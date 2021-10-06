@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s32 = state_var<std::int32_t>;
 
@@ -107,12 +107,12 @@ namespace mame.netlist
         }
 
 
-        protected virtual void timestep(timestep_type ts_type, nl_fptype st) { }//plib::unused_var(ts_type, st); }
+        public virtual void timestep(timestep_type ts_type, nl_fptype st) { }//plib::unused_var(ts_type, st); }
         public virtual void update_terminals() { }
 
         public virtual void update_param() { }
-        protected virtual bool is_dynamic() { return false; }
-        protected virtual bool is_timestep() { return false; }
+        public virtual bool is_dynamic() { return false; }
+        public virtual bool is_timestep() { return false; }
     }
 
 

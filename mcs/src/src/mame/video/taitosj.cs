@@ -54,7 +54,7 @@ namespace mame
             int i;
 
             /* compute the color output resistor weights */
-            compute_resistor_weights(0, 255, -1.0,
+            g.compute_resistor_weights(0, 255, -1.0,
                     3, resistances, out rweights, 0, 0,
                     3, resistances, out gweights, 0, 0,
                     3, resistances, out bweights, 0, 0);
@@ -65,7 +65,7 @@ namespace mame
                 int bit1;
                 int bit2;
                 int r;
-                int g;
+                int gr;
                 int b;
                 int val;
 
@@ -75,23 +75,23 @@ namespace mame
                 bit1 = (~val >> 7) & 0x01;
                 val = m_paletteram.op[(i << 1) | 0x00];
                 bit2 = (~val >> 0) & 0x01;
-                r = combine_weights(rweights, bit0, bit1, bit2);
+                r = g.combine_weights(rweights, bit0, bit1, bit2);
 
                 /* green component */
                 val = m_paletteram.op[(i << 1) | 0x01];
                 bit0 = (~val >> 3) & 0x01;
                 bit1 = (~val >> 4) & 0x01;
                 bit2 = (~val >> 5) & 0x01;
-                g = combine_weights(gweights, bit0, bit1, bit2);
+                gr = g.combine_weights(gweights, bit0, bit1, bit2);
 
                 /* blue component */
                 val = m_paletteram.op[(i << 1) | 0x01];
                 bit0 = (~val >> 0) & 0x01;
                 bit1 = (~val >> 1) & 0x01;
                 bit2 = (~val >> 2) & 0x01;
-                b = combine_weights(bweights, bit0, bit1, bit2);
+                b = g.combine_weights(bweights, bit0, bit1, bit2);
 
-                m_palette.op[0].dipalette.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)g, (u8)b));
+                m_palette.op[0].dipalette.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)gr, (u8)b));
             }
         }
 
@@ -591,7 +591,7 @@ namespace mame
                         scrolly[i]      = -m_colscrolly.op[32 * which + i] - m_scroll.op[2 * which + 1];
                 }
 
-                copyscrollbitmap_trans(bitmap, m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, cliprect, TRANSPARENT_PEN);
+                g.copyscrollbitmap_trans(bitmap, m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, cliprect, TRANSPARENT_PEN);
 
                 /* store parts covered with sprites for sprites/layers collision detection */
                 for (i = 0; i < 0x20; i++)
@@ -599,7 +599,7 @@ namespace mame
                     if ((i >= 0x10) && (i <= 0x17)) continue; /* no sprites here */
 
                     if (sprites_on[i] != 0)
-                        copyscrollbitmap(m_sprite_layer_collbitmap2[which], m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, sprite_areas[i]);
+                        g.copyscrollbitmap(m_sprite_layer_collbitmap2[which], m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, sprite_areas[i]);
                 }
             }
         }

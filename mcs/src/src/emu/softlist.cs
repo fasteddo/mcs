@@ -115,7 +115,7 @@ namespace mame
                 int foundIdx = std.strstr(interface_list, m_interface);  //char const *const found(std::strstr(interface_list, m_interface.c_str()));
                 if (foundIdx == -1)  //if (!found)
                     return false;
-                if (((foundIdx == 0) || (',' == interface_list[foundIdx - 1])) && ((',' == interface_list[foundIdx + m_interface.size()]) || interface_list[foundIdx + m_interface.size()] != 0))  //if (((found == interface_list) || (',' == found[-1])) && ((',' == found[m_interface.size()]) || !found[m_interface.size()]))
+                if (((foundIdx == 0) || (',' == interface_list[foundIdx - 1])) && ((',' == interface_list[foundIdx + (int)m_interface.size()]) || interface_list[foundIdx + (int)m_interface.size()] != 0))  //if (((found == interface_list) || (',' == found[-1])) && ((',' == found[m_interface.size()]) || !found[m_interface.size()]))
                     return true;
                 int interface_listIdx = std.strchr(interface_list, ',');  //interface_list = std::strchr(interface_list, ',');
                 if (interface_listIdx == -1)  //if (!interface_list)

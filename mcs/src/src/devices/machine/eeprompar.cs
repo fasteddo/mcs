@@ -13,6 +13,10 @@ namespace mame
 {
     public class eeprom_parallel_base_device : eeprom_base_device
     {
+        const int VERBOSE = 0;  //#define VERBOSE 1
+        protected void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
+
+
         // construction/destruction
         protected eeprom_parallel_base_device(machine_config mconfig, device_type devtype, string tag, device_t owner)
             : base(mconfig, devtype, tag, owner)
@@ -122,7 +126,7 @@ namespace mame
             // start the base class
             base.device_start();
 
-            save_item(NAME(new { m_oe }));
+            save_item(g.NAME(new { m_oe }));
         }
 
 
@@ -168,7 +172,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(EEPROM_##_uppercase, eeprom_parallel_##_lowercase##_device, #_lowercase, "Parallel EEPROM " #_uppercase " (" #_cells "x" #_bits ")")
         static device_t device_creator_eeprom_parallel_2804_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new eeprom_parallel_2804_device(mconfig, tag, owner, clock); }
-        public static readonly device_type EEPROM_2804 = DEFINE_DEVICE_TYPE(device_creator_eeprom_parallel_2804_device, "2804", "Parallel EEPROM 2804 (512x8)");
+        public static readonly device_type EEPROM_2804 = g.DEFINE_DEVICE_TYPE(device_creator_eeprom_parallel_2804_device, "2804", "Parallel EEPROM 2804 (512x8)");
 
         //DEFINE_PARALLEL_EEPROM_DEVICE(28xx, 2804, 2804, 8, 512)
         eeprom_parallel_2804_device(machine_config mconfig, string tag, device_t owner, uint32_t clock = 0)

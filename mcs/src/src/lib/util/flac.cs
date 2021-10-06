@@ -45,7 +45,7 @@ namespace mame
             throw new emu_unimplemented();
         }
 
-        public flac_decoder(util_.core_file file)
+        public flac_decoder(util.core_file file)
         {
             throw new emu_unimplemented();
         }

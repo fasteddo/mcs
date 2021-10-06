@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using int32_t = System.Int32;
 using PointerU8 = mame.Pointer<System.Byte>;
+using size_t = System.UInt64;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 
@@ -275,7 +276,7 @@ namespace mame
 
         // configuration
 
-        void set_spriteram(PointerU8 base_, uint32_t bytes) { assert(base_ != null && bytes != 0); m_spriteram = base_; m_spriteram_bytes = (int32_t)bytes; m_buffer.resize(m_spriteram_bytes); }  //void set_spriteram(_SpriteRAMType *base, uint32_t bytes) { assert(base != nullptr && bytes != 0); m_spriteram = base; m_spriteram_bytes = bytes; m_buffer.resize(m_spriteram_bytes / sizeof(_SpriteRAMType)); }
+        void set_spriteram(PointerU8 base_, uint32_t bytes) { g.assert(base_ != null && bytes != 0); m_spriteram = base_; m_spriteram_bytes = (int32_t)bytes; m_buffer.resize((size_t)m_spriteram_bytes); }  //void set_spriteram(_SpriteRAMType *base, uint32_t bytes) { assert(base != nullptr && bytes != 0); m_spriteram = base; m_spriteram_bytes = bytes; m_buffer.resize(m_spriteram_bytes / sizeof(_SpriteRAMType)); }
 
         //void set_origin(int32_t xorigin = 0, int32_t yorigin = 0) { m_xorigin = xorigin; m_yorigin = yorigin; }
         //void set_xorigin(int32_t xorigin) { m_xorigin = xorigin; }
@@ -343,7 +344,7 @@ namespace mame
                 set_spriteram(spriteram.ptr(), (uint32_t)spriteram.bytes());  //set_spriteram(reinterpret_cast<_SpriteRAMType *>(spriteram->ptr()), spriteram->bytes());
 
                 // save states
-                save_item(NAME(new { m_buffer }));
+                save_item(g.NAME(new { m_buffer }));
             }
         }
 

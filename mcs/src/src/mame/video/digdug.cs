@@ -4,12 +4,14 @@
 using System;
 using System.Collections.Generic;
 
+using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
+using uint32_t = System.UInt32;
 
 
 namespace mame
@@ -65,20 +67,20 @@ namespace mame
             for (int i = 0; i < 16; i++)
             {
                 palette.dipalette.set_pen_indirect((pen_t)((i << 1) | 0), 0);
-                palette.dipalette.set_pen_indirect((pen_t)((i << 1) | 1), (UInt16)i);
+                palette.dipalette.set_pen_indirect((pen_t)((i << 1) | 1), (indirect_pen_t)i);
             }
 
             // sprites
             for (int i = 0; i < 0x100; i++)
             {
-                palette.dipalette.set_pen_indirect((pen_t)(16*2 + i), (UInt16)((color_prom[0] & 0x0f) | 0x10));
+                palette.dipalette.set_pen_indirect((pen_t)(16*2 + i), (indirect_pen_t)((color_prom[0] & 0x0f) | 0x10));
                 color_prom++;
             }
 
             // bg_select
             for (int i = 0; i < 0x100; i++)
             {
-                palette.dipalette.set_pen_indirect((pen_t)(16*2 + 256 + i), (UInt16)(color_prom[0] & 0x0f));
+                palette.dipalette.set_pen_indirect((pen_t)(16*2 + 256 + i), (indirect_pen_t)(color_prom[0] & 0x0f));
                 color_prom++;
             }
         }
@@ -89,7 +91,7 @@ namespace mame
         ***************************************************************************/
         /* convert from 32x32 to 36x28 */
         //TILEMAP_MAPPER_MEMBER(digdug_state::tilemap_scan)
-        protected new tilemap_memory_index tilemap_scan(UInt32 col, UInt32 row, UInt32 num_cols, UInt32 num_rows)
+        protected new tilemap_memory_index tilemap_scan(u32 col, u32 row, u32 num_cols, u32 num_rows)
         {
             int offs;
 
@@ -109,7 +111,7 @@ namespace mame
         {
             Pointer<uint8_t> rom = new Pointer<uint8_t>(memregion("gfx4").base_());  //uint8_t *rom = memregion("gfx4")->base();
 
-            int code = rom[(int)(tile_index | (m_bg_select << 10))];
+            int code = rom[tile_index | ((u32)m_bg_select << 10)];
 
             /* when the background is "disabled", it is actually still drawn, but using
                a color code that makes all pixels black. There are pullups setting the
@@ -127,7 +129,7 @@ namespace mame
         //TILE_GET_INFO_MEMBER(digdug_state::tx_get_tile_info)
         void tx_get_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
-            byte code = m_videoram.op[tile_index];
+            uint8_t code = m_videoram.op[tile_index];
             int color;
 
             /* the hardware has two ways to pick the color, either straight from the
@@ -149,7 +151,7 @@ namespace mame
             tileinfo.set(0,
                     (u32)((code & 0x7f) | (flip_screen() != 0 ? 0x80 : 0)),
                     (u32)color,
-                    flip_screen() != 0 ? TILE_FLIPX : (u8)0);
+                    flip_screen() != 0 ? g.TILE_FLIPX : (u8)0);
         }
 
 
@@ -169,10 +171,10 @@ namespace mame
 
             m_fg_tilemap.set_transparent_pen(0);
 
-            save_item(NAME(new { m_bg_select }));
-            save_item(NAME(new { m_tx_color_mode }));
-            save_item(NAME(new { m_bg_disable }));
-            save_item(NAME(new { m_bg_color_bank }));
+            save_item(g.NAME(new { m_bg_select }));
+            save_item(g.NAME(new { m_tx_color_mode }));
+            save_item(g.NAME(new { m_bg_disable }));
+            save_item(g.NAME(new { m_bg_color_bank }));
         }
 
 
@@ -225,16 +227,16 @@ namespace mame
                 {
                     for (x = 0;x <= size;x++)
                     {
-                        UInt32 transmask =  m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color, 0x1f);
+                        uint32_t transmask =  m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color, 0x1f);
                         m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,visarea,
-                            (UInt32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
-                            (UInt32)color,
+                            (u32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
+                            (u32)color,
                             flipx,flipy,
                             ((sx + 16*x) & 0xff), sy + 16*y,transmask);
                         /* wraparound */
                         m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,visarea,
-                            (UInt32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
-                            (UInt32)color,
+                            (u32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
+                            (u32)color,
                             flipx,flipy,
                             ((sx + 16*x) & 0xff) + 0x100, sy + 16*y,transmask);
                     }
@@ -285,7 +287,7 @@ namespace mame
         void tx_color_mode_w(int state)
         {
             // select alpha layer color mode (see tx_get_tile_info)
-            m_tx_color_mode = (byte)state;
+            m_tx_color_mode = (uint8_t)state;
             m_fg_tilemap.mark_all_dirty();
         }
 
@@ -293,7 +295,7 @@ namespace mame
         void bg_disable_w(int state)
         {
             // "disable" background (see bg_get_tile_info)
-            m_bg_disable = (byte)state;
+            m_bg_disable = (uint8_t)state;
             m_bg_tilemap.mark_all_dirty();
         }
     }

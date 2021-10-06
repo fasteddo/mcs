@@ -241,7 +241,7 @@ namespace mame
     }
 
 
-    public partial class gfx_element : global_object
+    public partial class gfx_element
     {
         /***************************************************************************
             BASIC DRAWGFX CORE
@@ -314,9 +314,9 @@ namespace mame
 
 
             do {
-                assert(dest.valid());
-                assert(dest.cliprect().contains(cliprect));
-                assert(code < elements());
+                g.assert(dest.valid());
+                g.assert(dest.cliprect().contains(cliprect));
+                g.assert(code < elements());
 
                 // ignore empty/invalid cliprects
                 if (cliprect.empty())
@@ -525,6 +525,14 @@ namespace mame
                                     var destptrTemp3 = destptr16[3]; pixel_op.op16x8(ref destptrTemp3, srcptr[-3]); destptr16[3] = destptrTemp3;
                                     break;
                                 }
+                                case 32:
+                                {
+                                    var destptrTemp0 = destptr32[0]; pixel_op.op32x8(ref destptrTemp0, srcptr[ 0]); destptr32[0] = destptrTemp0;
+                                    var destptrTemp1 = destptr32[1]; pixel_op.op32x8(ref destptrTemp1, srcptr[-1]); destptr32[1] = destptrTemp1;
+                                    var destptrTemp2 = destptr32[2]; pixel_op.op32x8(ref destptrTemp2, srcptr[-2]); destptr32[2] = destptrTemp2;
+                                    var destptrTemp3 = destptr32[3]; pixel_op.op32x8(ref destptrTemp3, srcptr[-3]); destptr32[3] = destptrTemp3;
+                                    break;
+                                }
                                 default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
                             }
 
@@ -549,6 +557,7 @@ namespace mame
                             {
                                 case 8:  { var destptrTemp = destptr8[0]; pixel_op.op8x8(ref destptrTemp, srcptr[0]); destptr8[0] = destptrTemp; break; }
                                 case 16: { var destptrTemp = destptr16[0]; pixel_op.op16x8(ref destptrTemp, srcptr[0]); destptr16[0] = destptrTemp; break; }
+                                case 32: { var destptrTemp = destptr32[0]; pixel_op.op32x8(ref destptrTemp, srcptr[0]); destptr32[0] = destptrTemp; break; }
                                 default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
                             }
 
@@ -634,9 +643,9 @@ namespace mame
             profiler_global.g_profiler.start(profile_type.PROFILER_COPYBITMAP);
 
             do {
-                global_object.assert(dest.valid());
-                global_object.assert(src.valid());
-                global_object.assert(dest.cliprect().contains(cliprect));
+                g.assert(dest.valid());
+                g.assert(src.valid());
+                g.assert(dest.cliprect().contains(cliprect));
 
                 // ignore empty/invalid cliprects
                 if (cliprect.empty())
@@ -771,6 +780,13 @@ namespace mame
                                 var destptrTemp2 = destptr8[2]; pixel_op.op8x8(ref destptrTemp2, srcptr8[2]); destptr8[2] = destptrTemp2;
                                 var destptrTemp3 = destptr8[3]; pixel_op.op8x8(ref destptrTemp3, srcptr8[3]); destptr8[3] = destptrTemp3;
                             }
+                            else if (dest.bpp() == 16 && src.bpp() == 16)
+                            {
+                                var destptrTemp0 = destptr16[0]; pixel_op.op16x16(ref destptrTemp0, srcptr16[0]); destptr16[0] = destptrTemp0;
+                                var destptrTemp1 = destptr16[1]; pixel_op.op16x16(ref destptrTemp1, srcptr16[1]); destptr16[1] = destptrTemp1;
+                                var destptrTemp2 = destptr16[2]; pixel_op.op16x16(ref destptrTemp2, srcptr16[2]); destptr16[2] = destptrTemp2;
+                                var destptrTemp3 = destptr16[3]; pixel_op.op16x16(ref destptrTemp3, srcptr16[3]); destptr16[3] = destptrTemp3;
+                            }
                             else throw new emu_fatalerror("copybitmap_core() - unknown bpp - dest: {0} src: {1}\n", dest.bpp(), src.bpp());
 
                             //srcptr += 4;
@@ -798,10 +814,8 @@ namespace mame
                         for (s32 curx = 0; curx < leftovers; curx++)
                         {
                             //pixel_op(destptr[0], srcptr[0]);
-                            if (dest.bpp() == 8 && src.bpp() == 8)
-                            {
-                                var destptrTemp = destptr8[0]; pixel_op.op8x8(ref destptrTemp, srcptr8[0]); destptr8[0] = destptrTemp;
-                            }
+                            if      (dest.bpp() == 8  && src.bpp() == 8)  { var destptrTemp = destptr8[0];  pixel_op.op8x8(ref destptrTemp, srcptr8[0]);    destptr8[0] = destptrTemp; }
+                            else if (dest.bpp() == 16 && src.bpp() == 16) { var destptrTemp = destptr16[0]; pixel_op.op16x16(ref destptrTemp, srcptr16[0]); destptr16[0] = destptrTemp; }
                             else throw new emu_fatalerror("copybitmap_core() - unknown bpp - dest: {0} src: {1}\n", dest.bpp(), src.bpp());
 
                             //srcptr++;

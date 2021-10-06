@@ -15,7 +15,7 @@ namespace mame.netlist.devices
     class nld_CD4066_GATE : device_t
     {
         //NETLIB_DEVICE_IMPL(CD4066_GATE,         "CD4066_GATE",            "")
-        public static readonly netlist.factory.constructor_ptr_t decl_CD4066_GATE = NETLIB_DEVICE_IMPL<nld_CD4066_GATE>("CD4066_GATE", "");
+        public static readonly netlist.factory.constructor_ptr_t decl_CD4066_GATE = g.NETLIB_DEVICE_IMPL<nld_CD4066_GATE>("CD4066_GATE", "");
 
 
         analog.nld_R_base m_R;
@@ -42,7 +42,7 @@ namespace mame.netlist.devices
         {
             // Start in off condition
             // FIXME: is ROFF correct?
-            m_R.set_R(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(exec().gmin()));
+            m_R.set_R(plib.pg.reciprocal(exec().gmin()));
         }
 
 
@@ -59,7 +59,7 @@ namespace mame.netlist.devices
 
             if (in_ < low)
             {
-                R = plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(exec().gmin());
+                R = plib.pg.reciprocal(exec().gmin());
             }
             else if (in_ > high)
             {

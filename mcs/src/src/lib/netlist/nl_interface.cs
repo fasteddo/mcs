@@ -6,8 +6,11 @@ using System.Collections.Generic;
 
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
-using size_t = System.UInt32;
+using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
+using param_num_t_operators_size_t = mame.netlist.param_num_t_operators_uint64;
+using size_t = System.UInt64;
 
 
 namespace mame.netlist.interface_
@@ -41,7 +44,46 @@ namespace mame.netlist.interface_
     ///
 
     //template <typename FUNC>
-    //class NETLIB_NAME(analog_callback) : public device_t
+    class nld_analog_callback : device_t  //NETLIB_OBJECT(analog_callback)
+    {
+        public delegate void FUNC(device_t device, nl_fptype val);
+
+
+        analog_input_t m_in;
+        nl_fptype m_threshold;
+        state_var<nl_fptype> m_last;
+        FUNC m_func;
+
+
+        //NETLIB_CONSTRUCTOR_EX(analog_callback, nl_fptype threshold, FUNC &&func)
+        public nld_analog_callback(object owner, string name, nl_fptype threshold, FUNC func)
+            : base(owner, name)
+        {
+            m_in = new analog_input_t(this, "IN", in_);
+            m_threshold = threshold;
+            m_last = new state_var<nl_fptype>(this, "m_last", 0);
+            m_func = func;
+        }
+
+
+        //NETLIB_RESETI()
+        public override void reset()
+        {
+            m_last.op = 0.0;
+        }
+
+
+        //NETLIB_HANDLERI(in)
+        void in_()
+        {
+            nl_fptype cur = m_in.op();
+            if (plib.pg.abs(cur - m_last.op) > m_threshold)
+            {
+                m_last.op = cur;
+                m_func(this, cur);
+            }
+        }
+    }
 
 
     /// \brief logic_callback device
@@ -72,7 +114,7 @@ namespace mame.netlist.interface_
     //NETLIB_OBJECT(buffered_param_setter)
     class nld_buffered_param_setter<T> : device_t
     {
-        //using setter_t = plib::pmfp<void,nl_fptype>;
+        delegate void setter_t(nl_fptype param);  //using setter_t = plib::pmfp<void,nl_fptype>;
 
 
         netlist_time m_sample_time;
@@ -83,13 +125,13 @@ namespace mame.netlist.interface_
         size_t m_pos;
         size_t m_samples;
 
-        //param_str_t m_param_name;
-        //param_fp_t  m_param_mult;
-        //param_fp_t  m_param_offset;
-        //param_t *   m_param;
-        //setter_t    m_param_setter;
-        //T *         m_buffer;
-        param_num_t<size_t, param_num_t_operators_uint32> m_id;
+        param_str_t m_param_name;
+        param_fp_t m_param_mult;
+        param_fp_t m_param_offset;
+        param_t m_param;  //param_t *   m_param;
+        setter_t m_param_setter;
+        T m_buffer;  //T *         m_buffer;
+        param_num_t<size_t, param_num_t_operators_size_t> m_id;
 
 
         //NETLIB_CONSTRUCTOR(buffered_param_setter)
@@ -101,19 +143,15 @@ namespace mame.netlist.interface_
             m_Q = new logic_output_t(this, "Q");
             m_pos = 0;
             m_samples = 0;
-
-            throw new emu_unimplemented();
-#if false
-            , m_param_name(*this, "CHAN", "")
-            , m_param_mult(*this, "MULT", 1.0)
-            , m_param_offset(*this, "OFFSET", 0.0)
-            , m_param(nullptr)
-            , m_id(*this, "ID", 0)
+            m_param_name = new param_str_t(this, "CHAN", "");
+            m_param_mult = new param_fp_t(this, "MULT", 1.0);
+            m_param_offset = new param_fp_t(this, "OFFSET", 0.0);
+            m_param = null;
+            m_id = new param_num_t<size_t, param_num_t_operators_size_t>(this, "ID", 0);
 
 
             connect("FB", "Q");
-            m_buffer = null;
-#endif
+            m_buffer = default;
         }
 
 
@@ -162,18 +200,15 @@ namespace mame.netlist.interface_
             m_pos = 0;
             m_sample_time = sample_time;
 
-            throw new emu_unimplemented();
-#if false
-            if (m_param_name() != "")
+            if (m_param_name.op() != "")
             {
-                param_t *p = &state().setup().find_param(m_param_name()).param();
+                param_t p = state().setup().find_param(m_param_name.op()).param();
                 m_param = p;
-                if (dynamic_cast<param_fp_t *>(p) != nullptr)
-                    m_param_setter = setter_t(&NETLIB_NAME(buffered_param_setter)::setter<param_fp_t>, this);
-                else if (dynamic_cast<param_logic_t *>(p) != nullptr)
-                    m_param_setter = setter_t(&NETLIB_NAME(buffered_param_setter)::setter<param_logic_t>, this);
+                if (p is param_fp_t)  //if (dynamic_cast<param_fp_t *>(p) != nullptr)
+                    m_param_setter = setter<param_fp_t>;  //m_param_setter = setter_t(&NETLIB_NAME(buffered_param_setter)::setter<param_fp_t>, this);
+                else if (p is param_logic_t)  //else if (dynamic_cast<param_logic_t *>(p) != nullptr)
+                    m_param_setter = setter<param_logic_t>;  //m_param_setter = setter_t(&NETLIB_NAME(buffered_param_setter)::setter<param_logic_t>, this);
             }
-#endif
         }
 
 
@@ -194,9 +229,15 @@ namespace mame.netlist.interface_
 
 
         //template <typename S>
-        //void setter(nl_fptype v)
-        //{
-        //    static_cast<S *>(m_param)->set(v);
-        //}
+        void setter<S>(nl_fptype v)
+        {
+            //static_cast<S *>(m_param)->set(v);
+            if (typeof(S) == typeof(param_fp_t))
+                ((param_fp_t)m_param).set(v);
+            else if (typeof(S) == typeof(param_logic_t))
+                ((param_logic_t)m_param).set(v != 0);
+            else
+                throw new emu_unimplemented();
+        }
     }
 } // namespace netlist

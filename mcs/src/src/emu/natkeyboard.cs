@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using char32_t = System.UInt32;
 using natural_keyboard_keycode_map_entries = mame.std.vector<mame.natural_keyboard.keycode_map_entry>; //typedef std::vector<keycode_map_entry> keycode_map_entries;
 using natural_keyboard_keycode_map = mame.std.unordered_map<System.UInt32, mame.std.vector<mame.natural_keyboard.keycode_map_entry>>;  //typedef std::unordered_map<char32_t, keycode_map_entries> keycode_map;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
 
@@ -16,7 +16,7 @@ namespace mame
 {
     // ======================> natural_keyboard
     // buffer to handle copy/paste/insert of keys
-    public class natural_keyboard : global_object
+    public class natural_keyboard
     {
         //DISABLE_COPYING(natural_keyboard);
 
@@ -34,19 +34,19 @@ namespace mame
 
         //enum
         //{
-        const int SHIFT_COUNT  = (int)(ioport_global.UCHAR_SHIFT_END - ioport_global.UCHAR_SHIFT_BEGIN + 1);
+        const int SHIFT_COUNT  = (int)(g.UCHAR_SHIFT_END - g.UCHAR_SHIFT_BEGIN + 1);
         const int SHIFT_STATES = 1 << SHIFT_COUNT;
         //}
 
 
-        public class size_t_constant_SHIFT_COUNT : uint32_constant { public UInt32 value { get { return SHIFT_COUNT; } } }
-        public class size_t_constant_SHIFT_COUNT_1 : uint32_constant { public UInt32 value { get { return SHIFT_COUNT + 1; } } }
+        public class size_t_const_SHIFT_COUNT : u64_const { public UInt64 value { get { return SHIFT_COUNT; } } }
+        public class size_t_const_SHIFT_COUNT_1 : u64_const { public UInt64 value { get { return SHIFT_COUNT + 1; } } }
 
 
         // internal keyboard code information
         public class keycode_map_entry
         {
-            public std.array<ioport_field, size_t_constant_SHIFT_COUNT_1> field = new std.array<ioport_field, size_t_constant_SHIFT_COUNT_1>();
+            public std.array<ioport_field, size_t_const_SHIFT_COUNT_1> field = new std.array<ioport_field, size_t_const_SHIFT_COUNT_1>();
             public unsigned shift;
             public ioport_condition condition;
         }
@@ -224,7 +224,7 @@ namespace mame
                             m_keyboards,
                             (kbd_dev_info info) =>
                             {
-                                return port.second().device() == info.device.get();
+                                return port.second().device() == info.device;
                             });
 
                 foreach (ioport_field field in port.second().fields())
@@ -253,17 +253,17 @@ namespace mame
                     m_keyboards,
                     (kbd_dev_info l, kbd_dev_info r) =>
                     {
-                        return std.strcmp(l.device.get().tag(), r.device.get().tag());
+                        return std.strcmp(l.device.tag(), r.device.tag());
                     });
 
             // set up key mappings for each keyboard
-            std.array<ioport_field, size_t_constant_SHIFT_COUNT> shift = new std.array<ioport_field, size_t_constant_SHIFT_COUNT>();
+            std.array<ioport_field, size_t_const_SHIFT_COUNT> shift = new std.array<ioport_field, size_t_const_SHIFT_COUNT>();
             unsigned mask;
             bool have_keyboard = false;
             foreach (kbd_dev_info devinfo in m_keyboards)
             {
                 if (LOG_NATURAL_KEYBOARD)
-                    machine().logerror("natural_keyboard: building codes for {0}... ({1} fields)\n", devinfo.device.get().tag(), devinfo.keyfields.size());
+                    machine().logerror("natural_keyboard: building codes for {0}... ({1} fields)\n", devinfo.device.tag(), devinfo.keyfields.size());
 
                 // enable all pure keypads and the first keyboard
                 if (!devinfo.keyboard || !have_keyboard)
@@ -280,12 +280,12 @@ namespace mame
                         std.vector<char32_t> codes = field.keyboard_codes(0);
                         foreach (char32_t code in codes)
                         {
-                            if ((code >= ioport_global.UCHAR_SHIFT_BEGIN) && (code <= ioport_global.UCHAR_SHIFT_END))
+                            if ((code >= g.UCHAR_SHIFT_BEGIN) && (code <= g.UCHAR_SHIFT_END))
                             {
-                                mask |= 1U << (int)(code - ioport_global.UCHAR_SHIFT_BEGIN);
-                                shift[code - ioport_global.UCHAR_SHIFT_BEGIN] = field;
+                                mask |= 1U << (int)(code - g.UCHAR_SHIFT_BEGIN);
+                                shift[code - g.UCHAR_SHIFT_BEGIN] = field;
                                 if (LOG_NATURAL_KEYBOARD)
-                                    machine().logerror("natural_keyboard: UCHAR_SHIFT_{0} found\n", code - ioport_global.UCHAR_SHIFT_BEGIN + 1);
+                                    machine().logerror("natural_keyboard: UCHAR_SHIFT_{0} found\n", code - g.UCHAR_SHIFT_BEGIN + 1);
                             }
                         }
                     }
@@ -306,7 +306,7 @@ namespace mame
                                 std.vector<char32_t> codes = field.keyboard_codes((int)curshift);
                                 foreach (char32_t code in codes)
                                 {
-                                    if (((code < ioport_global.UCHAR_SHIFT_BEGIN) || (code > ioport_global.UCHAR_SHIFT_END)) && (code != 0))
+                                    if (((code < g.UCHAR_SHIFT_BEGIN) || (code > g.UCHAR_SHIFT_END)) && (code != 0))
                                     {
                                         m_have_charkeys = true;
                                         var found = devinfo.codemap.find(code);  //keycode_map::iterator const found(devinfo.codemap.find(code));
@@ -475,10 +475,10 @@ namespace mame
                         //char temp[2] = { char(ch), 0 };
                         buffer += (char)ch;
                     }
-                    else if (ch >= ioport_global.UCHAR_MAMEKEY_BEGIN)
+                    else if (ch >= g.UCHAR_MAMEKEY_BEGIN)
                     {
                         // try to obtain a codename with code_name(); this can result in an empty string
-                        input_code code = new input_code(input_device_class.DEVICE_CLASS_KEYBOARD, 0, input_item_class.ITEM_CLASS_SWITCH, input_item_modifier.ITEM_MODIFIER_NONE, (input_item_id)(ch - ioport_global.UCHAR_MAMEKEY_BEGIN));
+                        input_code code = new input_code(input_device_class.DEVICE_CLASS_KEYBOARD, 0, input_item_class.ITEM_CLASS_SWITCH, input_item_modifier.ITEM_MODIFIER_NONE, (input_item_id)(ch - g.UCHAR_MAMEKEY_BEGIN));
                         buffer = machine().input().code_name(code);
                     }
 

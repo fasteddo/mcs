@@ -7,9 +7,12 @@ using System.Collections.Generic;
 using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using palette_interface_enumerator = mame.device_interface_enumerator<mame.device_palette_interface>;  //typedef device_interface_enumerator<device_palette_interface> palette_interface_enumerator;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
+using size_t = System.UInt64;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
+using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -101,7 +104,7 @@ namespace mame
         public void set_pen_color(pen_t pen, u8 r, u8 g, u8 b) { m_palette.entry_set_color(pen, new rgb_t(r, g, b)); }
         //void set_pen_colors(pen_t color_base, const rgb_t *colors, int color_count) { while (color_count--) set_pen_color(color_base++, *colors++); }
         //template <size_t N> void set_pen_colors(pen_t color_base, const rgb_t (&colors)[N]) { set_pen_colors(color_base, colors, N); }
-        public void set_pen_colors(pen_t color_base, std.vector<rgb_t> colors) { for (int i = 0; i != colors.size(); i++) set_pen_color(color_base + (pen_t)i, colors[i]); }
+        public void set_pen_colors(pen_t color_base, std.vector<rgb_t> colors) { for (unsigned i = 0; i != colors.size(); i++) set_pen_color(color_base + (pen_t)i, colors[i]); }
         //void set_pen_contrast(pen_t pen, double bright) { m_palette->entry_set_contrast(pen, bright); }
         public void set_format(bitmap_format format) { m_format = format; }
 
@@ -115,7 +118,7 @@ namespace mame
         public void set_indirect_color(int index, rgb_t rgb)
         {
             // make sure we are in range
-            assert(index < m_indirect_colors.size());
+            g.assert(index < (int)m_indirect_colors.size());
 
             // alpha doesn't matter
             rgb.set_a(255);
@@ -140,7 +143,7 @@ namespace mame
         public void set_pen_indirect(pen_t pen, indirect_pen_t index)
         {
             // make sure we are in range
-            assert(pen < entries() && index < indirect_entries());
+            g.assert(pen < entries() && index < indirect_entries());
 
             m_indirect_pens[(int)pen] = index;
 
@@ -157,8 +160,8 @@ namespace mame
             u32 entry = gfx.colorbase() + (color % gfx.colors()) * gfx.granularity();
 
             // make sure we are in range
-            assert(entry < m_indirect_pens.size());
-            assert(gfx.depth() <= 32);
+            g.assert(entry < m_indirect_pens.size());
+            g.assert(gfx.depth() <= 32);
 
             // either gfx->color_depth entries or as many as we can get up until the end
             int count = (int)Math.Min((UInt32)gfx.depth(), m_indirect_pens.size() - entry);
@@ -177,8 +180,8 @@ namespace mame
 
 
         // shadow config
-        void set_shadow_factor(double factor) { assert(m_shadow_group != 0); m_palette.group_set_contrast(m_shadow_group, (float)factor); }
-        void set_highlight_factor(double factor) { assert(m_hilight_group != 0); m_palette.group_set_contrast(m_hilight_group, (float)factor); }
+        void set_shadow_factor(double factor) { g.assert(m_shadow_group != 0); m_palette.group_set_contrast(m_shadow_group, (float)factor); }
+        void set_highlight_factor(double factor) { g.assert(m_hilight_group != 0); m_palette.group_set_contrast(m_hilight_group, (float)factor); }
         //void set_shadow_mode(int mode) { assert(mode >= 0 && mode < MAX_SHADOW_PRESETS); m_shadow_table = m_shadow_tables[mode].base; }
 
 
@@ -211,16 +214,16 @@ namespace mame
             int indirect_colors = (int)palette_indirect_entries();
             if (indirect_colors > 0)
             {
-                m_indirect_colors.resize(indirect_colors);
+                m_indirect_colors.resize((size_t)indirect_colors);
                 for (int color = 0; color < indirect_colors; color++)
                 {
                     // alpha = 0 ensures change is detected the first time set_indirect_color() is called
                     m_indirect_colors[color] = rgb_t.transparent();
                 }
 
-                m_indirect_pens.resize((int)numentries);
+                m_indirect_pens.resize(numentries);
                 for (int pen = 0; pen < numentries; pen++)
-                    m_indirect_pens[pen] = (UInt16)(pen % indirect_colors);
+                    m_indirect_pens[pen] = (indirect_pen_t)(pen % indirect_colors);
             }
         }
 
@@ -232,16 +235,16 @@ namespace mame
         public override void interface_post_start()
         {
             // set up save/restore of the palette
-            m_save_pen.resize(m_palette.num_colors());
-            m_save_contrast.resize(m_palette.num_colors());
-            device().save_item(NAME(new { m_save_pen }));
-            device().save_item(NAME(new { m_save_contrast }));
+            m_save_pen.resize((size_t)m_palette.num_colors());
+            m_save_contrast.resize((size_t)m_palette.num_colors());
+            device().save_item(g.NAME(new { m_save_pen }));
+            device().save_item(g.NAME(new { m_save_contrast }));
 
             // save indirection tables if we have them
             if (m_indirect_colors.size() > 0)
             {
-                device().save_item(NAME(new { m_indirect_colors }));
-                device().save_item(NAME(new { m_indirect_pens }));
+                device().save_item(g.NAME(new { m_indirect_colors }));
+                device().save_item(g.NAME(new { m_indirect_pens }));
             }
         }
 
@@ -291,7 +294,7 @@ namespace mame
         //-------------------------------------------------
         void allocate_palette(u32 numentries)
         {
-            assert(numentries > 0);
+            g.assert(numentries > 0);
 
             // determine the number of groups we need
             int numgroups = 1;
@@ -313,7 +316,7 @@ namespace mame
 
             // set the initial colors to a standard rainbow
             for (int index = 0; index < numentries; index++)
-                set_pen_color((UInt32)index, rgbexpand(1,1,1, (UInt32)index, 0, 1, 2));
+                set_pen_color((UInt32)index, g.rgbexpand<int_const_1, int_const_1, int_const_1>((uint32_t)index, 0, 1, 2));
 
             // switch off the color mode
             switch (m_format)
@@ -356,7 +359,7 @@ namespace mame
                 case bitmap_format.BITMAP_FORMAT_IND16:
                     // create a dummy 1:1 mapping
                     {
-                        m_pen_array.resize(total_colors + 2);
+                        m_pen_array.resize((size_t)total_colors + 2);
                         Pointer<rgb_t> pentable = new Pointer<rgb_t>(m_pen_array);  //pen_t *pentable = &m_pen_array[0];
                         m_pens = new Pointer<rgb_t>(m_pen_array);  //m_pens = &m_pen_array[0];
                         for (int i = 0; i < total_colors + 2; i++)
@@ -444,23 +447,23 @@ namespace mame
         void configure_rgb_shadows(int mode, float factor)
         {
             // only applies to RGB direct modes
-            assert(m_format != bitmap_format.BITMAP_FORMAT_IND16);
+            g.assert(m_format != bitmap_format.BITMAP_FORMAT_IND16);
 
             // verify the shadow table
-            assert(mode >= 0 && mode < std.size(m_shadow_tables));
+            g.assert(mode >= 0 && mode < (int)std.size(m_shadow_tables));
             shadow_table_data stable = m_shadow_tables[mode];
-            assert(stable.base_ != null);
+            g.assert(stable.base_ != null);
 
             // regenerate the table
             int ifactor = (int)(factor * 256.0f);
             for (int rgb555 = 0; rgb555 < 32768; rgb555++)
             {
-                u8 r = rgb_t.clamp((pal5bit((uint8_t)(rgb555 >> 10)) * ifactor) >> 8);
-                u8 g = rgb_t.clamp((pal5bit((uint8_t)(rgb555 >> 5)) * ifactor) >> 8);
-                u8 b = rgb_t.clamp((pal5bit((uint8_t)(rgb555 >> 0)) * ifactor) >> 8);
+                u8 r  = rgb_t.clamp((g.pal5bit((uint8_t)(rgb555 >> 10)) * ifactor) >> 8);
+                u8 gr = rgb_t.clamp((g.pal5bit((uint8_t)(rgb555 >> 5)) * ifactor) >> 8);
+                u8 b  = rgb_t.clamp((g.pal5bit((uint8_t)(rgb555 >> 0)) * ifactor) >> 8);
 
                 // store either 16 or 32 bit
-                rgb_t final = new rgb_t(r, g, b);
+                rgb_t final = new rgb_t(r, gr, b);
                 if (m_format == bitmap_format.BITMAP_FORMAT_RGB32)
                     stable.base_[rgb555] = final;
                 else

@@ -218,7 +218,7 @@ namespace mame
 
             return queue;
 
-error:
+//error:
             osd_work_queue_free(queue);
             return null;
         }

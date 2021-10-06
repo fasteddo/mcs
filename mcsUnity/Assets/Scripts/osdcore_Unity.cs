@@ -1,20 +1,20 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using mame;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using mame;
 
-using ListBytesPointer = mame.ListPointer<System.Byte>;
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 
 
 namespace mcsUnity
 {
     public class osd_file_Unity : osd_file
     {
+        Stream m_stream = null;
         byte [] m_data = null;
 
 
@@ -110,6 +110,7 @@ namespace mcsUnity
                     return osd_file.error.NOT_FOUND;
                 }
 
+                m_stream = new MemoryStream(m_data);
                 filesize = (UInt64)m_data.Length;
                 return osd_file.error.NONE;
             }
@@ -160,7 +161,7 @@ namespace mcsUnity
                 a file_error describing any error that occurred while reading
                 from the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override error read(ListBytesPointer buffer, UInt64 offset, UInt32 length, out UInt32 actual)
+        public override error read(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)  //virtual error read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
         {
             //UnityEngine.Debug.LogFormat("osd_file_Unity.read() - {0} {1} {2} - {3} {4}", m_path, m_name, m_data.Length, offset, length);
 
@@ -199,7 +200,7 @@ namespace mcsUnity
                 a file_error describing any error that occurred while writing to
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override error write(ListBytesPointer buffer, UInt64 offset, UInt32 length, out UInt32 actual) { throw new emu_unimplemented(); }
+        public override error write(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual) { throw new emu_unimplemented(); }  //virtual error write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
 
 
         /*-----------------------------------------------------------------------------
@@ -215,6 +216,9 @@ namespace mcsUnity
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
         public override error remove(string filename) { throw new emu_unimplemented(); }
+
+
+        public override Stream stream { get { return m_stream; } }
     }
 
 
@@ -376,7 +380,7 @@ namespace mcsUnity
                 a file_error describing any error that occurred while reading
                 from the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public osd_file.error osd_read(osd_file file, ListBytesPointer buffer, UInt64 offset, UInt32 length, out UInt32 actual)
+        public osd_file.error osd_read(osd_file file, Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)
         {
             throw new emu_fatalerror("TODO - Fix inheritence");
 

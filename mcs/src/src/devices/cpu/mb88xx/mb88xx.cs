@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_read_line = mame.devcb_read<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_read_line = devcb_read<int, 1U>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -192,17 +192,17 @@ namespace mame
         devcb_read8 m_read_k;
         devcb_write8 m_write_o;
         devcb_write8 m_write_p;
-        devcb_read8.array<uint32_constant_4> m_read_r;
-        devcb_write8.array<uint32_constant_4> m_write_r;
+        devcb_read8.array<u64_const_4> m_read_r;
+        devcb_write8.array<u64_const_4> m_write_r;
         devcb_read_line m_read_si;
         devcb_write_line m_write_so;
 
         /* IRQ handling */
         uint8_t m_pending_interrupt;
 
-        memory_access<int_constant_11, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache m_cache = new memory_access<int_constant_11, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache();  //memory_access<11, 0, 0, ENDIANNESS_BIG>::cache m_cache;
-        memory_access<int_constant_11, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific m_program = new memory_access<int_constant_11, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific();  //memory_access<11, 0, 0, ENDIANNESS_BIG>::specific m_program;
-        memory_access<int_constant_7, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific m_data = new memory_access<int_constant_7, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific();  //memory_access< 7, 0, 0, ENDIANNESS_BIG>::specific m_data;
+        memory_access<int_const_11, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.cache m_cache = new memory_access<int_const_11, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.cache();  //memory_access<11, 0, 0, ENDIANNESS_BIG>::cache m_cache;
+        memory_access<int_const_11, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.specific m_program = new memory_access<int_const_11, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.specific();  //memory_access<11, 0, 0, ENDIANNESS_BIG>::specific m_program;
+        memory_access<int_const_7, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.specific m_data = new memory_access<int_const_7, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.specific();  //memory_access< 7, 0, 0, ENDIANNESS_BIG>::specific m_data;
 
         //int m_icount;
         intref m_icount = new intref();
@@ -228,8 +228,8 @@ namespace mame
             m_read_k = new devcb_read8(this);
             m_write_o = new devcb_write8(this);
             m_write_p = new devcb_write8(this);
-            m_read_r = new devcb_read8.array<uint32_constant_4>(this, () => { return new devcb_read8(this); });
-            m_write_r = new devcb_write8.array<uint32_constant_4>(this, () => { return new devcb_write8(this); });
+            m_read_r = new devcb_read8.array<u64_const_4>(this, () => { return new devcb_read8(this); });
+            m_write_r = new devcb_write8.array<u64_const_4>(this, () => { return new devcb_write8(this); });
             m_read_si = new devcb_read_line(this);
             m_write_so = new devcb_write_line(this);
         }
@@ -295,46 +295,46 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_mb88>();
 
 
-            m_dimemory.space(AS_PROGRAM).cache(m_cache);
-            m_dimemory.space(AS_PROGRAM).specific(m_program);
-            m_dimemory.space(AS_DATA).specific(m_data);
+            m_dimemory.space(g.AS_PROGRAM).cache(m_cache);
+            m_dimemory.space(g.AS_PROGRAM).specific(m_program);
+            m_dimemory.space(g.AS_DATA).specific(m_data);
 
-            m_read_k.resolve_safe(0);
+            m_read_k.resolve_safe_u8(0);
             m_write_o.resolve_safe();
             m_write_p.resolve_safe();
-            m_read_r.resolve_all_safe(0);
+            m_read_r.resolve_all_safe_u8(0);
             m_write_r.resolve_all_safe();
-            m_read_si.resolve_safe(0);
+            m_read_si.resolve_safe_s32(0);
             m_write_so.resolve_safe();
 
             m_serial = machine().scheduler().timer_alloc(serial_timer);  //timer_expired_delegate(FUNC(mb88_cpu_device::serial_timer), this));
 
             m_ctr = 0;
 
-            save_item(NAME(new { m_PC }));
-            save_item(NAME(new { m_PA }));
-            save_item(NAME(new { m_SP }));  //save_item(NAME(m_SP[0]));
+            save_item(g.NAME(new { m_PC }));
+            save_item(g.NAME(new { m_PA }));
+            save_item(g.NAME(new { m_SP }));  //save_item(NAME(m_SP[0]));
             //save_item(NAME(new { m_SP[1] }));
             //save_item(NAME(new { m_SP[2] }));
             //save_item(NAME(new { m_SP[3] }));
-            save_item(NAME(new { m_SI }));
-            save_item(NAME(new { m_A }));
-            save_item(NAME(new { m_X }));
-            save_item(NAME(new { m_Y }));
-            save_item(NAME(new { m_st }));
-            save_item(NAME(new { m_zf }));
-            save_item(NAME(new { m_cf }));
-            save_item(NAME(new { m_vf }));
-            save_item(NAME(new { m_sf }));
-            save_item(NAME(new { m_nf }));
-            save_item(NAME(new { m_pio }));
-            save_item(NAME(new { m_TH }));
-            save_item(NAME(new { m_TL }));
-            save_item(NAME(new { m_TP }));
-            save_item(NAME(new { m_ctr }));
-            save_item(NAME(new { m_SB }));
-            save_item(NAME(new { m_SBcount }));
-            save_item(NAME(new { m_pending_interrupt }));
+            save_item(g.NAME(new { m_SI }));
+            save_item(g.NAME(new { m_A }));
+            save_item(g.NAME(new { m_X }));
+            save_item(g.NAME(new { m_Y }));
+            save_item(g.NAME(new { m_st }));
+            save_item(g.NAME(new { m_zf }));
+            save_item(g.NAME(new { m_cf }));
+            save_item(g.NAME(new { m_vf }));
+            save_item(g.NAME(new { m_sf }));
+            save_item(g.NAME(new { m_nf }));
+            save_item(g.NAME(new { m_pio }));
+            save_item(g.NAME(new { m_TH }));
+            save_item(g.NAME(new { m_TL }));
+            save_item(g.NAME(new { m_TP }));
+            save_item(g.NAME(new { m_ctr }));
+            save_item(g.NAME(new { m_SB }));
+            save_item(g.NAME(new { m_SBcount }));
+            save_item(g.NAME(new { m_pending_interrupt }));
 
             m_distate.state_add( MB88_PC,  "PC",  m_PC).formatstr("%02X");
             m_distate.state_add( MB88_PA,  "PA",  m_PA).formatstr("%02X");
@@ -416,18 +416,18 @@ namespace mame
                         break;
 
                     case 0x01: /* outO ZCS:...*/
-                        m_write_o.op((byte)pla(m_A, TEST_CF()));
+                        m_write_o.op_u8((byte)pla(m_A, TEST_CF()));
                         m_st = 1;
                         break;
 
                     case 0x02: /* outP ZCS:... */
-                        m_write_p.op(m_A);
+                        m_write_p.op_u8(m_A);
                         m_st = 1;
                         break;
 
                     case 0x03: /* outR ZCS:... */
                         arg = m_Y;
-                        m_write_r[arg & 3].op(m_A);
+                        m_write_r[arg & 3].op_u8(m_A);
                         m_st = 1;
                         break;
 
@@ -529,14 +529,14 @@ namespace mame
                         break;
 
                     case 0x12: /* inK ZCS:x.. */
-                        m_A = (byte)(m_read_k.op() & 0x0f);
+                        m_A = (byte)(m_read_k.op_u8() & 0x0f);
                         UPDATE_ZF(m_A);
                         m_st = 1;
                         break;
 
                     case 0x13: /* inR ZCS:x.. */
                         arg = m_Y;
-                        m_A = (byte)(m_read_r[arg & 3].op() & 0x0f);
+                        m_A = (byte)(m_read_r[arg & 3].op_u8() & 0x0f);
                         UPDATE_ZF(m_A);
                         m_st = 1;
                         break;
@@ -627,8 +627,8 @@ namespace mame
                         break;
 
                     case 0x20: /* setR ZCS:... */
-                        arg = m_read_r[m_Y/4].op();
-                        m_write_r[m_Y/4].op((byte)(arg | (1 << (m_Y%4))));
+                        arg = m_read_r[m_Y / 4].op_u8();
+                        m_write_r[m_Y / 4].op_u8((byte)(arg | (1 << (m_Y%4))));
                         m_st = 1;
                         break;
 
@@ -638,8 +638,8 @@ namespace mame
                         break;
 
                     case 0x22: /* rstR ZCS:... */
-                        arg = m_read_r[m_Y/4].op();
-                        m_write_r[m_Y/4].op((byte)(arg & ~(1 << (m_Y%4))));
+                        arg = m_read_r[m_Y / 4].op_u8();
+                        m_write_r[m_Y / 4].op_u8((byte)(arg & ~(1 << (m_Y%4))));
                         m_st = 1;
                         break;
 
@@ -649,7 +649,7 @@ namespace mame
                         break;
 
                     case 0x24: /* tstr ZCS:..x */
-                        arg = m_read_r[m_Y/4].op();
+                        arg = m_read_r[m_Y / 4].op_u8();
                         m_st = ( arg & ( 1 << (m_Y%4) ) ) != 0 ? (byte)0 : (byte)1;
                         break;
 
@@ -771,21 +771,21 @@ namespace mame
                         break;
 
                     case 0x40:  case 0x41:  case 0x42:  case 0x43: /* setD ZCS:... */
-                        arg = m_read_r[0].op();
+                        arg = m_read_r[0].op_u8();
                         arg |= (byte)(1 << (opcode&3));
-                        m_write_r[0].op(arg);
+                        m_write_r[0].op_u8(arg);
                         m_st = 1;
                         break;
 
                     case 0x44:  case 0x45:  case 0x46:  case 0x47: /* rstD ZCS:... */
-                        arg = m_read_r[0].op();
+                        arg = m_read_r[0].op_u8();
                         arg &= (byte)(~(1 << (opcode&3)));
-                        m_write_r[0].op(arg);
+                        m_write_r[0].op_u8(arg);
                         m_st = 1;
                         break;
 
                     case 0x48:  case 0x49:  case 0x4a:  case 0x4b: /* tstD ZCS:..x */
-                        arg = m_read_r[2].op();
+                        arg = m_read_r[2].op_u8();
                         m_st = (arg & (1 << (opcode&3))) != 0 ? (byte)0 : (byte)1;
                         break;
 
@@ -933,8 +933,8 @@ namespace mame
         {
             return new space_config_vector()
             {
-                std.make_pair(AS_PROGRAM, m_program_config),
-                std.make_pair(AS_DATA,    m_data_config)
+                std.make_pair(g.AS_PROGRAM, m_program_config),
+                std.make_pair(g.AS_DATA,    m_data_config)
             };
         }
 
@@ -1019,7 +1019,7 @@ namespace mame
                the program can write to S and recover the value even if serial is enabled */
             if (m_sf == 0)
             {
-                m_SB = (byte)((m_SB >> 1) | (m_read_si.op() != 0 ? 8 : 0));
+                m_SB = (byte)((m_SB >> 1) | (m_read_si.op_s32() != 0 ? 8 : 0));
 
                 if (m_SBcount >= 4)
                 {
@@ -1154,7 +1154,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(MB8842,  mb8842_cpu_device,  "mb8842",  "Fujitsu MB8842")
         static device_t device_creator_mb8842_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8842_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8842 = DEFINE_DEVICE_TYPE(device_creator_mb8842_cpu_device, "mb8842",  "Fujitsu MB8842");
+        public static readonly device_type MB8842 = g.DEFINE_DEVICE_TYPE(device_creator_mb8842_cpu_device, "mb8842",  "Fujitsu MB8842");
 
 
         // construction/destruction
@@ -1169,7 +1169,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(MB8843,  mb8843_cpu_device,  "mb8843",  "Fujitsu MB8843")
         static device_t device_creator_mb8843_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8843_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8843 = DEFINE_DEVICE_TYPE(device_creator_mb8843_cpu_device, "mb8843",  "Fujitsu MB8843");
+        public static readonly device_type MB8843 = g.DEFINE_DEVICE_TYPE(device_creator_mb8843_cpu_device, "mb8843",  "Fujitsu MB8843");
 
 
         // construction/destruction
@@ -1184,7 +1184,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(MB8844,  mb8844_cpu_device,  "mb8844",  "Fujitsu MB8844")
         static device_t device_creator_mb8844_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8844_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8844 = DEFINE_DEVICE_TYPE(device_creator_mb8844_cpu_device, "mb8844", "Fujitsu MB8844");
+        public static readonly device_type MB8844 = g.DEFINE_DEVICE_TYPE(device_creator_mb8844_cpu_device, "mb8844", "Fujitsu MB8844");
 
 
         // construction/destruction

@@ -6,7 +6,7 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -21,7 +21,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(M6502, m6502_device, "m6502", "MOS Technology 6502")
         static device_t device_creator_mb6502_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6502_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6502 = DEFINE_DEVICE_TYPE(device_creator_mb6502_cpu_device, "m6502", "MOS Technology 6502");
+        public static readonly device_type M6502 = g.DEFINE_DEVICE_TYPE(device_creator_mb6502_cpu_device, "m6502", "MOS Technology 6502");
 
 
         class device_execute_interface_m6502 : device_execute_interface
@@ -114,10 +114,10 @@ namespace mame
 
         abstract class memory_interface
         {
-            public memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache cprogram = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache cprogram;
-            public memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache csprogram = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache csprogram;
-            public memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific program = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific program;
-            public memory_access<int_constant_14, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific program14 = new memory_access<int_constant_14, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<14, 0, 0, ENDIANNESS_LITTLE>::specific program14;
+            public memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache cprogram = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache cprogram;
+            public memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache csprogram = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache csprogram;
+            public memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.specific program = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific program;
+            public memory_access<int_const_14, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.specific program14 = new memory_access<int_const_14, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.specific();  //memory_access<14, 0, 0, ENDIANNESS_LITTLE>::specific program14;
 
             //virtual ~memory_interface() {}
             public abstract uint8_t read(uint16_t adr);
@@ -249,12 +249,12 @@ namespace mame
 
         protected virtual void init()
         {
-            m_dimemory.space(AS_PROGRAM).cache(mintf.cprogram);
-            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(mintf.csprogram);
-            if (m_dimemory.space(AS_PROGRAM).addr_width() > 14)
-                m_dimemory.space(AS_PROGRAM).specific(mintf.program);
+            m_dimemory.space(g.AS_PROGRAM).cache(mintf.cprogram);
+            m_dimemory.space(m_dimemory.has_space(g.AS_OPCODES) ? g.AS_OPCODES : g.AS_PROGRAM).cache(mintf.csprogram);
+            if (m_dimemory.space(g.AS_PROGRAM).addr_width() > 14)
+                m_dimemory.space(g.AS_PROGRAM).specific(mintf.program);
             else
-                m_dimemory.space(AS_PROGRAM).specific(mintf.program14);
+                m_dimemory.space(g.AS_PROGRAM).specific(mintf.program14);
 
             sync_w.resolve_safe();
 
@@ -272,27 +272,27 @@ namespace mame
             m_distate.state_add(M6502_S,           "SP",        SP);
             m_distate.state_add(M6502_IR,          "IR",        IR);
 
-            save_item(NAME(new { PC }));
-            save_item(NAME(new { NPC }));
-            save_item(NAME(new { PPC }));
-            save_item(NAME(new { A }));
-            save_item(NAME(new { X }));
-            save_item(NAME(new { Y }));
-            save_item(NAME(new { P }));
-            save_item(NAME(new { SP }));
-            save_item(NAME(new { TMP }));
-            save_item(NAME(new { TMP2 }));
-            save_item(NAME(new { IR }));
-            save_item(NAME(new { nmi_state }));
-            save_item(NAME(new { irq_state }));
-            save_item(NAME(new { apu_irq_state }));
-            save_item(NAME(new { v_state }));
-            save_item(NAME(new { nmi_pending }));
-            save_item(NAME(new { irq_taken }));
-            save_item(NAME(new { inst_state }));
-            save_item(NAME(new { inst_substate }));
-            save_item(NAME(new { inst_state_base }));
-            save_item(NAME(new { inhibit_interrupts }));
+            save_item(g.NAME(new { PC }));
+            save_item(g.NAME(new { NPC }));
+            save_item(g.NAME(new { PPC }));
+            save_item(g.NAME(new { A }));
+            save_item(g.NAME(new { X }));
+            save_item(g.NAME(new { Y }));
+            save_item(g.NAME(new { P }));
+            save_item(g.NAME(new { SP }));
+            save_item(g.NAME(new { TMP }));
+            save_item(g.NAME(new { TMP2 }));
+            save_item(g.NAME(new { IR }));
+            save_item(g.NAME(new { nmi_state }));
+            save_item(g.NAME(new { irq_state }));
+            save_item(g.NAME(new { apu_irq_state }));
+            save_item(g.NAME(new { v_state }));
+            save_item(g.NAME(new { nmi_pending }));
+            save_item(g.NAME(new { irq_taken }));
+            save_item(g.NAME(new { inst_state }));
+            save_item(g.NAME(new { inst_substate }));
+            save_item(g.NAME(new { inst_state_base }));
+            save_item(g.NAME(new { inhibit_interrupts }));
 
             set_icountptr(icount_);
 
@@ -329,7 +329,7 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_m6502>();
 
 
-            mintf = m_dimemory.space(AS_PROGRAM).addr_width() > 14 ? new mi_default() : new mi_default14();
+            mintf = m_dimemory.space(g.AS_PROGRAM).addr_width() > 14 ? new mi_default() : new mi_default14();
 
             init();
         }
@@ -352,7 +352,7 @@ namespace mame
             nmi_pending = false;
             irq_taken = false;
             sync = false;
-            sync_w.op(g.CLEAR_LINE);
+            sync_w.op_s32(g.CLEAR_LINE);
             inhibit_interrupts = false;
         }
 
@@ -374,7 +374,7 @@ namespace mame
                 {
                     PPC = NPC;
                     inst_state = IR | inst_state_base;
-                    if ((machine().debug_flags & DEBUG_FLAG_ENABLED) != 0)
+                    if ((machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0)
                         debugger_instruction_hook(pc_to_external(NPC));
                 }
 
@@ -429,19 +429,19 @@ namespace mame
         // device_memory_interface overrides
         space_config_vector device_memory_interface_memory_space_config()
         {
-            if (memory().has_configured_map(AS_OPCODES))
+            if (memory().has_configured_map(g.AS_OPCODES))
             {
                 return new space_config_vector()
                 {
-                    std.make_pair(AS_PROGRAM, program_config),
-                    std.make_pair(AS_OPCODES, sprogram_config)
+                    std.make_pair(g.AS_PROGRAM, program_config),
+                    std.make_pair(g.AS_OPCODES, sprogram_config)
                 };
             }
             else
             {
                 return new space_config_vector()
                 {
-                    std.make_pair(AS_PROGRAM, program_config)
+                    std.make_pair(g.AS_PROGRAM, program_config)
                 };
             }
         }
@@ -477,11 +477,11 @@ namespace mame
         void prefetch()
         {
             sync = true;
-            sync_w.op(g.ASSERT_LINE);
+            sync_w.op_s32(g.ASSERT_LINE);
             NPC = PC;
             IR = mintf.read_sync(PC);
             sync = false;
-            sync_w.op(g.CLEAR_LINE);
+            sync_w.op_s32(g.CLEAR_LINE);
 
             if ((nmi_pending || ((irq_state || apu_irq_state) && (P & F_I) == 0)) && !inhibit_interrupts)
             {

@@ -8,6 +8,7 @@ using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
 using u16 = System.UInt16;
+using uX = mame.FlexPrim;
 
 
 namespace mame
@@ -18,9 +19,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_read_memory<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read_address<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -62,9 +63,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_write_memory<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_write_address<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -86,13 +87,13 @@ namespace mame
             {
                 //template<> void handler_entry_write_memory<0, 0, ENDIANNESS_LITTLE>::write(offs_t offset, u8 data, u8 mem_mask)
                 //m_base[(offset - inh::m_address_base) & inh::m_address_mask] = data;
-                m_base.m_pointer[(offset - m_address_base) & m_address_mask] = data.x8;
+                m_base.m_pointer[(offset - m_address_base) & m_address_mask] = data.u8;
             }
             else if (data.width == 0 && mem_mask.width == 0 && Endian == endianness_t.ENDIANNESS_BIG)
             {
                 //template<> void handler_entry_write_memory<0, 0, ENDIANNESS_BIG>::write(offs_t offset, u8 data, u8 mem_mask)
                 //m_base[(offset - inh::m_address_base) & inh::m_address_mask] = data;
-                m_base.m_pointer[(offset - m_address_base) & m_address_mask] = data.x8;
+                m_base.m_pointer[(offset - m_address_base) & m_address_mask] = data.u8;
             }
             else
             {
@@ -103,8 +104,8 @@ namespace mame
                 //m_base[off] = (m_base[off] & ~mem_mask) | (data & mem_mask);
                 switch (Width)
                 {
-                    case 0: m_base.m_pointer[off] = (u8)((m_base.m_pointer[off] & ~mem_mask.x8) | (data.x8 & mem_mask.x8)); break;
-                    case 1: var pointerU16 = new PointerU16(m_base.m_pointer); pointerU16[off] = (u16)((pointerU16[off] & ~mem_mask.x16) | (data.x16 & mem_mask.x16)); break;
+                    case 0: m_base.m_pointer[off] = (u8)((m_base.m_pointer[off] & ~mem_mask.u8) | (data.u8 & mem_mask.u8)); break;
+                    case 1: var pointerU16 = new PointerU16(m_base.m_pointer); pointerU16[off] = (u16)((pointerU16[off] & ~mem_mask.u16) | (data.u16 & mem_mask.u16)); break;
                     case 2: throw new emu_unimplemented();
                     case 3: throw new emu_unimplemented();
                     default: throw new emu_unimplemented();
@@ -129,9 +130,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_read_memory_bank<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read_address<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -169,9 +170,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_write_memory_bank<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_write_address<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 

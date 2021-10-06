@@ -29,7 +29,9 @@ namespace mame
         //static NETLIST_START(TTL_7400_DIP)
         public static void netlist_TTL_7400_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -39,10 +41,10 @@ namespace mame
             TTL_7400_NAND(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| B4   */ "D.B",
                   "A.Q", /*    Y1 |3           12| A4   */ "D.A",
@@ -53,7 +55,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -77,7 +79,9 @@ namespace mame
         //static NETLIST_START(TTL_7402_DIP)
         public static void netlist_TTL_7402_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -87,10 +91,10 @@ namespace mame
             TTL_7402_NOR(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.Q", /*    Y1 |1     ++    14| VCC  */ "A.VCC",
                   "A.A", /*    A1 |2           13| Y4   */ "D.Q",
                   "A.B", /*    B1 |3           12| B4   */ "D.B",
@@ -101,7 +105,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -123,7 +127,9 @@ namespace mame
         //static NETLIST_START(TTL_7404_DIP)
         public static void netlist_TTL_7404_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -135,10 +141,10 @@ namespace mame
             TTL_7404_INVERT(setup, "F");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.Q", /*    Y1 |2           13| A6   */ "F.A",
                   "B.A", /*    A2 |3           12| Y6   */ "F.Q",
@@ -149,7 +155,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -172,7 +178,9 @@ namespace mame
         //static NETLIST_START(TTL_7406_DIP)
         public static void netlist_TTL_7406_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -184,10 +192,10 @@ namespace mame
             TTL_7406_GATE(setup, "F");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.Y", /*    Y1 |2           13| A6   */ "F.A",
                   "B.A", /*    A2 |3           12| Y6   */ "F.Y",
@@ -198,7 +206,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -221,7 +229,9 @@ namespace mame
         //static NETLIST_START(TTL_7407_DIP)
         public static void netlist_TTL_7407_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -233,10 +243,10 @@ namespace mame
             TTL_7407_GATE(setup, "F");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,  /*       +--------------+      */
+            h.DIPPINS(  /*       +--------------+      */
                 "A.A",  /*    A1 |1     ++    14| VCC  */ "A.VCC",
                 "A.Y",  /*    Y1 |2           13| A6   */ "F.A",
                 "B.A",  /*    A2 |3           12| Y6   */ "F.Y",
@@ -247,7 +257,7 @@ namespace mame
                       /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -271,7 +281,9 @@ namespace mame
         //static NETLIST_START(TTL_7408_DIP)
         public static void netlist_TTL_7408_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -281,10 +293,10 @@ namespace mame
             TTL_7408_AND(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| B4   */ "D.B",
                   "A.Q", /*    Y1 |3           12| A4   */ "D.A",
@@ -295,7 +307,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -319,7 +331,9 @@ namespace mame
         //static NETLIST_START(TTL_7410_DIP)
         public static void netlist_TTL_7410_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -328,10 +342,10 @@ namespace mame
             TTL_7410_NAND(setup, "C");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| C1   */ "A.C",
                   "B.A", /*    A2 |3           12| Y1   */ "A.Q",
@@ -342,7 +356,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -366,7 +380,9 @@ namespace mame
         //static NETLIST_START(TTL_7411_DIP)
         public static void netlist_TTL_7411_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -375,10 +391,10 @@ namespace mame
             TTL_7411_AND(setup, "C");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| C1   */ "A.C",
                   "B.A", /*    A2 |3           12| Y1   */ "A.Q",
@@ -389,7 +405,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -411,45 +427,51 @@ namespace mame
         //static NETLIST_START(TTL_7414_GATE)
         public static void netlist_TTL_7414_GATE(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             SCHMITT_TRIGGER(setup, "X", "DM7414");
 #endif
 
-            netlist.nl_setup_global.ALIAS(setup, "A", "X.A");
-            netlist.nl_setup_global.ALIAS(setup, "Q", "X.Q");
-            netlist.nl_setup_global.ALIAS(setup, "GND", "X.GND");
-            netlist.nl_setup_global.ALIAS(setup, "VCC", "X.VCC");
+            h.ALIAS("A", "X.A");
+            h.ALIAS("Q", "X.Q");
+            h.ALIAS("GND", "X.GND");
+            h.ALIAS("VCC", "X.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(TTL_74LS14_GATE)
         public static void netlist_TTL_74LS14_GATE(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             SCHMITT_TRIGGER(setup, "X", "DM74LS14");
 #endif
 
-            netlist.nl_setup_global.ALIAS(setup, "A", "X.A");
-            netlist.nl_setup_global.ALIAS(setup, "Q", "X.Q");
-            netlist.nl_setup_global.ALIAS(setup, "GND", "X.GND");
-            netlist.nl_setup_global.ALIAS(setup, "VCC", "X.VCC");
+            h.ALIAS("A", "X.A");
+            h.ALIAS("Q", "X.Q");
+            h.ALIAS("GND", "X.GND");
+            h.ALIAS("VCC", "X.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(TTL_7414_DIP)
         public static void netlist_TTL_7414_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -461,10 +483,10 @@ namespace mame
             SCHMITT_TRIGGER(setup, "F", "DM7414");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.Q", /*    Y1 |2           13| A6   */ "F.A",
                   "B.A", /*    A2 |3           12| Y6   */ "F.Q",
@@ -475,14 +497,16 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(TTL_74LS14_DIP)
         public static void netlist_TTL_74LS14_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -494,10 +518,10 @@ namespace mame
             SCHMITT_TRIGGER(setup, "F", "DM74LS14");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.Q", /*    Y1 |2           13| A6   */ "F.A",
                   "B.A", /*    A2 |3           12| Y6   */ "F.Q",
@@ -508,7 +532,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -530,7 +554,9 @@ namespace mame
         //static NETLIST_START(TTL_7416_DIP)
         public static void netlist_TTL_7416_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -542,10 +568,10 @@ namespace mame
             TTL_7416_GATE(setup, "F");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.Q", /*    Y1 |2           13| A6   */ "F.A",
                   "B.A", /*    A2 |3           12| Y6   */ "F.Q",
@@ -556,7 +582,42 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TTL_7417_DIP)
+        public static void netlist_TTL_7417_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            TTL_7417_GATE(A)
+            TTL_7417_GATE(B)
+            TTL_7417_GATE(C)
+            TTL_7417_GATE(D)
+            TTL_7417_GATE(E)
+            TTL_7417_GATE(F)
+
+            NET_C(A.VCC, B.VCC, C.VCC, D.VCC, E.VCC, F.VCC)
+            NET_C(A.GND, B.GND, C.GND, D.GND, E.GND, F.GND)
+
+            DIPPINS(   /*       +--------------+      */
+                  A.A, /*    A1 |1     ++    14| VCC  */ A.VCC,
+                  A.Q, /*    Y1 |2           13| A6   */ F.A,
+                  B.A, /*    A2 |3           12| Y6   */ F.Q,
+                  B.Q, /*    Y2 |4    7417   11| A5   */ E.A,
+                  C.A, /*    A3 |5           10| Y5   */ E.Q,
+                  C.Q, /*    Y3 |6            9| A4   */ D.A,
+                A.GND, /*   GND |7            8| Y4   */ D.Q
+                       /*       +--------------+      */
+            )
+#endif
+
+            h.NETLIST_END();
         }
 
 
@@ -581,7 +642,9 @@ namespace mame
         //static NETLIST_START(TTL_7420_DIP)
         public static void netlist_TTL_7420_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -589,15 +652,15 @@ namespace mame
             TTL_7420_NAND(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
             throw new emu_unimplemented();
 #if false
             NC_PIN(setup, "NC");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| D2   */ "B.D",
                  "NC.I", /*    NC |3           12| C2   */ "B.C",
@@ -608,7 +671,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -633,7 +696,9 @@ namespace mame
         //static NETLIST_START(TTL_7421_DIP)
         public static void netlist_TTL_7421_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -645,7 +710,7 @@ namespace mame
             NC_PIN(setup, "NC");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| D2   */ "B.D",
                  "NC.I", /*    NC |3           12| C2   */ "B.C",
@@ -656,7 +721,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -683,7 +748,9 @@ namespace mame
         //static NETLIST_START(TTL_7425_DIP)
         public static void netlist_TTL_7425_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -696,7 +763,7 @@ namespace mame
             NC_PIN(setup, "XB"); // FIXME: Functionality needs to be implemented
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| D2   */ "B.D",
                  "XA.I", /*    X1 |3           12| C2   */ "B.C",
@@ -707,7 +774,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -731,7 +798,9 @@ namespace mame
         //static NETLIST_START(TTL_7427_DIP)
         public static void netlist_TTL_7427_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -740,10 +809,10 @@ namespace mame
             TTL_7427_NOR(setup, "C");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| C1   */ "A.C",
                   "B.A", /*    A2 |3           12| Y1   */ "A.Q",
@@ -754,7 +823,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -782,7 +851,9 @@ namespace mame
         //static NETLIST_START(TTL_7430_DIP)
         public static void netlist_TTL_7430_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -790,7 +861,7 @@ namespace mame
             NC_PIN(setup, "NC");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*     A |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*     B |2           13| NC   */ "NC.I",
                   "A.C", /*     C |3           12| H    */ "A.H",
@@ -801,7 +872,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -825,7 +896,9 @@ namespace mame
         //static NETLIST_START(TTL_7432_DIP)
         public static void netlist_TTL_7432_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -835,10 +908,10 @@ namespace mame
             TTL_7432_OR(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| B4   */ "D.B",
                   "A.Q", /*    Y1 |3           12| A4   */ "D.A",
@@ -849,7 +922,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -874,7 +947,9 @@ namespace mame
         //static NETLIST_START(TTL_7437_DIP)
         public static void netlist_TTL_7437_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -884,10 +959,10 @@ namespace mame
             TTL_7437_NAND(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| B4   */ "D.B",
                   "A.Q", /*    Y1 |3           12| A4   */ "D.A",
@@ -898,7 +973,40 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TTL_7438_DIP)
+        public static void netlist_TTL_7438_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            TTL_7438_NAND(A)
+            TTL_7438_NAND(B)
+            TTL_7438_NAND(C)
+            TTL_7438_NAND(D)
+
+            NET_C(A.VCC, B.VCC, C.VCC, D.VCC)
+            NET_C(A.GND, B.GND, C.GND, D.GND)
+
+            DIPPINS(   /*       +--------------+      */
+                  A.A, /*    A1 |1     ++    14| VCC  */ A.VCC,
+                  A.B, /*    B1 |2           13| B4   */ D.B,
+                  A.Q, /*    Y1 |3           12| A4   */ D.A,
+                  B.A, /*    A2 |4    7438   11| Y4   */ D.Q,
+                  B.B, /*    B2 |5           10| B3   */ C.B,
+                  B.Q, /*    Y2 |6            9| A3   */ C.A,
+                A.GND, /*   GND |7            8| Y3   */ C.Q
+                       /*       +--------------+      */
+            )
+#endif
+
+            h.NETLIST_END();
         }
 
 
@@ -934,11 +1042,13 @@ namespace mame
         //static NETLIST_START(TTL_7442_DIP)
         public static void netlist_TTL_7442_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_7442", "A");
+            h.NETLIST_START(setup);
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+     */
+            h.NET_REGISTER_DEV("TTL_7442", "A");
+
+            h.DIPPINS(    /*      +--------------+     */
                   "A.Q0", /*    0 |1     ++    16| VCC */ "A.VCC",
                   "A.Q1", /*    1 |2           15| A   */ "A.A",
                   "A.Q2", /*    2 |3           14| B   */ "A.B",
@@ -950,7 +1060,7 @@ namespace mame
                         /*      +--------------+     */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -989,14 +1099,16 @@ namespace mame
         //static NETLIST_START(TTL_7448_DIP)
         public static void netlist_TTL_7448_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_7448(setup, "A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+     */
+            h.DIPPINS(    /*      +--------------+     */
                 "A.B",    /* B    |1     ++    16| VCC */ "A.VCC",
                 "A.C",    /* C    |2           15| f   */ "A.f",
                 "A.LTQ",  /* LTQ  |3           14| g   */ "A.g",
@@ -1008,7 +1120,7 @@ namespace mame
                         /*      +--------------+     */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1033,7 +1145,9 @@ namespace mame
         //static NETLIST_START(TTL_7450_DIP)
         public static void netlist_TTL_7450_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1045,7 +1159,7 @@ namespace mame
             NC_PIN(setup, "NC");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    1A |1     ++    14| VCC  */ "A.VCC",
                   "B.A", /*    2A |2           13| 1B   */ "A.B",
                   "B.B", /*    2B |3           12| 1XQ  */ "NC.I",
@@ -1056,7 +1170,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1081,7 +1195,9 @@ namespace mame
         //static NETLIST_START(TTL_7473_DIP)
         public static void netlist_TTL_7473_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1089,10 +1205,10 @@ namespace mame
             TTL_7473(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*       +--------------+      */
+            h.DIPPINS(    /*       +--------------+      */
                  "A.CLK", /*  CLK1 |1     ++    14| J1   */ "A.J",
                 "A.CLRQ", /*  CLR1 |2           13| QQ1  */ "A.QQ",
                    "A.K", /*    K1 |3           12| Q1   */ "A.Q",
@@ -1103,7 +1219,7 @@ namespace mame
                         /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1129,7 +1245,9 @@ namespace mame
         //static NETLIST_START(TTL_7473A_DIP)
         public static void netlist_TTL_7473A_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1137,10 +1255,10 @@ namespace mame
             TTL_7473A(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*       +--------------+      */
+            h.DIPPINS(    /*       +--------------+      */
                  "A.CLK", /*  CLK1 |1     ++    14| J1   */ "A.J",
                 "A.CLRQ", /*  CLR1 |2           13| QQ1  */ "A.QQ",
                    "A.K", /*    K1 |3           12| Q1   */ "A.Q",
@@ -1151,7 +1269,7 @@ namespace mame
                         /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1177,7 +1295,9 @@ namespace mame
         //static NETLIST_START(TTL_7474_DIP)
         public static void netlist_TTL_7474_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1185,10 +1305,10 @@ namespace mame
             TTL_7474(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*       +--------------+       */
+            h.DIPPINS(    /*       +--------------+       */
                 "A.CLRQ", /*  CLR1 |1     ++    14| VCC   */ "A.VCC",
                    "A.D", /*    D1 |2           13| CLR2  */ "B.CLRQ",
                  "A.CLK", /*  CLK1 |3           12| D2    */ "B.D",
@@ -1199,7 +1319,7 @@ namespace mame
                         /*       +-------------+        */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1222,7 +1342,9 @@ namespace mame
         //static NETLIST_START(TTL_7475_DIP)
         public static void netlist_TTL_7475_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1232,13 +1354,13 @@ namespace mame
             TTL_7475_GATE(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
 
-            netlist.nl_setup_global.NET_C(setup, "A.CLK", "B.CLK");
-            netlist.nl_setup_global.NET_C(setup, "C.CLK", "D.CLK");
+            h.NET_C("A.CLK", "B.CLK");
+            h.NET_C("C.CLK", "D.CLK");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+       */
+            h.DIPPINS(   /*       +--------------+       */
                  "A.QQ", /*   QQ1 |1     ++    16| Q1    */ "A.Q",
                   "A.D", /*    D1 |2           15| Q2    */ "B.Q",
                   "B.D", /*    D2 |3           14| QQ2   */ "B.QQ",
@@ -1250,7 +1372,7 @@ namespace mame
                        /*       +--------------+       */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1273,7 +1395,9 @@ namespace mame
         //static NETLIST_START(TTL_7477_DIP)
         public static void netlist_TTL_7477_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1291,7 +1415,7 @@ namespace mame
             NC_PIN(setup, "NC");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+       */
+            h.DIPPINS(   /*       +--------------+       */
                   "A.D", /*    D1 |1     ++    14| Q1    */ "A.Q",
                   "B.D", /*    D2 |2           13| Q2    */ "B.Q",
                 "C.CLK", /*   E34 |3           12| E12   */ "A.CLK",
@@ -1302,7 +1426,7 @@ namespace mame
                        /*       +--------------+       */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1317,14 +1441,16 @@ namespace mame
         //static NETLIST_START(TTL_7483_DIP)
         public static void netlist_TTL_7483_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_7483(setup, "A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*      +--------------+     */
+            h.DIPPINS(   /*      +--------------+     */
                  "A.A4", /*   A4 |1     ++    16| B4  */ "A.B4",
                  "A.S3", /*   S3 |2           15| S4  */ "A.S4",
                  "A.A3", /*   A3 |3           14| C4  */ "A.C4",
@@ -1336,7 +1462,7 @@ namespace mame
                        /*      +--------------+     */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1351,14 +1477,16 @@ namespace mame
         //static NETLIST_START(TTL_7485_DIP)
         public static void netlist_TTL_7485_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_7485(setup, "A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,     /*       +--------------+      */
+            h.DIPPINS(     /*       +--------------+      */
                    "A.B3", /*    B3 |1     ++    16| VCC  */ "A.VCC",
                  "A.LTIN", /*  LTIN |2           15| A3   */ "A.A3",
                  "A.EQIN", /*  EQIN |3           14| B2   */ "A.B2",
@@ -1370,7 +1498,7 @@ namespace mame
                          /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1394,7 +1522,9 @@ namespace mame
         //static NETLIST_START(TTL_7486_DIP)
         public static void netlist_TTL_7486_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1404,10 +1534,10 @@ namespace mame
             TTL_7486_XOR(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.A", /*    A1 |1     ++    14| VCC  */ "A.VCC",
                   "A.B", /*    B1 |2           13| B4   */ "D.B",
                   "A.Q", /*    Y1 |3           12| A4   */ "D.A",
@@ -1418,7 +1548,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1462,7 +1592,9 @@ namespace mame
         //static NETLIST_START(TTL_7490_DIP)
         public static void netlist_TTL_7490_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1470,7 +1602,7 @@ namespace mame
             NC_PIN(setup, "NC");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*     +--------------+     */
+            h.DIPPINS(   /*     +--------------+     */
                   "A.B", /*   B |1     ++    14| A   */ "A.A",
                  "A.R1", /* R01 |2           13| NC  */ "NC.I",
                  "A.R2", /* R02 |3           12| QA  */ "A.QA",
@@ -1481,7 +1613,7 @@ namespace mame
                        /*     +--------------+     */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1523,7 +1655,9 @@ namespace mame
         //static NETLIST_START(TTL_7492_DIP)
         public static void netlist_TTL_7492_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1531,7 +1665,7 @@ namespace mame
             NC_PIN(setup, "NC");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*      +--------------+      */
+            h.DIPPINS(   /*      +--------------+      */
                   "A.B", /* CLKB |1     ++    14| CLKA */ "A.A",
                  "NC.I", /*   NC |2           13| NC   */ "NC.I",
                  "NC.I", /*   NC |3           12| QA   */ "A.QA",
@@ -1542,7 +1676,7 @@ namespace mame
                        /*      +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1588,7 +1722,9 @@ namespace mame
         //static NETLIST_START(TTL_7493_DIP)
         public static void netlist_TTL_7493_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1596,7 +1732,7 @@ namespace mame
             NC_PIN(setup, "NC");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+      */
+            h.DIPPINS(    /*      +--------------+      */
                 "A.CLKB", /* CLKB |1     ++    14| CLKA */ "A.CLKA",
                   "A.R1", /*  R01 |2           13| NC   */ "NC.I",
                   "A.R2", /*  R02 |3           12| QA   */ "A.QA",
@@ -1607,7 +1743,7 @@ namespace mame
                         /*      +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1622,14 +1758,16 @@ namespace mame
         //static NETLIST_START(TTL_7497_DIP)
         public static void netlist_TTL_7497_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_7497(setup, "A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,      /*       +--------------+ */
+            h.DIPPINS(      /*       +--------------+ */
                     "A.B1", /*    S1 |1     ++    16| VCC   */ "A.VCC",
                     "A.B4", /*    S4 |2           15| S3    */ "A.B3",
                     "A.B5", /*    S5 |3           14| S2    */ "A.B2",
@@ -1641,7 +1779,7 @@ namespace mame
                           /*       +--------------+       */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1666,7 +1804,9 @@ namespace mame
         //static NETLIST_START(TTL_74107_DIP)
         public static void netlist_TTL_74107_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1674,10 +1814,10 @@ namespace mame
             TTL_74107(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*     +--------------+       */
+            h.DIPPINS(   /*     +--------------+       */
                   "A.J", /*  1J |1     ++    14| VCC   */ "A.VCC",
                  "A.QQ", /* 1QQ |2           13| 1CLRQ */ "A.CLRQ",
                   "A.Q", /*  1Q |3           12| 1CLK  */ "A.CLK",
@@ -1688,7 +1828,7 @@ namespace mame
                        /*     +--------------+       */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1714,7 +1854,9 @@ namespace mame
         //static NETLIST_START(TTL_74107A_DIP)
         public static void netlist_TTL_74107A_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1722,10 +1864,10 @@ namespace mame
             TTL_74107A(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*     +--------------+       */
+            h.DIPPINS(   /*     +--------------+       */
                   "A.J", /*  J1 |1     ++    14| VCC   */ "A.VCC",
                  "A.QQ", /* QQ1 |2           13| CLRQ1 */ "A.CLRQ",
                   "A.Q", /*  Q1 |3           12| CLK1  */ "A.CLK",
@@ -1736,7 +1878,7 @@ namespace mame
                        /*     +--------------+       */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1762,7 +1904,9 @@ namespace mame
         //static NETLIST_START(TTL_74113_DIP)
         public static void netlist_TTL_74113_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1770,10 +1914,10 @@ namespace mame
             TTL_74113(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*       +--------------+       */
+            h.DIPPINS(    /*       +--------------+       */
                  "A.CLK", /*  CLK1 |1     ++    14| VCC   */ "A.VCC",
                    "A.K", /*    K1 |2           13| CLK2  */ "B.CLK",
                    "A.J", /*    J1 |3           12| K2    */ "B.K",
@@ -1784,7 +1928,7 @@ namespace mame
                         /*       +--------------+       */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1810,7 +1954,9 @@ namespace mame
         //static NETLIST_START(TTL_74113A_DIP)
         public static void netlist_TTL_74113A_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1818,10 +1964,10 @@ namespace mame
             TTL_74113A(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*       +--------------+       */
+            h.DIPPINS(    /*       +--------------+       */
                  "A.CLK", /*  CLK1 |1     ++    14| VCC   */ "A.VCC",
                    "A.K", /*    K1 |2           13| CLK2  */ "B.CLK",
                    "A.J", /*    J1 |3           12| K2    */ "B.K",
@@ -1832,7 +1978,7 @@ namespace mame
                         /*       +--------------+       */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1852,7 +1998,9 @@ namespace mame
         //static NETLIST_START(TTL_74121_DIP)
         public static void netlist_TTL_74121_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1862,12 +2010,12 @@ namespace mame
             RES(RD, RES_M(1000));
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "RINT.2", "A.RC");
+            h.NET_C("RINT.2", "A.RC");
             // Avoid error messages if RINT is not used.
-            netlist.nl_setup_global.NET_C(setup, "RINT.1", "RD.2");
-            netlist.nl_setup_global.NET_C(setup, "RD.1", "A.GND");
+            h.NET_C("RINT.1", "RD.2");
+            h.NET_C("RD.1", "A.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*       +--------------+           */
+            h.DIPPINS(    /*       +--------------+           */
                   "A.QQ", /*    QQ |1     ++    14| VCC       */ "A.VCC",
                   "NC.I", /*    NC |2           13| NC        */ "NC.I",
                   "A.A1", /*    A1 |3           12| NC        */ "NC.I",
@@ -1878,7 +2026,7 @@ namespace mame
                         /*       +--------------+           */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1898,7 +2046,9 @@ namespace mame
         //static NETLIST_START(TTL_74123_DIP)
         public static void netlist_TTL_74123_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1906,10 +2056,10 @@ namespace mame
             TTL_74123(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,      /*       +--------------+ */
+            h.DIPPINS(      /*       +--------------+ */
                      "A.A", /*    A1 |1     ++    16| VCC   */ "A.VCC",
                      "A.B", /*    B1 |2           15| RC1   */ "A.RC",
                   "A.CLRQ", /* CLRQ1 |3           14| C1    */ "A.C",
@@ -1921,7 +2071,7 @@ namespace mame
                           /*       +--------------+       */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -1950,7 +2100,9 @@ namespace mame
         //static NETLIST_START(TTL_74125_DIP)
         public static void netlist_TTL_74125_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -1960,16 +2112,16 @@ namespace mame
             TTL_74125_GATE(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
 
-            netlist.nl_setup_global.DEFPARAM(setup, "FORCE_TRISTATE_LOGIC", "$(@.A.FORCE_TRISTATE_LOGIC");
-            netlist.nl_setup_global.PARAM(setup, "A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
-            netlist.nl_setup_global.PARAM(setup, "B.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
-            netlist.nl_setup_global.PARAM(setup, "C.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
-            netlist.nl_setup_global.PARAM(setup, "D.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.DEFPARAM("FORCE_TRISTATE_LOGIC", "$(@.A.FORCE_TRISTATE_LOGIC");
+            h.PARAM("A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.PARAM("B.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.PARAM("C.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.PARAM("D.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*      +--------------+      */
+            h.DIPPINS(   /*      +--------------+      */
                  "A.GQ", /*  1GQ |1     ++    14| VCC  */ "A.VCC",
                   "A.A", /*   1A |2           13| 4GQ  */ "D.GQ",
                   "A.Y", /*   1Y |3           12| 4A   */ "D.A",
@@ -1980,7 +2132,7 @@ namespace mame
                        /*      +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2003,7 +2155,9 @@ namespace mame
         //static NETLIST_START(TTL_74126_DIP)
         public static void netlist_TTL_74126_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -2013,16 +2167,16 @@ namespace mame
             TTL_74126_GATE(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
 
-            netlist.nl_setup_global.DEFPARAM(setup, "FORCE_TRISTATE_LOGIC", "0");
-            netlist.nl_setup_global.PARAM(setup, "A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
-            netlist.nl_setup_global.PARAM(setup, "B.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
-            netlist.nl_setup_global.PARAM(setup, "C.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
-            netlist.nl_setup_global.PARAM(setup, "D.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.DEFPARAM("FORCE_TRISTATE_LOGIC", "0");
+            h.PARAM("A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.PARAM("B.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.PARAM("C.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.PARAM("D.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*      +--------------+      */
+            h.DIPPINS(   /*      +--------------+      */
                   "A.G", /*   C1 |1     ++    14| VCC  */ "A.VCC",
                   "A.A", /*   A1 |2           13| C4   */ "D.G",
                   "A.Y", /*   Y1 |3           12| A4   */ "D.A",
@@ -2033,7 +2187,7 @@ namespace mame
                        /*      +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2058,15 +2212,17 @@ namespace mame
         //static NETLIST_START(TTL_74139_DIP)
         public static void netlist_TTL_74139_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74139_GATE", "A");
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74139_GATE", "B");
+            h.NETLIST_START(setup);
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_REGISTER_DEV("TTL_74139_GATE", "A");
+            h.NET_REGISTER_DEV("TTL_74139_GATE", "B");
 
-            netlist.nl_setup_global.DIPPINS(setup,  /*       +--------------+      */
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
+
+            h.DIPPINS(  /*       +--------------+      */
                 "A.E",  /*   /Ea |1     ++    16| VCC  */ "A.VCC",
                 "A.A",  /*   A0a |2           15| /Eb  */ "B.E",
                 "A.B",  /*   A1a |3           14| A0b  */ "B.A",
@@ -2078,7 +2234,7 @@ namespace mame
                       /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2107,18 +2263,20 @@ namespace mame
         //static NETLIST_START(TTL_74153_DIP)
         public static void netlist_TTL_74153_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74153", "A");
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74153", "B");
+            h.NETLIST_START(setup);
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_REGISTER_DEV("TTL_74153", "A");
+            h.NET_REGISTER_DEV("TTL_74153", "B");
 
-            netlist.nl_setup_global.NET_C(setup, "A.A", "B.A");
-            netlist.nl_setup_global.NET_C(setup, "A.B", "B.B");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*     +--------------+     */
+            h.NET_C("A.A", "B.A");
+            h.NET_C("A.B", "B.B");
+
+            h.DIPPINS(   /*     +--------------+     */
                   "A.G", /*  G1 |1     ++    16| VCC */ "A.VCC",
                   "A.B", /*   B |2           15| G2  */ "B.G",
                  "A.C3", /* 1C3 |3           14| A   */ "A.A",
@@ -2130,7 +2288,7 @@ namespace mame
                        /*     +--------------+     */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2172,18 +2330,20 @@ namespace mame
         //static NETLIST_START(TTL_74155_DIP)
         public static void netlist_TTL_74155_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74155A_GATE", "A");
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74155B_GATE", "B");
+            h.NETLIST_START(setup);
 
-            netlist.nl_setup_global.NET_C(setup, "A.A", "B.A");
-            netlist.nl_setup_global.NET_C(setup, "A.B", "B.B");
+            h.NET_REGISTER_DEV("TTL_74155A_GATE", "A");
+            h.NET_REGISTER_DEV("TTL_74155B_GATE", "B");
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.A", "B.A");
+            h.NET_C("A.B", "B.B");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
+
+            h.DIPPINS(   /*       +--------------+      */
                   "A.C", /*    C1 |1     ++    16| VCC  */ "A.VCC",
                   "A.G", /*    G1 |2           15| B4   */ "B.C",
                   "A.B", /*     B |3           14| B4   */ "B.G",
@@ -2195,7 +2355,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2237,18 +2397,20 @@ namespace mame
         //static NETLIST_START(TTL_74156_DIP)
         public static void netlist_TTL_74156_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74156A_GATE", "A");
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74156B_GATE", "B");
+            h.NETLIST_START(setup);
 
-            netlist.nl_setup_global.NET_C(setup, "A.A", "B.A");
-            netlist.nl_setup_global.NET_C(setup, "A.B", "B.B");
+            h.NET_REGISTER_DEV("TTL_74156A_GATE", "A");
+            h.NET_REGISTER_DEV("TTL_74156B_GATE", "B");
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.A", "B.A");
+            h.NET_C("A.B", "B.B");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
+
+            h.DIPPINS(   /*       +--------------+      */
                   "A.C", /*    C1 |1     ++    16| VCC  */ "A.VCC",
                   "A.G", /*    G1 |2           15| B4   */ "B.C",
                   "A.B", /*     B |3           14| B4   */ "B.G",
@@ -2260,7 +2422,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2285,20 +2447,22 @@ namespace mame
         //static NETLIST_START(TTL_74157_DIP)
         public static void netlist_TTL_74157_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74157_GATE", "A");
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74157_GATE", "B");
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74157_GATE", "C");
-            netlist.nl_setup_global.NET_REGISTER_DEV(setup, "TTL_74157_GATE", "D");
+            h.NETLIST_START(setup);
 
-            netlist.nl_setup_global.NET_C(setup, "A.E", "B.E", "C.E", "D.E");
-            netlist.nl_setup_global.NET_C(setup, "A.S", "B.S", "C.S", "D.S");
+            h.NET_REGISTER_DEV("TTL_74157_GATE", "A");
+            h.NET_REGISTER_DEV("TTL_74157_GATE", "B");
+            h.NET_REGISTER_DEV("TTL_74157_GATE", "C");
+            h.NET_REGISTER_DEV("TTL_74157_GATE", "D");
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.E", "B.E", "C.E", "D.E");
+            h.NET_C("A.S", "B.S", "C.S", "D.S");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
+
+            h.DIPPINS(   /*       +--------------+      */
                   "A.S", /*     S |1     ++    16| VCC  */ "A.VCC",
                   "A.I", /*    A1 |2           15| G    */ "A.E",
                   "A.J", /*    B1 |3           14| A4   */ "D.I",
@@ -2310,7 +2474,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2325,14 +2489,16 @@ namespace mame
         //static NETLIST_START(TTL_74161_DIP)
         public static void netlist_TTL_74161_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_74161("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*          +--------------+          */
+            h.DIPPINS(    /*          +--------------+          */
                 "A.CLRQ", /*   /CLEAR |1     ++    16| VCC      */ "A.VCC",
                  "A.CLK", /*    CLOCK |2           15| RC       */ "A.RC",
                    "A.A", /*        A |3           14| QA       */ "A.QA",
@@ -2344,7 +2510,7 @@ namespace mame
                         /*          +--------------+          */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2359,14 +2525,16 @@ namespace mame
         //static NETLIST_START(TTL_74163_DIP)
         public static void netlist_TTL_74163_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_74163("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*          +--------------+          */
+            h.DIPPINS(    /*          +--------------+          */
                 "A.CLRQ", /*   /CLEAR |1     ++    16| VCC      */ "A.VCC",
                  "A.CLK", /*    CLOCK |2           15| RC       */ "A.RC",
                    "A.A", /*        A |3           14| QA       */ "A.QA",
@@ -2378,7 +2546,7 @@ namespace mame
                         /*          +--------------+          */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2403,14 +2571,16 @@ namespace mame
         //static NETLIST_START(TTL_74164_DIP)
         public static void netlist_TTL_74164_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_74164("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*     +--------------+      */
+            h.DIPPINS(    /*     +--------------+      */
                    "A.A", /*   A |1     ++    14| VCC  */ "A.VCC",
                    "A.B", /*   B |2           13| QH   */ "A.QH",
                   "A.QA", /*  QA |3           12| QG   */ "A.QG",
@@ -2421,7 +2591,7 @@ namespace mame
                         /*     +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2446,14 +2616,16 @@ namespace mame
         //static NETLIST_START(TTL_74165_DIP)
         public static void netlist_TTL_74165_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_74165("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,      /*      +--------------+      */
+            h.DIPPINS(      /*      +--------------+      */
                 "A.SH_LDQ", /*  PLQ |1     ++    16| VCC  */ "A.VCC",
                    "A.CLK", /*  CP1 |2           15| CP2  */ "A.CLKINH",
                      "A.E", /*   P4 |3           14| P3   */ "A.D",
@@ -2465,7 +2637,7 @@ namespace mame
                           /*      +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2491,14 +2663,16 @@ namespace mame
         //static NETLIST_START(TTL_74166_DIP)
         public static void netlist_TTL_74166_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_74166("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,      /*        +--------------+        */
+            h.DIPPINS(      /*        +--------------+        */
                    "A.SER", /*    SER |1     ++    16| VCC    */ "A.VCC",
                      "A.A", /*      A |2           15| SH/LDQ */ "A.SH_LDQ",
                      "A.B", /*      B |3           14| H      */ "A.H",
@@ -2510,7 +2684,7 @@ namespace mame
                           /*        +--------------+        */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2534,7 +2708,9 @@ namespace mame
         //static NETLIST_START(TTL_74174_DIP)
         public static void netlist_TTL_74174_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -2546,7 +2722,7 @@ namespace mame
             TTL_74174("F");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+      */
+            h.DIPPINS(    /*      +--------------+      */
                 "A.CLRQ", /* CLRQ |1     ++    16| VCC  */ "A.VCC",
                    "A.Q", /*   Q1 |2           15| Q6   */ "F.Q",
                    "A.D", /*   D1 |3           14| D6   */ "F.D",
@@ -2558,7 +2734,7 @@ namespace mame
                         /*      +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2566,14 +2742,16 @@ namespace mame
         //static NETLIST_START(TTL_74175_DIP)
         public static void netlist_TTL_74175_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_74175("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+      */
+            h.DIPPINS(    /*      +--------------+      */
                 "A.CLRQ", /* CLRQ |1     ++    16| VCC  */ "A.VCC",
                 "A.Q1",   /*   Q1 |2           15| Q4   */ "A.Q4",
                 "A.Q1Q",  /*  Q1Q |3           14| Q4Q  */ "A.Q4Q",
@@ -2585,7 +2763,7 @@ namespace mame
                         /*      +--------------+   */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2593,14 +2771,16 @@ namespace mame
         //static NETLIST_START(TTL_74192_DIP)
         public static void netlist_TTL_74192_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_74192("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+        */
+            h.DIPPINS(    /*      +--------------+        */
                 "A.B",    /*    B |1     ++    16| VCC    */ "A.VCC",
                 "A.QB",   /*   QB |2           15| A      */ "A.A",
                 "A.QA",   /*   QA |3           14| CLEAR  */ "A.CLEAR",
@@ -2612,7 +2792,7 @@ namespace mame
                         /*      +--------------+        */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2620,14 +2800,16 @@ namespace mame
         //static NETLIST_START(TTL_74193_DIP)
         public static void netlist_TTL_74193_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_74193("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+        */
+            h.DIPPINS(    /*      +--------------+        */
                 "A.B",    /*    B |1     ++    16| VCC    */ "A.VCC",
                 "A.QB",   /*   QB |2           15| A      */ "A.A",
                 "A.QA",   /*   QA |3           14| CLEAR  */ "A.CLEAR",
@@ -2639,7 +2821,7 @@ namespace mame
                         /*      +--------------+        */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2647,14 +2829,16 @@ namespace mame
         //static NETLIST_START(TTL_74194_DIP)
         public static void netlist_TTL_74194_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_74194("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*        +--------------+     */
+            h.DIPPINS(    /*        +--------------+     */
                 "A.CLRQ", /*   CLRQ |1     ++    16| VCC */ "A.VCC",
                 "A.SRIN", /*   SRIN |2           15| QA  */ "A.QA",
                 "A.A",    /*      A |3           14| QB  */ "A.QB",
@@ -2666,7 +2850,7 @@ namespace mame
                         /*        +--------------+     */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2692,7 +2876,9 @@ namespace mame
         //static NETLIST_START(TTL_74260_DIP)
         public static void netlist_TTL_74260_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -2700,10 +2886,10 @@ namespace mame
             TTL_74260_NOR("B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.C", /*    C1 |1     ++    14| VCC  */ "A.VCC",
                   "A.D", /*    D1 |2           13| B1   */ "A.B",
                   "A.E", /*    E1 |3           12| A1   */ "A.A",
@@ -2714,7 +2900,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2739,7 +2925,9 @@ namespace mame
         //static NETLIST_START(TTL_74279_DIP)
         public static void netlist_TTL_74279_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -2749,10 +2937,10 @@ namespace mame
             TTL_74279A(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*      +--------------+      */
+            h.DIPPINS(   /*      +--------------+      */
                   "A.R", /*  1RQ |1     ++    16| VCC  */ "A.VCC",
                  "A.S1", /* 1S1Q |2           15| 4SQ  */ "D.S",
                  "A.S2", /* 1S2Q |3           14| 4RQ  */ "D.R",
@@ -2764,7 +2952,7 @@ namespace mame
                        /*      +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2772,14 +2960,16 @@ namespace mame
         //static NETLIST_START(TTL_74365_DIP)
         public static void netlist_TTL_74365_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_74365("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*      +--------------+     */
+            h.DIPPINS(   /*      +--------------+     */
                 "A.G1Q", /*  G1Q |1     ++    16| VCC */ "A.VCC",
                 "A.A1",  /*   A1 |2           15| G2Q */ "A.G2Q",
                 "A.Y1",  /*   Y1 |3           14| A6  */ "A.A6",
@@ -2791,7 +2981,63 @@ namespace mame
                        /*      +--------------+     */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TTL_74290_DIP)
+        public static void netlist_TTL_74290_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            TTL_7490(A)
+            NC_PIN(NC)
+
+            DIPPINS(   /*     +--------------+     */
+                A.R91, /* R91 |1     ++    14| VCC */ A.VCC,
+                 NC.I, /*  NC |2           13| R02 */ A.R2,
+                A.R92, /* R92 |3           12| R01 */ A.R1,
+                 A.QC, /*  QC |4   74290   11| CKB */ A.B,
+                 A.QB, /*  QB |5           10| CKA */ A.A,
+                 NC.I, /*  NC |6            9| QA  */ A.QA,
+                A.GND, /* GND |7            8| QD  */ A.QD
+                       /*     +--------------+     */
+            )
+#endif
+
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TTL_74293_DIP)
+        public static void netlist_TTL_74293_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            TTL_7493(A)
+            NC_PIN(NC)
+
+            DIPPINS(   /*     +--------------+     */
+                 NC.I, /*  NC |1     ++    14| VCC */ A.VCC,
+                 NC.I, /*  NC |2           13| R02 */ A.R2,
+                 NC.I, /*  NC |3           12| R01 */ A.R1,
+                 A.QC, /*  QC |4   74293   11| CKB */ A.CLKB,
+                 A.QB, /*  QB |5           10| CKA */ A.CLKA,
+                 NC.I, /*  NC |6            9| QA  */ A.QA,
+                A.GND, /* GND |7            8| QD  */ A.QD
+                       /*     +--------------+     */
+            )
+#endif
+
+            h.NETLIST_END();
         }
 
 
@@ -2814,7 +3060,9 @@ namespace mame
         //static NETLIST_START(TTL_74377_DIP)
         public static void netlist_TTL_74377_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -2828,21 +3076,21 @@ namespace mame
             TTL_74377_GATE(setup, "H");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC", "G.VCC", "H.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND", "G.GND", "H.GND");
-            netlist.nl_setup_global.NET_C(setup, "A.CP", "B.CP", "C.CP", "D.CP", "E.CP", "F.CP", "G.CP", "H.CP");
-            netlist.nl_setup_global.NET_C(setup, "A.E", "B.E", "C.E", "D.E", "E.E", "F.E", "G.E", "H.E");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC", "G.VCC", "H.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND", "G.GND", "H.GND");
+            h.NET_C("A.CP", "B.CP", "C.CP", "D.CP", "E.CP", "F.CP", "G.CP", "H.CP");
+            h.NET_C("A.E", "B.E", "C.E", "D.E", "E.E", "F.E", "G.E", "H.E");
 
-            netlist.nl_setup_global.HINT(setup, "A.QQ", "NC");
-            netlist.nl_setup_global.HINT(setup, "B.QQ", "NC");
-            netlist.nl_setup_global.HINT(setup, "C.QQ", "NC");
-            netlist.nl_setup_global.HINT(setup, "D.QQ", "NC");
-            netlist.nl_setup_global.HINT(setup, "E.QQ", "NC");
-            netlist.nl_setup_global.HINT(setup, "F.QQ", "NC");
-            netlist.nl_setup_global.HINT(setup, "G.QQ", "NC");
-            netlist.nl_setup_global.HINT(setup, "H.QQ", "NC");
+            h.HINT("A.QQ", "NC");
+            h.HINT("B.QQ", "NC");
+            h.HINT("C.QQ", "NC");
+            h.HINT("D.QQ", "NC");
+            h.HINT("E.QQ", "NC");
+            h.HINT("F.QQ", "NC");
+            h.HINT("G.QQ", "NC");
+            h.HINT("H.QQ", "NC");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.E", /*    EQ |1     ++    20| VCC  */ "A.VCC",
                   "A.Q", /*    Q0 |2           19| Q7   */ "H.Q",
                   "A.D", /*    D0 |3           18| D7   */ "H.D",
@@ -2856,7 +3104,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2879,7 +3127,9 @@ namespace mame
         //static NETLIST_START(TTL_74378_DIP)
         public static void netlist_TTL_74378_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -2891,12 +3141,12 @@ namespace mame
             TTL_74377_GATE(setup, "F");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
-            netlist.nl_setup_global.NET_C(setup, "A.CP", "B.CP", "C.CP", "D.CP", "E.CP", "F.CP");
-            netlist.nl_setup_global.NET_C(setup, "A.E", "B.E", "C.E", "D.E", "E.E", "F.E");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC", "E.VCC", "F.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND", "E.GND", "F.GND");
+            h.NET_C("A.CP", "B.CP", "C.CP", "D.CP", "E.CP", "F.CP");
+            h.NET_C("A.E", "B.E", "C.E", "D.E", "E.E", "F.E");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.E", /*    EQ |1     ++    16| VCC  */ "A.VCC",
                   "A.Q", /*    Q0 |2           15| Q5   */ "F.Q",
                   "A.D", /*    D0 |3           14| D5   */ "F.D",
@@ -2908,7 +3158,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2931,7 +3181,9 @@ namespace mame
         //static NETLIST_START(TTL_74379_DIP)
         public static void netlist_TTL_74379_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -2941,12 +3193,12 @@ namespace mame
             TTL_74377_GATE(setup, "D");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
-            netlist.nl_setup_global.NET_C(setup, "A.CP", "B.CP", "C.CP", "D.CP");
-            netlist.nl_setup_global.NET_C(setup, "A.E", "B.E", "C.E", "D.E");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.CP", "B.CP", "C.CP", "D.CP");
+            h.NET_C("A.E", "B.E", "C.E", "D.E");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*       +--------------+      */
+            h.DIPPINS(   /*       +--------------+      */
                   "A.E", /*    EQ |1     ++    16| VCC  */ "A.VCC",
                   "A.Q", /*    Q0 |2           15| Q3   */ "D.Q",
                  "A.QQ", /*   QQ0 |3           14| QQ3  */ "D.QQ",
@@ -2958,7 +3210,7 @@ namespace mame
                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -2973,7 +3225,9 @@ namespace mame
         //static NETLIST_START(TTL_74393_DIP)
         public static void netlist_TTL_74393_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -2981,10 +3235,10 @@ namespace mame
             TTL_74393(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*      +--------------+      */
+            h.DIPPINS(   /*      +--------------+      */
                  "A.CP", /*   1A |1    ++     14| VCC  */ "A.VCC",
                  "A.MR", /* 1CLR |2           13| 2A   */ "B.CP",
                  "A.Q0", /*  1QA |3           12| 2CLR */ "B.MR",
@@ -2995,7 +3249,7 @@ namespace mame
                        /*      +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -3023,7 +3277,9 @@ namespace mame
         //static NETLIST_START(SN74LS629_DIP)
         public static void netlist_SN74LS629_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -3037,7 +3293,7 @@ namespace mame
             NC_PIN(setup, "NC");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*          +--------------+         */
+            h.DIPPINS(   /*          +--------------+         */
                  "B.FC", /*      2FC |1     ++    16| VCC     */ "A.VCC",
                  "A.FC", /*      1FC |2           15| OSC VCC */ "A.OSCVCC",
                 "A.RNG", /*     1RNG |3           14| 2RNG    */ "B.RNG",
@@ -3049,7 +3305,7 @@ namespace mame
                        /*          +--------------+         */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -3064,14 +3320,16 @@ namespace mame
         //static NETLIST_START(TTL_9310_DIP)
         public static void netlist_TTL_9310_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_9310("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*          +--------------+          */
+            h.DIPPINS(    /*          +--------------+          */
                 "A.CLRQ", /*   /CLEAR |1     ++    16| VCC      */ "A.VCC",
                  "A.CLK", /*    CLOCK |2           15| RC       */ "A.RC",
                    "A.A", /*        A |3           14| QA       */ "A.QA",
@@ -3083,7 +3341,7 @@ namespace mame
                         /*          +--------------+          */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -3112,14 +3370,16 @@ namespace mame
         //static NETLIST_START(TTL_9312_DIP)
         public static void netlist_TTL_9312_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_9312(setup, "A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,   /*     +--------------+     */
+            h.DIPPINS(   /*     +--------------+     */
                  "A.D0", /*  D0 |1     ++    16| VCC */ "A.VCC",
                  "A.D1", /*  D1 |2           15| Y   */ "A.Y",
                  "A.D2", /*  D2 |3           14| YQ  */ "A.YQ",
@@ -3131,7 +3391,35 @@ namespace mame
                        /*     +--------------+     */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TTL_9314_DIP)
+        public static void netlist_TTL_9314_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            TTL_9314(A)
+
+            DIPPINS(   /*       +--------------+     */
+                A.EQ,  /*    /E |1     ++    16| VCC */ A.VCC,
+                A.S0Q, /*   /S0 |2           15| Q0  */ A.Q0,
+                A.D0,  /*    D0 |3           14| /S1 */ A.S1Q,
+                A.D1,  /*    D1 |4   DM9314  13| Q1  */ A.Q1,
+                A.S2Q, /*   /S2 |5           12| Q2  */ A.Q2,
+                A.D2,  /*    D2 |6           11| /S3 */ A.S3Q,
+                A.D3,  /*    D3 |7           10| Q3  */ A.Q3,
+                A.GND, /*   GND |8            9| /MR */ A.MRQ
+                       /*       +--------------+     */
+            )
+#endif
+
+            h.NETLIST_END();
         }
 
 
@@ -3146,14 +3434,16 @@ namespace mame
         //static NETLIST_START(TTL_9316_DIP)
         public static void netlist_TTL_9316_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_9316("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*          +--------------+          */
+            h.DIPPINS(    /*          +--------------+          */
                 "A.CLRQ", /*   CLEARQ |1     ++    16| VCC      */ "A.VCC",
                  "A.CLK", /*    CLOCK |2           15| RC       */ "A.RC",
                    "A.A", /*        A |3           14| QA       */ "A.QA",
@@ -3165,7 +3455,7 @@ namespace mame
                         /*          +--------------+          */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -3180,14 +3470,16 @@ namespace mame
         //static NETLIST_START(TTL_9322_DIP)
         public static void netlist_TTL_9322_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_9322("A");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,      /*        +--------------+        */
+            h.DIPPINS(       /*        +--------------+        */
                  "A.SELECT", /* SELECT |1     ++    16| VCC    */ "A.VCC",
                      "A.A1", /*     A1 |2           15| STROBE */ "A.STROBE",
                      "A.B1", /*     B1 |3           14| A4     */ "A.A4",
@@ -3199,7 +3491,7 @@ namespace mame
                           /*        +--------------+        */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -3212,7 +3504,9 @@ namespace mame
         //static NETLIST_START(TTL_9321_DIP)
         public static void netlist_TTL_9321_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -3220,10 +3514,10 @@ namespace mame
             TTL_9321(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,      /*        +--------------+        */
+            h.DIPPINS(      /*        +--------------+        */
                      "A.E", /*     /E |1     ++    16| VCC    */ "A.VCC",
                     "A.A0", /*     A0 |2           15| /E     */ "B.E",
                     "A.A1", /*     A1 |3           14| A0     */ "B.A0",
@@ -3235,7 +3529,35 @@ namespace mame
                           /*        +--------------+        */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TTL_9334_DIP)
+        public static void netlist_TTL_9334_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            TTL_9334(A)
+
+            DIPPINS(/*       +--------------+     */
+                A.A0, /*    A0 |1     ++    16| VCC */ A.VCC,
+                A.A1, /*    A1 |2           15| /C  */ A.CQ,
+                A.A2, /*    A2 |3           14| /E  */ A.EQ,
+                A.Q0, /*    Q0 |4   DM9334  13| D   */ A.D,
+                A.Q1, /*    Q1 |5           12| Q7  */ A.Q7,
+                A.Q2, /*    Q2 |6           11| Q6  */ A.Q6,
+                A.Q3, /*    Q3 |7           10| Q5  */ A.Q5,
+                A.GND,/*   GND |8            9| Q4  */ A.Q4
+                      /*       +--------------+     */
+            )
+#endif
+
+            h.NETLIST_END();
         }
 
 
@@ -3255,7 +3577,9 @@ namespace mame
         //static NETLIST_START(TTL_9602_DIP)
         public static void netlist_TTL_9602_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -3263,10 +3587,10 @@ namespace mame
             TTL_9602(setup, "B");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*       +--------------+ */
+            h.DIPPINS(    /*       +--------------+ */
                    "A.C", /*    C1 |1     ++    16| VCC   */ "A.VCC",
                   "A.RC", /*   RC1 |2           15| C2    */ "B.C",
                 "A.CLRQ", /* CLRQ1 |3           14| RC2   */ "B.RC",
@@ -3278,139 +3602,759 @@ namespace mame
                         /*       +--------------+       */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
+
+
+        //static NETLIST_START(TTL_8277_DIP)
+        public static void netlist_TTL_8277_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            TTL_8277(A)
+
+            DIPPINS(     /*       +--------------+      */
+                A.RESET, /* RESET |1     ++    16| VCC  */ A.VCC,
+                A.Q7QA,  /*  /Q7A |2           15| /Q7B */ A.Q7QB,
+                A.Q7A,   /*   Q7A |3           14| Q7B  */ A.Q7B,
+                A.DSA,   /*   DSA |4    8277   13| DSB  */ A.DSB,
+                A.D1A,   /*   D1A |5           12| D1B  */ A.D1B,
+                A.D0A,   /*   D0A |6           11| D0B  */ A.D0B,
+                A.CLKA,  /*  CLKA |7           10| CLKB */ A.CLKB,
+                A.GND,   /*   GND |8            9| CLK  */ A.CLK
+                         /*       +--------------+       */
+            )
+#endif
+
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(TTL_AM2847_DIP)
+        public static void netlist_TTL_AM2847_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            TTL_AM2847(A)
+
+            DIPPINS(    /*       +--------------+      */
+                A.OUTA, /*  OUTA |1     ++    16| VSS  */ A.VSS,
+                A.RCA,  /*   RCA |2           15| IND  */ A.IND,
+                A.INA,  /*   INA |3           14| RCD  */ A.RCD,
+                A.OUTB, /*  OUTB |4   Am2847  13| OUTD */ A.OUTD,
+                A.RCB,  /*   RCB |5           12| VGG  */ A.VGG,
+                A.INB,  /*   INB |6           11| CP   */ A.CP,
+                A.OUTC, /*  OUTC |7           10| INC  */ A.INC,
+                A.VDD,  /*   VDD |8            9| RCC  */ A.RCC
+                        /*       +--------------+      */
+            )
+#endif
+
+            h.NETLIST_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7400_NAND, 2, 1, "+A,+B,@VCC,@GND")
+        static void netlist_TTL_7400_NAND(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7400_NAND", 2, 1, "+A,+B,@VCC,@GND");
+            h.TT_HEAD("A,B|Q ");
+            h.TT_LINE("0,X|1|22");
+            h.TT_LINE("X,0|1|22");
+            h.TT_LINE("1,1|0|15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7402_NOR, 2, 1, "+A,+B,@VCC,@GND")
+        static void netlist_TTL_7402_NOR(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7402_NOR", 2, 1, "+A,+B,@VCC,@GND");
+            h.TT_HEAD("A,B|Q ");
+            h.TT_LINE("0,0|1|22");
+            h.TT_LINE("X,1|0|15");
+            h.TT_LINE("1,X|0|15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7404_INVERT, 1, 1, "+A,@VCC,@GND")
+        static void netlist_TTL_7404_INVERT(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7404_INVERT", 1, 1, "+A,@VCC,@GND");
+            h.TT_HEAD(" A | Q ");
+            h.TT_LINE(" 0 | 1 |22");
+            h.TT_LINE(" 1 | 0 |15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7406_GATE, 1, 1, "")
+        static void netlist_TTL_7406_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7406_GATE", 1, 1, "");
+            h.TT_HEAD("A|Y ");
+            h.TT_LINE("0|1|15");
+            h.TT_LINE("1|0|23");
+            /* Open Collector */
+            h.TT_FAMILY("74XXOC");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7407_GATE, 1, 1, "")
+        static void netlist_TTL_7407_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7407_GATE", 1, 1, "");
+            h.TT_HEAD("A|Y ");
+            h.TT_LINE("0|0|15");
+            h.TT_LINE("1|1|23");
+            /* Open Collector */
+            h.TT_FAMILY("74XXOC");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7408_GATE, 2, 1, "")
+        static void netlist_TTL_7408_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7408_GATE", 2, 1, "");
+            h.TT_HEAD("A,B|Q ");
+            h.TT_LINE("0,X|0|15");
+            h.TT_LINE("X,0|0|15");
+            h.TT_LINE("1,1|1|22");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7408_AND, 2, 1, "+A,+B,@VCC,@GND")
+        static void netlist_TTL_7408_AND(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7408_AND", 2, 1, "+A,+B,@VCC,@GND");
+            h.TT_HEAD("A,B|Q ");
+            h.TT_LINE("0,X|0|15");
+            h.TT_LINE("X,0|0|15");
+            h.TT_LINE("1,1|1|22");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7410_NAND, 3, 1, "+A,+B,+C,@VCC,@GND")
+        static void netlist_TTL_7410_NAND(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7410_NAND", 3, 1, "+A,+B,+C,@VCC,@GND");
+            h.TT_HEAD("A,B,C|Q ");
+            h.TT_LINE("0,X,X|1|22");
+            h.TT_LINE("X,0,X|1|22");
+            h.TT_LINE("X,X,0|1|22");
+            h.TT_LINE("1,1,1|0|15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7410_GATE, 3, 1, "")
+        static void netlist_TTL_7410_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7410_GATE", 3, 1, "");
+            h.TT_HEAD("A,B,C|Q ");
+            h.TT_LINE("0,X,X|1|22");
+            h.TT_LINE("X,0,X|1|22");
+            h.TT_LINE("X,X,0|1|22");
+            h.TT_LINE("1,1,1|0|15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7411_AND, 3, 1, "+A,+B,+C,@VCC,@GND")
+        static void netlist_TTL_7411_AND(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7411_AND", 3, 1, "+A,+B,+C,@VCC,@GND");
+            h.TT_HEAD("A,B,C|Q ");
+            h.TT_LINE("0,X,X|0|15");
+            h.TT_LINE("X,0,X|0|15");
+            h.TT_LINE("X,X,0|0|15");
+            h.TT_LINE("1,1,1|1|22");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7411_GATE, 3, 1, "")
+        static void netlist_TTL_7411_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7411_GATE", 3, 1, "");
+            h.TT_HEAD("A,B,C|Q ");
+            h.TT_LINE("0,X,X|0|15");
+            h.TT_LINE("X,0,X|0|15");
+            h.TT_LINE("X,X,0|0|15");
+            h.TT_LINE("1,1,1|1|22");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7416_GATE, 1, 1, "")
+        static void netlist_TTL_7416_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7416_GATE", 1, 1, "");
+            h.TT_HEAD("A|Q");
+            h.TT_LINE("0|1|15");
+            h.TT_LINE("1|0|23");
+            /* Open Collector */
+            h.TT_FAMILY("74XXOC");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7417_GATE, 1, 1, "")
+        static void netlist_TTL_7417_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7417_GATE", 1, 1, "");
+            h.TT_HEAD("A|Q");
+            h.TT_LINE("0|0|15");
+            h.TT_LINE("1|1|23");
+            /* Open Collector */
+            h.TT_FAMILY("74XXOC");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7420_NAND, 4, 1, "+A,+B,+C,+D,@VCC,@GND")
+        static void netlist_TTL_7420_NAND(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7420_NAND", 4, 1, "+A,+B,+C,+D,@VCC,@GND");
+            h.TT_HEAD("A,B,C,D|Q ");
+            h.TT_LINE("0,X,X,X|1|22");
+            h.TT_LINE("X,0,X,X|1|22");
+            h.TT_LINE("X,X,0,X|1|22");
+            h.TT_LINE("X,X,X,0|1|22");
+            h.TT_LINE("1,1,1,1|0|15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7421_AND, 4, 1, "+A,+B,+C,+D,@VCC,@GND")
+        static void netlist_TTL_7421_AND(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7421_AND", 4, 1, "+A,+B,+C,+D,@VCC,@GND");
+            h.TT_HEAD("A,B,C,D|Q ");
+            h.TT_LINE("0,X,X,X|0|22");
+            h.TT_LINE("X,0,X,X|0|22");
+            h.TT_LINE("X,X,0,X|0|22");
+            h.TT_LINE("X,X,X,0|0|22");
+            h.TT_LINE("1,1,1,1|1|15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7425_NOR, 4, 1, "+A,+B,+C,+D,@VCC,@GND")
+        static void netlist_TTL_7425_NOR(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7425_NOR", 4, 1, "+A,+B,+C,+D,@VCC,@GND");
+            h.TT_HEAD("A,B,C,D|Q ");
+            h.TT_LINE("1,X,X,X|0|15");
+            h.TT_LINE("X,1,X,X|0|15");
+            h.TT_LINE("X,X,1,X|0|15");
+            h.TT_LINE("X,X,X,1|0|15");
+            h.TT_LINE("0,0,0,0|1|22");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7427_NOR, 3, 1, "+A,+B,+C,@VCC,@GND")
+        static void netlist_TTL_7427_NOR(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7427_NOR", 3, 1, "+A,+B,+C,@VCC,@GND");
+            h.TT_HEAD("A,B,C|Q ");
+            h.TT_LINE("1,X,X|0|15");
+            h.TT_LINE("X,1,X|0|15");
+            h.TT_LINE("X,X,1|0|15");
+            h.TT_LINE("0,0,0|1|22");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7430_NAND, 8, 1, "+A,+B,+C,+D,+E,+F,+G,+H,@VCC,@GND")
+        static void netlist_TTL_7430_NAND(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7430_NAND", 8, 1, "+A,+B,+C,+D,+E,+F,+G,+H,@VCC,@GND");
+            h.TT_HEAD("A,B,C,D,E,F,G,H|Q ");
+            h.TT_LINE("0,X,X,X,X,X,X,X|1|22");
+            h.TT_LINE("X,0,X,X,X,X,X,X|1|22");
+            h.TT_LINE("X,X,0,X,X,X,X,X|1|22");
+            h.TT_LINE("X,X,X,0,X,X,X,X|1|22");
+            h.TT_LINE("X,X,X,X,0,X,X,X|1|22");
+            h.TT_LINE("X,X,X,X,X,0,X,X|1|22");
+            h.TT_LINE("X,X,X,X,X,X,0,X|1|22");
+            h.TT_LINE("X,X,X,X,X,X,X,0|1|22");
+            h.TT_LINE("1,1,1,1,1,1,1,1|0|15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7432_OR, 2, 1, "+A,+B,@VCC,@GND")
+        static void netlist_TTL_7432_OR(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7432_OR", 2, 1, "+A,+B,@VCC,@GND");
+            h.TT_HEAD("A,B|Q ");
+            h.TT_LINE("1,X|1|22");
+            h.TT_LINE("X,1|1|22");
+            h.TT_LINE("0,0|0|15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        /*  FIXME: Same as 7400, but drains higher output currents.
+         *         Netlist currently does not model over currents (should it ever?)
+         */
+
+        //static TRUTHTABLE_START(TTL_7437_NAND, 2, 1, "+A,+B")
+        static void netlist_TTL_7437_NAND(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7437_NAND", 2, 1, "+A,+B");
+            h.TT_HEAD("A,B|Q ");
+            h.TT_LINE("0,X|1|22");
+            h.TT_LINE("X,0|1|22");
+            h.TT_LINE("1,1|0|15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7438_NAND, 2, 1, "+A,+B")
+        static void netlist_TTL_7438_NAND(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7438_NAND", 2, 1, "+A,+B");
+            h.TT_HEAD("A,B|Q ");
+            h.TT_LINE("0,X|1|22");
+            h.TT_LINE("X,0|1|22");
+            h.TT_LINE("1,1|0|15");
+            /* Open Collector */
+            h.TT_FAMILY("74XXOC");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7442, 4, 10, "")
+        static void netlist_TTL_7442(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7442", 4, 10, "");
+            h.TT_HEAD("D,C,B,A|0,1,2,3,4,5,6,7,8,9");
+            h.TT_LINE("0,0,0,0|0,1,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("0,0,0,1|1,0,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("0,0,1,0|1,1,0,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("0,0,1,1|1,1,1,0,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("0,1,0,0|1,1,1,1,0,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("0,1,0,1|1,1,1,1,1,0,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("0,1,1,0|1,1,1,1,1,1,0,1,1,1|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("0,1,1,1|1,1,1,1,1,1,1,0,1,1|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("1,0,0,0|1,1,1,1,1,1,1,1,0,1|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("1,0,0,1|1,1,1,1,1,1,1,1,1,0|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("1,0,1,X|1,1,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
+            h.TT_LINE("1,1,X,X|1,1,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_7486_XOR, 2, 1, "+A,+B,@VCC,@GND")
+        static void netlist_TTL_7486_XOR(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_7486_XOR", 2, 1, "+A,+B,@VCC,@GND");
+            h.TT_HEAD("A,B|Q ");
+            h.TT_LINE("0,0|0|15");
+            h.TT_LINE("0,1|1|22");
+            h.TT_LINE("1,0|1|22");
+            h.TT_LINE("1,1|0|15");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_74139_GATE, 3, 4, "")
+        static void netlist_TTL_74139_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_74139_GATE", 3, 4, "");
+            h.TT_HEAD("E,A,B|0,1,2,3");
+            h.TT_LINE("1,X,X|1,1,1,1|14");
+            h.TT_LINE("0,0,0|0,1,1,1|14");
+            h.TT_LINE("0,0,1|1,0,1,1|14");
+            h.TT_LINE("0,1,0|1,1,0,1|14");
+            h.TT_LINE("0,1,1|1,1,1,0|14");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_74155A_GATE, 4, 4, "")
+        static void netlist_TTL_74155A_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_74155A_GATE", 4, 4, "");
+            h.TT_HEAD("B,A,G,C|0,1,2,3");
+            h.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
+            h.TT_LINE("X,X,0,0|1,1,1,1|13,13,13,13");
+            h.TT_LINE("0,0,0,1|0,1,1,1|13,13,13,13");
+            h.TT_LINE("0,1,0,1|1,0,1,1|13,13,13,13");
+            h.TT_LINE("1,0,0,1|1,1,0,1|13,13,13,13");
+            h.TT_LINE("1,1,0,1|1,1,1,0|13,13,13,13");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_74155B_GATE, 4, 4, "")
+        static void netlist_TTL_74155B_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_74155B_GATE", 4, 4, "");
+            h.TT_HEAD("B,A,G,C|0,1,2,3");
+            h.TT_LINE("X,X,0,1|1,1,1,1|13,13,13,13");
+            h.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
+            h.TT_LINE("0,0,0,0|0,1,1,1|13,13,13,13");
+            h.TT_LINE("0,1,0,0|1,0,1,1|13,13,13,13");
+            h.TT_LINE("1,0,0,0|1,1,0,1|13,13,13,13");
+            h.TT_LINE("1,1,0,0|1,1,1,0|13,13,13,13");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_74156A_GATE, 4, 4, "")
+        static void netlist_TTL_74156A_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_74156A_GATE", 4, 4, "");
+            h.TT_HEAD("B,A,G,C|0,1,2,3");
+            h.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
+            h.TT_LINE("X,X,0,0|1,1,1,1|13,13,13,13");
+            h.TT_LINE("0,0,0,1|0,1,1,1|13,13,13,13");
+            h.TT_LINE("0,1,0,1|1,0,1,1|13,13,13,13");
+            h.TT_LINE("1,0,0,1|1,1,0,1|13,13,13,13");
+            h.TT_LINE("1,1,0,1|1,1,1,0|13,13,13,13");
+            /* Open Collector */
+            h.TT_FAMILY("74XXOC");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_74156B_GATE, 4, 4, "")
+        static void netlist_TTL_74156B_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_74156B_GATE", 4, 4, "");
+            h.TT_HEAD("B,A,G,C|0,1,2,3");
+            h.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
+            h.TT_LINE("X,X,0,1|1,1,1,1|13,13,13,13");
+            h.TT_LINE("0,0,0,0|0,1,1,1|13,13,13,13");
+            h.TT_LINE("0,1,0,0|1,0,1,1|13,13,13,13");
+            h.TT_LINE("1,0,0,0|1,1,0,1|13,13,13,13");
+            h.TT_LINE("1,1,0,0|1,1,1,0|13,13,13,13");
+            /* Open Collector */
+            h.TT_FAMILY("74XXOC");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_74157_GATE, 4, 4, "")
+        static void netlist_TTL_74157_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_74157_GATE", 4, 4, "");
+            h.TT_HEAD("E,S,I,J|O");
+            h.TT_LINE("1,X,X,X|0|14");
+            h.TT_LINE("0,1,X,0|0|14");
+            h.TT_LINE("0,1,X,1|1|14");
+            h.TT_LINE("0,0,0,X|0|14");
+            h.TT_LINE("0,0,1,X|1|14");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_74260_NOR, 5, 1, "+A,+B,+C,+D,+E,@VCC,@GND")
+        static void netlist_TTL_74260_NOR(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_74260_NOR", 5, 1, "+A,+B,+C,+D,+E,@VCC,@GND");
+            h.TT_HEAD("A,B,C,D,E|Q");
+            h.TT_LINE("0,0,0,0,0|1|10");
+            h.TT_LINE("X,X,X,X,1|0|12");
+            h.TT_LINE("X,X,X,1,X|0|12");
+            h.TT_LINE("X,X,1,X,X|0|12");
+            h.TT_LINE("X,1,X,X,X|0|12");
+            h.TT_LINE("1,X,X,X,X|0|12");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        // FIXME: We need "private" devices
+        //static TRUTHTABLE_START(TTL_74279A, 3, 1, "")
+        static void netlist_TTL_74279A(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_74279A", 3, 1, "");
+            h.TT_HEAD("S,R,_Q|Q");
+            h.TT_LINE("0,X,X|1|22");
+            h.TT_LINE("1,0,X|0|27");
+            h.TT_LINE("1,1,0|0|27");
+            h.TT_LINE("1,1,1|1|22");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_74279B, 4, 1, "")
+        static void netlist_TTL_74279B(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_74279B", 4, 1, "");
+            h.TT_HEAD("S1,S2,R,_Q|Q");
+            h.TT_LINE("0,X,X,X|1|22");
+            h.TT_LINE("X,0,X,X|1|22");
+            h.TT_LINE("1,1,0,X|0|27");
+            h.TT_LINE("1,1,1,0|0|27");
+            h.TT_LINE("1,1,1,1|1|22");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
+
+        //static TRUTHTABLE_START(TTL_9312, 12, 2, "+A,+B,+C,+G,+D0,+D1,+D2,+D3,+D4,+D5,+D6,+D7,@VCC,@GND")
+        static void netlist_TTL_9312(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "TTL_9312", 12, 2, "+A,+B,+C,+G,+D0,+D1,+D2,+D3,+D4,+D5,+D6,+D7,@VCC,@GND");
+            h.TT_HEAD(" C, B, A, G,D0,D1,D2,D3,D4,D5,D6,D7| Y,YQ");
+            h.TT_LINE(" X, X, X, 1, X, X, X, X, X, X, X, X| 0, 1|33,19");
+            h.TT_LINE(" 0, 0, 0, 0, 0, X, X, X, X, X, X, X| 0, 1|33,28");
+            h.TT_LINE(" 0, 0, 0, 0, 1, X, X, X, X, X, X, X| 1, 0|33,28");
+            h.TT_LINE(" 0, 0, 1, 0, X, 0, X, X, X, X, X, X| 0, 1|33,28");
+            h.TT_LINE(" 0, 0, 1, 0, X, 1, X, X, X, X, X, X| 1, 0|33,28");
+            h.TT_LINE(" 0, 1, 0, 0, X, X, 0, X, X, X, X, X| 0, 1|33,28");
+            h.TT_LINE(" 0, 1, 0, 0, X, X, 1, X, X, X, X, X| 1, 0|33,28");
+            h.TT_LINE(" 0, 1, 1, 0, X, X, X, 0, X, X, X, X| 0, 1|33,28");
+            h.TT_LINE(" 0, 1, 1, 0, X, X, X, 1, X, X, X, X| 1, 0|33,28");
+            h.TT_LINE(" 1, 0, 0, 0, X, X, X, X, 0, X, X, X| 0, 1|33,28");
+            h.TT_LINE(" 1, 0, 0, 0, X, X, X, X, 1, X, X, X| 1, 0|33,28");
+            h.TT_LINE(" 1, 0, 1, 0, X, X, X, X, X, 0, X, X| 0, 1|33,28");
+            h.TT_LINE(" 1, 0, 1, 0, X, X, X, X, X, 1, X, X| 1, 0|33,28");
+            h.TT_LINE(" 1, 1, 0, 0, X, X, X, X, X, X, 0, X| 0, 1|33,28");
+            h.TT_LINE(" 1, 1, 0, 0, X, X, X, X, X, X, 1, X| 1, 0|33,28");
+            h.TT_LINE(" 1, 1, 1, 0, X, X, X, X, X, X, X, 0| 0, 1|33,28");
+            h.TT_LINE(" 1, 1, 1, 0, X, X, X, X, X, X, X, 1| 1, 0|33,28");
+            h.TT_FAMILY("74XX");
+            h.TRUTHTABLE_END();
+        }
+
 
 
         //NETLIST_START(ttl74xx_lib)
         public static void netlist_ttl74xx_lib(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.NET_MODEL(setup, "DM7414         SCHMITT_TRIGGER(VTP=1.7 VTM=0.9 VI=4.35 RI=6.15k VOH=3.5 ROH=120 VOL=0.1 ROL=37.5 TPLH=15 TPHL=15)");
-            netlist.nl_setup_global.NET_MODEL(setup, "TTL_7414_GATE  SCHMITT_TRIGGER(VTP=1.7 VTM=0.9 VI=4.35 RI=6.15k VOH=3.5 ROH=120 VOL=0.1 ROL=37.5 TPLH=15 TPHL=15)");
-            netlist.nl_setup_global.NET_MODEL(setup, "DM74LS14       SCHMITT_TRIGGER(VTP=1.6 VTM=0.8 VI=4.4 RI=19.3k VOH=3.45 ROH=130 VOL=0.1 ROL=31.2 TPLH=15 TPHL=15)");
+            h.NETLIST_START(setup);
+
+            h.NET_MODEL("DM7414         SCHMITT_TRIGGER(VTP=1.7 VTM=0.9 VI=4.35 RI=6.15k VOH=3.5 ROH=120 VOL=0.1 ROL=37.5 TPLH=15 TPHL=15)");
+            h.NET_MODEL("TTL_7414_GATE  SCHMITT_TRIGGER(VTP=1.7 VTM=0.9 VI=4.35 RI=6.15k VOH=3.5 ROH=120 VOL=0.1 ROL=37.5 TPLH=15 TPHL=15)");
+            h.NET_MODEL("DM74LS14       SCHMITT_TRIGGER(VTP=1.6 VTM=0.8 VI=4.4 RI=19.3k VOH=3.45 ROH=130 VOL=0.1 ROL=31.2 TPLH=15 TPHL=15)");
             //NET_MODEL("DM7414 FAMILY(IVL=0.16 IVH=0.4 OVL=0.1 OVH=0.05 ORL=10.0 ORH=1.0e8)")
 
-            throw new emu_unimplemented();
-#if false
-            TRUTHTABLE_ENTRY(TTL_7400_NAND);
-            TRUTHTABLE_ENTRY(TTL_7402_NOR);
-            TRUTHTABLE_ENTRY(TTL_7404_INVERT);
-            TRUTHTABLE_ENTRY(TTL_7406_GATE);
-            TRUTHTABLE_ENTRY(TTL_7407_GATE);
-            TRUTHTABLE_ENTRY(TTL_7408_GATE);
-            TRUTHTABLE_ENTRY(TTL_7408_AND);
-            TRUTHTABLE_ENTRY(TTL_7410_NAND);
-            TRUTHTABLE_ENTRY(TTL_7410_GATE);
-            TRUTHTABLE_ENTRY(TTL_7411_AND);
-            TRUTHTABLE_ENTRY(TTL_7411_GATE);
-            TRUTHTABLE_ENTRY(TTL_7416_GATE);
-            TRUTHTABLE_ENTRY(TTL_7417_GATE);
-            TRUTHTABLE_ENTRY(TTL_7420_NAND);
-            TRUTHTABLE_ENTRY(TTL_7421_AND);
-            TRUTHTABLE_ENTRY(TTL_7425_NOR);
-            TRUTHTABLE_ENTRY(TTL_7427_NOR);
-            TRUTHTABLE_ENTRY(TTL_7430_NAND);
-            TRUTHTABLE_ENTRY(TTL_7432_OR);
-            TRUTHTABLE_ENTRY(TTL_7437_NAND);
-            TRUTHTABLE_ENTRY(TTL_7438_NAND);
-            TRUTHTABLE_ENTRY(TTL_7442);
-            TRUTHTABLE_ENTRY(TTL_7486_XOR);
-            TRUTHTABLE_ENTRY(TTL_74139_GATE);
-            TRUTHTABLE_ENTRY(TTL_74155A_GATE);
-            TRUTHTABLE_ENTRY(TTL_74155B_GATE);
-            TRUTHTABLE_ENTRY(TTL_74156A_GATE);
-            TRUTHTABLE_ENTRY(TTL_74156B_GATE);
-            TRUTHTABLE_ENTRY(TTL_74157_GATE);
-            TRUTHTABLE_ENTRY(TTL_74260_NOR);
-            TRUTHTABLE_ENTRY(TTL_74279A);
-            TRUTHTABLE_ENTRY(TTL_74279B);
-            TRUTHTABLE_ENTRY(TTL_9312);
+            h.TRUTHTABLE_ENTRY("TTL_7400_NAND", netlist_TTL_7400_NAND);
+            h.TRUTHTABLE_ENTRY("TTL_7402_NOR", netlist_TTL_7402_NOR);
+            h.TRUTHTABLE_ENTRY("TTL_7404_INVERT", netlist_TTL_7404_INVERT);
+            h.TRUTHTABLE_ENTRY("TTL_7406_GATE", netlist_TTL_7406_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_7407_GATE", netlist_TTL_7407_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_7408_GATE", netlist_TTL_7408_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_7408_AND", netlist_TTL_7408_AND);
+            h.TRUTHTABLE_ENTRY("TTL_7410_NAND", netlist_TTL_7410_NAND);
+            h.TRUTHTABLE_ENTRY("TTL_7410_GATE", netlist_TTL_7410_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_7411_AND", netlist_TTL_7411_AND);
+            h.TRUTHTABLE_ENTRY("TTL_7411_GATE", netlist_TTL_7411_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_7416_GATE", netlist_TTL_7416_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_7417_GATE", netlist_TTL_7417_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_7420_NAND", netlist_TTL_7420_NAND);
+            h.TRUTHTABLE_ENTRY("TTL_7421_AND", netlist_TTL_7421_AND);
+            h.TRUTHTABLE_ENTRY("TTL_7425_NOR", netlist_TTL_7425_NOR);
+            h.TRUTHTABLE_ENTRY("TTL_7427_NOR", netlist_TTL_7427_NOR);
+            h.TRUTHTABLE_ENTRY("TTL_7430_NAND", netlist_TTL_7430_NAND);
+            h.TRUTHTABLE_ENTRY("TTL_7432_OR", netlist_TTL_7432_OR);
+            h.TRUTHTABLE_ENTRY("TTL_7437_NAND", netlist_TTL_7437_NAND);
+            h.TRUTHTABLE_ENTRY("TTL_7438_NAND", netlist_TTL_7438_NAND);
+            h.TRUTHTABLE_ENTRY("TTL_7442", netlist_TTL_7442);
+            h.TRUTHTABLE_ENTRY("TTL_7486_XOR", netlist_TTL_7486_XOR);
+            h.TRUTHTABLE_ENTRY("TTL_74139_GATE", netlist_TTL_74139_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_74155A_GATE", netlist_TTL_74155A_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_74155B_GATE", netlist_TTL_74155B_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_74156A_GATE", netlist_TTL_74156A_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_74156B_GATE", netlist_TTL_74156B_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_74157_GATE", netlist_TTL_74157_GATE);
+            h.TRUTHTABLE_ENTRY("TTL_74260_NOR", netlist_TTL_74260_NOR);
+            h.TRUTHTABLE_ENTRY("TTL_74279A", netlist_TTL_74279A);
+            h.TRUTHTABLE_ENTRY("TTL_74279B", netlist_TTL_74279B);
+            h.TRUTHTABLE_ENTRY("TTL_9312", netlist_TTL_9312);
 
-            LOCAL_LIB_ENTRY(TTL_7400_DIP);
-            LOCAL_LIB_ENTRY(TTL_7402_DIP);
-            LOCAL_LIB_ENTRY(TTL_7404_DIP);
-            LOCAL_LIB_ENTRY(TTL_7406_DIP);
-            LOCAL_LIB_ENTRY(TTL_7407_DIP);
-            LOCAL_LIB_ENTRY(TTL_7408_DIP);
-            LOCAL_LIB_ENTRY(TTL_7410_DIP);
-            LOCAL_LIB_ENTRY(TTL_7411_DIP);
-            LOCAL_LIB_ENTRY(TTL_7414_GATE);
-            LOCAL_LIB_ENTRY(TTL_74LS14_GATE);
-            LOCAL_LIB_ENTRY(TTL_7414_DIP);
-            LOCAL_LIB_ENTRY(TTL_74LS14_DIP);
-            LOCAL_LIB_ENTRY(TTL_7416_DIP);
-            LOCAL_LIB_ENTRY(TTL_7417_DIP);
-            LOCAL_LIB_ENTRY(TTL_7420_DIP);
-            LOCAL_LIB_ENTRY(TTL_7421_DIP);
-            LOCAL_LIB_ENTRY(TTL_7425_DIP);
-            LOCAL_LIB_ENTRY(TTL_7427_DIP);
-            LOCAL_LIB_ENTRY(TTL_7430_DIP);
-            LOCAL_LIB_ENTRY(TTL_7432_DIP);
-            LOCAL_LIB_ENTRY(TTL_7437_DIP);
-            LOCAL_LIB_ENTRY(TTL_7438_DIP);
-            LOCAL_LIB_ENTRY(TTL_7442_DIP);
-            LOCAL_LIB_ENTRY(TTL_7448_DIP);
-            LOCAL_LIB_ENTRY(TTL_7450_DIP);
-            LOCAL_LIB_ENTRY(TTL_7473_DIP);
-            LOCAL_LIB_ENTRY(TTL_7473A_DIP);
-            LOCAL_LIB_ENTRY(TTL_7474_DIP);
-            LOCAL_LIB_ENTRY(TTL_7475_DIP);
-            LOCAL_LIB_ENTRY(TTL_7477_DIP);
-            LOCAL_LIB_ENTRY(TTL_7483_DIP);
-            LOCAL_LIB_ENTRY(TTL_7485_DIP);
-            LOCAL_LIB_ENTRY(TTL_7486_DIP);
-            LOCAL_LIB_ENTRY(TTL_7490_DIP);
-            LOCAL_LIB_ENTRY(TTL_7492_DIP);
-            LOCAL_LIB_ENTRY(TTL_7493_DIP);
-            LOCAL_LIB_ENTRY(TTL_7497_DIP);
-            LOCAL_LIB_ENTRY(TTL_74107_DIP);
-            LOCAL_LIB_ENTRY(TTL_74107A_DIP);
-            LOCAL_LIB_ENTRY(TTL_74113_DIP);
-            LOCAL_LIB_ENTRY(TTL_74113A_DIP);
-            LOCAL_LIB_ENTRY(TTL_74121_DIP);
-            LOCAL_LIB_ENTRY(TTL_74123_DIP);
-            LOCAL_LIB_ENTRY(TTL_9602_DIP);
-            LOCAL_LIB_ENTRY(TTL_74125_DIP);
-            LOCAL_LIB_ENTRY(TTL_74126_DIP);
-            LOCAL_LIB_ENTRY(TTL_74139_DIP);
-            LOCAL_LIB_ENTRY(TTL_74153_DIP);
-            LOCAL_LIB_ENTRY(TTL_74155_DIP);
-            LOCAL_LIB_ENTRY(TTL_74156_DIP);
-            LOCAL_LIB_ENTRY(TTL_74157_DIP);
-            LOCAL_LIB_ENTRY(TTL_74161_DIP);
-            LOCAL_LIB_ENTRY(TTL_74163_DIP);
-            LOCAL_LIB_ENTRY(TTL_74164_DIP);
-            LOCAL_LIB_ENTRY(TTL_74165_DIP);
-            LOCAL_LIB_ENTRY(TTL_74166_DIP);
-            LOCAL_LIB_ENTRY(TTL_74174_DIP);
-            LOCAL_LIB_ENTRY(TTL_74175_DIP);
-            LOCAL_LIB_ENTRY(TTL_74192_DIP);
-            LOCAL_LIB_ENTRY(TTL_74193_DIP);
-            LOCAL_LIB_ENTRY(TTL_74194_DIP);
-            LOCAL_LIB_ENTRY(TTL_74260_DIP);
-            LOCAL_LIB_ENTRY(TTL_74279_DIP);
-            LOCAL_LIB_ENTRY(TTL_74290_DIP);
-            LOCAL_LIB_ENTRY(TTL_74293_DIP);
-            LOCAL_LIB_ENTRY(TTL_74365_DIP);
-            LOCAL_LIB_ENTRY(TTL_74377_DIP);
-            LOCAL_LIB_ENTRY(TTL_74378_DIP);
-            LOCAL_LIB_ENTRY(TTL_74379_DIP);
-            LOCAL_LIB_ENTRY(TTL_74393_DIP);
-            LOCAL_LIB_ENTRY(SN74LS629_DIP);
-            LOCAL_LIB_ENTRY(TTL_9310_DIP);
-            LOCAL_LIB_ENTRY(TTL_9312_DIP);
-            LOCAL_LIB_ENTRY(TTL_9314_DIP);
-            LOCAL_LIB_ENTRY(TTL_9316_DIP);
-            LOCAL_LIB_ENTRY(TTL_9321_DIP);
-            LOCAL_LIB_ENTRY(TTL_9322_DIP);
-            LOCAL_LIB_ENTRY(TTL_9334_DIP);
-            LOCAL_LIB_ENTRY(TTL_8277_DIP);
-            LOCAL_LIB_ENTRY(TTL_AM2847_DIP);
-#endif
+            h.LOCAL_LIB_ENTRY("TTL_7400_DIP", netlist_TTL_7400_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7402_DIP", netlist_TTL_7402_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7404_DIP", netlist_TTL_7404_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7406_DIP", netlist_TTL_7406_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7407_DIP", netlist_TTL_7407_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7408_DIP", netlist_TTL_7408_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7410_DIP", netlist_TTL_7410_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7411_DIP", netlist_TTL_7411_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7414_GATE", netlist_TTL_7414_GATE);
+            h.LOCAL_LIB_ENTRY("TTL_74LS14_GATE", netlist_TTL_74LS14_GATE);
+            h.LOCAL_LIB_ENTRY("TTL_7414_DIP", netlist_TTL_7414_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74LS14_DIP", netlist_TTL_74LS14_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7416_DIP", netlist_TTL_7416_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7417_DIP", netlist_TTL_7417_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7420_DIP", netlist_TTL_7420_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7421_DIP", netlist_TTL_7421_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7425_DIP", netlist_TTL_7425_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7427_DIP", netlist_TTL_7427_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7430_DIP", netlist_TTL_7430_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7432_DIP", netlist_TTL_7432_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7437_DIP", netlist_TTL_7437_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7438_DIP", netlist_TTL_7438_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7442_DIP", netlist_TTL_7442_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7448_DIP", netlist_TTL_7448_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7450_DIP", netlist_TTL_7450_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7473_DIP", netlist_TTL_7473_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7473A_DIP", netlist_TTL_7473A_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7474_DIP", netlist_TTL_7474_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7475_DIP", netlist_TTL_7475_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7477_DIP", netlist_TTL_7477_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7483_DIP", netlist_TTL_7483_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7485_DIP", netlist_TTL_7485_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7486_DIP", netlist_TTL_7486_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7490_DIP", netlist_TTL_7490_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7492_DIP", netlist_TTL_7492_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7493_DIP", netlist_TTL_7493_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_7497_DIP", netlist_TTL_7497_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74107_DIP", netlist_TTL_74107_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74107A_DIP", netlist_TTL_74107A_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74113_DIP", netlist_TTL_74113_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74113A_DIP", netlist_TTL_74113A_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74121_DIP", netlist_TTL_74121_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74123_DIP", netlist_TTL_74123_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_9602_DIP", netlist_TTL_9602_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74125_DIP", netlist_TTL_74125_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74126_DIP", netlist_TTL_74126_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74139_DIP", netlist_TTL_74139_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74153_DIP", netlist_TTL_74153_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74155_DIP", netlist_TTL_74155_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74156_DIP", netlist_TTL_74156_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74157_DIP", netlist_TTL_74157_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74161_DIP", netlist_TTL_74161_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74163_DIP", netlist_TTL_74163_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74164_DIP", netlist_TTL_74164_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74165_DIP", netlist_TTL_74165_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74166_DIP", netlist_TTL_74166_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74174_DIP", netlist_TTL_74174_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74175_DIP", netlist_TTL_74175_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74192_DIP", netlist_TTL_74192_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74193_DIP", netlist_TTL_74193_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74194_DIP", netlist_TTL_74194_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74260_DIP", netlist_TTL_74260_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74279_DIP", netlist_TTL_74279_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74290_DIP", netlist_TTL_74290_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74293_DIP", netlist_TTL_74293_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74365_DIP", netlist_TTL_74365_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74377_DIP", netlist_TTL_74377_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74378_DIP", netlist_TTL_74378_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74379_DIP", netlist_TTL_74379_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_74393_DIP", netlist_TTL_74393_DIP);
+            h.LOCAL_LIB_ENTRY("SN74LS629_DIP", netlist_SN74LS629_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_9310_DIP", netlist_TTL_9310_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_9312_DIP", netlist_TTL_9312_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_9314_DIP", netlist_TTL_9314_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_9316_DIP", netlist_TTL_9316_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_9321_DIP", netlist_TTL_9321_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_9322_DIP", netlist_TTL_9322_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_9334_DIP", netlist_TTL_9334_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_8277_DIP", netlist_TTL_8277_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_AM2847_DIP", netlist_TTL_AM2847_DIP);
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
     }
 }

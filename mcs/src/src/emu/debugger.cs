@@ -15,7 +15,7 @@ namespace mame
 
 
     // ======================> debugger_manager
-    public class debugger_manager : global_object, IDisposable
+    public class debugger_manager : IDisposable
     {
         // internal state
         running_machine m_machine;                  // reference to our machine
@@ -55,7 +55,7 @@ namespace mame
 
         ~debugger_manager()
         {
-            assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;

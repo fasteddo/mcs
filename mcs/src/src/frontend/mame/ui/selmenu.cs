@@ -10,7 +10,7 @@ using flags_cache = mame.util.lru_cache_map<mame.game_driver, mame.ui.menu_selec
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s_bios = mame.std.vector<System.Collections.Generic.KeyValuePair<string, int>>;
 using s_parts = mame.std.unordered_map<string, string>;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using texture_ptr = mame.render_texture;
 using texture_ptr_vector = mame.std.vector<mame.render_texture>;
 using uint8_t = System.Byte;
@@ -27,19 +27,19 @@ namespace mame.ui
 
             if (file.open(base_ + ".png") == osd_file.error.NONE)
             {
-                rendutil_global.render_load_png(out bitmap, file.core_file_get());
+                g.render_load_png(out bitmap, file.core_file_get());
                 file.close();
             }
 
             if (!bitmap.valid() && (file.open(base_ + ".jpg") == osd_file.error.NONE))
             {
-                rendutil_global.render_load_jpeg(out bitmap, file.core_file_get());
+                g.render_load_jpeg(out bitmap, file.core_file_get());
                 file.close();
             }
 
             if (!bitmap.valid() && (file.open(base_ + ".bmp") == osd_file.error.NONE))
             {
-                rendutil_global.render_load_msdib(out bitmap, file.core_file_get());
+                g.render_load_msdib(out bitmap, file.core_file_get());
                 file.close();
             }
         }
@@ -49,7 +49,7 @@ namespace mame.ui
         {
             // try to load snapshot first from saved "0000.png" file
             string fullname = driver.name;
-            load_image(out bitmap, file, fullname + global_object.PATH_SEPARATOR + "0000");
+            load_image(out bitmap, file, fullname + g.PATH_SEPARATOR + "0000");
 
             // if fail, attempt to load from standard file
             if (!bitmap.valid())
@@ -63,14 +63,14 @@ namespace mame.ui
                 if (isclone)
                 {
                     int cx = driver_list.find(driver.parent);
-                    if ((0 <= cx) && (driver_list.driver(cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0)
+                    if ((0 <= cx) && (driver_list.driver((size_t)cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0)
                         isclone = false;
                 }
 
                 if (isclone)
                 {
                     fullname = driver.parent;
-                    load_image(out bitmap, file, fullname + global_object.PATH_SEPARATOR + "0000");
+                    load_image(out bitmap, file, fullname + g.PATH_SEPARATOR + "0000");
 
                     if (!bitmap.valid())
                         load_image(out bitmap, file, fullname);
@@ -251,12 +251,12 @@ namespace mame.ui
                 m_star_texture = render.texture_alloc();  //m_star_texture.reset(render.texture_alloc());
                 m_star_texture.set_bitmap(m_star_bitmap, m_star_bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
 
-                m_toolbar_bitmap.reserve(toolbar_global.UI_TOOLBAR_BUTTONS);
-                m_sw_toolbar_bitmap.reserve(toolbar_global.UI_TOOLBAR_BUTTONS);
-                m_toolbar_texture.reserve(toolbar_global.UI_TOOLBAR_BUTTONS);
-                m_sw_toolbar_texture.reserve(toolbar_global.UI_TOOLBAR_BUTTONS);
+                m_toolbar_bitmap.reserve((size_t)toolbar_global.UI_TOOLBAR_BUTTONS);
+                m_sw_toolbar_bitmap.reserve((size_t)toolbar_global.UI_TOOLBAR_BUTTONS);
+                m_toolbar_texture.reserve((size_t)toolbar_global.UI_TOOLBAR_BUTTONS);
+                m_sw_toolbar_texture.reserve((size_t)toolbar_global.UI_TOOLBAR_BUTTONS);
 
-                for (size_t i = 0; i < toolbar_global.UI_TOOLBAR_BUTTONS; ++i)
+                for (size_t i = 0; i < (size_t)toolbar_global.UI_TOOLBAR_BUTTONS; ++i)
                 {
                     m_toolbar_bitmap.emplace_back(new bitmap_argb32(32, 32));
                     m_sw_toolbar_bitmap.emplace_back(new bitmap_argb32(32, 32));
@@ -538,7 +538,7 @@ namespace mame.ui
                 var found = s_caches.find(machine());
                 if (found != null)
                 {
-                    assert(found != null);
+                    g.assert(found != null);
                     m_cache = found;
                 }
                 else
@@ -684,7 +684,7 @@ namespace mame.ui
                 int cloneof = driver_list.non_bios_clone(driver);
 
                 if (cloneof != -1)
-                    tempbuf[2] = string.Format("Driver is clone of: {0}", driver_list.driver(cloneof).type.fullname());  // %1$-.100s
+                    tempbuf[2] = string.Format("Driver is clone of: {0}", driver_list.driver((size_t)cloneof).type.fullname());  // %1$-.100s
                 else
                     tempbuf[2] = "Driver is parent";
 
@@ -719,7 +719,7 @@ namespace mame.ui
             else
             {
                 string copyright = emulator_info.get_copyright();
-                int found = copyright.find('\n');
+                size_t found = copyright.find('\n');
 
                 tempbuf[0] = "";
                 tempbuf[1] = string.Format("{0} {1}", emulator_info.get_appname(), version_global.build_version);  // %1$s %2$s
@@ -859,14 +859,14 @@ namespace mame.ui
             if (mouse_in_rect(ar_x0, ar_y0, ar_x1, ar_y1) && current != dmax)
             {
                 ui().draw_textured_box(container(), ar_x0 + 0.01f, ar_y0, ar_x1 - 0.01f, ar_y1, ui().colors().mouseover_bg_color(), new rgb_t(43, 43, 43),
-                        hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                        hilight_main_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
                 set_hover(utils_global.HOVER_UI_RIGHT);
                 fgcolor_right = ui().colors().mouseover_color();
             }
             else if (mouse_in_rect(al_x0, al_y0, al_x1, al_y1) && current != dmin)
             {
                 ui().draw_textured_box(container(), al_x0 + 0.01f, al_y0, al_x1 - 0.01f, al_y1, ui().colors().mouseover_bg_color(), new rgb_t(43, 43, 43),
-                        hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                        hilight_main_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
                 set_hover(utils_global.HOVER_UI_LEFT);
                 fgcolor_left = ui().colors().mouseover_color();
             }
@@ -875,13 +875,13 @@ namespace mame.ui
             if (dmax == dmin)
                 return;
             else if (current == dmin)
-                draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor_right, ROT90);
+                draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor_right, g.ROT90);
             else if (current == dmax)
-                draw_arrow(al_x0, al_y0, al_x1, al_y1, fgcolor_left, ROT90 ^ ORIENTATION_FLIP_X);
+                draw_arrow(al_x0, al_y0, al_x1, al_y1, fgcolor_left, g.ROT90 ^ g.ORIENTATION_FLIP_X);
             else
             {
-                draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor_right, ROT90);
-                draw_arrow(al_x0, al_y0, al_x1, al_y1, fgcolor_left, ROT90 ^ ORIENTATION_FLIP_X);
+                draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor_right, g.ROT90);
+                draw_arrow(al_x0, al_y0, al_x1, al_y1, fgcolor_left, g.ROT90 ^ g.ORIENTATION_FLIP_X);
             }
         }
 
@@ -892,12 +892,12 @@ namespace mame.ui
         void draw_info_arrow(int ub, float origx1, float origx2, float oy1, float line_height, float text_size, float ud_arrow_width)
         {
             rgb_t fgcolor = ui().colors().text_color();
-            UInt32 orientation = (ub == 0) ? ROT0 : ROT0 ^ ORIENTATION_FLIP_Y;
+            uint32_t orientation = (ub == 0) ? (uint32_t)g.ROT0 : (uint32_t)(g.ROT0 ^ g.ORIENTATION_FLIP_Y);
 
             if (mouse_in_rect(origx1, oy1, origx2, oy1 + (line_height * text_size)))
             {
                 ui().draw_textured_box(container(), origx1 + 0.01f, oy1, origx2 - 0.01f, oy1 + (line_height * text_size), ui().colors().mouseover_bg_color(),
-                        new rgb_t(43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                        new rgb_t(43, 43, 43), hilight_main_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
                 set_hover((ub == 0) ? utils_global.HOVER_DAT_UP : utils_global.HOVER_DAT_DOWN);
                 fgcolor = ui().colors().mouseover_color();
             }
@@ -999,7 +999,7 @@ namespace mame.ui
                             container(),
                             x1, y1, x2, y1 + line_height_max,
                             bgcolor, new rgb_t(255, 43, 43, 43),
-                            hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            hilight_main_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
                 }
 
                 // finally draw the text itself and move to the next line
@@ -1037,7 +1037,7 @@ namespace mame.ui
                 set_hover(utils_global.HOVER_LPANEL_ARROW);
             }
 
-            draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor2, ROT90 ^ ORIENTATION_FLIP_X);
+            draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor2, g.ROT90 ^ g.ORIENTATION_FLIP_X);
             return x2 + lr_border;
         }
 
@@ -1058,11 +1058,11 @@ namespace mame.ui
                 // if we're doing a software list, append it to the configured path
                 if (listname != null)
                 {
-                    if (!current.empty() && !util_.is_directory_separator(current.back()))
-                        current = current.append_(PATH_SEPARATOR);
+                    if (!current.empty() && !util.is_directory_separator(current.back()))
+                        current = current.append_(g.PATH_SEPARATOR);
                     current = current.append_(listname);
                 }
-                osd_printf_verbose("Checking for icons in directory {0}\n", current);
+                g.osd_printf_verbose("Checking for icons in directory {0}\n", current);
 
                 // open and walk the directory
                 osd.directory dir = osdfile_global.m_osddirectory.open(current);
@@ -1073,16 +1073,16 @@ namespace mame.ui
                     while ((entry = dir.read()) != null)
                     {
                         current = entry.name;
-                        int found = current.rfind(".ico");
-                        if ((-1 != found) && ((current.length() - 4) == found))
+                        size_t found = current.rfind(".ico");
+                        if ((g.npos != found) && ((current.length() - 4) == found))
                         {
-                            osd_printf_verbose("Entry {0} is a candidate icon file\n", entry.name);
+                            g.osd_printf_verbose("Entry {0} is a candidate icon file\n", entry.name);
                             m_has_icons = true;
                             return;
                         }
                         else if (("icons" == current) || (current.find("icons.") == 0U))
                         {
-                            osd_printf_verbose("Entry {0} is a candidate icon collection\n", entry.name);
+                            g.osd_printf_verbose("Entry {0} is a candidate icon collection\n", entry.name);
                             m_has_icons = true;
                             return;
                         }
@@ -1091,7 +1091,7 @@ namespace mame.ui
             }
 
             // nothing promising
-            osd_printf_verbose(
+            g.osd_printf_verbose(
                     "No candidate icons found for {0}{1}\n",
                     listname != null ? "software list " : "",
                     listname != null ? listname : "machines");
@@ -1165,11 +1165,11 @@ namespace mame.ui
             {
                 str += "System media audit failed:\n";
                 auditor.summarize(null, ref str);
-                osd_printf_info(str);
+                g.osd_printf_info(str);
                 str = "";
             }
 
-            str += __("Required ROM/disk images for the selected system are missing or incorrect. Please select a different system.\n\n");
+            str += g.__("Required ROM/disk images for the selected system are missing or incorrect. Please select a different system.\n\n");
             make_audit_fail_text(ref str, auditor, summary);
             return str;
         }
@@ -1182,10 +1182,10 @@ namespace mame.ui
             {
                 str += "System media audit failed:\n";
                 auditor.summarize(null, ref str);
-                osd_printf_info(str);
+                g.osd_printf_info(str);
                 str = "";
             }
-            str += __("Required ROM/disk images for the selected software are missing or incorrect. Please select a different software item.\n\n");
+            str += g.__("Required ROM/disk images for the selected software are missing or incorrect. Please select a different software item.\n\n");
             make_audit_fail_text(ref str, auditor, summary);
             return str;
         }
@@ -1242,7 +1242,7 @@ namespace mame.ui
                 set_hover(utils_global.HOVER_LPANEL_ARROW);
             }
 
-            draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
+            draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, g.ROT90);
 
             return x2 + ui().box_lr_border() * aspect;
         }
@@ -1387,7 +1387,7 @@ namespace mame.ui
             if (bgcolor != ui().colors().text_bg_color())
             {
                 ui().draw_textured_box(container(), origx1 + ((middle - title_size) * 0.5f), origy1, origx1 + ((middle + title_size) * 0.5f),
-                        origy1 + line_height, bgcolor, new rgb_t(255, 43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                        origy1 + line_height, bgcolor, new rgb_t(255, 43, 43, 43), hilight_main_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
             }
 
             float unused1;
@@ -1435,8 +1435,8 @@ namespace mame.ui
             for (int r = 0; r < r_visible_lines; ++r)
             {
                 int itemline = r + m_topline_datsview;
-                string tempbuf = m_info_buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]);
-                if (tempbuf[0] == '#')
+                string tempbuf = m_info_buffer.substr((size_t)xstart[itemline], (size_t)(xend[itemline] - xstart[itemline]));
+                if (!tempbuf.empty() && (tempbuf[0] == '#'))
                     continue;
 
                 if (r == 0 && m_topline_datsview != 0) // up arrow
@@ -1450,9 +1450,9 @@ namespace mame.ui
                 else if (justify == '2') // two-column layout
                 {
                     // split at first tab
-                    int splitpos = tempbuf.find("\t");
-                    string leftcol = tempbuf.substr(0, (-1 == splitpos) ? 0 : splitpos);
-                    string rightcol = tempbuf.substr((-1 == splitpos) ? 0 : (splitpos + 1));
+                    size_t splitpos = tempbuf.find("\t");
+                    string leftcol = tempbuf.substr(0, (g.npos == splitpos) ? 0 : splitpos);
+                    string rightcol = tempbuf.substr((g.npos == splitpos) ? 0 : (splitpos + 1));
 
                     // measure space needed, condense if necessary
                     float leftlen = ui().get_string_width(leftcol, text_size);
@@ -1577,7 +1577,7 @@ namespace mame.ui
                         ui().draw_text_box(container(), hover_msg[z], text_layout.text_justify.CENTER, 0.5f, ypos, ui().colors().background_color());
                     }
 
-                    container().add_quad(x1, y1, x2, y2, color, t_texture[z], PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                    container().add_quad(x1, y1, x2, y2, color, t_texture[z], g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
                     x1 += space_x + ((z < toolbar_global.UI_TOOLBAR_BUTTONS - 1) ? 0.001f : 0.0f);
                     x2 = x1 + space_x;
                 }
@@ -1592,7 +1592,7 @@ namespace mame.ui
         {
             float y1 = y0 + ui().get_line_height();
             float x1 = x0 + ui().get_line_height() * container().manager().ui_aspect(container());
-            container().add_quad(x0, y0, x1, y1, rgb_t.white(), m_cache.star_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_PACKABLE);
+            container().add_quad(x0, y0, x1, y1, rgb_t.white(), m_cache.star_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_PACKABLE);
         }
 
 
@@ -1607,7 +1607,7 @@ namespace mame.ui
                 float ud_arrow_width = ui().get_line_height() * container().manager().ui_aspect(container());
                 float x1 = x0 + ud_arrow_width;
                 float y1 = y0 + ui().get_line_height();
-                container().add_quad(x0, y0, x1, y1, rgb_t.white(), icon, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_quad(x0, y0, x1, y1, rgb_t.white(), icon, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
             }
         }
 
@@ -1649,7 +1649,7 @@ namespace mame.ui
             {
                 path_iter.reset();
                 while (path_iter.next(out c_path))
-                    searchstr += ";" + curpath + PATH_SEPARATOR + c_path;
+                    searchstr += ";" + curpath + g.PATH_SEPARATOR + c_path;
             }
         }
 
@@ -2256,7 +2256,7 @@ namespace mame.ui
                             container(),
                             line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1, 
                             bgcolor, new rgb_t(43, 43, 43),
-                            hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            hilight_main_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
                 }
                 else if (itemnum == hover())
                 {
@@ -2270,14 +2270,14 @@ namespace mame.ui
                     fgcolor = fgcolor3 = ui().options().mouseover_color();
                     bgcolor = ui().colors().mouseover_bg_color();
                     ui().draw_textured_box(container(), line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1, bgcolor, new rgb_t(43, 43, 43),
-                            hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            hilight_main_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
                 }
 
                 if (linenum == 0 && top_line != 0)
                 {
                     // if we're on the top line, display the up arrow
                     draw_arrow(0.5f * (x1 + x2) - 0.5f * ud_arrow_width, line_y + 0.25f * line_height,
-                        0.5f * (x1 + x2) + 0.5f * ud_arrow_width, line_y + 0.75f * line_height, fgcolor, ROT0);
+                        0.5f * (x1 + x2) + 0.5f * ud_arrow_width, line_y + 0.75f * line_height, fgcolor, g.ROT0);
 
                     if (hover() == itemnum)
                         set_hover(utils_global.HOVER_ARROW_UP);
@@ -2286,7 +2286,7 @@ namespace mame.ui
                 {
                     // if we're on the bottom line, display the down arrow
                     draw_arrow(0.5f * (x1 + x2) - 0.5f * ud_arrow_width, line_y + 0.25f * line_height,
-                        0.5f * (x1 + x2) + 0.5f * ud_arrow_width, line_y + 0.75f * line_height, fgcolor, ROT0 ^ ORIENTATION_FLIP_Y);
+                        0.5f * (x1 + x2) + 0.5f * ud_arrow_width, line_y + 0.75f * line_height, fgcolor, g.ROT0 ^ g.ORIENTATION_FLIP_Y);
 
                     if (hover() == itemnum)
                         set_hover(utils_global.HOVER_ARROW_DOWN);
@@ -2295,7 +2295,7 @@ namespace mame.ui
                 {
                     // if we're just a divider, draw a line
                     container().add_line(visible_left, line_y + 0.5f * line_height, visible_left + visible_width, line_y + 0.5f * line_height,
-                            g.UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                            g.UI_LINE_WIDTH, ui().colors().text_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
                 }
                 else if (pitem.subtext.empty())
                 {
@@ -2376,7 +2376,7 @@ namespace mame.ui
                     fgcolor = new rgb_t(0xff, 0xff, 0x00);
                     bgcolor = new rgb_t(0xff, 0xff, 0xff);
                     ui().draw_textured_box(container(), line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1, bgcolor, new rgb_t(43, 43, 43),
-                            hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            hilight_main_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
                 }
                 // else if the mouse is over this item, draw with a different background
                 else if (count == hover())
@@ -2389,7 +2389,7 @@ namespace mame.ui
                 if (pitem.type == menu_item_type.SEPARATOR)
                 {
                     container().add_line(visible_left, line + 0.5f * line_height, visible_left + visible_width, line + 0.5f * line_height,
-                            g.UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                            g.UI_LINE_WIDTH, ui().colors().text_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
                 }
                 else
                 {
@@ -2422,7 +2422,7 @@ namespace mame.ui
                 if (alpha > 255)
                     alpha = 255;
                 if (alpha >= 0)
-                    container().add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t((byte)alpha, 0x00, 0x00, 0x00), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                    container().add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t((byte)alpha, 0x00, 0x00, 0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
             }
         }
 
@@ -2457,11 +2457,11 @@ namespace mame.ui
 
             if (hide)
             {
-                draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
+                draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, g.ROT90 ^ g.ORIENTATION_FLIP_X);
                 return;
             }
 
-            draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
+            draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, g.ROT90);
             origy1 = draw_right_box_title(x2, origy1, origx2, origy2);
 
             if (ui_globals.rpanel == utils_global.RP_IMAGES)
@@ -2483,7 +2483,7 @@ namespace mame.ui
             ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
 
             // add separator line
-            container().add_line(x1 + midl, y1, x1 + midl, y1 + line_height, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container().add_line(x1 + midl, y1, x1 + midl, y1 + line_height, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
 
             string [] buffer = new string[utils_global.RP_LAST + 1];
             buffer[utils_global.RP_IMAGES] = "Images";
@@ -2516,7 +2516,7 @@ namespace mame.ui
                 if (ui_globals.rpanel != cells)
                 {
                     container().add_line(x1, y1 + line_height, x1 + midl, y1 + line_height, g.UI_LINE_WIDTH,
-                            ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                            ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
                     if (fgcolor != ui().colors().mouseover_color())
                         fgcolor = ui().colors().clone_color();
                 }
@@ -2526,12 +2526,12 @@ namespace mame.ui
                     fgcolor = new rgb_t(0xff, 0xff, 0x00);
                     bgcolor = new rgb_t(0xff, 0xff, 0xff);
                     ui().draw_textured_box(container(), x1 + g.UI_LINE_WIDTH, y1 + g.UI_LINE_WIDTH, x1 + midl - g.UI_LINE_WIDTH, y1 + line_height,
-                            bgcolor, new rgb_t(43, 43, 43), hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            bgcolor, new rgb_t(43, 43, 43), hilight_main_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
                 }
                 else if (bgcolor == ui().colors().mouseover_bg_color())
                 {
                     container().add_rect(x1 + g.UI_LINE_WIDTH, y1 + g.UI_LINE_WIDTH, x1 + midl - g.UI_LINE_WIDTH, y1 + line_height,
-                            bgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                            bgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
                 }
 
                 float unused1;
@@ -2570,7 +2570,7 @@ namespace mame.ui
                 // loads the image if necessary
                 if (!m_cache.snapx_software_is(software) || !snapx_valid() || m_switch_image)
                 {
-                    emu_file snapfile = new emu_file(searchstr, OPEN_FLAG_READ);
+                    emu_file snapfile = new emu_file(searchstr, g.OPEN_FLAG_READ);
                     bitmap_argb32 tmp_bitmap;
 
                     if (software.startempty == 1)
@@ -2580,11 +2580,11 @@ namespace mame.ui
                     }
                     else
                     {
-                        selmenu_global.load_image(out tmp_bitmap, snapfile, software.listname + PATH_SEPARATOR + software.shortname);
+                        selmenu_global.load_image(out tmp_bitmap, snapfile, software.listname + g.PATH_SEPARATOR + software.shortname);
 
                         // Second attempt from driver name + part name
                         if (!tmp_bitmap.valid())
-                            selmenu_global.load_image(out tmp_bitmap, snapfile, software.driver.name + software.part + PATH_SEPARATOR + software.shortname);
+                            selmenu_global.load_image(out tmp_bitmap, snapfile, software.driver.name + software.part + g.PATH_SEPARATOR + software.shortname);
                     }
 
                     m_cache.set_snapx_software(software);
@@ -2607,7 +2607,7 @@ namespace mame.ui
                 // loads the image if necessary
                 if (!m_cache.snapx_driver_is(driver) || !snapx_valid() || m_switch_image)
                 {
-                    emu_file snapfile = new emu_file(searchstr, OPEN_FLAG_READ);
+                    emu_file snapfile = new emu_file(searchstr, g.OPEN_FLAG_READ);
                     bitmap_argb32 tmp_bitmap;
 
                     selmenu_global.load_driver_image(out tmp_bitmap, snapfile, driver);
@@ -2664,7 +2664,7 @@ namespace mame.ui
                         origx1 + ((middle - title_size) * 0.5f), origy1 + ui().box_tb_border(),
                         origx1 + ((middle + title_size) * 0.5f), origy1 + ui().box_tb_border() + line_height,
                         bgcolor, new rgb_t(43, 43, 43),
-                        hilight_main_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
+                        hilight_main_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1));
             }
 
             float unused1;
@@ -2711,7 +2711,7 @@ namespace mame.ui
                 int screen_width = machine().render().ui_target().width();
                 int screen_height = machine().render().ui_target().height();
 
-                if ((machine().render().ui_target().orientation() & ORIENTATION_SWAP_XY) != 0)
+                if ((machine().render().ui_target().orientation() & g.ORIENTATION_SWAP_XY) != 0)
                     std.swap(ref screen_height, ref screen_width);
 
                 int panel_width_pixel = (int)(panel_width * screen_width);
@@ -2751,7 +2751,7 @@ namespace mame.ui
                     dest_bitmap = new bitmap_argb32();
                     dest_bitmap.allocate(dest_xPixel, dest_yPixel);
                     render_color color = new render_color() { a = 1.0f, r = 1.0f, g = 1.0f, b = 1.0f };
-                    rendutil_global.render_resample_argb_bitmap_hq(dest_bitmap, tmp_bitmap, color, true);
+                    g.render_resample_argb_bitmap_hq(dest_bitmap, tmp_bitmap, color, true);
                 }
                 else
                 {
@@ -2795,7 +2795,7 @@ namespace mame.ui
                 float y2 = origy2 - ui().box_tb_border() - line_height;
 
                 // apply texture
-                container().add_quad(x1, y1, x2, y2, rgb_t.white(), m_cache.snapx_texture(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_quad(x1, y1, x2, y2, rgb_t.white(), m_cache.snapx_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
             }
         }
 
@@ -2821,13 +2821,13 @@ namespace mame.ui
                     switch (record.substatus())
                     {
                     case media_auditor.audit_substatus.FOUND_BAD_CHECKSUM:
-                        message = __("incorrect checksum");
+                        message = g.__("incorrect checksum");
                         break;
                     case media_auditor.audit_substatus.FOUND_WRONG_LENGTH:
-                        message = __("incorrect length");
+                        message = g.__("incorrect length");
                         break;
                     case media_auditor.audit_substatus.NOT_FOUND:
-                        message = __("not found");
+                        message = g.__("not found");
                         break;
                     case media_auditor.audit_substatus.GOOD:
                     case media_auditor.audit_substatus.GOOD_NEEDS_REDUMP:
@@ -2839,15 +2839,15 @@ namespace mame.ui
                     }
 
                     if (record.shared_device() != null)
-                        str += string.Format(__("{0} ({1}) - {2}\n"), record.name(), record.shared_device().shortname(), message);
+                        str += string.Format(g.__("{0} ({1}) - {2}\n"), record.name(), record.shared_device().shortname(), message);
                     else
-                        str += string.Format(__("{0} - {1}\n"), record.name(), message);
+                        str += string.Format(g.__("{0} - {1}\n"), record.name(), message);
                 }
 
                 str += '\n';
             }
 
-            str += __("Press any key to continue.");
+            str += g.__("Press any key to continue.");
         }
 
 
@@ -2868,7 +2868,7 @@ namespace mame.ui
                     else
                         moptions.set_value(emu_options.OPTION_SOFTWARENAME, string.Format("{0}:{1}", swinfo.listname, swinfo.shortname), emu_options.OPTION_PRIORITY_CMDLINE);
 
-                    moptions.set_value(emu_options.OPTION_SNAPNAME, string.Format("{0}{1}{2}", swinfo.listname, PATH_SEPARATOR, swinfo.shortname), emu_options.OPTION_PRIORITY_CMDLINE);
+                    moptions.set_value(emu_options.OPTION_SNAPNAME, string.Format("{0}{1}{2}", swinfo.listname, g.PATH_SEPARATOR, swinfo.shortname), emu_options.OPTION_PRIORITY_CMDLINE);
                 }
                 reselect_last.set_software(driver, swinfo);
             }

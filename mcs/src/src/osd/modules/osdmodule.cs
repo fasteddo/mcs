@@ -13,7 +13,7 @@ namespace mame
 
 
     // ======================> osd_module
-    public abstract class osd_module : global_object
+    public abstract class osd_module
     {
         string m_name;
         string m_type;
@@ -41,7 +41,7 @@ namespace mame
     }
 
 
-    class osd_module_manager : global_object
+    class osd_module_manager
     {
         //static const int MAX_MODULES = 64;
 
@@ -73,7 +73,7 @@ namespace mame
             osd_module module = mod_type();
             if (module.probe())
             {
-                osd_printf_verbose("===> registered module {0} {1}\n", module.name(), module.type());
+                g.osd_printf_verbose("===> registered module {0} {1}\n", module.name(), module.type());
 
                 //int i;
                 //for (i = 0; m_modules[i] != NULL; i++)
@@ -83,7 +83,7 @@ namespace mame
             }
             else
             {
-                osd_printf_verbose("===> not supported {0} {1}\n", module.name(), module.type());
+                g.osd_printf_verbose("===> not supported {0} {1}\n", module.name(), module.type());
                 //module->~osd_module();
                 //global_free(module);
             }

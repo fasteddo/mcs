@@ -50,7 +50,7 @@ namespace mame
     public class chd_file
     {
         // file characteristics
-        util_.core_file m_file;             // handle to the open core file
+        util.core_file m_file;             // handle to the open core file
 
 
         // construction/destruction
@@ -153,7 +153,7 @@ namespace mame
          *
          * @return  A chd_error.
          */
-        public chd_error open(util_.core_file file, bool writeable = false, chd_file parent = null)
+        public chd_error open(util.core_file file, bool writeable = false, chd_file parent = null)
         {
             throw new emu_unimplemented();
         }

@@ -17,7 +17,7 @@ namespace mame
         const int _maxout = 1;
 
 
-        double DEFAULT_555_BLEED_R { get { return RES_M(10); } }
+        double DEFAULT_555_BLEED_R { get { return g.RES_M(10); } }
 
 
         bool DSD_555_ASTBL__RESET { get { return DISCRETE_INPUT(0) == 0; } }
@@ -394,7 +394,7 @@ namespace mame
         const int _maxout = 1;
 
 
-        double DEFAULT_555_BLEED_R { get { return RES_M(10); } }
+        double DEFAULT_555_BLEED_R { get { return g.RES_M(10); } }
 
 
         double DSD_555_CC__RESET { get { return (!(DISCRETE_INPUT(0) != 0)) ? 1 : 0; } }
@@ -497,7 +497,7 @@ namespace mame
                     case 0:
                         break;
                     case 3:
-                        r_discharge = RES_2_PARALLEL(DSD_555_CC__RDIS, DSD_555_CC__RGND);
+                        r_discharge = g.RES_2_PARALLEL(DSD_555_CC__RDIS, DSD_555_CC__RGND);
                         goto case 2;  //[[fallthrough]];
                     case 2:
                         r_charge = DSD_555_CC__RGND;
@@ -510,12 +510,12 @@ namespace mame
                         r_discharge = DSD_555_CC__RDIS;
                         break;
                     case 6:
-                        r_charge = RES_2_PARALLEL(DSD_555_CC__RBIAS, DSD_555_CC__RGND);
+                        r_charge = g.RES_2_PARALLEL(DSD_555_CC__RBIAS, DSD_555_CC__RGND);
                         break;
                     case 7:
                         r_temp   = DSD_555_CC__RBIAS + DSD_555_CC__RDIS;
-                        r_charge = RES_2_PARALLEL(r_temp, DSD_555_CC__RGND);
-                        r_discharge = RES_2_PARALLEL(DSD_555_CC__RGND, DSD_555_CC__RDIS);
+                        r_charge = g.RES_2_PARALLEL(r_temp, DSD_555_CC__RGND);
+                        r_discharge = g.RES_2_PARALLEL(DSD_555_CC__RGND, DSD_555_CC__RDIS);
                         break;
                 }
 
@@ -736,7 +736,7 @@ namespace mame
                     case 0:
                         break;
                     case 3:
-                        r_discharge = RES_2_PARALLEL(DSD_555_CC__RDIS, DSD_555_CC__RGND);
+                        r_discharge = g.RES_2_PARALLEL(DSD_555_CC__RDIS, DSD_555_CC__RGND);
                         goto case 2;  //[[fallthrough]];
                     case 2:
                         r_charge = DSD_555_CC__RGND;
@@ -754,18 +754,18 @@ namespace mame
                         r_discharge = DSD_555_CC__RDIS;
                         break;
                     case 6:
-                        r_charge = RES_2_PARALLEL(DSD_555_CC__RBIAS, DSD_555_CC__RGND);
+                        r_charge = g.RES_2_PARALLEL(DSD_555_CC__RBIAS, DSD_555_CC__RGND);
                         vi      = i * r_charge;
-                        v_bias  = info.v_pos * RES_VOLTAGE_DIVIDER(DSD_555_CC__RGND, DSD_555_CC__RBIAS);
+                        v_bias  = info.v_pos * g.RES_VOLTAGE_DIVIDER(DSD_555_CC__RGND, DSD_555_CC__RBIAS);
                         break;
                     case 7:
                         r_temp   = DSD_555_CC__RBIAS + DSD_555_CC__RDIS;
-                        r_charge = RES_2_PARALLEL(r_temp, DSD_555_CC__RGND);
+                        r_charge = g.RES_2_PARALLEL(r_temp, DSD_555_CC__RGND);
                         r_temp  += DSD_555_CC__RGND;
                         r_temp   = DSD_555_CC__RGND / r_temp;   /* now has voltage divider ratio, not resistance */
                         vi      = i * DSD_555_CC__RBIAS * r_temp;
                         v_bias  = info.v_pos * r_temp;
-                        r_discharge = RES_2_PARALLEL(DSD_555_CC__RGND, DSD_555_CC__RDIS);
+                        r_discharge = g.RES_2_PARALLEL(DSD_555_CC__RGND, DSD_555_CC__RDIS);
                         break;
                 }
             }

@@ -14,35 +14,35 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    public class software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB> : software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool_constant_false, bool_constant_false>
-        where int__SrcShiftR : int_constant, new()
-        where int__SrcShiftG : int_constant, new()
-        where int__SrcShiftB : int_constant, new()
-        where int__DstShiftR : int_constant, new()
-        where int__DstShiftG : int_constant, new()
-        where int__DstShiftB : int_constant, new()
+    public class software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB> : software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool_const_false, bool_const_false>
+        where int__SrcShiftR : int_const, new()
+        where int__SrcShiftG : int_const, new()
+        where int__SrcShiftB : int_const, new()
+        where int__DstShiftR : int_const, new()
+        where int__DstShiftG : int_const, new()
+        where int__DstShiftB : int_const, new()
     { }
 
-    public class software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool__NoDestRead> : software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool__NoDestRead, bool_constant_false>
-        where int__SrcShiftR : int_constant, new()
-        where int__SrcShiftG : int_constant, new()
-        where int__SrcShiftB : int_constant, new()
-        where int__DstShiftR : int_constant, new()
-        where int__DstShiftG : int_constant, new()
-        where int__DstShiftB : int_constant, new()
-        where bool__NoDestRead : bool_constant, new()
+    public class software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool__NoDestRead> : software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool__NoDestRead, bool_const_false>
+        where int__SrcShiftR : int_const, new()
+        where int__SrcShiftG : int_const, new()
+        where int__SrcShiftB : int_const, new()
+        where int__DstShiftR : int_const, new()
+        where int__DstShiftG : int_const, new()
+        where int__DstShiftB : int_const, new()
+        where bool__NoDestRead : bool_const, new()
     { }
 
     //template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
-    public class software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool__NoDestRead, bool__BilinearFilter> : global_object
-        where int__SrcShiftR : int_constant, new()
-        where int__SrcShiftG : int_constant, new()
-        where int__SrcShiftB : int_constant, new()
-        where int__DstShiftR : int_constant, new()
-        where int__DstShiftG : int_constant, new()
-        where int__DstShiftB : int_constant, new()
-        where bool__NoDestRead : bool_constant, new()
-        where bool__BilinearFilter : bool_constant, new()
+    public class software_renderer<_PixelType, int__SrcShiftR, int__SrcShiftG, int__SrcShiftB, int__DstShiftR, int__DstShiftG, int__DstShiftB, bool__NoDestRead, bool__BilinearFilter>
+        where int__SrcShiftR : int_const, new()
+        where int__SrcShiftG : int_const, new()
+        where int__SrcShiftB : int_const, new()
+        where int__DstShiftR : int_const, new()
+        where int__DstShiftG : int_const, new()
+        where int__DstShiftB : int_const, new()
+        where bool__NoDestRead : bool_const, new()
+        where bool__BilinearFilter : bool_const, new()
     {
         static readonly int _SrcShiftR = new int__SrcShiftR().value;
         static readonly int _SrcShiftG = new int__SrcShiftG().value;
@@ -53,7 +53,52 @@ namespace mame
         static readonly bool _NoDestRead = new bool__NoDestRead().value;
         static readonly bool _BilinearFilter = new bool__BilinearFilter().value;
 
-        static readonly int _bpp = sizeof_(typeof(_PixelType)) * 8;
+
+        interface PixelType_operations
+        {
+            PointerU8 GetPointer(PointerU8 dstdata, int offset);
+            u32 GetValue(PointerU8 dest);
+            void SetValue(PointerU8 dest, u32 value);
+            void SetValueAndIncrement(PointerU8 dest, u32 value);
+            void Increment(PointerU8 dest);
+        }
+
+        class PixelType_operations_u8 : PixelType_operations
+        {
+            public PointerU8 GetPointer(PointerU8 dstdata, int offset) { return new PointerU8(dstdata, offset); }
+            public u32 GetValue(PointerU8 dest) { return dest[0]; }
+            public void SetValue(PointerU8 dest, u32 value) { dest[0] = (u8)value; }
+            public void SetValueAndIncrement(PointerU8 dest, u32 value) { dest[0] = (u8)value; dest++; }
+            public void Increment(PointerU8 dest) { dest++; }
+        }
+
+        class PixelType_operations_u16 : PixelType_operations
+        {
+            public PointerU8 GetPointer(PointerU8 dstdata, int offset) { return new PointerU16(dstdata, offset); }
+            public u32 GetValue(PointerU8 dest) { return ((PointerU16)dest)[0]; }
+            public void SetValue(PointerU8 dest, u32 value) { var dest16 = (PointerU16)dest; dest16[0] = (u16)value; }
+            public void SetValueAndIncrement(PointerU8 dest, u32 value) { var dest16 = (PointerU16)dest; dest16[0] = (u16)value; dest16++; }
+            public void Increment(PointerU8 dest) { var dest16 = (PointerU16)dest; dest16++; }
+        }
+
+        class PixelType_operations_u32 : PixelType_operations
+        {
+            public PointerU8 GetPointer(PointerU8 dstdata, int offset) { return new PointerU32(dstdata, offset); }
+            public u32 GetValue(PointerU8 dest) { return ((PointerU32)dest)[0]; }
+            public void SetValue(PointerU8 dest, u32 value) { var dest32 = (PointerU32)dest; dest32[0] = value; }
+            public void SetValueAndIncrement(PointerU8 dest, u32 value) { var dest32 = (PointerU32)dest; dest32[0] = (u32)value; dest32++; }
+            public void Increment(PointerU8 dest) { var dest32 = (PointerU32)dest; dest32++; }
+        }
+
+        static PixelType_operations GetPixelType_operations()
+        {
+            if      (typeof(_PixelType) == typeof(u8))  return new PixelType_operations_u8();
+            else if (typeof(_PixelType) == typeof(u16)) return new PixelType_operations_u16();
+            else if (typeof(_PixelType) == typeof(u32)) return new PixelType_operations_u32();
+            else throw new emu_unimplemented();
+        }
+
+        static readonly PixelType_operations ops = GetPixelType_operations();
 
 
         // internal structs
@@ -76,7 +121,7 @@ namespace mame
         static bool is_opaque(float alpha) { return alpha >= (_NoDestRead ? 0.5f : 1.0f); }
         static bool is_transparent(float alpha) { return alpha < (_NoDestRead ? 0.5f : 0.0001f); }
         static rgb_t apply_intensity(int intensity, rgb_t color) { return color.scale8((u8)intensity); }
-        static float round_nearest(float f) { return floor(f + 0.5f); }
+        static float round_nearest(float f) { return std.floor(f + 0.5f); }
 
 
         // destination pixels are written based on the values of the template parameters
@@ -367,44 +412,15 @@ namespace mame
         //-------------------------------------------------
         static void draw_aa_pixel(PointerU8 dstdata, u32 pitch, int x, int y, u32 col)  //static inline void draw_aa_pixel(_PixelType *dstdata, u32 pitch, int x, int y, u32 col)
         {
-            //_PixelType *dest = dstdata + y * pitch + x;
-            PointerU8 dest8 = null;
-            PointerU16 dest16 = null;
-            PointerU32 dest32 = null;
-            switch (_bpp)
-            {
-                case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + x); break;
-                case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + x); break;
-                case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + x); break;
-                default: throw new emu_fatalerror("draw_aa_pixel() - unknown bpp - {0}\n", _bpp);
-            }
-
-            //u32 dpix = _NoDestRead ? 0 : *dest;
-            u32 dpix;
-            switch (_bpp)
-            {
-                case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
-                case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
-                case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
-                default: throw new emu_fatalerror("draw_aa_pixel() - unknown bpp - {0}\n", _bpp);
-            }
-
-            u32 dr = source32_r(col) + dest_r32(dpix);
-            u32 dg = source32_g(col) + dest_g32(dpix);
-            u32 db = source32_b(col) + dest_b32(dpix);
-
-            dr = (u32)((dr | -(dr >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR));
-            dg = (u32)((dg | -(dg >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG));
-            db = (u32)((db | -(db >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB));
-
-            //*dest = dest_assemble_rgb(dr, dg, db);
-            switch (_bpp)
-            {
-                case 8:  dest8[0] = dest_assemble_rgb8(dr, dg, db); break;
-                case 16: dest16[0] = dest_assemble_rgb16(dr, dg, db); break;
-                case 32: dest32[0] = dest_assemble_rgb32(dr, dg, db); break;
-                default: throw new emu_fatalerror("draw_aa_pixel() - unknown bpp - {0}\n", _bpp);
-            }
+            PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + x);  //_PixelType *dest = dstdata + y * pitch + x;
+            u32 dpix = _NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = _NoDestRead ? 0 : *dest;
+            u32 dr = source32_r(col) + dest_r32(dpix);  //u32 dr = source32_r(col) + dest_r(dpix);
+            u32 dg = source32_g(col) + dest_g32(dpix);  //u32 dg = source32_g(col) + dest_g(dpix);
+            u32 db = source32_b(col) + dest_b32(dpix);  //u32 db = source32_b(col) + dest_b(dpix);
+            dr = (u32)(dr | -(dr >> (8 - _SrcShiftR))) & ((u32)0xff >> _SrcShiftR);
+            dg = (u32)(dg | -(dg >> (8 - _SrcShiftG))) & ((u32)0xff >> _SrcShiftG);
+            db = (u32)(db | -(db >> (8 - _SrcShiftB))) & ((u32)0xff >> _SrcShiftB);
+            ops.SetValue(dest, dest_assemble_rgb32(dr, dg, db));  //*dest = dest_assemble_rgb(dr, dg, db);
         }
 
 
@@ -424,7 +440,7 @@ namespace mame
             int y2 = (int)(prim.bounds.y1 * 65536.0f);
 
             // handle color and intensity
-            u32 col = new rgb_t((byte)(255.0f * prim.color.r * prim.color.a), (byte)(255.0f * prim.color.g * prim.color.a), (byte)(255.0f * prim.color.b * prim.color.a));
+            u32 col = new rgb_t((u8)(255.0f * prim.color.r * prim.color.a), (u8)(255.0f * prim.color.g * prim.color.a), (u8)(255.0f * prim.color.b * prim.color.a));
 
             if (render_global.PRIMFLAG_GET_ANTIALIAS(prim.flags))
             {
@@ -438,17 +454,17 @@ namespace mame
                     beam = 0x00010000;
 
                 // draw an anti-aliased line
-                int dx = Math.Abs(x1 - x2);
-                int dy = Math.Abs(y1 - y2);
+                int dx = std.abs(x1 - x2);
+                int dy = std.abs(y1 - y2);
                 if (dx >= dy)
                 {
                     int sx = ((x1 <= x2) ? 1 : -1);
-                    int sy = (dy == 0) ? 0 : eminline_global.div_32x32_shift(y2 - y1, dx, 16);
+                    int sy = (dy == 0) ? 0 : g.div_32x32_shift(y2 - y1, dx, 16);
                     if (sy < 0)
                         dy--;
                     x1 >>= 16;
                     int xx = x2 >> 16;
-                    int bwidth = eminline_global.mul_32x32_hi(beam << 4, (int)s_cosine_table[std.abs(sy) >> 5]);
+                    int bwidth = g.mul_32x32_hi(beam << 4, (int)s_cosine_table[std.abs(sy) >> 5]);
                     y1 -= bwidth >> 1; // start back half the diameter
                     for (;;)
                     {
@@ -479,12 +495,12 @@ namespace mame
                 else
                 {
                     int sy = ((y1 <= y2) ? 1: -1);
-                    int sx = (dx == 0) ? 0 : eminline_global.div_32x32_shift(x2 - x1, dy, 16);
+                    int sx = (dx == 0) ? 0 : g.div_32x32_shift(x2 - x1, dy, 16);
                     if (sx < 0)
                         dx--;
                     y1 >>= 16;
                     int yy = y2 >> 16;
-                    int bwidth = eminline_global.mul_32x32_hi(beam << 4, (int)s_cosine_table[std.abs(sx) >> 5]);
+                    int bwidth = g.mul_32x32_hi(beam << 4, (int)s_cosine_table[std.abs(sx) >> 5]);
                     x1 -= bwidth >> 1; // start back half the width
                     for (;;)
                     {
@@ -573,8 +589,8 @@ namespace mame
         {
             render_bounds fpos = prim.bounds;
 
-            assert(fpos.x0 <= fpos.x1);
-            assert(fpos.y0 <= fpos.y1);
+            g.assert(fpos.x0 <= fpos.x1);
+            g.assert(fpos.y0 <= fpos.y1);
 
             // clamp to integers
             s32 startx = (s32)round_nearest(fpos.x0);
@@ -597,10 +613,10 @@ namespace mame
                 return;
 
             // only support alpha and "none" blendmodes
-            assert(render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_NONE || render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_ALPHA);
+            g.assert(render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == g.BLENDMODE_NONE || render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == g.BLENDMODE_ALPHA);
 
             // fast case: no alpha
-            if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_NONE || is_opaque(prim.color.a))
+            if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == g.BLENDMODE_NONE || is_opaque(prim.color.a))
             {
                 u32 r = (u32)(256.0f * prim.color.r);
                 u32 g = (u32)(256.0f * prim.color.g);
@@ -608,38 +624,19 @@ namespace mame
                 u32 pix;
 
                 // clamp R,G,B to 0-256 range
-                if (r > 0xff) { if ((int)r < 0) r = 0; else r = 0xff; }
-                if (g > 0xff) { if ((int)g < 0) g = 0; else g = 0xff; }
-                if (b > 0xff) { if ((int)b < 0) b = 0; else b = 0xff; }
+                if (r > 0xff) { if ((s32)r < 0) r = 0; else r = 0xff; }
+                if (g > 0xff) { if ((s32)g < 0) g = 0; else g = 0xff; }
+                if (b > 0xff) { if ((s32)b < 0) b = 0; else b = 0xff; }
                 pix = dest_rgb_to_pixel32(r, g, b);
 
                 // loop over rows
                 for (s32 y = starty; y < endy; y++)
                 {
-                    //_PixelType *dest = dstdata + y * pitch + startx;
-                    PointerU8 dest8 = null;
-                    PointerU16 dest16 = null;
-                    PointerU32 dest32 = null;
-                    switch (_bpp)
-                    {
-                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + startx); break;
-                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + startx); break;
-                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + startx); break;
-                        default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", _bpp);
-                    }
+                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + startx);  //_PixelType *dest = dstdata + y * pitch + startx;
 
                     // loop over cols
                     for (s32 x = startx; x < endx; x++)
-                    {
-                        //*dest++ = pix;
-                        switch (_bpp)
-                        {
-                            case 8:  dest8[0] = (u8)pix;  dest8++;  break;
-                            case 16: dest16[0] = (u16)pix;  dest16++;  break;
-                            case 32: dest32[0] = pix;  dest32++;  break;
-                            default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", _bpp);
-                        }
-                    }
+                        ops.SetValueAndIncrement(dest, pix);  //*dest++ = pix;
                 }
             }
 
@@ -668,43 +665,16 @@ namespace mame
                 // loop over rows
                 for (s32 y = starty; y < endy; y++)
                 {
-                    //_PixelType *dest = dstdata + y * pitch + startx;
-                    PointerU8 dest8 = null;
-                    PointerU16 dest16 = null;
-                    PointerU32 dest32 = null;
-                    switch (_bpp)
-                    {
-                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + startx); break;
-                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + startx); break;
-                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + startx); break;
-                        default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", _bpp);
-                    }
+                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + startx);  //_PixelType *dest = dstdata + y * pitch + startx;
 
                     // loop over cols
                     for (s32 x = startx; x < endx; x++)
                     {
-                        //u32 dpix = _NoDestRead ? 0 : *dest;
-                        u32 dpix;
-                        switch (_bpp)
-                        {
-                            case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
-                            case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
-                            case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
-                            default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", _bpp);
-                        }
-
+                        u32 dpix = _NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = _NoDestRead ? 0 : *dest;
                         u32 dr = (r + ((dpix & rmask) * inva)) & (rmask << 8);
                         u32 dg = (g + ((dpix & gmask) * inva)) & (gmask << 8);
                         u32 db = (b + ((dpix & bmask) * inva)) & (bmask << 8);
-
-                        //*dest++ = (dr | dg | db) >> 8;
-                        switch (_bpp)
-                        {
-                            case 8:  dest8[0] = (u8)((dr | dg | db) >> 8);  dest8++;  break;
-                            case 16: dest16[0] = (u16)((dr | dg | db) >> 8);  dest16++;  break;
-                            case 32: dest32[0] = (dr | dg | db) >> 8;  dest32++;  break;
-                            default: throw new emu_fatalerror("draw_rect() - unknown bpp - {0}\n", _bpp);
-                        }
+                        ops.SetValueAndIncrement(dest, (dr | dg | db) >> 8);  //*dest++ = (dr | dg | db) >> 8;
                     }
                 }
             }
@@ -722,7 +692,7 @@ namespace mame
         static void draw_quad_palette16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_none(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data &setup)
         {
             // ensure all parameters are valid
-            assert(prim.texture.palette != null);
+            g.assert(prim.texture.palette != null);
 
             // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
@@ -730,18 +700,7 @@ namespace mame
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
-                    //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    PointerU8 dest8 = null;
-                    PointerU16 dest16 = null;
-                    PointerU32 dest32 = null;
-                    switch (_bpp)
-                    {
-                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
-                    }
-
+                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -749,16 +708,7 @@ namespace mame
                     for (s32 x = setup.startx; x < setup.endx; x++)
                     {
                         u32 pix = get_texel_palette16(prim.texture, curu, curv);
-
-                        //*dest++ = source32_to_dest(pix);
-                        switch (_bpp)
-                        {
-                            case 8:  dest8[0] = source32_to_dest8(pix);  dest8++;  break;
-                            case 16: dest16[0] = source32_to_dest16(pix);  dest16++;  break;
-                            case 32: dest32[0] = source32_to_dest32(pix);  dest32++;  break;
-                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
-                        }
-
+                        ops.SetValueAndIncrement(dest, source32_to_dest32(pix));  //*dest++ = source32_to_dest(pix);
                         curu += setup.dudx;
                         curv += setup.dvdx;
                     }
@@ -779,18 +729,7 @@ namespace mame
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
-                    //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    PointerU8 dest8 = null;
-                    PointerU16 dest16 = null;
-                    PointerU32 dest32 = null;
-                    switch (_bpp)
-                    {
-                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
-                    }
-
+                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -802,15 +741,7 @@ namespace mame
                         u32 g = (source32_g(pix) * sg) >> 8;
                         u32 b = (source32_b(pix) * sb) >> 8;
 
-                        //*dest++ = dest_assemble_rgb(r, g, b);
-                        switch (_bpp)
-                        {
-                            case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
-                            case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
-                            case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
-                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
-                        }
-
+                        ops.SetValueAndIncrement(dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                         curu += setup.dudx;
                         curv += setup.dvdx;
                     }
@@ -833,18 +764,7 @@ namespace mame
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
-                    //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    PointerU8 dest8 = null;
-                    PointerU16 dest16 = null;
-                    PointerU32 dest32 = null;
-                    switch (_bpp)
-                    {
-                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
-                    }
-
+                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -853,29 +773,12 @@ namespace mame
                     {
                         u32 pix = get_texel_palette16(prim.texture, curu, curv);
 
-                        //u32 dpix = _NoDestRead ? 0 : *dest;
-                        u32 dpix;
-                        switch (_bpp)
-                        {
-                            case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
-                            case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
-                            case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
-                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
-                        }
-
+                        u32 dpix = _NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = _NoDestRead ? 0 : *dest;
                         u32 r = (source32_r(pix) * sr + dest_r32(dpix) * invsa) >> 8;
                         u32 g = (source32_g(pix) * sg + dest_g32(dpix) * invsa) >> 8;
                         u32 b = (source32_b(pix) * sb + dest_b32(dpix) * invsa) >> 8;
 
-                        //*dest++ = dest_assemble_rgb(r, g, b);
-                        switch (_bpp)
-                        {
-                            case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
-                            case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
-                            case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
-                            default: throw new emu_fatalerror("draw_quad_palette16_none() - unknown bpp - {0}\n", _bpp);
-                        }
-
+                        ops.SetValueAndIncrement(dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                         curu += setup.dudx;
                         curv += setup.dvdx;
                     }
@@ -890,7 +793,7 @@ namespace mame
         static void draw_quad_palette16_add(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_add(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
             // ensure all parameters are valid
-            assert(prim.texture.palette != null);
+            g.assert(prim.texture.palette != null);
 
             throw new emu_unimplemented();
         }
@@ -939,18 +842,7 @@ namespace mame
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
-                    //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    PointerU8 dest8 = null;
-                    PointerU16 dest16 = null;
-                    PointerU32 dest32 = null;
-                    switch (_bpp)
-                    {
-                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                    }
-
+                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -958,19 +850,10 @@ namespace mame
                     if (palbase == null)
                     {
                         // loop over cols
-                        for (int x = setup.startx; x < setup.endx; x++)
+                        for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_rgb32(prim.texture, curu, curv);
-
-                            //*dest++ = source32_to_dest(pix);
-                            switch (_bpp)
-                            {
-                                case 8:  dest8[0] = source32_to_dest8(pix);  dest8++;  break;
-                                case 16: dest16[0] = source32_to_dest16(pix);  dest16++;  break;
-                                case 32: dest32[0] = source32_to_dest32(pix);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            ops.SetValueAndIncrement(dest, source32_to_dest32(pix));  //*dest++ = source32_to_dest(pix);
                             curu += setup.dudx;
                             curv += setup.dvdx;
                         }
@@ -986,16 +869,7 @@ namespace mame
                             u32 r = palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR;
                             u32 g = palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG;
                             u32 b = palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB;
-
-                            //*dest++ = dest_assemble_rgb(r, g, b);
-                            switch (_bpp)
-                            {
-                                case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
-                                case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
-                                case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            ops.SetValueAndIncrement(dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                             curu += setup.dudx;
                             curv += setup.dvdx;
                         }
@@ -1018,18 +892,7 @@ namespace mame
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
-                    //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    PointerU8 dest8 = null;
-                    PointerU16 dest16 = null;
-                    PointerU32 dest32 = null;
-                    switch (_bpp)
-                    {
-                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                    }
-
+                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1044,15 +907,7 @@ namespace mame
                             u32 g = (source32_g(pix) * sg) >> 8;
                             u32 b = (source32_b(pix) * sb) >> 8;
 
-                            //*dest++ = dest_assemble_rgb(r, g, b);
-                            switch (_bpp)
-                            {
-                                case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
-                                case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
-                                case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            ops.SetValueAndIncrement(dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                             curu += setup.dudx;
                             curv += setup.dvdx;
                         }
@@ -1069,15 +924,7 @@ namespace mame
                             u32 g = (palbase[(int)((pix >> 8) & 0xff)] * sg) >> (8 + _SrcShiftG);
                             u32 b = (palbase[(int)((pix >> 0) & 0xff)] * sb) >> (8 + _SrcShiftB);
 
-                            //*dest++ = dest_assemble_rgb(r, g, b);
-                            switch (_bpp)
-                            {
-                                case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
-                                case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
-                                case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            ops.SetValueAndIncrement(dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                             curu += setup.dudx;
                             curv += setup.dvdx;
                         }
@@ -1102,18 +949,7 @@ namespace mame
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
-                    //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    PointerU8 dest8 = null;
-                    PointerU16 dest16 = null;
-                    PointerU32 dest32 = null;
-                    switch (_bpp)
-                    {
-                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                    }
-
+                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1124,30 +960,12 @@ namespace mame
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_rgb32(prim.texture, curu, curv);
-
-                            //u32 dpix = _NoDestRead ? 0 : *dest;
-                            u32 dpix;
-                            switch (_bpp)
-                            {
-                                case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
-                                case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
-                                case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            u32 dpix = _NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = _NoDestRead ? 0 : *dest;
                             u32 r = (source32_r(pix) * sr + dest_r32(dpix) * invsa) >> 8;
                             u32 g = (source32_g(pix) * sg + dest_g32(dpix) * invsa) >> 8;
                             u32 b = (source32_b(pix) * sb + dest_b32(dpix) * invsa) >> 8;
 
-                            //*dest++ = dest_assemble_rgb(r, g, b);
-                            switch (_bpp)
-                            {
-                                case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
-                                case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
-                                case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            ops.SetValueAndIncrement(dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                             curu += setup.dudx;
                             curv += setup.dvdx;
                         }
@@ -1160,30 +978,12 @@ namespace mame
                         for (s32 x = setup.startx; x < setup.endx; x++)
                         {
                             u32 pix = get_texel_rgb32(prim.texture, curu, curv);
-
-                            //u32 dpix = _NoDestRead ? 0 : *dest;
-                            u32 dpix;
-                            switch (_bpp)
-                            {
-                                case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
-                                case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
-                                case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            u32 dpix = _NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = _NoDestRead ? 0 : *dest;
                             u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * sr + dest_r32(dpix) * invsa) >> 8;
                             u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * sg + dest_g32(dpix) * invsa) >> 8;
                             u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * sb + dest_b32(dpix) * invsa) >> 8;
 
-                            //*dest++ = dest_assemble_rgb(r, g, b);
-                            switch (_bpp)
-                            {
-                                case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  dest8++;  break;
-                                case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  dest16++;  break;
-                                case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_rgb32() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            ops.SetValueAndIncrement(dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
                             curu += setup.dudx;
                             curv += setup.dvdx;
                         }
@@ -1231,18 +1031,7 @@ namespace mame
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
-                    //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    PointerU8 dest8 = null;
-                    PointerU16 dest16 = null;
-                    PointerU32 dest32 = null;
-                    switch (_bpp)
-                    {
-                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                    }
-
+                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1256,40 +1045,15 @@ namespace mame
                             u32 ta = pix >> 24;
                             if (ta != 0)
                             {
-                                //u32 dpix = _NoDestRead ? 0 : *dest;
-                                u32 dpix;
-                                switch (_bpp)
-                                {
-                                    case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
-                                    case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
-                                    case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                                }
-
+                                u32 dpix = _NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = _NoDestRead ? 0 : *dest;
                                 u32 invta = 0x100 - ta;
                                 u32 r = (source32_r(pix) * ta + dest_r32(dpix) * invta) >> 8;
                                 u32 g = (source32_g(pix) * ta + dest_g32(dpix) * invta) >> 8;
                                 u32 b = (source32_b(pix) * ta + dest_b32(dpix) * invta) >> 8;
-
-                                //*dest = dest_assemble_rgb(r, g, b);
-                                switch (_bpp)
-                                {
-                                    case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  break;
-                                    case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  break;
-                                    case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                                }
+                                ops.SetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
                             }
 
-                            //dest++;
-                            switch (_bpp)
-                            {
-                                case 8:  dest8++;  break;
-                                case 16: dest16++;  break;
-                                case 32: dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            ops.Increment(dest);  //dest++;
                             curu += setup.dudx;
                             curv += setup.dvdx;
                         }
@@ -1305,40 +1069,16 @@ namespace mame
                             u32 ta = pix >> 24;
                             if (ta != 0)
                             {
-                                //u32 dpix = _NoDestRead ? 0 : *dest;
-                                u32 dpix;
-                                switch (_bpp)
-                                {
-                                    case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
-                                    case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
-                                    case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                                }
-
+                                u32 dpix = _NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = _NoDestRead ? 0 : *dest;
                                 u32 invta = 0x100 - ta;
                                 u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * ta + dest_r32(dpix) * invta) >> 8;
                                 u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * ta + dest_g32(dpix) * invta) >> 8;
                                 u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * ta + dest_b32(dpix) * invta) >> 8;
 
-                                //*dest = dest_assemble_rgb(r, g, b);
-                                switch (_bpp)
-                                {
-                                    case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  break;
-                                    case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  break;
-                                    case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                                }
+                                ops.SetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
                             }
 
-                            //dest++;
-                            switch (_bpp)
-                            {
-                                case 8:  dest8++;  break;
-                                case 16: dest16++;  break;
-                                case 32: dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            ops.Increment(dest);  //dest++;
                             curu += setup.dudx;
                             curv += setup.dvdx;
                         }
@@ -1363,18 +1103,7 @@ namespace mame
                 // loop over rows
                 for (s32 y = setup.starty; y < setup.endy; y++)
                 {
-                    //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    PointerU8 dest8 = null;
-                    PointerU16 dest16 = null;
-                    PointerU32 dest32 = null;
-                    switch (_bpp)
-                    {
-                        case 8:  dest8 = new PointerU8(dstdata, y * (int)pitch + setup.startx); break;
-                        case 16: dest16 = new PointerU16(dstdata, y * (int)pitch + setup.startx); break;
-                        case 32: dest32 = new PointerU32(dstdata, y * (int)pitch + setup.startx); break;
-                        default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                    }
-
+                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
                     s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
                     s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1388,40 +1117,16 @@ namespace mame
                             u32 ta = (pix >> 24) * sa;
                             if (ta != 0)
                             {
-                                //u32 dpix = _NoDestRead ? 0 : *dest;
-                                u32 dpix;
-                                switch (_bpp)
-                                {
-                                    case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
-                                    case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
-                                    case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                                }
-
+                                u32 dpix = _NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = _NoDestRead ? 0 : *dest;
                                 u32 invsta = (0x10000 - ta) << 8;
                                 u32 r = (source32_r(pix) * sr * ta + dest_r32(dpix) * invsta) >> 24;
                                 u32 g = (source32_g(pix) * sg * ta + dest_g32(dpix) * invsta) >> 24;
                                 u32 b = (source32_b(pix) * sb * ta + dest_b32(dpix) * invsta) >> 24;
 
-                                //*dest = dest_assemble_rgb(r, g, b);
-                                switch (_bpp)
-                                {
-                                    case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  break;
-                                    case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  break;
-                                    case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                                }
+                                ops.SetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
                             }
 
-                            //dest++;
-                            switch (_bpp)
-                            {
-                                case 8:  dest8++;  break;
-                                case 16: dest16++;  break;
-                                case 32: dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            ops.Increment(dest);  //dest++;
                             curu += setup.dudx;
                             curv += setup.dvdx;
                         }
@@ -1437,40 +1142,16 @@ namespace mame
                             u32 ta = (pix >> 24) * sa;
                             if (ta != 0)
                             {
-                                //u32 dpix = _NoDestRead ? 0 : *dest;
-                                u32 dpix;
-                                switch (_bpp)
-                                {
-                                    case 8:  dpix = _NoDestRead ? 0U : dest8[0]; break;
-                                    case 16: dpix = _NoDestRead ? 0U : dest16[0]; break;
-                                    case 32: dpix = _NoDestRead ? 0U : dest32[0]; break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                                }
-
+                                u32 dpix = _NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = _NoDestRead ? 0 : *dest;
                                 u32 invsta = (0x10000 - ta) << 8;
                                 u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> _SrcShiftR) * sr * ta + dest_r32(dpix) * invsta) >> 24;
                                 u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> _SrcShiftG) * sg * ta + dest_g32(dpix) * invsta) >> 24;
                                 u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> _SrcShiftB) * sb * ta + dest_b32(dpix) * invsta) >> 24;
 
-                                //*dest = dest_assemble_rgb(r, g, b);
-                                switch (_bpp)
-                                {
-                                    case 8:  dest8[0] = dest_assemble_rgb8(r, g, b);  break;
-                                    case 16: dest16[0] = dest_assemble_rgb16(r, g, b);  break;
-                                    case 32: dest32[0] = dest_assemble_rgb32(r, g, b);  break;
-                                    default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                                }
+                                ops.SetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
                             }
 
-                            //dest++;
-                            switch (_bpp)
-                            {
-                                case 8:  dest8++;  break;
-                                case 16: dest16++;  break;
-                                case 32: dest32++;  break;
-                                default: throw new emu_fatalerror("draw_quad_argb32_alpha() - unknown bpp - {0}\n", _bpp);
-                            }
-
+                            ops.Increment(dest);  //dest++;
                             curu += setup.dudx;
                             curv += setup.dvdx;
                         }
@@ -1501,8 +1182,8 @@ namespace mame
         //-------------------------------------------------
         static void setup_and_draw_textured_quad(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void setup_and_draw_textured_quad(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
         {
-            assert(prim.bounds.x0 <= prim.bounds.x1);
-            assert(prim.bounds.y0 <= prim.bounds.y1);
+            g.assert(prim.bounds.x0 <= prim.bounds.x1);
+            g.assert(prim.bounds.y0 <= prim.bounds.y1);
 
             // determine U/V deltas
             float fdudx = (prim.texcoords.tr.u - prim.texcoords.tl.u) / (prim.bounds.x1 - prim.bounds.x0);
@@ -1550,40 +1231,40 @@ namespace mame
             u32 primflags = prim.flags & (render_global.PRIMFLAG_TEXFORMAT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK);
             //switch (prim.flags & (render_global.PRIMFLAG_TEXFORMAT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK))
             {
-                if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)) ||
-                    primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)))
+                if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE)) ||
+                    primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA)))
                     draw_quad_palette16_none(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ADD)))
                     draw_quad_palette16_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA)))
                     draw_quad_yuy16_none(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ADD)))
                     draw_quad_yuy16_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE)))
                     draw_quad_rgb32(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_RGB_MULTIPLY)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_RGB_MULTIPLY)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_RGB_MULTIPLY)) ||
+                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_RGB_MULTIPLY)))
                     draw_quad_rgb32_multiply(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ADD)))
                     draw_quad_rgb32_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA)))
                     draw_quad_argb32_alpha(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ADD)))
+                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ADD)))
                     draw_quad_argb32_add(prim, dstdata, pitch, setup);
 
                 else
-                    fatalerror("Unknown texformat({0})/blendmode({1}) combo\n", render_global.PRIMFLAG_GET_TEXFORMAT(prim.flags), render_global.PRIMFLAG_GET_BLENDMODE(prim.flags));
+                    g.fatalerror("Unknown texformat({0})/blendmode({1}) combo\n", render_global.PRIMFLAG_GET_TEXFORMAT(prim.flags), render_global.PRIMFLAG_GET_BLENDMODE(prim.flags));
             }
         }
 

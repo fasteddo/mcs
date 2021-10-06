@@ -139,8 +139,8 @@ namespace mame
         public static bool render_clip_quad(render_bounds bounds, render_bounds clip, render_quad_texuv texcoords)
         {
             /* ensure our assumptions about the bounds are correct */
-            global_object.assert(bounds.x0 <= bounds.x1);
-            global_object.assert(bounds.y0 <= bounds.y1);
+            g.assert(bounds.x0 <= bounds.x1);
+            g.assert(bounds.y0 <= bounds.y1);
 
             /* trivial reject */
             if (bounds.y1 < clip.y0)
@@ -219,7 +219,7 @@ namespace mame
             render_load_msdib - load a Microsoft DIB file
             into a bitmap
         -------------------------------------------------*/
-        public static void render_load_msdib(out bitmap_argb32 bitmap, util_.core_file file)
+        public static void render_load_msdib(out bitmap_argb32 bitmap, util.core_file file)
         {
             bitmap = new bitmap_argb32();
 
@@ -236,7 +236,7 @@ namespace mame
             render_load_jpeg - load a JPEG file into a
             bitmap
         -------------------------------------------------*/
-        public static void render_load_jpeg(out bitmap_argb32 bitmap, util_.core_file file)
+        public static void render_load_jpeg(out bitmap_argb32 bitmap, util.core_file file)
         {
             bitmap = new bitmap_argb32();
 
@@ -253,7 +253,7 @@ namespace mame
             render_load_png - load a PNG file into a
             bitmap
         -------------------------------------------------*/
-        public static bool render_load_png(out bitmap_argb32 bitmap, util_.core_file file, bool load_as_alpha_to_existing = false)
+        public static bool render_load_png(out bitmap_argb32 bitmap, util.core_file file, bool load_as_alpha_to_existing = false)
         {
             bitmap = new bitmap_argb32();
 
@@ -283,9 +283,9 @@ namespace mame
         -------------------------------------------------*/
         public static int orientation_swap_flips(int orientation)
         {
-            return (int)((orientation & global_object.ORIENTATION_SWAP_XY) |
-                        ((orientation & global_object.ORIENTATION_FLIP_X) != 0 ? global_object.ORIENTATION_FLIP_Y : 0) |
-                        ((orientation & global_object.ORIENTATION_FLIP_Y) != 0 ? global_object.ORIENTATION_FLIP_X : 0));
+            return (int)((orientation & g.ORIENTATION_SWAP_XY) |
+                        ((orientation & g.ORIENTATION_FLIP_X) != 0 ? g.ORIENTATION_FLIP_Y : 0) |
+                        ((orientation & g.ORIENTATION_FLIP_Y) != 0 ? g.ORIENTATION_FLIP_X : 0));
         }
 
 
@@ -296,7 +296,7 @@ namespace mame
         public static int orientation_reverse(int orientation)
         {
             /* if not swapping X/Y, then just apply the same transform to reverse */
-            if ((orientation & global_object.ORIENTATION_SWAP_XY) == 0)
+            if ((orientation & g.ORIENTATION_SWAP_XY) == 0)
                 return orientation;
 
             /* if swapping X/Y, then swap X/Y flip bits to get the reverse */
@@ -312,7 +312,7 @@ namespace mame
         public static int orientation_add(int orientation1, int orientation2)
         {
             /* if the 2nd transform doesn't swap, just XOR together */
-            if ((orientation2 & global_object.ORIENTATION_SWAP_XY) == 0)
+            if ((orientation2 & g.ORIENTATION_SWAP_XY) == 0)
                 return orientation1 ^ orientation2;
 
             /* otherwise, we need to effectively swap the flip bits on the first transform */

@@ -669,6 +669,7 @@ namespace mcsForm
                 occurs. If a debugger is attached to the current process, it should
                 break into the debugger and display the given message.
         -----------------------------------------------------------------------------*/
+        [DebuggerHidden]
         public override void osd_break_into_debugger(string message)
         {
             osd_printf_error(message);

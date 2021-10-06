@@ -93,7 +93,7 @@ namespace mame
             m_yscroll_reset_timer = machine().scheduler().timer_alloc(reset_yscroll_callback, this);
 
             // save states
-            save_item(NAME(new { m_playfield_tile_bank }));
+            save_item(g.NAME(new { m_playfield_tile_bank }));
         }
 
 
@@ -106,7 +106,7 @@ namespace mame
         {
             uint16_t oldscroll = m_xscroll[0].op;  //uint16_t oldscroll = *m_xscroll;
             uint16_t newscroll = oldscroll;
-            COMBINE_DATA(ref newscroll, data, mem_mask);
+            g.COMBINE_DATA(ref newscroll, data, mem_mask);
 
             /* if anything has changed, force a partial update */
             if (newscroll != oldscroll)
@@ -138,7 +138,7 @@ namespace mame
         {
             uint16_t oldscroll = m_yscroll[0].op;  //uint16_t oldscroll = *m_yscroll;
             uint16_t newscroll = oldscroll;
-            COMBINE_DATA(ref newscroll, data, mem_mask);
+            g.COMBINE_DATA(ref newscroll, data, mem_mask);
 
             /* if anything has changed, force a partial update */
             if (newscroll != oldscroll)
@@ -210,7 +210,7 @@ namespace mame
 
             //COMBINE_DATA(&m_mob->spriteram()[offset]);
             var temp = m_mob.op[0].spriteram().GetUInt16((int)offset);
-            COMBINE_DATA(ref temp, data, mem_mask);
+            g.COMBINE_DATA(ref temp, data, mem_mask);
             m_mob.op[0].spriteram().SetUInt16((int)offset, temp);
         }
 
@@ -219,7 +219,7 @@ namespace mame
         {
             //COMBINE_DATA(m_playfieldt + offset);
             var temp = (m_playfieldt.op + offset).op;
-            COMBINE_DATA(ref temp, data, mem_mask);
+            g.COMBINE_DATA(ref temp, data, mem_mask);
             (m_playfieldt.op + offset).op = temp;
 
             m_playfield_tilemap.op[0].tilemap.mark_tile_dirty(offset);
@@ -230,7 +230,7 @@ namespace mame
         {
             //COMBINE_DATA(m_playfieldb + offset);
             var temp = (m_playfieldb.op + offset).op;
-            COMBINE_DATA(ref temp, data, mem_mask);
+            g.COMBINE_DATA(ref temp, data, mem_mask);
             (m_playfieldb.op + offset).op = temp;
 
             m_playfield_tilemap.op[0].tilemap.mark_tile_dirty(offset + 020000/2);

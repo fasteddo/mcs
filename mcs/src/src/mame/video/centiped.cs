@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -25,7 +26,7 @@ namespace mame
         void centiped_get_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
             int data = m_videoram[tile_index].op;
-            tileinfo.set(0, ((u32)data & 0x3f) + 0x40, 0, TILE_FLIPYX(data >> 6));
+            tileinfo.set(0, ((u32)data & 0x3f) + 0x40, 0, g.TILE_FLIPYX(data >> 6));
         }
 
 
@@ -50,9 +51,9 @@ namespace mame
 
         void init_common()
         {
-            save_item(NAME(new { m_flipscreen }));
-            save_item(NAME(new { m_gfx_bank }));
-            save_item(NAME(new { m_bullsdrt_sprites_bank }));
+            save_item(g.NAME(new { m_flipscreen }));
+            save_item(g.NAME(new { m_gfx_bank }));
+            save_item(g.NAME(new { m_bullsdrt_sprites_bank }));
 
             m_flipscreen = 0;
             m_gfx_bank = 0;
@@ -157,7 +158,7 @@ namespace mame
                     else if (g != 0) g = 0xc0;
                 }
 
-                color = new rgb_t((byte)r, (byte)g, (byte)b);
+                color = new rgb_t((u8)r, (u8)g, (u8)b);
 
                 /* character colors, set directly */
                 if ((offset & 0x08) == 0)
@@ -173,13 +174,13 @@ namespace mame
                     for (i = 0; i < 0x100; i += 4)
                     {
                         if (offset == ((i >> 2) & 0x03))
-                            m_palette.op[0].dipalette.set_pen_color((UInt32)i + 4 + 1, color);
+                            m_palette.op[0].dipalette.set_pen_color((pen_t)i + 4 + 1, color);
 
                         if (offset == ((i >> 4) & 0x03))
-                            m_palette.op[0].dipalette.set_pen_color((UInt32)i + 4 + 2, color);
+                            m_palette.op[0].dipalette.set_pen_color((pen_t)i + 4 + 2, color);
 
                         if (offset == ((i >> 6) & 0x03))
-                            m_palette.op[0].dipalette.set_pen_color((UInt32)i + 4 + 3, color);
+                            m_palette.op[0].dipalette.set_pen_color((pen_t)i + 4 + 3, color);
                     }
                 }
             }
@@ -215,7 +216,7 @@ namespace mame
                 int x = m_spriteram[offs + 0x20].op;
                 int y = 240 - m_spriteram[offs + 0x10].op;
 
-                m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip, (UInt32)code, (UInt32)color, flipx, flipy, x, y, m_penmask[color & 0x3f]);
+                m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip, (u32)code, (u32)color, flipx, flipy, x, y, m_penmask[color & 0x3f]);
             }
 
             return 0;

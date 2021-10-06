@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using s32 = System.Int32;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
@@ -21,7 +21,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(MSM5205, msm5205_device, "msm5205", "OKI MSM5205 ADPCM")
         static device_t device_creator_msm5205_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new msm5205_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MSM5205 = DEFINE_DEVICE_TYPE(device_creator_msm5205_device, "msm5205", "OKI MSM5205 ADPCM");
+        public static readonly device_type MSM5205 = g.DEFINE_DEVICE_TYPE(device_creator_msm5205_device, "msm5205", "OKI MSM5205 ADPCM");
 
 
         public class device_sound_interface_msm5205 : device_sound_interface
@@ -183,14 +183,14 @@ namespace mame
             m_capture_timer = timer_alloc(TIMER_ADPCM_CAPTURE);
 
             /* register for save states */
-            save_item(NAME(new { m_data }));
-            save_item(NAME(new { m_vck }));
-            save_item(NAME(new { m_reset }));
-            save_item(NAME(new { m_s1 }));
-            save_item(NAME(new { m_s2 }));
-            save_item(NAME(new { m_bitwidth }));
-            save_item(NAME(new { m_signal }));
-            save_item(NAME(new { m_step }));
+            save_item(g.NAME(new { m_data }));
+            save_item(g.NAME(new { m_vck }));
+            save_item(g.NAME(new { m_reset }));
+            save_item(g.NAME(new { m_s1 }));
+            save_item(g.NAME(new { m_s2 }));
+            save_item(g.NAME(new { m_bitwidth }));
+            save_item(g.NAME(new { m_signal }));
+            save_item(g.NAME(new { m_step }));
         }
 
 
@@ -230,7 +230,7 @@ namespace mame
             {
                 case TIMER_VCK:
                     m_vck = !m_vck;
-                    m_vck_cb.op(m_vck ? 1 : 0);
+                    m_vck_cb.op_s32(m_vck ? 1 : 0);
                     if (!m_vck)
                         m_capture_timer.adjust(attotime.from_hz(clock() / 6)); // 15.6 usec at 384KHz
                     break;
@@ -250,7 +250,7 @@ namespace mame
 
             // callback user handler and latch next data
             if (!m_vck_legacy_cb.isnull())
-                m_vck_legacy_cb.op(1);
+                m_vck_legacy_cb.op_s32(1);
 
             // reset check at last hiedge of VCK
             if (m_reset)

@@ -81,33 +81,21 @@ namespace mame
     //class dac_word_interface
 
 
-    public abstract class device_t_plus_device_sound_interface : device_t
+    // ======================> dac_device_base
+    //class dac_device_base : public device_t, public device_sound_interface
+    public class dac_device_base : device_t
     {
-        device_sound_interface m_disound;
-
-
-        protected u32 m_specified_inputs_mask { get { return m_disound.m_specified_inputs_mask; } set { m_disound.m_specified_inputs_mask = value; } }
-
-
-        protected device_t_plus_device_sound_interface(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
-            : base(mconfig, type, tag, owner, clock)
+        public class device_sound_interface_dac_device_base : device_sound_interface
         {
-            m_disound = new device_sound_interface(mconfig, this);
+            public device_sound_interface_dac_device_base(machine_config mconfig, device_t device) : base(mconfig, device) { }
+
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((dac_device_base)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }
         }
 
 
-        public device_sound_interface add_route(u32 output, string target, double gain, u32 input = g.AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return m_disound.add_route(output, target, gain, input, mixoutput); }
-        protected virtual void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { m_disound.sound_stream_update(stream, inputs, outputs); }
-        protected sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate) { return m_disound.stream_alloc(inputs, outputs, sample_rate); }
-        protected sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate, sound_stream_flags flags) { return m_disound.stream_alloc(inputs, outputs, sample_rate, flags); }
-        public void set_output_gain(int outputnum, float gain) { m_disound.set_output_gain(outputnum, gain); }
-    }
+        device_sound_interface_dac_device_base m_disound;
 
 
-    // ======================> dac_device_base
-    //class dac_device_base : public device_t, public device_sound_interface
-    public class dac_device_base : device_t_plus_device_sound_interface
-    {
         // internal state
         sound_stream m_stream;
         stream_buffer_sample_t m_curval;
@@ -125,7 +113,8 @@ namespace mame
         public dac_device_base(machine_config mconfig, device_type type, string tag, device_t owner, uint32_t clock, u8 bits, dac_mapper_callback mapper, stream_buffer_sample_t gain)
             : base(mconfig, type, tag, owner, clock)
         {
-            //device_sound_interface(mconfig, this);
+            m_class_interfaces.Add(new device_sound_interface_dac_device_base(mconfig, this));  //device_sound_interface(mconfig, *this);
+            m_disound = GetClassInterface<device_sound_interface_dac_device_base>();
 
 
             m_stream = null;
@@ -146,7 +135,7 @@ namespace mame
         protected override void device_start()
         {
             // precompute all gain-applied values
-            for (s32 code = 0; code < m_value_map.size(); code++)
+            for (s32 code = 0; code < (int)m_value_map.size(); code++)
                 m_value_map[code] = m_mapper((u32)code, m_bits) * m_gain;
 
             // determine the number of inputs
@@ -156,15 +145,23 @@ namespace mame
             m_stream = stream_alloc(inputs, 1, 48000 * 4);
 
             // save data
-            save_item(NAME(new { m_curval }));
+            save_item(g.NAME(new { m_curval }));
         }
+
+
+        // device_sound_interface overrides
+
+        protected u32 m_specified_inputs_mask { get { return m_disound.m_specified_inputs_mask; } set { m_disound.m_specified_inputs_mask = value; } }
+
+
+        public device_sound_interface add_route(u32 output, string target, double gain, u32 input = g.AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return m_disound.add_route(output, target, gain, input, mixoutput); }
 
 
         // stream generation
         //-------------------------------------------------
         //  sound_stream_update - stream updates
         //-------------------------------------------------
-        protected override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)
+        protected virtual void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
             var out_ = outputs[0];
 
@@ -201,11 +198,16 @@ namespace mame
         }
 
 
+        protected sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate) { return m_disound.stream_alloc(inputs, outputs, sample_rate); }
+        protected sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate, sound_stream_flags flags) { return m_disound.stream_alloc(inputs, outputs, sample_rate, flags); }
+        public void set_output_gain(int outputnum, float gain) { m_disound.set_output_gain(outputnum, gain); }
+
+
         // set the current value
         protected void set_value(u32 value)
         {
             m_stream.update();
-            m_curval = m_value_map[(int)value & (m_value_map.size() - 1)];
+            m_curval = m_value_map[value & (m_value_map.size() - 1)];
         }
 
 
@@ -271,7 +273,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(_dac_type, _dac_class, _dac_shortname, _dac_description)
         static device_t device_creator_dac_8bit_r2r_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dac_8bit_r2r_device(mconfig, tag, owner, clock); }
-        public static readonly device_type DAC_8BIT_R2R = DEFINE_DEVICE_TYPE(device_creator_dac_8bit_r2r_device, "dac_8bit_r2r", "8-Bit R-2R DAC");
+        public static readonly device_type DAC_8BIT_R2R = g.DEFINE_DEVICE_TYPE(device_creator_dac_8bit_r2r_device, "dac_8bit_r2r", "8-Bit R-2R DAC");
 
         dac_8bit_r2r_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
             : base(mconfig, DAC_8BIT_R2R, tag, owner, clock, 8, dac_global.dac_mapper_unsigned, dac_global.dac_gain_r2r)

@@ -75,7 +75,7 @@ namespace mame.netlist.devices
             //LIB_ENTRY(9334)
             //LIB_ENTRY(9602)
             //LIB_ENTRY(AM2847)
-            //LIB_ENTRY(C)
+            LIB_ENTRY("C", analog.nld_C.decl_C);
             //LIB_ENTRY(CCCS)
             //LIB_ENTRY(CCVS)
             //LIB_ENTRY(CD4006)
@@ -87,7 +87,7 @@ namespace mame.netlist.devices
             //LIB_ENTRY(CD4029)
             //LIB_ENTRY(CD4042)
             //LIB_ENTRY(CD4053_GATE)
-            //LIB_ENTRY(CD4066_GATE)
+            LIB_ENTRY("CD4066_GATE", nld_CD4066_GATE.decl_CD4066_GATE);
             //LIB_ENTRY(CD4076)
             //LIB_ENTRY(CD4316_GATE)
             //LIB_ENTRY(CS)
@@ -100,37 +100,37 @@ namespace mame.netlist.devices
             //LIB_ENTRY(MM5837)
             //LIB_ENTRY(MOSFET)
             //LIB_ENTRY(NE555)
-            //LIB_ENTRY(POT)
+            LIB_ENTRY("POT", analog.nld_POT.decl_POT);
             //LIB_ENTRY(POT2)
             //LIB_ENTRY(QBJT_EB)
             //LIB_ENTRY(QBJT_switch)
-            //LIB_ENTRY(R)
+            LIB_ENTRY("R", analog.nld_R.decl_R);
             //LIB_ENTRY(SN74LS629)
             //LIB_ENTRY(TMS4800)
             //LIB_ENTRY(VCCS)
             //LIB_ENTRY(VCVS)
             //LIB_ENTRY(VS)
             //LIB_ENTRY(Z)
-            //LIB_ENTRY(analog_input)
+            LIB_ENTRY("analog_input", nld_analog_input.decl_analog_input);
             //LIB_ENTRY(clock)
             //LIB_ENTRY(extclock)
             //LIB_ENTRY(frontier)
             //LIB_ENTRY(function)
-            //LIB_ENTRY(gnd)
+            LIB_ENTRY("gnd", nld_gnd.decl_gnd);
             //LIB_ENTRY(log)
             //LIB_ENTRY(logD)
             //LIB_ENTRY(logic_input)
             //LIB_ENTRY(logic_input8)
-            //LIB_ENTRY(logic_input_ttl)
+            LIB_ENTRY("logic_input_ttl", nld_logic_input.decl_logic_input_ttl);
             //LIB_ENTRY(mainclock)
             //LIB_ENTRY(nc_pin)
-            //LIB_ENTRY(netlistparams)
+            LIB_ENTRY("netlistparams", nld_netlistparams.decl_netlistparams);
             //LIB_ENTRY(nicDelay)
             //LIB_ENTRY(nicRSFF)
-            //LIB_ENTRY(opamp)
+            LIB_ENTRY("opamp", analog.nld_opamp.decl_opamp);
             //LIB_ENTRY(r2r_dac)
             //LIB_ENTRY(schmitt_trigger)
-            //LIB_ENTRY(solver)
+            LIB_ENTRY("solver", nld_solver.decl_solver);
             //LIB_ENTRY(switch1)
             //LIB_ENTRY(switch2)
             //LIB_ENTRY(sys_compd)
@@ -141,6 +141,8 @@ namespace mame.netlist.devices
             //LIB_ENTRY(tristate)
             //LIB_ENTRY(tristate3)
             //LIB_ENTRY(varclock)
+
+            initialize_factory_factory = null;
         }
     }
 }

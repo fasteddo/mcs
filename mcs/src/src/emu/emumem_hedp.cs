@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
+using uX = mame.FlexPrim;
 
 
 namespace mame
@@ -16,16 +17,18 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian, typename READ>
     class handler_entry_read_delegate<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read_address<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
         //READ m_delegate;
         read8_delegate m_delegate8;
+        read8m_delegate m_delegate8m;
         read8sm_delegate m_delegate8sm;
+        read8mo_delegate m_delegate8mo;
         read8smo_delegate m_delegate8smo;
         read16_delegate m_delegate16;
         read16s_delegate m_delegate16s;
@@ -34,7 +37,9 @@ namespace mame
         public handler_entry_read_delegate(address_space space, object /*READ*/ delegate_) : base(space, 0)
         {
             if      (delegate_ is read8_delegate)    m_delegate8    = (read8_delegate)delegate_;
+            else if (delegate_ is read8m_delegate)   m_delegate8m   = (read8m_delegate)delegate_;
             else if (delegate_ is read8sm_delegate)  m_delegate8sm  = (read8sm_delegate)delegate_;
+            else if (delegate_ is read8mo_delegate)  m_delegate8mo  = (read8mo_delegate)delegate_;
             else if (delegate_ is read8smo_delegate) m_delegate8smo = (read8smo_delegate)delegate_;
             else if (delegate_ is read16_delegate)   m_delegate16   = (read16_delegate)delegate_;
             else if (delegate_ is read16s_delegate)  m_delegate16s  = (read16s_delegate)delegate_;
@@ -48,7 +53,9 @@ namespace mame
         {
             //return read_impl<READ>(offset, mem_mask);
             if (m_delegate8 != null)         return read_impl(m_delegate8,    offset, mem_mask);
+            else if (m_delegate8m != null)   return read_impl(m_delegate8m,   offset, mem_mask);
             else if (m_delegate8sm != null)  return read_impl(m_delegate8sm,  offset, mem_mask);
+            else if (m_delegate8mo != null)  return read_impl(m_delegate8mo,  offset, mem_mask);
             else if (m_delegate8smo != null) return read_impl(m_delegate8smo, offset, mem_mask);
             else if (m_delegate16 != null)   return read_impl(m_delegate16,   offset, mem_mask);
             else if (m_delegate16s != null)  return read_impl(m_delegate16s,  offset, mem_mask);
@@ -68,13 +75,13 @@ namespace mame
         uX read_impl(read8_delegate delegate_, offs_t offset, uX mem_mask)
         {
             //return m_delegate(*inh::m_space, ((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), mem_mask);
-            return new uX(Width, m_delegate8(m_space, ((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), mem_mask.x8));
+            return new uX(Width, m_delegate8(m_space, ((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), mem_mask.u8));
         }
 
         uX read_impl(read16_delegate delegate_, offs_t offset, uX mem_mask)
         {
             //return m_delegate(*inh::m_space, ((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), mem_mask);
-            return new uX(Width, m_delegate16(m_space, ((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), mem_mask.x16));
+            return new uX(Width, m_delegate16(m_space, ((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), mem_mask.u16));
         }
 
         //template<typename R>
@@ -83,6 +90,11 @@ namespace mame
         //                     std::is_same<R, read32m_delegate>::value ||
         //                     std::is_same<R, read64m_delegate>::value,
         //                     uX> read_impl(offs_t offset, uX mem_mask);
+        uX read_impl(read8m_delegate delegate_, offs_t offset, uX mem_mask)
+        {
+            //return m_delegate(*this->m_space, ((offset - this->m_address_base) & this->m_address_mask) >> (Width + AddrShift));
+            return new uX(Width, m_delegate8m(this.m_space, ((offset - m_address_base) & m_address_mask) >> (Width + AddrShift)));
+        }
 
         //template<typename R>
         //    std::enable_if_t<std::is_same<R, read8s_delegate>::value ||
@@ -93,7 +105,7 @@ namespace mame
         uX read_impl(read16s_delegate delegate_, offs_t offset, uX mem_mask)
         {
             //return m_delegate(((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), mem_mask);
-            return new uX(Width, m_delegate16s(((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), mem_mask.x16));
+            return new uX(Width, m_delegate16s(((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), mem_mask.u16));
         }
 
         //template<typename R>
@@ -114,6 +126,11 @@ namespace mame
         //                     std::is_same<R, read32mo_delegate>::value ||
         //                     std::is_same<R, read64mo_delegate>::value,
         //                     uX> read_impl(offs_t offset, uX mem_mask);
+        uX read_impl(read8mo_delegate delegate_, offs_t offset, uX mem_mask)
+        {
+            //return m_delegate(*this->m_space);
+            return new uX(Width, m_delegate8mo(m_space));
+        }
 
         //template<typename R>
         //    std::enable_if_t<std::is_same<R, read8smo_delegate>::value ||
@@ -131,9 +148,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian, typename WRITE>
     class handler_entry_write_delegate<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_write_address<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -185,12 +202,12 @@ namespace mame
         //                     void> write_impl(offs_t offset, uX data, uX mem_mask);
         void write_impl(write8_delegate delegate_, offs_t offset, uX data, uX mem_mask)
         {
-            m_delegate8(m_space, ((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), data.x8, mem_mask.x8);  //m_delegate(*inh::m_space, ((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), data, mem_mask);
+            m_delegate8(m_space, ((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), data.u8, mem_mask.u8);  //m_delegate(*inh::m_space, ((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), data, mem_mask);
         }
 
         void write_impl(write16_delegate delegate_, offs_t offset, uX data, uX mem_mask)
         {
-            m_delegate16(m_space, ((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), data.x16, mem_mask.x16);  //m_delegate(*inh::m_space, ((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), data, mem_mask);
+            m_delegate16(m_space, ((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), data.u16, mem_mask.u16);  //m_delegate(*inh::m_space, ((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), data, mem_mask);
         }
 
         //template<typename W>
@@ -208,7 +225,7 @@ namespace mame
         //                     void> write_impl(offs_t offset, uX data, uX mem_mask);
         void write_impl(write16s_delegate delegate_, offs_t offset, uX data, uX mem_mask)
         {
-            m_delegate16s(((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), data.x16, mem_mask.x16);  //m_delegate(((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), data, mem_mask);
+            m_delegate16s(((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), data.u16, mem_mask.u16);  //m_delegate(((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), data, mem_mask);
         }
 
         //template<typename W>
@@ -219,7 +236,7 @@ namespace mame
         //                     void> write_impl(offs_t offset, uX data, uX mem_mask);
         void write_impl(write8sm_delegate delegate_, offs_t offset, uX data, uX mem_mask)
         {
-            m_delegate8sm(((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), data.x8);  //m_delegate(((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), data);
+            m_delegate8sm(((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), data.u8);  //m_delegate(((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift), data);
         }
 
         //template<typename W>
@@ -237,12 +254,12 @@ namespace mame
         //                     void> write_impl(offs_t offset, uX data, uX mem_mask);
         void write_impl(write8smo_delegate delegate_, offs_t offset, uX data, uX mem_mask)
         {
-            m_delegate8smo(data.x8);  //m_delegate(data);
+            m_delegate8smo(data.u8);  //m_delegate(data);
         }
 
         void write_impl(write16smo_delegate delegate_, offs_t offset, uX data, uX mem_mask)
         {
-            m_delegate16smo(data.x16);  //m_delegate(data);
+            m_delegate16smo(data.u16);  //m_delegate(data);
         }
     }
 
@@ -253,9 +270,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_read_ioport<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -279,9 +296,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_write_ioport<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 

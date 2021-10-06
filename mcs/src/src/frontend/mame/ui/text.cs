@@ -5,11 +5,13 @@ using System;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
+using size_t = System.UInt64;
+using u16 = System.UInt16;
 
 
 namespace mame.ui
 {
-    public class text_layout : global_object
+    public class text_layout
     {
         // justification options for text
         public enum text_justify
@@ -42,8 +44,8 @@ namespace mame.ui
         // to facilitate copying
         struct source_info
         {
-            public UInt32 start;
-            public UInt32 span;
+            public size_t start;
+            public size_t span;
         }
 
 
@@ -106,25 +108,25 @@ namespace mame.ui
                 m_width += chwidth;
 
                 // we might be bigger
-                m_height = Math.Max(m_height, style.size * m_layout.yscale());
+                m_height = std.max(m_height, style.size * m_layout.yscale());
             }
 
 
             //-------------------------------------------------
             //  line::truncate
             //-------------------------------------------------
-            public void truncate(UInt32 position)
+            public void truncate(size_t position)
             {
-                assert(position <= m_characters.size());
+                g.assert(position <= m_characters.size());
 
                 // are we actually truncating?
                 if (position < m_characters.size())
                 {
                     // set the width as appropriate
-                    m_width = m_characters[(int)position].xoffset;
+                    m_width = m_characters[position].xoffset;
 
                     // and resize the array
-                    m_characters.resize((int)position);
+                    m_characters.resize(position);
                 }
             }
 
@@ -157,9 +159,8 @@ namespace mame.ui
             public float width() { return m_width; }
             public float height() { return m_height; }
             public text_justify justify() { return m_justify; }
-            public UInt32 character_count() { return (UInt32)m_characters.size(); }
-            public positioned_char character(UInt32 index) { return m_characters[(int)index]; }
-            //positioned_char &character(size_t index) { return m_characters[index]; }
+            public size_t character_count() { return m_characters.size(); }
+            public positioned_char character(size_t index) { return m_characters[index]; }
         }
 
 
@@ -173,8 +174,8 @@ namespace mame.ui
         word_wrapping m_wrap;
         std.vector<line> m_lines = new std.vector<line>();
         line m_current_line;
-        UInt32 m_last_break;
-        UInt32 m_text_position;
+        size_t m_last_break;
+        size_t m_text_position;
         bool m_truncating;
 
 
@@ -251,7 +252,7 @@ namespace mame.ui
                 result = 1.0f;
                 foreach (var line in m_lines)
                 {
-                    result = Math.Min(result, line.xoffset());
+                    result = std.min(result, line.xoffset());
 
                     // take an opportunity to break out easily
                     if (result <= 0)
@@ -358,7 +359,7 @@ namespace mame.ui
 
                     // render the background of the character (if present)
                     if (ch.style.bgcolor.a() != 0)
-                        container.add_rect(char_x, char_y, char_x + char_width, char_y + char_height, ch.style.bgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                        container.add_rect(char_x, char_y, char_x + char_width, char_y + char_height, ch.style.bgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
 
                     // render the foreground
                     container.add_char(
@@ -368,7 +369,7 @@ namespace mame.ui
                         xscale() / yscale(),
                         ch.style.fgcolor,
                         font(),
-                        (UInt16)ch.character);
+                        (u16)ch.character);
                 }
             }
         }
@@ -473,7 +474,7 @@ namespace mame.ui
                                     break;
 
                                 default:
-                                    fatalerror("invalid word wrapping value");
+                                    g.fatalerror("invalid word wrapping value");
                                     break;
                             }
                         }
@@ -525,7 +526,7 @@ namespace mame.ui
             char32_t elipsis = 0x2026;
 
             // for now, lets assume that we're only truncating the last character
-            UInt32 truncate_position = m_current_line.character_count() - 1;
+            size_t truncate_position = m_current_line.character_count() - 1;
             var truncate_char = m_current_line.character(truncate_position);
 
             // copy style information
@@ -561,18 +562,18 @@ namespace mame.ui
         {
             // keep track of the last line and break
             line last_line = m_current_line;
-            UInt32 last_break = m_last_break;
+            size_t last_break = m_last_break;
 
             // start a new line with the same justification
             start_new_line(last_line.justify(), last_line.character(last_line.character_count() - 1).style.size);
 
             // find the begining of the word to wrap
-            UInt32 position = last_break;
+            size_t position = last_break;
             while (position + 1 < last_line.character_count() && is_space_character(last_line.character(position).character))
                 position++;
 
             // transcribe the characters
-            for (UInt32 i = position; i < last_line.character_count(); i++)
+            for (size_t i = position; i < last_line.character_count(); i++)
             {
                 var ch = last_line.character(i);
                 m_current_line.add_character(ch.character, ch.style, ch.source);

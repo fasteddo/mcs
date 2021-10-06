@@ -35,7 +35,7 @@ namespace mame
             double scale;
 
             /* compute palette information for characters/backgrounds */
-            scale = compute_resistor_weights(0, 255, -1.0,
+            scale = g.compute_resistor_weights(0, 255, -1.0,
                 3, resistances_3, out weights_r, 0, 0,
                 3, resistances_3, out weights_g, 0, 0,
                 2, resistances_2, out weights_b, 0, 0);
@@ -45,9 +45,9 @@ namespace mame
             for (int i = 0; i < 512; i++)
             {
                 uint8_t promval = char_pal[i];
-                int r  = combine_weights(weights_r, g.BIT(promval, 0), g.BIT(promval, 1), g.BIT(promval, 2));
-                int gr = combine_weights(weights_g, g.BIT(promval, 3), g.BIT(promval, 4), g.BIT(promval, 5));
-                int b  = combine_weights(weights_b, g.BIT(promval, 6), g.BIT(promval, 7));
+                int r  = g.combine_weights(weights_r, g.BIT(promval, 0), g.BIT(promval, 1), g.BIT(promval, 2));
+                int gr = g.combine_weights(weights_g, g.BIT(promval, 3), g.BIT(promval, 4), g.BIT(promval, 5));
+                int b  = g.combine_weights(weights_b, g.BIT(promval, 6), g.BIT(promval, 7));
 
                 m_tx_palette.op[0].dipalette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
@@ -57,9 +57,9 @@ namespace mame
             for (int i = 0; i < 32; i++)
             {
                 uint8_t promval = back_pal[i];
-                int r  = combine_weights(weights_r, g.BIT(promval, 0), g.BIT(promval, 1), g.BIT(promval, 2));
-                int gr = combine_weights(weights_g, g.BIT(promval, 3), g.BIT(promval, 4), g.BIT(promval, 5));
-                int b  = combine_weights(weights_b, g.BIT(promval, 6), g.BIT(promval, 7));
+                int r  = g.combine_weights(weights_r, g.BIT(promval, 0), g.BIT(promval, 1), g.BIT(promval, 2));
+                int gr = g.combine_weights(weights_g, g.BIT(promval, 3), g.BIT(promval, 4), g.BIT(promval, 5));
+                int b  = g.combine_weights(weights_b, g.BIT(promval, 6), g.BIT(promval, 7));
 
                 m_bg_palette.op[0].dipalette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
@@ -98,7 +98,7 @@ namespace mame
             var sprite_table = memregion("spr_clut").base_();
 
             /* compute palette information for sprites */
-            compute_resistor_weights(0, 255, scale,
+            g.compute_resistor_weights(0, 255, scale,
                 2, resistances_2, out weights_r, 470, 0,
                 3, resistances_3, out weights_g, 470, 0,
                 3, resistances_3, out weights_b, 470, 0);
@@ -107,9 +107,9 @@ namespace mame
             for (int i = 0; i < 32; i++)
             {
                 uint8_t promval = sprite_pal[i];
-                int r  = combine_weights(weights_r, g.BIT(promval, 6), g.BIT(promval, 7));
-                int gr = combine_weights(weights_g, g.BIT(promval, 3), g.BIT(promval, 4), g.BIT(promval, 5));
-                int b  = combine_weights(weights_b, g.BIT(promval, 0), g.BIT(promval, 1), g.BIT(promval, 2));
+                int r  = g.combine_weights(weights_r, g.BIT(promval, 6), g.BIT(promval, 7));
+                int gr = g.combine_weights(weights_g, g.BIT(promval, 3), g.BIT(promval, 4), g.BIT(promval, 5));
+                int b  = g.combine_weights(weights_b, g.BIT(promval, 0), g.BIT(promval, 1), g.BIT(promval, 2));
 
                 m_sp_palette.op[0].dipalette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
@@ -146,7 +146,7 @@ namespace mame
 
             if (tile_index / 32 <= 6)
             {
-                flag |= TILE_FORCE_LAYER0; /* lines 0 to 6 are opaqe? */
+                flag |= g.TILE_FORCE_LAYER0; /* lines 0 to 6 are opaqe? */
             }
 
             tileinfo.set(0, (u32)code, (u32)(color & 0x7f), (u8)flag);
@@ -169,11 +169,11 @@ namespace mame
 
             init_palette();
 
-            save_item(NAME(new { m_bg1xpos }));
-            save_item(NAME(new { m_bg1ypos }));
-            save_item(NAME(new { m_bg2xpos }));
-            save_item(NAME(new { m_bg2ypos }));
-            save_item(NAME(new { m_bgcontrol }));
+            save_item(g.NAME(new { m_bg1xpos }));
+            save_item(g.NAME(new { m_bg1ypos }));
+            save_item(g.NAME(new { m_bg2xpos }));
+            save_item(g.NAME(new { m_bg2ypos }));
+            save_item(g.NAME(new { m_bgcontrol }));
 
             m_spritelimit = 0x100-4;
             m_do_bg_fills = true;
@@ -440,7 +440,7 @@ namespace mame
                     draw_background(bitmap, cliprect, m_bg1xpos, m_bg1ypos, 2); /* cityscape */
             }
 
-            m_tx_tilemap.set_flip((flip_screen() != 0) ? TILEMAP_FLIPX | TILEMAP_FLIPY : 0);
+            m_tx_tilemap.set_flip((flip_screen() != 0) ? g.TILEMAP_FLIPX | g.TILEMAP_FLIPY : 0);
 
             m_tx_tilemap.draw(screen, bitmap, cliprect, 0, 0);
 

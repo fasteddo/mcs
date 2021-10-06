@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
-using optional_address_space = mame.address_space_finder<mame.bool_constant_false>;  //using optional_address_space = address_space_finder<false>;
-using optional_memory_bank = mame.memory_bank_finder<mame.bool_constant_false>;  //using optional_memory_bank = memory_bank_finder<false>;
+using optional_address_space = mame.address_space_finder<mame.bool_const_false>;  //using optional_address_space = address_space_finder<false>;
+using optional_memory_bank = mame.memory_bank_finder<mame.bool_const_false>;  //using optional_memory_bank = memory_bank_finder<false>;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -20,7 +20,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(SLAPSTIC, atari_slapstic_device, "slapstic", "Atari Slapstic")
         static device_t device_creator_atari_slapstic_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new atari_slapstic_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SLAPSTIC = DEFINE_DEVICE_TYPE(device_creator_atari_slapstic_device, "slapstic", "Atari Slapstic");
+        public static readonly device_type SLAPSTIC = g.DEFINE_DEVICE_TYPE(device_creator_atari_slapstic_device, "slapstic", "Atari Slapstic");
 
 
         struct mask_value
@@ -655,7 +655,7 @@ namespace mame
                 m_range_mask = ~((end - start) | mirror);
                 m_range_value = start;
                 if ((m_range_value & ~m_range_mask) != 0)
-                    fatalerror("The slapstic range {0}-{1} mirror {2} is not masking friendly", start, end, mirror);
+                    g.fatalerror("The slapstic range {0}-{1} mirror {2} is not masking friendly", start, end, mirror);
                 m_shift = data_width == 16 ? 1U : 0U;
                 m_input_mask = g.make_bitmask32(address_lines) << (int)m_shift;
             }
@@ -1439,9 +1439,9 @@ namespace mame
         protected override void device_start()
         {
             /* save state */
-            save_item(NAME(new { m_current_bank }));
-            save_item(NAME(new { m_loaded_bank }));
-            save_item(NAME(new { m_saved_state }));
+            save_item(g.NAME(new { m_current_bank }));
+            save_item(g.NAME(new { m_loaded_bank }));
+            save_item(g.NAME(new { m_saved_state }));
 
             /* Address space tap installation */
             if (m_space.op[0].data_width() == 16)
@@ -1518,7 +1518,7 @@ namespace mame
         {
             // only a small number of chips are known to exist
             if (m_chipnum < 101 || m_chipnum > 118 || slapstic_table[m_chipnum - 101] == null)
-                osd_printf_error("Unknown slapstic number: {0}\n", m_chipnum);
+                g.osd_printf_error("Unknown slapstic number: {0}\n", m_chipnum);
         }
 
 

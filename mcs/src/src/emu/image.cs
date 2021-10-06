@@ -10,7 +10,7 @@ using image_interface_enumerator = mame.device_interface_enumerator<mame.device_
 namespace mame
 {
     // ======================> image_manager
-    public class image_manager : global_object
+    public class image_manager
     {
         // internal state
         running_machine m_machine;                  // reference to our machine
@@ -73,7 +73,7 @@ namespace mame
                     /* unload all images */
                     unload_all(machine());
 
-                    throw new emu_fatalerror(EMU_ERR_DEVICE, "Device {0} load failed: {1}",
+                    throw new emu_fatalerror(g.EMU_ERR_DEVICE, "Device {0} load failed: {1}",
                         image.device().name(),
                         image_err);
                 }
@@ -180,7 +180,7 @@ namespace mame
                 filename = buffer;
             }
 
-            emu_file file = new emu_file(options.ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
+            emu_file file = new emu_file(options.ini_path(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE);
             osd_file.error filerr = file.open(filename);
             if (filerr == osd_file.error.NONE)
             {

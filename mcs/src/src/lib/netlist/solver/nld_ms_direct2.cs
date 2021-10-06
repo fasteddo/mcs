@@ -16,7 +16,7 @@ namespace mame.netlist
         // ----------------------------------------------------------------------------------------
 
         //template <typename FT>
-        abstract class matrix_solver_direct2_t<FT, FT_OPS> : matrix_solver_direct_t<FT, FT_OPS, int_constant_2>  //class matrix_solver_direct2_t: public matrix_solver_direct_t<FT, 2>
+        abstract class matrix_solver_direct2_t<FT, FT_OPS> : matrix_solver_direct_t<FT, FT_OPS, int_const_2>  //class matrix_solver_direct2_t: public matrix_solver_direct_t<FT, 2>
             where FT_OPS : plib.constants_operators<FT>, new()
         {
             //typedef FT float_type;

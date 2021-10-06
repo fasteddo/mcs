@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace mame
 {
-    public class ui_manager : global_object
+    public class ui_manager
     {
         // instance variables
         protected running_machine m_machine;

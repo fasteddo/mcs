@@ -13,6 +13,7 @@ using mame_ui_manager_device_feature_set = mame.std.set<mame.std.pair<string, st
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using std_time_t = System.Int64;
+using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
 
@@ -301,7 +302,7 @@ namespace mame
                         return 0;
                     });
             m_non_char_keys_down = new byte [(std.size(ui_global.non_char_keys) + 7) / 8]; // auto_alloc_array(machine, UINT8, (ARRAY_LENGTH(non_char_keys) + 7) / 8);
-            m_mouse_show = ((UInt64)machine().system().flags & MACHINE_CLICKABLE_ARTWORK) == MACHINE_CLICKABLE_ARTWORK ? true : false;
+            m_mouse_show = ((UInt64)machine().system().flags & g.MACHINE_CLICKABLE_ARTWORK) == g.MACHINE_CLICKABLE_ARTWORK ? true : false;
 
             // request notification callbacks
             machine().add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit);
@@ -326,7 +327,7 @@ namespace mame
         bool single_step() { return m_single_step; }
         public ui_options options() { return m_ui_options; }
         public ui_colors colors() { return m_ui_colors; }
-        public ui.machine_info machine_info() { assert(m_machine_info != null); return m_machine_info; }
+        public ui.machine_info machine_info() { g.assert(m_machine_info != null); return m_machine_info; }
 
 
         // setters
@@ -356,12 +357,12 @@ namespace mame
             // if no test switch found, assign its input sequence to a service mode DIP
             if (!m_machine_info.has_test_switch() && m_machine_info.has_dips())
             {
-                string service_mode_dipname = ioport_configurer.string_from_token(ioport_global.DEF_STR(INPUT_STRING.INPUT_STRING_Service_Mode));
+                string service_mode_dipname = ioport_configurer.string_from_token(g.DEF_STR(INPUT_STRING.INPUT_STRING_Service_Mode));
                 foreach (var port in machine.ioport().ports())
                 {
                     foreach (ioport_field field in port.Value.fields())
                     {
-                        if (field.type() == ioport_type.IPT_DIPSWITCH && strcmp(field.name(), service_mode_dipname) == 0)
+                        if (field.type() == ioport_type.IPT_DIPSWITCH && std.strcmp(field.name(), service_mode_dipname) == 0)
                             field.set_defseq(machine.ioport().type_seq(ioport_type.IPT_SERVICE));
                     }
                 }
@@ -434,11 +435,11 @@ namespace mame
             bool show_gameinfo = !machine().options().skip_gameinfo();
             bool show_warnings = true;
             bool show_mandatory_fileman = true;
-            bool video_none = strcmp(((osd_options)machine().options()).video(), osd_options.OSDOPTVAL_NONE) == 0;
+            bool video_none = std.strcmp(((osd_options)machine().options()).video(), osd_options.OSDOPTVAL_NONE) == 0;
 
             // disable everything if we are using -str for 300 or fewer seconds, or if we're the empty driver,
             // or if we are debugging, or if there's no mame window to send inputs to
-            if (!first_time || (str > 0 && str < 60 * 5) || machine().system() == ___empty.driver____empty || (machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0 || video_none)
+            if (!first_time || (str > 0 && str < 60 * 5) || machine().system() == ___empty.driver____empty || (machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0 || video_none)
                 show_gameinfo = show_warnings = show_mandatory_fileman = false;
 
 #if EMSCRIPTEN
@@ -682,13 +683,13 @@ namespace mame
             // if we're paused, dim the whole screen
             if (machine().phase() >= machine_phase.RESET && (single_step() || machine().paused()))
             {
-                byte alpha = (byte)((1.0f - machine().options().pause_brightness()) * 255.0f);
+                int alpha = (int)((1.0f - machine().options().pause_brightness()) * 255.0f);
                 if (ui.menu.stack_has_special_main_menu(machine()))
                     alpha = 255;
                 if (alpha > 255)
                     alpha = 255;
                 if (alpha >= 0)
-                    container.add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t(alpha,0x00,0x00,0x00), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                    container.add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t((uint8_t)alpha,0x00,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
             }
 
             // render any cheat stuff at the bottom
@@ -707,8 +708,8 @@ namespace mame
             // display the internal mouse cursor
             if (m_mouse_show || (is_menu_active() && machine().options().ui_mouse()))
             {
-                int mouse_target_x;
-                int mouse_target_y;
+                int32_t mouse_target_x;
+                int32_t mouse_target_y;
                 bool mouse_button;
                 render_target mouse_target = machine().ui_input().find_mouse(out mouse_target_x, out mouse_target_y, out mouse_button);
 
@@ -719,7 +720,7 @@ namespace mame
                     if (mouse_target.map_point_container(mouse_target_x, mouse_target_y, container, out mouse_x, out mouse_y))
                     {
                         float cursor_size = 0.6f * get_line_height();
-                        container.add_quad(mouse_x, mouse_y, mouse_x + cursor_size * container.manager().ui_aspect(container), mouse_y + cursor_size, colors().text_color(), m_mouse_arrow_texture, render_global.PRIMFLAG_ANTIALIAS(1) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                        container.add_quad(mouse_x, mouse_y, mouse_x + cursor_size * container.manager().ui_aspect(container), mouse_y + cursor_size, colors().text_color(), m_mouse_arrow_texture, g.PRIMFLAG_ANTIALIAS(1) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
                     }
                 }
             }
@@ -750,9 +751,9 @@ namespace mame
         //-------------------------------------------------
         public float get_line_height()
         {
-            int raw_font_pixel_height = get_font().pixel_height();
+            int32_t raw_font_pixel_height = get_font().pixel_height();
             render_target ui_target = machine().render().ui_target();
-            int target_pixel_height = ui_target.height();
+            int32_t target_pixel_height = ui_target.height();
             float one_to_one_line_height;
             float scale_factor;
 
@@ -775,14 +776,14 @@ namespace mame
                 // otherwise, just ensure an integral scale factor
                 else
                 {
-                    scale_factor = (float)Math.Floor(scale_factor);
+                    scale_factor = std.floor(scale_factor);
                 }
             }
 
             // otherwise, just make sure we hit an even number of pixels
             else
             {
-                int height = (int)(scale_factor * one_to_one_line_height * (float)target_pixel_height);
+                int32_t height = (int32_t)(scale_factor * one_to_one_line_height * (float)target_pixel_height);
                 scale_factor = (float)height / (one_to_one_line_height * (float)target_pixel_height);
             }
 
@@ -822,11 +823,11 @@ namespace mame
 
         public void draw_outlined_box(render_container container, float x0, float y0, float x1, float y1, rgb_t fgcolor, rgb_t bgcolor)
         {
-            container.add_rect(x0, y0, x1, y1, bgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x0, y0, x1, y0, g.UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x1, y0, x1, y1, g.UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x1, y1, x0, y1, g.UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x0, y1, x0, y0, g.UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_rect(x0, y0, x1, y1, bgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+            container.add_line(x0, y0, x1, y0, g.UI_LINE_WIDTH, fgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+            container.add_line(x1, y0, x1, y1, g.UI_LINE_WIDTH, fgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+            container.add_line(x1, y1, x0, y1, g.UI_LINE_WIDTH, fgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+            container.add_line(x0, y1, x0, y0, g.UI_LINE_WIDTH, fgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
         }
 
         //-------------------------------------------------
@@ -927,7 +928,7 @@ namespace mame
         public void save_ui_options()
         {
             // attempt to open the output file
-            emu_file file = new emu_file(machine().options().ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+            emu_file file = new emu_file(machine().options().ini_path(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
             if (file.open("ui.ini") == osd_file.error.NONE)
             {
                 // generate the updated INI
@@ -1245,13 +1246,15 @@ namespace mame
         //  draw an outlined box with the given
         //  textured background and line color
         //-------------------------------------------------
-        public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture texture, UInt32 flags)  // render_texture texture = null, UInt32 flags = render_global.PRIMFLAG_BLENDMODE((UInt32)BLENDMODE.BLENDMODE_ALPHA))
+        public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor) { draw_textured_box(container, x0, y0, x1, y1, backcolor, linecolor, null); }
+        public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture texture) { draw_textured_box(container, x0, y0, x1, y1, backcolor, linecolor, texture, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA)); }
+        public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture texture, uint32_t flags)  //void draw_textured_box(render_container &container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture *texture = nullptr, uint32_t flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
         {
             container.add_quad(x0, y0, x1, y1, backcolor, texture, flags);
-            container.add_line(x0, y0, x1, y0, g.UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x1, y0, x1, y1, g.UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x1, y1, x0, y1, g.UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-            container.add_line(x0, y1, x0, y0, g.UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+            container.add_line(x0, y0, x1, y0, g.UI_LINE_WIDTH, linecolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+            container.add_line(x1, y0, x1, y1, g.UI_LINE_WIDTH, linecolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+            container.add_line(x1, y1, x0, y1, g.UI_LINE_WIDTH, linecolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+            container.add_line(x0, y1, x0, y0, g.UI_LINE_WIDTH, linecolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
         }
 
 
@@ -1319,9 +1322,9 @@ namespace mame
                     // display a popup indicating the new status
                     string name = machine().input().seq_name(machine().ioport().type_seq(ioport_type.IPT_UI_TOGGLE_UI));
                     if (machine().ui_active())
-                        popup_time(2, __("UI controls enabled\nUse {0} to toggle"), name);
+                        popup_time(2, g.__("UI controls enabled\nUse {0} to toggle"), name);
                     else
-                        popup_time(2, __("UI controls disabled\nUse {0} to toggle"), name);
+                        popup_time(2, g.__("UI controls disabled\nUse {0} to toggle"), name);
                 }
             }
 
@@ -1359,7 +1362,7 @@ namespace mame
             }
 
             // if the on-screen display isn't up and the user has toggled it, turn it on
-            if ((machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) == 0 && machine().ui_input().pressed((int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY))
+            if ((machine().debug_flags & g.DEBUG_FLAG_ENABLED) == 0 && machine().ui_input().pressed((int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY))
             {
                 //using namespace std::placeholders;
                 set_handler(ui_callback_type.MENU, ui.menu_sliders.ui_handler);  //, _1, std::ref_(*this)));
@@ -1683,7 +1686,7 @@ namespace mame
         {
             // parse the file
             // attempt to open the output file
-            emu_file file = new emu_file(machine.options().ini_path(), OPEN_FLAG_READ);
+            emu_file file = new emu_file(machine.options().ini_path(), g.OPEN_FLAG_READ);
             if (file.open("ui.ini") == osd_file.error.NONE)
             {
                 try
@@ -1692,7 +1695,7 @@ namespace mame
                 }
                 catch (options_exception )
                 {
-                    osd_printf_error("**Error loading ui.ini**\n");
+                    g.osd_printf_error("**Error loading ui.ini**\n");
                 }
 
                 file.close();

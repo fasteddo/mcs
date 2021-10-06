@@ -21,7 +21,7 @@ namespace mame
         public void ___empty(machine_config config)
         {
             // video hardware
-            screen_device screen = SCREEN(config, "screen", SCREEN_TYPE_RASTER);
+            screen_device screen = g.SCREEN(config, "screen", g.SCREEN_TYPE_RASTER);
             screen.set_screen_update(screen_update);
             screen.set_size(640, 480);
             screen.set_visarea(0, 639, 0, 479);
@@ -46,12 +46,12 @@ namespace mame
     }
 
 
-    class ___empty : global_object
+    class ___empty
     {
         //ROM_START( ___empty )
         static readonly MemoryContainer<tiny_rom_entry> rom____empty = new MemoryContainer<tiny_rom_entry>()
         {
-            ROM_END,
+            g.ROM_END,
         };
 
 
@@ -64,7 +64,7 @@ namespace mame
         static device_t device_creator____empty(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new empty_state(mconfig, (device_type)type, tag); }
 
 
-        //                                                        creator,                 rom           YEAR,   NAME,       PARENT,  MACHINE,              INPUT, INIT,                     MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver____empty = GAME(device_creator____empty, rom____empty, "2007", "___empty", "0",     empty_state____empty, null,  driver_device.empty_init, ROT0, "MAME", "No Driver Loaded", MACHINE_NO_SOUND_HW );
+        //                                                          creator,                 rom           YEAR,   NAME,       PARENT,  MACHINE,              INPUT, INIT,                     MONITOR,COMPANY, FULLNAME,FLAGS
+        public static readonly game_driver driver____empty = g.GAME(device_creator____empty, rom____empty, "2007", "___empty", "0",     empty_state____empty, null,  driver_device.empty_init, g.ROT0, "MAME", "No Driver Loaded", g.MACHINE_NO_SOUND_HW );
     }
 }

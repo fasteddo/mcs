@@ -4,9 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using size_t = System.UInt64;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -19,22 +20,6 @@ namespace mame
 {
     static class m68705_global
     {
-        //#define LOG_GENERAL (1U <<  0)
-        //#define LOG_INT     (1U <<  1)
-        //#define LOG_IOPORT  (1U <<  2)
-        public const int LOG_TIMER   = 1 <<  3;
-        //#define LOG_EPROM   (1U <<  4)
-
-        //#define VERBOSE (LOG_GENERAL | LOG_IOPORT | LOG_TIMER | LOG_EPROM)
-        //#define LOG_OUTPUT_FUNC printf
-        //#include "logmacro.h"
-
-        //#define LOGINT(...)     LOGMASKED(LOG_INT,    __VA_ARGS__)
-        //#define LOGIOPORT(...)  LOGMASKED(LOG_IOPORT, __VA_ARGS__)
-        //#define LOGTIMER(...)   LOGMASKED(LOG_TIMER,  __VA_ARGS__)
-        //#define LOGEPROM(...)   LOGMASKED(LOG_EPROM,  __VA_ARGS__)
-
-
         //enum : u16 {
         public const u16 M68705_VECTOR_BOOTSTRAP  = 0xfff6;
         public const u16 M6805_VECTOR_TIMER       = 0xfff8;
@@ -56,7 +41,7 @@ namespace mame
     }
 
 
-    public class m6805_timer : global_object
+    public class m6805_timer
     {
         public enum timer_options //: u8
         {
@@ -118,11 +103,11 @@ namespace mame
 
         public void start(UInt32 base_ = 0)
         {
-            m_parent.save_item(NAME(new { m_timer }));
-            m_parent.save_item(NAME(new { m_timer_edges }));
-            m_parent.save_item(NAME(new { m_prescale }));
-            m_parent.save_item(NAME(new { m_tdr }));
-            m_parent.save_item(NAME(new { m_tcr }));
+            m_parent.save_item(g.NAME(new { m_timer }));
+            m_parent.save_item(g.NAME(new { m_timer_edges }));
+            m_parent.save_item(g.NAME(new { m_prescale }));
+            m_parent.save_item(g.NAME(new { m_tdr }));
+            m_parent.save_item(g.NAME(new { m_tcr }));
 
             m_parent.m_distate.state_add((int)base_ + 0, "PS", m_prescale);
             m_parent.m_distate.state_add((int)base_ + 1, "TDR", m_tdr);
@@ -151,7 +136,7 @@ namespace mame
 
         public void tcr_w(u8 data)
         {
-            if ((logmacro_global.VERBOSE & m68705_global.LOG_TIMER) != 0)
+            if ((m6805_hmos_device.VERBOSE & m6805_hmos_device.LOG_TIMER) != 0)
                 m_parent.logerror("tcr_w 0x{0}\n", data);
 
             if ((m_options & timer_options.TIMER_MOR) != 0)
@@ -192,7 +177,7 @@ namespace mame
 
             if (interrupt)
             {
-                if ((logmacro_global.VERBOSE & m68705_global.LOG_TIMER) != 0)
+                if ((m6805_hmos_device.VERBOSE & m6805_hmos_device.LOG_TIMER) != 0)
                     m_parent.logerror("timer interrupt\n");
 
                 m_tcr |= (u8)tcr_mask.TCR_TIR;
@@ -256,22 +241,22 @@ namespace mame
         //#define LOG_GENERAL (1U <<  0)
         const int LOG_INT    = 1 << 1;
         const int LOG_IOPORT = 1 << 2;
-        const int LOG_TIMER  = 1 << 3;
+        public const int LOG_TIMER  = 1 << 3;
         const int LOG_EPROM  = 1 << 4;
 
-        //#define VERBOSE (LOG_GENERAL | LOG_IOPORT | LOG_TIMER | LOG_EPROM)
+        public const int VERBOSE = 0;  //#define VERBOSE (LOG_GENERAL | LOG_IOPORT | LOG_TIMER | LOG_EPROM)
         //#define LOG_OUTPUT_FUNC printf
-        //#include "logmacro.h"
 
-        public void LOGINT(string format, params object [] args) { LOGMASKED(LOG_INT, format, args); }
-        public void LOGIOPORT(string format, params object [] args) { LOGMASKED(LOG_IOPORT, format, args); }
-        public void LOGTIMER(string format, params object [] args) { LOGMASKED(LOG_TIMER, format, args); }
-        public void LOGEPROM(string format, params object [] args) { LOGMASKED(LOG_EPROM, format, args); }
+        void LOGINT(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_INT, format, args); }
+        void LOGIOPORT(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_IOPORT, format, args); }
+        void LOGTIMER(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_TIMER, format, args); }
+        protected void LOGEPROM(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_EPROM, format, args); }
+        protected void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
 
 
         const int PORT_COUNT = 4;
 
-        public class uint32_constant_PORT_COUNT : uint32_constant { public UInt32 value { get { return PORT_COUNT; } } }
+        public class u64_const_PORT_COUNT : u64_const { public UInt64 value { get { return PORT_COUNT; } } }
 
 
         // timer/counter
@@ -283,8 +268,8 @@ namespace mame
         u8 [] m_port_input;  //u8              m_port_input[PORT_COUNT];
         u8 [] m_port_latch;  //u8              m_port_latch[PORT_COUNT];
         u8 [] m_port_ddr;  //u8              m_port_ddr[PORT_COUNT];
-        devcb_read8.array<devcb_read8, uint32_constant_PORT_COUNT> m_port_cb_r;
-        devcb_write8.array<uint32_constant_PORT_COUNT> m_port_cb_w;
+        devcb_read8.array<u64_const_PORT_COUNT> m_port_cb_r;
+        devcb_write8.array<u64_const_PORT_COUNT> m_port_cb_w;
 
         // miscellaneous register
         //enum mr_mask : u8
@@ -294,7 +279,7 @@ namespace mame
         //};
         u8 m_mr;
 
-        UInt32 m_ram_size;  //unsigned const m_ram_size;
+        unsigned m_ram_size;
 
 
         protected m6805_hmos_device(machine_config mconfig, string tag, device_t owner, u32 clock, device_type type, u32 addr_width, UInt32 ram_size)
@@ -312,8 +297,8 @@ namespace mame
             m_port_input = new u8 [PORT_COUNT] { 0xff, 0xff, 0xff, 0xff };
             m_port_latch = new u8 [PORT_COUNT] { 0xff, 0xff, 0xff, 0xff };
             m_port_ddr = new u8 [PORT_COUNT] { 0x00, 0x00, 0x00, 0x00 };
-            m_port_cb_r = new devcb_read8.array<devcb_read8, uint32_constant_PORT_COUNT>(this, () => { return new devcb_read8(this); });
-            m_port_cb_w = new devcb_write8.array<uint32_constant_PORT_COUNT>(this, () => { return new devcb_write8(this); });
+            m_port_cb_r = new devcb_read8.array<u64_const_PORT_COUNT>(this, () => { return new devcb_read8(this); });
+            m_port_cb_w = new devcb_write8.array<u64_const_PORT_COUNT>(this, () => { return new devcb_write8(this); });
             m_ram_size = ram_size;
         }
 
@@ -340,13 +325,13 @@ namespace mame
         {
             map.unmap_value_high();
 
-            map.op(0x0000, 0x0000).rw(port_r_0, port_latch_w_0);
-            map.op(0x0001, 0x0001).rw(port_r_1, port_latch_w_1);
-            map.op(0x0002, 0x0002).rw(port_r_2, port_latch_w_2);
+            map.op(0x0000, 0x0000).rw(port_r<u32_const_0>, port_latch_w<u32_const_0>);
+            map.op(0x0001, 0x0001).rw(port_r<u32_const_1>, port_latch_w<u32_const_1>);
+            map.op(0x0002, 0x0002).rw(port_r<u32_const_2>, port_latch_w<u32_const_2>);
 
-            map.op(0x0004, 0x0004).w(port_ddr_w_0);
-            map.op(0x0005, 0x0005).w(port_ddr_w_1);
-            map.op(0x0006, 0x0006).w(port_ddr_w_2);
+            map.op(0x0004, 0x0004).w(port_ddr_w<u32_const_0>);
+            map.op(0x0005, 0x0005).w(port_ddr_w<u32_const_1>);
+            map.op(0x0006, 0x0006).w(port_ddr_w<u32_const_2>);
 
             map.op(0x0008, 0x0008).lrw8(() => { return m_timer.tdr_r(); }, "", (data) => { m_timer.tdr_w(data); }, "");  //map(0x0008, 0x0008).lrw8(NAME([this]() { return m_timer.tdr_r(); }), NAME([this](u8 data) { m_timer.tdr_w(data); }));
             map.op(0x0009, 0x0009).lrw8(() => { return m_timer.tcr_r(); }, "", (data) => { m_timer.tcr_w(data); }, "");  //map(0x0009, 0x0009).lrw8(NAME([this]() { return m_timer.tcr_r(); }), NAME([this](u8 data) { m_timer.tcr_w(data); }));
@@ -354,7 +339,7 @@ namespace mame
             // M68?05Px devices don't have Port D or the Miscellaneous register
             if (m_port_mask[3] != 0xff)
             {
-                map.op(0x0003, 0x0003).rw(port_r_3, port_latch_w_3);
+                map.op(0x0003, 0x0003).rw(port_r<u32_const_3>, port_latch_w<u32_const_3>);
                 map.op(0x000a, 0x000a).rw(misc_r, misc_w);
             }
 
@@ -362,12 +347,15 @@ namespace mame
         }
 
 
-        protected void set_port_open_drain(int N, bool value) { m_port_open_drain[N] = value; }  //template <std::size_t N> void set_port_open_drain(bool value);
+        protected void set_port_open_drain<std_size_t_N>(bool value) where std_size_t_N : u32_const, new() { size_t N = new std_size_t_N().value; m_port_open_drain[N] = value; }  //template <std::size_t N> void set_port_open_drain(bool value);
 
 
         //template <std::size_t N>
-        protected void set_port_mask(int N, u8 mask)
+        protected void set_port_mask<std_size_t_N>(u8 mask)
+            where std_size_t_N : u32_const, new()
         {
+            size_t N = new std_size_t_N().value;
+
             if (configured() || started())
                 throw new emu_fatalerror("Attempt to set physical port mask after configuration");
 
@@ -378,11 +366,14 @@ namespace mame
         //template <std::size_t N> void port_input_w(uint8_t data) { m_port_input[N] = data & ~m_port_mask[N]; }
 
 
-        u8 port_r(int N)  //template <std::size_t N> u8 port_r();
+        u8 port_r<std_size_t_N>()  //template <std::size_t N> u8 port_r();
+            where std_size_t_N : u32_const, new()
         {
+            size_t N = new std_size_t_N().value;
+
             if (!m_port_cb_r[N].isnull())
             {
-                u8 newval = (u8)(m_port_cb_r[N].op(0, (u8)(~m_port_ddr[N] & ~m_port_mask[N])) & ~m_port_mask[N]);
+                u8 newval = (u8)(m_port_cb_r[N].op_u8(0, (u8)(~m_port_ddr[N] & ~m_port_mask[N])) & ~m_port_mask[N]);
                 if (newval != m_port_input[N])
                 {
                     LOGIOPORT("read PORT{0}: new input = {1} & {2} (was {3})\n",
@@ -395,51 +386,45 @@ namespace mame
             return (u8)(m_port_mask[N] | (m_port_latch[N] & m_port_ddr[N]) | (m_port_input[N] & ~m_port_ddr[N]));
         }
 
-        protected u8 port_r_0() { return port_r(0); }
-        protected u8 port_r_1() { return port_r(1); }
-        protected u8 port_r_2() { return port_r(2); }
-        protected u8 port_r_3() { return port_r(3); }
 
-
-        void port_latch_w(int N, u8 data)  //template <std::size_t N> void port_latch_w(u8 data);
+        void port_latch_w<std_size_t_N>(u8 data)  //template <std::size_t N> void port_latch_w(u8 data);
+            where std_size_t_N : u32_const, new()
         {
+            size_t N = new std_size_t_N().value;
+
             data = (u8)(data & ~m_port_mask[N]);
             u8 diff = (u8)(m_port_latch[N] ^ data);
             if (diff != 0)
                 LOGIOPORT("write PORT{0} latch: {1} & {2} (was {3})\n", 'A' + N, data, m_port_ddr[N], m_port_latch[N]);
             m_port_latch[N] = data;
             if ((diff & m_port_ddr[N]) != 0)
-                port_cb_w(N);
+                port_cb_w<std_size_t_N>();
         }
 
-        protected void port_latch_w_0(u8 data) { port_latch_w(0, data); }
-        protected void port_latch_w_1(u8 data) { port_latch_w(1, data); }
-        protected void port_latch_w_2(u8 data) { port_latch_w(2, data); }
-        protected void port_latch_w_3(u8 data) { port_latch_w(3, data); }
 
-
-        void port_ddr_w(int N, u8 data)  //template <std::size_t N> void port_ddr_w(u8 data);
+        void port_ddr_w<std_size_t_N>(u8 data)  //template <std::size_t N> void port_ddr_w(u8 data);
+            where std_size_t_N : u32_const, new()
         {
+            size_t N = new std_size_t_N().value;
+
             data = (u8)(data & ~m_port_mask[N]);
             if (data != m_port_ddr[N])
             {
                 LOGIOPORT("write DDR{0}: {1} (was {2})\n", 'A' + N, data, m_port_ddr[N]);
                 m_port_ddr[N] = data;
-                port_cb_w(N);
+                port_cb_w<std_size_t_N>();
             }
         }
 
-        protected void port_ddr_w_0(u8 data) { port_ddr_w(0, data); }
-        protected void port_ddr_w_1(u8 data) { port_ddr_w(1, data); }
-        protected void port_ddr_w_2(u8 data) { port_ddr_w(2, data); }
-        protected void port_ddr_w_3(u8 data) { port_ddr_w(3, data); }
 
-
-        void port_cb_w(int N)  //template <std::size_t N> void port_cb_w();
+        void port_cb_w<std_size_t_N>()  //template <std::size_t N> void port_cb_w();
+            where std_size_t_N : u32_const, new()
         {
+            size_t N = new std_size_t_N().value;
+
             u8 data = m_port_open_drain[N] ? (u8)(m_port_latch[N] | ~m_port_ddr[N]) : m_port_latch[N];
             u8 mask = m_port_open_drain[N] ? (u8)(~m_port_latch[N] & m_port_ddr[N]) : m_port_ddr[N];
-            m_port_cb_w[N].op(0, data, mask);
+            m_port_cb_w[N].op_u8(0, data, mask);
         }
 
 
@@ -458,9 +443,9 @@ namespace mame
         {
             base.device_start();
 
-            save_item(NAME(new { m_port_input }));
-            save_item(NAME(new { m_port_latch }));
-            save_item(NAME(new { m_port_ddr }));
+            save_item(g.NAME(new { m_port_input }));
+            save_item(g.NAME(new { m_port_latch }));
+            save_item(g.NAME(new { m_port_ddr }));
 
             // initialise digital I/O
             for (int i = 0; i < m_port_input.Length; i++) m_port_input[i] = 0xff;  //for (u8 &input : m_port_input) input = 0xff;
@@ -484,10 +469,10 @@ namespace mame
             base.device_reset();
 
             // reset digital I/O
-            port_ddr_w_0(0x00);
-            port_ddr_w_1(0x00);
-            port_ddr_w_2(0x00);
-            port_ddr_w_3(0x00);
+            port_ddr_w<u32_const_0>(0x00);
+            port_ddr_w<u32_const_1>(0x00);
+            port_ddr_w<u32_const_2>(0x00);
+            port_ddr_w<u32_const_3>(0x00);
 
             // reset timer/counter
             m_timer.reset();
@@ -673,10 +658,10 @@ namespace mame
         {
             base.device_start();
 
-            save_item(NAME(new { m_vihtp }));
-            save_item(NAME(new { m_pcr }));
-            save_item(NAME(new { m_pl_data }));
-            save_item(NAME(new { m_pl_addr }));
+            save_item(g.NAME(new { m_vihtp }));
+            save_item(g.NAME(new { m_pcr }));
+            save_item(g.NAME(new { m_pl_data }));
+            save_item(g.NAME(new { m_pl_addr }));
 
             // initialise timer/counter
             u8 options = get_mask_options();
@@ -818,9 +803,9 @@ namespace mame
             m_class_interfaces.Add(new device_disasm_interface_m68705p(mconfig, this));
 
 
-            set_port_open_drain(0, true);   // Port A is open drain with internal pull-ups
-            set_port_mask(2, 0xf0);         // Port C is four bits wide
-            set_port_mask(3, 0xff);         // Port D isn't present
+            set_port_open_drain<u32_const_0>(true);   // Port A is open drain with internal pull-ups
+            set_port_mask<u32_const_2>(0xf0);         // Port C is four bits wide
+            set_port_mask<u32_const_3>(0xff);         // Port D isn't present
         }
 
 
@@ -859,15 +844,15 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(M68705P5, m68705p5_device, "m68705p5", "Motorola MC68705P5")
         static device_t device_creator_m68705p5_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m68705p5_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M68705P5 = DEFINE_DEVICE_TYPE(device_creator_m68705p5_device, "m68705p5", "Motorola MC68705P5");
+        public static readonly device_type M68705P5 = g.DEFINE_DEVICE_TYPE(device_creator_m68705p5_device, "m68705p5", "Motorola MC68705P5");
 
 
         //ROM_START( m68705p5 )
         static readonly MemoryContainer<tiny_rom_entry> rom_m68705p5 = new MemoryContainer<tiny_rom_entry>()
         {
-            ROM_REGION(0x0073, "bootstrap", 0),
-            ROM_LOAD("bootstrap.bin", 0x0000, 0x0073, CRC("f70a8620") + SHA1("c154f78c23f10bb903a531cb19e99121d5f7c19c")),
-            ROM_END
+            g.ROM_REGION(0x0073, "bootstrap", 0),
+            g.ROM_LOAD("bootstrap.bin", 0x0000, 0x0073, g.CRC("f70a8620") + g.SHA1("c154f78c23f10bb903a531cb19e99121d5f7c19c")),
+            g.ROM_END
         };
 
 

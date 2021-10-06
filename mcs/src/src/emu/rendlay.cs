@@ -17,7 +17,7 @@ using layout_file_group_map = mame.std.unordered_map<string, mame.layout_group>;
 using layout_file_view_list = mame.std.list<mame.layout_view>;  //using view_list = std::list<layout_view>;
 using layout_group_environment = mame.emu.render.detail.layout_environment;  //using environment = emu::render::detail::layout_environment;
 using layout_group_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
-using layout_group_transform = mame.std.array<mame.std.array<float, mame.uint32_constant_3>, mame.uint32_constant_3>;  //using transform = std::array<std::array<float, 3>, 3>;
+using layout_group_transform = mame.std.array<mame.std.array<float, mame.u64_const_3>, mame.u64_const_3>;  //using transform = std::array<std::array<float, 3>, 3>;
 using layout_view_edge_vector = mame.std.vector<mame.layout_view.edge>;  //using edge_vector = std::vector<edge>;
 using layout_view_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
 using layout_view_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
@@ -32,6 +32,7 @@ using layout_view_visibility_toggle_vector = mame.std.vector<mame.layout_view.vi
 using s32 = System.Int32;
 using s64 = System.Int64;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
+using size_t = System.UInt64;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
@@ -49,8 +50,7 @@ namespace mame
         ////#define VERBOSE (LOG_GROUP_BOUNDS_RESOLUTION | LOG_INTERACTIVE_ITEMS | LOG_DISK_DRAW | LOG_IMAGE_LOAD)
         public const int VERBOSE = 0;
         //#define LOG_OUTPUT_FUNC osd_printf_verbose
-        //#include "logmacro.h"
-        public static void LOGMASKED(int mask, string format, params object [] args) { if ((VERBOSE & mask) != 0) global_object.osd_printf_verbose(format, args); }
+        public static void LOGMASKED(int mask, string format, params object [] args) { if ((VERBOSE & mask) != 0) g.osd_printf_verbose(format, args); }
 
 
         public const int LAYOUT_VERSION = 2;
@@ -64,7 +64,7 @@ namespace mame
         //}
 
 
-        public static readonly layout_group_transform identity_transform = new layout_group_transform(new std.array<float, uint32_constant_3>(1.0F, 0.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 1.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 0.0F, 1.0F));  //layout_group.transform identity_transform {{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
+        public static readonly layout_group_transform identity_transform = new layout_group_transform(new std.array<float, u64_const_3>(1.0F, 0.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 1.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 0.0F, 1.0F));  //layout_group.transform identity_transform {{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
 
 
         public static void render_bounds_transform(ref render_bounds bounds, layout_group_transform trans)  //inline void render_bounds_transform(render_bounds &bounds, layout_group::transform const &trans)
@@ -340,7 +340,7 @@ namespace mame
     /// multiple times within a layout.  Even though an element can contain
     /// a number of components, they are treated as if they were a single
     /// bitmap.
-    public class layout_element : global_object
+    public class layout_element
     {
         //using environment = emu::render::detail::layout_environment;
         public delegate component make_component_func(layout_element_environment env, util.xml.data_node compnode);  //typedef component::ptr (*make_component_func)(environment &env, util::xml::data_node const &compnode);
@@ -801,7 +801,7 @@ namespace mame
 
 
         // a texture encapsulates a texture for a given element in a given state
-        public class texture : global_object, IDisposable
+        public class texture : IDisposable
         {
             public layout_element m_element;      // pointer back to the element
             public render_texture m_texture;      // texture for this state
@@ -825,7 +825,7 @@ namespace mame
 
             ~texture()
             {
-                assert(m_isDisposed);  // can remove
+                g.assert(m_isDisposed);  // can remove
             }
 
             bool m_isDisposed = false;
@@ -1202,10 +1202,10 @@ namespace mame
 
                 // split out position names from string and figure out our number of symbols
                 m_numstops = 0;
-                for (var location = symbollist.find(','); -1 != location; location = symbollist.find(','))  //for (std::string::size_type location = symbollist.find(','); std::string::npos != location; location = symbollist.find(','))
+                for (var location = symbollist.find(','); g.npos != location; location = symbollist.find(','))  //for (std::string::size_type location = symbollist.find(','); std::string::npos != location; location = symbollist.find(','))
                 {
                     m_stopnames[m_numstops] = symbollist.substr(0, location);
-                    symbollist = symbollist.Substring(location + 1);  //symbollist.remove_prefix(location + 1);
+                    symbollist = symbollist.Substring((int)location + 1);  //symbollist.remove_prefix(location + 1);
                     m_numstops++;
                 }
 
@@ -1214,10 +1214,10 @@ namespace mame
                 for (int i = 0; i < m_numstops; i++)
                 {
                     var location = m_stopnames[i].find(':');  //std::string::size_type const location = m_stopnames[i].find(':');
-                    if (location != -1)
+                    if (location != g.npos)
                     {
                         m_imagefile[i] = m_stopnames[i].substr(location + 1);
-                        m_stopnames[i] = m_stopnames[i].Remove(location, 1);  //m_stopnames[i].erase(location);
+                        m_stopnames[i] = m_stopnames[i].Remove((int)location, 1);  //m_stopnames[i].erase(location);
                     }
                 }
 
@@ -1255,9 +1255,9 @@ namespace mame
         {
             { "image",         make_component<image_component>         },
             { "text",          make_component<text_component>          },
-            { "dotmatrix",     make_dotmatrix_component<int_constant_8>},
-            { "dotmatrix5dot", make_dotmatrix_component<int_constant_5>},
-            { "dotmatrixdot",  make_dotmatrix_component<int_constant_1>},
+            { "dotmatrix",     make_dotmatrix_component<int_const_8>   },
+            { "dotmatrix5dot", make_dotmatrix_component<int_const_5>   },
+            { "dotmatrixdot",  make_dotmatrix_component<int_const_1>   },
             { "simplecounter", make_component<simplecounter_component> },
             { "reel",          make_component<reel_component>          },
             { "led7seg",       make_component<led7seg_component>       },
@@ -1299,7 +1299,7 @@ namespace mame
             {
                 var make_func = s_make_component.find(compnode.get_name());
                 if (make_func == null)
-                    throw new layout_syntax_error(string_format("unknown element component {0}", compnode.get_name()));
+                    throw new layout_syntax_error(util.string_format("unknown element component {0}", compnode.get_name()));
 
                 // insert the new component into the list
                 //component const &newcomp(*m_complist.emplace_back(make_func->second(env, *compnode)));
@@ -1334,7 +1334,7 @@ namespace mame
             }
 
             // allocate an array of element textures for the states
-            m_elemtex.resize((m_statemask + 1) << (m_foldhigh ? 1 : 0));
+            m_elemtex.resize(((u32)m_statemask + 1) << (m_foldhigh ? 1 : 0));
         }
 
         //virtual ~layout_element();
@@ -1358,7 +1358,7 @@ namespace mame
             else
                 state &= m_statemask;
 
-            assert(m_elemtex.size() > state);
+            g.assert((int)m_elemtex.size() > state);
 
             if (m_elemtex[state].m_texture == null)
             {
@@ -1411,7 +1411,7 @@ namespace mame
         static component make_component<T>(layout_element_environment env, util.xml.data_node compnode) where T : component  //template <typename T> static component::ptr make_component(environment &env, util::xml::data_node const &compnode);
         {
             // return std::make_unique<T>(env, compnode);
-            if (typeof(T) is image_component)
+            if (typeof(T) == typeof(image_component))
                 return new image_component(env, compnode);
             else
                 throw new emu_unimplemented();
@@ -1420,7 +1420,7 @@ namespace mame
 
         //template <int D>
         static component make_dotmatrix_component<int_D>(layout_element_environment env, util.xml.data_node compnode)  //static component::ptr make_dotmatrix_component(environment &env, util::xml::data_node const &compnode);
-            where int_D : int_constant, new()
+            where int_D : int_const, new()
         {
             int D = new int_D().value;
             return new dotmatrix_component(D, env, compnode);  //return std::make_unique<dotmatrix_component>(D, env, compnode);
@@ -1436,7 +1436,7 @@ namespace mame
     /// within a view if it could be parameterised.  Groups only exist while
     /// parsing a layout file - no information about element grouping is
     /// preserved.
-    public class layout_group : global_object
+    public class layout_group
     {
         //using environment = emu::render::detail::layout_environment;
         //using group_map = std::unordered_map<std::string, layout_group>;
@@ -1473,23 +1473,23 @@ namespace mame
         //-------------------------------------------------
         public layout_group_transform make_transform(int orientation, render_bounds dest)
         {
-            assert(m_bounds_resolved);
+            g.assert(m_bounds_resolved);
 
             // make orientation matrix
-            layout_group_transform result = new layout_group_transform(new std.array<float, uint32_constant_3>(1.0F, 0.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 1.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 0.0F, 1.0F));  //transform result{{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
-            if ((orientation & ORIENTATION_SWAP_XY) != 0)
+            layout_group_transform result = new layout_group_transform(new std.array<float, u64_const_3>(1.0F, 0.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 1.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 0.0F, 1.0F));  //transform result{{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
+            if ((orientation & g.ORIENTATION_SWAP_XY) != 0)
             {
                 var temp1 = result[0][0]; result[0][0] = result[0][1];  result[0][1] = temp1;  //std::swap(result[0][0], result[0][1]);
                 var temp2 = result[1][0]; result[1][0] = result[1][1];  result[1][1] = temp2;  //std::swap(result[1][0], result[1][1]);
             }
 
-            if ((orientation & ORIENTATION_FLIP_X) != 0)
+            if ((orientation & g.ORIENTATION_FLIP_X) != 0)
             {
                 result[0][0] = -result[0][0];
                 result[0][1] = -result[0][1];
             }
 
-            if ((orientation & ORIENTATION_FLIP_Y) != 0)
+            if ((orientation & g.ORIENTATION_FLIP_Y) != 0)
             {
                 result[1][0] = -result[1][0];
                 result[1][1] = -result[1][1];
@@ -1510,14 +1510,14 @@ namespace mame
 
         public layout_group_transform make_transform(int orientation, layout_group_transform trans)  //layout_group::transform layout_group::make_transform(int orientation, transform const &trans) const
         {
-            assert(m_bounds_resolved);
+            g.assert(m_bounds_resolved);
 
             render_bounds dest = new render_bounds()
             {
                 x0 = m_bounds.x0,
                 y0 = m_bounds.y0,
-                x1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (m_bounds.x0 + m_bounds.y1 - m_bounds.y0) : m_bounds.x1,
-                y1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (m_bounds.y0 + m_bounds.x1 - m_bounds.x0) : m_bounds.y1
+                x1 = (orientation & g.ORIENTATION_SWAP_XY) != 0 ? (m_bounds.x0 + m_bounds.y1 - m_bounds.y0) : m_bounds.x1,
+                y1 = (orientation & g.ORIENTATION_SWAP_XY) != 0 ? (m_bounds.y0 + m_bounds.x1 - m_bounds.x0) : m_bounds.y1
             };
             return make_transform(orientation, dest, trans);
         }
@@ -1526,7 +1526,7 @@ namespace mame
         public layout_group_transform make_transform(int orientation, render_bounds dest, layout_group_transform trans)  //layout_group::transform layout_group::make_transform(int orientation, render_bounds const &dest, transform const &trans) const
         {
             layout_group_transform next = make_transform(orientation, dest);
-            layout_group_transform result = new layout_group_transform(new std.array<float, uint32_constant_3>(0.0F, 0.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 0.0F, 0.0F), new std.array<float, uint32_constant_3>(0.0F, 0.0F, 0.0F));  //transform result{{ {{ 0.0F, 0.0F, 0.0F }}, {{ 0.0F, 0.0F, 0.0F }}, {{ 0.0F, 0.0F, 0.0F }} }};
+            layout_group_transform result = new layout_group_transform(new std.array<float, u64_const_3>(0.0F, 0.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 0.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 0.0F, 0.0F));  //transform result{{ {{ 0.0F, 0.0F, 0.0F }}, {{ 0.0F, 0.0F, 0.0F }}, {{ 0.0F, 0.0F, 0.0F }} }};
             for (unsigned y = 0; 3U > y; ++y)
             {
                 for (unsigned x = 0; 3U > x; ++x)
@@ -1565,7 +1565,7 @@ namespace mame
                 foreach (layout_group group in seen)
                     path += ' ' + group.m_groupnode.get_attribute_string("name", "");  //path << ' ' << group->m_groupnode.get_attribute_string("name", "");
                 path += ' ' + m_groupnode.get_attribute_string("name", "");  //path << ' ' << m_groupnode.get_attribute_string("name", "");
-                throw new layout_syntax_error(string_format("recursively nested groups {0}", path));
+                throw new layout_syntax_error(util.string_format("recursively nested groups {0}", path));
             }
 
             seen.push_back(this);
@@ -1597,13 +1597,13 @@ namespace mame
             bool unresolved = true;
             for (util.xml.data_node itemnode = parentnode.get_first_child(); !m_bounds_resolved && itemnode != null; itemnode = itemnode.get_next_sibling())
             {
-                if (strcmp(itemnode.get_name(), "bounds") == 0)
+                if (std.strcmp(itemnode.get_name(), "bounds") == 0)
                 {
                     // use explicit bounds
                     env.parse_bounds(itemnode, out m_bounds);
                     m_bounds_resolved = true;
                 }
-                else if (strcmp(itemnode.get_name(), "param") == 0)
+                else if (std.strcmp(itemnode.get_name(), "param") == 0)
                 {
                     envaltered = true;
                     if (!unresolved)
@@ -1619,13 +1619,13 @@ namespace mame
                     else
                         env.set_repeat_parameter(itemnode, init);
                 }
-                else if (strcmp(itemnode.get_name(), "element") == 0 ||
-                    strcmp(itemnode.get_name(), "backdrop") == 0 ||
-                    strcmp(itemnode.get_name(), "screen") == 0 ||
-                    strcmp(itemnode.get_name(), "overlay") == 0 ||
-                    strcmp(itemnode.get_name(), "bezel") == 0 ||
-                    strcmp(itemnode.get_name(), "cpanel") == 0 ||
-                    strcmp(itemnode.get_name(), "marquee") == 0)
+                else if (std.strcmp(itemnode.get_name(), "element") == 0 ||
+                    std.strcmp(itemnode.get_name(), "backdrop") == 0 ||
+                    std.strcmp(itemnode.get_name(), "screen") == 0 ||
+                    std.strcmp(itemnode.get_name(), "overlay") == 0 ||
+                    std.strcmp(itemnode.get_name(), "bezel") == 0 ||
+                    std.strcmp(itemnode.get_name(), "cpanel") == 0 ||
+                    std.strcmp(itemnode.get_name(), "marquee") == 0)
                 {
                     render_bounds itembounds;
                     util.xml.data_node boundsnode = itemnode.get_child("bounds");
@@ -1652,7 +1652,7 @@ namespace mame
                         itembounds.x0, itembounds.y0, itembounds.x1, itembounds.y1,
                         m_bounds.x0, m_bounds.y0, m_bounds.x1, m_bounds.y1);
                 }
-                else if (strcmp(itemnode.get_name(), "group") == 0)
+                else if (std.strcmp(itemnode.get_name(), "group") == 0)
                 {
                     util.xml.data_node itemboundsnode = itemnode.get_child("bounds");
                     if (itemboundsnode != null)
@@ -1679,7 +1679,7 @@ namespace mame
 
                         var found = groupmap.find(ref_);
                         if (found == null)
-                            throw new layout_syntax_error(string_format("unable to find group {0}", ref_));
+                            throw new layout_syntax_error(util.string_format("unable to find group {0}", ref_));
 
                         int orientation = env.parse_orientation(itemnode.get_child("orientation"));
                         layout_group_environment local = new layout_group_environment(env);
@@ -1688,8 +1688,8 @@ namespace mame
                         {
                             x0 = found.m_bounds.x0,
                             y0 = found.m_bounds.y0,
-                            x1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.x0 + found.m_bounds.y1 - found.m_bounds.y0) : found.m_bounds.x1,
-                            y1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.y0 + found.m_bounds.x1 - found.m_bounds.x0) : found.m_bounds.y1
+                            x1 = (orientation & g.ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.x0 + found.m_bounds.y1 - found.m_bounds.y0) : found.m_bounds.x1,
+                            y1 = (orientation & g.ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.y0 + found.m_bounds.x1 - found.m_bounds.x0) : found.m_bounds.y1
                         };
 
                         if (empty)
@@ -1706,7 +1706,7 @@ namespace mame
                             m_bounds.x0, m_bounds.y0, m_bounds.x1, m_bounds.y1);
                     }
                 }
-                else if (strcmp(itemnode.get_name(), "repeat") == 0)
+                else if (std.strcmp(itemnode.get_name(), "repeat") == 0)
                 {
                     int count = env.get_attribute_int(itemnode, "count", -1);
                     if (0 >= count)
@@ -1719,7 +1719,7 @@ namespace mame
                         local.increment_parameters();
                     }
                 }
-                else if (strcmp(itemnode.get_name(), "collection") == 0)
+                else if (std.strcmp(itemnode.get_name(), "collection") == 0)
                 {
                     if (!itemnode.has_attribute("name"))
                         throw new layout_syntax_error("collection must have name attribute");
@@ -1728,7 +1728,7 @@ namespace mame
                 }
                 else
                 {
-                    throw new layout_syntax_error(string_format("unknown group element {0}", itemnode.get_name()));
+                    throw new layout_syntax_error(util.string_format("unknown group element {0}", itemnode.get_name()));
                 }
             }
 
@@ -1755,7 +1755,7 @@ namespace mame
     /// The view is described using arbitrary coordinates that are scaled to
     /// fit within the render target.  Pixels within a view are assumed to
     /// be square.
-    public class layout_view : global_object
+    public class layout_view
     {
         //using layout_environment = emu::render::detail::layout_environment;
         //using view_environment = emu::render::detail::view_environment;
@@ -1779,7 +1779,7 @@ namespace mame
         /// Each view has a list of item structures describing the visual
         /// elements to draw, where they are located, additional blending
         /// modes, and bindings for inputs and outputs.
-        public class item : global_object
+        public class item
         {
             //friend class layout_view;
 
@@ -1796,8 +1796,8 @@ namespace mame
             state_delegate m_get_anim_state;   // resolved animation state function
             bounds_delegate m_get_bounds;       // resolved bounds function
             color_delegate m_get_color;        // resolved color function
-            output_finder<uint32_constant_1> m_output;           // associated output  //output_finder<>         m_output;           // associated output
-            output_finder<uint32_constant_1> m_animoutput;       // associated output for animation if different  //output_finder<>         m_animoutput;       // associated output for animation if different
+            output_finder<u32_const_1> m_output;           // associated output  //output_finder<>         m_output;           // associated output
+            output_finder<u32_const_1> m_animoutput;       // associated output for animation if different  //output_finder<>         m_animoutput;       // associated output for animation if different
             ioport_port m_animinput_port;   // input port used for animation
             int m_elem_state;       // element state used in absence of bindings
             ioport_value m_animmask;         // mask for animation state
@@ -1874,23 +1874,23 @@ namespace mame
                     m_screen = new screen_device_enumerator(env.machine().root_device()).byindex(index);
 
                 // sanity checks
-                if (strcmp(itemnode.get_name(), "screen") == 0)
+                if (std.strcmp(itemnode.get_name(), "screen") == 0)
                 {
                     if (itemnode.has_attribute("tag"))
                     {
                         string tag = env.get_attribute_string(itemnode, "tag");
                         m_screen = (screen_device)env.device().subdevice(tag);
                         if (m_screen == null)
-                            throw new layout_reference_error(string_format("invalid screen tag '{0}'", tag));
+                            throw new layout_reference_error(util.string_format("invalid screen tag '{0}'", tag));
                     }
                     else if (m_screen == null)
                     {
-                        throw new layout_reference_error(string_format("invalid screen index {0}", index));
+                        throw new layout_reference_error(util.string_format("invalid screen index {0}", index));
                     }
                 }
                 else if (m_element == null)
                 {
-                    throw new layout_syntax_error(string_format("item of type {0} requires an element tag", itemnode.get_name()));
+                    throw new layout_syntax_error(util.string_format("item of type {0} requires an element tag", itemnode.get_name()));
                 }
 
                 // this can be called before resolving tags, make it return something valid
@@ -2069,7 +2069,7 @@ namespace mame
             //-------------------------------------------------
             int get_output()
             {
-                assert(m_have_output);
+                g.assert(m_have_output);
                 return (int)(s32)m_output.op.op;
             }
 
@@ -2079,7 +2079,7 @@ namespace mame
             //-------------------------------------------------
             int get_input_raw()
             {
-                assert(m_input_port != null);
+                g.assert(m_input_port != null);
                 return (int)(s32)((m_input_port.read() & m_input_mask) >> m_input_shift);  //return int(std::make_signed_t<ioport_value>((m_input_port->read() & m_input_mask) >> m_input_shift));
             }
 
@@ -2089,8 +2089,8 @@ namespace mame
             //-------------------------------------------------
             int get_input_field_cached()
             {
-                assert(m_input_port != null);
-                assert(m_input_field != null);
+                g.assert(m_input_port != null);
+                g.assert(m_input_field != null);
                 return ((m_input_port.read() ^ m_input_field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
             }
 
@@ -2100,8 +2100,8 @@ namespace mame
             //-------------------------------------------------
             int get_input_field_conditional()
             {
-                assert(m_input_port != null);
-                assert(m_input_field == null);
+                g.assert(m_input_port != null);
+                g.assert(m_input_field == null);
                 ioport_field field = m_input_port.field(m_input_mask);
                 return (field != null && ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0) ? 1 : 0;
             }
@@ -2112,7 +2112,7 @@ namespace mame
             //-------------------------------------------------
             int get_anim_output()
             {
-                assert(m_have_animoutput);
+                g.assert(m_have_animoutput);
                 return (int)(unsigned)((u32)((s32)m_animoutput.op.op & m_animmask) >> m_animshift);
             }
 
@@ -2122,7 +2122,7 @@ namespace mame
             //-------------------------------------------------
             int get_anim_input()
             {
-                assert(m_animinput_port != null);
+                g.assert(m_animinput_port != null);
                 return (int)(s32)((m_animinput_port.read() & m_animmask) >> m_animshift);  //return int(std::make_signed_t<ioport_value>((m_animinput_port->read() & m_animmask) >> m_animshift));
             }
 
@@ -2132,7 +2132,7 @@ namespace mame
             //-------------------------------------------------
             void get_interpolated_bounds(out render_bounds result)
             {
-                assert(m_bounds.size() > 1U);
+                g.assert(m_bounds.size() > 1U);
                 result = rendlay_global.interpolate_bounds(m_bounds, m_get_anim_state());
             }
 
@@ -2142,7 +2142,7 @@ namespace mame
             //-------------------------------------------------
             void get_interpolated_color(out render_color result)
             {
-                assert(m_color.size() > 1U);
+                g.assert(m_color.size() > 1U);
                 result = rendlay_global.interpolate_color(m_color, m_get_anim_state());
             }
 
@@ -2152,7 +2152,7 @@ namespace mame
             //---------------------------------------------
             static layout_element find_element(layout_view_view_environment env, util.xml.data_node itemnode, layout_view_element_map elemmap)
             {
-                string name = env.get_attribute_string(itemnode, strcmp(itemnode.get_name(), "element") == 0 ? "ref" : "element");
+                string name = env.get_attribute_string(itemnode, std.strcmp(itemnode.get_name(), "element") == 0 ? "ref" : "element");
                 if (name.empty())
                     return null;
 
@@ -2179,7 +2179,7 @@ namespace mame
                     if (!rendlay_global.add_bounds_step(env, result, bounds))
                     {
                         throw new layout_syntax_error(
-                                util_.string_format(
+                                util.string_format(
                                     "{0} item has duplicate bounds for state",
                                     itemnode.get_name()));
                     }
@@ -2213,7 +2213,7 @@ namespace mame
                     if (!rendlay_global.add_color_step(env, result, color))
                     {
                         throw new layout_syntax_error(
-                                util_.string_format(
+                                util.string_format(
                                     "{0} item has duplicate color for state",
                                     itemnode.get_name()));
                     }
@@ -2299,24 +2299,24 @@ namespace mame
                 if (mode != null)
                 {
                     if (mode == "none")
-                        return rendertypes_global.BLENDMODE_NONE;
+                        return g.BLENDMODE_NONE;
                     else if (mode == "alpha")
-                        return rendertypes_global.BLENDMODE_ALPHA;
+                        return g.BLENDMODE_ALPHA;
                     else if (mode == "multiply")
-                        return rendertypes_global.BLENDMODE_RGB_MULTIPLY;
+                        return g.BLENDMODE_RGB_MULTIPLY;
                     else if (mode == "add")
-                        return rendertypes_global.BLENDMODE_ADD;
+                        return g.BLENDMODE_ADD;
                     else
-                        throw new layout_syntax_error(util_.string_format("unknown blend mode {0}", mode));
+                        throw new layout_syntax_error(util.string_format("unknown blend mode {0}", mode));
                 }
 
                 // fall back to implicit blend mode based on element type
-                if (strcmp(itemnode.get_name(), "screen") == 0)
+                if (std.strcmp(itemnode.get_name(), "screen") == 0)
                     return -1; // magic number recognised by render.cpp to allow per-element blend mode
-                else if (strcmp(itemnode.get_name(), "overlay") == 0)
-                    return rendertypes_global.BLENDMODE_RGB_MULTIPLY;
+                else if (std.strcmp(itemnode.get_name(), "overlay") == 0)
+                    return g.BLENDMODE_RGB_MULTIPLY;
                 else
-                    return rendertypes_global.BLENDMODE_ALPHA;
+                    return g.BLENDMODE_ALPHA;
             }
 
 
@@ -2355,7 +2355,7 @@ namespace mame
         ///
         /// Visibility toggles allow the user to show or hide selected parts
         /// of a view.
-        public class visibility_toggle : global_object
+        public class visibility_toggle
         {
             string m_name;             // display name for the toggle
             u32 m_mask;             // toggle combination to show
@@ -2368,7 +2368,7 @@ namespace mame
                 m_mask = mask;
 
 
-                assert(mask != 0);
+                g.assert(mask != 0);
             }
 
             //visibility_toggle(visibility_toggle const &) = default;
@@ -2469,7 +2469,7 @@ namespace mame
             layout_view_view_environment local = new layout_view_view_environment(env, m_name);
             layer_lists layers = new layer_lists();
             local.set_parameter("viewname", m_name);
-            add_items(layers, local, viewnode, elemmap, groupmap, (int)ROT0, rendlay_global.identity_transform, new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, true, false, true);
+            add_items(layers, local, viewnode, elemmap, groupmap, g.ROT0, rendlay_global.identity_transform, new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, true, false, true);
 
             // can't support legacy layers and modern visibility toggles at the same time
             if (!m_vistoggles.empty() && (!layers.backdrops.empty() || !layers.overlays.empty() || !layers.bezels.empty() || !layers.cpanels.empty() || !layers.marquees.empty()))
@@ -2527,7 +2527,7 @@ namespace mame
             {
                 // screens (-1) + overlays (RGB multiply) + backdrop (add) + bezels (alpha) + cpanels (alpha) + marquees (alpha)
                 foreach (item backdrop in layers.backdrops)
-                    backdrop.m_blend_mode = rendertypes_global.BLENDMODE_ADD;
+                    backdrop.m_blend_mode = g.BLENDMODE_ADD;
 
                 foreach (var item in layers.screens) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.screens);
                 foreach (var item in layers.overlays) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.overlays);
@@ -2543,7 +2543,7 @@ namespace mame
                 foreach (item screen in layers.screens)
                 {
                     if (screen.blend_mode() == -1)
-                        screen.m_blend_mode = rendertypes_global.BLENDMODE_ADD;
+                        screen.m_blend_mode = g.BLENDMODE_ADD;
                 }
 
                 foreach (var item in layers.backdrops) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.backdrops);
@@ -2601,7 +2601,7 @@ namespace mame
 
         public bool has_visible_screen(screen_device screen)
         {
-            return std.find_if(m_screens, (scr) => { return scr.get() == screen; }) != default;  //return std::find_if(m_screens.begin(), m_screens.end(), [&screen] (auto const &scr) { return &scr.get() == &screen; }) != m_screens.end();
+            return std.find_if(m_screens, (scr) => { return scr == screen; }) != default;  //return std::find_if(m_screens.begin(), m_screens.end(), [&screen] (auto const &scr) { return &scr.get() == &screen; }) != m_screens.end();
         }
 
 
@@ -2712,7 +2712,7 @@ namespace mame
             // normalize all the item bounds
             foreach (item curitem in items())
             {
-                assert(curitem.m_rawbounds.size() == curitem.m_bounds.size());
+                g.assert(curitem.m_rawbounds.size() == curitem.m_bounds.size());
 
                 //std::copy(curitem.m_rawbounds.begin(), curitem.m_rawbounds.end(), curitem.m_bounds.begin());
                 curitem.m_bounds = new emu_render_detail_bounds_vector();
@@ -2804,13 +2804,13 @@ namespace mame
             bool unresolved = true;
             for (util.xml.data_node itemnode = parentnode.get_first_child(); itemnode != null; itemnode = itemnode.get_next_sibling())
             {
-                if (strcmp(itemnode.get_name(), "bounds") == 0)
+                if (std.strcmp(itemnode.get_name(), "bounds") == 0)
                 {
                     // set explicit bounds
                     if (root)
                         env.parse_bounds(itemnode, out m_expbounds);
                 }
-                else if (strcmp(itemnode.get_name(), "param") == 0)
+                else if (std.strcmp(itemnode.get_name(), "param") == 0)
                 {
                     envaltered = true;
                     if (!unresolved)
@@ -2825,54 +2825,54 @@ namespace mame
                     else
                         env.set_repeat_parameter(itemnode, init);
                 }
-                else if (strcmp(itemnode.get_name(), "screen") == 0)
+                else if (std.strcmp(itemnode.get_name(), "screen") == 0)
                 {
                     layers.screens.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                 }
-                else if (strcmp(itemnode.get_name(), "element") == 0)
+                else if (std.strcmp(itemnode.get_name(), "element") == 0)
                 {
                     layers.screens.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
-                else if (strcmp(itemnode.get_name(), "backdrop") == 0)
+                else if (std.strcmp(itemnode.get_name(), "backdrop") == 0)
                 {
                     if (layers.backdrops.empty())
-                        osd_printf_warning("Warning: layout view '{0}' contains deprecated backdrop element\n", name());
+                        g.osd_printf_warning("Warning: layout view '{0}' contains deprecated backdrop element\n", name());
                     layers.backdrops.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
-                else if (strcmp(itemnode.get_name(), "overlay") == 0)
+                else if (std.strcmp(itemnode.get_name(), "overlay") == 0)
                 {
                     if (layers.overlays.empty())
-                        osd_printf_warning("Warning: layout view '{0}' contains deprecated overlay element\n", name());
+                        g.osd_printf_warning("Warning: layout view '{0}' contains deprecated overlay element\n", name());
                     layers.overlays.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
-                else if (strcmp(itemnode.get_name(), "bezel") == 0)
+                else if (std.strcmp(itemnode.get_name(), "bezel") == 0)
                 {
                     if (layers.bezels.empty())
-                        osd_printf_warning("Warning: layout view '{0}' contains deprecated bezel element\n", name());
+                        g.osd_printf_warning("Warning: layout view '{0}' contains deprecated bezel element\n", name());
 
                     layers.bezels.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
-                else if (strcmp(itemnode.get_name(), "cpanel") == 0)
+                else if (std.strcmp(itemnode.get_name(), "cpanel") == 0)
                 {
                     if (layers.cpanels.empty())
-                        osd_printf_warning("Warning: layout view '{0}' contains deprecated cpanel element\n", name());
+                        g.osd_printf_warning("Warning: layout view '{0}' contains deprecated cpanel element\n", name());
 
                     layers.cpanels.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
-                else if (strcmp(itemnode.get_name(), "marquee") == 0)
+                else if (std.strcmp(itemnode.get_name(), "marquee") == 0)
                 {
                     if (layers.marquees.empty())
-                        osd_printf_warning("Warning: layout view '{0}' contains deprecated marquee element\n", name());
+                        g.osd_printf_warning("Warning: layout view '{0}' contains deprecated marquee element\n", name());
 
                     layers.marquees.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
-                else if (strcmp(itemnode.get_name(), "group") == 0)
+                else if (std.strcmp(itemnode.get_name(), "group") == 0)
                 {
                     string ref_ = env.get_attribute_string(itemnode, "ref");
                     if (ref_.empty())
@@ -2880,16 +2880,16 @@ namespace mame
 
                     var found = groupmap.find(ref_);
                     if (found == null)
-                        throw new layout_syntax_error(string_format("unable to find group {0}", ref_));
+                        throw new layout_syntax_error(util.string_format("unable to find group {0}", ref_));
 
                     unresolved = false;
                     found.resolve_bounds(env, groupmap);
 
                     layout_group_transform grouptrans = new layout_group_transform
                     (
-                        new std.array<float, uint32_constant_3>(trans[0][0], trans[0][1], trans[0][2]),
-                        new std.array<float, uint32_constant_3>(trans[1][0], trans[1][1], trans[1][2]),
-                        new std.array<float, uint32_constant_3>(trans[2][0], trans[2][1], trans[2][2])
+                        new std.array<float, u64_const_3>(trans[0][0], trans[0][1], trans[0][2]),
+                        new std.array<float, u64_const_3>(trans[1][0], trans[1][1], trans[1][2]),
+                        new std.array<float, u64_const_3>(trans[2][0], trans[2][1], trans[2][2])
                     );
                     util.xml.data_node itemboundsnode = itemnode.get_child("bounds");
                     util.xml.data_node itemorientnode = itemnode.get_child("orientation");
@@ -2912,14 +2912,14 @@ namespace mame
                             found.get_groupnode(),
                             elemmap,
                             groupmap,
-                            rendutil_global.orientation_add(grouporient, orientation),
+                            g.orientation_add(grouporient, orientation),
                             grouptrans,
                             env.parse_color(itemnode.get_child("color")) * color,
                             false,
                             false,
                             true);
                 }
-                else if (strcmp(itemnode.get_name(), "repeat") == 0)
+                else if (std.strcmp(itemnode.get_name(), "repeat") == 0)
                 {
                     int count = env.get_attribute_int(itemnode, "count", -1);
                     if (0 >= count)
@@ -2932,7 +2932,7 @@ namespace mame
                         local.increment_parameters();
                     }
                 }
-                else if (strcmp(itemnode.get_name(), "collection") == 0)
+                else if (std.strcmp(itemnode.get_name(), "collection") == 0)
                 {
                     string name = env.get_attribute_string(itemnode, "name");
                     if (name.empty())
@@ -2940,16 +2940,16 @@ namespace mame
 
                     var found = std.find_if(m_vistoggles, (x) => { return x.name() == name; });  //var found = std::find_if(m_vistoggles.begin(), m_vistoggles.end(), [name] (auto const &x) { return x.name() == name; });
                     if (default != found)
-                        throw new layout_syntax_error(string_format("duplicate collection name '{0}'", name));
+                        throw new layout_syntax_error(util.string_format("duplicate collection name '{0}'", name));
 
-                    m_defvismask |= (u32)(env.get_attribute_bool(itemnode, "visible", true) ? 1 : 0) << m_vistoggles.size(); // TODO: make this less hacky
+                    m_defvismask |= (env.get_attribute_bool(itemnode, "visible", true) ? 1U : 0U) << (int)m_vistoggles.size(); // TODO: make this less hacky
                     layout_view_view_environment local = new layout_view_view_environment(env, true);
                     m_vistoggles.emplace_back(new visibility_toggle(name, local.visibility_mask()));
                     add_items(layers, local, itemnode, elemmap, groupmap, orientation, trans, color, false, false, true);
                 }
                 else
                 {
-                    throw new layout_syntax_error(string_format("unknown view item {0}", itemnode.get_name()));
+                    throw new layout_syntax_error(util.string_format("unknown view item {0}", itemnode.get_name()));
                 }
             }
 
@@ -2977,7 +2977,7 @@ namespace mame
                 if (':' == tag[0])
                     tag = tag.Substring(1);  //++tag;
 
-                return string_format("{0} {1}", tag, name);
+                return util.string_format("{0} {1}", tag, name);
             }
         }
     }
@@ -2987,7 +2987,7 @@ namespace mame
     ///
     /// Comprises a list of elements and a list of views.  The elements are
     /// reusable items that the views reference.
-    public class layout_file : global_object
+    public class layout_file
     {
         //using element_map = std::unordered_map<std::string, layout_element>;
         //using group_map = std::unordered_map<std::string, layout_group>;
@@ -3030,7 +3030,7 @@ namespace mame
                 // validate the config data version
                 int version = (int)mamelayoutnode.get_attribute_int("version", 0);
                 if (version != rendlay_global.LAYOUT_VERSION)
-                    throw new layout_syntax_error(string_format("unsupported version {0}", version));
+                    throw new layout_syntax_error(util.string_format("unsupported version {0}", version));
 
                 // parse all the parameters, elements and groups
                 layout_file_group_map groupmap = new layout_file_group_map();
@@ -3049,7 +3049,7 @@ namespace mame
                     }
                     catch (layout_reference_error err)
                     {
-                        osd_printf_warning("Error instantiating layout view {0}: {1}\n", env.get_attribute_string(viewnode, "name"), err);
+                        g.osd_printf_warning("Error instantiating layout view {0}: {1}\n", env.get_attribute_string(viewnode, "name"), err);
                     }
                 }
 
@@ -3105,32 +3105,32 @@ namespace mame
         {
             for (util.xml.data_node childnode = parentnode.get_first_child(); childnode != null; childnode = childnode.get_next_sibling())
             {
-                if (strcmp(childnode.get_name(), "param") == 0)
+                if (std.strcmp(childnode.get_name(), "param") == 0)
                 {
                     if (!repeat)
                         env.set_parameter(childnode);
                     else
                         env.set_repeat_parameter(childnode, init);
                 }
-                else if (strcmp(childnode.get_name(), "element") == 0)
+                else if (std.strcmp(childnode.get_name(), "element") == 0)
                 {
                     string name = env.get_attribute_string(childnode, "name");
                     if (name.empty())
                         throw new layout_syntax_error("element must have non-empty name attribute");
                     if (!m_elemmap.emplace(name, new layout_element(env, childnode)))  //if (!m_elemmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(env, *childnode)).second)
-                        throw new layout_syntax_error(string_format("duplicate element name {0}", name));
+                        throw new layout_syntax_error(util.string_format("duplicate element name {0}", name));
                     m_elemmap.emplace(name, new layout_element(env, childnode));
                 }
-                else if (strcmp(childnode.get_name(), "group") == 0)
+                else if (std.strcmp(childnode.get_name(), "group") == 0)
                 {
                     string name = env.get_attribute_string(childnode, "name");
                     if (name.empty())
                         throw new layout_syntax_error("group must have non-empty name attribute");
                     if (!groupmap.emplace(name, new layout_group(childnode)))  //if (!groupmap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(childnode)).second)
-                        throw new layout_syntax_error(string_format("duplicate group name {0}", name));
+                        throw new layout_syntax_error(util.string_format("duplicate group name {0}", name));
                     groupmap.emplace(name, new layout_group(childnode));
                 }
-                else if (strcmp(childnode.get_name(), "repeat") == 0)
+                else if (std.strcmp(childnode.get_name(), "repeat") == 0)
                 {
                     int count = env.get_attribute_int(childnode, "count", -1);
                     if (0 >= count)
@@ -3142,9 +3142,9 @@ namespace mame
                         local.increment_parameters();
                     }
                 }
-                else if (repeat || (strcmp(childnode.get_name(), "view") != 0 && strcmp(childnode.get_name(), "script") != 0))
+                else if (repeat || (std.strcmp(childnode.get_name(), "view") != 0 && std.strcmp(childnode.get_name(), "script") != 0))
                 {
-                    throw new layout_syntax_error(string_format("unknown layout item {0}", childnode.get_name()));
+                    throw new layout_syntax_error(util.string_format("unknown layout item {0}", childnode.get_name()));
                 }
             }
         }
@@ -3153,7 +3153,7 @@ namespace mame
 
     namespace emu.render.detail
     {
-        public class layout_environment : global_object
+        public class layout_environment
         {
             public class entry
             {
@@ -3377,28 +3377,28 @@ namespace mame
                 char variable_end_char = '~';
 
                 // search for candidate variable references
-                int start = 0;
-                for (int pos = str.find_first_of(variable_start_char); pos != -1; )
+                size_t start = 0;
+                for (size_t pos = str.find_first_of(variable_start_char); pos != g.npos; )
                 {
-                    string new_str = str.Substring(pos + 1);
+                    string new_str = str.Substring((int)pos + 1);
                     int termIdx = new_str.IndexOf(c => !is_variable_char(c));  //auto term = std::find_if_not(str.begin() + pos + 1, str.end(), is_variable_char);
                     if ((termIdx == -1) || (new_str[termIdx] != variable_end_char))  //if ((term == str.end()) || (*term != variable_end_char))
                     {
                         // not a valid variable name - keep searching
-                        pos = str.find_first_of(variable_start_char, termIdx + pos + 1);  //pos = str.find_first_of(variable_start_char, term - str.begin());
+                        pos = str.find_first_of(variable_start_char, (size_t)termIdx + pos + 1);  //pos = str.find_first_of(variable_start_char, term - str.begin());
                     }
                     else
                     {
                         // looks like a variable reference - try to look it up
-                        std.pair<string, bool> text = get_variable_text(str.substr(pos + 1, termIdx - (pos + 1)));  //std::pair<std::string_view, bool> text = get_variable_text(str.substr(pos + 1, term - (str.begin() + pos + 1)));
+                        std.pair<string, bool> text = get_variable_text(str.substr(pos + 1, (size_t)termIdx - (pos + 1)));  //std::pair<std::string_view, bool> text = get_variable_text(str.substr(pos + 1, term - (str.begin() + pos + 1)));
                         if (text.second)
                         {
                             // variable found
                             if (start == 0)
                                 m_buffer = "";  //m_buffer.seekp(0);
-                            m_buffer += str.Substring(start, pos - start);  //m_buffer.write(&str[start], pos - start);
+                            m_buffer += str.Substring((int)start, (int)pos - (int)start);  //m_buffer.write(&str[start], pos - start);
                             m_buffer += text.first;  //m_buffer.write(text.first.data(), text.first.length());
-                            start = termIdx + 1;  //start = term - str.begin() + 1;
+                            start = (size_t)termIdx + 1;  //start = term - str.begin() + 1;
                             pos = str.find_first_of(variable_start_char, start);
                         }
                         else
@@ -3416,7 +3416,7 @@ namespace mame
                 }
                 else
                 {
-                    m_buffer += str.Substring(start, str.length() - start);  //m_buffer.write(&str[start], str.length() - start);
+                    m_buffer += str.Substring((int)start, (int)str.length() - (int)start);  //m_buffer.write(&str[start], str.length() - start);
                     return m_buffer;
                 }
             }
@@ -3572,7 +3572,7 @@ namespace mame
                         string expanded = expand(increment);
                         unsigned hexprefix = hex_prefix(expanded);
                         unsigned decprefix = dec_prefix(expanded);
-                        bool floatchars = expanded.find_first_of(".eE") != -1;
+                        bool floatchars = expanded.find_first_of(".eE") != g.npos;
                         string stream = expanded.Substring((int)(hexprefix + decprefix));  //std::istringstream stream(std::string(expanded.substr(hexprefix + decprefix)));
                         //stream.imbue(std::locale::classic());
                         bool success = true;
@@ -3778,7 +3778,7 @@ namespace mame
 
                     // check for errors
                     if ((result.x0 > result.x1) || (result.y0 > result.y1))
-                        throw new layout_syntax_error(util_.string_format("illegal bounds ({0}-{1})-({2}-{3})", result.x0, result.x1, result.y0, result.y1));
+                        throw new layout_syntax_error(util.string_format("illegal bounds ({0}-{1})-({2}-{3})", result.x0, result.x1, result.y0, result.y1));
                 }
             }
 
@@ -3800,7 +3800,7 @@ namespace mame
 
                 // check for errors
                 if ((0.0F > new [] { result.r, result.g, result.b, result.a }.Min()) || (1.0F < new [] { result.r, result.g, result.b, result.a }.Max()))
-                    throw new layout_syntax_error(string_format("illegal RGBA color {0},{1},{2},{3}", result.r, result.g, result.b, result.a));
+                    throw new layout_syntax_error(util.string_format("illegal RGBA color {0},{1},{2},{3}", result.r, result.g, result.b, result.a));
 
                 return result;
             }
@@ -3810,26 +3810,26 @@ namespace mame
             {
                 // default to no transform
                 if (node == null)
-                    return (int)ROT0;
+                    return g.ROT0;
 
                 // parse attributes
                 int result;
                 int rotate = get_attribute_int(node, "rotate", 0);
                 switch (rotate)
                 {
-                    case 0:     result = (int)ROT0;      break;
-                    case 90:    result = (int)ROT90;     break;
-                    case 180:   result = (int)ROT180;    break;
-                    case 270:   result = (int)ROT270;    break;
-                    default:    throw new layout_syntax_error(string_format("invalid rotate attribute {0}", rotate));
+                    case 0:     result = g.ROT0;      break;
+                    case 90:    result = g.ROT90;     break;
+                    case 180:   result = g.ROT180;    break;
+                    case 270:   result = g.ROT270;    break;
+                    default:    throw new layout_syntax_error(util.string_format("invalid rotate attribute {0}", rotate));
                 }
 
                 if (get_attribute_bool(node, "swapxy", false))
-                    result ^= (int)ORIENTATION_SWAP_XY;
+                    result ^= g.ORIENTATION_SWAP_XY;
                 if (get_attribute_bool(node, "flipx", false))
-                    result ^= (int)ORIENTATION_FLIP_X;
+                    result ^= g.ORIENTATION_FLIP_X;
                 if (get_attribute_bool(node, "flipy", false))
-                    result ^= (int)ORIENTATION_FLIP_Y;
+                    result ^= g.ORIENTATION_FLIP_Y;
 
                 return result;
             }
@@ -3860,7 +3860,7 @@ namespace mame
 
 
                 if (32U < m_next_visibility_bit)
-                    throw new layout_syntax_error(string_format("view '{0}' contains too many visibility toggles", m_name));
+                    throw new layout_syntax_error(util.string_format("view '{0}' contains too many visibility toggles", m_name));
             }
 
             //~view_environment()

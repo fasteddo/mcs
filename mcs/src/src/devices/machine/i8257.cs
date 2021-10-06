@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -22,7 +22,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(I8257, i8257_device, "i8257", "Intel 8257 DMA Controller")
         static device_t device_creator_i8257_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8257_device(mconfig, tag, owner, clock); }
-        public static readonly device_type I8257 = DEFINE_DEVICE_TYPE(device_creator_i8257_device, "i8257", "Intel 8257 DMA Controller");
+        public static readonly device_type I8257 = g.DEFINE_DEVICE_TYPE(device_creator_i8257_device, "i8257", "Intel 8257 DMA Controller");
 
 
         class device_execute_interface_i8257 : device_execute_interface
@@ -35,9 +35,11 @@ namespace mame
 
         const int LOG_SETUP     = 1 << 1;
         const int LOG_TFR       = 1 << 2;
+        const int VERBOSE = 0;  //#define VERBOSE (LOG_GENERAL | LOG_SETUP | LOG_TFR)
 
-        void LOGSETUP(string format, params object [] args) { LOGMASKED(LOG_SETUP, format, args); }  //#define LOGSETUP(...) LOGMASKED(LOG_SETUP, __VA_ARGS__)
-        void LOGTFR(string format, params object [] args) { LOGMASKED(LOG_TFR, format, args); }  //#define LOGTFR(...)   LOGMASKED(LOG_TFR, __VA_ARGS__)
+        void LOGSETUP(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_SETUP, format, args); }  //#define LOGSETUP(...) LOGMASKED(LOG_SETUP, __VA_ARGS__)
+        void LOGTFR(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_TFR, format, args); }  //#define LOGTFR(...)   LOGMASKED(LOG_TFR, __VA_ARGS__)
+        void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
 
 
         //enum
@@ -97,9 +99,9 @@ namespace mame
         devcb_write8 m_out_memw_cb;
 
         // channel accessors
-        devcb_read8.array<uint32_constant_4> m_in_ior_cb;
-        devcb_write8.array<uint32_constant_4> m_out_iow_cb;
-        devcb_write_line.array<uint32_constant_4> m_out_dack_cb;
+        devcb_read8.array<u64_const_4> m_in_ior_cb;
+        devcb_write8.array<u64_const_4> m_out_iow_cb;
+        devcb_write_line.array<u64_const_4> m_out_dack_cb;
 
         struct channel
         {
@@ -138,9 +140,9 @@ namespace mame
             m_out_tc_cb = new devcb_write_line(this);
             m_in_memr_cb = new devcb_read8(this);
             m_out_memw_cb = new devcb_write8(this);
-            m_in_ior_cb = new devcb_read8.array<uint32_constant_4>(this, () => { return new devcb_read8(this); });
-            m_out_iow_cb = new devcb_write8.array<uint32_constant_4>(this, () => { return new devcb_write8(this); });
-            m_out_dack_cb = new devcb_write_line.array<uint32_constant_4>(this, () => { return new devcb_write_line(this); });
+            m_in_ior_cb = new devcb_read8.array<u64_const_4>(this, () => { return new devcb_read8(this); });
+            m_out_iow_cb = new devcb_write8.array<u64_const_4>(this, () => { return new devcb_write8(this); });
+            m_out_dack_cb = new devcb_write_line.array<u64_const_4>(this, () => { return new devcb_write_line(this); });
         }
 
 
@@ -271,23 +273,23 @@ namespace mame
             // resolve callbacks
             m_out_hrq_cb.resolve_safe();
             m_out_tc_cb.resolve_safe();
-            m_in_memr_cb.resolve_safe(0);
+            m_in_memr_cb.resolve_safe_u8(0);
             m_out_memw_cb.resolve_safe();
-            m_in_ior_cb.resolve_all_safe(0);
+            m_in_ior_cb.resolve_all_safe_u8(0);
             m_out_iow_cb.resolve_all_safe();
             m_out_dack_cb.resolve_all_safe();
 
             // state saving
-            save_item(NAME(new { m_msb }));
-            save_item(NAME(new { m_hreq }));
-            save_item(NAME(new { m_hack }));
-            save_item(NAME(new { m_ready }));
-            save_item(NAME(new { m_state }));
-            save_item(NAME(new { m_current_channel }));
-            save_item(NAME(new { m_last_channel }));
-            save_item(NAME(new { m_transfer_mode }));
-            save_item(NAME(new { m_status }));
-            save_item(NAME(new { m_request }));
+            save_item(g.NAME(new { m_msb }));
+            save_item(g.NAME(new { m_hreq }));
+            save_item(g.NAME(new { m_hack }));
+            save_item(g.NAME(new { m_ready }));
+            save_item(g.NAME(new { m_state }));
+            save_item(g.NAME(new { m_current_channel }));
+            save_item(g.NAME(new { m_last_channel }));
+            save_item(g.NAME(new { m_transfer_mode }));
+            save_item(g.NAME(new { m_status }));
+            save_item(g.NAME(new { m_request }));
 
             //throw new emu_unimplemented();
 #if false
@@ -458,7 +460,7 @@ namespace mame
             LOG("{0}\n", "set_hreq");
             if (m_hreq != state)
             {
-                m_out_hrq_cb.op(state);
+                m_out_hrq_cb.op_s32(state);
                 m_hreq = state;
                 m_diexec.abort_timeslice();
             }
@@ -469,7 +471,7 @@ namespace mame
         {
             LOG("{0}\n", "set_dack");
             for (int ch = 0; ch < 4; ch++)
-                m_out_dack_cb[ch].op(m_current_channel != ch ? 1 : 0);
+                m_out_dack_cb[ch].op_s32(m_current_channel != ch ? 1 : 0);
         }
 
 
@@ -483,12 +485,12 @@ namespace mame
             case MODE_TRANSFER_VERIFY:
             case MODE_TRANSFER_WRITE:
                 LOGTFR(" - MODE TRANSFER VERIFY/WRITE");
-                m_temp = m_in_ior_cb[m_current_channel].op(offset);
+                m_temp = m_in_ior_cb[m_current_channel].op_u8(offset);
                 break;
 
             case MODE_TRANSFER_READ:
                 LOGTFR(" - MODE TRANSFER READ");
-                m_temp = m_in_memr_cb.op(offset);
+                m_temp = m_in_memr_cb.op_u8(offset);
                 break;
             }
             LOGTFR(" channel {0} Offset {1}: {2}\n", m_current_channel, offset, m_temp);
@@ -505,7 +507,7 @@ namespace mame
             case MODE_TRANSFER_VERIFY:
             {
                 LOGTFR(" - MODE TRANSFER VERIFY");
-                uint8_t v1 = m_in_memr_cb.op(offset);
+                uint8_t v1 = m_in_memr_cb.op_u8(offset);
                 if (false && m_temp != v1)
                     logerror("verify error {0} vs. {1}\n", m_temp, v1);
                 break;
@@ -513,12 +515,12 @@ namespace mame
 
             case MODE_TRANSFER_WRITE:
                 LOGTFR(" - MODE TRANSFER WRITE");
-                m_out_memw_cb.op(offset, m_temp);
+                m_out_memw_cb.op_u8(offset, m_temp);
                 break;
 
             case MODE_TRANSFER_READ:
                 LOGTFR(" - MODE TRANSFER READ");
-                m_out_iow_cb[m_current_channel].op(offset, m_temp);
+                m_out_iow_cb[m_current_channel].op_u8(offset, m_temp);
                 break;
             }
 
@@ -565,7 +567,7 @@ namespace mame
             LOG("{0}: {1}\n", "set_tc", state);
             if (m_tc != (state != 0))
             {
-                m_out_tc_cb.op(state);
+                m_out_tc_cb.op_s32(state);
 
                 m_tc = state != 0;
             }

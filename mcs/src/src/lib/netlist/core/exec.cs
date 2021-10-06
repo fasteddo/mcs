@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using queue_t = mame.netlist.detail.queue_base<mame.netlist.detail.net_t>;  //using queue_t = queue_base<net_t, false>;
+using queue_t = mame.netlist.detail.queue_base<mame.netlist.detail.net_t, mame.bool_const_false>;  //using queue_t = queue_base<net_t, false>;
 using queue_t_entry_t = mame.plib.pqentry_t<mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>, mame.netlist.detail.net_t>;  //using entry_t = plib::pqentry_t<netlist_time_ext, net_t *>;
 
 
@@ -41,7 +41,7 @@ namespace mame.netlist
             m_time = netlist_time_ext.zero();
             m_mainclock = null;
             m_use_stats = false;
-            m_queue = new queue_t(false, config.MAX_QUEUE_SIZE,
+            m_queue = new queue_t(config.MAX_QUEUE_SIZE,
                 (net) => { return state.find_net_id(net); },  //detail::queue_t::id_delegate(&netlist_state_t :: find_net_id, &state),
                 (id) => { return state.net_by_id(id); });  //detail::queue_t::obj_delegate(&netlist_state_t :: net_by_id, &state))
 

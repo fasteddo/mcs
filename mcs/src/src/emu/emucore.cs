@@ -46,14 +46,14 @@ namespace mame
 
 
         // orientation of bitmaps
-        public const UInt32 ORIENTATION_FLIP_X              = 0x0001;  // mirror everything in the X direction
-        public const UInt32 ORIENTATION_FLIP_Y              = 0x0002;  // mirror everything in the Y direction
-        public const UInt32 ORIENTATION_SWAP_XY             = 0x0004;  // mirror along the top-left/bottom-right diagonal
+        public const int ORIENTATION_FLIP_X     = 0x0001;  // mirror everything in the X direction
+        public const int ORIENTATION_FLIP_Y     = 0x0002;  // mirror everything in the Y direction
+        public const int ORIENTATION_SWAP_XY    = 0x0004;  // mirror along the top-left/bottom-right diagonal
 
-        public const UInt32 ROT0                            = 0;
-        public const UInt32 ROT90                           = ORIENTATION_SWAP_XY | ORIENTATION_FLIP_X;  // rotate clockwise 90 degrees
-        public const UInt32 ROT180                          = ORIENTATION_FLIP_X | ORIENTATION_FLIP_Y;   // rotate 180 degrees
-        public const UInt32 ROT270                          = ORIENTATION_SWAP_XY | ORIENTATION_FLIP_Y;  // rotate counter-clockwise 90 degrees
+        public const int ROT0                   = 0;
+        public const int ROT90                  = ORIENTATION_SWAP_XY | ORIENTATION_FLIP_X;  // rotate clockwise 90 degrees
+        public const int ROT180                 = ORIENTATION_FLIP_X | ORIENTATION_FLIP_Y;   // rotate 180 degrees
+        public const int ROT270                 = ORIENTATION_SWAP_XY | ORIENTATION_FLIP_Y;  // rotate counter-clockwise 90 degrees
 
 
         // these are UTF-8 encoded strings for common characters
@@ -151,16 +151,14 @@ namespace mame
         //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("%s (%s:%d)", msg, __FILE__, __LINE__); } while (0)
         //#endif
 
+        [DebuggerHidden]
         [Conditional("DEBUG")]
-        public static void assert(bool condition)
+        public static void assert(bool condition, string message = "")
         {
-            Debug.Assert(condition);
-        }
-
-        [Conditional("DEBUG")]
-        public static void assert(bool condition, string message)
-        {
-            Debug.Assert(condition, message);
+            if (string.IsNullOrEmpty(message))
+                Debug.Assert(condition);
+            else
+                Debug.Assert(condition, message);
         }
 
 
@@ -179,6 +177,7 @@ namespace mame
         //#define ENDIAN_VALUE_NE_NNE(endian,neval,nneval) (((endian) == ENDIANNESS_NATIVE) ? (neval) : (nneval))
 
 
+        [DebuggerHidden]
         public static void fatalerror(string format, params object [] args)
         {
             throw new emu_fatalerror(format, args);
@@ -271,11 +270,13 @@ namespace mame
         int code;
 
 
+        [DebuggerHidden]
         public emu_fatalerror(string format, params object [] args)
             : this(0, format, args)
         {
         }
 
+        [DebuggerHidden]
         public emu_fatalerror(int _exitcode, string format, params object [] args)
         {
             code = _exitcode;
@@ -300,5 +301,9 @@ namespace mame
     }
 
 
-    public class emu_unimplemented : emu_fatalerror { public emu_unimplemented() : base("Unimplemented") { } }
+    public class emu_unimplemented : emu_fatalerror
+    {
+        [DebuggerHidden]
+        public emu_unimplemented() : base("Unimplemented") { }
+    }
 }

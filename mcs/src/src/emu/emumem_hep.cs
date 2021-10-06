@@ -13,9 +13,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     public abstract class handler_entry_read_passthrough<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>, IDisposable  //class handler_entry_read_passthrough : public handler_entry_read<Width, AddrShift, Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -64,9 +64,9 @@ namespace mame
 
     //template<int Width, int AddrShift, int Endian>
     public abstract class handler_entry_write_passthrough<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>, IDisposable  //class handler_entry_write_passthrough : public handler_entry_write<Width, AddrShift, Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 

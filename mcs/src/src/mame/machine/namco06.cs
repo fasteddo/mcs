@@ -4,13 +4,14 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -20,7 +21,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NAMCO_06XX, namco_06xx_device, "namco06", "Namco 06xx")
         static device_t device_creator_namco_06xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_06xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NAMCO_06XX = DEFINE_DEVICE_TYPE(device_creator_namco_06xx_device, "namco06", "Namco 06xx");
+        public static readonly device_type NAMCO_06XX = g.DEFINE_DEVICE_TYPE(device_creator_namco_06xx_device, "namco06", "Namco 06xx");
 
 
         const bool VERBOSE = false;
@@ -37,10 +38,10 @@ namespace mame
 
         required_device<cpu_device> m_nmicpu;
 
-        devcb_write_line.array<uint32_constant_4> m_chipsel;  //devcb_write_line::array<4> m_chipsel;
-        devcb_write_line.array<uint32_constant_4> m_rw;  //devcb_write_line::array<4> m_rw;
-        devcb_read8.array<uint32_constant_4> m_read;
-        devcb_write8.array<uint32_constant_4> m_write;
+        devcb_write_line.array<u64_const_4> m_chipsel;  //devcb_write_line::array<4> m_chipsel;
+        devcb_write_line.array<u64_const_4> m_rw;  //devcb_write_line::array<4> m_rw;
+        devcb_read8.array<u64_const_4> m_read;
+        devcb_write8.array<u64_const_4> m_write;
 
 
         namco_06xx_device(machine_config mconfig, string tag, device_t owner, u32 clock)
@@ -52,20 +53,20 @@ namespace mame
             m_rw_stretch = false;
             m_rw_change = false;
             m_nmicpu = new required_device<cpu_device>(this, finder_base.DUMMY_TAG);
-            m_chipsel = new devcb_write_line.array<uint32_constant_4>(this, () => { return new devcb_write_line(this); });
-            m_rw = new devcb_write_line.array<uint32_constant_4>(this, () => { return new devcb_write_line(this); });
-            m_read = new devcb_read8.array<uint32_constant_4>(this, () => { return new devcb_read8(this); });
-            m_write = new devcb_write8.array<uint32_constant_4>(this, () => { return new devcb_write8(this); });
+            m_chipsel = new devcb_write_line.array<u64_const_4>(this, () => { return new devcb_write_line(this); });
+            m_rw = new devcb_write_line.array<u64_const_4>(this, () => { return new devcb_write_line(this); });
+            m_read = new devcb_read8.array<u64_const_4>(this, () => { return new devcb_read8(this); });
+            m_write = new devcb_write8.array<u64_const_4>(this, () => { return new devcb_write8(this); });
         }
 
 
         public void set_maincpu(string tag) { m_nmicpu.set_tag(tag); }  //template <typename T> void set_maincpu(T &&tag) { m_nmicpu.set_tag(std::forward<T>(tag)); }
         public void set_maincpu(finder_base tag) { m_nmicpu.set_tag(tag); }  //template <typename T> void set_maincpu(T &&tag) { m_nmicpu.set_tag(std::forward<T>(tag)); }
 
-        public devcb_write_line.binder chip_select_callback(int N) { return m_chipsel[N].bind(); }  //template <unsigned N> auto chip_select_callback() { return m_chipsel[N].bind(); }
-        public devcb_write_line.binder rw_callback(int N) { return m_rw[N].bind(); }  //template <unsigned N> auto rw_callback() { return m_rw[N].bind(); }
-        public devcb_read8.binder read_callback(int N) { return m_read[N].bind(); }  //template <unsigned N> auto read_callback() { return m_read[N].bind(); }
-        public devcb_write8.binder write_callback(int N) { return m_write[N].bind(); }  //template <unsigned N> auto write_callback() { return m_write[N].bind(); }
+        public devcb_write_line.binder chip_select_callback<unsigned_N>() where unsigned_N : u32_const, new() { unsigned N = new unsigned_N().value; return m_chipsel[N].bind(); }  //template <unsigned N> auto chip_select_callback() { return m_chipsel[N].bind(); }
+        public devcb_write_line.binder rw_callback<unsigned_N>() where unsigned_N : u32_const, new() { unsigned N = new unsigned_N().value; return m_rw[N].bind(); }  //template <unsigned N> auto rw_callback() { return m_rw[N].bind(); }
+        public devcb_read8.binder read_callback<unsigned_N>() where unsigned_N : u32_const, new() { unsigned N = new unsigned_N().value; return m_read[N].bind(); }  //template <unsigned N> auto read_callback() { return m_read[N].bind(); }
+        public devcb_write8.binder write_callback<unsigned_N>() where unsigned_N : u32_const, new() { unsigned N = new unsigned_N().value; return m_write[N].bind(); }  //template <unsigned N> auto write_callback() { return m_write[N].bind(); }
 
 
         public uint8_t data_r(offs_t offset)
@@ -78,10 +79,10 @@ namespace mame
                 return 0;
             }
 
-            if (g.BIT(m_control, 0) != 0) result &= m_read[0].op(0);
-            if (g.BIT(m_control, 1) != 0) result &= m_read[1].op(0);
-            if (g.BIT(m_control, 2) != 0) result &= m_read[2].op(0);
-            if (g.BIT(m_control, 3) != 0) result &= m_read[3].op(0);
+            if (g.BIT(m_control, 0) != 0) result &= m_read[0].op_u8(0);
+            if (g.BIT(m_control, 1) != 0) result &= m_read[1].op_u8(0);
+            if (g.BIT(m_control, 2) != 0) result &= m_read[2].op_u8(0);
+            if (g.BIT(m_control, 3) != 0) result &= m_read[3].op_u8(0);
 
             return result;
         }
@@ -95,10 +96,10 @@ namespace mame
                 return;
             }
 
-            if (g.BIT(m_control, 0) != 0) m_write[0].op(0, data);
-            if (g.BIT(m_control, 1) != 0) m_write[1].op(0, data);
-            if (g.BIT(m_control, 2) != 0) m_write[2].op(0, data);
-            if (g.BIT(m_control, 3) != 0) m_write[3].op(0, data);
+            if (g.BIT(m_control, 0) != 0) m_write[0].op_u8(0, data);
+            if (g.BIT(m_control, 1) != 0) m_write[1].op_u8(0, data);
+            if (g.BIT(m_control, 2) != 0) m_write[2].op_u8(0, data);
+            if (g.BIT(m_control, 3) != 0) m_write[3].op_u8(0, data);
         }
 
 
@@ -117,10 +118,10 @@ namespace mame
             {
                 m_nmi_timer.adjust(attotime.never);
                 set_nmi(g.CLEAR_LINE);
-                m_chipsel[0].op(0, g.CLEAR_LINE);
-                m_chipsel[1].op(0, g.CLEAR_LINE);
-                m_chipsel[2].op(0, g.CLEAR_LINE);
-                m_chipsel[3].op(0, g.CLEAR_LINE);
+                m_chipsel[0].op_s32(0, g.CLEAR_LINE);
+                m_chipsel[1].op_s32(0, g.CLEAR_LINE);
+                m_chipsel[2].op_s32(0, g.CLEAR_LINE);
+                m_chipsel[3].op_s32(0, g.CLEAR_LINE);
                 // Setting this to true makes the next RW change not stretch.
                 m_next_timer_state = true;
             }
@@ -151,17 +152,17 @@ namespace mame
         {
             m_chipsel.resolve_all_safe();
             m_rw.resolve_all_safe();
-            m_read.resolve_all_safe(0xff);
+            m_read.resolve_all_safe_u8(0xff);
             m_write.resolve_all_safe();
 
             /* allocate a timer */
             m_nmi_timer = machine().scheduler().timer_alloc(nmi_generate); //timer_expired_delegate(FUNC(namco_06xx_device::nmi_generate),this));
 
-            save_item(NAME(new { m_control }));
-            save_item(NAME(new { m_next_timer_state }));
-            save_item(NAME(new { m_nmi_stretch }));
-            save_item(NAME(new { m_rw_stretch }));
-            save_item(NAME(new { m_rw_change }));
+            save_item(g.NAME(new { m_control }));
+            save_item(g.NAME(new { m_next_timer_state }));
+            save_item(g.NAME(new { m_nmi_stretch }));
+            save_item(g.NAME(new { m_rw_stretch }));
+            save_item(g.NAME(new { m_rw_change }));
         }
 
         //-------------------------------------------------
@@ -175,7 +176,7 @@ namespace mame
 
         void set_nmi(int state)
         {
-            if (!m_nmicpu.op[0].suspended(device_execute_interface.SUSPEND_REASON_HALT | device_execute_interface.SUSPEND_REASON_RESET | device_execute_interface.SUSPEND_REASON_DISABLE))
+            if (!m_nmicpu.op[0].suspended(g.SUSPEND_REASON_HALT | g.SUSPEND_REASON_RESET | g.SUSPEND_REASON_DISABLE))
             {
                 m_nmicpu.op[0].set_input_line(g.INPUT_LINE_NMI, state);
             }
@@ -197,10 +198,10 @@ namespace mame
             {
                 if (!m_rw_stretch)
                 {
-                    m_rw[0].op(0, g.BIT(m_control, 4));
-                    m_rw[1].op(0, g.BIT(m_control, 4));
-                    m_rw[2].op(0, g.BIT(m_control, 4));
-                    m_rw[3].op(0, g.BIT(m_control, 4));
+                    m_rw[0].op_s32(0, g.BIT(m_control, 4));
+                    m_rw[1].op_s32(0, g.BIT(m_control, 4));
+                    m_rw[2].op_s32(0, g.BIT(m_control, 4));
+                    m_rw[3].op_s32(0, g.BIT(m_control, 4));
                     m_rw_change = false;
                 }
             }
@@ -214,10 +215,10 @@ namespace mame
                 set_nmi(g.CLEAR_LINE);
             }
 
-            m_chipsel[0].op(0, (g.BIT(m_control, 0) != 0 && m_next_timer_state) ? 1 : 0);
-            m_chipsel[1].op(0, (g.BIT(m_control, 1) != 0 && m_next_timer_state) ? 1 : 0);
-            m_chipsel[2].op(0, (g.BIT(m_control, 2) != 0 && m_next_timer_state) ? 1 : 0);
-            m_chipsel[3].op(0, (g.BIT(m_control, 3) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[0].op_s32(0, (g.BIT(m_control, 0) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[1].op_s32(0, (g.BIT(m_control, 1) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[2].op_s32(0, (g.BIT(m_control, 2) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[3].op_s32(0, (g.BIT(m_control, 3) != 0 && m_next_timer_state) ? 1 : 0);
 
             m_next_timer_state = !m_next_timer_state;
             m_nmi_stretch = false;

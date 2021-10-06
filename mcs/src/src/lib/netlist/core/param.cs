@@ -103,6 +103,12 @@ namespace mame.netlist
         public UInt32 cast(double a) { return (UInt32)a; }
     }
 
+    public class param_num_t_operators_uint64 : param_num_t_operators<UInt64>
+    {
+        public bool is_integral() { return true; }
+        public UInt64 cast(double a) { return (UInt64)a; }
+    }
+
     public class param_num_t_operators_double : param_num_t_operators<double>
     {
         public bool is_integral() { return true; }
@@ -114,7 +120,7 @@ namespace mame.netlist
     public class param_num_t<T, T_OPS> : param_t
         where T_OPS : param_num_t_operators<T>, new()
     {
-        static param_num_t_operators<T> ops = new T_OPS();
+        static readonly param_num_t_operators<T> ops = new T_OPS();
 
 
         //using value_type = T;
@@ -138,7 +144,7 @@ namespace mame.netlist
                 func.compile_infix(p, new std.vector<string>());
                 var valx = func.evaluate();
                 if (ops.is_integral())  //if (plib::is_integral<T>::value)
-                    if (plib.pglobal.abs<nl_fptype, nl_fptype_ops>(valx - plib.pglobal.trunc<nl_fptype, nl_fptype_ops>(valx)) > nlconst.magic(1e-6))
+                    if (plib.pg.abs(valx - plib.pg.trunc(valx)) > nlconst.magic(1e-6))
                         throw new nl_exception(nl_errstr_global.MF_INVALID_NUMBER_CONVERSION_1_2(device.name() + "." + name, p));
                 m_param = ops.cast(valx);  //m_param = plib::narrow_cast<T>(valx);
             }
@@ -190,7 +196,7 @@ namespace mame.netlist
     public class param_enum_t<T, T_OPS> : param_t
         where T_OPS : param_enum_t_operators<T>, new()
     {
-        static param_enum_t_operators<T> ops = new T_OPS();
+        static readonly param_enum_t_operators<T> ops = new T_OPS();
 
 
         //using value_type = T;
@@ -292,10 +298,17 @@ namespace mame.netlist
     }
 
 
+    public interface param_value_interface
+    {
+        string value_str(string entity);
+        nl_fptype value(string entity);
+    }
+
+
     // -----------------------------------------------------------------------------
     // model parameter
     // -----------------------------------------------------------------------------
-    class param_model_t : param_str_t
+    class param_model_t : param_str_t, param_value_interface
     {
         public interface value_base_t_operators<T>
         {
@@ -325,14 +338,14 @@ namespace mame.netlist
         public class value_base_t<T, T_OPS>
             where T_OPS : value_base_t_operators<T>, new()
         {
-            static value_base_t_operators<T> ops = new T_OPS();
+            static readonly value_base_t_operators<T> ops = new T_OPS();
 
 
             T m_value;
 
 
             //template <typename P, typename Y=T, typename DUMMY = std::enable_if_t<plib::is_arithmetic<Y>::value>>
-            public value_base_t(param_model_t param, string name)
+            public value_base_t(param_value_interface param, string name)
             {
                 if (ops.is_arithmetic())
                     m_value = ops.cast(param.value(name));  //: m_value(gsl::narrow<T>(param.value(name)))
@@ -363,13 +376,13 @@ namespace mame.netlist
         }
 
 
-        string value_str(string entity)
+        public string value_str(string entity)
         {
             return state().setup().models().get_model(str()).value_str(entity);
         }
 
 
-        nl_fptype value(string entity)
+        public nl_fptype value(string entity)
         {
             return state().setup().models().get_model(str()).value(entity);
         }

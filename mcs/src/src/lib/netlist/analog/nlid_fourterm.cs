@@ -67,10 +67,10 @@ namespace mame.netlist
                 m_IN = new terminal_t(this, "IN", termhandler);  //m_IN(*this, "IN", &m_IP, {&m_OP, &m_ON}, NETLIB_DELEGATE(termhandler));
                 m_OP1 = new terminal_t(this, "_OP1", termhandler);//, m_OP1(*this, "_OP1", &m_IN, NETLIB_DELEGATE(termhandler))
                 m_ON1 = new terminal_t(this, "_ON1", termhandler);//, m_ON1(*this, "_ON1", &m_IN, NETLIB_DELEGATE(termhandler))
-                m_OP.terminal_t_after_ctor(m_IP, new std.array<terminal_t, uint32_constant_2>(m_ON, m_IN));
-                m_ON.terminal_t_after_ctor(m_IP, new std.array<terminal_t, uint32_constant_2>(m_OP, m_IN));
-                m_IP.terminal_t_after_ctor(m_IN, new std.array<terminal_t, uint32_constant_2>(m_OP, m_ON));
-                m_IN.terminal_t_after_ctor(m_IP, new std.array<terminal_t, uint32_constant_2>(m_OP, m_ON));
+                m_OP.terminal_t_after_ctor(m_IP, new std.array<terminal_t, u64_const_2>(m_ON, m_IN));
+                m_ON.terminal_t_after_ctor(m_IP, new std.array<terminal_t, u64_const_2>(m_OP, m_IN));
+                m_IP.terminal_t_after_ctor(m_IN, new std.array<terminal_t, u64_const_2>(m_OP, m_ON));
+                m_IN.terminal_t_after_ctor(m_IP, new std.array<terminal_t, u64_const_2>(m_OP, m_ON));
                 m_OP1.terminal_t_after_ctor(m_IN);
                 m_ON1.terminal_t_after_ctor(m_IN);
 
@@ -92,7 +92,7 @@ namespace mame.netlist
             public override void reset()
             {
                 nl_fptype m_mult = m_G.op() * m_gfac; // 1.0 ==> 1V ==> 1A
-                nl_fptype GI = plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(m_RI.op());
+                nl_fptype GI = plib.pg.reciprocal(m_RI.op());
 
                 m_IP.set_conductivity(GI);
                 m_IN.set_conductivity(GI);
@@ -177,7 +177,7 @@ namespace mame.netlist
             //NETLIB_RESET(VCVS)
             public override void reset()
             {
-                var gfac = plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(m_RO.op());
+                var gfac = plib.pg.reciprocal(m_RO.op());
                 set_gfac(gfac);
 
                 base.reset();
@@ -191,9 +191,9 @@ namespace mame.netlist
 
 
             //NETLIB_HANDLERI(termhandler)
-            void termhandler()
+            new void termhandler()
             {
-                base.termhandler();
+                base.termhandler();  //NETLIB_NAME(VCCS) :: termhandler();
             }
         }
 

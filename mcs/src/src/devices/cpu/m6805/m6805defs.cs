@@ -109,7 +109,7 @@ namespace mame
         {
             switch (M)
             {
-                case addr_mode.IM: static_assert(addr_mode.IM != M, "invalid mode for this instruction"); break;
+                case addr_mode.IM: g.static_assert(addr_mode.IM != M, "invalid mode for this instruction"); break;
                 case addr_mode.DI: DIRECT(big); break;
                 case addr_mode.EX: EXTENDED(big); break;
                 case addr_mode.IX: INDEXED(); break;

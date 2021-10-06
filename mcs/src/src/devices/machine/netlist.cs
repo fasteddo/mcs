@@ -11,7 +11,7 @@ using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using sound_in_type = mame.netlist.interface_.nld_buffered_param_setter<mame.netlist_mame_sound_input_buffer>;  //using sound_in_type = netlist::interface::NETLIB_NAME(buffered_param_setter)<netlist_mame_sound_input_buffer>;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u32 = System.UInt32;
@@ -45,15 +45,15 @@ namespace mame
 
         //#define LOG_MASK (LOG_GENERAL | LOG_DEV_CALLS | LOG_DEBUG)
         //#define LOG_MASK        (LOG_TIMING)
-        //#define LOG_MASK        (0)
+        const int LOG_MASK = 0;  //#define LOG_MASK        (0)
 
-        public static void LOGDEVCALLS(device_t device, string format, params object [] args) { logmacro_global.LOGMASKED(LOG_DEV_CALLS, device, format, args); }  //#define LOGDEVCALLS(...) LOGMASKED(LOG_DEV_CALLS, __VA_ARGS__)
-        public static void LOGDEBUG(device_t device, string format, params object [] args) { logmacro_global.LOGMASKED(LOG_DEBUG, device, format, args); }  //#define LOGDEBUG(...) LOGMASKED(LOG_DEBUG, __VA_ARGS__)
-        public static void LOGTIMING(device_t device, string format, params object [] args) { logmacro_global.LOGMASKED(LOG_TIMING, device, format, args); }  //#define LOGTIMING(...) LOGMASKED(LOG_TIMING, __VA_ARGS__)
+        public static void LOGDEVCALLS(string format, params object [] args) { LOGMASKED(LOG_DEV_CALLS, format, args); }  //#define LOGDEVCALLS(...) LOGMASKED(LOG_DEV_CALLS, __VA_ARGS__)
+        public static void LOGDEBUG(string format, params object [] args) { LOGMASKED(LOG_DEBUG, format, args); }  //#define LOGDEBUG(...) LOGMASKED(LOG_DEBUG, __VA_ARGS__)
+        public static void LOGTIMING(string format, params object [] args) { LOGMASKED(LOG_TIMING, format, args); }  //#define LOGTIMING(...) LOGMASKED(LOG_TIMING, __VA_ARGS__)
 
-        //#define LOG_OUTPUT_FUNC printf
+        static void LOG_OUTPUT_FUNC_netlist(device_t device, string format, params object [] args) { g.osd_printf_debug(format, args); }  //#define LOG_OUTPUT_FUNC printf
 
-        //#define LOGMASKED(mask, ...) do { if (LOG_MASK & (mask)) (LOG_OUTPUT_FUNC)(__VA_ARGS__); } while (false)
+        static void LOGMASKED(int mask, string format, params object [] args) { if ((LOG_MASK & mask) != 0) LOG_OUTPUT_FUNC_netlist(null, format, args); }  //#define LOGMASKED(mask, ...) do { if (LOG_MASK & (mask)) (LOG_OUTPUT_FUNC)(__VA_ARGS__); } while (false)
 
 
         public static netlist_time_ext nltime_from_attotime(attotime t)
@@ -72,7 +72,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NETLIST_CORE,  netlist_mame_device,       "netlist_core",  "Netlist Core Device")
         static device_t device_creator_netlist_mame_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_CORE = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_device, "netlist_core",  "Netlist Core Device");
+        public static readonly device_type NETLIST_CORE = g.DEFINE_DEVICE_TYPE(device_creator_netlist_mame_device, "netlist_core",  "Netlist Core Device");
 
 
         //using func_type = std::function<void(netlist::nlparse_t &)>;
@@ -88,11 +88,11 @@ namespace mame
 
 
             public netlist_mame_t(netlist_mame_device parent, string name)
-                : base(name)  //: netlist::netlist_state_t(name, plib::plog_delegate(&netlist_mame_t::logger, this))
+                : base()  //: netlist::netlist_state_t(name, plib::plog_delegate(&netlist_mame_t::logger, this))
             {
                 m_parent = parent;
 
-                netlist_state_t_after_ctor(logger);
+                netlist_state_t_after_ctor(name, logger);
             }
 
 
@@ -125,6 +125,11 @@ namespace mame
                 }
             }
         }
+
+
+        protected void LOGDEVCALLS(string format, params object [] args) { netlist_global.LOGDEVCALLS(format, args); }
+        protected void LOGDEBUG(string format, params object [] args) { netlist_global.LOGDEBUG(format, args); }  //#define LOGDEBUG(...) LOGMASKED(LOG_DEBUG, __VA_ARGS__)
+        protected void LOGTIMING(string format, params object [] args) { netlist_global.LOGTIMING(format, args); }  //#define LOGTIMING(...) LOGMASKED(LOG_TIMING, __VA_ARGS__)
 
 
         netlist_mame_t m_netlist;  //std::unique_ptr<netlist_mame_t> m_netlist;
@@ -175,7 +180,7 @@ namespace mame
 
         protected override void device_config_complete()
         {
-            netlist_global.LOGDEVCALLS(this, "device_config_complete {0}\n", this.mconfig().gamedrv().name);
+            LOGDEVCALLS("device_config_complete {0}\n", this.mconfig().gamedrv().name);
         }
 
 
@@ -183,24 +188,24 @@ namespace mame
         {
             base_validity_check(valid);
             //rom_exists(mconfig().root_device());
-            netlist_global.LOGDEVCALLS(this, "device_validity_check {0}\n", this.mconfig().gamedrv().name);
+            LOGDEVCALLS("device_validity_check {0}\n", this.mconfig().gamedrv().name);
         }
 
 
         protected override void device_start()
         {
-            netlist_global.LOGDEVCALLS(this, "device_start entry\n");
+            LOGDEVCALLS("device_start entry\n");
 
             device_start_common();
             save_state();
 
-            netlist_global.LOGDEVCALLS(this, "device_start exit\n");
+            LOGDEVCALLS("device_start exit\n");
         }
 
 
         protected override void device_stop()
         {
-            netlist_global.LOGDEVCALLS(this, "device_stop\n");
+            LOGDEVCALLS("device_stop\n");
 
             if (m_netlist != null)
                 netlist().exec().stop();
@@ -217,7 +222,7 @@ namespace mame
 
         protected override void device_reset()
         {
-            netlist_global.LOGDEVCALLS(this, "device_reset\n");
+            LOGDEVCALLS("device_reset\n");
             if (!m_device_reset_called)
             {
                 // netlists don't have a reset line, doing a soft-reset is pointless
@@ -234,7 +239,7 @@ namespace mame
 
         protected override void device_post_load()
         {
-            netlist_global.LOGDEVCALLS(this, "device_post_load\n");
+            LOGDEVCALLS("device_post_load\n");
 
             netlist().run_state_manager().post_load();
             netlist().rebuild_lists();
@@ -243,7 +248,7 @@ namespace mame
 
         protected override void device_pre_save()
         {
-            netlist_global.LOGDEVCALLS(this, "device_pre_save\n");
+            LOGDEVCALLS("device_pre_save\n");
 
             netlist().run_state_manager().pre_save();
         }
@@ -277,7 +282,7 @@ namespace mame
             m_csv_file = fopen(name.c_str(), "wb");
 #endif
 
-            netlist_global.LOGDEVCALLS(this, "device_start exit\n");
+            LOGDEVCALLS("device_start exit\n");
         }
 
 
@@ -297,16 +302,16 @@ namespace mame
                 case plib.plog_level.VERBOSE:
                     break;
                 case plib.plog_level.INFO:
-                    osd_printf_verbose("netlist INFO: {0}\n", ls8);
+                    g.osd_printf_verbose("netlist INFO: {0}\n", ls8);
                     break;
                 case plib.plog_level.WARNING:
-                    osd_printf_warning("netlist WARNING: {0}\n", ls8);
+                    g.osd_printf_warning("netlist WARNING: {0}\n", ls8);
                     break;
                 case plib.plog_level.ERROR:
-                    osd_printf_error("netlist ERROR: {0}\n", ls8);
+                    g.osd_printf_error("netlist ERROR: {0}\n", ls8);
                     break;
                 case plib.plog_level.FATAL:
-                    osd_printf_error("netlist FATAL: {0}\n", ls8);
+                    g.osd_printf_error("netlist FATAL: {0}\n", ls8);
                     break;
                 }
             }
@@ -325,8 +330,8 @@ namespace mame
                 t.start();
 #endif
 
-                var lnetlist = new netlist.netlist_state_t("netlist");                // enable validation mode  //auto lnetlist = std::make_unique<netlist::netlist_state_t>("netlist", plib::plog_delegate(&validity_logger::log, &logger));                // enable validation mode
-                lnetlist.netlist_state_t_after_ctor(logger.log);
+                var lnetlist = new netlist.netlist_state_t();                // enable validation mode  //auto lnetlist = std::make_unique<netlist::netlist_state_t>("netlist", plib::plog_delegate(&validity_logger::log, &logger));                // enable validation mode
+                lnetlist.netlist_state_t_after_ctor("netlist", logger.log);
 
                 lnetlist.set_static_solver_lib(new plib.dynlib_static(null));  //lnetlist->set_static_solver_lib(std::make_unique<plib::dynlib_static>(nullptr));
 
@@ -338,7 +343,7 @@ namespace mame
                     device_t_with_netlist_mame_sub_interface sdev = (device_t_with_netlist_mame_sub_interface)d;
                     if (sdev != null)
                     {
-                        netlist_global.LOGDEVCALLS(this, "Validity check on subdevice {0}/{1}\n", d.name(), d.shortname());
+                        LOGDEVCALLS("Validity check on subdevice {0}/{1}\n", d.name(), d.shortname());
                         sdev.validity_helper(valid, lnetlist);
                     }
                 }
@@ -354,15 +359,15 @@ namespace mame
             catch (memregion_not_set err)
             {
                 // Do not report an error. Validity check has no access to ROM area.
-                osd_printf_verbose("{0}\n", err);
+                g.osd_printf_verbose("{0}\n", err);
             }
             catch (emu_fatalerror err)
             {
-                osd_printf_error("{0}\n", err);
+                g.osd_printf_error("{0}\n", err);
             }
             catch (Exception err)
             {
-                osd_printf_error("{0}\n", err);
+                g.osd_printf_error("{0}\n", err);
             }
 
             return null;  //return netlist::host_arena::unique_ptr<netlist::netlist_state_t>(nullptr);
@@ -440,7 +445,7 @@ namespace mame
                 device_t_with_netlist_mame_sub_interface sdev = (device_t_with_netlist_mame_sub_interface)d;  //netlist_mame_sub_interface *sdev = dynamic_cast<netlist_mame_sub_interface *>(&d);
                 if (sdev != null)
                 {
-                    netlist_global.LOGDEVCALLS(this, "Preparse subdevice {0}/{1}\n", d.name(), d.shortname());
+                    LOGDEVCALLS("Preparse subdevice {0}/{1}\n", d.name(), d.shortname());
                     sdev.pre_parse_action(lsetup.parser());
                 }
             }
@@ -457,7 +462,7 @@ namespace mame
                 device_t_with_netlist_mame_sub_interface sdev = (device_t_with_netlist_mame_sub_interface)d;  //netlist_mame_sub_interface *sdev = dynamic_cast<netlist_mame_sub_interface *>(&d);
                 if (sdev != null)
                 {
-                    netlist_global.LOGDEVCALLS(this, "Found subdevice {0}/{1}\n", d.name(), d.shortname());
+                    LOGDEVCALLS("Found subdevice {0}/{1}\n", d.name(), d.shortname());
                     sdev.custom_netlist_additions(lsetup.parser());
                 }
             }
@@ -476,7 +481,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NETLIST_CPU,   netlist_mame_cpu_device,   "netlist_cpu",   "Netlist CPU Device")
         static device_t device_creator_netlist_mame_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_CPU = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_cpu_device, "netlist_cpu",   "Netlist CPU Device");
+        public static readonly device_type NETLIST_CPU = g.DEFINE_DEVICE_TYPE(device_creator_netlist_mame_cpu_device, "netlist_cpu",   "Netlist CPU Device");
 
 
         //static constexpr const unsigned MDIV_SHIFT = 16;
@@ -595,7 +600,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NETLIST_SOUND, netlist_mame_sound_device, "netlist_sound", "Netlist Sound Device")
         static device_t device_creator_netlist_mame_sound_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_sound_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_SOUND = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_sound_device, "netlist_sound", "Netlist Sound Device");
+        public static readonly device_type NETLIST_SOUND = g.DEFINE_DEVICE_TYPE(device_creator_netlist_mame_sound_device, "netlist_sound", "Netlist Sound Device");
 
 
         public class device_sound_interface_netlist_mame_sound : device_sound_interface
@@ -610,8 +615,8 @@ namespace mame
 
 
         std.map<int, netlist_mame_stream_output_device> m_out = new std.map<int, netlist_mame_stream_output_device>();
-        std.map<size_t, nld_sound_in> m_in;
-        std.vector<netlist_mame_sound_input_buffer> m_inbuffer;
+        std.map<size_t, nld_sound_in> m_in = new std.map<size_t, nld_sound_in>();
+        std.vector<netlist_mame_sound_input_buffer> m_inbuffer = new std.vector<netlist_mame_sound_input_buffer>();
         sound_stream m_stream;
         attotime m_cur_time;
         uint32_t m_sound_clock;
@@ -649,11 +654,11 @@ namespace mame
 
         public void update_to_current_time()
         {
-            netlist_global.LOGDEBUG(this, "before update\n");
+            LOGDEBUG("before update\n");
             get_stream().update();
 
             if (machine().time() < m_last_update_to_current_time)
-                netlist_global.LOGTIMING(this, "machine.time() decreased 2\n");
+                LOGTIMING("machine.time() decreased 2\n");
 
             m_last_update_to_current_time = machine().time();
 
@@ -668,7 +673,7 @@ namespace mame
             }
             else if (mtime < cur)
             {
-                netlist_global.LOGTIMING(this, "{0} : {1} us before machine time\n", this.name(), (cur - mtime).as_double() * 1000000.0);
+                LOGTIMING("{0} : {1} us before machine time\n", this.name(), (cur - mtime).as_double() * 1000000.0);
             }
         }
 
@@ -684,7 +689,7 @@ namespace mame
         {
             ////parser.factory().add<nld_sound_out>("NETDEV_SOUND_OUT",
             ////  netlist::factory::properties("+CHAN", PSOURCELOC()));
-            parser.factory_().add_nld_sound_in("NETDEV_SOUND_IN", new netlist.factory.properties("-", plib.pglobal.PSOURCELOC()));  //parser.factory_().add<nld_sound_in>("NETDEV_SOUND_IN", netlist.factory.properties("-", PSOURCELOC()));
+            parser.factory_().add_nld_sound_in("NETDEV_SOUND_IN", new netlist.factory.properties("-", plib.pg.PSOURCELOC()));  //parser.factory_().add<nld_sound_in>("NETDEV_SOUND_IN", netlist.factory.properties("-", PSOURCELOC()));
         }
 
 
@@ -692,12 +697,12 @@ namespace mame
 
         protected override void device_start()
         {
-            netlist_global.LOGDEVCALLS(this, "sound device_start\n");
+            LOGDEVCALLS("sound device_start\n");
 
             m_attotime_per_clock = attotime.from_hz(m_sound_clock);
 
-            save_item(NAME(new { m_cur_time }));
-            save_item(NAME(new { m_attotime_per_clock }));
+            save_item(g.NAME(new { m_cur_time }));
+            save_item(g.NAME(new { m_attotime_per_clock }));
 
             device_start_common();
             save_state();
@@ -707,13 +712,13 @@ namespace mame
             // Configure outputs
 
             if (m_out.size() == 0)
-                fatalerror("No output devices");
+                g.fatalerror("No output devices");
 
             /* resort channels */
             foreach (var outdev in m_out)
             {
-                if (outdev.first() < 0 || outdev.first() >= m_out.size())
-                    fatalerror("illegal output channel number {0}", outdev.first());
+                if (outdev.first() < 0 || outdev.first() >= (int)m_out.size())
+                    g.fatalerror("illegal output channel number {0}", outdev.first());
                 outdev.second().set_sample_time(netlist_time.from_hz(m_sound_clock));
                 outdev.second().buffer_reset(netlist_time_ext.zero());
             }
@@ -725,7 +730,6 @@ namespace mame
             std.vector<nld_sound_in> indevs = netlist().get_device_list<nld_sound_in>();
             foreach (var e in indevs)
             {
-                //old m_in = indevs[0];
                 m_in.emplace(e.id(), e);
                 var sample_time = netlist_time.from_raw((int64_t)netlist_global.nltime_from_attotime(m_attotime_per_clock).as_raw());  //const auto sample_time = netlist::netlist_time::from_raw(static_cast<netlist::netlist_time::internal_type>(nltime_from_attotime(m_attotime_per_clock).as_raw()));
                 e.resolve_params(sample_time);
@@ -734,15 +738,15 @@ namespace mame
             foreach (var e in m_in)
             {
                 if (e.first() < 0 || e.first() >= m_in.size())
-                    fatalerror("illegal input channel number {0}", e.first());
+                    g.fatalerror("illegal input channel number {0}", e.first());
             }
 
             m_inbuffer.resize(m_in.size());
 
             /* initialize the stream(s) */
-            m_stream = m_disound.stream_alloc(m_in.size(), m_out.size(), m_sound_clock, sound_stream_flags.STREAM_DISABLE_INPUT_RESAMPLING);
+            m_stream = m_disound.stream_alloc((int)m_in.size(), (int)m_out.size(), m_sound_clock, sound_stream_flags.STREAM_DISABLE_INPUT_RESAMPLING);
 
-            netlist_global.LOGDEVCALLS(this, "sound device_start exit\n");
+            LOGDEVCALLS("sound device_start exit\n");
         }
 
 
@@ -758,7 +762,7 @@ namespace mame
             }
 
             int samples = (int)outputs[0].samples();
-            netlist_global.LOGDEBUG(this, "samples {0}\n", samples);
+            LOGDEBUG("samples {0}\n", samples);
 
             // end_time() is the time at the END of the last sample we're generating
             // however, the sample value is the value at the START of that last sample,
@@ -842,6 +846,11 @@ namespace mame
     {
         protected netlist_mame_sub_interface m_netlist_mame_sub_interface;
 
+
+        protected void LOGDEVCALLS(string format, params object [] args) { netlist_global.LOGDEVCALLS(format, args); }
+        protected void LOGDEBUG(string format, params object [] args) { netlist_global.LOGDEBUG(format, args); }  //#define LOGDEBUG(...) LOGMASKED(LOG_DEBUG, __VA_ARGS__)
+
+
         public device_t_with_netlist_mame_sub_interface(machine_config mconfig, device_type type, string tag, device_t owner, uint32_t clock = 0)
             : base(mconfig, type, tag, owner, clock)
         {
@@ -869,7 +878,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NETLIST_ANALOG_INPUT,  netlist_mame_analog_input_device,  "nl_analog_in",  "Netlist Analog Input")
         static device_t device_creator_netlist_mame_analog_input_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_analog_input_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_ANALOG_INPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_analog_input_device, "nl_analog_in",  "Netlist Analog Input");
+        public static readonly device_type NETLIST_ANALOG_INPUT = g.DEFINE_DEVICE_TYPE(device_creator_netlist_mame_analog_input_device, "nl_analog_in",  "Netlist Analog Input");
 
 
         // TODO remove this when this class is finished
@@ -964,10 +973,10 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NETLIST_LOGIC_INPUT,   netlist_mame_logic_input_device,   "nl_logic_in",   "Netlist Logic Input")
         static device_t device_creator_netlist_mame_logic_input_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_logic_input_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_LOGIC_INPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_logic_input_device, "nl_logic_in",  "Netlist Logic Input");
+        public static readonly device_type NETLIST_LOGIC_INPUT = g.DEFINE_DEVICE_TYPE(device_creator_netlist_mame_logic_input_device, "nl_logic_in",  "Netlist Logic Input");
 
 
-        netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool> m_param;
+        netlist.param_num_t<bool, netlist.param_num_t_operators_bool> m_param;
         uint32_t m_shift;
         string m_param_name;
 
@@ -1005,7 +1014,7 @@ namespace mame
             uint32_t v = (val >> (int)m_shift) & 1;
             if ((v != 0) != m_param.op())
             {
-                netlist_global.LOGDEBUG(this, "write {0}\n", this.tag());
+                LOGDEBUG("write {0}\n", this.tag());
                 synchronize(0, (int)v);
             }
         }
@@ -1030,13 +1039,13 @@ namespace mame
         // device-level overrides
         protected override void device_start()
         {
-            netlist_global.LOGDEVCALLS(this, "start\n");
+            LOGDEVCALLS("start\n");
 
             netlist.param_ref_t p = ((netlist_mame_device)this.owner()).setup().find_param(m_param_name);  //netlist::param_ref_t p = downcast<netlist_mame_device *>(this->owner())->setup().find_param(pstring(m_param_name));
             m_param = (param_logic_t)p.param();  //m_param = dynamic_cast<netlist::param_logic_t *>(&p.param());
             if (m_param == null)
             {
-                fatalerror("device {0} wrong parameter type for {1}\n", basetag(), m_param_name);
+                g.fatalerror("device {0} wrong parameter type for {1}\n", basetag(), m_param_name);
             }
         }
 
@@ -1068,7 +1077,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NETLIST_STREAM_INPUT,  netlist_mame_stream_input_device,  "nl_stream_in",  "Netlist Stream Input")
         static device_t device_creator_netlist_mame_stream_input_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_stream_input_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_STREAM_INPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_stream_input_device, "nl_stream_in",  "Netlist Stream Input");
+        public static readonly device_type NETLIST_STREAM_INPUT = g.DEFINE_DEVICE_TYPE(device_creator_netlist_mame_stream_input_device, "nl_stream_in",  "Netlist Stream Input");
 
 
         uint32_t m_channel;
@@ -1104,7 +1113,7 @@ namespace mame
         // device-level overrides
         protected override void device_start()
         {
-            netlist_global.LOGDEVCALLS(this, "start\n");
+            LOGDEVCALLS("start\n");
         }
 
 
@@ -1163,12 +1172,12 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NETLIST_STREAM_OUTPUT, netlist_mame_stream_output_device, "nl_stream_out", "Netlist Stream Output")
         static device_t device_creator_netlist_mame_stream_output_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_stream_output_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_STREAM_OUTPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_stream_output_device, "nl_stream_out", "Netlist Stream Output");
+        public static readonly device_type NETLIST_STREAM_OUTPUT = g.DEFINE_DEVICE_TYPE(device_creator_netlist_mame_stream_output_device, "nl_stream_out", "Netlist Stream Output");
 
 
         uint32_t m_channel;
         string m_out_name;
-        std.vector<stream_buffer_sample_t> m_buffer;
+        std.vector<stream_buffer_sample_t> m_buffer = new std.vector<stream_buffer_sample_t>();
         double m_cur;
 
         netlist_time m_sample_time;
@@ -1205,7 +1214,10 @@ namespace mame
         }
 
 
-        //void process(netlist::netlist_time_ext tim, netlist::nl_fptype val);
+        void process(netlist_time_ext tim, nl_fptype val)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         public void buffer_reset(netlist_time_ext upto)
@@ -1218,10 +1230,10 @@ namespace mame
         public void sound_update_fill(write_stream_view target)
         {
             if (target.samples() < m_buffer.size())
-                osd_printf_warning("sound {0}: samples {1} less bufsize {2}\n", name(), target.samples(), m_buffer.size());
+                g.osd_printf_warning("sound {0}: samples {1} less bufsize {2}\n", name(), target.samples(), m_buffer.size());
 
             int sampindex;
-            for (sampindex = 0; sampindex < m_buffer.size(); sampindex++)
+            for (sampindex = 0; sampindex < (int)m_buffer.size(); sampindex++)
                 target.put(sampindex, m_buffer[sampindex]);
 
             target.fill((stream_buffer_sample_t)m_cur, sampindex);
@@ -1234,11 +1246,11 @@ namespace mame
         // device-level overrides
         protected override void device_start()
         {
-            netlist_global.LOGDEVCALLS(this, "start {0}\n", name());
+            LOGDEVCALLS("start {0}\n", name());
             m_cur = 0.0;
             m_last_buffer_time = netlist_time_ext.zero();
 
-            save_item(NAME(m_cur));
+            save_item(g.NAME(m_cur));
             m_sample_time.save_state(new save_helper(this, "m_sample_time"));
             m_last_buffer_time.save_state(new save_helper(this, "m_last_buffer_time"));
         }
@@ -1246,7 +1258,7 @@ namespace mame
 
         protected override void device_reset()
         {
-            netlist_global.LOGDEVCALLS(this, "reset {0}\n", name());
+            LOGDEVCALLS("reset {0}\n", name());
 #if false
             m_cur = 0.0;
             m_last_buffer_time = netlist_time_ext.zero();
@@ -1267,15 +1279,15 @@ namespace mame
         {
             string dname = new plib.pfmt("STREAM_OUT_{0}").op(m_channel);
 
-            //const auto lambda = [this](auto &in_, netlist::nl_fptype val)
-            //{
-            //    this->process(in_.exec().time(), val);;
-            //};
+            netlist.interface_.nld_analog_callback.FUNC lambda = (in_, val) =>  //const auto lambda = [this](auto &in, netlist::nl_fptype val)
+            {
+                this.process(in_.exec().time(), val);
+            };
 
             //using lb_t = decltype(lambda);
             //using cb_t = netlist::interface::NETLIB_NAME(analog_callback)<lb_t>;
 
-            parser.factory_().add_nld_analog_callback(dname, new netlist.factory.properties("-", plib.pglobal.PSOURCELOC()));  //parser.factory().add<cb_t, netlist::nl_fptype, lb_t>(dname, netlist::factory::properties("-", PSOURCELOC()), 1e-9, std::forward<lb_t>(lambda));
+            parser.factory_().add_nld_analog_callback<netlist.interface_.nld_analog_callback, nl_fptype, netlist.interface_.nld_analog_callback.FUNC>(dname, new netlist.factory.properties("-", plib.pg.PSOURCELOC()), 1e-9, lambda);  //parser.factory().add<cb_t, netlist::nl_fptype, lb_t>(dname, netlist::factory::properties("-", PSOURCELOC()), 1e-9, std::forward<lb_t>(lambda));
         }
     }
 
@@ -1331,7 +1343,7 @@ namespace mame
         //using base_type::base_type;
 
 
-        protected nld_sound_in(object owner, string name)
+        public nld_sound_in(object owner, string name)
             : base(owner, name)
         { }
     }

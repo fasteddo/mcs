@@ -10,6 +10,7 @@ using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feat
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using seconds_t = System.Int32;  //typedef s32 seconds_t;
+using size_t = System.UInt64;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -267,7 +268,7 @@ namespace mame
         //template <class DriverClass, char const *ShortName, char const *FullName, char const *Source, device_feature::type Unemulated, device_feature::type Imperfect> auto driver_tag_func() { return driver_tag_struct<DriverClass, ShortName, FullName, Source>{ }; };
 
 
-        public class device_type_impl_base : global_object
+        public class device_type_impl_base
         {
             //friend class device_registrar;
 
@@ -418,10 +419,10 @@ namespace mame
             //template <class DeviceClass> template <typename Exposed, bool Required, typename... Params>
             public static DeviceClass op<DeviceClass, bool_Required>(machine_config mconfig, device_finder<DeviceClass, bool_Required> finder, device_type type, u32 clock)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
                 where DeviceClass : device_t
-                where bool_Required : bool_constant, new()
+                where bool_Required : bool_const, new()
             {
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-                assert(mconfig.current_device() == target.first);
+                g.assert(mconfig.current_device() == target.first);
                 DeviceClass result = (DeviceClass)mconfig.device_add(target.second, type, clock);  //DeviceClass &result(dynamic_cast<DeviceClass &>(*mconfig.device_add(target.second, *this, std::forward<Params>(args)...)));
 
                 //return finder = result;
@@ -431,7 +432,7 @@ namespace mame
 
             public static DeviceClass op<DeviceClass, bool_Required>(machine_config mconfig, device_finder<DeviceClass, bool_Required> finder, device_type type, XTAL clock)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config &mconfig, device_finder<Exposed, Required> &finder, Params &&... args) const
                 where DeviceClass : device_t
-                where bool_Required : bool_constant, new()
+                where bool_Required : bool_const, new()
             {
                 return op(mconfig, finder, type, clock.value());
             }
@@ -526,8 +527,7 @@ namespace mame
     class device_missing_dependencies : emu_exception { }
 
 
-    public abstract class device_t : global_object,
-                                     simple_list_item<device_t>, //: public delegate_late_bind
+    public abstract class device_t : simple_list_item<device_t>, //: public delegate_late_bind
                                      netlist.detail.netlist_name_interface
     {
         //friend class simple_list<device_t>;
@@ -585,7 +585,7 @@ namespace mame
             //-------------------------------------------------
             public device_t append(device_t device)
             {
-                device_t result = m_list.append(device.release());
+                device_t result = m_list.append(device);
                 m_tagmap.emplace(result.m_basetag, result);
                 return result;
             }
@@ -806,9 +806,6 @@ namespace mame
 
 
         // getters
-        public device_t get() { return this; }  // for c++ pointer wrappers
-        public device_t release() { return this; }  // for c++ pointer wrappers
-
         public bool has_running_machine() { return m_machine != null; }
         public running_machine machine() { /*assert(m_machine != NULL);*/ return m_machine; }
         public string tag() { return m_tag; }
@@ -849,7 +846,7 @@ namespace mame
         {
             if (m_rom_entries.empty())
             {
-                m_rom_entries = rom_build_entries(device_rom_region());
+                m_rom_entries = g.rom_build_entries(device_rom_region());
             }
             return m_rom_entries;
         }
@@ -857,7 +854,7 @@ namespace mame
         public Pointer<tiny_rom_entry> rom_region() { return device_rom_region(); }
         public ioport_constructor input_ports() { return device_input_ports(); }
         //string get_default_bios_tag() { return m_default_bios_tag; }
-        public u8 default_bios() { assert(configured());  return m_default_bios; }
+        public u8 default_bios() { g.assert(configured());  return m_default_bios; }
         public u8 system_bios() { return m_system_bios; }
 
 
@@ -875,9 +872,9 @@ namespace mame
 
         public bool interface_<T>(out T intf) where T : device_interface { intf = GetClassInterface<T>(); return intf != null; }
 
-        public device_execute_interface execute() { assert(m_interfaces.m_execute != null);  return m_interfaces.m_execute; }
-        public device_memory_interface memory() { assert(m_interfaces.m_memory != null);  return m_interfaces.m_memory; }
-        public device_state_interface state() { assert(m_interfaces.m_state != null); return m_interfaces.m_state; }
+        public device_execute_interface execute() { g.assert(m_interfaces.m_execute != null);  return m_interfaces.m_execute; }
+        public device_memory_interface memory() { g.assert(m_interfaces.m_memory != null);  return m_interfaces.m_memory; }
+        public device_state_interface state() { g.assert(m_interfaces.m_state != null); return m_interfaces.m_state; }
 
 
         // owned object helpers
@@ -909,24 +906,24 @@ namespace mame
             }
 
             // iterate over the tag, look for special path characters to resolve
-            int caret;
-            while ((caret = tag.find('^')) != -1)
+            size_t caret;
+            while ((caret = tag.find('^')) != g.npos)
             {
                 // copy everything up to there
-                result += tag.Substring(0, caret);  //result.append(tag, 0, caret);
-                tag = tag.Substring(caret + 1);  //tag.remove_prefix(caret + 1);
+                result += tag.Substring(0, (int)caret);  //result.append(tag, 0, caret);
+                tag = tag.Substring((int)caret + 1);  //tag.remove_prefix(caret + 1);
 
                 // strip trailing colons
                 int len = result.Length;
                 while (result[--len] == ':')
-                    result = result.Substring(0, len);
+                    result = result.substr(0, (size_t)len);
 
                 // remove the last path part, leaving the last colon
                 if (result != ":")
                 {
-                    int lastcolon = result.LastIndexOf(':', 0);
+                    int lastcolon = (int)result.find_last_of(':');
                     if (lastcolon != -1)
-                        result = result.Substring(0, lastcolon + 1);
+                        result = result.substr(0, (size_t)lastcolon + 1);
                 }
             }
 
@@ -1047,7 +1044,7 @@ namespace mame
         //-------------------------------------------------
         public void add_machine_configuration(machine_config config)
         {
-            assert(config == m_machine_config);
+            g.assert(config == m_machine_config);
             using (machine_config.token tok = config.begin_configuration(this))  // machine_config::token const tok(config.begin_configuration(*this));
             {
                 device_add_mconfig(config);
@@ -1100,22 +1097,22 @@ namespace mame
                 u8 firstbios = 0;
                 {
                     int romIdx = 0;
-                    for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !ROMENTRY_ISEND(rom); rom = roms[++romIdx])  //  for (tiny_rom_entry rom = roms; !m_default_bios && !ROMENTRY_ISEND(rom); ++rom)
+                    for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !g.ROMENTRY_ISEND(rom); rom = roms[++romIdx])  //  for (tiny_rom_entry rom = roms; !m_default_bios && !ROMENTRY_ISEND(rom); ++rom)
                     {
-                        if (ROMENTRY_ISSYSTEM_BIOS(rom))
+                        if (g.ROMENTRY_ISSYSTEM_BIOS(rom))
                         {
                             if (!havebios)
                             {
                                 havebios = true;
-                                firstbios = (u8)ROM_GETBIOSFLAGS(rom);
+                                firstbios = (u8)g.ROM_GETBIOSFLAGS(rom);
                             }
 
                             if (string.IsNullOrEmpty(defbios))
                                 twopass = true;
-                            else if (strcmp(rom.name_, defbios) == 0)
-                                m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
+                            else if (std.strcmp(rom.name_, defbios) == 0)
+                                m_default_bios = (u8)g.ROM_GETBIOSFLAGS(rom);
                         }
-                        else if (string.IsNullOrEmpty(defbios) && ROMENTRY_ISDEFAULT_BIOS(rom))
+                        else if (string.IsNullOrEmpty(defbios) && g.ROMENTRY_ISDEFAULT_BIOS(rom))
                         {
                             defbios = rom.name_;
                         }
@@ -1128,10 +1125,10 @@ namespace mame
                     if (!string.IsNullOrEmpty(defbios) && twopass)
                     {
                         int romIdx = 0;
-                        for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !ROMENTRY_ISEND(rom); rom = roms[++romIdx])
+                        for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !g.ROMENTRY_ISEND(rom); rom = roms[++romIdx])
                         {
-                            if (ROMENTRY_ISSYSTEM_BIOS(rom) && strcmp(rom.name_, defbios) == 0)
-                                m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
+                            if (g.ROMENTRY_ISSYSTEM_BIOS(rom) && std.strcmp(rom.name_, defbios) == 0)
+                                m_default_bios = (u8)g.ROM_GETBIOSFLAGS(rom);
                         }
                     }
 
@@ -1239,7 +1236,7 @@ namespace mame
             else
             {
                 u32 remainder;
-                u32 quotient = divu_64x32_rem(numclocks, m_clock, out remainder);
+                u32 quotient = g.divu_64x32_rem(numclocks, m_clock, out remainder);
                 return new attotime((seconds_t)quotient, (attoseconds_t)((u64)remainder * (u64)m_attoseconds_per_clock));
             }
         }
@@ -1273,7 +1270,7 @@ namespace mame
         //template<typename _ItemType>
         public void save_item<ItemType>(Tuple<ItemType, string> value, int index = 0)
         {
-            assert(m_save != null);
+            g.assert(m_save != null);
             m_save.save_item(this, name(), tag(), index, value.Item1, value.Item2);
         }
 
@@ -1317,13 +1314,13 @@ namespace mame
                     string tag = autodev.finder_tag();
                     if (tag == null)
                     {
-                        osd_printf_error("Finder tag is null!\n");
+                        g.osd_printf_error("Finder tag is null!\n");
                         allfound = false;
                         continue;
                     }
                     if (tag[0] == '^' && tag[1] == ':')
                     {
-                        osd_printf_error("Malformed finder tag: {0}\n", tag);
+                        g.osd_printf_error("Malformed finder tag: {0}\n", tag);
                         allfound = false;
                         continue;
                     }
@@ -1458,20 +1455,20 @@ namespace mame
             notify_clock_changed();
 
             // if we're debugging, create a device_debug object
-            if ((machine().debug_flags & DEBUG_FLAG_ENABLED) != 0)
+            if ((machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0)
             {
                 m_debug = new device_debug(this);
                 debug_setup();
             }
 
             // register our save states
-            save_item(NAME(new { m_clock }));
-            save_item(NAME(new { m_unscaled_clock }));
-            save_item(NAME(new { m_clock_scale }));
+            save_item(g.NAME(new { m_clock }));
+            save_item(g.NAME(new { m_unscaled_clock }));
+            save_item(g.NAME(new { m_clock_scale }));
 
             // have the views register their state
             if (!m_viewlist.empty())
-                osd_printf_verbose("{0}: Registering {1} views\n", m_tag, (int)m_viewlist.size());
+                g.osd_printf_verbose("{0}: Registering {1} views\n", m_tag, (int)m_viewlist.size());
             foreach (memory_view view in m_viewlist)
                 view.register_state();
 
@@ -1800,16 +1797,16 @@ namespace mame
 
             // we presume the result is a rooted path; also doubled colons mess up our
             // tree walk, so catch them early
-            assert(fulltag[0] == ':');
-            assert(!fulltag.Contains("::"));
+            g.assert(fulltag[0] == ':');
+            g.assert(fulltag.find("::") == g.npos);
 
             // walk the device list to the final path
             device_t curdevice = mconfig().root_device();
             string part = fulltag.substr(1);
             while (!part.empty() && curdevice != null)
             {
-                int end = part.find_first_of(':');
-                if (end == -1)
+                size_t end = part.find_first_of(':');
+                if (end == g.npos)
                 {
                     curdevice = curdevice.subdevices().find(part);
                     part = "";
@@ -1817,7 +1814,7 @@ namespace mame
                 else
                 {
                     curdevice = curdevice.subdevices().find(part.substr(0, end));
-                    part = part.Substring(end + 1);  //part.remove_prefix(end + 1);
+                    part = part.Substring((int)end + 1);  //part.remove_prefix(end + 1);
                 }
             }
 
@@ -1833,14 +1830,14 @@ namespace mame
         {
             if ((m_configured_clock & 0xff000000) == 0xff000000)
             {
-                assert(m_owner != null);
+                g.assert(m_owner != null);
                 set_unscaled_clock(m_owner.m_clock * ((m_configured_clock >> 12) & 0xfff) / ((m_configured_clock >> 0) & 0xfff));
             }
         }
 
 
-        protected void LOGMASKED(int mask, string format, params object [] args) { LOGMASKED(mask, this, format, args); }
-        protected void LOG(string format, params object [] args) { LOG(this, format, args); }
+        protected void LOGMASKED(int VERBOSE, int mask, string format, params object [] args) { g.LOGMASKED(VERBOSE, mask, this, format, args); }
+        protected void LOG(int VERBOSE, string format, params object [] args) { g.LOG(VERBOSE, this, format, args); }
     }
 
 
@@ -1852,7 +1849,7 @@ namespace mame
     /// lifecycle.  Derived classes are used to implement a number of
     /// standard concepts and interfaces, and integrate with the scheduler,
     /// debugger and user interface.
-    public class device_interface : global_object
+    public class device_interface
     {
         // internal state
         device_interface m_interface_next;

@@ -16,7 +16,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(TIMER, timer_device, "timer", "Timer")
         static device_t device_creator_timer_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new timer_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TIMER = DEFINE_DEVICE_TYPE(device_creator_timer_device, "timer", "Timer");
+        public static readonly device_type TIMER = g.DEFINE_DEVICE_TYPE(device_creator_timer_device, "timer", "Timer");
 
 
         // a timer callbacks look like this
@@ -100,7 +100,7 @@ namespace mame
 
 
         public void configure_scanline<bool_Required>(expired_delegate callback, device_finder<screen_device, bool_Required> screen, int first_vpos, int increment)  //template <typename F, typename U> void configure_scanline(F &&callback, const char *name, U &&screen, int first_vpos, int increment)
-            where bool_Required : bool_constant, new()
+            where bool_Required : bool_const, new()
         {
             m_type = timer_type.TIMER_TYPE_SCANLINE;
             m_callback = callback;  //m_callback.set(std::forward<F>(callback), name);
@@ -174,23 +174,23 @@ namespace mame
             {
                 case timer_type.TIMER_TYPE_GENERIC:
                     if (m_screen.finder_tag() != finder_base.DUMMY_TAG || m_first_vpos != 0 || m_start_delay != attotime.zero)
-                        osd_printf_warning("Generic timer specified parameters for a scanline timer\n");
+                        g.osd_printf_warning("Generic timer specified parameters for a scanline timer\n");
                     if (m_period != attotime.zero || m_start_delay != attotime.zero)
-                        osd_printf_warning("Generic timer specified parameters for a periodic timer\n");
+                        g.osd_printf_warning("Generic timer specified parameters for a periodic timer\n");
                     break;
 
                 case timer_type.TIMER_TYPE_PERIODIC:
                     if (m_screen.finder_tag() != finder_base.DUMMY_TAG || m_first_vpos != 0)
-                        osd_printf_warning("Periodic timer specified parameters for a scanline timer\n");
+                        g.osd_printf_warning("Periodic timer specified parameters for a scanline timer\n");
                     if (m_period <= attotime.zero)
-                        osd_printf_error("Periodic timer specified invalid period\n");
+                        g.osd_printf_error("Periodic timer specified invalid period\n");
                     break;
 
                 case timer_type.TIMER_TYPE_SCANLINE:
                     if (m_period != attotime.zero || m_start_delay != attotime.zero)
-                        osd_printf_warning("Scanline timer specified parameters for a periodic timer\n");
+                        g.osd_printf_warning("Scanline timer specified parameters for a periodic timer\n");
                     if (m_param != 0)
-                        osd_printf_warning("Scanline timer specified parameter which is ignored\n");
+                        g.osd_printf_warning("Scanline timer specified parameter which is ignored\n");
 //          if (m_first_vpos < 0)
 //              osd_printf_error("Scanline timer specified invalid initial position\n");
 //          if (m_increment < 0)
@@ -198,7 +198,7 @@ namespace mame
                     break;
 
                 default:
-                    osd_printf_error("Invalid type specified\n");
+                    g.osd_printf_error("Invalid type specified\n");
                     break;
             }
         }
@@ -219,7 +219,7 @@ namespace mame
 #endif
 
             // register for save states
-            save_item(NAME(new { m_first_time }));
+            save_item(g.NAME(new { m_first_time }));
         }
 
 
@@ -253,7 +253,7 @@ namespace mame
 
                 case timer_type.TIMER_TYPE_SCANLINE:
                     if (m_screen == null)
-                        fatalerror("timer '{0}': unable to find screen '{1}'\n", tag(), m_screen.finder_tag());
+                        g.fatalerror("timer '{0}': unable to find screen '{1}'\n", tag(), m_screen.finder_tag());
 
                     // set the timer to fire immediately
                     m_first_time = true;

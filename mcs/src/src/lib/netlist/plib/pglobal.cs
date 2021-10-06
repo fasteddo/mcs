@@ -5,28 +5,39 @@ using System;
 using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using size_t = System.UInt32;
+using nl_fptype_ops = mame.plib.constants_operators_double;
+using size_t = System.UInt64;
 
 
 namespace mame.plib
 {
-    static class pglobal
+    static class pg
     {
         // pexception
         public static void terminate(string msg) { pexception_global.terminate(msg); }
 
 
         // pmath
-        public static T reciprocal<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.reciprocal<T, OPS>(v); }
-        public static T abs<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.abs<T, OPS>(v); }
-        public static T sqrt<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.sqrt<T, OPS>(v); }
-        public static T exp<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.exp<T, OPS>(v); }
-        public static T log<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.log<T, OPS>(v); }
-        public static T floor<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.floor<T, OPS>(v); }
-        public static T sin<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.sin<T, OPS>(v); }
-        public static T cos<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.cos<T, OPS>(v); }
-        public static T trunc<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global.trunc<T, OPS>(v); }
-        public static T pow<T, OPS>(T v, T p) where OPS : constants_operators<T>, new() { return pmath_global.pow<T, OPS>(v, p); }
+        public static T reciprocal<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.reciprocal(v); }
+        public static nl_fptype reciprocal(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.reciprocal(v); }
+        public static T abs<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.abs(v); }
+        public static nl_fptype abs(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.abs(v); }
+        //public static T sqrt<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.sqrt(v); }
+        public static nl_fptype sqrt(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.sqrt(v); }
+        //public static T exp<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.exp(v); }
+        public static nl_fptype exp(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.exp(v); }
+        //public static T log<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.log(v); }
+        public static nl_fptype log(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.log(v); }
+        //public static T floor<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.floor(v); }
+        public static nl_fptype floor(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.floor(v); }
+        //public static T sin<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.sin(v); }
+        public static nl_fptype sin(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.sin(v); }
+        //public static T cos<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.cos(v); }
+        public static nl_fptype cos(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.cos(v); }
+        //public static T trunc<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.trunc(v); }
+        public static nl_fptype trunc(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.trunc(v); }
+        //public static T pow<T, OPS>(T v, T p) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.pow(v, p); }
+        public static nl_fptype pow(nl_fptype v, nl_fptype p) { return pmath_global<nl_fptype, nl_fptype_ops>.pow(v, p); }
 
 
         // pstonum
@@ -42,18 +53,19 @@ namespace mame.plib
         public static std.vector<string> psplit(string str, std.vector<string> onstrl) { return pstrutil_global.psplit(str, onstrl); }
         public static string ucase(string str) { return pstrutil_global.ucase(str); }
         public static string trim(string str) { return pstrutil_global.trim(str); }
-        public static string left(string str, int len) { return pstrutil_global.left(str, len); }
-        public static string right(string str, int nlen) { return pstrutil_global.right(str, nlen); }
+        public static string left(string str, size_t len) { return pstrutil_global.left(str, len); }
+        public static string right(string str, size_t nlen) { return pstrutil_global.right(str, nlen); }
         public static string replace_all(string str, string search, string replace) { return pstrutil_global.replace_all(str, search, replace); }
 
 
         // putil
-        public static UInt64 hash(string buf, size_t size) { return putil_global.hash(buf, size); }
+        public static size_t hash(string buf, size_t size) { return putil_global.hash(buf, size); }
         public static string environment(string var, string default_val) { return putil_global.environment(var, default_val); }
         public static source_location PSOURCELOC() { return putil_global.PSOURCELOC(); }
 
 
         // vector_ops
-        public static void vec_add_mult_scalar_p<T, T_OPS>(int n, Pointer<T> result, Pointer<T> v, T scalar) where T_OPS : plib.constants_operators<T>, new() { vector_ops_global.vec_add_mult_scalar_p<T, T_OPS>(n, result, v, scalar); }
+        public static void vec_add_mult_scalar_p<T, T_OPS>(int n, Pointer<T> result, Pointer<T> v, T scalar) where T_OPS : plib.constants_operators<T>, new() { vector_ops_global<T, T_OPS>.vec_add_mult_scalar_p(n, result, v, scalar); }
+        public static void vec_add_mult_scalar_p(int n, Pointer<nl_fptype> result, Pointer<nl_fptype> v, nl_fptype scalar) { vector_ops_global<nl_fptype, nl_fptype_ops>.vec_add_mult_scalar_p(n, result, v, scalar); }
     }
 }

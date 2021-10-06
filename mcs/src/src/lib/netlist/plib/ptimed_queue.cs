@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 
 
 namespace mame.plib
@@ -23,7 +23,8 @@ namespace mame.plib
     // This degrades performance significantly.
 
     //template <typename Time, typename Element>
-    public class pqentry_t<Time, Element> where Time : IComparable
+    public class pqentry_t<Time, Element>
+        where Time : netlist_time_ext
     {
         // Time == eg, netlist_time_ext
         // Element == eg, net_t
@@ -59,13 +60,17 @@ namespace mame.plib
         public static bool operator >(pqentry_t<Time, Element> lhs, pqentry_t<Time, Element> rhs) { return lhs.m_exec_time.CompareTo(rhs.m_exec_time) > 0; }
         public static bool operator <(pqentry_t<Time, Element> lhs, pqentry_t<Time, Element> rhs) { return lhs.m_exec_time.CompareTo(rhs.m_exec_time) < 0; }
 
-
-        static pqentry_t<Time, Element> never()  //static constexpr pqentry_t never() noexcept { return pqentry_t(Time::never(), nullptr); }
+        public override bool Equals(Object obj)
         {
-            throw new emu_unimplemented();
-#if false
-            return new pqentry_t<Time, Element>(Time.never(), default);
-#endif
+            if (obj == null || base.GetType() != obj.GetType()) return false;
+            return this == (pqentry_t<Time, Element>)obj;
+        }
+        public override int GetHashCode() { return m_object.GetHashCode(); }
+
+
+        public static pqentry_t<Time, Element> never()  //static constexpr pqentry_t never() noexcept { return pqentry_t(Time::never(), nullptr); }
+        {
+            return new pqentry_t<Time, Element>((Time)netlist_time_ext.never(), default);
         }
 
         public Time exec_time() { return m_exec_time; }  //constexpr Time exec_time() const noexcept { return m_exec_time; }
@@ -75,15 +80,19 @@ namespace mame.plib
 
     // Use TS = true for a threadsafe queue
     //template <class T, bool TS>
-    public class timed_queue_linear<T>
+    public class timed_queue_linear<T, bool_TS, U, V>
+        where T : pqentry_t<U, V>
+        where bool_TS : bool_const, new()
+        where U : netlist_time_ext
     {
         //using mutex_type       = pspin_mutex<TS>;
         //using lock_guard_type  = std::lock_guard<mutex_type>;
 
 
-        //mutex_type               m_lock;
+        object m_lock = new object();  //mutex_type               m_lock;
         //T *                      m_end;
         aligned_vector<T> m_list;
+
 
         // profiling
         // FIXME: Make those private
@@ -92,9 +101,9 @@ namespace mame.plib
         //pperfcount_t<true> m_prof_remove; // NOLINT
 
 
-        protected timed_queue_linear(bool TS, size_t list_size)
+        protected timed_queue_linear(size_t list_size)
         {
-            m_list = new aligned_vector<T>(list_size);
+            m_list = new aligned_vector<T>((int)list_size);
 
 
             clear();
@@ -200,17 +209,18 @@ namespace mame.plib
 
         public void clear()
         {
-            throw new emu_unimplemented();
-#if false
-            lock_guard_type lck(m_lock);
-            m_end = &m_list[0];
-            // put an empty element with maximum time into the queue.
-            // the insert algo above will run into this element and doesn't
-            // need a comparison with queue start.
-            //
-            m_list[0] = T::never();
-            m_end++;
-#endif
+            lock (m_lock)  //lock_guard_type lck(m_lock);
+            {
+                //m_end = &m_list[0];
+                // put an empty element with maximum time into the queue.
+                // the insert algo above will run into this element and doesn't
+                // need a comparison with queue start.
+                //
+                //m_list[0] = T::never();
+                //m_end++;
+                m_list.clear();
+                m_list.Add((T)pqentry_t<U, V>.never());
+            }
         }
 
 

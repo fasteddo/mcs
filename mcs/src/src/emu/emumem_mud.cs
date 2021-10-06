@@ -11,6 +11,7 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+using uX = mame.FlexPrim;
 
 
 namespace mame
@@ -18,10 +19,10 @@ namespace mame
     // Descriptors for subunit support
 
     //template<int Width, int AddrShift, endianness_t Endian>
-    public class memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> : global_object
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+    public class memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian>
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -49,7 +50,7 @@ namespace mame
         offs_t m_handler_start;
         offs_t m_handler_mask;
         handler_entry m_handler;
-        std.array<u8, uint32_constant_4> m_keymap = new std.array<u8, uint32_constant_4>();  //std::array<u8, 4> m_keymap;
+        std.array<u8, u64_const_4> m_keymap = new std.array<u8, u64_const_4>();  //std::array<u8, 4> m_keymap;
         u8 m_access_width;
         u8 m_access_endian;
 
@@ -77,8 +78,8 @@ namespace mame
             uX emask;
             if (Endian == endianness_t.ENDIANNESS_BIG)
             {
-                smask = g.make_bitmask_uX(Width, 8 * new uX(Width, 0).sizeof_() - ((addrstart - m_addrstart) << (3 - AddrShift)));  //smask =  make_bitmask<uX>(8 * sizeof(uX) - ((addrstart - m_addrstart) << (3 - AddrShift)));
-                emask = ~g.make_bitmask_uX(Width, 8 * new uX(Width, 0).sizeof_() - ((addrend - m_addrend + 1) << (3 - AddrShift)));  //emask = ~make_bitmask<uX>(8 * sizeof(uX) - ((addrend - m_addrend + 1) << (3 - AddrShift)));
+                smask = g.make_bitmask_uX(Width, 8 * (u32)uX.sizeof_(Width) - ((addrstart - m_addrstart) << (3 - AddrShift)));  //smask =  make_bitmask<uX>(8 * sizeof(uX) - ((addrstart - m_addrstart) << (3 - AddrShift)));
+                emask = ~g.make_bitmask_uX(Width, 8 * (u32)uX.sizeof_(Width) - ((addrend - m_addrend + 1) << (3 - AddrShift)));  //emask = ~make_bitmask<uX>(8 * sizeof(uX) - ((addrend - m_addrend + 1) << (3 - AddrShift)));
             }
             else
             {
@@ -174,10 +175,10 @@ namespace mame
         {
             switch (mask.width)
             {
-                case 0: return mask_to_ukey_u8(mask.x8);
-                case 1: return mask_to_ukey_u16(mask.x16);
-                case 2: return mask_to_ukey_u32(mask.x32);
-                case 3: return mask_to_ukey_u64(mask.x64);
+                case 0: return mask_to_ukey_u8(mask.u8);
+                case 1: return mask_to_ukey_u16(mask.u16);
+                case 2: return mask_to_ukey_u32(mask.u32);
+                case 3: return mask_to_ukey_u64(mask.u64);
                 default: throw new emu_unimplemented();
             }
         }

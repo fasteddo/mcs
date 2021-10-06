@@ -56,10 +56,10 @@ namespace mame
         public void set(PointerU8 base_, u32 bytes, int membits, endianness_t endianness, int bpe)  //void set(void *base, u32 bytes, int membits, endianness_t endianness, int bpe);
         {
             // validate inputs
-            global_object.assert(base_ != null);
-            global_object.assert(bytes > 0);
-            global_object.assert(membits == 8 || membits == 16 || membits == 32 || membits == 64);
-            global_object.assert(bpe == 1 || bpe == 2 || bpe == 4);
+            g.assert(base_ != null);
+            g.assert(bytes > 0);
+            g.assert(membits == 8 || membits == 16 || membits == 32 || membits == 64);
+            g.assert(bpe == 1 || bpe == 2 || bpe == 4);
 
             // populate direct data
             m_base = base_;
@@ -139,7 +139,7 @@ namespace mame
         //u32 read32(offs_t offset) const { return reinterpret_cast<u32 *>(m_base)[offset]; }
         //u64 read64(offs_t offset) const { return reinterpret_cast<u64 *>(m_base)[offset]; }
         //void write8(offs_t offset, u8 data) { reinterpret_cast<u8 *>(m_base)[offset] = data; }
-        public void write16(offs_t offset, u16 data, u16 mem_mask = 0xffff) { var temp = m_base.GetUInt16((int)offset); global_object.COMBINE_DATA(ref temp, data, mem_mask); m_base.SetUInt16((int)offset, temp); }  //{ COMBINE_DATA(&reinterpret_cast<u16 *>(m_base)[offset]); }
+        public void write16(offs_t offset, u16 data, u16 mem_mask = 0xffff) { var temp = m_base.GetUInt16((int)offset); g.COMBINE_DATA(ref temp, data, mem_mask); m_base.SetUInt16((int)offset, temp); }  //{ COMBINE_DATA(&reinterpret_cast<u16 *>(m_base)[offset]); }
         //void write32(offs_t offset, u32 data, u32 mem_mask = 0xffffffff) { COMBINE_DATA(&reinterpret_cast<u32 *>(m_base)[offset]); }
         //void write64(offs_t offset, u64 data, u64 mem_mask = 0xffffffffffffffffU) { COMBINE_DATA(&reinterpret_cast<u64 *>(m_base)[offset]); }
 

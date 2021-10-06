@@ -16,7 +16,7 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 using unsigned = System.UInt32;
-
+using System.Diagnostics;
 
 namespace mame
 {
@@ -104,14 +104,12 @@ namespace mame
         //#else
         //#define sound_assert assert
         //#endif
+        [Conditional("DEBUG")] public static void sound_assert(bool condition) { emucore_global.assert(condition, "sound_assert\n"); }
 
-        //**************************************************************************
-        //  DEBUGGING
-        //**************************************************************************
 
         const bool VERBOSE = false;  //#define VERBOSE         (0)
 
-        public static void VPRINTF(string x, params object [] args) { global_object.osd_printf_debug(x, args); } //#define VPRINTF(x)      do { if (VERBOSE) osd_printf_debug x; } while (0)
+        public static void VPRINTF(string x, params object [] args) { if (VERBOSE) g.osd_printf_debug(x, args); } //#define VPRINTF(x)      do { if (VERBOSE) osd_printf_debug x; } while (0)
 
         //#define LOG_OUTPUT_WAV  (0)
     }
@@ -177,10 +175,7 @@ namespace mame
                 return;
 
             // force resampling off if coming to or from an invalid rate, or if we're at time 0 (startup)
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(rate >= SAMPLE_RATE_MINIMUM - 1);
-#endif
+            sound_global.sound_assert(rate >= sound_global.SAMPLE_RATE_MINIMUM - 1);
 
             if (rate < sound_global.SAMPLE_RATE_MINIMUM || m_sample_rate < sound_global.SAMPLE_RATE_MINIMUM || (m_end_second == 0 && m_end_sample == 0))
                 resample = false;
@@ -231,7 +226,7 @@ namespace mame
 
             // ensure our buffer is large enough to hold a full second at the new rate
             if (m_buffer.size() < rate)
-                m_buffer.resize((int)rate);
+                m_buffer.resize(rate);
 
             // set the new rate
             m_sample_rate = rate;
@@ -297,16 +292,11 @@ namespace mame
         // read the sample at the given index (clamped); should be valid in all cases
         public stream_buffer_sample_t get(s32 index)
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(u32(index) < size());
-#endif
+            sound_global.sound_assert((u32)index < size());
 
             stream_buffer_sample_t value = m_buffer[index];
 
-#if SOUND_DEBUG
-            sound_assert(!std::isnan(value));
-#endif
+            sound_global.sound_assert(!std.isnan(value));
 
             return value;
         }
@@ -315,10 +305,7 @@ namespace mame
         // write the sample at the given index (clamped)
         public void put(s32 index, stream_buffer_sample_t data)
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(u32(index) < size());
-#endif
+            sound_global.sound_assert((u32)index < size());
 
             m_buffer[index] = data;
         }
@@ -338,10 +325,7 @@ namespace mame
             else if (index >= size())
                 index -= (s32)size();
 
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(index >= 0 && index < size());
-#endif
+            sound_global.sound_assert(index >= 0 && index < size());
 
             return (u32)index;
         }
@@ -373,18 +357,12 @@ namespace mame
             // compute the sample index within the second
             int sample = (int)((time.attoseconds() + (round_up ? (m_sample_attos - 1) : 0)) / m_sample_attos);
 
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(sample >= 0 && sample <= size());
-#endif
+            sound_global.sound_assert(sample >= 0 && sample <= size());
 
             // if the time is past the current end, make it the end
             if (time.seconds() > m_end_second || (time.seconds() == m_end_second && sample > m_end_sample))
             {
-                //throw new emu_unimplemented();
-#if false
-                sound_assert(allow_expansion);
-#endif
+                sound_global.sound_assert(allow_expansion);
 
                 m_end_sample = (u32)sample;
                 m_end_second = (u32)time.m_seconds;
@@ -569,15 +547,6 @@ namespace mame
         //    normalize_start_end();
         //    return *this;
         //}
-        public read_stream_view assign_from(read_stream_view rhs)
-        {
-            m_buffer = rhs.m_buffer;
-            m_start = rhs.m_start;
-            m_end = rhs.m_end;
-            m_gain = rhs.m_gain;
-            normalize_start_end();
-            return this;
-        }
 
 
         // return the local gain
@@ -606,10 +575,7 @@ namespace mame
         // safely fetch a gain-scaled sample from the buffer
         public stream_buffer_sample_t get(s32 index)
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(u32(index) < samples());
-#endif
+            sound_global.sound_assert((u32)index < samples());
 
             index += m_start;
             if (index >= m_buffer.size())
@@ -636,10 +602,7 @@ namespace mame
             if (m_end < m_start && m_buffer != null)
                 m_end += (s32)m_buffer.size();
 
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(m_end >= m_start);
-#endif
+            sound_global.sound_assert(m_end >= m_start);
         }
     }
 
@@ -692,7 +655,7 @@ namespace mame
         // write a sample to the buffer, converting from an integer with the given maximum
         public void put_int_clamp(s32 index, s32 sample, s32 maxclamp)
         {
-            global_object.assert(maxclamp >= 0);
+            g.assert(maxclamp >= 0);
             put_int(index, std.clamp(sample, -maxclamp, maxclamp), maxclamp);
         }
 
@@ -700,7 +663,7 @@ namespace mame
         void add(s32 start, stream_buffer_sample_t sample)
         {
             u32 index = index_to_buffer_index(start);
-            m_buffer.put(start, m_buffer.get((s32)index) + sample);
+            m_buffer.put((s32)index, m_buffer.get((s32)index) + sample);
         }
 
 
@@ -766,10 +729,7 @@ namespace mame
         // given a stream starting offset, return the buffer index
         u32 index_to_buffer_index(s32 start)
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(u32(start) < samples());
-#endif
+            sound_global.sound_assert((u32)start < samples());
 
             u32 index = (u32)(start + m_start);
             if (index >= m_buffer.size())
@@ -780,7 +740,7 @@ namespace mame
 
 
     // ======================> sound_stream_output
-    public class sound_stream_output : global_object
+    public class sound_stream_output
     {
 #if SOUND_DEBUG
         friend class sound_stream;
@@ -813,7 +773,7 @@ namespace mame
 
             // save our state
             var save = stream.device().machine().save();
-            save.save_item(stream.device(), "stream.output", tag, (int)index, NAME(new { m_gain }));
+            save.save_item(stream.device(), "stream.output", tag, (int)index, g.NAME(new { m_gain }));
 
 #if (LOG_OUTPUT_WAV)
             std::string filename = stream.device().machine().basename();
@@ -841,10 +801,7 @@ namespace mame
         // simple getters
         public sound_stream stream()
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(m_stream != nullptr);
-#endif
+            sound_global.sound_assert(m_stream != null);
 
             return m_stream;
         }
@@ -897,7 +854,7 @@ namespace mame
 
 
     // ======================> sound_stream_input
-    public class sound_stream_input : global_object
+    public class sound_stream_input
     {
 #if SOUND_DEBUG
         friend class sound_stream;
@@ -938,8 +895,8 @@ namespace mame
 
             // save our state
             var save = stream.device().machine().save();
-            save.save_item(stream.device(), "stream.input", tag, (int)index, NAME(new { m_gain }));
-            save.save_item(stream.device(), "stream.input", tag, (int)index, NAME(new { m_user_gain }));
+            save.save_item(stream.device(), "stream.input", tag, (int)index, g.NAME(new { m_gain }));
+            save.save_item(stream.device(), "stream.input", tag, (int)index, g.NAME(new { m_user_gain }));
         }
 
 
@@ -953,10 +910,7 @@ namespace mame
         //sound_stream &owner() const { sound_assert(valid()); return *m_owner; }
         public sound_stream_output source()
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(valid());
-#endif
+            sound_global.sound_assert(valid());
 
             return m_native_source;
         }
@@ -992,11 +946,8 @@ namespace mame
         //-------------------------------------------------
         public read_stream_view update(attotime start, attotime end)
         {
-            //throw new emu_unimplemented();
-#if false
             // shouldn't get here unless valid
-            sound_assert(valid());
-#endif
+            sound_global.sound_assert(valid());
 
             // pick an optimized resampler
             sound_stream_output source = m_native_source.optimize_resampler(m_resampler_source);
@@ -1019,10 +970,7 @@ namespace mame
         public void apply_sample_rate_changes(u32 updatenum, u32 downstream_rate)
         {
             // shouldn't get here unless valid
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(valid());
-#endif
+            sound_global.sound_assert(valid());
 
             // if we have a resampler, tell it (and it will tell the native source)
             if (m_resampler_source != null)
@@ -1118,10 +1066,7 @@ namespace mame
             m_output_view = new std.vector<write_stream_view>(outputs);
 
 
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(outputs > 0);
-#endif
+            sound_global.sound_assert(outputs > 0);
 
             // create a name
             m_name = m_device.name();
@@ -1130,7 +1075,7 @@ namespace mame
             m_name += "'";
 
             // create a unique tag for saving
-            string state_tag = global_object.string_format("{0}", m_device.machine().sound().unique_id());
+            string state_tag = util.string_format("{0}", m_device.machine().sound().unique_id());
             var save = m_device.machine().save();
 
             //throw new emu_unimplemented();
@@ -1171,7 +1116,7 @@ namespace mame
         public sound_stream(device_t device, u32 inputs, u32 outputs, u32 output_base, u32 sample_rate, stream_update_delegate callback, sound_stream_flags flags = sound_stream_flags.STREAM_DEFAULT_FLAGS)  //sound_stream(device_t &device, u32 inputs, u32 outputs, u32 output_base, u32 sample_rate, stream_update_delegate callback, sound_stream_flags flags = STREAM_DEFAULT_FLAGS);
             : this(device, inputs, outputs, output_base, sample_rate, flags)
         {
-            //m_callback_ex = callback;
+            m_callback_ex = callback;
         }
 
 
@@ -1199,19 +1144,13 @@ namespace mame
         //u32 output_base() const { return m_output_base; }
         public sound_stream_input input(int index)
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(index >= 0 && index < m_input.size());
-#endif
+            sound_global.sound_assert(index >= 0 && index < (int)m_input.size());
 
             return m_input[index];
         }
         public sound_stream_output output(int index)
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(index >= 0 && index < m_output.size());
-#endif
+            sound_global.sound_assert(index >= 0 && index < (int)m_output.size());
 
             return m_output[index];
         }
@@ -1245,12 +1184,12 @@ namespace mame
             sound_global.VPRINTF("stream_set_input({0}, '{1}', {2}, {3}, {4}, {5})\n", this, m_device.tag(), index, input_stream, output_index, (double)gain);
 
             // make sure it's a valid input
-            if (index >= m_input.size())
-                global_object.fatalerror("stream_set_input attempted to configure nonexistent input {0} ({1} max)\n", index, (int)m_input.size());
+            if (index >= (int)m_input.size())
+                g.fatalerror("stream_set_input attempted to configure nonexistent input {0} ({1} max)\n", index, (int)m_input.size());
 
             // make sure it's a valid output
-            if (input_stream != null && output_index >= input_stream.m_output.size())
-                global_object.fatalerror("stream_set_input attempted to use a nonexistent output {0} ({1} max)\n", output_index, (int)m_output.size());
+            if (input_stream != null && output_index >= (int)input_stream.m_output.size())
+                g.fatalerror("stream_set_input attempted to use a nonexistent output {0} ({1} max)\n", output_index, (int)m_output.size());
 
             // wire it up
             m_input[index].set_source((input_stream != null) ? input_stream.m_output[output_index] : null);
@@ -1288,11 +1227,8 @@ namespace mame
         //-------------------------------------------------
         public read_stream_view update_view(attotime start, attotime end, u32 outputnum = 0)
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(start <= end);
-            sound_assert(outputnum < m_output.size());
-#endif
+            sound_global.sound_assert(start <= end);
+            sound_global.sound_assert(outputnum < m_output.size());
 
             // clean up parameters for when the asserts go away
             if (outputnum >= m_output.size())
@@ -1314,17 +1250,11 @@ namespace mame
                 // skip if nothing to do
                 u32 samples = m_output_view[0].samples();
 
-                //throw new emu_unimplemented();
-#if false
-                sound_assert(samples >= 0);
-#endif
+                sound_global.sound_assert(samples >= 0);
 
                 if (samples != 0 && m_sample_rate >= sound_global.SAMPLE_RATE_MINIMUM)
                 {
-                    //throw new emu_unimplemented();
-#if false
-                    sound_assert(!synchronous() || samples == 1);
-#endif
+                    sound_global.sound_assert(!synchronous() || samples == 1);
 
                     // ensure all input streams are up to date, and create views for them as well
                     for (unsigned inputnum = 0; inputnum < m_input.size(); inputnum++)
@@ -1334,11 +1264,8 @@ namespace mame
                         else
                             m_input_view[inputnum] = empty_view(update_start, end);
 
-                        //throw new emu_unimplemented();
-#if false
-                        sound_assert(m_input_view[inputnum].samples() > 0);
-                        sound_assert(m_resampling_disabled || m_input_view[inputnum].sample_rate() == m_sample_rate);
-#endif
+                        sound_global.sound_assert(m_input_view[inputnum].samples() > 0);
+                        sound_global.sound_assert(m_resampling_disabled || m_input_view[inputnum].sample_rate() == m_sample_rate);
                     }
 
 #if (SOUND_DEBUG)
@@ -1395,10 +1322,7 @@ namespace mame
             {
                 if (m_last_sample_rate_update == updatenum)
                 {
-                    //throw new emu_unimplemented();
-#if false
-                    sound_assert(new_rate == m_sample_rate);
-#endif
+                    sound_global.sound_assert(new_rate == m_sample_rate);
                 }
                 else
                 {
@@ -1552,11 +1476,8 @@ namespace mame
         //-------------------------------------------------
         void resampler_sound_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //void resampler_sound_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs);
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(inputs.size() == 1);
-            sound_assert(outputs.size() == 1);
-#endif
+            sound_global.sound_assert(inputs.size() == 1);
+            sound_global.sound_assert(outputs.size() == 1);
 
             var input = inputs[0];
             var output = outputs[0];
@@ -1568,11 +1489,8 @@ namespace mame
                 return;
             }
 
-            //throw new emu_unimplemented();
-#if false
             // optimize_resampler ensures we should not have equal sample rates
-            sound_assert(input.sample_rate() != output.sample_rate());
-#endif
+            sound_global.sound_assert(input.sample_rate() != output.sample_rate());
 
             // compute the stepping value and the inverse
             stream_buffer_sample_t step = (stream_buffer_sample_t)input.sample_rate() / (stream_buffer_sample_t)output.sample_rate();
@@ -1605,25 +1523,16 @@ namespace mame
             // create a rebased input buffer around the adjusted start time
             read_stream_view rebased = new read_stream_view(input, output_start - latency);
 
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(rebased.start_time() + latency <= output_start);
-#endif
+            sound_global.sound_assert(rebased.start_time() + latency <= output_start);
 
             // compute the fractional input start position
             attotime delta = output_start - (rebased.start_time() + latency);
 
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(delta.seconds() == 0);
-#endif
+            sound_global.sound_assert(delta.seconds() == 0);
 
             stream_buffer_sample_t srcpos = (stream_buffer_sample_t)((double)delta.attoseconds() / (double)rebased.sample_period_attoseconds());
 
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(srcpos <= 1.0f);
-#endif
+            sound_global.sound_assert(srcpos <= 1.0f);
 
             // input is undersampled: point sample except where our sample period covers a boundary
             s32 srcindex = 0;
@@ -1642,10 +1551,7 @@ namespace mame
                     {
                         srcpos -= (stream_buffer_sample_t)1.0;
 
-                        //throw new emu_unimplemented();
-#if false
-                        sound_assert(srcpos <= step + 1e-5);
-#endif
+                        sound_global.sound_assert(srcpos <= step + 1e-5);
 
                         stream_buffer_sample_t prevsample = cursample;
                         cursample = rebased.get(srcindex++);
@@ -1653,10 +1559,7 @@ namespace mame
                     }
                 }
 
-                //throw new emu_unimplemented();
-#if false
-                sound_assert(srcindex <= rebased.samples());
-#endif
+                sound_global.sound_assert(srcindex <= rebased.samples());
             }
 
             // input is oversampled: sum the energy
@@ -1685,10 +1588,7 @@ namespace mame
                     // our position is now the remainder
                     srcpos = remaining;
 
-                    //throw new emu_unimplemented();
-#if false
-                    sound_assert(srcindex <= rebased.samples());
-#endif
+                    sound_global.sound_assert(srcindex <= rebased.samples());
                 }
             }
         }
@@ -1705,7 +1605,7 @@ namespace mame
     }
 
 
-    public class sound_manager : global_object
+    public class sound_manager
     {
         //friend class sound_stream;
 
@@ -1794,7 +1694,7 @@ namespace mame
             machine.add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, stop_recording);
 
             // register global states
-            machine.save().save_item(NAME(new { m_last_update }));
+            machine.save().save_item(g.NAME(new { m_last_update }));
 
             // set the starting attenuation
             set_attenuation(machine.options().volume());
@@ -1907,10 +1807,7 @@ namespace mame
                     info.mixer = mixer;
                     info.stream = mixer.input_to_stream_input(index, out info.inputnum);
 
-                    throw new emu_unimplemented();
-#if false
-                    sound_assert(info.stream != nullptr);
-#endif
+                    sound_global.sound_assert(info.stream != null);
 
                     return true;
                 }
@@ -1979,10 +1876,7 @@ namespace mame
                 // due to device removal, some speakers may end up with no outputs; just skip those
                 if (stream != null)
                 {
-                    //throw new emu_unimplemented();
-#if false
-                    sound_assert(speaker.outputs() == 1);
-#endif
+                    sound_global.sound_assert(speaker.device_sound_interface_outputs() == 1);
 
                     stream.apply_sample_rate_changes(m_update_number, (u32)machine().sample_rate());
                 }
@@ -2182,10 +2076,7 @@ namespace mame
             // determine the duration of this update
             attotime update_period = machine().time() - m_last_update;
 
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(update_period.seconds() == 0);
-#endif
+            sound_global.sound_assert(update_period.seconds() == 0);
 
             // use that to compute the number of samples we need from the speakers
             attoseconds_t sample_rate_attos = attotime.HZ_TO_ATTOSECONDS(machine().sample_rate());
@@ -2195,8 +2086,8 @@ namespace mame
             attotime endtime = m_last_update + new attotime(0, m_samples_this_update * sample_rate_attos);
 
             // clear out the mix bufers
-            std.fill_n(m_leftmix, (int)m_samples_this_update, 0);  //std::fill_n(&m_leftmix[0], m_samples_this_update, 0);
-            std.fill_n(m_rightmix, (int)m_samples_this_update, 0);  //std::fill_n(&m_rightmix[0], m_samples_this_update, 0);
+            std.fill_n(m_leftmix, m_samples_this_update, 0);  //std::fill_n(&m_leftmix[0], m_samples_this_update, 0);
+            std.fill_n(m_rightmix, m_samples_this_update, 0);  //std::fill_n(&m_rightmix[0], m_samples_this_update, 0);
 
             // force all the speaker streams to generate the proper number of samples
             foreach (speaker_device speaker in m_speakers)

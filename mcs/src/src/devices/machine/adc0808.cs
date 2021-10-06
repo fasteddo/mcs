@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using offs_t = System.UInt32;  //using offs_t = u32;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using u8 = System.Byte;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -23,7 +23,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(ADC0808, adc0808_device, "adc0808", "ADC0808 A/D Converter")
         static device_t device_creator_adc0808_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new adc0808_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ADC0808 = DEFINE_DEVICE_TYPE(device_creator_adc0808_device, "adc0808", "ADC0808 A/D Converter");
+        public static readonly device_type ADC0808 = g.DEFINE_DEVICE_TYPE(device_creator_adc0808_device, "adc0808", "ADC0808 A/D Converter");
 
 
         const bool VERBOSE = false;
@@ -32,9 +32,9 @@ namespace mame
         // callbacks
         devcb_write_line m_eoc_cb;
         devcb_write_line m_eoc_ff_cb;
-        devcb_read8.array<uint32_constant_8> m_in_cb;
+        devcb_read8.array<u64_const_8> m_in_cb;
 
-        enum state  //enum state : int
+        new enum state : int
         {
             STATE_IDLE,
             STATE_CONVERSION_START,
@@ -63,7 +63,7 @@ namespace mame
         {
             m_eoc_cb = new devcb_write_line(this);
             m_eoc_ff_cb = new devcb_write_line(this);
-            m_in_cb = new devcb_read8.array<uint32_constant_8>(this, () => { return new devcb_read8(this); });
+            m_in_cb = new devcb_read8.array<u64_const_8>(this, () => { return new devcb_read8(this); });
             m_state = state.STATE_IDLE;
             m_cycle_timer = null;
             m_start = 0;
@@ -75,7 +75,7 @@ namespace mame
 
         //auto eoc_callback() { return m_eoc_cb.bind(); }
         //auto eoc_ff_callback() { return m_eoc_ff_cb.bind(); }
-        public devcb_read8.binder in_callback<std_size_t_Bit>() where std_size_t_Bit : uint32_constant, new() { size_t Bit = new std_size_t_Bit().value;  return m_in_cb[Bit].bind(); }  //template <std::size_t Bit> auto in_callback() { return m_in_cb[Bit].bind(); }
+        public devcb_read8.binder in_callback<std_size_t_Bit>() where std_size_t_Bit : u32_const, new() { size_t Bit = new std_size_t_Bit().value;  return m_in_cb[Bit].bind(); }  //template <std::size_t Bit> auto in_callback() { return m_in_cb[Bit].bind(); }
 
 
         //**************************************************************************
@@ -89,7 +89,7 @@ namespace mame
                     logerror("data_r: {0}\n", m_sar);
 
                 // oe connected to flip-flop clear
-                m_eoc_ff_cb.op(0);
+                m_eoc_ff_cb.op_s32(0);
             }
 
             return m_sar;
@@ -147,18 +147,18 @@ namespace mame
             // resolve callbacks
             m_eoc_cb.resolve_safe();
             m_eoc_ff_cb.resolve_safe();
-            m_in_cb.resolve_all_safe(0xff);
+            m_in_cb.resolve_all_safe_u8(0xff);
 
             // allocate timers
             m_cycle_timer = timer_alloc();
             m_cycle_timer.adjust(attotime.zero, 0, attotime.from_hz(clock()));
 
             // register for save states
-            save_item(NAME(new { m_state }));
-            save_item(NAME(new { m_start }));
-            save_item(NAME(new { m_address }));
-            save_item(NAME(new { m_sar }));
-            save_item(NAME(new { m_eoc }));
+            save_item(g.NAME(new { m_state }));
+            save_item(g.NAME(new { m_start }));
+            save_item(g.NAME(new { m_address }));
+            save_item(g.NAME(new { m_sar }));
+            save_item(g.NAME(new { m_eoc }));
         }
 
 
@@ -177,9 +177,9 @@ namespace mame
                 case state.STATE_CONVERSION_READY:
                     m_state = state.STATE_CONVERSION_RUNNING;
 
-                    m_sar = m_in_cb[m_address].op(0);
+                    m_sar = m_in_cb[m_address].op_u8(0);
                     m_eoc = false;
-                    m_eoc_cb.op(m_eoc ? 1 : 0);
+                    m_eoc_cb.op_s32(m_eoc ? 1 : 0);
 
                     // the conversion takes 8 steps per 8 cycles
                     m_cycle_timer.adjust(attotime.from_ticks(64, clock()));
@@ -196,11 +196,11 @@ namespace mame
                 {
                     m_state = state.STATE_IDLE;
                     uint8_t start_sar = m_sar;
-                    m_sar = m_in_cb[m_address].op(0);
+                    m_sar = m_in_cb[m_address].op_u8(0);
 
                     m_eoc = true;
-                    m_eoc_cb.op(m_eoc ? 1 : 0);
-                    m_eoc_ff_cb.op(1);
+                    m_eoc_cb.op_s32(m_eoc ? 1 : 0);
+                    m_eoc_ff_cb.op_s32(1);
 
                     if (VERBOSE)
                         logerror("Conversion finished, result {0}\n", m_sar);
@@ -221,7 +221,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(ADC0809, adc0809_device, "adc0809", "ADC0809 A/D Converter")
         static device_t device_creator_adc0809_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new adc0809_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ADC0809 = DEFINE_DEVICE_TYPE(device_creator_adc0809_device, "adc0809", "ADC0809 A/D Converter");
+        public static readonly device_type ADC0809 = g.DEFINE_DEVICE_TYPE(device_creator_adc0809_device, "adc0809", "ADC0809 A/D Converter");
 
 
         adc0809_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)

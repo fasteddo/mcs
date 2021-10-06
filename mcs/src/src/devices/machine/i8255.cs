@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -19,9 +19,13 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(I8255, i8255_device, "i8255", "Intel 8255 PPI")
         static device_t device_creator_i8255_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8255_device(mconfig, tag, owner, clock); }
-        public static readonly device_type I8255 = DEFINE_DEVICE_TYPE(device_creator_i8255_device, "i8255", "Intel 8255 PPI");
+        public static readonly device_type I8255 = g.DEFINE_DEVICE_TYPE(device_creator_i8255_device, "i8255", "Intel 8255 PPI");
 
         public static readonly device_type I8255A = I8255;  //decltype(I8255) I8255A = I8255;
+
+
+        const int VERBOSE = 0;  //#define VERBOSE 1
+        protected void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
 
 
         //enum
@@ -250,15 +254,15 @@ namespace mame
         protected override void device_resolve_objects()
         {
             // resolve callbacks
-            m_in_pa_cb.resolve_safe(0);
-            m_in_pb_cb.resolve_safe(0);
-            m_in_pc_cb.resolve_safe(0);
+            m_in_pa_cb.resolve_safe_u8(0);
+            m_in_pb_cb.resolve_safe_u8(0);
+            m_in_pc_cb.resolve_safe_u8(0);
             m_out_pa_cb.resolve_safe();
             m_out_pb_cb.resolve_safe();
             m_out_pc_cb.resolve_safe();
-            m_tri_pa_cb.resolve_safe(0xff);
-            m_tri_pb_cb.resolve_safe(0xff);
-            m_tri_pc_cb.resolve_safe(0xff);
+            m_tri_pa_cb.resolve_safe_u8(0xff);
+            m_tri_pb_cb.resolve_safe_u8(0xff);
+            m_tri_pc_cb.resolve_safe_u8(0xff);
         }
 
 
@@ -268,15 +272,15 @@ namespace mame
         protected override void device_start()
         {
             // register for state saving
-            save_item(NAME(new { m_control }));
-            save_item(NAME(new { m_output }));
-            save_item(NAME(new { m_input }));
-            save_item(NAME(new { m_ibf }));
-            save_item(NAME(new { m_obf }));
-            save_item(NAME(new { m_inte }));
-            save_item(NAME(new { m_inte1 }));
-            save_item(NAME(new { m_inte2 }));
-            save_item(NAME(new { m_intr }));
+            save_item(g.NAME(new { m_control }));
+            save_item(g.NAME(new { m_output }));
+            save_item(g.NAME(new { m_input }));
+            save_item(g.NAME(new { m_ibf }));
+            save_item(g.NAME(new { m_obf }));
+            save_item(g.NAME(new { m_inte }));
+            save_item(g.NAME(new { m_inte1 }));
+            save_item(g.NAME(new { m_inte2 }));
+            save_item(g.NAME(new { m_intr }));
         }
 
 
@@ -473,7 +477,7 @@ namespace mame
             else
             {
                 // read data from port
-                data = (port == PORT_A) ? m_in_pa_cb.op(0) : ((port == PORT_B) ? m_in_pb_cb.op(0) : m_in_pc_cb.op(0));
+                data = (port == PORT_A) ? m_in_pa_cb.op_u8(0) : ((port == PORT_B) ? m_in_pb_cb.op_u8(0) : m_in_pc_cb.op_u8(0));
             }
 
             return data;
@@ -584,7 +588,7 @@ namespace mame
             if (mask != 0)
             {
                 // read data from port
-                data |= (byte)(m_in_pc_cb.op(0) & mask);
+                data |= (byte)(m_in_pc_cb.op_u8(0) & mask);
             }
 
             return data;
@@ -603,11 +607,11 @@ namespace mame
 
                 // write data to port
                 if (port == PORT_A)
-                    m_out_pa_cb.op((offs_t)0, m_output[port]);
+                    m_out_pa_cb.op_u8((offs_t)0, m_output[port]);
                 else if (port == PORT_B)
-                    m_out_pb_cb.op((offs_t)0, m_output[port]);
+                    m_out_pb_cb.op_u8((offs_t)0, m_output[port]);
                 else
-                    m_out_pc_cb.op((offs_t)0, m_output[port]);
+                    m_out_pc_cb.op_u8((offs_t)0, m_output[port]);
             }
         }
 
@@ -624,11 +628,11 @@ namespace mame
 
                 // write data to port
                 if (port == PORT_A)
-                    m_out_pa_cb.op((offs_t)0, m_output[port]);
+                    m_out_pa_cb.op_u8((offs_t)0, m_output[port]);
                 else if (port == PORT_B)
-                    m_out_pb_cb.op((offs_t)0, m_output[port]);
+                    m_out_pb_cb.op_u8((offs_t)0, m_output[port]);
                 else
-                    m_out_pc_cb.op((offs_t)0, m_output[port]);
+                    m_out_pc_cb.op_u8((offs_t)0, m_output[port]);
 
                 // set output buffer full flag
                 set_obf(port, 0);
@@ -648,7 +652,7 @@ namespace mame
             m_output[PORT_A] = data;
 
             // write data to port
-            m_out_pa_cb.op((offs_t)0, data);
+            m_out_pa_cb.op_u8((offs_t)0, data);
 
             // set output buffer full flag
             set_obf(PORT_A, 0);
@@ -678,7 +682,7 @@ namespace mame
                 else
                 {
                     // TTL inputs floating
-                    data |= (uint8_t)(m_tri_pc_cb.op(0) & 0xf0);
+                    data |= (uint8_t)(m_tri_pc_cb.op_u8(0) & (u32)0xf0);
                 }
                 break;
 
@@ -716,7 +720,7 @@ namespace mame
                 else
                 {
                     // TTL inputs floating
-                    data |= (uint8_t)(m_tri_pc_cb.op(0) & b_mask);
+                    data |= (uint8_t)(m_tri_pc_cb.op_u8(0) & (u32)b_mask);
                 }
                 break;
 
@@ -736,7 +740,7 @@ namespace mame
 
             data |= (uint8_t)(m_output[PORT_C] & mask);
 
-            m_out_pc_cb.op(0, data);
+            m_out_pc_cb.op_u8(0, data);
         }
 
 
@@ -765,13 +769,13 @@ namespace mame
 
             if (port_mode(PORT_A) == MODE_OUTPUT)
             {
-                m_out_pa_cb.op((offs_t)0, m_output[PORT_A]);
+                m_out_pa_cb.op_u8((offs_t)0, m_output[PORT_A]);
                 m_ibf[PORT_A] = 1; // correct? needed by SAM Coupe Blue Alpha sampler
             }
             else
             {
                 // TTL inputs floating
-                m_out_pa_cb.op((offs_t)0, m_tri_pa_cb.op(0));
+                m_out_pa_cb.op_u8((offs_t)0, m_tri_pa_cb.op_u8(0));
             }
 
             LOG("I8255 Group A Mode: {0}\n", group_mode(GROUP_A));  // %u
@@ -791,12 +795,12 @@ namespace mame
 
             if (port_mode(PORT_B) == MODE_OUTPUT)
             {
-                m_out_pb_cb.op((offs_t)0, m_output[PORT_B]);
+                m_out_pb_cb.op_u8((offs_t)0, m_output[PORT_B]);
             }
             else
             {
                 // TTL inputs floating
-                m_out_pb_cb.op((offs_t)0, m_tri_pb_cb.op(0));
+                m_out_pb_cb.op_u8((offs_t)0, m_tri_pb_cb.op_u8(0));
             }
 
             if (!m_dont_clear_output_latches)

@@ -28,7 +28,7 @@ namespace mame
 
     // ======================> device_state_entry
     // class describing a single item of exposed device state
-    public class device_state_entry : global_object
+    public class device_state_entry
     {
         // device state flags
         const u8 DSF_NOSHOW          = 0x01; // don't display this entry in the registers view
@@ -70,7 +70,7 @@ namespace mame
             m_default_format = true;
 
 
-            assert(size == 1 || size == 2 || size == 4 || size == 8 || (flags & DSF_FLOATING_POINT) != 0);
+            g.assert(size == 1 || size == 2 || size == 4 || size == 8 || (flags & DSF_FLOATING_POINT) != 0);
 
             format_from_mask();
 
@@ -153,7 +153,7 @@ namespace mame
         //-------------------------------------------------
         void set_value(u64 value)
         {
-            assert((m_flags & DSF_READONLY) == 0);
+            g.assert((m_flags & DSF_READONLY) == 0);
 
             // apply the mask
             value &= m_datamask;
@@ -260,6 +260,7 @@ namespace mame
 
     public interface device_state_register_operators<T>
     {
+        u64 cast_u64(T value);
         u8 sizeof_();
         u64 max();
         u8 flags();
@@ -267,6 +268,7 @@ namespace mame
 
     class device_state_register_operators_u8 : device_state_register_operators<u8>
     {
+        public u64 cast_u64(u8 value) { throw new emu_unimplemented(); }
         public u8 sizeof_() { return sizeof(u8); }
         public u64 max() { return u8.MaxValue; }
         public u8 flags() { return 0; }
@@ -274,6 +276,7 @@ namespace mame
 
     class device_state_register_operators_u16 : device_state_register_operators<u16>
     {
+        public u64 cast_u64(u16 value) { return value; }
         public u8 sizeof_() { return sizeof(u16); }
         public u64 max() { return u16.MaxValue; }
         public u8 flags() { return 0; }
@@ -281,6 +284,7 @@ namespace mame
 
     class device_state_register_operators_u32 : device_state_register_operators<u32>
     {
+        public u64 cast_u64(u32 value) { throw new emu_unimplemented(); }
         public u8 sizeof_() { return sizeof(u32); }
         public u64 max() { return u32.MaxValue; }
         public u8 flags() { return 0; }
@@ -288,6 +292,7 @@ namespace mame
 
     class device_state_register_operators_bool : device_state_register_operators<bool>
     {
+        public u64 cast_u64(bool value) { throw new emu_unimplemented(); }
         public u8 sizeof_() { return 1; }
         public u64 max() { return 1; }
         public u8 flags() { return 0; }
@@ -295,6 +300,7 @@ namespace mame
 
     class device_state_register_operators_double : device_state_register_operators<double>
     {
+        public u64 cast_u64(double value) { throw new emu_unimplemented(); }
         public u8 sizeof_() { return sizeof(double); }
         public u64 max() { return u64.MaxValue; }
         public u8 flags() { return device_state_entry.DSF_FLOATING_POINT; }
@@ -307,7 +313,7 @@ namespace mame
     class device_state_register<ItemType, ItemType_OPS> : device_state_entry
         where ItemType_OPS : device_state_register_operators<ItemType>, new()
     {
-        static device_state_register_operators<ItemType> ops = new ItemType_OPS();
+        static readonly device_state_register_operators<ItemType> ops = new ItemType_OPS();
 
 
         ItemType m_data;                 // reference to where the data lives  //ItemType &              m_data;                 // reference to where the data lives
@@ -329,7 +335,7 @@ namespace mame
 
         // device_state_entry overrides
         protected override object entry_baseptr() { throw new emu_unimplemented(); }  //virtual void *entry_baseptr() const override { return &m_data; }
-        protected override u64 entry_value() { throw new emu_unimplemented(); }  //virtual u64 entry_value() const override { return m_data; }
+        protected override u64 entry_value() { return ops.cast_u64(m_data); }  //virtual u64 entry_value() const override { return m_data; }
         protected override void entry_set_value(u64 value) { throw new emu_unimplemented(); }  //virtual void entry_set_value(u64 value) const override { m_data = value; }
     }
 
@@ -349,7 +355,7 @@ namespace mame
     public class device_latched_functional_state_register<ItemType, ItemType_OPS> : device_state_entry
         where ItemType_OPS : device_state_register_operators<ItemType>, new()
     {
-        static device_state_register_operators<ItemType> ops = new ItemType_OPS();
+        static readonly device_state_register_operators<ItemType> ops = new ItemType_OPS();
 
 
         //typedef typename std::function<void (ItemType)> setter_func;
@@ -383,7 +389,7 @@ namespace mame
     public class device_functional_state_register<ItemType, ItemType_OPS> : device_state_entry
         where ItemType_OPS : device_state_register_operators<ItemType>, new()
     {
-        static device_state_register_operators<ItemType> ops = new ItemType_OPS();
+        static readonly device_state_register_operators<ItemType> ops = new ItemType_OPS();
 
 
         //typedef typename std::function<ItemType ()> getter_func;
@@ -500,7 +506,7 @@ namespace mame
         public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, ItemType data)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, ItemType &data)
             where ItemType_OPS : device_state_register_operators<ItemType>, new()
         {
-            assert(symbol != null);
+            g.assert(symbol != null);
             return state_add(new device_state_register<ItemType, ItemType_OPS>(index, symbol, data, this));  //return state_add(std::make_unique<device_state_register<ItemType>>(index, symbol, data, this));
         }
 
@@ -514,7 +520,7 @@ namespace mame
         public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, ItemType data, device_latched_functional_state_register<ItemType, ItemType_OPS>.setter_func setter)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, ItemType &data, typename device_latched_functional_state_register<ItemType>::setter_func &&setter)
             where ItemType_OPS : device_state_register_operators<ItemType>, new()
         {
-            assert(symbol != null);
+            g.assert(symbol != null);
             return state_add(new device_latched_functional_state_register<ItemType, ItemType_OPS>(index, symbol, data, setter, this));  //return state_add(std::make_unique<device_latched_functional_state_register<ItemType>>(index, symbol, data, std::move(setter), this));
         }
 
@@ -524,7 +530,7 @@ namespace mame
         public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, device_functional_state_register<ItemType, ItemType_OPS>.getter_func getter, device_functional_state_register<ItemType, ItemType_OPS>.setter_func setter)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, typename device_functional_state_register<ItemType>::getter_func &&getter, typename device_functional_state_register<ItemType>::setter_func &&setter)
             where ItemType_OPS : device_state_register_operators<ItemType>, new()
         {
-            assert(symbol != null);
+            g.assert(symbol != null);
             return state_add(new device_functional_state_register<ItemType, ItemType_OPS>(index, symbol, getter, setter, this));  //return state_add(std::make_unique<device_functional_state_register<ItemType>>(index, symbol, std::move(getter), std::move(setter), this));
         }
 
@@ -534,7 +540,7 @@ namespace mame
         public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, device_functional_state_register<ItemType, ItemType_OPS>.getter_func getter)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, typename device_functional_state_register<ItemType>::getter_func &&getter)
             where ItemType_OPS : device_state_register_operators<ItemType>, new()
         {
-            assert(symbol != null);
+            g.assert(symbol != null);
             return state_add(new device_functional_state_register<ItemType, ItemType_OPS>(index, symbol, getter, (i) => { }, this)).readonly_();  //return state_add(std::make_unique<device_functional_state_register<ItemType>>(index, symbol, std::move(getter), [](ItemType){}, this)).readonly();
         }
 

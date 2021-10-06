@@ -114,9 +114,9 @@ namespace mame.ui
                     string unused;
                     int curvalue = slider.update(out unused, slider_state.SLIDER_NOCHANGE);
                     int increment = 0;
-                    bool alt_pressed = machine().input().code_pressed(input_global.KEYCODE_LALT) || machine().input().code_pressed(input_global.KEYCODE_RALT);
-                    bool ctrl_pressed = machine().input().code_pressed(input_global.KEYCODE_LCONTROL) || machine().input().code_pressed(input_global.KEYCODE_RCONTROL);
-                    bool shift_pressed = machine().input().code_pressed(input_global.KEYCODE_LSHIFT) || machine().input().code_pressed(input_global.KEYCODE_RSHIFT);
+                    bool alt_pressed = machine().input().code_pressed(g.KEYCODE_LALT) || machine().input().code_pressed(g.KEYCODE_RALT);
+                    bool ctrl_pressed = machine().input().code_pressed(g.KEYCODE_LCONTROL) || machine().input().code_pressed(g.KEYCODE_RCONTROL);
+                    bool shift_pressed = machine().input().code_pressed(g.KEYCODE_LSHIFT) || machine().input().code_pressed(g.KEYCODE_RSHIFT);
 
                     switch (menu_event.iptkey)
                     {
@@ -277,15 +277,15 @@ namespace mame.ui
                 current_x = bar_left + bar_width * percentage;
 
                 // fill in the percentage
-                container().add_rect(bar_left, bar_top, current_x, bar_bottom, ui().colors().slider_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_rect(bar_left, bar_top, current_x, bar_bottom, ui().colors().slider_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
 
                 // draw the top and bottom lines
-                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
 
                 // draw default marker
-                container().add_line(default_x, bar_area_top, default_x, bar_top, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
-                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, g.UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_area_top, default_x, bar_top, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
 
                 // draw the actual text
                 ui().draw_text_full(container(), tempstring, x1 + lr_border, y1 + line_height, x2 - x1 - 2.0f * lr_border,

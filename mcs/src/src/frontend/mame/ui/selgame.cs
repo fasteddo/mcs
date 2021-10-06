@@ -6,7 +6,9 @@ using System.Collections.Generic;
 
 using icon_cache = mame.util.lru_cache_map<mame.game_driver, mame.ui.menu_select_game.texture_and_bitmap>;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using size_t = System.UInt64;
 using software_list_device_enumerator = mame.device_type_enumerator<mame.software_list_device>;  //typedef device_type_enumerator<software_list_device> software_list_device_enumerator;
+using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -172,9 +174,9 @@ namespace mame.ui
                 m_sorted_list.reserve(driver_list.total());
                 std.unordered_set<string> manufacturers;
                 std.unordered_set<string> years;
-                for (int x = 0; x < driver_list.total(); ++x)
+                for (int x = 0; x < (int)driver_list.total(); ++x)
                 {
-                    game_driver driver = driver_list.driver(x);
+                    game_driver driver = driver_list.driver((size_t)x);
                     if (driver != ___empty.driver____empty)
                     {
                         if ((driver.flags & machine_flags.type.IS_BIOS_ROOT) != 0)
@@ -280,25 +282,25 @@ namespace mame.ui
                 ui_globals.rpanel = (byte)std.min(std.max(moptions.last_right_panel(), (int)utils_global.RP_FIRST), (int)utils_global.RP_LAST);
 
                 string tmp = moptions.last_used_filter();
-                int found = tmp.find_first_of(',');
+                size_t found = tmp.find_first_of(',');
                 string fake_ini;
-                if (found == -1)
+                if (found == g.npos)
                 {
-                    fake_ini = string_format("{0} = 1\n", tmp);
+                    fake_ini = util.string_format("{0} = 1\n", tmp);
                 }
                 else
                 {
                     string sub_filter = tmp.substr(found + 1);
-                    tmp = tmp.Substring(found);  // .resize(found);
-                    fake_ini = string_format("{0} = {1}\n", tmp, sub_filter);
+                    tmp = tmp.Substring((int)found);  // .resize(found);
+                    fake_ini = util.string_format("{0} = {1}\n", tmp, sub_filter);
                 }
 
-                emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_READ);
+                emu_file file = new emu_file(ui().options().ui_path(), g.OPEN_FLAG_READ);
 
                 MemoryU8 temp = new MemoryU8();
                 foreach (var s in fake_ini) temp.Add(Convert.ToByte(s));
 
-                if (file.open_ram(temp, (UInt32)fake_ini.Length) == osd_file.error.NONE)  // fake_ini.c_str()
+                if (file.open_ram(temp, (u32)fake_ini.Length) == osd_file.error.NONE)  // fake_ini.c_str()
                 {
                     m_persistent_data.filter_data().load_ini(file);
                     file.close();
@@ -321,7 +323,7 @@ namespace mame.ui
 
         ~menu_select_game()
         {
-            assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
         }
 
         public override void Dispose()
@@ -434,11 +436,11 @@ namespace mame.ui
                     if (old_item_selected == -1 && elem.driver.name == reselect_last.driver())
                         old_item_selected = curitem;
 
-                    bool cloneof = strcmp(elem.driver.parent, "0") != 0;
+                    bool cloneof = std.strcmp(elem.driver.parent, "0") != 0;
                     if (cloneof)
                     {
                         int cx = driver_list.find(elem.driver.parent);
-                        if (cx != -1 && ((driver_list.driver(cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0))
+                        if (cx != -1 && ((driver_list.driver((size_t)cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0))
                             cloneof = false;
                     }
 
@@ -460,11 +462,11 @@ namespace mame.ui
                         if (old_item_selected == -1 && info.shortname == reselect_last.driver())
                             old_item_selected = curitem;
 
-                        bool cloneof = strcmp(info.driver.parent, "0") != 0;
+                        bool cloneof = std.strcmp(info.driver.parent, "0") != 0;
                         if (cloneof)
                         {
                             int cx = driver_list.find(info.driver.parent);
-                            if (cx != -1 && ((driver_list.driver(cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0))
+                            if (cx != -1 && ((driver_list.driver((size_t)cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0))
                                 cloneof = false;
                         }
 
@@ -735,9 +737,9 @@ namespace mame.ui
                 machine_filter it = m_persistent_data.filter_data().get_current_filter();
                 string filter = it != null ? it.filter_text() : null;
                 if (filter != null)
-                    line1 = string_format("{0}: {1} - Search: {2}_", it.display_name(), filter, m_search);  // %1$s: %2$s - Search: %3$s_
+                    line1 = util.string_format("{0}: {1} - Search: {2}_", it.display_name(), filter, m_search);  // %1$s: %2$s - Search: %3$s_
                 else
-                    line1 = string_format("Search: {0}_", m_search);  // %1$s_
+                    line1 = util.string_format("Search: {0}_", m_search);  // %1$s_
             }
 
             line2 = "";
@@ -772,8 +774,8 @@ namespace mame.ui
                             machine_filter.type new_type = filter.get_type();
                             if (machine_filter.type.CUSTOM == new_type)
                             {
-                                emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-                                if (file.open(string_format("custom_{0}_filter.ini", emulator_info.get_configname())) == osd_file.error.NONE)
+                                emu_file file = new emu_file(ui().options().ui_path(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
+                                if (file.open(util.string_format("custom_{0}_filter.ini", emulator_info.get_configname())) == osd_file.error.NONE)
                                 {
                                     filter.save_ini(file, 0);
                                     file.close();
@@ -795,7 +797,7 @@ namespace mame.ui
                 // iterate over favorites
                 mame_machine_manager.instance().favorite().apply((info) =>
                 {
-                    assert(info.driver != null);
+                    g.assert(info.driver != null);
                     if (info.startempty != 0)
                         list.push_back(info.driver);
                 });
@@ -831,7 +833,7 @@ namespace mame.ui
         //-------------------------------------------------
         void build_available_list()
         {
-            int total = driver_list.total();
+            size_t total = driver_list.total();
             std.vector<bool> included = new std.vector<bool>(total, false);
 
             // iterate over ROM directories and look for potential ROMs
@@ -898,7 +900,7 @@ namespace mame.ui
             {
                 m_searched_fields |= (UInt32)persistent_data.available.AVAIL_UCS_SHORTNAME;
                 for (int i = 0; i < m_searchlist.Count; i++)  //for (std::pair<double, std::reference_wrapper<ui_system_info const> > &info : m_searchlist)
-                    m_searchlist[i] = new std.pair<double, ui_system_info>(util_.edit_distance(ucs_search, m_searchlist[i].second.ucs_shortname), m_searchlist[i].second);  //info.first = util::edit_distance(ucs_search, info.second.get().ucs_shortname);
+                    m_searchlist[i] = new std.pair<double, ui_system_info>(util.edit_distance(ucs_search, m_searchlist[i].second.ucs_shortname), m_searchlist[i].second);  //info.first = util::edit_distance(ucs_search, info.second.get().ucs_shortname);
             }
 
             // match descriptions
@@ -909,7 +911,7 @@ namespace mame.ui
                 {
                     if (m_searchlist[i].first != 0)  //if (info.first)
                     {
-                        double penalty = util_.edit_distance(ucs_search, m_searchlist[i].second.ucs_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_description));
+                        double penalty = util.edit_distance(ucs_search, m_searchlist[i].second.ucs_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_description));
                         m_searchlist[i] = new std.pair<double, ui_system_info>(std.min(penalty, m_searchlist[i].first), m_searchlist[i].second);  //info.first = (std::min)(penalty, info.first);
                     }
                 }
@@ -923,7 +925,7 @@ namespace mame.ui
                 {
                     if (m_searchlist[i].first != 0)  //if (info.first)
                     {
-                        double penalty = util_.edit_distance(ucs_search, m_searchlist[i].second.ucs_manufacturer_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_manufacturer_description));
+                        double penalty = util.edit_distance(ucs_search, m_searchlist[i].second.ucs_manufacturer_description);  //double const penalty(util::edit_distance(ucs_search, info.second.get().ucs_manufacturer_description));
                         m_searchlist[i] = new std.pair<double, ui_system_info>(std.min(penalty, m_searchlist[i].first), m_searchlist[i].second);  //info.first = (std::min)(penalty, info.first);
                     }
                 }
@@ -950,7 +952,7 @@ namespace mame.ui
         bool load_available_machines()
         {
             // try to load available drivers from file
-            emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_READ);
+            emu_file file = new emu_file(ui().options().ui_path(), g.OPEN_FLAG_READ);
             if (file.open(emulator_info.get_configname() + "_avail.ini") != osd_file.error.NONE)
                 return false;
 
@@ -975,7 +977,7 @@ namespace mame.ui
                 readbuf = rbuf.Trim();  //readbuf = strtrimspace(rbuf);
 
                 if (readbuf.empty() || ('#' == readbuf[0])) // ignore empty lines and line comments
-                    ;
+                { }
                 else if ('[' == readbuf[0]) // throw out the rest of the file if we find a section heading
                     break;
                 else
@@ -1002,8 +1004,8 @@ namespace mame.ui
         //-------------------------------------------------
         void load_custom_filters()
         {
-            emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_READ);
-            if (file.open(string_format("custom_{0}_filter.ini", emulator_info.get_configname())) == osd_file.error.NONE)
+            emu_file file = new emu_file(ui().options().ui_path(), g.OPEN_FLAG_READ);
+            if (file.open(util.string_format("custom_{0}_filter.ini", emulator_info.get_configname())) == osd_file.error.NONE)
             {
                 machine_filter flt = machine_filter.create(file, m_persistent_data.filter_data());
                 if (flt != null)
@@ -1031,7 +1033,7 @@ namespace mame.ui
 
             int cloneof = driver_list.non_bios_clone(driver);
             if (cloneof != -1)
-                str += string.Format("Driver is Clone of\t{0}\n", driver_list.driver(cloneof).type.fullname());  //%1$-.100s
+                str += string.Format("Driver is Clone of\t{0}\n", driver_list.driver((size_t)cloneof).type.fullname());  //%1$-.100s
             else
                 str += "Driver is Parent\t\n";
 
@@ -1040,7 +1042,7 @@ namespace mame.ui
             if (flags.has_keyboard())
                 str += "Keyboard Inputs\tYes\n";
 
-            if (((UInt64)driver.flags & MACHINE_NOT_WORKING) != 0)
+            if (((UInt64)driver.flags & g.MACHINE_NOT_WORKING) != 0)
                 str += "Overall\tNOT WORKING\n";
             else if (((flags.unemulated_features() | flags.imperfect_features()) & emu.detail.device_feature.type.PROTECTION) != 0)
                 str += "Overall\tUnemulated Protection\n";
@@ -1159,7 +1161,7 @@ namespace mame.ui
                 str += "Support Cocktail\tNo\n";
             str += ((flags.machine_flags() & machine_flags.type.IS_BIOS_ROOT) != 0      ? "Driver is BIOS\tYes\n"             : "Driver is BIOS\tNo\n");
             str += ((flags.machine_flags() & machine_flags.type.SUPPORTS_SAVE) != 0     ? "Support Save\tYes\n"               : "Support Save\tNo\n");
-            str += (((UInt32)flags.machine_flags() & ORIENTATION_SWAP_XY) != 0 ? "Screen Orientation\tVertical\n" : "Screen Orientation\tHorizontal\n");
+            str += (((int)flags.machine_flags() & g.ORIENTATION_SWAP_XY) != 0 ? "Screen Orientation\tVertical\n" : "Screen Orientation\tHorizontal\n");
 
             bool found = false;
             foreach (tiny_rom_entry region in new romload.entries(driver.rom).get_regions())

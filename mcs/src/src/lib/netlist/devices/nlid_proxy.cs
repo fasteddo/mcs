@@ -194,7 +194,7 @@ namespace mame.netlist.devices
             m_last_state.op = terminal_t.OUT_TRISTATE();
             m_RN.reset();
             m_RP.reset();
-            m_RN.set_G_V_I(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(logic_family().R_low()),
+            m_RN.set_G_V_I(plib.pg.reciprocal(logic_family().R_low()),
                     logic_family().low_offset_V(), nlconst.zero());
             m_RP.set_G_V_I(G_OFF,
                 nlconst.zero(),
@@ -216,7 +216,7 @@ namespace mame.netlist.devices
                     {
                         if (state == 0)  //case 0:
                         {
-                            m_RN.set_G_V_I(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(logic_family().R_low()),
+                            m_RN.set_G_V_I(plib.pg.reciprocal(logic_family().R_low()),
                                     logic_family().low_offset_V(), nlconst.zero());
                             m_RP.set_G_V_I(G_OFF,
                                 nlconst.zero(),
@@ -227,7 +227,7 @@ namespace mame.netlist.devices
                             m_RN.set_G_V_I(G_OFF,
                                 nlconst.zero(),
                                 nlconst.zero());
-                            m_RP.set_G_V_I(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(logic_family().R_high()),
+                            m_RP.set_G_V_I(plib.pg.reciprocal(logic_family().R_high()),
                                     logic_family().high_offset_V(), nlconst.zero());
                         }//    break;
                         else if (state == terminal_t.OUT_TRISTATE())  //case terminal_t.OUT_TRISTATE():
@@ -241,7 +241,7 @@ namespace mame.netlist.devices
                         }//    break;
                         else  //default:
                         {
-                            plib.pglobal.terminate("unknown state for proxy: this should never happen!");
+                            plib.pg.terminate("unknown state for proxy: this should never happen!");
                         }//    break;
                     }
                 });

@@ -94,10 +94,10 @@ namespace mame.plib
         //using list_t = std::vector<source_ptr>;
 
 
-        psource_collection_t_list_t m_collection;
+        psource_collection_t_list_t m_collection = new psource_collection_t_list_t();
 
 
-        psource_collection_t() { }
+        public psource_collection_t() { }
 
         //PCOPYASSIGNMOVE(psource_collection_t, delete)
         //virtual ~psource_collection_t() noexcept = default;
@@ -106,10 +106,7 @@ namespace mame.plib
         //template <typename S, typename... Args>
         public void add_source(plib.psource_t args)  //void add_source(Args&&... args)
         {
-            throw new emu_unimplemented();
-#if false
-            static_assert(std::is_base_of<psource_t, S>::value, "S must inherit from plib::psource_t");
-#endif
+            //static_assert(std::is_base_of<psource_t, S>::value, "S must inherit from plib::psource_t");
 
             var src = args;  //auto src(std::make_unique<S>(std::forward<Args>(args)...));
             m_collection.push_back(src);
@@ -139,7 +136,7 @@ namespace mame.plib
         {
             foreach (var s in m_collection)
             {
-                var source = (T)s;  //auto *source(dynamic_cast<S *>(s.get()));
+                var source = s is T ? (T)s : null;  //auto *source(dynamic_cast<S *>(s.get()));
                 if (source != null)
                 {
                     if (lambda(source))

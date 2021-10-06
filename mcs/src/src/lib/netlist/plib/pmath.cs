@@ -49,6 +49,46 @@ namespace mame.plib
     }
 
 
+    public class constants_operators_float : constants_operators<float>
+    {
+        public float default_ { get { return default; } }
+
+        public float add(float a, float b) { return a + b; }
+        public float subtract(float a, float b) { return a - b; }
+        public float multiply(float a, float b) { return a * b; }
+        public float divide(float a, float b) { return a / b; }
+
+        public float neg(float a) { return -a; }
+
+        public float abs(float a) { return std.abs(a); }
+        public float cos(float a) { return std.cos(a); }
+        public float exp(float a) { return std.exp(a); }
+        public float floor(float a) { return std.floor(a); }
+        public float log(float a) { return std.log(a); }
+        public float pow(float a, float b) { return std.pow(a, b); }
+        public float sin(float a) { return std.sin(a); }
+        public float sqrt(float a) { return std.sqrt(a); }
+        public float trunc(float a) { return std.trunc(a); }
+
+        public float cast(UInt64 a) { return a; }
+        public float cast(double a) { return (float)a; }
+        public int cast_int(float a) { return (int)a; }
+        public double cast_double(float a) { return a; }
+
+        public float min(float a, float b) { return std.min(a, b); }
+        public float max(float a, float b) { return std.max(a, b); }
+
+        public bool equals(float a, float b) { return a == b; }
+        public bool not_equals(float a, float b) { return a != b; }
+        public bool greater_than(float a, float b) { return a > b; }
+        public bool greater_than_or_equal(float a, float b) { return a >= b; }
+        public bool less_than(float a, float b) { return a < b; }
+        public bool less_than_or_equal(float a, float b) { return a <= b; }
+
+        public float pstonum_ne(bool CLOCALE, string arg, out bool err) { return (float)plib.pg.pstonum_ne_nl_fptype(CLOCALE, arg, out err); }
+    }
+
+
     public class constants_operators_double : constants_operators<double>
     {
         public double default_ { get { return default; } }
@@ -85,7 +125,7 @@ namespace mame.plib
         public bool less_than(double a, double b) { return a < b; }
         public bool less_than_or_equal(double a, double b) { return a <= b; }
 
-        public double pstonum_ne(bool CLOCALE, string arg, out bool err) { return plib.pglobal.pstonum_ne_nl_fptype(CLOCALE, arg, out err); }
+        public double pstonum_ne(bool CLOCALE, string arg, out bool err) { return plib.pg.pstonum_ne_nl_fptype(CLOCALE, arg, out err); }
     }
 
 
@@ -100,7 +140,8 @@ namespace mame.plib
     public class constants<T, T_OPS>
         where T_OPS : constants_operators<T>, new()
     {
-        protected static constants_operators<T> ops = new T_OPS();
+        protected static readonly T_OPS ops = new T_OPS();
+
 
         public static T zero() { return ops.cast(0); }  //static inline constexpr T zero()   noexcept { return static_cast<T>(0); }
         public static T half() { return ops.cast(0.5); }  //static inline constexpr T half()   noexcept { return static_cast<T>(0.5); }
@@ -161,8 +202,12 @@ namespace mame.plib
     }
 
 
-    static class pmath_global
+    static class pmath_global<T, T_OPS>
+        where T_OPS : constants_operators<T>, new()
     {
+        static readonly T_OPS ops = new T_OPS();
+
+
         /// \brief typesafe reciprocal function
         ///
         /// \tparam T type of the argument
@@ -171,9 +216,8 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        public static T reciprocal<T, T_OPS>(T v) where T_OPS : constants_operators<T>, new()  //reciprocal(T v) noexcept
+        public static T reciprocal(T v)  //reciprocal(T v) noexcept
         {
-            constants_operators<T> ops = new T_OPS();
             return ops.divide(constants<T, T_OPS>.one(), v);  //return constants<T>::one() / v;
         }
 
@@ -185,10 +229,9 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        public static T abs<T, T_OPS>(T v) where T_OPS : constants_operators<T>, new()  //abs(T v) noexcept
+        public static T abs(T v)  //abs(T v) noexcept
         {
-            constants_operators<T> ops = new T_OPS();
-            return ops.abs(v);
+            return ops.abs(v);  //return std::abs(v);
         }
 
         /// \brief sqrt function
@@ -199,10 +242,9 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        public static T sqrt<T, T_OPS>(T v) where T_OPS : constants_operators<T>, new()  //sqrt(T v) noexcept
+        public static T sqrt(T v)  //sqrt(T v) noexcept
         {
-            constants_operators<T> ops = new T_OPS();
-            return ops.sqrt(v);
+            return ops.sqrt(v);  //return std::sqrt(v);
         }
 
         /// \brief hypot function
@@ -227,10 +269,9 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        public static T exp<T, T_OPS>(T v) where T_OPS : constants_operators<T>, new()  //exp(T v) noexcept
+        public static T exp(T v)  //exp(T v) noexcept
         {
-            constants_operators<T> ops = new T_OPS();
-            return ops.exp(v);
+            return ops.exp(v);  //return std::exp(v);
         }
 
         /// \brief log function
@@ -241,10 +282,9 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        public static T log<T, T_OPS>(T v) where T_OPS : constants_operators<T>, new()  //log(T v) noexcept
+        public static T log(T v)  //log(T v) noexcept
         {
-            constants_operators<T> ops = new T_OPS();
-            return ops.log(v);
+            return ops.log(v);  //return std::log(v);
         }
 
         /// \brief tanh function
@@ -268,10 +308,9 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        public static T floor<T, T_OPS>(T v) where T_OPS : constants_operators<T>, new()  //floor(T v) noexcept
+        public static T floor(T v)  //floor(T v) noexcept
         {
-            constants_operators<T> ops = new T_OPS();
-            return ops.floor(v);
+            return ops.floor(v);  //return std::floor(v);
         }
 
         /// \brief log1p function
@@ -295,10 +334,9 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        public static T sin<T, T_OPS>(T v) where T_OPS : constants_operators<T>, new()  //sin(T v) noexcept
+        public static T sin(T v)  //sin(T v) noexcept
         {
-            constants_operators<T> ops = new T_OPS();
-            return ops.sin(v);
+            return ops.sin(v);  //return std::sin(v);
         }
 
         /// \brief cos function
@@ -309,10 +347,9 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        public static T cos<T, T_OPS>(T v) where T_OPS : constants_operators<T>, new()  //cos(T v) noexcept
+        public static T cos(T v)  //cos(T v) noexcept
         {
-            constants_operators<T> ops = new T_OPS();
-            return ops.cos(v);
+            return ops.cos(v);  //return std::cos(v);
         }
 
         /// \brief trunc function
@@ -323,10 +360,9 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        public static T trunc<T, T_OPS>(T v) where T_OPS : constants_operators<T>, new()  //trunc(T v) noexcept
+        public static T trunc(T v)  //trunc(T v) noexcept
         {
-            constants_operators<T> ops = new T_OPS();
-            return ops.trunc(v);
+            return ops.trunc(v);  //return std::trunc(v);
         }
 
         /// \brief signum function
@@ -356,10 +392,9 @@ namespace mame.plib
         ///
         //template <typename T1, typename T2>
         //static inline T1
-        public static T pow<T, T_OPS>(T v, T p) where T_OPS : constants_operators<T>, new()  //pow(T1 v, T2 p) noexcept
+        public static T pow(T v, T p)  //pow(T1 v, T2 p) noexcept
         {
-            constants_operators<T> ops = new T_OPS();
-            return ops.pow(v, p);
+            return ops.pow(v, p);  //return std::pow(v, p);
         }
 
 

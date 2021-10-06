@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
+using uX = mame.FlexPrim;
 
 
 namespace mame
@@ -16,9 +17,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     public class handler_entry_read_unmapped<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -46,9 +47,9 @@ namespace mame
 
     //template<int Width, int AddrShift, int Endian>
     public class handler_entry_write_unmapped<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -81,9 +82,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_read_nop<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -104,9 +105,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     class handler_entry_write_nop<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 

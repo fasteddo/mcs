@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using s8 = System.SByte;
 using s32 = System.Int32;
@@ -46,7 +46,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(AY8910, ay8910_device, "ay8910", "AY-3-8910A PSG")
         static device_t device_creator_ay8910_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8910_device(mconfig, tag, owner, clock); }
-        public static readonly device_type AY8910 = DEFINE_DEVICE_TYPE(device_creator_ay8910_device, "ay8910", "AY-3-8910A PSG");
+        public static readonly device_type AY8910 = g.DEFINE_DEVICE_TYPE(device_creator_ay8910_device, "ay8910", "AY-3-8910A PSG");
 
 
         public class device_sound_interface_ay8910 : device_sound_interface
@@ -401,12 +401,12 @@ namespace mame
             m_port_b_write_cb = new devcb_write8(this);
 
 
-            memset(m_regs, (u8)0);
+            std.memset(m_regs, (u8)0);
             m_tone = new tone_t[NUM_CHANNELS];  //memset(&m_tone,0,sizeof(m_tone));
             m_envelope = new envelope_t[NUM_CHANNELS];  //memset(&m_envelope,0,sizeof(m_envelope));
-            memset(m_vol_enabled, (u8)0);
-            memset(m_vol_table, 0);
-            memset(m_env_table, 0);
+            std.memset(m_vol_enabled, (u8)0);
+            std.memset(m_vol_table, 0);
+            std.memset(m_env_table, 0);
             m_res_load[0] = m_res_load[1] = m_res_load[2] = 1000; //Default values for resistor loads
 
             // TODO : measure ay8930 volume parameters (PSG_TYPE_YM for temporary 5 bit handling)
@@ -496,10 +496,10 @@ namespace mame
             int master_clock = (int)clock();
 
             if (m_ioports < 1 && !(m_port_a_read_cb.isnull() && m_port_a_write_cb.isnull()))
-                fatalerror("Device '{0}' is a {1} and has no port A!", tag(), name());
+                g.fatalerror("Device '{0}' is a {1} and has no port A!", tag(), name());
 
             if (m_ioports < 2 && !(m_port_b_read_cb.isnull() && m_port_b_write_cb.isnull()))
-                fatalerror("Device '{0}' is a {1} and has no port B!", tag(), name());
+                g.fatalerror("Device '{0}' is a {1} and has no port B!", tag(), name());
 
             m_port_a_read_cb.resolve();
             m_port_b_read_cb.resolve();
@@ -768,7 +768,7 @@ namespace mame
                    case were it makes a difference in comparison to a standard TTL output.
                  */
                 if (!m_port_a_read_cb.isnull())
-                    m_regs[AY_PORTA] = m_port_a_read_cb.op(0);
+                    m_regs[AY_PORTA] = m_port_a_read_cb.op_u8(0);
                 else
                     logerror("{0}: warning - read 8910 Port A\n", machine().describe_context());
                 break;
@@ -777,7 +777,7 @@ namespace mame
                 if ((m_regs[AY_ENABLE] & 0x80) != 0)
                     logerror("{0}: warning - read from 8910 Port B set as output\n", machine().describe_context());
                 if (!m_port_b_read_cb.isnull())
-                    m_regs[AY_PORTB] = m_port_b_read_cb.op(0);
+                    m_regs[AY_PORTB] = m_port_b_read_cb.op_u8(0);
                 else
                     logerror("{0}: warning - read 8910 Port B\n", machine().describe_context());
                 break;
@@ -976,7 +976,7 @@ namespace mame
                     {
                         /* write out 0xff if port set to input */
                         if (!m_port_a_write_cb.isnull())
-                            m_port_a_write_cb.op((offs_t)0, (m_regs[AY_ENABLE] & 0x40) != 0 ? m_regs[AY_PORTA] : (byte)0xff);
+                            m_port_a_write_cb.op_u8((offs_t)0, (m_regs[AY_ENABLE] & 0x40) != 0 ? m_regs[AY_PORTA] : (byte)0xff);
                     }
 
                     if ((m_last_enable == -1) ||
@@ -984,7 +984,7 @@ namespace mame
                     {
                         /* write out 0xff if port set to input */
                         if (!m_port_b_write_cb.isnull())
-                            m_port_b_write_cb.op((offs_t)0, (m_regs[AY_ENABLE] & 0x80) != 0 ? m_regs[AY_PORTB] : (byte)0xff);
+                            m_port_b_write_cb.op_u8((offs_t)0, (m_regs[AY_ENABLE] & 0x80) != 0 ? m_regs[AY_PORTB] : (byte)0xff);
                     }
                     m_last_enable = m_regs[AY_ENABLE];
                     break;
@@ -1015,7 +1015,7 @@ namespace mame
                     if ((m_regs[AY_ENABLE] & 0x40) != 0)
                     {
                         if (!m_port_a_write_cb.isnull())
-                            m_port_a_write_cb.op(0, m_regs[AY_PORTA]);
+                            m_port_a_write_cb.op_u8(0, m_regs[AY_PORTA]);
                         else
                             logerror("warning: unmapped write {0} to {1} Port A\n", v, name());  // %02x
                     }
@@ -1030,7 +1030,7 @@ namespace mame
                     if ((m_regs[AY_ENABLE] & 0x80) != 0)
                     {
                         if (!m_port_b_write_cb.isnull())
-                            m_port_b_write_cb.op((offs_t)0, m_regs[AY_PORTB]);
+                            m_port_b_write_cb.op_u8((offs_t)0, m_regs[AY_PORTB]);
                         else
                             logerror("warning: unmapped write {0} to {1} Port B\n", v, name());  // %02x
                     }
@@ -1088,7 +1088,7 @@ namespace mame
             if ((m_flags & AY8910_RESISTOR_OUTPUT) != 0)
             {
                 if (m_type != psg_type_t.PSG_TYPE_AY)
-                    fatalerror("AY8910_RESISTOR_OUTPUT currently only supported for AY8910 devices.");
+                    g.fatalerror("AY8910_RESISTOR_OUTPUT currently only supported for AY8910 devices.");
 
                 for (int chan = 0; chan < NUM_CHANNELS; chan++)
                 {
@@ -1136,17 +1136,17 @@ namespace mame
             save_item(STRUCT_MEMBER(m_envelope, holding));
 #endif
 
-            save_item(NAME(new { m_active }));
-            save_item(NAME(new { m_register_latch }));
-            save_item(NAME(new { m_regs }));
-            save_item(NAME(new { m_last_enable }));
+            save_item(g.NAME(new { m_active }));
+            save_item(g.NAME(new { m_register_latch }));
+            save_item(g.NAME(new { m_regs }));
+            save_item(g.NAME(new { m_last_enable }));
 
-            save_item(NAME(new { m_count_noise }));
-            save_item(NAME(new { m_prescale_noise }));
+            save_item(g.NAME(new { m_count_noise }));
+            save_item(g.NAME(new { m_prescale_noise }));
 
-            save_item(NAME(new { m_rng }));
-            save_item(NAME(new { m_mode }));
-            save_item(NAME(new { m_flags }));
+            save_item(g.NAME(new { m_rng }));
+            save_item(g.NAME(new { m_mode }));
+            save_item(g.NAME(new { m_flags }));
         }
 
 
@@ -1286,7 +1286,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(AY8914, ay8914_device, "ay8914", "AY-3-8914A PSG")
         static device_t device_creator_ay8914_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8914_device(mconfig, tag, owner, clock); }
-        public static readonly device_type AY8914 = DEFINE_DEVICE_TYPE(device_creator_ay8914_device, "ay8914", "AY-3-8914A PSG");
+        public static readonly device_type AY8914 = g.DEFINE_DEVICE_TYPE(device_creator_ay8914_device, "ay8914", "AY-3-8914A PSG");
 
 
         static readonly u8 [] mapping8914to8910 = new u8[16] { 0, 2, 4, 11, 1, 3, 5, 12, 7, 6, 13, 8, 9, 10, 14, 15 };

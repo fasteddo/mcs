@@ -4,11 +4,12 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -22,7 +23,7 @@ namespace mame
 
 
         // device callbacks
-        devcb_write_line.array<uint32_constant_8> m_q_out_cb;      // output line callback array
+        devcb_write_line.array<u64_const_8> m_q_out_cb;      // output line callback array
         devcb_write8 m_parallel_out_cb;  // parallel output option
 
         // miscellaneous configuration
@@ -40,14 +41,14 @@ namespace mame
         protected addressable_latch_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock, bool clear_active)
             : base(mconfig, type, tag, owner, clock)
         {
-            m_q_out_cb = new devcb_write_line.array<uint32_constant_8>(this, () => { return new devcb_write_line(this); });
+            m_q_out_cb = new devcb_write_line.array<u64_const_8>(this, () => { return new devcb_write_line(this); });
             m_parallel_out_cb = new devcb_write8(this);
             m_clear_active = clear_active;
         }
 
 
         // static configuration
-        public devcb_write_line.binder q_out_cb(int Bit) { return m_q_out_cb[Bit].bind(); }  //template <unsigned Bit> auto q_out_cb() { return m_q_out_cb[Bit].bind(); }
+        public devcb_write_line.binder q_out_cb<unsigned_Bit>() where unsigned_Bit : u32_const, new() { unsigned Bit = new unsigned_Bit().value; return m_q_out_cb[Bit].bind(); }  //template <unsigned Bit> auto q_out_cb() { return m_q_out_cb[Bit].bind(); }
         public devcb_write8.binder parallel_out_cb() { return m_parallel_out_cb.bind(); }  //auto parallel_out_cb() { return m_parallel_out_cb.bind(); }
 
 
@@ -184,11 +185,11 @@ namespace mame
             // arbitrary initial output state
             m_q = 0xff;
 
-            save_item(NAME(new { m_address }));
-            save_item(NAME(new { m_data }));
-            save_item(NAME(new { m_enable }));
-            save_item(NAME(new { m_q }));
-            save_item(NAME(new { m_clear }));
+            save_item(g.NAME(new { m_address }));
+            save_item(g.NAME(new { m_data }));
+            save_item(g.NAME(new { m_enable }));
+            save_item(g.NAME(new { m_q }));
+            save_item(g.NAME(new { m_clear }));
         }
 
 
@@ -228,11 +229,11 @@ namespace mame
 
             // update output line via callback
             if (!m_q_out_cb[m_address].isnull())
-                m_q_out_cb[m_address].op(m_data ? 1 : 0);
+                m_q_out_cb[m_address].op_s32(m_data ? 1 : 0);
 
             // update parallel output
             if (!m_parallel_out_cb.isnull())
-                m_parallel_out_cb.op(0, m_q, (byte)(1 << m_address));
+                m_parallel_out_cb.op_u8(0, m_q, (byte)(1 << m_address));
 
             // do some logging
             if (LOG_ALL_WRITES || (LOG_UNDEFINED_WRITES && m_q_out_cb[m_address].isnull() && m_parallel_out_cb.isnull()))
@@ -255,12 +256,12 @@ namespace mame
             for (int bit = 0; bit < 8; bit++)
             {
                 if (g.BIT(bits_changed, bit) != 0 && !m_q_out_cb[bit].isnull())
-                    m_q_out_cb[bit].op(g.BIT(new_q, bit));
+                    m_q_out_cb[bit].op_s32(g.BIT(new_q, bit));
             }
 
             // update parallel output
             if (!m_parallel_out_cb.isnull())
-                m_parallel_out_cb.op(0, new_q, bits_changed);
+                m_parallel_out_cb.op_u8(0, new_q, bits_changed);
         }
     }
 
@@ -270,7 +271,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(LS259, ls259_device, "ls259", "74LS259 Addressable Latch")
         static device_t device_creator_ls259_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ls259_device(mconfig, tag, owner, clock); }
-        public static readonly device_type LS259 = DEFINE_DEVICE_TYPE(device_creator_ls259_device, "ls259", "74LS259 Addressable Latch");
+        public static readonly device_type LS259 = g.DEFINE_DEVICE_TYPE(device_creator_ls259_device, "ls259", "74LS259 Addressable Latch");
 
 
         ls259_device(machine_config mconfig, string tag, device_t owner, u32 clock = 0)

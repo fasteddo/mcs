@@ -604,7 +604,7 @@ namespace mame
 
 
     /* ----- output management ----- */
-    public abstract class osd_output : global_object
+    public abstract class osd_output
     {
         const int MAXSTACK = 10;
 

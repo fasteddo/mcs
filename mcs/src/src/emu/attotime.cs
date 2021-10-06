@@ -87,7 +87,7 @@ namespace mame
                     -ATTOSECONDS_PER_SECOND;                                        // out-of-range negative values
         }
 
-        public double as_hz() { global_object.assert(!is_zero()); return m_seconds == 0 ? ATTOSECONDS_TO_HZ(m_attoseconds) : is_never() ? 0.0 : 1.0 / as_double(); }
+        public double as_hz() { g.assert(!is_zero()); return m_seconds == 0 ? ATTOSECONDS_TO_HZ(m_attoseconds) : is_never() ? 0.0 : 1.0 / as_double(); }
 
         //double as_khz() const noexcept { assert(!is_zero()); return m_seconds == 0 ? double(ATTOSECONDS_PER_MILLISECOND) / double(m_attoseconds) : is_never() ? 0.0 : 1e-3 / as_double(); }
         //double as_mhz() const noexcept { assert(!is_zero()); return m_seconds == 0 ? double(ATTOSECONDS_PER_MICROSECOND) / double(m_attoseconds) : is_never() ? 0.0 : 1e-6 / as_double(); }
@@ -100,7 +100,7 @@ namespace mame
         u64 as_ticks(u32 frequency)
         {
             u32 fracticks = (u32)((new attotime(0, m_attoseconds) * frequency).m_seconds);
-            return global_object.mulu_32x32((u32)m_seconds, frequency) + fracticks;
+            return g.mulu_32x32((u32)m_seconds, frequency) + fracticks;
         }
 
 
@@ -143,7 +143,7 @@ namespace mame
             else
             {
                 u32 lower;
-                u32 upper = global_object.divu_64x32_rem((u64)m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out lower);
+                u32 upper = g.divu_64x32_rem((u64)m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out lower);
                 int temp = precision;
                 while (temp < 18)
                 {
@@ -179,7 +179,7 @@ namespace mame
                     return new attotime(0, (attoseconds_t)ticks * attos_per_tick);  //return attotime(0, ticks * attos_per_tick);
 
                 u32 remainder;
-                s32 secs = (s32)global_object.divu_64x32_rem(ticks, frequency, out remainder);
+                s32 secs = (s32)g.divu_64x32_rem(ticks, frequency, out remainder);
                 return new attotime(secs, (attoseconds_t)remainder * attos_per_tick);  //return attotime(secs, u64(remainder) * attos_per_tick);
             }
             else
@@ -293,26 +293,26 @@ namespace mame
 
             // split attoseconds into upper and lower halves which fit into 32 bits
             u32 attolo;
-            u32 attohi = global_object.divu_64x32_rem((u64)left.m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out attolo);
+            u32 attohi = g.divu_64x32_rem((u64)left.m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out attolo);
 
             // scale the lower half, then split into high/low parts
-            u64 temp = global_object.mulu_32x32(attolo, factor);
+            u64 temp = g.mulu_32x32(attolo, factor);
             u32 reslo;
-            temp = global_object.divu_64x32_rem(temp, (u32)ATTOSECONDS_PER_SECOND_SQRT, out reslo);
+            temp = g.divu_64x32_rem(temp, (u32)ATTOSECONDS_PER_SECOND_SQRT, out reslo);
 
             // scale the upper half, then split into high/low parts
-            temp += global_object.mulu_32x32(attohi, factor);
+            temp += g.mulu_32x32(attohi, factor);
             u32 reshi;
-            temp = global_object.divu_64x32_rem(temp, (u32)ATTOSECONDS_PER_SECOND_SQRT, out reshi);
+            temp = g.divu_64x32_rem(temp, (u32)ATTOSECONDS_PER_SECOND_SQRT, out reshi);
 
             // scale the seconds
-            temp += global_object.mulu_32x32((u32)left.m_seconds, factor);
+            temp += g.mulu_32x32((u32)left.m_seconds, factor);
             if (temp >= ATTOTIME_MAX_SECONDS)
                 return never;  //return *this = never;
 
             // build the result
             seconds_t seconds = (seconds_t)temp;  //m_seconds = temp;
-            attoseconds_t attoseconds = (attoseconds_t)reslo + global_object.mul_32x32((s32)reshi, (s32)ATTOSECONDS_PER_SECOND_SQRT);  //m_attoseconds = (attoseconds_t)reslo + mul_32x32(reshi, ATTOSECONDS_PER_SECOND_SQRT);
+            attoseconds_t attoseconds = (attoseconds_t)reslo + g.mul_32x32((s32)reshi, (s32)ATTOSECONDS_PER_SECOND_SQRT);  //m_attoseconds = (attoseconds_t)reslo + mul_32x32(reshi, ATTOSECONDS_PER_SECOND_SQRT);
             return new attotime(seconds, attoseconds);  //return *this;
         }
 
@@ -335,22 +335,22 @@ namespace mame
 
             // split attoseconds into upper and lower halves which fit into 32 bits
             u32 attolo;
-            u32 attohi = global_object.divu_64x32_rem((u64)left.m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out attolo);
+            u32 attohi = g.divu_64x32_rem((u64)left.m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out attolo);
 
             // divide the seconds and get the remainder
             u32 remainder;
-            seconds_t seconds = (seconds_t)global_object.divu_64x32_rem((u64)left.m_seconds, factor, out remainder);  //m_seconds = divu_64x32_rem(m_seconds, factor, &remainder);
+            seconds_t seconds = (seconds_t)g.divu_64x32_rem((u64)left.m_seconds, factor, out remainder);  //m_seconds = divu_64x32_rem(m_seconds, factor, &remainder);
 
             // combine the upper half of attoseconds with the remainder and divide that
-            u64 temp = (u64)attohi + global_object.mulu_32x32(remainder, (u32)ATTOSECONDS_PER_SECOND_SQRT);  //u64 temp = s64(attohi) + mulu_32x32(remainder, ATTOSECONDS_PER_SECOND_SQRT);
-            u32 reshi = global_object.divu_64x32_rem(temp, factor, out remainder);
+            u64 temp = (u64)attohi + g.mulu_32x32(remainder, (u32)ATTOSECONDS_PER_SECOND_SQRT);  //u64 temp = s64(attohi) + mulu_32x32(remainder, ATTOSECONDS_PER_SECOND_SQRT);
+            u32 reshi = g.divu_64x32_rem(temp, factor, out remainder);
 
             // combine the lower half of attoseconds with the remainder and divide that
-            temp = attolo + global_object.mulu_32x32(remainder, (u32)ATTOSECONDS_PER_SECOND_SQRT);
-            u32 reslo = global_object.divu_64x32_rem(temp, factor, out remainder);
+            temp = attolo + g.mulu_32x32(remainder, (u32)ATTOSECONDS_PER_SECOND_SQRT);
+            u32 reslo = g.divu_64x32_rem(temp, factor, out remainder);
 
             // round based on the remainder
-            attoseconds_t attoseconds = (attoseconds_t)reslo + (attoseconds_t)global_object.mulu_32x32(reshi, (u32)ATTOSECONDS_PER_SECOND_SQRT);  //m_attoseconds = (attoseconds_t)reslo + mulu_32x32(reshi, ATTOSECONDS_PER_SECOND_SQRT);
+            attoseconds_t attoseconds = (attoseconds_t)reslo + (attoseconds_t)g.mulu_32x32(reshi, (u32)ATTOSECONDS_PER_SECOND_SQRT);  //m_attoseconds = (attoseconds_t)reslo + mulu_32x32(reshi, ATTOSECONDS_PER_SECOND_SQRT);
             if (remainder >= factor / 2)
             {
                 if (++attoseconds >= ATTOSECONDS_PER_SECOND)  //if (++m_attoseconds >= ATTOSECONDS_PER_SECOND)

@@ -73,7 +73,7 @@ namespace mame
             double [] rweights = new double[3];
             double [] gweights = new double[3];
             double [] bweights = new double[2];
-            compute_resistor_weights(0, RGB_MAXIMUM, -1.0,
+            g.compute_resistor_weights(0, RGB_MAXIMUM, -1.0,
                     3, rgb_resistances3, out rweights, 470, 0,
                     3, rgb_resistances3, out gweights, 470, 0,
                     2, rgb_resistances2, out bweights, 470, 0);
@@ -90,18 +90,18 @@ namespace mame
                 bit0 = (uint8_t)g.BIT(color_prom[i], 0);
                 bit1 = (uint8_t)g.BIT(color_prom[i], 1);
                 bit2 = (uint8_t)g.BIT(color_prom[i], 2);
-                int r = combine_weights(rweights, bit0, bit1, bit2);
+                int r = g.combine_weights(rweights, bit0, bit1, bit2);
 
                 /* green component */
                 bit0 = (uint8_t)g.BIT(color_prom[i], 3);
                 bit1 = (uint8_t)g.BIT(color_prom[i], 4);
                 bit2 = (uint8_t)g.BIT(color_prom[i], 5);
-                int gr = combine_weights(gweights, bit0, bit1, bit2);
+                int gr = g.combine_weights(gweights, bit0, bit1, bit2);
 
                 /* blue component */
                 bit0 = (uint8_t)g.BIT(color_prom[i], 6);
                 bit1 = (uint8_t)g.BIT(color_prom[i], 7);
-                int b = combine_weights(bweights, bit0, bit1);
+                int b = g.combine_weights(bweights, bit0, bit1);
 
                 palette.dipalette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
@@ -208,21 +208,21 @@ namespace mame
 
         void state_save_register()
         {
-            save_item(NAME(new { m_flipscreen_x }));
-            save_item(NAME(new { m_flipscreen_y }));
-            save_item(NAME(new { m_background_enable }));
-            save_item(NAME(new { m_background_red }));
-            save_item(NAME(new { m_background_green }));
-            save_item(NAME(new { m_background_blue }));
+            save_item(g.NAME(new { m_flipscreen_x }));
+            save_item(g.NAME(new { m_flipscreen_y }));
+            save_item(g.NAME(new { m_background_enable }));
+            save_item(g.NAME(new { m_background_red }));
+            save_item(g.NAME(new { m_background_green }));
+            save_item(g.NAME(new { m_background_blue }));
 
-            save_item(NAME(new { m_sprites_base }));
-            save_item(NAME(new { m_bullets_base }));
-            save_item(NAME(new { m_gfxbank }));
+            save_item(g.NAME(new { m_sprites_base }));
+            save_item(g.NAME(new { m_bullets_base }));
+            save_item(g.NAME(new { m_gfxbank }));
 
-            save_item(NAME(new { m_stars_enabled }));
-            save_item(NAME(new { m_star_rng_origin }));
-            save_item(NAME(new { m_star_rng_origin_frame }));
-            save_item(NAME(new { m_stars_blink_state }));
+            save_item(g.NAME(new { m_stars_enabled }));
+            save_item(g.NAME(new { m_star_rng_origin }));
+            save_item(g.NAME(new { m_star_rng_origin_frame }));
+            save_item(g.NAME(new { m_stars_blink_state }));
         }
 
 
@@ -451,7 +451,7 @@ namespace mame
                 stars_update_origin();
 
                 m_flipscreen_x = (uint8_t)(data & 0x01);
-                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? TILEMAP_FLIPY : 0));
+                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? g.TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? g.TILEMAP_FLIPY : 0));
             }
         }
 
@@ -463,7 +463,7 @@ namespace mame
                 m_screen.op[0].update_partial(m_screen.op[0].vpos());
 
                 m_flipscreen_y = (uint8_t)(data & 0x01);
-                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? TILEMAP_FLIPY : 0));
+                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? g.TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? g.TILEMAP_FLIPY : 0));
             }
         }
 

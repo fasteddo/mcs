@@ -13,7 +13,8 @@ using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 using param_int_t = mame.netlist.param_num_t<int, mame.netlist.param_num_t_operators_int>;  //using param_int_t = param_num_t<int>;
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
-using size_t = System.UInt32;
+using param_num_t_operators_size_t = mame.netlist.param_num_t_operators_uint64;
+using size_t = System.UInt64;
 using unsigned = System.UInt32;
 
 
@@ -146,8 +147,8 @@ namespace mame.netlist
             public param_fp_t m_reltol;
             public param_fp_t m_vntol;
             public param_fp_t m_accuracy;
-            public param_num_t<size_t, param_num_t_operators_uint32> m_nr_loops;
-            public param_num_t<size_t, param_num_t_operators_uint32> m_gs_loops;
+            public param_num_t<size_t, param_num_t_operators_size_t> m_nr_loops;
+            public param_num_t<size_t, param_num_t_operators_size_t> m_gs_loops;
             public param_fp_t m_gmin;
             public param_logic_t m_pivot;
             public param_fp_t m_nr_recalc_delay;
@@ -176,8 +177,8 @@ namespace mame.netlist
                 m_reltol = new param_fp_t(parent,   prefix + "RELTOL", defaults.m_reltol_());            ///< SPICE RELTOL parameter
                 m_vntol = new param_fp_t(parent,    prefix + "VNTOL",  defaults.m_vntol_());            ///< SPICE VNTOL parameter
                 m_accuracy = new param_fp_t(parent, prefix + "ACCURACY", defaults.m_accuracy_());          ///< Iterative solver accuracy
-                m_nr_loops = new param_num_t<size_t, param_num_t_operators_uint32>(parent, prefix + "NR_LOOPS", defaults.m_nr_loops_());           ///< Maximum number of Newton-Raphson loops
-                m_gs_loops = new param_num_t<size_t, param_num_t_operators_uint32>(parent, prefix + "GS_LOOPS", defaults.m_gs_loops_());             ///< Maximum number of Gauss-Seidel loops
+                m_nr_loops = new param_num_t<size_t, param_num_t_operators_size_t>(parent, prefix + "NR_LOOPS", defaults.m_nr_loops_());           ///< Maximum number of Newton-Raphson loops
+                m_gs_loops = new param_num_t<size_t, param_num_t_operators_size_t>(parent, prefix + "GS_LOOPS", defaults.m_gs_loops_());             ///< Maximum number of Gauss-Seidel loops
 
                 // general parameters
                 m_gmin = new param_fp_t(parent, prefix + "GMIN", defaults.m_gmin_());
@@ -199,7 +200,7 @@ namespace mame.netlist
 
 
                 m_min_timestep = m_dynamic_min_ts.op();
-                m_max_timestep = netlist_time.from_fp(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(m_freq.op())).as_fp();  //m_max_timestep = netlist_time::from_fp(plib::reciprocal(m_freq())).as_fp<decltype(m_max_timestep)>();
+                m_max_timestep = netlist_time.from_fp(plib.pg.reciprocal(m_freq.op())).as_fp();  //m_max_timestep = netlist_time::from_fp(plib::reciprocal(m_freq())).as_fp<decltype(m_max_timestep)>();
 
 
                 if (m_dynamic_ts != null)
@@ -269,12 +270,12 @@ namespace mame.netlist
             {
                 if (sorted)
                 {
-                    for (int i = 0; i < m_connected_net_idx.size(); i++)
+                    for (size_t i = 0; i < m_connected_net_idx.size(); i++)
                     {
                         if (m_connected_net_idx[i] > net_other)
                         {
-                            m_terms.Insert(i, term);  //plib::container::insert_at(m_terms, i, term);
-                            m_connected_net_idx.Insert(i, net_other);  //plib::container::insert_at(m_connected_net_idx, i, net_other);
+                            m_terms.Insert((int)i, term);  //plib::container::insert_at(m_terms, i, term);
+                            m_connected_net_idx.Insert((int)i, net_other);  //plib::container::insert_at(m_connected_net_idx, i, net_other);
                             return;
                         }
                     }
@@ -330,10 +331,10 @@ namespace mame.netlist
 
             protected solver_parameters_t m_params;
 
-            protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_gonn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gonn;
-            protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_gtn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gtn;
-            protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_Idrn;  //plib::pmatrix2d_vrl<fptype, arena_type>    m_Idrn;
-            protected plib.pmatrix2d_vrl<Pointer<matrix_solver_t_fptype>> m_connected_net_Vn;  //plib::pmatrix2d_vrl<fptype *, arena_type>  m_connected_net_Vn;
+            protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_gonn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gonn;
+            protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_gtn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gtn;
+            protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_Idrn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();  //plib::pmatrix2d_vrl<fptype, arena_type>    m_Idrn;
+            protected plib.pmatrix2d_vrl<Pointer<matrix_solver_t_fptype>> m_connected_net_Vn = new plib.pmatrix2d_vrl<Pointer<matrix_solver_t_fptype>>();  //plib::pmatrix2d_vrl<fptype *, arena_type>  m_connected_net_Vn;
 
             protected state_var<size_t> m_iterative_fail;
             protected state_var<size_t> m_iterative_total;
@@ -348,13 +349,13 @@ namespace mame.netlist
             state_var<size_t> m_stat_vsolver_calls;
 
             state_var<netlist_time_ext> m_last_step;
-            plib.aligned_vector<nldelegate_ts> m_step_funcs;
-            plib.aligned_vector<nldelegate_dyn> m_dynamic_funcs;
-            plib.aligned_vector<proxied_analog_output_t> m_inps;  //plib::aligned_vector<device_arena::unique_ptr<proxied_analog_output_t>> m_inps;
+            plib.aligned_vector<nldelegate_ts> m_step_funcs = new plib.aligned_vector<nldelegate_ts>();
+            plib.aligned_vector<nldelegate_dyn> m_dynamic_funcs = new plib.aligned_vector<nldelegate_dyn>();
+            plib.aligned_vector<proxied_analog_output_t> m_inps = new plib.aligned_vector<proxied_analog_output_t>();  //plib::aligned_vector<device_arena::unique_ptr<proxied_analog_output_t>> m_inps;
 
             size_t m_ops;
 
-            plib.aligned_vector<terms_for_net_t> m_rails_temp; // setup only
+            plib.aligned_vector<terms_for_net_t> m_rails_temp = new plib.aligned_vector<terms_for_net_t>(); // setup only
 
 
             // ----------------------------------------------------------------------------------------
@@ -453,8 +454,8 @@ namespace mame.netlist
             //bool updates_net(const analog_net_t *net) const noexcept;
 
 
-            public int dynamic_device_count() { return m_dynamic_funcs.size(); }  //std::size_t dynamic_device_count() const noexcept { return m_dynamic_funcs.size(); }
-            public int timestep_device_count() { return m_step_funcs.size(); }  //std::size_t timestep_device_count() const noexcept { return m_step_funcs.size(); }
+            public size_t dynamic_device_count() { return m_dynamic_funcs.size(); }  //std::size_t dynamic_device_count() const noexcept { return m_dynamic_funcs.size(); }
+            public size_t timestep_device_count() { return m_step_funcs.size(); }  //std::size_t timestep_device_count() const noexcept { return m_step_funcs.size(); }
 
 
             /// \brief reschedule solver execution
@@ -576,7 +577,7 @@ namespace mame.netlist
                     m_rails_temp.emplace_back(new terms_for_net_t());
                 }
 
-                for (int k = 0; k < nets.size(); k++)
+                for (size_t k = 0; k < nets.size(); k++)
                 {
                     analog_net_t net = nets[k];
 
@@ -591,8 +592,6 @@ namespace mame.netlist
                         switch (p.type())
                         {
                             case detail.terminal_type.TERMINAL:
-                                throw new emu_unimplemented();
-#if false
                                 if (p.device().is_timestep())
                                 {
                                     if (!plib.container.contains(step_devices, p.device()))
@@ -607,11 +606,10 @@ namespace mame.netlist
 
                                 {
                                     terminal_t pterm = (terminal_t)p;
-                                    add_term(k, pterm);
+                                    add_term((int)k, pterm);
                                 }
 
                                 log().debug.op("Added terminal {0}\n", p.name());
-#endif
                                 break;
 
                             case detail.terminal_type.INPUT:
@@ -651,13 +649,10 @@ namespace mame.netlist
                     }
                 }
 
-                throw new emu_unimplemented();
-#if false
                 foreach (var d in step_devices)
                     m_step_funcs.emplace_back(d.timestep);
                 foreach (var d in dynamic_devices)
                     m_dynamic_funcs.emplace_back(d.update_terminals);
-#endif
             }
 
 
@@ -752,16 +747,16 @@ namespace mame.netlist
                 // NOTE: Even better would be to sort on elements right of the matrix diagonal.
                 //
 
-                int iN = m_terms.size();
+                size_t iN = m_terms.size();
 
                 switch (sort)
                 {
                     case matrix_sort_type_e.PREFER_BAND_MATRIX:
                         {
-                            for (int k = 0; k < iN - 1; k++)
+                            for (size_t k = 0; k < iN - 1; k++)
                             {
                                 var pk = get_weight_around_diag(k, k);
-                                for (int i = k + 1; i < iN; i++)
+                                for (size_t i = k + 1; i < iN; i++)
                                 {
                                     var pi = get_weight_around_diag(i, k);
                                     if (pi < pk)
@@ -779,10 +774,10 @@ namespace mame.netlist
                         break;
                     case matrix_sort_type_e.PREFER_IDENTITY_TOP_LEFT:
                         {
-                            for (int k = 0; k < iN - 1; k++)
+                            for (size_t k = 0; k < iN - 1; k++)
                             {
                                 var pk = get_left_right_of_diag(k, k);
-                                for (int i = k + 1; i < iN; i++)
+                                for (size_t i = k + 1; i < iN; i++)
                                 {
                                     var pi = get_left_right_of_diag(i, k);
                                     if (pi.first <= pk.first && pi.second >= pk.second)
@@ -803,9 +798,9 @@ namespace mame.netlist
                         {
                             int sort_order = (sort == matrix_sort_type_e.DESCENDING ? 1 : -1);
 
-                            for (int k = 0; k < iN - 1; k++)
+                            for (size_t k = 0; k < iN - 1; k++)
                             {
-                                for (int i = k + 1; i < iN; i++)
+                                for (size_t i = k + 1; i < iN; i++)
                                 {
                                     if (((int)m_terms[k].railstart() - (int)m_terms[i].railstart()) * sort_order < 0)
                                     {
@@ -826,7 +821,7 @@ namespace mame.netlist
                 foreach (var term in m_terms)
                 {
                     //int *other = term.m_connected_net_idx.data();
-                    for (UInt32 i = 0; i < term.count(); i++)
+                    for (size_t i = 0; i < term.count(); i++)
                     {
                         //FIXME: this is weird
                         if (term.m_connected_net_idx[i] != -1)
@@ -854,7 +849,7 @@ namespace mame.netlist
 
             int get_net_idx(analog_net_t net)
             {
-                for (UInt32 k = 0; k < m_terms.size(); k++)
+                for (size_t k = 0; k < m_terms.size(); k++)
                 {
                     if (m_terms[k].is_net(net))
                         return (int)k;
@@ -863,7 +858,7 @@ namespace mame.netlist
             }
 
 
-            std.pair<int, int> get_left_right_of_diag(int irow, int idiag)
+            std.pair<int, int> get_left_right_of_diag(size_t irow, size_t idiag)
             {
                 //
                 // return the maximum column left of the diagonal (-1 if no cols found)
@@ -878,7 +873,7 @@ namespace mame.netlist
 
                 var term = m_terms[irow];
 
-                for (UInt32 i = 0; i < term.count(); i++)
+                for (size_t i = 0; i < term.count(); i++)
                 {
                     var col = get_net_idx(get_connected_net(term.terms()[i]));
                     if (col != -1)
@@ -897,7 +892,7 @@ namespace mame.netlist
             }
 
 
-            nl_fptype get_weight_around_diag(int row, int diag)
+            nl_fptype get_weight_around_diag(size_t row, size_t diag)
             {
                 {
                     //
@@ -908,18 +903,18 @@ namespace mame.netlist
 
                     nl_fptype weight = nlconst.zero();
                     var term = m_terms[row];
-                    for (int i = 0; i < term.count(); i++)
+                    for (size_t i = 0; i < term.count(); i++)
                     {
                         var col = get_net_idx(get_connected_net(term.terms()[i]));
                         if (col >= 0)
                         {
-                            var colu = (UInt32)col;  //auto colu = static_cast<std::size_t>(col);
+                            var colu = (size_t)col;  //auto colu = static_cast<std::size_t>(col);
                             if (!touched[colu])
                             {
-                                if (colu == row) colu = (UInt32)diag;
-                                else if (colu == diag) colu = (UInt32)row;
+                                if (colu == row) colu = (unsigned)diag;
+                                else if (colu == diag) colu = (unsigned)row;
 
-                                weight = weight + plib.pglobal.abs<nl_fptype, nl_fptype_ops>((nl_fptype)colu - (nl_fptype)diag);
+                                weight = weight + plib.pg.abs((nl_fptype)colu - (nl_fptype)diag);
                                 touched[colu] = true;
                             }
                         }
@@ -1099,11 +1094,11 @@ namespace mame.netlist
 
             void set_pointers()
             {
-                UInt32 iN = (UInt32)this.m_terms.size();
+                size_t iN = this.m_terms.size();
 
-                UInt32 max_count = 0;
-                UInt32 max_rail = 0;
-                for (UInt32 k = 0; k < iN; k++)
+                size_t max_count = 0;
+                size_t max_rail = 0;
+                for (size_t k = 0; k < iN; k++)
                 {
                     max_count = std.max(max_count, m_terms[k].count());
                     max_rail = std.max(max_rail, m_terms[k].railstart());
@@ -1132,12 +1127,8 @@ namespace mame.netlist
 
                     for (size_t i = 0; i < count; i++)
                     {
-                        throw new emu_unimplemented();
-#if false
-                        m_terms[k].terms()[i].set_ptrs(new Pointer<nl_fptype>(m_gtn.op(k), i), new Pointer<nl_fptype>(m_gonn.op(k), i), new Pointer<nl_fptype>(m_Idrn.op(k), i));  //m_terms[k].terms()[i]->set_ptrs(&m_gtn[k][i], &m_gonn[k][i], &m_Idrn[k][i]);
-                        //m_connected_net_Vn[k][i] = m_terms[k].terms()[i]->connected_terminal()->net().Q_Analog_state_ptr();
-                        m_connected_net_Vn.op(k)[i] = new Pointer<nl_fptype>(get_connected_net(m_terms[k].terms()[i]).Q_Analog_state_ptr());  //m_connected_net_Vn[k][i] = get_connected_net(m_terms[k].terms()[i])->Q_Analog_state_ptr();
-#endif
+                        m_terms[k].terms()[i].set_ptrs(new Pointer<nl_fptype>(m_gtn.op(k), (int)i), new Pointer<nl_fptype>(m_gonn.op(k), (int)i), new Pointer<nl_fptype>(m_Idrn.op(k), (int)i));  //m_terms[k].terms()[i]->set_ptrs(&m_gtn[k][i], &m_gonn[k][i], &m_Idrn[k][i]);
+                        m_connected_net_Vn.op(k)[i] = get_connected_net(m_terms[k].terms()[i]).Q_Analog_state_ptr();  //m_connected_net_Vn[k][i] = get_connected_net(m_terms[k].terms()[i])->Q_Analog_state_ptr();
                     }
                 }
             }

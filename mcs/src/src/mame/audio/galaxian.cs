@@ -16,7 +16,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(GALAXIAN_SOUND, galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound")
         static device_t device_creator_galaxian_sound_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_sound_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GALAXIAN_SOUND = DEFINE_DEVICE_TYPE(device_creator_galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound");
+        public static readonly device_type GALAXIAN_SOUND = g.DEFINE_DEVICE_TYPE(device_creator_galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound");
 
 
         // internal state
@@ -119,7 +119,7 @@ namespace mame
         {
             m_lfo_val = 0;
 
-            save_item(NAME(new { m_lfo_val }));
+            save_item(g.NAME(new { m_lfo_val }));
         }
 
 
@@ -129,7 +129,7 @@ namespace mame
         protected override void device_add_mconfig(machine_config config)
         {
             // sound hardware
-            DISCRETE(config, m_discrete).disound.add_route(g.ALL_OUTPUTS, ":speaker", 1.0);
+            g.DISCRETE(config, m_discrete).disound.add_route(g.ALL_OUTPUTS, ":speaker", 1.0);
             m_discrete.op[0].set_intf(galaxian_state.galaxian_discrete);
         }
     }
@@ -158,74 +158,74 @@ namespace mame
 
         const double TTL_OUT                 = 4.0;
 
-        static readonly double GAL_R15                 = RES_K(100);
-        static readonly double GAL_R16                 = RES_K(220);
-        static readonly double GAL_R17                 = RES_K(470);
-        static readonly double GAL_R18                 = RES_K(1000);
-        static readonly double GAL_R19                 = RES_K(330);
+        static readonly double GAL_R15                 = g.RES_K(100);
+        static readonly double GAL_R16                 = g.RES_K(220);
+        static readonly double GAL_R17                 = g.RES_K(470);
+        static readonly double GAL_R18                 = g.RES_K(1000);
+        static readonly double GAL_R19                 = g.RES_K(330);
 
-        static readonly double GAL_R20                 = RES_K(15);
-        static readonly double GAL_R21                 = RES_K(100);
-        static readonly double GAL_R22                 = RES_K(100);
-        static readonly double GAL_R23                 = RES_K(470);
-        static readonly double GAL_R24                 = RES_K(10);
-        static readonly double GAL_R25                 = RES_K(100);
-        static readonly double GAL_R26                 = RES_K(330);
-        static readonly double GAL_R27                 = RES_K(10);
-        static readonly double GAL_R28                 = RES_K(100);
-        static readonly double GAL_R29                 = RES_K(220);
+        static readonly double GAL_R20                 = g.RES_K(15);
+        static readonly double GAL_R21                 = g.RES_K(100);
+        static readonly double GAL_R22                 = g.RES_K(100);
+        static readonly double GAL_R23                 = g.RES_K(470);
+        static readonly double GAL_R24                 = g.RES_K(10);
+        static readonly double GAL_R25                 = g.RES_K(100);
+        static readonly double GAL_R26                 = g.RES_K(330);
+        static readonly double GAL_R27                 = g.RES_K(10);
+        static readonly double GAL_R28                 = g.RES_K(100);
+        static readonly double GAL_R29                 = g.RES_K(220);
 
-        static readonly double GAL_R30                 = RES_K(10);
-        static readonly double GAL_R31                 = RES_K(47);
-        static readonly double GAL_R32                 = RES_K(47);
-        static readonly double GAL_R33                 = RES_K(10);
+        static readonly double GAL_R30                 = g.RES_K(10);
+        static readonly double GAL_R31                 = g.RES_K(47);
+        static readonly double GAL_R32                 = g.RES_K(47);
+        static readonly double GAL_R33                 = g.RES_K(10);
         /*
          * R34 is given twice on galaxian board and both times as 5.1k. On moon cresta
          * it is only listed once and given as 15k. This is more in line with recordings
          */
-        static readonly double GAL_R34                 = RES_K(5.1);
+        static readonly double GAL_R34                 = g.RES_K(5.1);
         //#define MCRST_R34                   RES_K(15)
 
-        static readonly double GAL_R35                 = RES_K(150);
-        static readonly double GAL_R36                 = RES_K(22);
-        static readonly double GAL_R37                 = RES_K(470);
-        static readonly double GAL_R38                 = RES_K(33);
-        static readonly double GAL_R39                 = RES_K(22);
+        static readonly double GAL_R35                 = g.RES_K(150);
+        static readonly double GAL_R36                 = g.RES_K(22);
+        static readonly double GAL_R37                 = g.RES_K(470);
+        static readonly double GAL_R38                 = g.RES_K(33);
+        static readonly double GAL_R39                 = g.RES_K(22);
 
         /* The hit sound is too low compared with recordings
          * There may be an issue with the op-amp band filter
          */
-        static readonly double GAL_R40                 = RES_K(2.2) * 0.6;    /* Volume adjust */
-        static readonly double GAL_R41                 = RES_K(100);
-        static readonly double GAL_R43                 = RES_K(2.2);
-        static readonly double GAL_R44                 = RES_K(10);
-        static readonly double GAL_R45                 = RES_K(22);
-        static readonly double GAL_R46                 = RES_K(10);
-        static readonly double GAL_R47                 = RES_K(2.2);
-        static readonly double GAL_R48                 = RES_K(2.2);
-        static readonly double GAL_R49                 = RES_K(10);
+        static readonly double GAL_R40                 = g.RES_K(2.2) * 0.6;    /* Volume adjust */
+        static readonly double GAL_R41                 = g.RES_K(100);
+        static readonly double GAL_R43                 = g.RES_K(2.2);
+        static readonly double GAL_R44                 = g.RES_K(10);
+        static readonly double GAL_R45                 = g.RES_K(22);
+        static readonly double GAL_R46                 = g.RES_K(10);
+        static readonly double GAL_R47                 = g.RES_K(2.2);
+        static readonly double GAL_R48                 = g.RES_K(2.2);
+        static readonly double GAL_R49                 = g.RES_K(10);
 
-        static readonly double GAL_R50                 = RES_K(22);
-        static readonly double GAL_R51                 = RES_K(33);
-        static readonly double GAL_R52                 = RES_K(15);
+        static readonly double GAL_R50                 = g.RES_K(22);
+        static readonly double GAL_R51                 = g.RES_K(33);
+        static readonly double GAL_R52                 = g.RES_K(15);
 
-        static readonly double GAL_R91                 = RES_K(10);
+        static readonly double GAL_R91                 = g.RES_K(10);
 
-        static readonly double GAL_C15                 = CAP_U(1);
-        static readonly double GAL_C17                 = CAP_U(0.01);
-        static readonly double GAL_C18                 = CAP_U(0.01);
-        static readonly double GAL_C19                 = CAP_U(0.01);
+        static readonly double GAL_C15                 = g.CAP_U(1);
+        static readonly double GAL_C17                 = g.CAP_U(0.01);
+        static readonly double GAL_C18                 = g.CAP_U(0.01);
+        static readonly double GAL_C19                 = g.CAP_U(0.01);
 
-        static readonly double GAL_C20                 = CAP_U(0.1);
-        static readonly double GAL_C21                 = CAP_U(2.2);
-        static readonly double GAL_C22                 = CAP_U(0.01);
-        static readonly double GAL_C23                 = CAP_U(0.01);
-        static readonly double GAL_C25                 = CAP_U(1);
-        static readonly double GAL_C26                 = CAP_U(0.01);
-        static readonly double GAL_C27                 = CAP_U(0.01);
-        static readonly double GAL_C28                 = CAP_U(47);
+        static readonly double GAL_C20                 = g.CAP_U(0.1);
+        static readonly double GAL_C21                 = g.CAP_U(2.2);
+        static readonly double GAL_C22                 = g.CAP_U(0.01);
+        static readonly double GAL_C23                 = g.CAP_U(0.01);
+        static readonly double GAL_C25                 = g.CAP_U(1);
+        static readonly double GAL_C26                 = g.CAP_U(0.01);
+        static readonly double GAL_C27                 = g.CAP_U(0.01);
+        static readonly double GAL_C28                 = g.CAP_U(47);
 
-        static readonly double GAL_C46                 = CAP_U(0.1);
+        static readonly double GAL_C46                 = g.CAP_U(0.1);
 
 
         /*************************************
@@ -401,7 +401,7 @@ namespace mame
                 g.DISCRETE_DAC_R1(g.NODE_100, GAL_INP_BG_DAC, TTL_OUT, galaxian_bck_dac),
                 g.DISCRETE_555_CC(g.NODE_105, 1, g.NODE_100, GAL_R21, GAL_C15, 0, 0, 0, galaxian_bck_vco),
                 // Next is mult/add opamp circuit
-                g.DISCRETE_MULTADD(g.NODE_110, g.NODE_105, GAL_R33/RES_3_PARALLEL(GAL_R31,GAL_R32,GAL_R33),
+                g.DISCRETE_MULTADD(g.NODE_110, g.NODE_105, GAL_R33/g.RES_3_PARALLEL(GAL_R31,GAL_R32,GAL_R33),
                         -5.0*GAL_R33/GAL_R31),
                 g.DISCRETE_CLAMP(g.NODE_111,g.NODE_110,0.0,5.0),
                 // The three 555
@@ -461,7 +461,7 @@ namespace mame
                 //DISCRETE_MULTIPLY(NODE_175, 1, 1.0/GAL_R46, NODE_174)
                 //DISCRETE_MULTIPLY(NODE_176, 1, 1.0/GAL_R48, NODE_173)
                 //DISCRETE_ADDER2(NODE_177, 1, NODE_175, NODE_176)
-                g.DISCRETE_MULTIPLY(g.NODE_178, RES_2_PARALLEL(GAL_R46, GAL_R48), g.NODE_177),
+                g.DISCRETE_MULTIPLY(g.NODE_178, g.RES_2_PARALLEL(GAL_R46, GAL_R48), g.NODE_177),
 
                 g.DISCRETE_555_ASTABLE_CV(g.NODE_181, 1, GAL_R44, GAL_R45, GAL_C27, g.NODE_178, galaxian_555_fire_vco_desc),
 

@@ -10,12 +10,12 @@ using u32 = System.UInt32;
 namespace mame
 {
     // ======================> digitalker_device
-    class digitalker_device : device_t
-                              //device_sound_interface
+    public class digitalker_device : device_t
+                                     //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(DIGITALKER, digitalker_device, "digitalker", "MM54104 Digitalker")
         static device_t device_creator_digitalker_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new digitalker_device(mconfig, tag, owner, clock); }
-        public static readonly device_type DIGITALKER = DEFINE_DEVICE_TYPE(device_creator_digitalker_device, "digitalker", "MM54104 Digitalker");
+        public static readonly device_type DIGITALKER = g.DEFINE_DEVICE_TYPE(device_creator_digitalker_device, "digitalker", "MM54104 Digitalker");
 
 
         class device_sound_interface_digitalker : device_sound_interface

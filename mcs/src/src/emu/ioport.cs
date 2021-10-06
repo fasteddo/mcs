@@ -11,11 +11,13 @@ using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using s64 = System.Int64;
+using size_t = System.UInt64;
 using time_t = System.Int64;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -979,48 +981,123 @@ namespace mame
         //  compute_scale -- compute an 8.24 scale value
         //  from a numerator and a denominator
         //-------------------------------------------------
-        public static Int64 compute_scale(int num, int den)
+        public static s64 compute_scale(s32 num, s32 den)
         {
-            return ((Int64)num << 24) / den;
+            return ((s64)num << 24) / den;
         }
 
         //-------------------------------------------------
         //  recip_scale -- compute an 8.24 reciprocal of
         //  an 8.24 scale value
         //-------------------------------------------------
-        public static Int64 recip_scale(Int64 scale)
+        public static s64 recip_scale(s64 scale)
         {
-            return ((Int64)1 << 48) / scale;
+            return ((s64)1 << 48) / scale;
         }
 
         //-------------------------------------------------
         //  apply_scale -- apply an 8.24 scale value to
         //  a 32-bit value
         //-------------------------------------------------
-        public static int apply_scale(int value, Int64 scale)
+        public static s32 apply_scale(s32 value, s64 scale)
         {
-            return (int)(((Int64)(value) * scale) / (1 << 24));
+            return (s32)(((s64)value * scale) / (1 << 24));
         }
+    }
+
+
+    public class construct_ioport_helper
+    {
+        device_t m_owner = null;
+        ioport_configurer m_configurer = null;
+        ioport_list m_portlist = null;
+        bool m_originated_from_port_include = false;
+
+        device_t owner { get { return m_owner; } set { m_owner = value; } }
+        ioport_configurer configurer { get { return m_configurer; } set { m_configurer = value; } }
+        ioport_list portlist { get { return m_portlist; } set { m_portlist = value; } }
+        bool originated_from_port_include { get { return m_originated_from_port_include; } set { m_originated_from_port_include = value; } }
+
+
+        // ioport
+        protected void INPUT_PORTS_START(device_t owner, ioport_list portlist, ref string errorbuf)
+        {
+            // if we're inside PORT_INCLUDE, we already have a configurer, and don't need to create a new one
+            if (!originated_from_port_include)
+            {
+                ioport_configurer configurer = new ioport_configurer(owner, portlist, ref errorbuf);
+                this.configurer = configurer;
+                this.owner = owner;
+                this.portlist = portlist;
+            }
+        }
+        protected void INPUT_PORTS_END()
+        {
+            // if we're inside PORT_INCLUDE, don't null out our helper variables, we need them still
+            if (!originated_from_port_include)
+            {
+                configurer = null;
+                owner = null;
+                portlist = null;
+            }
+        }
+        protected void PORT_INCLUDE(ioport_constructor name, ref string errorbuf)
+        {
+            originated_from_port_include = true;
+            ioport_global.PORT_INCLUDE(name, owner, portlist, ref errorbuf);
+            originated_from_port_include = false;
+        }
+        protected void PORT_START(string tag) { ioport_global.PORT_START(configurer, tag); }
+        protected void PORT_MODIFY(string tag) { ioport_global.PORT_MODIFY(configurer, tag); }
+        protected void PORT_BIT(ioport_value mask, ioport_value default_, ioport_type type) { ioport_global.PORT_BIT(configurer, mask, default_, type); }
+        protected void PORT_CODE(input_code code) { ioport_global.PORT_CODE(configurer, code); }
+        protected void PORT_2WAY() { ioport_global.PORT_2WAY(configurer); }
+        protected void PORT_4WAY() { ioport_global.PORT_4WAY(configurer); }
+        protected void PORT_8WAY() { ioport_global.PORT_8WAY(configurer); }
+        protected void PORT_NAME(string _name) { ioport_global.PORT_NAME(configurer, _name); }
+        protected void PORT_PLAYER(int player) { ioport_global.PORT_PLAYER(configurer, player); }
+        protected void PORT_COCKTAIL() { ioport_global.PORT_COCKTAIL(configurer); }
+        protected void PORT_IMPULSE(u8 duration) { ioport_global.PORT_IMPULSE(configurer, duration); }
+        protected void PORT_REVERSE() { ioport_global.PORT_REVERSE(configurer); }
+        protected void PORT_MINMAX(ioport_value _min, ioport_value _max) { ioport_global.PORT_MINMAX(configurer, _min, _max); }
+        protected void PORT_SENSITIVITY(int sensitivity) { ioport_global.PORT_SENSITIVITY(configurer, sensitivity); }
+        protected void PORT_KEYDELTA(int delta) { ioport_global.PORT_KEYDELTA(configurer, delta); }
+        protected void PORT_FULL_TURN_COUNT(u16 _count) { ioport_global.PORT_FULL_TURN_COUNT(configurer, _count); }
+        protected void PORT_CUSTOM_MEMBER(string device, ioport_field_read_delegate callback) { ioport_global.PORT_CUSTOM_MEMBER(configurer, device, callback); }
+        protected void PORT_READ_LINE_DEVICE_MEMBER(string device, Func<int> _member) { ioport_global.PORT_READ_LINE_DEVICE_MEMBER(configurer, device, _member); }
+        public void PORT_DIPNAME(ioport_value mask, ioport_value default_, string name) { ioport_global.PORT_DIPNAME(configurer, mask, default_, name); }
+        public void PORT_DIPSETTING(ioport_value default_, string name) { ioport_global.PORT_DIPSETTING(configurer, default_, name); }
+        public void PORT_DIPLOCATION(string location) { ioport_global.PORT_DIPLOCATION(configurer, location); }
+        public void PORT_CONDITION(string tag, ioport_value mask, ioport_condition.condition_t condition, ioport_value value) { ioport_global.PORT_CONDITION(configurer, tag, mask, condition, value); }
+        protected void PORT_ADJUSTER(ioport_value default_, string name) { ioport_global.PORT_ADJUSTER(configurer, default_, name); }
+        protected void PORT_CONFNAME(ioport_value mask, ioport_value default_, string name) { ioport_global.PORT_CONFNAME(configurer, mask, default_, name); }
+        protected void PORT_CONFSETTING(ioport_value default_, string name) { ioport_global.PORT_CONFSETTING(configurer, default_, name); }
+        protected void PORT_DIPUNUSED_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_DIPUNUSED_DIPLOC(configurer, mask, default_, diploc); }
+        protected void PORT_DIPUNUSED(ioport_value mask, ioport_value default_) { ioport_global.PORT_DIPUNUSED(configurer, mask, default_); }
+        protected void PORT_DIPUNKNOWN_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_DIPUNKNOWN_DIPLOC(configurer, mask, default_, diploc); }
+        protected void PORT_SERVICE_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_SERVICE_DIPLOC(configurer, mask, default_, diploc); }
+        protected void PORT_SERVICE(ioport_value mask, ioport_value default_) { ioport_global.PORT_SERVICE(configurer, mask, default_); }
+        protected void PORT_VBLANK(string screen) { ioport_global.PORT_VBLANK(configurer, screen, (screen_device)owner.subdevice(screen)); }
     }
 
 
     // ======================> inp_header
     // header at the front of INP files
-    class inp_header : global_object
+    class inp_header
     {
         // parameters
-        public const UInt32 MAJVERSION = 3;
-        public const UInt32 MINVERSION = 0;
+        public const unsigned MAJVERSION = 3;
+        public const unsigned MINVERSION = 0;
 
 
-        const UInt32 OFFS_MAGIC       = 0x00;    // 0x08 bytes
-        const UInt32 OFFS_BASETIME    = 0x08;    // 0x08 bytes (little-endian binary integer)
-        const UInt32 OFFS_MAJVERSION  = 0x10;    // 0x01 bytes (binary integer)
-        const UInt32 OFFS_MINVERSION  = 0x11;    // 0x01 bytes (binary integer)
+        const size_t OFFS_MAGIC       = 0x00;    // 0x08 bytes
+        const size_t OFFS_BASETIME    = 0x08;    // 0x08 bytes (little-endian binary integer)
+        const size_t OFFS_MAJVERSION  = 0x10;    // 0x01 bytes (binary integer)
+        const size_t OFFS_MINVERSION  = 0x11;    // 0x01 bytes (binary integer)
                                                                     // 0x02 bytes reserved
-        const UInt32 OFFS_SYSNAME     = 0x14;    // 0x0c bytes (ASCII)
-        const UInt32 OFFS_APPDESC     = 0x20;    // 0x20 bytes (ASCII)
-        const UInt32 OFFS_END         = 0x40;
+        const size_t OFFS_SYSNAME     = 0x14;    // 0x0c bytes (ASCII)
+        const size_t OFFS_APPDESC     = 0x20;    // 0x20 bytes (ASCII)
+        const size_t OFFS_END         = 0x40;
 
         static MemoryU8 MAGIC = new MemoryU8((int)(OFFS_BASETIME - OFFS_MAGIC), true);  //static u8 const                 MAGIC[OFFS_BASETIME - OFFS_MAGIC];
 
@@ -1030,26 +1107,26 @@ namespace mame
         public bool read(emu_file f) { return f.read(new PointerU8(m_data), (UInt32)m_data.Count) == m_data.Count; }
         public bool write(emu_file f) { return f.write(new PointerU8(m_data), (UInt32)m_data.Count) == m_data.Count; }
 
-        public bool check_magic() { return 0 == memcmp(new PointerU8(MAGIC), new PointerU8(m_data, (int)OFFS_MAGIC), OFFS_BASETIME - OFFS_MAGIC); }
-        public UInt64 get_basetime()
+        public bool check_magic() { return 0 == std.memcmp(new PointerU8(MAGIC), new PointerU8(m_data, (int)OFFS_MAGIC), OFFS_BASETIME - OFFS_MAGIC); }
+        public u64 get_basetime()
         {
             return
-                    ((UInt64)(m_data[OFFS_BASETIME + 0]) << (0 * 8)) |
-                    ((UInt64)(m_data[OFFS_BASETIME + 1]) << (1 * 8)) |
-                    ((UInt64)(m_data[OFFS_BASETIME + 2]) << (2 * 8)) |
-                    ((UInt64)(m_data[OFFS_BASETIME + 3]) << (3 * 8)) |
-                    ((UInt64)(m_data[OFFS_BASETIME + 4]) << (4 * 8)) |
-                    ((UInt64)(m_data[OFFS_BASETIME + 5]) << (5 * 8)) |
-                    ((UInt64)(m_data[OFFS_BASETIME + 6]) << (6 * 8)) |
-                    ((UInt64)(m_data[OFFS_BASETIME + 7]) << (7 * 8));
+                    ((u64)(m_data[OFFS_BASETIME + 0]) << (0 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 1]) << (1 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 2]) << (2 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 3]) << (3 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 4]) << (4 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 5]) << (5 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 6]) << (6 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 7]) << (7 * 8));
         }
-        public UInt32 get_majversion() { return m_data[OFFS_MAJVERSION]; }
-        public UInt32 get_minversion() { return m_data[OFFS_MINVERSION]; }
+        public unsigned get_majversion() { return m_data[OFFS_MAJVERSION]; }
+        public unsigned get_minversion() { return m_data[OFFS_MINVERSION]; }
         public string get_sysname() { return get_string(OFFS_SYSNAME, OFFS_APPDESC); }
         public string get_appdesc() { return get_string(OFFS_APPDESC, OFFS_END); }
 
-        public void set_magic() { memcpy(new PointerU8(m_data, (int)OFFS_MAGIC), new PointerU8(MAGIC), OFFS_BASETIME - OFFS_MAGIC); }  // std::memcpy(m_data + OFFS_MAGIC, MAGIC, OFFS_BASETIME - OFFS_MAGIC); }
-        public void set_basetime(UInt64 time)
+        public void set_magic() { std.memcpy(new PointerU8(m_data, (int)OFFS_MAGIC), new PointerU8(MAGIC), OFFS_BASETIME - OFFS_MAGIC); }  // std::memcpy(m_data + OFFS_MAGIC, MAGIC, OFFS_BASETIME - OFFS_MAGIC); }
+        public void set_basetime(u64 time)
         {
             m_data[OFFS_BASETIME + 0] = (byte)((time >> (0 * 8)) & 0x00ff);
             m_data[OFFS_BASETIME + 1] = (byte)((time >> (1 * 8)) & 0x00ff);
@@ -1062,17 +1139,17 @@ namespace mame
         }
         public void set_version()
         {
-            m_data[OFFS_MAJVERSION] = (byte)MAJVERSION;
-            m_data[OFFS_MINVERSION] = (byte)MINVERSION;
+            m_data[OFFS_MAJVERSION] = (u8)MAJVERSION;
+            m_data[OFFS_MINVERSION] = (u8)MINVERSION;
         }
         public void set_sysname(string name) { set_string(OFFS_SYSNAME, OFFS_APPDESC, name); }
         public void set_appdesc(string desc) { set_string(OFFS_APPDESC, OFFS_END, desc); }
 
 
         //template <std::size_t BEGIN, std::size_t END> void set_string(std::string const &str)
-        void set_string(UInt32 BEGIN, UInt32 END, string str)
+        void set_string(size_t BEGIN, size_t END, string str)
         {
-            UInt32 used = std.min((UInt32)str.size() + 1, END - BEGIN);
+            size_t used = std.min(str.size() + 1, END - BEGIN);
             byte[] strBytes = System.Text.Encoding.ASCII.GetBytes(str);
             std.memcpy(new PointerU8(m_data, (int)BEGIN), new PointerU8(new MemoryU8(strBytes)), used);  //std::memcpy(m_data + BEGIN, str.c_str(), used);
             if ((END - BEGIN) > used)
@@ -1080,7 +1157,7 @@ namespace mame
         }
 
         //template <std::size_t BEGIN, std::size_t END> std::string get_string() const
-        string get_string(UInt32 BEGIN, UInt32 END)
+        string get_string(size_t BEGIN, size_t END)
         {
             //char const *const begin = reinterpret_cast<char const *>(m_data + BEGIN);
             //return std::string(begin, std::find(begin, reinterpret_cast<char const *>(m_data + END), '\0'));
@@ -1099,7 +1176,7 @@ namespace mame
     }
 
 
-    public class size_t_constant_SEQ_TYPE_TOTAL : uint32_constant { public UInt32 value { get { return (UInt32)input_seq_type.SEQ_TYPE_TOTAL; } } }
+    public class size_t_const_SEQ_TYPE_TOTAL : u64_const { public UInt64 value { get { return (UInt64)input_seq_type.SEQ_TYPE_TOTAL; } } }
 
 
     // ======================> input_type_entry
@@ -1112,8 +1189,8 @@ namespace mame
         u8 m_player;           // player number (0 is player 1)
         string m_token;            // token used to store settings
         string m_name;             // user-friendly name
-        std.array<input_seq, size_t_constant_SEQ_TYPE_TOTAL> m_defseq = new std.array<input_seq, size_t_constant_SEQ_TYPE_TOTAL>(); // default input sequence
-        std.array<input_seq, size_t_constant_SEQ_TYPE_TOTAL> m_seq = new std.array<input_seq, size_t_constant_SEQ_TYPE_TOTAL>(); // currently configured sequences
+        std.array<input_seq, size_t_const_SEQ_TYPE_TOTAL> m_defseq = new std.array<input_seq, size_t_const_SEQ_TYPE_TOTAL>(); // default input sequence
+        std.array<input_seq, size_t_const_SEQ_TYPE_TOTAL> m_seq = new std.array<input_seq, size_t_const_SEQ_TYPE_TOTAL>(); // currently configured sequences
 
 
         // construction/destruction
@@ -1278,15 +1355,15 @@ namespace mame
                 {
                     machine = i.machine();
                     if (machine.input().seq_pressed(i.seq(input_seq_type.SEQ_TYPE_STANDARD)))
-                        m_current |= (byte)((byte)1 << (byte)direction);
+                        m_current |= (u8)(1 << (int)direction);
                 }
             }
 
             // lock out opposing directions (left + right or up + down)
             if ((m_current & (UP_BIT | DOWN_BIT)) == (UP_BIT | DOWN_BIT))
-                m_current = (byte)(m_current & (~(UP_BIT | DOWN_BIT)));
+                m_current = (u8)(m_current & (~(UP_BIT | DOWN_BIT)));
             if ((m_current & (LEFT_BIT | RIGHT_BIT)) == (LEFT_BIT | RIGHT_BIT))
-                m_current = (byte)(m_current & (~(LEFT_BIT | RIGHT_BIT)));
+                m_current = (u8)(m_current & (~(LEFT_BIT | RIGHT_BIT)));
 
             // only update 4-way case if joystick has moved
             if (m_current != m_previous)
@@ -1307,7 +1384,7 @@ namespace mame
                 if ((m_current4way & (UP_BIT | DOWN_BIT)) != 0 &&
                     (m_current4way & (LEFT_BIT | RIGHT_BIT)) != 0)
                 {
-                    m_current4way = (byte)(m_current4way ^ (m_current4way & m_previous));
+                    m_current4way = (u8)(m_current4way ^ (m_current4way & m_previous));
                 }
 
                 //
@@ -1322,7 +1399,7 @@ namespace mame
                 if ((m_current4way & (UP_BIT | DOWN_BIT)) != 0 &&
                     (m_current4way & (LEFT_BIT | RIGHT_BIT)) != 0)
                 {
-                    m_current4way = (byte)(m_current4way & ~(UP_BIT | DOWN_BIT));
+                    m_current4way = (u8)(m_current4way & ~(UP_BIT | DOWN_BIT));
                 }
             }
         }
@@ -1502,7 +1579,7 @@ namespace mame
 
     // ======================> ioport_field
     // a single bitfield within an input port
-    public class ioport_field : global_object, simple_list_item<ioport_field>
+    public class ioport_field : simple_list_item<ioport_field>
     {
         //friend class simple_list<ioport_field>;
         //friend class ioport_configurer;
@@ -1561,7 +1638,7 @@ namespace mame
 
         // data relevant to other specific types
         public u8 m_way;              // digital joystick 2/4/8-way descriptions
-        char32_t [,] m_chars = new char32_t[1 << (int)(ioport_global.UCHAR_SHIFT_END - ioport_global.UCHAR_SHIFT_BEGIN + 1), 2];         // unicode key data
+        char32_t [,] m_chars = new char32_t[1 << (int)(g.UCHAR_SHIFT_END - g.UCHAR_SHIFT_BEGIN + 1), 2];         // unicode key data
 
 
         // construction/destruction
@@ -1794,53 +1871,53 @@ namespace mame
                 else if (ch == 13) return "Enter";
                 else if (ch == 27) return "Esc";
                 else if (ch == 32) return "Space";
-                else if (ch == ioport_global.UCHAR_SHIFT_1) return "Shift";
-                else if (ch == ioport_global.UCHAR_SHIFT_2) return "Ctrl";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_ESC)) return "Esc";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_INSERT)) return "Insert";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_DEL)) return "Delete";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_HOME)) return "Home";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_END)) return "End";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_PGUP)) return "Page Up";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_PGDN)) return "Page Down";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_LEFT)) return "Cursor Left";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_RIGHT)) return "Cursor Right";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_UP)) return "Cursor Up";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_DOWN)) return "Cursor Down";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_SLASH_PAD)) return "Keypad /";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_ASTERISK)) return "Keypad *";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_MINUS_PAD)) return "Keypad -";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_PLUS_PAD)) return "Keypad +";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_DEL_PAD)) return "Keypad .";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_ENTER_PAD)) return "Keypad Enter";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_BS_PAD)) return "Keypad Backspace";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_TAB_PAD)) return "Keypad Tab";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_00_PAD)) return "Keypad 00";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_000_PAD)) return "Keypad 000";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_PRTSCR)) return "Print Screen";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_PAUSE)) return "Pause";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_LSHIFT)) return "Left Shift";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_RSHIFT)) return "Right Shift";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_LCONTROL)) return "Left Ctrl";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_RCONTROL)) return "Right Ctrl";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_LALT)) return "Left Alt";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_RALT)) return "Right Alt";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_SCRLOCK)) return "Scroll Lock";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_NUMLOCK)) return "Num Lock";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_CAPSLOCK)) return "Caps Lock";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_LWIN)) return "Left Win";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_RWIN)) return "Right Win";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_MENU)) return "Menu";
-                else if (ch == ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_CANCEL)) return "Break";
+                else if (ch == g.UCHAR_SHIFT_1) return "Shift";
+                else if (ch == g.UCHAR_SHIFT_2) return "Ctrl";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_ESC)) return "Esc";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_INSERT)) return "Insert";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_DEL)) return "Delete";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_HOME)) return "Home";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_END)) return "End";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PGUP)) return "Page Up";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PGDN)) return "Page Down";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LEFT)) return "Cursor Left";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RIGHT)) return "Cursor Right";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_UP)) return "Cursor Up";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_DOWN)) return "Cursor Down";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_SLASH_PAD)) return "Keypad /";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_ASTERISK)) return "Keypad *";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_MINUS_PAD)) return "Keypad -";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PLUS_PAD)) return "Keypad +";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_DEL_PAD)) return "Keypad .";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_ENTER_PAD)) return "Keypad Enter";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_BS_PAD)) return "Keypad Backspace";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_TAB_PAD)) return "Keypad Tab";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_00_PAD)) return "Keypad 00";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_000_PAD)) return "Keypad 000";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PRTSCR)) return "Print Screen";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PAUSE)) return "Pause";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LSHIFT)) return "Left Shift";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RSHIFT)) return "Right Shift";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LCONTROL)) return "Left Ctrl";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RCONTROL)) return "Right Ctrl";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LALT)) return "Left Alt";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RALT)) return "Right Alt";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_SCRLOCK)) return "Scroll Lock";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_NUMLOCK)) return "Num Lock";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_CAPSLOCK)) return "Caps Lock";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LWIN)) return "Left Win";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RWIN)) return "Right Win";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_MENU)) return "Menu";
+                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_CANCEL)) return "Break";
             }
 
             // handle function keys
-            if (ch >= ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_F1) && ch <= ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_F20))
-                return string.Format("F{0}", ch - ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_F1) + 1);
+            if (ch >= g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_F1) && ch <= g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_F20))
+                return string.Format("F{0}", ch - g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_F1) + 1);
 
             // handle 0-9 on numeric keypad
-            if (ch >= ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_0_PAD) && ch <= ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_9_PAD))
-                return string.Format("Keypad {0}", ch - ioport_global.UCHAR_MAMEKEY((UInt32)input_item_id.ITEM_ID_0_PAD));
+            if (ch >= g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_0_PAD) && ch <= g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_9_PAD))
+                return string.Format("Keypad {0}", ch - g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_0_PAD));
 
             // if that doesn't work, convert to UTF-8
             if (ch > 0x7F || unicode_global.isprint(ch))
@@ -1912,7 +1989,7 @@ namespace mame
         void select_next_setting()
         {
             // only makes sense if we have settings
-            assert(!m_settinglist.empty());
+            g.assert(!m_settinglist.empty());
 
             // scan the list of settings looking for a match on the current value
             ioport_setting nextsetting = null;
@@ -2081,7 +2158,7 @@ namespace mame
             // additional logic to restrict digital joysticks
             if (curstate && !m_digital_value && m_live.joystick != null && m_way != 16 && !machine().options().joystick_contradictory())
             {
-                byte mask = (m_way == 4) ? m_live.joystick.current4way() : m_live.joystick.current();
+                u8 mask = (m_way == 4) ? m_live.joystick.current4way() : m_live.joystick.current();
                 if ((mask & (1 << (int)m_live.joydir)) == 0)
                     curstate = false;
             }
@@ -2279,13 +2356,13 @@ namespace mame
             if (field.type_class() == ioport_type_class.INPUT_CLASS_KEYBOARD && field.specific_name() == null)
             {
                 // loop through each character on the field
-                for (int which = 0; which < (1 << (int)(ioport_global.UCHAR_SHIFT_END - ioport_global.UCHAR_SHIFT_BEGIN + 1)); which++)
+                for (int which = 0; which < (1 << (int)(g.UCHAR_SHIFT_END - g.UCHAR_SHIFT_BEGIN + 1)); which++)
                 {
                     std.vector<char32_t> codes = field.keyboard_codes(which);
                     if (codes.empty())
                         break;
 
-                    name += util_.string_format("{0}{1} ", std.max(ioport_global.SPACE_COUNT - 1, 0), field.key_name(which));
+                    name += util.string_format("{0}{1} ", std.max(ioport_global.SPACE_COUNT - 1, 0), field.key_name(which));
                 }
 
                 // trim extra spaces
@@ -2425,7 +2502,7 @@ namespace mame
         public void write(ioport_value data, ioport_value mem_mask = ioport_value.MaxValue)// ~0)
         {
             // call device line write handlers
-            emumem_global.COMBINE_DATA(ref m_live.outputvalue, data, mem_mask);
+            g.COMBINE_DATA(ref m_live.outputvalue, data, mem_mask);
             foreach (dynamic_field dynfield in m_live.writelist)
             {
                 if (dynfield.field().type() == ioport_type.IPT_OUTPUT)
@@ -2567,7 +2644,7 @@ namespace mame
 
     // ======================> analog_field
     // live analog field information
-    public class analog_field : global_object, simple_list_item<analog_field>
+    public class analog_field : simple_list_item<analog_field>
     {
         // internal state
         analog_field m_next;                 // link to the next analog state for this port
@@ -2623,9 +2700,9 @@ namespace mame
             m_next = null;
             m_field = field;
             m_shift = 0;
-            m_adjdefvalue = (int)(field.defvalue() & field.mask());
-            m_adjmin = (int)(field.minval() & field.mask());
-            m_adjmax = (int)(field.maxval() & field.mask());
+            m_adjdefvalue = (s32)(field.defvalue() & field.mask());
+            m_adjmin = (s32)(field.minval() & field.mask());
+            m_adjmax = (s32)(field.maxval() & field.mask());
             m_sensitivity = field.sensitivity();
             m_reverse = field.analog_reverse();
             m_delta = field.delta();
@@ -2698,7 +2775,7 @@ namespace mame
                 // set each position to be 512 units
                 case ioport_type.IPT_POSITIONAL:
                 case ioport_type.IPT_POSITIONAL_V:
-                    m_positionalscale = ioport_global.compute_scale((int)field.maxval(), inputdev_global.INPUT_ABSOLUTE_MAX - inputdev_global.INPUT_ABSOLUTE_MIN);
+                    m_positionalscale = ioport_global.compute_scale((s32)field.maxval(), inputdev_global.INPUT_ABSOLUTE_MAX - inputdev_global.INPUT_ABSOLUTE_MIN);
                     m_adjmin = 0;
                     m_adjmax = (int)field.maxval() - 1;
                     m_wraps = field.analog_wraps();
@@ -3044,12 +3121,12 @@ namespace mame
         //  apply_min_max - clamp the given input value to
         //  the appropriate min/max for the analog control
         //-------------------------------------------------
-        int apply_min_max(int value)
+        s32 apply_min_max(s32 value)
         {
             // take the analog minimum and maximum values and apply the inverse of the
             // sensitivity so that we can clamp against them before applying sensitivity
-            int adjmin = apply_inverse_sensitivity(m_minimum);
-            int adjmax = apply_inverse_sensitivity(m_maximum);
+            s32 adjmin = apply_inverse_sensitivity(m_minimum);
+            s32 adjmax = apply_inverse_sensitivity(m_maximum);
 
             // clamp to the bounds absolutely
             if (value > adjmax)
@@ -3105,18 +3182,18 @@ namespace mame
         //  apply_sensitivity - apply a sensitivity
         //  adjustment for a current value
         //-------------------------------------------------
-        int apply_sensitivity(int value)
+        s32 apply_sensitivity(s32 value)
         {
-            return lround(((Int64)value * m_sensitivity) / 100.0);
+            return std.lround(((s64)value * m_sensitivity) / 100.0);
         }
 
         //-------------------------------------------------
         //  apply_inverse_sensitivity - reverse-apply the
         //  sensitivity adjustment for a current value
         //-------------------------------------------------
-        int apply_inverse_sensitivity(int value)
+        s32 apply_inverse_sensitivity(s32 value)
         {
-            return (int)(((Int64)value * 100) / m_sensitivity);
+            return (s32)(((s64)value * 100) / m_sensitivity);
         }
     }
 
@@ -3393,7 +3470,7 @@ namespace mame
 
         public ioport_configurer field_set_way(int way) { m_curfield.m_way = (u8)way; return this; }  //{ m_curfield->m_way = way; return *this; }
         //ioport_configurer field_set_rotated() const { m_curfield->m_flags |= ioport_field::FIELD_FLAG_ROTATED; }
-        public ioport_configurer field_set_name(string name) { global_object.assert(m_curfield != null); m_curfield.m_name = string_from_token(name); return this; }
+        public ioport_configurer field_set_name(string name) { g.assert(m_curfield != null); m_curfield.m_name = string_from_token(name); return this; }
         public ioport_configurer field_set_player(int player) { m_curfield.set_player((byte)(player - 1)); return this; }
         public ioport_configurer field_set_cocktail() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL;  field_set_player(2); return this; }  //  m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL; field_set_player(2); }
         ioport_configurer field_set_toggle() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_TOGGLE; return this; }  //{ m_curfield.m_flags |= ioport_field::FIELD_FLAG_TOGGLE; }
@@ -3471,7 +3548,7 @@ namespace mame
 
     // ======================> ioport_manager
     // private input port state
-    public class ioport_manager : global_object
+    public class ioport_manager
     {
         // XML attributes for the different types
         static readonly string [] seqtypestrings = { "standard", "increment", "decrement" };
@@ -3514,11 +3591,11 @@ namespace mame
             m_safe_to_read = false;
             m_last_frame_time = attotime.zero;
             m_last_delta_nsec = 0;
-            m_record_file = new emu_file(machine.options().input_directory(), osdfile_global.OPEN_FLAG_WRITE | osdfile_global.OPEN_FLAG_CREATE | osdfile_global.OPEN_FLAG_CREATE_PATHS);
-            m_playback_file = new emu_file(machine.options().input_directory(), osdfile_global.OPEN_FLAG_READ);
+            m_record_file = new emu_file(machine.options().input_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
+            m_playback_file = new emu_file(machine.options().input_directory(), g.OPEN_FLAG_READ);
             m_playback_accumulated_speed = 0;
             m_playback_accumulated_frames = 0;
-            m_timecode_file = new emu_file(machine.options().input_directory(), osdfile_global.OPEN_FLAG_WRITE | osdfile_global.OPEN_FLAG_CREATE | osdfile_global.OPEN_FLAG_CREATE_PATHS);
+            m_timecode_file = new emu_file(machine.options().input_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
             m_timecode_count = 0;
             m_timecode_last_time = attotime.zero;
 
@@ -3546,7 +3623,7 @@ namespace mame
                 string errors;
                 m_portlist.append(device, out errors);
                 if (!string.IsNullOrEmpty(errors))
-                    osd_printf_error("Input port errors:\n{0}", errors);
+                    g.osd_printf_error("Input port errors:\n{0}", errors);
             }
 
             // renumber player numbers for controller ports
@@ -3760,14 +3837,14 @@ namespace mame
         {
             // if nothing specified, ignore the option
             string stemp = machine().options().value(option);
-            if (string.IsNullOrEmpty(stemp) || strcmp(stemp, "none") == 0)
+            if (string.IsNullOrEmpty(stemp) || std.strcmp(stemp, "none") == 0)
                 return;
 
             // extract valid strings
             input_class autoenable_class = null;
             for (input_device_class devclass = input_device_class.DEVICE_CLASS_FIRST_VALID; devclass <= input_device_class.DEVICE_CLASS_LAST_VALID; ++devclass)
             {
-                if (strcmp(stemp, machine().input().device_class(devclass).name()) == 0)
+                if (std.strcmp(stemp, machine().input().device_class(devclass).name()) == 0)
                 {
                     autoenable_class = machine().input().device_class(devclass);
                     break;
@@ -3776,7 +3853,7 @@ namespace mame
 
             if (autoenable_class == null)
             {
-                osd_printf_error("Invalid {0} value {1}; reverting to keyboard\n", option, stemp);
+                g.osd_printf_error("Invalid {0} value {1}; reverting to keyboard\n", option, stemp);
                 autoenable_class = machine().input().device_class(input_device_class.DEVICE_CLASS_KEYBOARD);
             }
 
@@ -3790,7 +3867,7 @@ namespace mame
                         // if this port type is in use, apply the autoselect criteria
                         if ((type1 != 0 && (int)field.type() == type1) || (type2 != 0 && (int)field.type() == type2) || (type3 != 0 && (int)field.type() == type3))
                         {
-                            osd_printf_verbose("Input: Autoenabling {0} due to presence of a {1}\n", autoenable_class.name(), ananame);
+                            g.osd_printf_verbose("Input: Autoenabling {0} due to presence of a {1}\n", autoenable_class.name(), ananame);
                             autoenable_class.enable();
                             break;
                         }
@@ -3956,11 +4033,11 @@ namespace mame
 
             // return an explicit error if file isn't found in given path
             if (filerr == osd_file.error.NOT_FOUND)
-                fatalerror("Input file {0} not found\n", filename);
+                g.fatalerror("Input file {0} not found\n", filename);
 
             // TODO: bail out any other error laconically for now
             if (filerr != osd_file.error.NONE)
-                fatalerror("Failed to open file {0} for playback (code error={1})\n", filename, (int)filerr);
+                g.fatalerror("Failed to open file {0} for playback (code error={1})\n", filename, (int)filerr);
 
             // read the header and verify that it is a modern version; if not, print an error
             inp_header header = new inp_header();
@@ -3972,19 +4049,19 @@ namespace mame
                 throw new emu_fatalerror("Input file format version mismatch\n");
 
             // output info to console
-            osd_printf_info("Input file: {0}\n", filename);
-            osd_printf_info("INP version {0}.{1}", header.get_majversion(), header.get_minversion());  // %u.%u\n
+            g.osd_printf_info("Input file: {0}\n", filename);
+            g.osd_printf_info("INP version {0}.{1}", header.get_majversion(), header.get_minversion());  // %u.%u\n
             time_t basetime = (time_t)header.get_basetime();
-            osd_printf_info("Created {0}\n", new DateTime(1970, 1, 1).ToLocalTime().AddSeconds(basetime).ToString());  //ctime(&basetime));
-            osd_printf_info("Recorded using {0}\n", header.get_appdesc());
+            g.osd_printf_info("Created {0}\n", new DateTime(1970, 1, 1).ToLocalTime().AddSeconds(basetime).ToString());  //ctime(&basetime));
+            g.osd_printf_info("Recorded using {0}\n", header.get_appdesc());
 
             // verify the header against the current game
             string sysname = header.get_sysname();
             if (sysname != machine().system().name)
-                osd_printf_info("Input file is for machine '{0}', not for current machine '{1}'\n", sysname, machine().system().name);
+                g.osd_printf_info("Input file is for machine '{0}', not for current machine '{1}'\n", sysname, machine().system().name);
 
             // enable compression
-            m_playback_file.compress(util_.FCOMPRESS_MEDIUM);
+            m_playback_file.compress(util.FCOMPRESS_MEDIUM);
             return basetime;
         }
 
@@ -4007,13 +4084,13 @@ namespace mame
                 // display speed stats
                 if (m_playback_accumulated_speed > 0)
                     m_playback_accumulated_speed /= m_playback_accumulated_frames;
-                osd_printf_info("Total playback frames: {0}\n", m_playback_accumulated_frames);
-                osd_printf_info("Average recorded speed: {1}%%\n", (m_playback_accumulated_speed * 200 + 1) >> 21);
+                g.osd_printf_info("Total playback frames: {0}\n", m_playback_accumulated_frames);
+                g.osd_printf_info("Average recorded speed: {0}%%\n", (m_playback_accumulated_speed * 200 + 1) >> 21);
 
                 // close the program at the end of inp file playback
                 if (machine().options().exit_after_playback())
                 {
-                    osd_printf_info("Exiting MAME now...\n");
+                    g.osd_printf_info("Exiting MAME now...\n");
                     machine().schedule_exit();
                 }
             }
@@ -4092,7 +4169,7 @@ namespace mame
             header.write(m_record_file);
 
             // enable compression
-            m_record_file.compress(util_.FCOMPRESS_MEDIUM);
+            m_record_file.compress(util.FCOMPRESS_MEDIUM);
         }
 
 
@@ -4220,7 +4297,7 @@ namespace mame
                     timecode_key = string.Format("EXTRA_STOP_{0}", (m_timecode_count-4)/2);  //%03d
                 }
 
-                osd_printf_info("{0} \n", message);
+                g.osd_printf_info("{0} \n", message);
                 machine().popmessage("{0} \n", message);
 
                 m_timecode_file.printf(
@@ -4276,7 +4353,7 @@ namespace mame
             // open the record file
             string filename;
             filename = record_filename + ".timecode";
-            osd_printf_info("Record input timecode file: {0}\n", record_filename);
+            g.osd_printf_info("Record input timecode file: {0}\n", record_filename);
 
             osd_file.error filerr = m_timecode_file.open(filename);
             if (filerr != osd_file.error.NONE)

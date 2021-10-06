@@ -6,8 +6,9 @@ using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
+using size_t = System.UInt64;
 using uint16_t = System.UInt16;
-using size_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame.plib
@@ -31,11 +32,11 @@ namespace mame.plib
 
     //template<typename T, int N, typename C = uint16_t>
     class pmatrix_cr<T, int_N, C, C_OPS>  //struct pmatrix_cr
-        where int_N : int_constant, new()
+        where int_N : int_const, new()
         where C_OPS : pmatrix_cr_operators<C>, new()
     {
-        static int_N N = new int_N();
-        static C_OPS ops = new C_OPS();
+        static readonly int N = new int_N().value;
+        static readonly C_OPS ops = new C_OPS();
 
 
         //using index_type = C;
@@ -88,7 +89,7 @@ namespace mame.plib
         //~pmatrix_cr_t() = default;
 
 
-        protected size_t size() { return (N.value > 0) ? (size_t)N.value : m_size; }  //constexpr std::size_t size() const noexcept { return (N>0) ? static_cast<std::size_t>(N) : m_size; }
+        protected size_t size() { return (N > 0) ? (size_t)N : m_size; }  //constexpr std::size_t size() const noexcept { return (N>0) ? static_cast<std::size_t>(N) : m_size; }
 
         //void clear()
 
@@ -100,7 +101,7 @@ namespace mame.plib
 
 
         //template <typename M>
-        public void build_from_fill_mat(std.vector<std.vector<size_t>> f, size_t max_fill = (size_t)constants_e.FILL_INFINITY - 1, size_t band_width = (size_t)constants_e.FILL_INFINITY)  //void build_from_fill_mat(const M &f, std::size_t max_fill = FILL_INFINITY - 1, std::size_t band_width = FILL_INFINITY)
+        public void build_from_fill_mat(std.vector<std.vector<unsigned>> f, size_t max_fill = (size_t)constants_e.FILL_INFINITY - 1, size_t band_width = (size_t)constants_e.FILL_INFINITY)  //void build_from_fill_mat(const M &f, std::size_t max_fill = FILL_INFINITY - 1, std::size_t band_width = FILL_INFINITY)
         {
             C nz = ops.cast(0);  //C nz = 0;
             if (nz_num != 0)
@@ -112,7 +113,7 @@ namespace mame.plib
 
                 for (size_t j = 0; j < size(); j++)
                 {
-                    if (f[k][j] <= max_fill && plib.pglobal.abs<nl_fptype, nl_fptype_ops>((int)k - (int)j) <= (int)band_width)
+                    if (f[k][j] <= max_fill && plib.pg.abs((int)k - (int)j) <= (int)band_width)
                     {
                         col_idx[ops.cast_int32(nz)] = ops.cast(j);  //col_idx[nz] = static_cast<C>(j);
                         if (j == k)
@@ -156,13 +157,13 @@ namespace mame.plib
         //void raw_copy_from(LUMAT & src)
 
 
-        public C nzbd(size_t row) { return m_nzbd.op(row); }
+        public Pointer<C> nzbd(size_t row) { return m_nzbd.op(row); }
         public size_t nzbd_count(size_t row) { return m_nzbd.colcount(row) - 1; }
     }
 
 
     class pmatrix_cr<T, int_N> : pmatrix_cr<T, int_N, uint16_t, pmatrix_cr_operators_uint16>
-        where int_N : int_constant, new()
+        where int_N : int_const, new()
     {
         public pmatrix_cr(size_t n) : base(n) { }
     }
@@ -170,7 +171,7 @@ namespace mame.plib
 
     //template<typename B>
     class pGEmatrix_cr<B, int_N> : pmatrix_cr<B, int_N>  //struct pGEmatrix_cr : public B
-        where int_N : int_constant, new()
+        where int_N : int_const, new()
     {
         //using base_type = B;
         //using index_type = typename base_type::index_type;
@@ -183,7 +184,7 @@ namespace mame.plib
 
 
         //template <typename M>
-        public std.pair<size_t, size_t> gaussian_extend_fill_mat(std.vector<std.vector<size_t>> fill)  //std::pair<std::size_t, std::size_t> gaussian_extend_fill_mat(M &fill)
+        public std.pair<size_t, size_t> gaussian_extend_fill_mat(std.vector<std.vector<unsigned>> fill)  //std::pair<std::size_t, std::size_t> gaussian_extend_fill_mat(M &fill)
         {
             size_t ops = 0;
             size_t fill_max = 0;
@@ -236,7 +237,7 @@ namespace mame.plib
 
 
         //template <typename M>
-        void build_parallel_gaussian_execution_scheme(std.vector<std.vector<size_t>> fill)  //void build_parallel_gaussian_execution_scheme(const M &fill)
+        void build_parallel_gaussian_execution_scheme(std.vector<std.vector<unsigned>> fill)  //void build_parallel_gaussian_execution_scheme(const M &fill)
         {
             // calculate parallel scheme for gaussian elimination
             std.vector<std.vector<size_t>> rt = new std.vector<std.vector<size_t>>(base.size());
@@ -292,7 +293,7 @@ namespace mame.plib
             }
 
             m_ge_par.clear();
-            m_ge_par.resize((int)(cl + 1));
+            m_ge_par.resize(cl + 1);
             m_ge_par.Fill(() => { return new std.vector<size_t>(); });
             for (size_t k = 0; k < base.size(); k++)
             {

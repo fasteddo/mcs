@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using int64_t = System.Int64;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 
 
 namespace mame.netlist
@@ -157,7 +157,7 @@ namespace mame.netlist
         //#define NL_DEBUG                    (true)
         //#endif
 
-        public class bool_constant_NL_DEBUG : bool_constant { public bool value { get { return NL_DEBUG; } } }
+        public class bool_const_NL_DEBUG : bool_const { public bool value { get { return NL_DEBUG; } } }
     }
 
 
@@ -255,10 +255,10 @@ namespace mame.netlist
         //============================================================
 
         //#if defined(MAME_DEBUG) || (NL_DEBUG == true)
-        public static void nl_assert(bool x) { global_object.assert(x); }  //#define nl_assert(x)    passert_always(x)  //#define nl_assert(x)    passert_always(x)
+        public static void nl_assert(bool x) { g.assert(x); }  //#define nl_assert(x)    passert_always(x)  //#define nl_assert(x)    passert_always(x)
         //#else
         //#define nl_assert(x)    do { } while (0)
         //#endif
-        public static void nl_assert_always(bool x, string msg) { global_object.assert(x, msg); }  //#define nl_assert_always(x, msg) passert_always_msg(x, msg)
+        public static void nl_assert_always(bool x, string msg) { g.assert(x, msg); }  //#define nl_assert_always(x, msg) passert_always_msg(x, msg)
     }
 }

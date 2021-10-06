@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using pmatrix2d_size_type = System.UInt32;  //using size_type = std::size_t;
-using pmatrix2d_vrl_size_type = System.UInt32;  //using size_type = std::size_t;
-using size_t = System.UInt32;
+using pmatrix2d_size_type = System.UInt64;  //using size_type = std::size_t;
+using pmatrix2d_vrl_size_type = System.UInt64;  //using size_type = std::size_t;
+using size_t = System.UInt64;
 
 
 namespace mame.plib
@@ -97,6 +97,11 @@ namespace mame.plib
         //{
         //    return &m_v[m_stride * row];
         //}
+        public Pointer<T> op(pmatrix2d_size_type row)
+        {
+            return new Pointer<T>(m_v, (int)(m_stride * row));
+        }
+
 
         //reference operator()(size_type r, size_type c) noexcept
         //{
@@ -136,7 +141,7 @@ namespace mame.plib
 
         pmatrix2d_vrl_size_type m_N;
         pmatrix2d_vrl_size_type m_M;
-        std.vector<pmatrix2d_vrl_size_type> m_row;
+        std.vector<pmatrix2d_vrl_size_type> m_row = new std.vector<pmatrix2d_size_type>();
         std.vector<T> m_v;
 
 
@@ -154,8 +159,8 @@ namespace mame.plib
             m_v = new std.vector<T>();
 
 
-            m_row.resize((int)N + 1, 0);
-            m_v.resize((int)N); //FIXME
+            m_row.resize(N + 1, 0);
+            m_v.resize(N); //FIXME
         }
 
         //PCOPYASSIGNMOVE(pmatrix2d_vrl, default)
@@ -166,20 +171,18 @@ namespace mame.plib
         {
             m_N = N;
             m_M = M;
-            m_row.resize((int)N + 1);
+            m_row.resize(N + 1);
             for (size_t i = 0; i < m_N; i++)
                 m_row[i] = 0;
 
-            m_v.resize((int)N); //FIXME
+            m_v.resize(N); //FIXME
         }
 
 
         //constexpr T * operator[] (size_type row) noexcept
-
-        //constexpr const T * operator[] (size_type row) const noexcept
-        public T op(pmatrix2d_vrl_size_type row)
+        public Pointer<T> op(pmatrix2d_vrl_size_type row)
         {
-            return m_v[m_row[row]];
+            return new Pointer<T>(m_v, (int)m_row[row]);  //return &(m_v[m_row[row]]);
         }
 
 
@@ -189,17 +192,16 @@ namespace mame.plib
 
         public void set(pmatrix2d_vrl_size_type r, pmatrix2d_vrl_size_type c, T v)  //void set(size_type r, size_type c, const T &v) noexcept
         {
-            throw new emu_unimplemented();
-#if false
             if (c + m_row[r] >= m_row[r + 1])
             {
-                m_v.insert(m_v.begin() + narrow_cast<std::ptrdiff_t>(m_row[r+1]), v);
-                for (size_type i = r + 1; i <= m_N; i++)
+                m_v.insert((int)m_row[r + 1], v);  //m_v.insert(m_v.begin() + narrow_cast<std::ptrdiff_t>(m_row[r+1]), v);
+                for (pmatrix2d_vrl_size_type i = r + 1; i <= m_N; i++)
                     m_row[i] = m_row[i] + 1;
             }
             else
-                (*this)[r][c] = v;
-#endif
+            {
+                this.op(r)[c] = v;  //(*this)[r][c] = v;
+            }
         }
 
 
@@ -211,15 +213,15 @@ namespace mame.plib
         //const T * data() const noexcept
 
         //FIXME: no check!
-        //size_type didx(size_type r, size_type c) const noexcept
-
-
-        public size_t colcount(pmatrix2d_vrl_size_type row)  //size_type colcount(size_type row) const noexcept
+        public pmatrix2d_vrl_size_type didx(pmatrix2d_vrl_size_type r, pmatrix2d_vrl_size_type c)
         {
-            throw new emu_unimplemented();
-#if false
+            return m_row[r] + c;
+        }
+
+
+        public pmatrix2d_vrl_size_type colcount(pmatrix2d_vrl_size_type row)  //size_type colcount(size_type row) const noexcept
+        {
             return m_row[row + 1] - m_row[row];
-#endif
         }
 
 

@@ -10,6 +10,7 @@ using u8  = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+using uX = mame.FlexPrim;
 
 
 namespace mame
@@ -39,102 +40,102 @@ namespace mame
     //namespace
     //{
     //template <typename Delegate> struct handler_width;
-    class handler_width_read8_delegate : int_constant_0 { }
-    class handler_width_n_read8_delegate : int_constant_0 { }
-    class handler_width_read8m_delegate : int_constant_0 { }
-    class handler_width_n_read8m_delegate : int_constant_0 { }
-    class handler_width_read8s_delegate : int_constant_0 { }
-    class handler_width_n_read8s_delegate : int_constant_0 { }
-    class handler_width_read8sm_delegate : int_constant_0 { }
-    class handler_width_n_read8sm_delegate : int_constant_0 { }
-    class handler_width_read8mo_delegate : int_constant_0 { }
-    class handler_width_n_read8mo_delegate : int_constant_0 { }
-    class handler_width_read8smo_delegate : int_constant_0 { }
-    class handler_width_n_read8smo_delegate : int_constant_0 { }
-    class handler_width_write8_delegate : int_constant_0 { }
-    class handler_width_n_write8_delegate : int_constant_0 { }
-    class handler_width_write8m_delegate : int_constant_0 { }
-    class handler_width_n_write8m_delegate : int_constant_0 { }
-    class handler_width_write8s_delegate : int_constant_0 { }
-    class handler_width_n_write8s_delegate : int_constant_0 { }
-    class handler_width_write8sm_delegate : int_constant_0 { }
-    class handler_width_n_write8sm_delegate : int_constant_0 { }
-    class handler_width_write8mo_delegate : int_constant_0 { }
-    class handler_width_n_write8mo_delegate : int_constant_0 { }
-    class handler_width_write8smo_delegate : int_constant_0 { }
-    class handler_width_n_write8smo_delegate : int_constant_0 { }
-    class handler_width_read16_delegate : int_constant_1 { }
-    class handler_width_n_read16_delegate : int_constant_n1 { }
-    class handler_width_read16m_delegate : int_constant_1 { }
-    class handler_width_n_read16m_delegate : int_constant_n1 { }
-    class handler_width_read16s_delegate : int_constant_1 { }
-    class handler_width_n_read16s_delegate : int_constant_n1 { }
-    class handler_width_read16sm_delegate : int_constant_1 { }
-    class handler_width_n_read16sm_delegate : int_constant_n1 { }
-    class handler_width_read16mo_delegate : int_constant_1 { }
-    class handler_width_n_read16mo_delegate : int_constant_n1 { }
-    class handler_width_read16smo_delegate : int_constant_1 { }
-    class handler_width_n_read16smo_delegate : int_constant_n1 { }
-    class handler_width_write16_delegate : int_constant_1 { }
-    class handler_width_n_write16_delegate : int_constant_n1 { }
-    class handler_width_write16m_delegate : int_constant_1 { }
-    class handler_width_n_write16m_delegate : int_constant_n1 { }
-    class handler_width_write16s_delegate : int_constant_1 { }
-    class handler_width_n_write16s_delegate : int_constant_n1 { }
-    class handler_width_write16sm_delegate : int_constant_1 { }
-    class handler_width_n_write16sm_delegate : int_constant_n1 { }
-    class handler_width_write16mo_delegate : int_constant_1 { }
-    class handler_width_n_write16mo_delegate : int_constant_n1 { }
-    class handler_width_write16smo_delegate : int_constant_1 { }
-    class handler_width_n_write16smo_delegate : int_constant_n1 { }
-    class handler_width_read32_delegate : int_constant_2 { }
-    class handler_width_n_read32_delegate : int_constant_n2 { }
-    class handler_width_read32m_delegate : int_constant_2 { }
-    class handler_width_n_read32m_delegate : int_constant_n2 { }
-    class handler_width_read32s_delegate : int_constant_2 { }
-    class handler_width_n_read32s_delegate : int_constant_n2 { }
-    class handler_width_read32sm_delegate : int_constant_2 { }
-    class handler_width_n_read32sm_delegate : int_constant_n2 { }
-    class handler_width_read32mo_delegate : int_constant_2 { }
-    class handler_width_n_read32mo_delegate : int_constant_n2 { }
-    class handler_width_read32smo_delegate : int_constant_2 { }
-    class handler_width_n_read32smo_delegate : int_constant_n2 { }
-    class handler_width_write32_delegate : int_constant_2 { }
-    class handler_width_n_write32_delegate : int_constant_n2 { }
-    class handler_width_write32m_delegate : int_constant_2 { }
-    class handler_width_n_write32m_delegate : int_constant_n2 { }
-    class handler_width_write32s_delegate : int_constant_2 { }
-    class handler_width_n_write32s_delegate : int_constant_n2 { }
-    class handler_width_write32sm_delegate : int_constant_2 { }
-    class handler_width_n_write32sm_delegate : int_constant_n2 { }
-    class handler_width_write32mo_delegate : int_constant_2 { }
-    class handler_width_n_write32mo_delegate : int_constant_n2 { }
-    class handler_width_write32smo_delegate : int_constant_2 { }
-    class handler_width_n_write32smo_delegate : int_constant_n2 { }
-    class handler_width_read64_delegate : int_constant_3 { }
-    class handler_width_n_read64_delegate : int_constant_n3 { }
-    class handler_width_read64m_delegate : int_constant_3 { }
-    class handler_width_n_read64m_delegate : int_constant_n3 { }
-    class handler_width_read64s_delegate : int_constant_3 { }
-    class handler_width_n_read64s_delegate : int_constant_n3 { }
-    class handler_width_read64sm_delegate : int_constant_3 { }
-    class handler_width_n_read64sm_delegate : int_constant_n3 { }
-    class handler_width_read64mo_delegate : int_constant_3 { }
-    class handler_width_n_read64mo_delegate : int_constant_n3 { }
-    class handler_width_read64smo_delegate : int_constant_3 { }
-    class handler_width_n_read64smo_delegate : int_constant_n3 { }
-    class handler_width_write64_delegate : int_constant_3 { }
-    class handler_width_n_write64_delegate : int_constant_n3 { }
-    class handler_width_write64m_delegate : int_constant_3 { }
-    class handler_width_n_write64m_delegate : int_constant_n3 { }
-    class handler_width_write64s_delegate : int_constant_3 { }
-    class handler_width_n_write64s_delegate : int_constant_n3 { }
-    class handler_width_write64sm_delegate : int_constant_3 { }
-    class handler_width_n_write64sm_delegate : int_constant_n3 { }
-    class handler_width_write64mo_delegate : int_constant_3 { }
-    class handler_width_n_write64mo_delegate : int_constant_n3 { }
-    class handler_width_write64smo_delegate : int_constant_3 { }
-    class handler_width_n_write64smo_delegate : int_constant_n3 { }
+    class handler_width_read8_delegate : int_const_0 { }
+    class handler_width_n_read8_delegate : int_const_0 { }
+    class handler_width_read8m_delegate : int_const_0 { }
+    class handler_width_n_read8m_delegate : int_const_0 { }
+    class handler_width_read8s_delegate : int_const_0 { }
+    class handler_width_n_read8s_delegate : int_const_0 { }
+    class handler_width_read8sm_delegate : int_const_0 { }
+    class handler_width_n_read8sm_delegate : int_const_0 { }
+    class handler_width_read8mo_delegate : int_const_0 { }
+    class handler_width_n_read8mo_delegate : int_const_0 { }
+    class handler_width_read8smo_delegate : int_const_0 { }
+    class handler_width_n_read8smo_delegate : int_const_0 { }
+    class handler_width_write8_delegate : int_const_0 { }
+    class handler_width_n_write8_delegate : int_const_0 { }
+    class handler_width_write8m_delegate : int_const_0 { }
+    class handler_width_n_write8m_delegate : int_const_0 { }
+    class handler_width_write8s_delegate : int_const_0 { }
+    class handler_width_n_write8s_delegate : int_const_0 { }
+    class handler_width_write8sm_delegate : int_const_0 { }
+    class handler_width_n_write8sm_delegate : int_const_0 { }
+    class handler_width_write8mo_delegate : int_const_0 { }
+    class handler_width_n_write8mo_delegate : int_const_0 { }
+    class handler_width_write8smo_delegate : int_const_0 { }
+    class handler_width_n_write8smo_delegate : int_const_0 { }
+    class handler_width_read16_delegate : int_const_1 { }
+    class handler_width_n_read16_delegate : int_const_n1 { }
+    class handler_width_read16m_delegate : int_const_1 { }
+    class handler_width_n_read16m_delegate : int_const_n1 { }
+    class handler_width_read16s_delegate : int_const_1 { }
+    class handler_width_n_read16s_delegate : int_const_n1 { }
+    class handler_width_read16sm_delegate : int_const_1 { }
+    class handler_width_n_read16sm_delegate : int_const_n1 { }
+    class handler_width_read16mo_delegate : int_const_1 { }
+    class handler_width_n_read16mo_delegate : int_const_n1 { }
+    class handler_width_read16smo_delegate : int_const_1 { }
+    class handler_width_n_read16smo_delegate : int_const_n1 { }
+    class handler_width_write16_delegate : int_const_1 { }
+    class handler_width_n_write16_delegate : int_const_n1 { }
+    class handler_width_write16m_delegate : int_const_1 { }
+    class handler_width_n_write16m_delegate : int_const_n1 { }
+    class handler_width_write16s_delegate : int_const_1 { }
+    class handler_width_n_write16s_delegate : int_const_n1 { }
+    class handler_width_write16sm_delegate : int_const_1 { }
+    class handler_width_n_write16sm_delegate : int_const_n1 { }
+    class handler_width_write16mo_delegate : int_const_1 { }
+    class handler_width_n_write16mo_delegate : int_const_n1 { }
+    class handler_width_write16smo_delegate : int_const_1 { }
+    class handler_width_n_write16smo_delegate : int_const_n1 { }
+    class handler_width_read32_delegate : int_const_2 { }
+    class handler_width_n_read32_delegate : int_const_n2 { }
+    class handler_width_read32m_delegate : int_const_2 { }
+    class handler_width_n_read32m_delegate : int_const_n2 { }
+    class handler_width_read32s_delegate : int_const_2 { }
+    class handler_width_n_read32s_delegate : int_const_n2 { }
+    class handler_width_read32sm_delegate : int_const_2 { }
+    class handler_width_n_read32sm_delegate : int_const_n2 { }
+    class handler_width_read32mo_delegate : int_const_2 { }
+    class handler_width_n_read32mo_delegate : int_const_n2 { }
+    class handler_width_read32smo_delegate : int_const_2 { }
+    class handler_width_n_read32smo_delegate : int_const_n2 { }
+    class handler_width_write32_delegate : int_const_2 { }
+    class handler_width_n_write32_delegate : int_const_n2 { }
+    class handler_width_write32m_delegate : int_const_2 { }
+    class handler_width_n_write32m_delegate : int_const_n2 { }
+    class handler_width_write32s_delegate : int_const_2 { }
+    class handler_width_n_write32s_delegate : int_const_n2 { }
+    class handler_width_write32sm_delegate : int_const_2 { }
+    class handler_width_n_write32sm_delegate : int_const_n2 { }
+    class handler_width_write32mo_delegate : int_const_2 { }
+    class handler_width_n_write32mo_delegate : int_const_n2 { }
+    class handler_width_write32smo_delegate : int_const_2 { }
+    class handler_width_n_write32smo_delegate : int_const_n2 { }
+    class handler_width_read64_delegate : int_const_3 { }
+    class handler_width_n_read64_delegate : int_const_n3 { }
+    class handler_width_read64m_delegate : int_const_3 { }
+    class handler_width_n_read64m_delegate : int_const_n3 { }
+    class handler_width_read64s_delegate : int_const_3 { }
+    class handler_width_n_read64s_delegate : int_const_n3 { }
+    class handler_width_read64sm_delegate : int_const_3 { }
+    class handler_width_n_read64sm_delegate : int_const_n3 { }
+    class handler_width_read64mo_delegate : int_const_3 { }
+    class handler_width_n_read64mo_delegate : int_const_n3 { }
+    class handler_width_read64smo_delegate : int_const_3 { }
+    class handler_width_n_read64smo_delegate : int_const_n3 { }
+    class handler_width_write64_delegate : int_const_3 { }
+    class handler_width_n_write64_delegate : int_const_n3 { }
+    class handler_width_write64m_delegate : int_const_3 { }
+    class handler_width_n_write64m_delegate : int_const_n3 { }
+    class handler_width_write64s_delegate : int_const_3 { }
+    class handler_width_n_write64s_delegate : int_const_n3 { }
+    class handler_width_write64sm_delegate : int_const_3 { }
+    class handler_width_n_write64sm_delegate : int_const_n3 { }
+    class handler_width_write64mo_delegate : int_const_3 { }
+    class handler_width_n_write64mo_delegate : int_const_n3 { }
+    class handler_width_write64smo_delegate : int_const_3 { }
+    class handler_width_n_write64smo_delegate : int_const_n3 { }
     //} // anonymous namespace
 
 
@@ -147,10 +148,10 @@ namespace mame
     // this is a derived class of address_space with specific width, endianness, and table size
     //template<int Level, int Width, int AddrShift, endianness_t Endian>
     class address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> : address_space
-        where int_Level : int_constant, new()
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Level : int_const, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
         //using NativeType = uX;
@@ -182,9 +183,9 @@ namespace mame
         std.unordered_set<handler_entry> m_delayed_unrefs;
 
 
-        public class int_constant_std_max_1_Width : int_constant { public int value { get { return std.max(1, Width); } } }
-        public class int_constant_std_max_2_Width : int_constant { public int value { get { return std.max(2, Width); } } }
-        public class int_constant_std_max_3_Width : int_constant { public int value { get { return std.max(3, Width); } } }
+        public class int_const_std_max_1_Width : int_const { public int value { get { return std.max(1, Width); } } }
+        public class int_const_std_max_2_Width : int_const { public int value { get { return std.max(2, Width); } } }
+        public class int_const_std_max_3_Width : int_const { public int value { get { return std.max(3, Width); } } }
 
         // construction/destruction
         public address_space_specific(memory_manager manager, device_memory_interface memory, int spacenum, int address_width)
@@ -199,39 +200,39 @@ namespace mame
 
             switch (address_width)
             {
-                case  1: m_root_read = new handler_entry_read_dispatch<int_constant_std_max_1_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_constant_std_max_1_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  2: m_root_read = new handler_entry_read_dispatch<int_constant_std_max_2_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_constant_std_max_2_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  3: m_root_read = new handler_entry_read_dispatch<int_constant_std_max_3_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_constant_std_max_3_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  4: m_root_read = new handler_entry_read_dispatch<int_constant_4, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_4, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  5: m_root_read = new handler_entry_read_dispatch<int_constant_5, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_5, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  6: m_root_read = new handler_entry_read_dispatch<int_constant_6, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_6, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  7: m_root_read = new handler_entry_read_dispatch<int_constant_7, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_7, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  8: m_root_read = new handler_entry_read_dispatch<int_constant_8, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_8, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  9: m_root_read = new handler_entry_read_dispatch<int_constant_9, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_9, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 10: m_root_read = new handler_entry_read_dispatch<int_constant_10, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_10, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 11: m_root_read = new handler_entry_read_dispatch<int_constant_11, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_11, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 12: m_root_read = new handler_entry_read_dispatch<int_constant_12, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_12, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 13: m_root_read = new handler_entry_read_dispatch<int_constant_13, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_13, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 14: m_root_read = new handler_entry_read_dispatch<int_constant_14, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_14, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 15: m_root_read = new handler_entry_read_dispatch<int_constant_15, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_15, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 16: m_root_read = new handler_entry_read_dispatch<int_constant_16, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_16, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 17: m_root_read = new handler_entry_read_dispatch<int_constant_17, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_17, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 18: m_root_read = new handler_entry_read_dispatch<int_constant_18, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_18, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 19: m_root_read = new handler_entry_read_dispatch<int_constant_19, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_19, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 20: m_root_read = new handler_entry_read_dispatch<int_constant_20, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_20, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 21: m_root_read = new handler_entry_read_dispatch<int_constant_21, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_21, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 22: m_root_read = new handler_entry_read_dispatch<int_constant_22, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_22, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 23: m_root_read = new handler_entry_read_dispatch<int_constant_23, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_23, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 24: m_root_read = new handler_entry_read_dispatch<int_constant_24, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_24, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 25: m_root_read = new handler_entry_read_dispatch<int_constant_25, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_25, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 26: m_root_read = new handler_entry_read_dispatch<int_constant_26, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_26, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 27: m_root_read = new handler_entry_read_dispatch<int_constant_27, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_27, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 28: m_root_read = new handler_entry_read_dispatch<int_constant_28, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_28, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 29: m_root_read = new handler_entry_read_dispatch<int_constant_29, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_29, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 30: m_root_read = new handler_entry_read_dispatch<int_constant_30, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_30, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 31: m_root_read = new handler_entry_read_dispatch<int_constant_31, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_31, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 32: m_root_read = new handler_entry_read_dispatch<int_constant_32, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_constant_32, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                default: global_object.fatalerror("Unhandled address bus width {0}\n", address_width); break;
+                case  1: m_root_read = new handler_entry_read_dispatch<int_const_std_max_1_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_const_std_max_1_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case  2: m_root_read = new handler_entry_read_dispatch<int_const_std_max_2_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_const_std_max_2_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case  3: m_root_read = new handler_entry_read_dispatch<int_const_std_max_3_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_const_std_max_3_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case  4: m_root_read = new handler_entry_read_dispatch<int_const_4, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_4, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case  5: m_root_read = new handler_entry_read_dispatch<int_const_5, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_5, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case  6: m_root_read = new handler_entry_read_dispatch<int_const_6, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_6, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case  7: m_root_read = new handler_entry_read_dispatch<int_const_7, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_7, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case  8: m_root_read = new handler_entry_read_dispatch<int_const_8, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_8, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case  9: m_root_read = new handler_entry_read_dispatch<int_const_9, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_9, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 10: m_root_read = new handler_entry_read_dispatch<int_const_10, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_10, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 11: m_root_read = new handler_entry_read_dispatch<int_const_11, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_11, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 12: m_root_read = new handler_entry_read_dispatch<int_const_12, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_12, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 13: m_root_read = new handler_entry_read_dispatch<int_const_13, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_13, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 14: m_root_read = new handler_entry_read_dispatch<int_const_14, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_14, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 15: m_root_read = new handler_entry_read_dispatch<int_const_15, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_15, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 16: m_root_read = new handler_entry_read_dispatch<int_const_16, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_16, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 17: m_root_read = new handler_entry_read_dispatch<int_const_17, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_17, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 18: m_root_read = new handler_entry_read_dispatch<int_const_18, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_18, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 19: m_root_read = new handler_entry_read_dispatch<int_const_19, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_19, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 20: m_root_read = new handler_entry_read_dispatch<int_const_20, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_20, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 21: m_root_read = new handler_entry_read_dispatch<int_const_21, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_21, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 22: m_root_read = new handler_entry_read_dispatch<int_const_22, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_22, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 23: m_root_read = new handler_entry_read_dispatch<int_const_23, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_23, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 24: m_root_read = new handler_entry_read_dispatch<int_const_24, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_24, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 25: m_root_read = new handler_entry_read_dispatch<int_const_25, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_25, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 26: m_root_read = new handler_entry_read_dispatch<int_const_26, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_26, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 27: m_root_read = new handler_entry_read_dispatch<int_const_27, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_27, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 28: m_root_read = new handler_entry_read_dispatch<int_const_28, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_28, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 29: m_root_read = new handler_entry_read_dispatch<int_const_29, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_29, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 30: m_root_read = new handler_entry_read_dispatch<int_const_30, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_30, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 31: m_root_read = new handler_entry_read_dispatch<int_const_31, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_31, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case 32: m_root_read = new handler_entry_read_dispatch<int_const_32, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_32, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                default: g.fatalerror("Unhandled address bus width {0}\n", address_width); break;
             }
 
             m_dispatch_read  = m_root_read.get_dispatch();
@@ -389,7 +390,7 @@ namespace mame
                 // find the port
                 ioport_port port = device().owner().ioport(wtag);
                 if (port == null)
-                    fatalerror("Attempted to map non-existent port '{0}' for write in space {1} of device '{2}'\n", wtag, m_name, m_device.tag());
+                    g.fatalerror("Attempted to map non-existent port '{0}' for write in space {1} of device '{2}'\n", wtag, m_name, m_device.tag());
 
                 // map the range and set the ioport
                 var hand_w = new handler_entry_write_ioport<int_Width, int_AddrShift, endianness_t_Endian>(this, port);
@@ -684,60 +685,60 @@ namespace mame
 
 
         // virtual access to these functions
-        public override u8 read_byte(offs_t address) { return Width == 0 ? read_native(address & ~NATIVE_MASK).x8 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_0, bool_constant_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(0, 0xff)).x8; }
-        public override u16 read_word(offs_t address) { return Width == 1 ? read_native(address & ~NATIVE_MASK).x16 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).x16; }
-        public override u16 read_word(offs_t address, u16 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(1, mask)).x16; }
-        protected override u16 read_word_unaligned(offs_t address) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_false>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).x16; }
-        protected override u16 read_word_unaligned(offs_t address, u16 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_false>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(1, mask)).x16; }
-        protected override u32 read_dword(offs_t address) { return Width == 2 ? read_native(address & ~NATIVE_MASK).x32 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(2, 0xffffffff)).x32; }
-        protected override u32 read_dword(offs_t address, u32 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_true>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(2, mask)).x32; }
-        protected override u32 read_dword_unaligned(offs_t address) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_false>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(2, 0xffffffff)).x32; }
-        protected override u32 read_dword_unaligned(offs_t address, u32 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_false>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(2, mask)).x32; }
-        protected override u64 read_qword(offs_t address) { return Width == 3 ? read_native(address & ~NATIVE_MASK).x64 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(3, 0xffffffffffffffffU)).x64; }
-        protected override u64 read_qword(offs_t address, u64 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_true>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(3, mask)).x64; }
-        protected override u64 read_qword_unaligned(offs_t address) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_false>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(3, 0xffffffffffffffffU)).x64; }
-        protected override u64 read_qword_unaligned(offs_t address, u64 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_false>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(3, mask)).x64; }
+        public override u8 read_byte(offs_t address) { return Width == 0 ? read_native(address & ~NATIVE_MASK).u8 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(0, 0xff)).u8; }
+        public override u16 read_word(offs_t address) { return Width == 1 ? read_native(address & ~NATIVE_MASK).u16 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).u16; }
+        public override u16 read_word(offs_t address, u16 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(1, mask)).u16; }
+        protected override u16 read_word_unaligned(offs_t address) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_false>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).u16; }
+        protected override u16 read_word_unaligned(offs_t address, u16 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_false>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(1, mask)).u16; }
+        protected override u32 read_dword(offs_t address) { return Width == 2 ? read_native(address & ~NATIVE_MASK).u32 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(2, 0xffffffff)).u32; }
+        protected override u32 read_dword(offs_t address, u32 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_true>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(2, mask)).u32; }
+        protected override u32 read_dword_unaligned(offs_t address) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_false>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(2, 0xffffffff)).u32; }
+        protected override u32 read_dword_unaligned(offs_t address, u32 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_false>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(2, mask)).u32; }
+        protected override u64 read_qword(offs_t address) { return Width == 3 ? read_native(address & ~NATIVE_MASK).u64 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(3, 0xffffffffffffffffU)).u64; }
+        protected override u64 read_qword(offs_t address, u64 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_true>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(3, mask)).u64; }
+        protected override u64 read_qword_unaligned(offs_t address) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_false>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(3, 0xffffffffffffffffU)).u64; }
+        protected override u64 read_qword_unaligned(offs_t address, u64 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_false>((offs_t offset, uX mask2) => { return read_native(offset, mask2); }, address, new uX(3, mask)).u64; }
 
-        public override void write_byte(offs_t address, u8 data) { if (Width == 0) write_native(address & ~NATIVE_MASK, new uX(0, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_0, bool_constant_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(0, data), new uX(0, 0xff)); }
-        public override void write_word(offs_t address, u16 data) { if (Width == 1) write_native(address & ~NATIVE_MASK, new uX(1, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(1, data), new uX(1, 0xffff)); }
-        public override void write_word(offs_t address, u16 data, u16 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(1, data), new uX(1, mask)); }
-        protected override void write_word_unaligned(offs_t address, u16 data) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_false>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(1, data), new uX(1, 0xffff)); }
-        protected override void write_word_unaligned(offs_t address, u16 data, u16 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_false>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(1, data), new uX(1, mask)); }
-        protected override void write_dword(offs_t address, u32 data) { if (Width == 2) write_native(address & ~NATIVE_MASK, new uX(2, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(2, data), new uX(2, 0xffffffff)); }
-        protected override void write_dword(offs_t address, u32 data, u32 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_true>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(2, data), new uX(2, mask)); }
-        protected override void write_dword_unaligned(offs_t address, u32 data) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_false>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(2, data), new uX(2, 0xffffffff)); }
-        protected override void write_dword_unaligned(offs_t address, u32 data, u32 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_false>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(2, data), new uX(2, mask)); }
-        protected override void write_qword(offs_t address, u64 data) { if (Width == 3) write_native(address & ~NATIVE_MASK, new uX(3, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(3, data), new uX(3, 0xffffffffffffffffU)); }
-        protected override void write_qword(offs_t address, u64 data, u64 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_true>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(3, data), new uX(3, mask)); }
-        protected override void write_qword_unaligned(offs_t address, u64 data) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_false>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(3, data), new uX(3, 0xffffffffffffffffU)); }
-        protected override void write_qword_unaligned(offs_t address, u64 data, u64 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_false>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(3, data), new uX(3, mask)); }
+        public override void write_byte(offs_t address, u8 data) { if (Width == 0) write_native(address & ~NATIVE_MASK, new uX(0, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(0, data), new uX(0, 0xff)); }
+        public override void write_word(offs_t address, u16 data) { if (Width == 1) write_native(address & ~NATIVE_MASK, new uX(1, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(1, data), new uX(1, 0xffff)); }
+        public override void write_word(offs_t address, u16 data, u16 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(1, data), new uX(1, mask)); }
+        protected override void write_word_unaligned(offs_t address, u16 data) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_false>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(1, data), new uX(1, 0xffff)); }
+        protected override void write_word_unaligned(offs_t address, u16 data, u16 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_false>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(1, data), new uX(1, mask)); }
+        protected override void write_dword(offs_t address, u32 data) { if (Width == 2) write_native(address & ~NATIVE_MASK, new uX(2, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(2, data), new uX(2, 0xffffffff)); }
+        protected override void write_dword(offs_t address, u32 data, u32 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_true>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(2, data), new uX(2, mask)); }
+        protected override void write_dword_unaligned(offs_t address, u32 data) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_false>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(2, data), new uX(2, 0xffffffff)); }
+        protected override void write_dword_unaligned(offs_t address, u32 data, u32 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_false>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(2, data), new uX(2, mask)); }
+        protected override void write_qword(offs_t address, u64 data) { if (Width == 3) write_native(address & ~NATIVE_MASK, new uX(3, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(3, data), new uX(3, 0xffffffffffffffffU)); }
+        protected override void write_qword(offs_t address, u64 data, u64 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_true>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(3, data), new uX(3, mask)); }
+        protected override void write_qword_unaligned(offs_t address, u64 data) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_false>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(3, data), new uX(3, 0xffffffffffffffffU)); }
+        protected override void write_qword_unaligned(offs_t address, u64 data, u64 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_false>((offs_t offset, uX data2, uX mask2) => { write_native(offset, data2, mask2); }, address, new uX(3, data), new uX(3, mask)); }
 
         // static access to these functions
-        static u8 read_byte_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address) { return Width == 0 ? space.read_native(address & ~NATIVE_MASK).x8 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_0, bool_constant_true>((offs_t offset, uX mask) => { return space.read_native(offset, mask); }, address, new uX(0, 0xff)).x8; }
-        static u16 read_word_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address) { return Width == 1 ? space.read_native(address & ~NATIVE_MASK).x16 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX mask) => { return space.read_native(offset, mask); }, address, new uX(1, 0xffff)).x16; }
-        static u16 read_word_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u16 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX mask2) => { return space.read_native(offset, mask2); }, address, new uX(1, mask)).x16; }
-        static u32 read_dword_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address) { return Width == 2 ? space.read_native(address & ~NATIVE_MASK).x32 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_true>((offs_t offset, uX mask) => { return space.read_native(offset, mask); }, address, new uX(2, 0xffffffff)).x32; }
-        static u32 read_dword_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u32 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_true>((offs_t offset, uX mask2) => { return space.read_native(offset, mask2); }, address, new uX(2, mask)).x32; }
-        static u64 read_qword_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address) { return Width == 3 ? space.read_native(address & ~NATIVE_MASK).x64 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_true>((offs_t offset, uX mask) => { return space.read_native(offset, mask); }, address, new uX(3, 0xffffffffffffffffU)).x64; }
-        static u64 read_qword_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u64 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_true>((offs_t offset, uX mask2) => { return space.read_native(offset, mask2); }, address, new uX(3, mask)).x64; }
-        static void write_byte_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u8 data) { if (Width == 0) space.write_native(address & ~NATIVE_MASK, new uX(0, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_0, bool_constant_true>((offs_t offset, uX data2, uX mask) => { space.write_native(offset, data2, mask); }, address, new uX(0, data), new uX(0, 0xff)); }
-        static void write_word_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u16 data) { if (Width == 1) space.write_native(address & ~NATIVE_MASK, new uX(1, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX data2, uX mask) => { space.write_native(offset, data2, mask); }, address, new uX(1, data), new uX(1, 0xffff)); }
-        static void write_word_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u16 data, u16 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX data2, uX mask2) => { space.write_native(offset, data2, mask2); }, address, new uX(1, data), new uX(1, mask)); }
-        static void write_dword_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u32 data) { if (Width == 2) space.write_native(address & ~NATIVE_MASK, new uX(2, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_true>((offs_t offset, uX data2, uX mask) => { space.write_native(offset, data2, mask); }, address, new uX(2, data), new uX(2, 0xffffffff)); }
-        static void write_dword_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u32 data, u32 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_2, bool_constant_true>((offs_t offset, uX data2, uX mask2) => { space.write_native(offset, data2, mask2); }, address, new uX(2, data), new uX(2, mask)); }
-        static void write_qword_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u64 data) { if (Width == 3) space.write_native(address & ~NATIVE_MASK, new uX(3, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_false>((offs_t offset, uX data2, uX mask) => { space.write_native(offset, data2, mask); }, address, new uX(3, data), new uX(3, 0xffffffffffffffffU)); }
-        static void write_qword_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u64 data, u64 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_3, bool_constant_false>((offs_t offset, uX data2, uX mask2) => { space.write_native(offset, data2, mask2); }, address, new uX(3, data), new uX(3, mask)); }
+        static u8 read_byte_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address) { return Width == 0 ? space.read_native(address & ~NATIVE_MASK).u8 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX mask) => { return space.read_native(offset, mask); }, address, new uX(0, 0xff)).u8; }
+        static u16 read_word_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address) { return Width == 1 ? space.read_native(address & ~NATIVE_MASK).u16 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX mask) => { return space.read_native(offset, mask); }, address, new uX(1, 0xffff)).u16; }
+        static u16 read_word_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u16 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX mask2) => { return space.read_native(offset, mask2); }, address, new uX(1, mask)).u16; }
+        static u32 read_dword_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address) { return Width == 2 ? space.read_native(address & ~NATIVE_MASK).u32 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_true>((offs_t offset, uX mask) => { return space.read_native(offset, mask); }, address, new uX(2, 0xffffffff)).u32; }
+        static u32 read_dword_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u32 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_true>((offs_t offset, uX mask2) => { return space.read_native(offset, mask2); }, address, new uX(2, mask)).u32; }
+        static u64 read_qword_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address) { return Width == 3 ? space.read_native(address & ~NATIVE_MASK).u64 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_true>((offs_t offset, uX mask) => { return space.read_native(offset, mask); }, address, new uX(3, 0xffffffffffffffffU)).u64; }
+        static u64 read_qword_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u64 mask) { return emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_true>((offs_t offset, uX mask2) => { return space.read_native(offset, mask2); }, address, new uX(3, mask)).u64; }
+        static void write_byte_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u8 data) { if (Width == 0) space.write_native(address & ~NATIVE_MASK, new uX(0, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX data2, uX mask) => { space.write_native(offset, data2, mask); }, address, new uX(0, data), new uX(0, 0xff)); }
+        static void write_word_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u16 data) { if (Width == 1) space.write_native(address & ~NATIVE_MASK, new uX(1, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX data2, uX mask) => { space.write_native(offset, data2, mask); }, address, new uX(1, data), new uX(1, 0xffff)); }
+        static void write_word_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u16 data, u16 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX data2, uX mask2) => { space.write_native(offset, data2, mask2); }, address, new uX(1, data), new uX(1, mask)); }
+        static void write_dword_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u32 data) { if (Width == 2) space.write_native(address & ~NATIVE_MASK, new uX(2, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_true>((offs_t offset, uX data2, uX mask) => { space.write_native(offset, data2, mask); }, address, new uX(2, data), new uX(2, 0xffffffff)); }
+        static void write_dword_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u32 data, u32 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_2, bool_const_true>((offs_t offset, uX data2, uX mask2) => { space.write_native(offset, data2, mask2); }, address, new uX(2, data), new uX(2, mask)); }
+        static void write_qword_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u64 data) { if (Width == 3) space.write_native(address & ~NATIVE_MASK, new uX(3, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_false>((offs_t offset, uX data2, uX mask) => { space.write_native(offset, data2, mask); }, address, new uX(3, data), new uX(3, 0xffffffffffffffffU)); }
+        static void write_qword_masked_static(address_space_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> space, offs_t address, u64 data, u64 mask) { emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_3, bool_const_false>((offs_t offset, uX data2, uX mask2) => { space.write_native(offset, data2, mask2); }, address, new uX(3, data), new uX(3, mask)); }
 
 
         //template<typename READ>
         void install_read_handler_impl<READ, handler_width_READ, handler_width_n_READ>(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, READ handler_r)  //void install_read_handler_impl(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, READ &handler_r)
-            where handler_width_READ : int_constant, new()
-            where handler_width_n_READ : int_constant, new()
+            where handler_width_READ : int_const, new()
+            where handler_width_n_READ : int_const, new()
         {
             try { }  //try { handler_r.resolve(); }
             catch (binding_type_exception)
             {
-                osd_printf_error("Binding error while installing read handler {0} for range 0x{1}-0x{2} mask 0x{3} mirror 0x{4} select 0x{5} umask 0x{6}\n", handler_r.ToString(), addrstart, addrend, addrmask, addrmirror, addrselect, unitmask);
+                g.osd_printf_error("Binding error while installing read handler {0} for range 0x{1}-0x{2} mask 0x{3} mirror 0x{4} select 0x{5} umask 0x{6}\n", handler_r.ToString(), addrstart, addrend, addrmask, addrmirror, addrselect, unitmask);
                 throw;
             }
             install_read_handler_helper<handler_width_READ, handler_width_n_READ, READ>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, handler_r);
@@ -745,13 +746,13 @@ namespace mame
 
         //template<typename WRITE>
         void install_write_handler_impl<WRITE, handler_width_WRITE, handler_width_n_WRITE>(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, WRITE handler_w)  //void install_write_handler_impl(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, WRITE &handler_w)
-            where handler_width_WRITE : int_constant, new()
-            where handler_width_n_WRITE : int_constant, new()
+            where handler_width_WRITE : int_const, new()
+            where handler_width_n_WRITE : int_const, new()
         {
             try { }  //try { handler_w.resolve(); }
             catch (binding_type_exception)
             {
-                global_object.osd_printf_error("Binding error while installing write handler {0} for range 0x{1}-0x{2} mask 0x{3} mirror 0x{4} select 0x{5} umask 0x{6}\n", handler_w.ToString(), addrstart, addrend, addrmask, addrmirror, addrselect, unitmask);
+                g.osd_printf_error("Binding error while installing write handler {0} for range 0x{1}-0x{2} mask 0x{3} mirror 0x{4} select 0x{5} umask 0x{6}\n", handler_w.ToString(), addrstart, addrend, addrmask, addrmirror, addrselect, unitmask);
                 throw;
             }
             install_write_handler_helper<handler_width_WRITE, handler_width_n_WRITE, WRITE>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, handler_w);
@@ -781,14 +782,14 @@ namespace mame
 
         //template<int AccessWidth, typename READ>
         void install_read_handler_helper<int_AccessWidth, int_nAccessWidth, READ>(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, READ handler_r)
-            where int_AccessWidth : int_constant, new()
-            where int_nAccessWidth : int_constant, new()
+            where int_AccessWidth : int_const, new()
+            where int_nAccessWidth : int_const, new()
         {
             int AccessWidth = new int_AccessWidth().value;
 
             if (Width < AccessWidth)
             {
-                fatalerror("install_read_handler: cannot install a {0}-wide handler in a {1}-wide bus", 8 << AccessWidth, 8 << Width);
+                g.fatalerror("install_read_handler: cannot install a {0}-wide handler in a {1}-wide bus", 8 << AccessWidth, 8 << Width);
             }
             else
             {
@@ -828,14 +829,14 @@ namespace mame
 
         //template<int AccessWidth, typename WRITE>
         void install_write_handler_helper<int_AccessWidth, int_nAccessWidth, WRITE>(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, WRITE handler_w)
-            where int_AccessWidth : int_constant, new()
-            where int_nAccessWidth : int_constant, new()
+            where int_AccessWidth : int_const, new()
+            where int_nAccessWidth : int_const, new()
         {
             int AccessWidth = new int_AccessWidth().value;
 
             if (Width < AccessWidth)
             {
-                fatalerror("install_write_handler: cannot install a {0}-wide handler in a {1}-wide bus", 8 << AccessWidth, 8 << Width);
+                g.fatalerror("install_write_handler: cannot install a {0}-wide handler in a {1}-wide bus", 8 << AccessWidth, 8 << Width);
             }
             else
             {

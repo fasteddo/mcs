@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
+using size_t = System.UInt64;
 
 
 namespace mame
@@ -132,9 +133,9 @@ namespace mame
         static std.vector<string> split(string text, char sep)
         {
             std.vector<string> tokens = new std.vector<string>();
-            int start = 0;
-            int end = 0;
-            while ((end = text.find(sep, start)) != -1)
+            size_t start = 0;
+            size_t end = 0;
+            while ((end = text.find(sep, start)) != g.npos)
             {
                 string temp = text.substr(start, end - start);
                 if (temp != "") tokens.push_back(temp);
@@ -212,7 +213,7 @@ namespace mame
         public std.vector<string> missing_mandatory_images()  //std::vector<std::reference_wrapper<const std::string>> mame_machine_manager::missing_mandatory_images()
         {
             std.vector<string> results = new std.vector<string>();
-            assert(machine() != null);
+            g.assert(machine() != null);
 
             // make sure that any required image has a mounted file
             foreach (device_image_interface image in new image_interface_enumerator(machine().root_device()))
@@ -264,9 +265,9 @@ namespace mame
 
             // loop across multiple hard resets
             bool exit_pending = false;
-            int error = EMU_ERR_NONE;
+            int error = g.EMU_ERR_NONE;
 
-            while (error == EMU_ERR_NONE && !exit_pending)
+            while (error == g.EMU_ERR_NONE && !exit_pending)
             {
                 m_new_driver_pending = null;
 
@@ -404,7 +405,7 @@ namespace mame
             {
                 plugin_options.plugin p = m_plugins.find(emu_options.OPTION_CONSOLE);
                 if (p == null)
-                    fatalerror("Fatal error: Console plugin not found.\n");
+                    g.fatalerror("Fatal error: Console plugin not found.\n");
 
                 p.m_start = true;
             }
@@ -412,7 +413,7 @@ namespace mame
             m_lua.initialize();
 
             {
-                emu_file file = new emu_file(options().plugins_path(), OPEN_FLAG_READ);
+                emu_file file = new emu_file(options().plugins_path(), g.OPEN_FLAG_READ);
                 osd_file.error filerr = file.open("boot.lua");
                 if (filerr == osd_file.error.NONE)
                 {
@@ -435,9 +436,9 @@ namespace mame
         }
 
 
-        public mame_ui_manager ui() { assert(m_ui != null); return m_ui; }
-        public cheat_manager cheat() { assert(m_cheat != null); return m_cheat; }
-        public inifile_manager inifile() { assert(m_inifile != null); return m_inifile; }
-        public favorite_manager favorite() { assert(m_favorite != null); return m_favorite; }
+        public mame_ui_manager ui() { g.assert(m_ui != null); return m_ui; }
+        public cheat_manager cheat() { g.assert(m_cheat != null); return m_cheat; }
+        public inifile_manager inifile() { g.assert(m_inifile != null); return m_inifile; }
+        public favorite_manager favorite() { g.assert(m_favorite != null); return m_favorite; }
     }
 }

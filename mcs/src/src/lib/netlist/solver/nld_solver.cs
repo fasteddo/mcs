@@ -10,9 +10,9 @@ using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nld_solver_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t = solver::matrix_solver_t::net_list_t;
 using nld_solver_params_uptr = mame.netlist.solver.solver_parameters_t;  //using params_uptr = solver_arena::unique_ptr<solver::solver_parameters_t>;
-using nld_solver_queue_type = mame.netlist.detail.queue_base<mame.netlist.solver.matrix_solver_t>;  //using queue_type = detail::queue_base<solver::matrix_solver_t, false>;
+using nld_solver_queue_type = mame.netlist.detail.queue_base<mame.netlist.solver.matrix_solver_t, mame.bool_const_false>;  //using queue_type = detail::queue_base<solver::matrix_solver_t, false>;
 using nld_solver_solver_ptr = mame.netlist.solver.matrix_solver_t;  //using solver_ptr = solver_arena::unique_ptr<solver::matrix_solver_t>;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 
 
 // ----------------------------------------------------------------------------------------
@@ -33,15 +33,15 @@ namespace mame.netlist
 
 
             //NETLIB_DEVICE_IMPL(solver, "SOLVER", "FREQ")
-            public static readonly factory.constructor_ptr_t decl_solver = NETLIB_DEVICE_IMPL<nld_solver>("SOLVER", "FREQ");
+            public static readonly factory.constructor_ptr_t decl_solver = g.NETLIB_DEVICE_IMPL<nld_solver>("SOLVER", "FREQ");
 
 
             logic_input_t m_fb_step;
             logic_output_t m_Q_step;
 
             // FIXME: these should be created in device space
-            std.vector<nld_solver_params_uptr> m_mat_params;
-            std.vector<nld_solver_solver_ptr> m_mat_solvers;
+            std.vector<nld_solver_params_uptr> m_mat_params = new std.vector<nld_solver_params_uptr>();
+            std.vector<nld_solver_solver_ptr> m_mat_solvers = new std.vector<nld_solver_solver_ptr>();
 
             solver.solver_parameters_t m_params;
             nld_solver_queue_type m_queue;
@@ -54,10 +54,10 @@ namespace mame.netlist
             public nld_solver(object owner, string name)
                 : base(owner, name)
             {
-                m_fb_step = new logic_input_t(this, "FB_step", fb_step);  //, m_fb_step(*this, "FB_step", NETLIB_DELEGATE(fb_step<false>))
+                m_fb_step = new logic_input_t(this, "FB_step", fb_step<bool_const_false>);  //, m_fb_step(*this, "FB_step", NETLIB_DELEGATE(fb_step<false>))
                 m_Q_step = new logic_output_t(this, "Q_step");
                 m_params = new solver.solver_parameters_t(this, "", solver.solver_parameter_defaults.get_instance());
-                m_queue = new nld_solver_queue_type(false, config.MAX_SOLVER_QUEUE_SIZE,
+                m_queue = new nld_solver_queue_type(config.MAX_SOLVER_QUEUE_SIZE,
                     get_solver_id,  //queue_type::id_delegate(&NETLIB_NAME(solver).get_solver_id, this),
                     solver_by_id);  //queue_type::obj_delegate(&NETLIB_NAME(solver).solver_by_id, this));
 
@@ -111,7 +111,7 @@ namespace mame.netlist
                             }
                             else
                             {
-                                var otherterm = (terminal_t)t;
+                                var otherterm = t is terminal_t ? (terminal_t)t : null;  //auto *otherterm = dynamic_cast<terminal_t *>(t);
                                 if (otherterm != null)
                                     if (state().setup().get_connected_terminal(otherterm).net().is_rail_net())
                                         railterms++;
@@ -142,23 +142,31 @@ namespace mame.netlist
                             if (!config.use_float_matrix)
                                 log().info.op("FPTYPE {0} not supported. Using DOUBLE", params_.m_fp_type.op().ToString());
 
-                            ms = create_solvers(sname, grp);  //ms = create_solvers<std::conditional_t<config::use_float_matrix::value, float, double>>(sname, params.get(), grp);
+                            //ms = create_solvers<std::conditional_t<config::use_float_matrix::value, float, double>>(sname, params.get(), grp);
+                            if (config.use_float_matrix)
+                                ms = create_solvers<float, plib.constants_operators_float>(sname, params_, grp);
+                            else
+                                ms = create_solvers<double, plib.constants_operators_double>(sname, params_, grp);
                             break;
                         case solver.matrix_fp_type_e.DOUBLE:
-                            ms = create_solvers(sname, grp);  //ms = create_solvers<double>(sname, params.get(), grp);
+                            ms = create_solvers<double, plib.constants_operators_double>(sname, params_, grp);  //ms = create_solvers<double>(sname, params.get(), grp);
                             break;
                         case solver.matrix_fp_type_e.LONGDOUBLE:
                             if (!config.use_long_double_matrix)
                                 log().info.op("FPTYPE {0} not supported. Using DOUBLE", params_.m_fp_type.op().ToString());
 
-                            ms = create_solvers(sname, grp);  //ms = create_solvers<std::conditional_t<config::use_long_double_matrix::value, long double, double>>(sname, params.get(), grp);
+                            //ms = create_solvers<std::conditional_t<config::use_long_double_matrix::value, long double, double>>(sname, params.get(), grp);
+                            if (config.use_long_double_matrix)
+                                throw new emu_unimplemented();  //ms = create_solvers<long double>(sname, params_, grp);
+                            else
+                                ms = create_solvers<double, plib.constants_operators_double>(sname, params_, grp);
                             break;
                         case solver.matrix_fp_type_e.FLOATQ128:
 #if (NL_USE_FLOAT128)
                             ms = create_solvers<FLOAT128>(sname, params.get(), grp);
 #else
                             log().info.op("FPTYPE {0} not supported. Using DOUBLE", params_.m_fp_type.op().ToString());
-                            ms = create_solvers(sname, grp);  //ms = create_solvers<double>(sname, params.get(), grp);
+                            ms = create_solvers<double, plib.constants_operators_double>(sname, params_, grp);  //ms = create_solvers<double>(sname, params.get(), grp);
 #endif
                             break;
                     }
@@ -184,9 +192,10 @@ namespace mame.netlist
 
 
             //template <typename FT>
-            solver.matrix_solver_t create_solvers(string sname, analog_net_t_list_t nets)  //host_arena::unique_ptr<solver::matrix_solver_t> NETLIB_NAME(solver)::create_solvers(const pstring &sname, analog_net_t::list_t &nets)
+            solver.matrix_solver_t create_solvers<FT, FT_OPS>(string sname, solver.solver_parameters_t params_, nld_solver_net_list_t nets)  //NETLIB_NAME(solver)::solver_ptr NETLIB_NAME(solver)::create_solvers(const pstring &sname, const solver::solver_parameters_t *params, net_list_t &nets)
+                where FT_OPS : plib.constants_operators<FT>, new()
             {
-                size_t net_count = (size_t)nets.size();
+                size_t net_count = nets.size();
                 switch (net_count)
                 {
                     case 1:
@@ -239,36 +248,32 @@ namespace mame.netlist
                         break;
                     default:
                         log().info.op(nl_errstr_global.MI_NO_SPECIFIC_SOLVER(net_count));
-                        throw new emu_unimplemented();
-#if false
                         if (net_count <= 16)
                         {
-                            return create_solver/*<FT, -16>*/(-16, net_count, sname, nets);
+                            return create_solver<FT, FT_OPS, int_const_n16>(net_count, sname, params_, nets);
                         }
                         if (net_count <= 32)
                         {
-                            return create_solver/*<FT, -32>*/(-32, net_count, sname, nets);
+                            return create_solver<FT, FT_OPS, int_const_n32>(net_count, sname, params_, nets);
                         }
                         if (net_count <= 64)
                         {
-                            return create_solver/*<FT, -64>*/(-64, net_count, sname, nets);
+                            return create_solver<FT, FT_OPS, int_const_n64>(net_count, sname, params_, nets);
                         }
                         if (net_count <= 128)
                         {
-                            return create_solver/*<FT, -128>*/(-128, net_count, sname, nets);
+                            return create_solver<FT, FT_OPS, int_const_n128>(net_count, sname, params_, nets);
                         }
                         if (net_count <= 256)
                         {
-                            return create_solver/*<FT, -256>*/(-256, net_count, sname, nets);
+                            return create_solver<FT, FT_OPS, int_const_n256>(net_count, sname, params_, nets);
                         }
                         if (net_count <= 512)
                         {
-                            return create_solver/*<FT, -512>*/(-512, net_count, sname, nets);
+                            return create_solver<FT, FT_OPS, int_const_n512>(net_count, sname, params_, nets);
                         }
 
-                        return create_solver/*<FT, 0>*/(0, net_count, sname, nets);
-#endif
-                        break;
+                        return create_solver<FT, FT_OPS, int_const_0>(net_count, sname, params_, nets);
                 }
             }
 
@@ -291,7 +296,7 @@ namespace mame.netlist
             public override void reset()
             {
                 if (exec().stats_enabled())
-                    m_fb_step.set_delegate(fb_step);  //m_fb_step.set_delegate(NETLIB_DELEGATE(fb_step<true>));
+                    m_fb_step.set_delegate(fb_step<bool_const_true>);  //m_fb_step.set_delegate(NETLIB_DELEGATE(fb_step<true>));
                 foreach (var s in m_mat_solvers)
                     s.reset();
                 foreach (var s in m_mat_solvers)
@@ -323,25 +328,32 @@ namespace mame.netlist
 
             // FIXME: should be created in device space
             //template <class C>
-            //host_arena::unique_ptr<solver::matrix_solver_t> create_it(netlist_state_t &nl, pstring name,
-            //    analog_net_t::list_t &nets,
-            //    solver::solver_parameters_t &params, std::size_t size)
+            solver.matrix_solver_t create_it<C, FT, FT_OPS, int_SIZE>(nld_solver main_solver, string name, analog_net_t_list_t nets, solver.solver_parameters_t params_, size_t size)  //NETLIB_NAME(solver)::solver_ptr create_it(NETLIB_NAME(solver) &main_solver, pstring name, NETLIB_NAME(solver)::net_list_t &nets, const solver::solver_parameters_t *params, std::size_t size)
+                where FT_OPS : plib.constants_operators<FT>, new()
+                where int_SIZE : int_const, new()
+            {
+                if (typeof(C) == typeof(solver.matrix_solver_GCR_t<FT, FT_OPS, int_SIZE>))
+                    return new solver.matrix_solver_GCR_t<FT, FT_OPS, int_SIZE>(main_solver, name, nets, params_, size);  //return plib::make_unique<C, device_arena>(main_solver, name, nets, params, size);
+                else
+                    throw new emu_unimplemented();
+            }
 
 
-            public class size_t_constant_MAX_SOLVER_QUEUE_SIZE : uint32_constant { public UInt32 value { get { return config.MAX_SOLVER_QUEUE_SIZE; } } }
+            public class size_t_const_MAX_SOLVER_QUEUE_SIZE : u64_const { public UInt64 value { get { return config.MAX_SOLVER_QUEUE_SIZE; } } }
 
 
             //template<bool KEEP_STATS>
             //NETLIB_HANDLER(solver, fb_step)
-            void fb_step()
+            void fb_step<bool_KEEP_STATS>()
+                where bool_KEEP_STATS : bool_const, new()
             {
-                bool KEEP_STATS = false;
+                bool KEEP_STATS = new bool_KEEP_STATS().value;
 
                 netlist_time_ext now = exec().time();
                 size_t nthreads = m_params.m_parallel.op() < 2 ? 1 : (size_t)std.min(m_params.m_parallel.op(), plib.omp.pomp_global.get_max_threads());
                 netlist_time_ext sched = now + (nthreads <= 1 ? netlist_time_ext.zero() : netlist_time_ext.from_nsec(100));
-                plib.uninitialised_array<solver.matrix_solver_t, size_t_constant_MAX_SOLVER_QUEUE_SIZE> tmp = new plib.uninitialised_array<solver.matrix_solver_t, size_t_constant_MAX_SOLVER_QUEUE_SIZE>();  //plib::uninitialised_array<solver::matrix_solver_t *, config::MAX_SOLVER_QUEUE_SIZE::value> tmp;
-                plib.uninitialised_array<netlist_time, size_t_constant_MAX_SOLVER_QUEUE_SIZE> nt = new plib.uninitialised_array<netlist_time, size_t_constant_MAX_SOLVER_QUEUE_SIZE>();  //plib::uninitialised_array<netlist_time, config::MAX_SOLVER_QUEUE_SIZE::value> nt;
+                plib.uninitialised_array<solver.matrix_solver_t, size_t_const_MAX_SOLVER_QUEUE_SIZE> tmp = new plib.uninitialised_array<solver.matrix_solver_t, size_t_const_MAX_SOLVER_QUEUE_SIZE>();  //plib::uninitialised_array<solver::matrix_solver_t *, config::MAX_SOLVER_QUEUE_SIZE::value> tmp;
+                plib.uninitialised_array<netlist_time, size_t_const_MAX_SOLVER_QUEUE_SIZE> nt = new plib.uninitialised_array<netlist_time, size_t_const_MAX_SOLVER_QUEUE_SIZE>();  //plib::uninitialised_array<netlist_time, config::MAX_SOLVER_QUEUE_SIZE::value> nt;
                 size_t p = 0;
 
                 while (!m_queue.empty())
@@ -394,7 +406,7 @@ namespace mame.netlist
                     //    {
                     //        nt[i] = tmp[i]->solve(now, "parallel");
                     //    });
-                    for (int i = 0; i < p; i++)
+                    for (size_t i = 0; i < p; i++)
                     {
                         nt[i] = tmp[i].solve(now, "parallel");
                     }
@@ -413,19 +425,24 @@ namespace mame.netlist
 
 
             //template <typename FT, int SIZE>
-            nld_solver_solver_ptr create_solver(size_t size, string solvername, solver.solver_parameters_t params_, nld_solver_net_list_t nets)  //solver_ptr create_solver(std::size_t size, const pstring &solvername, const solver::solver_parameters_t *params,net_list_t &nets);
+            nld_solver_solver_ptr create_solver<FT, FT_OPS, int_SIZE>(size_t size, string solvername, solver.solver_parameters_t params_, nld_solver_net_list_t nets)  //solver_ptr create_solver(std::size_t size, const pstring &solvername, const solver::solver_parameters_t *params,net_list_t &nets);
+                where FT_OPS : plib.constants_operators<FT>, new()
+                where int_SIZE : int_const, new()
             {
                 switch (m_params.m_method.op())
                 {
                     case solver.matrix_type_e.MAT_CR:
-                        throw new emu_unimplemented();
-#if false
-                        return create_it<solver::matrix_solver_GCR_t<FT, SIZE>>(*this, solvername, nets, params, size);
-#endif
+                        return create_it<solver.matrix_solver_GCR_t<FT, FT_OPS, int_SIZE>, FT, FT_OPS, int_SIZE>(this, solvername, nets, params_, size);  //return create_it<solver::matrix_solver_GCR_t<FT, SIZE>>(*this, solvername, nets, params, size);
                     case solver.matrix_type_e.MAT:
                         throw new emu_unimplemented();
 #if false
                         return create_it<solver::matrix_solver_direct_t<FT, SIZE>>(*this, solvername, nets, params, size);
+#endif
+
+                    case solver.matrix_type_e.GMRES:
+                        throw new emu_unimplemented();
+#if false
+                        return create_it<solver::matrix_solver_GMRES_t<FT, SIZE>>(*this, solvername, nets, params, size);
 #endif
 
 #if NL_USE_ACADEMIC_SOLVERS
@@ -460,10 +477,6 @@ namespace mame.netlist
             }
 
 
-            //template <typename FT>
-            //solver_ptr create_solvers(const pstring &sname, const solver::solver_parameters_t *params, net_list_t &nets);
-
-
             size_t get_solver_id(solver.matrix_solver_t net)
             {
                 for (size_t i = 0; i < m_mat_solvers.size(); i++)
@@ -485,9 +498,9 @@ namespace mame.netlist
 
         class net_splitter
         {
-            public std.vector<nld_solver_net_list_t> groups;
+            public std.vector<nld_solver_net_list_t> groups = new std.vector<nld_solver_net_list_t>();
 
-            std.vector<nld_solver_net_list_t> groupspre;
+            std.vector<nld_solver_net_list_t> groupspre = new std.vector<nld_solver_net_list_t>();
 
 
             public void run(netlist_state_t nlstate)
@@ -581,6 +594,9 @@ namespace mame.netlist
                             var connected_terminals = nlstate.setup().get_connected_terminals(pt);
                             foreach (var ct in connected_terminals)  //for (auto ct = connected_terminals->begin(); *ct != nullptr; ct++)
                             {
+                                if (ct == default)
+                                    continue;
+
                                 analog_net_t connected_net = ct.net();
                                 nlstate.log().verbose.op("  Connected net {0}", connected_net.name());
                                 if (!check_if_processed_and_join(connected_net))

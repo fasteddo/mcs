@@ -835,9 +835,9 @@ namespace mame
 
         // $8E STOP inherent    ----
         //OP_HANDLER( stop )
-        void stop()
+        new void stop()
         {
-            fatalerror("m6805[{0}]: unimplemented STOP", tag());
+            g.fatalerror("m6805[{0}]: unimplemented STOP", tag());
         }
 
         void stop_true() { stop(); }
@@ -847,7 +847,7 @@ namespace mame
         //OP_HANDLER( wait )
         void wait()
         {
-            fatalerror("m6805[{0}]: unimplemented WAIT", tag());
+            g.fatalerror("m6805[{0}]: unimplemented WAIT", tag());
         }
 
         void wait_true() { wait(); }

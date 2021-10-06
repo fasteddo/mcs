@@ -39,37 +39,39 @@ namespace mame
         //static NETLIST_START(PROM_82S126_DIP)
         public static void netlist_PROM_82S126_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             PROM_82S126(setup, "A");
 #endif
 
-            netlist.nl_setup_global.DEFPARAM(setup, "ROM", "unknown");
-            netlist.nl_setup_global.DEFPARAM(setup, "FORCE_TRISTATE_LOGIC", "0");
-            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(@.A.MODEL)");
-            netlist.nl_setup_global.PARAM(setup, "A.ROM", "$(@.ROM)");
-            netlist.nl_setup_global.PARAM(setup, "A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
-            netlist.nl_setup_global.PARAM(setup, "A.MODEL", "$(@.MODEL)");
-            netlist.nl_setup_global.ALIAS(setup, "1", "A.A6");
-            netlist.nl_setup_global.ALIAS(setup, "2", "A.A5");
-            netlist.nl_setup_global.ALIAS(setup, "3", "A.A4");
-            netlist.nl_setup_global.ALIAS(setup, "4", "A.A3");
-            netlist.nl_setup_global.ALIAS(setup, "5", "A.A0");
-            netlist.nl_setup_global.ALIAS(setup, "6", "A.A1");
-            netlist.nl_setup_global.ALIAS(setup, "7", "A.A2");
-            netlist.nl_setup_global.ALIAS(setup, "8", "A.GND");
-            netlist.nl_setup_global.ALIAS(setup, "9", "A.O4");
-            netlist.nl_setup_global.ALIAS(setup, "10", "A.O3");
-            netlist.nl_setup_global.ALIAS(setup, "11", "A.O2");
-            netlist.nl_setup_global.ALIAS(setup, "12", "A.O1");
-            netlist.nl_setup_global.ALIAS(setup, "13", "A.CE1Q");
-            netlist.nl_setup_global.ALIAS(setup, "14", "A.CE2Q");
-            netlist.nl_setup_global.ALIAS(setup, "15", "A.A7");
-            netlist.nl_setup_global.ALIAS(setup, "16", "A.VCC");
+            h.DEFPARAM("ROM", "unknown");
+            h.DEFPARAM("FORCE_TRISTATE_LOGIC", "0");
+            h.DEFPARAM("MODEL", "$(@.A.MODEL)");
+            h.PARAM("A.ROM", "$(@.ROM)");
+            h.PARAM("A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.PARAM("A.MODEL", "$(@.MODEL)");
+            h.ALIAS("1", "A.A6");
+            h.ALIAS("2", "A.A5");
+            h.ALIAS("3", "A.A4");
+            h.ALIAS("4", "A.A3");
+            h.ALIAS("5", "A.A0");
+            h.ALIAS("6", "A.A1");
+            h.ALIAS("7", "A.A2");
+            h.ALIAS("8", "A.GND");
+            h.ALIAS("9", "A.O4");
+            h.ALIAS("10", "A.O3");
+            h.ALIAS("11", "A.O2");
+            h.ALIAS("12", "A.O1");
+            h.ALIAS("13", "A.CE1Q");
+            h.ALIAS("14", "A.CE2Q");
+            h.ALIAS("15", "A.A7");
+            h.ALIAS("16", "A.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -97,37 +99,39 @@ namespace mame
         //static NETLIST_START(PROM_74S287_DIP)
         public static void netlist_PROM_74S287_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             PROM_74S287(setup, "A");
 #endif
 
-            netlist.nl_setup_global.DEFPARAM(setup, "ROM", "unknown");
-            netlist.nl_setup_global.DEFPARAM(setup, "FORCE_TRISTATE_LOGIC", "0");
-            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(@.A.MODEL)");
-            netlist.nl_setup_global.PARAM(setup, "A.ROM", "$(@.ROM)");
-            netlist.nl_setup_global.PARAM(setup, "A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
-            netlist.nl_setup_global.PARAM(setup, "A.MODEL", "$(@.MODEL)");
-            netlist.nl_setup_global.ALIAS(setup, "1", "A.A6");
-            netlist.nl_setup_global.ALIAS(setup, "2", "A.A5");
-            netlist.nl_setup_global.ALIAS(setup, "3", "A.A4");
-            netlist.nl_setup_global.ALIAS(setup, "4", "A.A3");
-            netlist.nl_setup_global.ALIAS(setup, "5", "A.A0");
-            netlist.nl_setup_global.ALIAS(setup, "6", "A.A1");
-            netlist.nl_setup_global.ALIAS(setup, "7", "A.A2");
-            netlist.nl_setup_global.ALIAS(setup, "8", "A.GND");
-            netlist.nl_setup_global.ALIAS(setup, "9", "A.O3");
-            netlist.nl_setup_global.ALIAS(setup, "10", "A.O2");
-            netlist.nl_setup_global.ALIAS(setup, "11", "A.O1");
-            netlist.nl_setup_global.ALIAS(setup, "12", "A.O0");
-            netlist.nl_setup_global.ALIAS(setup, "13", "A.CE1Q");
-            netlist.nl_setup_global.ALIAS(setup, "14", "A.CE2Q");
-            netlist.nl_setup_global.ALIAS(setup, "15", "A.A7");
-            netlist.nl_setup_global.ALIAS(setup, "16", "A.VCC");
+            h.DEFPARAM("ROM", "unknown");
+            h.DEFPARAM("FORCE_TRISTATE_LOGIC", "0");
+            h.DEFPARAM("MODEL", "$(@.A.MODEL)");
+            h.PARAM("A.ROM", "$(@.ROM)");
+            h.PARAM("A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.PARAM("A.MODEL", "$(@.MODEL)");
+            h.ALIAS("1", "A.A6");
+            h.ALIAS("2", "A.A5");
+            h.ALIAS("3", "A.A4");
+            h.ALIAS("4", "A.A3");
+            h.ALIAS("5", "A.A0");
+            h.ALIAS("6", "A.A1");
+            h.ALIAS("7", "A.A2");
+            h.ALIAS("8", "A.GND");
+            h.ALIAS("9", "A.O3");
+            h.ALIAS("10", "A.O2");
+            h.ALIAS("11", "A.O1");
+            h.ALIAS("12", "A.O0");
+            h.ALIAS("13", "A.CE1Q");
+            h.ALIAS("14", "A.CE2Q");
+            h.ALIAS("15", "A.A7");
+            h.ALIAS("16", "A.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -155,38 +159,40 @@ namespace mame
         //static NETLIST_START(PROM_82S123_DIP)
         public static void netlist_PROM_82S123_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             PROM_82S123(setup, "A");
 #endif
 
-            netlist.nl_setup_global.DEFPARAM(setup, "ROM", "unknown");
-            netlist.nl_setup_global.DEFPARAM(setup, "FORCE_TRISTATE_LOGIC", "0");
-            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(@.A.MODEL)");
-            netlist.nl_setup_global.PARAM(setup, "A.ROM", "$(@.ROM)");
-            netlist.nl_setup_global.PARAM(setup, "A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
-            netlist.nl_setup_global.PARAM(setup, "A.MODEL", "$(@.MODEL)");
-            netlist.nl_setup_global.ALIAS(setup, "1", "A.O0");
-            netlist.nl_setup_global.ALIAS(setup, "2", "A.O1");
-            netlist.nl_setup_global.ALIAS(setup, "3", "A.O2");
-            netlist.nl_setup_global.ALIAS(setup, "4", "A.O3");
-            netlist.nl_setup_global.ALIAS(setup, "5", "A.O4");
-            netlist.nl_setup_global.ALIAS(setup, "6", "A.O5");
-            netlist.nl_setup_global.ALIAS(setup, "7", "A.O6");
-            netlist.nl_setup_global.ALIAS(setup, "8", "A.GND");
+            h.DEFPARAM("ROM", "unknown");
+            h.DEFPARAM("FORCE_TRISTATE_LOGIC", "0");
+            h.DEFPARAM("MODEL", "$(@.A.MODEL)");
+            h.PARAM("A.ROM", "$(@.ROM)");
+            h.PARAM("A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.PARAM("A.MODEL", "$(@.MODEL)");
+            h.ALIAS("1", "A.O0");
+            h.ALIAS("2", "A.O1");
+            h.ALIAS("3", "A.O2");
+            h.ALIAS("4", "A.O3");
+            h.ALIAS("5", "A.O4");
+            h.ALIAS("6", "A.O5");
+            h.ALIAS("7", "A.O6");
+            h.ALIAS("8", "A.GND");
 
-            netlist.nl_setup_global.ALIAS(setup, "9", "A.O7");
-            netlist.nl_setup_global.ALIAS(setup, "10", "A.A0");
-            netlist.nl_setup_global.ALIAS(setup, "11", "A.A1");
-            netlist.nl_setup_global.ALIAS(setup, "12", "A.A2");
-            netlist.nl_setup_global.ALIAS(setup, "13", "A.A3");
-            netlist.nl_setup_global.ALIAS(setup, "14", "A.A4");
-            netlist.nl_setup_global.ALIAS(setup, "15", "A.CEQ");
-            netlist.nl_setup_global.ALIAS(setup, "16", "A.VCC");
+            h.ALIAS("9", "A.O7");
+            h.ALIAS("10", "A.A0");
+            h.ALIAS("11", "A.A1");
+            h.ALIAS("12", "A.A2");
+            h.ALIAS("13", "A.A3");
+            h.ALIAS("14", "A.A4");
+            h.ALIAS("15", "A.CEQ");
+            h.ALIAS("16", "A.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -213,27 +219,29 @@ namespace mame
         //static NETLIST_START(EPROM_2716_DIP)
         public static void netlist_EPROM_2716_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             EPROM_2716(setup, "A");
 #endif
 
-            netlist.nl_setup_global.DEFPARAM(setup, "ROM", "unknown");
-            netlist.nl_setup_global.DEFPARAM(setup, "FORCE_TRISTATE_LOGIC", "0");
-            netlist.nl_setup_global.DEFPARAM(setup, "MODEL", "$(@.A.MODEL)");
-            netlist.nl_setup_global.PARAM(setup, "A.ROM", "$(@.ROM)");
-            netlist.nl_setup_global.PARAM(setup, "A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
-            netlist.nl_setup_global.PARAM(setup, "A.MODEL", "$(@.MODEL)");
-            netlist.nl_setup_global.ALIAS(setup, "1", "A.A7");
-            netlist.nl_setup_global.ALIAS(setup, "2", "A.A6");
-            netlist.nl_setup_global.ALIAS(setup, "3", "A.A5");
-            netlist.nl_setup_global.ALIAS(setup, "4", "A.A4");
-            netlist.nl_setup_global.ALIAS(setup, "5", "A.A3");
-            netlist.nl_setup_global.ALIAS(setup, "6", "A.A2");
-            netlist.nl_setup_global.ALIAS(setup, "7", "A.A1");
-            netlist.nl_setup_global.ALIAS(setup, "8", "A.A0");
+            h.DEFPARAM("ROM", "unknown");
+            h.DEFPARAM("FORCE_TRISTATE_LOGIC", "0");
+            h.DEFPARAM("MODEL", "$(@.A.MODEL)");
+            h.PARAM("A.ROM", "$(@.ROM)");
+            h.PARAM("A.FORCE_TRISTATE_LOGIC", "$(@.FORCE_TRISTATE_LOGIC)");
+            h.PARAM("A.MODEL", "$(@.MODEL)");
+            h.ALIAS("1", "A.A7");
+            h.ALIAS("2", "A.A6");
+            h.ALIAS("3", "A.A5");
+            h.ALIAS("4", "A.A4");
+            h.ALIAS("5", "A.A3");
+            h.ALIAS("6", "A.A2");
+            h.ALIAS("7", "A.A1");
+            h.ALIAS("8", "A.A0");
             throw new emu_unimplemented();
 #if false
             ALIAS(9, A.O0);
@@ -247,14 +255,14 @@ namespace mame
             ALIAS(16, A.O6);
             ALIAS(17, A.O7);
 #endif
-            netlist.nl_setup_global.ALIAS(setup, "18", "A.CE1Q"); // CEQ
-            netlist.nl_setup_global.ALIAS(setup, "19", "A.A10");
-            netlist.nl_setup_global.ALIAS(setup, "20", "A.CE2Q"); // OEQ
-            netlist.nl_setup_global.ALIAS(setup, "22", "A.A9");
-            netlist.nl_setup_global.ALIAS(setup, "23", "A.A8");
-            netlist.nl_setup_global.ALIAS(setup, "24", "A.VCC");
+            h.ALIAS("18", "A.CE1Q"); // CEQ
+            h.ALIAS("19", "A.A10");
+            h.ALIAS("20", "A.CE2Q"); // OEQ
+            h.ALIAS("22", "A.A9");
+            h.ALIAS("23", "A.A8");
+            h.ALIAS("24", "A.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -276,14 +284,16 @@ namespace mame
         //static NETLIST_START(TTL_82S16_DIP)
         public static void netlist_TTL_82S16_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             TTL_82S16(A);
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,      /*        +--------------+       */
+            h.DIPPINS(     /*        +--------------+       */
                    "A.A1", /*     A1 |1     ++    16| VCC   */ "A.VCC",
                    "A.A0", /*     A0 |2           15| A2    */ "A.A2",
                  "A.CE1Q", /*   CE1Q |3           14| A3    */ "A.A3",
@@ -292,10 +302,10 @@ namespace mame
                 "A.DOUTQ", /*  DOUTQ |6           11| A7    */ "A.A7",
                    "A.A4", /*     A4 |7           10| A6    */ "A.A6",
                   "A.GND", /*    GND |8            9| A5    */ "A.A5"
-                         /*        +--------------+       */
+                           /*        +--------------+       */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -319,7 +329,9 @@ namespace mame
         //static NETLIST_START(PROM_82S115_DIP)
         public static void netlist_PROM_82S115_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -327,7 +339,7 @@ namespace mame
             NC_PIN(setup, "NC");
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+        */
+            h.DIPPINS(   /*      +--------------+        */
                  "A.A3", /*   A3 |1     ++    24| VCC    */ "A.VCC",
                  "A.A4", /*   A4 |2           23| A2     */ "A.A2",
                  "A.A5", /*   A5 |3           22| A1     */ "A.A1",
@@ -340,10 +352,10 @@ namespace mame
                  "A.O4", /*   O4 |10          15| O6     */ "A.O6",
                  "NC.I", /*  FE2 |11          14| O5     */ "A.O5",
                 "A.GND", /*  GND |12          13| FE1    */ "NC.I"
-                       /*      +--------------+        */
+                         /*      +--------------+        */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -359,41 +371,75 @@ namespace mame
         //static NETLIST_START(PROM_MK28000_DIP)
         public static void netlist_PROM_MK28000_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             PROM_MK28000(A);
 #endif
 
-            netlist.nl_setup_global.DEFPARAM(setup, "ROM", "unknown");
-            netlist.nl_setup_global.PARAM(setup, "A.ROM", "$(@.ROM)");
-            netlist.nl_setup_global.ALIAS(setup, "1", "A.VCC");
-            netlist.nl_setup_global.ALIAS(setup, "2", "A.A1");
-            netlist.nl_setup_global.ALIAS(setup, "3", "A.A2");
-            netlist.nl_setup_global.ALIAS(setup, "4", "A.A3");
-            netlist.nl_setup_global.ALIAS(setup, "5", "A.A4");
-            netlist.nl_setup_global.ALIAS(setup, "6", "A.A5");
-            netlist.nl_setup_global.ALIAS(setup, "7", "A.A6");
-            netlist.nl_setup_global.ALIAS(setup, "8", "A.A10");
-            netlist.nl_setup_global.ALIAS(setup, "9", "A.GND");
-            netlist.nl_setup_global.ALIAS(setup, "10", "A.A9");
-            netlist.nl_setup_global.ALIAS(setup, "11", "A.A8");
-            netlist.nl_setup_global.ALIAS(setup, "12", "A.A7");
-            netlist.nl_setup_global.ALIAS(setup, "13", "A.ARQ");
-            netlist.nl_setup_global.ALIAS(setup, "14", "A.OE2");
-            netlist.nl_setup_global.ALIAS(setup, "15", "A.A11");
-            netlist.nl_setup_global.ALIAS(setup, "16", "A.O8");
-            netlist.nl_setup_global.ALIAS(setup, "17", "A.O7");
-            netlist.nl_setup_global.ALIAS(setup, "18", "A.O6");
-            netlist.nl_setup_global.ALIAS(setup, "19", "A.O5");
-            netlist.nl_setup_global.ALIAS(setup, "20", "A.O4");
-            netlist.nl_setup_global.ALIAS(setup, "21", "A.O3");
-            netlist.nl_setup_global.ALIAS(setup, "22", "A.O2");
-            netlist.nl_setup_global.ALIAS(setup, "23", "A.O1");
-            netlist.nl_setup_global.ALIAS(setup, "24", "A.OE1");
+            h.DEFPARAM("ROM", "unknown");
+            h.PARAM("A.ROM", "$(@.ROM)");
+            h.ALIAS("1", "A.VCC");
+            h.ALIAS("2", "A.A1");
+            h.ALIAS("3", "A.A2");
+            h.ALIAS("4", "A.A3");
+            h.ALIAS("5", "A.A4");
+            h.ALIAS("6", "A.A5");
+            h.ALIAS("7", "A.A6");
+            h.ALIAS("8", "A.A10");
+            h.ALIAS("9", "A.GND");
+            h.ALIAS("10", "A.A9");
+            h.ALIAS("11", "A.A8");
+            h.ALIAS("12", "A.A7");
+            h.ALIAS("13", "A.ARQ");
+            h.ALIAS("14", "A.OE2");
+            h.ALIAS("15", "A.A11");
+            h.ALIAS("16", "A.O8");
+            h.ALIAS("17", "A.O7");
+            h.ALIAS("18", "A.O6");
+            h.ALIAS("19", "A.O5");
+            h.ALIAS("20", "A.O4");
+            h.ALIAS("21", "A.O3");
+            h.ALIAS("22", "A.O2");
+            h.ALIAS("23", "A.O1");
+            h.ALIAS("24", "A.OE1");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(ROM_MCM14524_DIP)
+        public static void netlist_ROM_MCM14524_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            ROM_MCM14524(A)
+
+            DEFPARAM(ROM, "unknown")
+            PARAM(A.ROM, "$(@.ROM)")
+
+                     /* Motorola MCM14524:      */
+            DIPPINS( /*      +-----..-----+     */
+              A.CLK, /* /CLK |1         16| VDD */ A.VCC,
+               A.EN, /*   CE |2         15| A0  */ A.A0,
+               A.B0, /*   B0 |3   MCM   14| A1  */ A.A1,
+               A.B1, /*   B1 |4  14524  13| A7  */ A.A7,
+               A.B2, /*   B2 |5         12| A6  */ A.A6,
+               A.B3, /*   B3 |6         11| A5  */ A.A5,
+               A.A2, /*   A2 |7         10| A4  */ A.A4,
+              A.GND, /*  VSS |8          9| A3  */ A.A3
+                     /*      +------------+ */
+            )
+#endif
+
+            h.NETLIST_END();
         }
 
 
@@ -413,14 +459,16 @@ namespace mame
          //static NETLIST_START(RAM_2102A_DIP)
         public static void netlist_RAM_2102A_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             RAM_2102A(A);
 #endif
 
-            netlist.nl_setup_global.DIPPINS(setup,    /*      +--------------+      */
+            h.DIPPINS(   /*      +--------------+      */
                  "A.A6", /*   A6 |1     ++    16| A7   */ "A.A7",
                  "A.A5", /*   A5 |2           15| A8   */ "A.A8",
                 "A.RWQ", /*  RWQ |3           14| A9   */ "A.A9",
@@ -429,29 +477,64 @@ namespace mame
                  "A.A3", /*   A3 |6           11| DI   */ "A.DI",
                  "A.A4", /*   A4 |7           10| VCC  */ "A.VCC",
                  "A.A0", /*   A0 |8            9| GND  */ "A.GND"
-                       /*      +--------------+      */
+                         /*      +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(ROM_TMS4800_DIP)
+        public static void netlist_ROM_TMS4800_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            ROM_TMS4800(A)
+
+            DIPPINS(   /*       +----------------+     */
+                A.VSS, /*   VSS |1      ++     24| OE1 */ A.OE1,
+                A.A1,  /*    A1 |2             23| O1  */ A.O1,
+                A.A2,  /*    A2 |3             22| O2  */ A.O2,
+                A.A3,  /*    A3 |4   TMS-4800  21| O3  */ A.O3,
+                A.A4,  /*    A4 |5             20| O4  */ A.O4,
+                A.A5,  /*    A5 |6             19| O5  */ A.O5,
+                A.A6,  /*    A6 |7             18| O6  */ A.O6,
+                A.A10, /*   A10 |8             17| O7  */ A.O7,
+                A.VGG, /*   VGG |9             16| O8  */ A.O8,
+                A.A9,  /*    A9 |10            15| A11 */ A.A11,
+                A.A8,  /*    A8 |11            14| OE2 */ A.OE2,
+                A.A7,  /*    A7 |12            13| AR  */ A.AR
+                       /*       +----------------+      */
+            )
+#endif
+
+            h.NETLIST_END();
         }
 
 
         //NETLIST_START(roms_lib)
         public static void netlist_roms_lib(netlist.nlparse_t setup)
         {
-            throw new emu_unimplemented();
-#if false
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "PROM_82S123_DIP", netlist_PROM_82S123_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "PROM_82S126_DIP", netlist_PROM_82S126_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "PROM_74S287_DIP", netlist_PROM_74S287_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "EPROM_2716_DIP", netlist_EPROM_2716_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TTL_82S16_DIP", netlist_TTL_82S16_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "PROM_82S115_DIP", netlist_PROM_82S115_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "PROM_MK28000_DIP", netlist_PROM_MK28000_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "RAM_2102A_DIP", netlist_RAM_2102A_DIP);
-#endif
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_START(setup);
+
+            h.LOCAL_LIB_ENTRY("PROM_82S123_DIP", netlist_PROM_82S123_DIP);
+            h.LOCAL_LIB_ENTRY("PROM_82S126_DIP", netlist_PROM_82S126_DIP);
+            h.LOCAL_LIB_ENTRY("PROM_74S287_DIP", netlist_PROM_74S287_DIP);
+            h.LOCAL_LIB_ENTRY("EPROM_2716_DIP", netlist_EPROM_2716_DIP);
+            h.LOCAL_LIB_ENTRY("TTL_82S16_DIP", netlist_TTL_82S16_DIP);
+            h.LOCAL_LIB_ENTRY("PROM_82S115_DIP", netlist_PROM_82S115_DIP);
+            h.LOCAL_LIB_ENTRY("PROM_MK28000_DIP", netlist_PROM_MK28000_DIP);
+            h.LOCAL_LIB_ENTRY("ROM_MCM14524_DIP", netlist_ROM_MCM14524_DIP);
+            h.LOCAL_LIB_ENTRY("RAM_2102A_DIP", netlist_RAM_2102A_DIP);
+            h.LOCAL_LIB_ENTRY("ROM_TMS4800_DIP", netlist_ROM_TMS4800_DIP);
+
+            h.NETLIST_END();
         }
     }
 }

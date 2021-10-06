@@ -39,7 +39,7 @@ namespace mame.netlist
                 }
                 catch (Exception)
                 {
-                    plib.pglobal.terminate("exception in property_store_t.get()");
+                    plib.pg.terminate("exception in property_store_t.get()");
                     return null;
                 }
             }
@@ -48,7 +48,7 @@ namespace mame.netlist
             //static void remove(key_type obj) noexcept
 
 
-            static std.unordered_map<C, T> lstore;
+            static std.unordered_map<C, T> lstore = new std.unordered_map<C, T>();
 
             static std.unordered_map<C, T> store()
             {
@@ -64,7 +64,7 @@ namespace mame.netlist
         ///
         ///  This class serves as the base class for all device, terminal and
         ///  objects.
-        public class object_t : global_object
+        public class object_t
         {
             //using props = property_store_t<object_t, pstring>;
 

@@ -11,11 +11,12 @@ using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using s8  = System.SByte;
 using s32 = System.Int32;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using u8  = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+using uX = mame.FlexPrim;
 
 
 namespace mame
@@ -25,8 +26,7 @@ namespace mame
 
 
     // address map constructors are delegates that build up an address_map
-    //using address_map_constructor = named_delegate<void (address_map &)>;
-    public delegate void address_map_constructor(address_map map, device_t owner);
+    public delegate void address_map_constructor(address_map map, device_t owner);  //using address_map_constructor = named_delegate<void (address_map &)>;
 
 
     // ======================> read_delegate
@@ -501,7 +501,7 @@ namespace mame
         //#else
         //template <typename Format, typename... Params> static void VPRINTF(Format &&, Params &&...) {}
         //#endif
-        public static void VPRINTF(string format, params object [] args) { if (VERBOSE) global_object.osd_printf_info(format, args); }
+        public static void VPRINTF(string format, params object [] args) { if (VERBOSE) g.osd_printf_info(format, args); }
 
 
         // =====================-> Width -> types
@@ -523,11 +523,11 @@ namespace mame
         // generic direct read
         //template<int Width, int AddrShift, endianness_t Endian, int TargetWidth, bool Aligned, typename T>
         public static uX memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_TargetWidth, bool_Aligned>(Func<offs_t, uX, uX> rop, offs_t address, uX mask)  //typename emu::detail::handler_entry_size<TargetWidth>::uX  memory_read_generic(T rop, offs_t address, typename emu::detail::handler_entry_size<TargetWidth>::uX mask)
-            where int_Width : int_constant, new()
-            where int_AddrShift : int_constant, new()
-            where endianness_t_Endian : endianness_t_constant, new()
-            where int_TargetWidth : int_constant, new()
-            where bool_Aligned : bool_constant, new()
+            where int_Width : int_const, new()
+            where int_AddrShift : int_const, new()
+            where endianness_t_Endian : endianness_t_const, new()
+            where int_TargetWidth : int_const, new()
+            where bool_Aligned : bool_const, new()
         {
             //using TargetType = typename emu::detail::handler_entry_size<TargetWidth>::uX;
             //using NativeType = typename emu::detail::handler_entry_size<Width>::uX;
@@ -619,7 +619,7 @@ namespace mame
                 {
                     // read lowest bits from first address
                     uX curmask = new uX(Width, mask << (int)offsbits);  //NativeType curmask = mask << offsbits;
-                    if (curmask != 0) result = new uX(TargetWidth, rop(address, curmask) >> (int)offsbits);
+                    if (curmask != 0U) result = new uX(TargetWidth, rop(address, curmask) >> (int)offsbits);
 
                     // read middle bits from subsequent addresses
                     offsbits = NATIVE_BITS - offsbits;
@@ -680,10 +680,10 @@ namespace mame
         // ======================> Direct dispatching
 
         public static uX dispatch_read<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(offs_t mask, offs_t offset, uX mem_mask, Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> dispatch)  //template<int Level, int Width, int AddrShift, endianness_t Endian> typename emu::detail::handler_entry_size<Width>::uX dispatch_read(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_read<Width, AddrShift, Endian> *const *dispatch)
-            where int_Level : int_constant, new()
-            where int_Width : int_constant, new()
-            where int_AddrShift : int_constant, new()
-            where endianness_t_Endian : endianness_t_constant, new()
+            where int_Level : int_const, new()
+            where int_Width : int_const, new()
+            where int_AddrShift : int_const, new()
+            where endianness_t_Endian : endianness_t_const, new()
         {
             int Level = new int_Level().value;
             int Width = new int_Width().value;
@@ -695,10 +695,10 @@ namespace mame
 
 
         public static void dispatch_write<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(offs_t mask, offs_t offset, uX data, uX mem_mask, Pointer<handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>> dispatch)  //template<int Level, int Width, int AddrShift, endianness_t Endian> void dispatch_write(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX data, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_write<Width, AddrShift, Endian> *const *dispatch)
-            where int_Level : int_constant, new()
-            where int_Width : int_constant, new()
-            where int_AddrShift : int_constant, new()
-            where endianness_t_Endian : endianness_t_constant, new()
+            where int_Level : int_const, new()
+            where int_Width : int_const, new()
+            where int_AddrShift : int_const, new()
+            where endianness_t_Endian : endianness_t_const, new()
         {
             int Level = new int_Level().value;
             int Width = new int_Width().value;
@@ -756,88 +756,6 @@ namespace mame
 #endif
 
 
-    public struct uX
-    {
-        int m_width;
-        u8  m_x8;
-        u16 m_x16;
-        u32 m_x32;
-        u64 m_x64;
-
-
-        public uX(int width, u64 initial) { this = default; this.m_width = width; Set(initial); }
-        public uX(int width, uX initial) { this = default; this.m_width = width; Set(initial); }
-
-
-        public static uX MaxValue(int width) { return new uX(width, u64.MaxValue); }
-
-
-        public int width { get { return m_width; } }
-        public u8 x8 { get { return (u8)Get(); } }
-        public u16 x16 { get { return (u16)Get(); } }
-        public u32 x32 { get { return (u32)Get(); } }
-        public u64 x64 { get { return (u64)Get(); } }
-
-
-        void Set(u64 value)
-        {
-            switch (width)
-            {
-                case 0: m_x8  = (u8)value; break;
-                case 1: m_x16 = (u16)value; break;
-                case 2: m_x32 = (u32)value; break;
-                case 3: m_x64 = (u64)value; break;
-                default: throw new emu_unimplemented();
-            }
-        }
-
-        void Set(uX value) { Set(value.Get()); }
-
-
-        u64 Get()
-        {
-            switch (width)
-            {
-                case 0: return m_x8;
-                case 1: return m_x16;
-                case 2: return m_x32;
-                case 3: return m_x64;
-                default: throw new emu_unimplemented();
-            }
-        }
-
-
-        public static bool operator ==(uX left, uX right) { return left.Get() == right.Get(); }
-        public static bool operator !=(uX left, uX right) { return left.Get() != right.Get(); }
-        public static bool operator ==(uX left, u64 right) { return left.Get() == right; }
-        public static bool operator !=(uX left, u64 right) { return left.Get() != right; }
-
-        public static uX operator +(uX left, u64 right) { return new uX(left.width, left.Get() + right); }
-        public static uX operator +(uX left, uX right) { return new uX(left.width, left.Get() + right.Get()); }
-        public static uX operator <<(uX left, int right) { return new uX(left.width, left.Get() << right); }
-        public static uX operator >>(uX left, int right) { return new uX(left.width, left.Get() >> right); }
-        public static uX operator |(uX left, u64 right) { return new uX(left.width, left.Get() | right); }
-        public static uX operator |(uX left, uX right) { return new uX(left.width, left.Get() | right.Get()); }
-        public static uX operator &(uX left, u64 right) { return new uX(left.width, left.Get() & right); }
-        public static uX operator &(uX left, uX right) { return new uX(left.width, left.Get() & right.Get()); }
-
-        public static uX operator ~(uX left) { return new uX(left.width, ~left.Get()); }
-
-
-        public u32 sizeof_()
-        {
-            switch (width)
-            {
-                case 0: return 1;
-                case 1: return 2;
-                case 2: return 4;
-                case 3: return 8;
-                default: throw new emu_unimplemented();
-            }
-        }
-    }
-
-
     // struct with function pointers for accessors; use is generally discouraged unless necessary
     public struct data_accessors
     {
@@ -881,7 +799,7 @@ namespace mame
 
     // Handlers the refcounting as part of the interface
 
-    public abstract class handler_entry : global_object, IDisposable
+    public abstract class handler_entry : IDisposable
     {
         //DISABLE_COPYING(handler_entry);
 
@@ -964,7 +882,7 @@ namespace mame
 
         protected virtual void dump_map(std.vector<memory_entry> map)
         {
-            fatalerror("dump_map called on non-dispatching class\n");
+            g.fatalerror("dump_map called on non-dispatching class\n");
         }
 
         protected abstract string name();
@@ -977,12 +895,12 @@ namespace mame
 
         public virtual void select_a(int slot)
         {
-            fatalerror("select_a called on non-view\n");
+            g.fatalerror("select_a called on non-view\n");
         }
 
         public virtual void select_u(int slot)
         {
-            fatalerror("select_u called on non-view\n");
+            g.fatalerror("select_u called on non-view\n");
         }
     }
 
@@ -996,9 +914,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     public abstract class handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -1034,7 +952,7 @@ namespace mame
 
         public virtual void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
         {
-            fatalerror("lookup called on non-dispatching class\n");
+            g.fatalerror("lookup called on non-dispatching class\n");
         }
 
 
@@ -1051,13 +969,13 @@ namespace mame
 
         public virtual void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
         {
-            fatalerror("populate called on non-dispatching class\n");
+            g.fatalerror("populate called on non-dispatching class\n");
         }
 
 
         public virtual void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
         {
-            fatalerror("populate called on non-dispatching class\n");
+            g.fatalerror("populate called on non-dispatching class\n");
         }
 
 
@@ -1075,13 +993,13 @@ namespace mame
 
         public virtual void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, u8 rkey, std.vector<mapping> mappings)
         {
-            fatalerror("populate_mismatched called on non-dispatching class\n");
+            g.fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
         public virtual void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, std.vector<mapping> mappings)
         {
-            fatalerror("populate_mismatched called on non-dispatching class\n");
+            g.fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
@@ -1099,34 +1017,34 @@ namespace mame
 
         protected virtual void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read_passthrough<int_Width, int_AddrShift, endianness_t_Endian> handler, std.vector<mapping> mappings)
         {
-            fatalerror("populate_passthrough called on non-dispatching class\n");
+            g.fatalerror("populate_passthrough called on non-dispatching class\n");
         }
 
 
         protected virtual void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read_passthrough<int_Width, int_AddrShift, endianness_t_Endian> handler, std.vector<mapping> mappings)
         {
-            fatalerror("populate_passthrough called on non-dispatching class\n");
+            g.fatalerror("populate_passthrough called on non-dispatching class\n");
         }
 
 
         // Remove a set of passthrough handlers, leaving the lower handler in their place
         public virtual void detach(std.unordered_set<handler_entry> handlers)
         {
-            fatalerror("detach called on non-dispatching class\n");
+            g.fatalerror("detach called on non-dispatching class\n");
         }
 
 
         // Return the internal structures of the root dispatch
         public virtual Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> get_dispatch()
         {
-            fatalerror("get_dispatch called on non-dispatching class\n");
+            g.fatalerror("get_dispatch called on non-dispatching class\n");
             return null;
         }
 
 
         public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> dispatch, Pointer<handler_entry.range> ranges)
         {
-            fatalerror("init_handlers called on non-view class\n");
+            g.fatalerror("init_handlers called on non-view class\n");
         }
 
 
@@ -1147,9 +1065,9 @@ namespace mame
 
     //template<int Width, int AddrShift, endianness_t Endian>
     public abstract class handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -1186,7 +1104,7 @@ namespace mame
 
         protected virtual void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> handler)
         {
-            fatalerror("lookup called on non-dispatching class\n");
+            g.fatalerror("lookup called on non-dispatching class\n");
         }
 
 
@@ -1203,13 +1121,13 @@ namespace mame
 
         public virtual void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> handler)
         {
-            fatalerror("populate called on non-dispatching class\n");
+            g.fatalerror("populate called on non-dispatching class\n");
         }
 
 
         public virtual void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> handler)
         {
-            fatalerror("populate called on non-dispatching class\n");
+            g.fatalerror("populate called on non-dispatching class\n");
         }
 
 
@@ -1228,13 +1146,13 @@ namespace mame
 
         public virtual void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, u8 rkey, std.vector<mapping> mappings)
         {
-            fatalerror("populate_mismatched called on non-dispatching class\n");
+            g.fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
         public virtual void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, std.vector<mapping> mappings)
         {
-            fatalerror("populate_mismatched called on non-dispatching class\n");
+            g.fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
@@ -1252,34 +1170,34 @@ namespace mame
 
         protected virtual void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write_passthrough<int_Width, int_AddrShift, endianness_t_Endian> handler, std.vector<mapping> mappings)
         {
-            fatalerror("populate_passthrough called on non-dispatching class\n");
+            g.fatalerror("populate_passthrough called on non-dispatching class\n");
         }
 
 
         protected virtual void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write_passthrough<int_Width, int_AddrShift, endianness_t_Endian> handler, std.vector<mapping> mappings)
         {
-            fatalerror("populate_passthrough called on non-dispatching class\n");
+            g.fatalerror("populate_passthrough called on non-dispatching class\n");
         }
 
 
         // Remove a set of passthrough handlers, leaving the lower handler in their place
         public virtual void detach(std.unordered_set<handler_entry> handlers)
         {
-            fatalerror("detach called on non-dispatching class\n");
+            g.fatalerror("detach called on non-dispatching class\n");
         }
 
 
         // Return the internal structures of the root dispatch
         public virtual Pointer<handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>> get_dispatch()
         {
-            fatalerror("get_dispatch called on non-dispatching class\n");
+            g.fatalerror("get_dispatch called on non-dispatching class\n");
             return null;
         }
 
 
         public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>> dispatch, Pointer<handler_entry.range> ranges)
         {
-            fatalerror("init_handlers called on non-view class\n");
+            g.fatalerror("init_handlers called on non-view class\n");
         }
 
 
@@ -1326,10 +1244,10 @@ namespace mame
 
     //template<int Level, int Width, int AddrShift, endianness_t Endian>
     public class memory_access_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Level : int_constant, new()
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Level : int_const, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //friend class ::address_space;
 
@@ -1368,8 +1286,8 @@ namespace mame
         //}
 
 
-        public u8 read_byte(offs_t address) { return Width == 0 ? read_native(address & ~NATIVE_MASK).x8 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_0, bool_constant_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(0, 0xff)).x8; }
-        public u16 read_word(offs_t address) { return Width == 1 ? read_native(address & ~NATIVE_MASK).x16 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).x16; }
+        public u8 read_byte(offs_t address) { return Width == 0 ? read_native(address & ~NATIVE_MASK).u8 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(0, 0xff)).u8; }
+        public u16 read_word(offs_t address) { return Width == 1 ? read_native(address & ~NATIVE_MASK).u16 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).u16; }
         //u16 read_word(offs_t address, u16 mask) { return memory_read_generic<Width, AddrShift, Endian, 1, true>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
         //u16 read_word_unaligned(offs_t address) { return memory_read_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, 0xffff); }
         //u16 read_word_unaligned(offs_t address, u16 mask) { return memory_read_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
@@ -1382,8 +1300,8 @@ namespace mame
         //u64 read_qword_unaligned(offs_t address) { return memory_read_generic<Width, AddrShift, Endian, 3, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, 0xffffffffffffffffU); }
         //u64 read_qword_unaligned(offs_t address, u64 mask) { return memory_read_generic<Width, AddrShift, Endian, 3, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
 
-        public void write_byte(offs_t address, u8 data) { if (Width == 0) write_native(address & ~NATIVE_MASK, new uX(0, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_0, bool_constant_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(0, data), new uX(0, 0xff)); }
-        public void write_word(offs_t address, u16 data) { if (Width == 1) write_native(address & ~NATIVE_MASK, new uX(1, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(1, data), new uX(1, 0xffff)); }
+        public void write_byte(offs_t address, u8 data) { if (Width == 0) write_native(address & ~NATIVE_MASK, new uX(0, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(0, data), new uX(0, 0xff)); }
+        public void write_word(offs_t address, u16 data) { if (Width == 1) write_native(address & ~NATIVE_MASK, new uX(1, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(1, data), new uX(1, 0xffff)); }
         //void write_word(offs_t address, u16 data, u16 mask) { memory_write_generic<Width, AddrShift, Endian, 1, true>([this](offs_t offset, NativeType data, NativeType mask) { write_native(offset, data, mask); }, address, data, mask); }
         //void write_word_unaligned(offs_t address, u16 data) { memory_write_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType data, NativeType mask) { write_native(offset, data, mask); }, address, data, 0xffff); }
         //void write_word_unaligned(offs_t address, u16 data, u16 mask) { memory_write_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType data, NativeType mask) { write_native(offset, data, mask); }, address, data, mask); }
@@ -1425,9 +1343,9 @@ namespace mame
     // memory_access_cache contains state data for cached access
     //template<int Width, int AddrShift, endianness_t Endian>
     public class memory_access_cache<int_Width, int_AddrShift, endianness_t_Endian>
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         //friend class ::address_space;
 
@@ -1501,8 +1419,8 @@ namespace mame
         //    return m_cache_r->get_ptr(address);
         //}
 
-        public u8 read_byte(offs_t address) { return Width == 0 ? read_native(address & ~NATIVE_MASK).x8 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_0, bool_constant_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(0, 0xff)).x8; }
-        public u16 read_word(offs_t address) { return Width == 1 ? read_native(address & ~NATIVE_MASK).x16 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_constant_1, bool_constant_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).x16; }
+        public u8 read_byte(offs_t address) { return Width == 0 ? read_native(address & ~NATIVE_MASK).u8 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(0, 0xff)).u8; }
+        public u16 read_word(offs_t address) { return Width == 1 ? read_native(address & ~NATIVE_MASK).u16 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).u16; }
         //u16 read_word(offs_t address, u16 mask) { return memory_read_generic<Width, AddrShift, Endian, 1, true>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
         //u16 read_word_unaligned(offs_t address) { return memory_read_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, 0xffff); }
         //u16 read_word_unaligned(offs_t address, u16 mask) { return memory_read_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
@@ -1582,16 +1500,16 @@ namespace mame
     // ======================> memory_access cache/specific type dispatcher
     //template<int HighBits, int Width, int AddrShift, endianness_t Endian>
     struct memory_access<int_HighBits, int_Width, int_AddrShift, endianness_t_Endian>
-        where int_HighBits : int_constant, new()
-        where int_Width : int_constant, new()
-        where int_AddrShift : int_constant, new()
-        where endianness_t_Endian : endianness_t_constant, new()
+        where int_HighBits : int_const, new()
+        where int_Width : int_const, new()
+        where int_AddrShift : int_const, new()
+        where endianness_t_Endian : endianness_t_const, new()
     {
         static readonly int HighBits = new int_HighBits().value;
 
 
         //static constexpr int Level = emu::detail::handler_entry_dispatch_level(HighBits);
-        public class int_Level : int_constant { public int value { get { return emumem_global.handler_entry_dispatch_level(HighBits); } } }
+        public class int_Level : int_const { public int value { get { return emumem_global.handler_entry_dispatch_level(HighBits); } } }
 
 
         //using cache = emu::detail::memory_access_cache<Width, AddrShift, Endian>;
@@ -1648,7 +1566,7 @@ namespace mame
 
     // ======================> address_space_config
     // describes an address space and provides basic functions to map addresses to bytes
-    public class address_space_config : global_object
+    public class address_space_config
     {
         //friend class address_map;
 
@@ -1674,7 +1592,7 @@ namespace mame
         public address_space_config()
         {
             m_name = "unknown";
-            m_endianness = ENDIANNESS_NATIVE;
+            m_endianness = g.ENDIANNESS_NATIVE;
             m_data_width = 0;
             m_addr_width = 0;
             m_addr_shift = 0;
@@ -1744,13 +1662,13 @@ namespace mame
         public offs_t byte2addr(offs_t address) { return m_addr_shift > 0 ? (address << m_addr_shift) : (address >> -m_addr_shift); }
 
         // address-to-byte conversion helpers
-        public offs_t addr2byte_end(offs_t address) { return m_addr_shift < 0 ? (UInt32)((address << -m_addr_shift) | ((1 << -m_addr_shift) - 1)) : (address >> m_addr_shift); }
+        public offs_t addr2byte_end(offs_t address) { return m_addr_shift < 0 ? (UInt32)((address << -m_addr_shift) | ((1U << -m_addr_shift) - 1)) : (address >> m_addr_shift); }
         //offs_t byte2addr_end(offs_t address) { return (m_addrbus_shift > 0) ? ((address << m_addrbus_shift) | ((1 << m_addrbus_shift) - 1)) : (address >> -m_addrbus_shift); }
     }
 
 
     // ======================> address_space
-    public abstract class address_space_installer : global_object
+    public abstract class address_space_installer
     {
         protected address_space_config m_config;       // configuration of this space
         public memory_manager m_manager;          // reference to the owning manager
@@ -1850,36 +1768,36 @@ namespace mame
 
         // install taps with mirroring
         protected virtual memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u8> tap, memory_passthrough_handler mph = null)   //virtual memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 8-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 8-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u16> tap, memory_passthrough_handler mph = null)   //virtual memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 16-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 16-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u32> tap, memory_passthrough_handler mph = null)   //virtual memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 32-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 32-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u64> tap, memory_passthrough_handler mph = null)   //virtual memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 64-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 64-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u8> tap, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 8-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 8-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u16> tap, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 16-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 16-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u32> tap, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 32-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 32-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u64> tap, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 64-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 64-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
         public virtual memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u8> tapr, install_tap_func<u8> tapw, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tapr, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tapw, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 8-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 8-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
         public virtual memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u16> tapr, install_tap_func<u16> tapw, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tapr, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 16-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 16-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u32> tapr, install_tap_func<u32> tapw, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tapr, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 32-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 32-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u64> tapr, install_tap_func<u64> tapw, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapr, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 64-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 64-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
 
         protected virtual memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<uX> tap, memory_passthrough_handler mph = null)   //virtual memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 8-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 8-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<uX> tap, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 64-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 64-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<uX> tapr, install_tap_func<uX> tapw, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapr, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr);
-        { global_object.fatalerror("Trying to install a 64-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { g.fatalerror("Trying to install a 64-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
 
 
         // install views
@@ -2263,15 +2181,15 @@ namespace mame
         protected void check_optimize_all(string function, int width, offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, out offs_t nstart, out offs_t nend, out offs_t nmask, out offs_t nmirror, out u64 nunitmask, out int ncswidth)
         {
             if (addrstart > addrend)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is after the end address.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is after the end address.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect);
             if ((addrstart & ~m_addrmask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrstart & m_addrmask);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrstart & m_addrmask);
             if ((addrend & ~m_addrmask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrend & m_addrmask);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrend & m_addrmask);
 
             // Check the relative data widths
             if (width > m_config.data_width())
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, cannot install a {6}-bits wide handler in a {7}-bits wide address space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, width, m_config.data_width());
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, cannot install a {6}-bits wide handler in a {7}-bits wide address space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, width, m_config.data_width());
 
             // Check the validity of the addresses given their intrinsic width
             // We assume that busses with non-zero address shift have a data width matching the shift (reality says yes)
@@ -2279,9 +2197,9 @@ namespace mame
             offs_t lowbits_mask = width != 0 && m_config.addr_shift() == 0 ? ((offs_t)width >> 3) - 1 : default_lowbits_mask;
 
             if ((addrstart & lowbits_mask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address has low bits set, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrstart & ~lowbits_mask);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address has low bits set, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrstart & ~lowbits_mask);
             if (((~addrend) & lowbits_mask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address has low bits unset, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrend | lowbits_mask);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address has low bits unset, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrend | lowbits_mask);
 
 
             offs_t set_bits = addrstart | addrend;
@@ -2294,27 +2212,27 @@ namespace mame
             changing_bits |= changing_bits >> 16;
 
             if ((addrmask & ~m_addrmask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrmask & m_addrmask);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrmask & m_addrmask);
             if ((addrselect & ~m_addrmask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrselect & m_addrmask);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrselect & m_addrmask);
             if ((addrmask & ~changing_bits) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is trying to unmask an unchanging address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmask & changing_bits);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is trying to unmask an unchanging address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmask & changing_bits);
             if ((addrmirror & changing_bits) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~changing_bits);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~changing_bits);
             if ((addrselect & changing_bits) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~changing_bits);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~changing_bits);
             if ((addrmirror & set_bits) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~set_bits);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~set_bits);
             if ((addrselect & set_bits) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~set_bits);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~set_bits);
             if ((addrmirror & addrselect) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a select bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~addrselect);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a select bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~addrselect);
 
             // Check the cswidth, if provided
             if (cswidth > m_config.data_width())
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is too large for a {7}-bit space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, m_config.data_width());
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is too large for a {7}-bit space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, m_config.data_width());
             if (width != 0 && (cswidth % width) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is not a multiple of handler size {7}.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, width);
+                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is not a multiple of handler size {7}.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, width);
 
             ncswidth = cswidth != 0 ? cswidth : width;
 
@@ -2331,7 +2249,7 @@ namespace mame
                     while (cmask != 0 && (cmask & block_mask) == 0)
                         cmask >>= width;
                     if (cmask != 0 && cmask != block_mask)
-                        global_object.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the unitmask of %016x has incorrect granularity for %d-bit chip selection.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth);
+                        g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the unitmask of %016x has incorrect granularity for %d-bit chip selection.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth);
                 }
             }
 
@@ -2429,17 +2347,17 @@ namespace mame
         protected void check_optimize_mirror(string function, offs_t addrstart, offs_t addrend, offs_t addrmirror, out offs_t nstart, out offs_t nend, out offs_t nmask, out offs_t nmirror)
         {
             if (addrstart > addrend)
-                global_object.fatalerror("{0}: In range {1}-{2} mirror {3}, start address is after the end address.\n", function, addrstart, addrend, addrmirror);
+                g.fatalerror("{0}: In range {1}-{2} mirror {3}, start address is after the end address.\n", function, addrstart, addrend, addrmirror);
             if ((addrstart & ~m_addrmask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mirror {3}, start address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrstart & m_addrmask);
+                g.fatalerror("{0}: In range {1}-{2} mirror {3}, start address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrstart & m_addrmask);
             if ((addrend & ~m_addrmask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mirror {3}, end address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrend & m_addrmask);
+                g.fatalerror("{0}: In range {1}-{2} mirror {3}, end address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrend & m_addrmask);
 
             offs_t lowbits_mask = (offs_t)((m_config.data_width() >> (3 - m_config.addr_shift())) - 1);
             if ((addrstart & lowbits_mask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mirror {3}, start address has low bits set, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrstart & ~lowbits_mask);
+                g.fatalerror("{0}: In range {1}-{2} mirror {3}, start address has low bits set, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrstart & ~lowbits_mask);
             if (((~addrend) & lowbits_mask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mirror {3}, end address has low bits unset, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrend | lowbits_mask);
+                g.fatalerror("{0}: In range {1}-{2} mirror {3}, end address has low bits unset, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrend | lowbits_mask);
 
             offs_t set_bits = addrstart | addrend;
             offs_t changing_bits = addrstart ^ addrend;
@@ -2451,11 +2369,11 @@ namespace mame
             changing_bits |= changing_bits >> 16;
 
             if ((addrmirror & ~m_addrmask) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrmirror & m_addrmask);
+                g.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrmirror & m_addrmask);
             if ((addrmirror & changing_bits) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a changing address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~changing_bits);
+                g.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a changing address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~changing_bits);
             if ((addrmirror & set_bits) != 0)
-                global_object.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a set address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~set_bits);
+                g.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a set address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~set_bits);
 
             nstart = addrstart;
             nend = addrend;
@@ -2536,7 +2454,7 @@ namespace mame
 
         ~address_space()
         {
-            global_object.assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
         }
 
     
@@ -2564,21 +2482,21 @@ namespace mame
 
         //template<int Width, int AddrShift, endianness_t Endian>
         public void cache<int_Width, int_AddrShift, endianness_t_Endian>(emu.detail.memory_access_cache<int_Width, int_AddrShift, endianness_t_Endian> v)  //template<int Width, int AddrShift, endianness_t Endian> void cache(emu::detail::memory_access_cache<Width, AddrShift, Endian> &v) {
-            where int_Width : int_constant, new()
-            where int_AddrShift : int_constant, new()
-            where endianness_t_Endian : endianness_t_constant, new()
+            where int_Width : int_const, new()
+            where int_AddrShift : int_const, new()
+            where endianness_t_Endian : endianness_t_const, new()
         {
             int Width = new int_Width().value;
             int AddrShift = new int_AddrShift().value;
             endianness_t Endian = new endianness_t_Endian().value;
 
             if (AddrShift != m_config.addr_shift())
-                fatalerror("Requesting cache() with address shift {0} while the config says {1}\n", AddrShift, m_config.addr_shift());
+                g.fatalerror("Requesting cache() with address shift {0} while the config says {1}\n", AddrShift, m_config.addr_shift());
             if (8 << Width != m_config.data_width())
-                fatalerror("Requesting cache() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
+                g.fatalerror("Requesting cache() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
             if (Endian != m_config.endianness())
-                fatalerror("Requesting cache() with endianness {0} while the config says {1}\n",
-                           endianness_names[(int)Endian], endianness_names[(int)m_config.endianness()]);
+                g.fatalerror("Requesting cache() with endianness {0} while the config says {1}\n",
+                           g.endianness_names[(int)Endian], g.endianness_names[(int)m_config.endianness()]);
 
             v.set(this, get_cache_info());
         }
@@ -2586,10 +2504,10 @@ namespace mame
 
         //template<int Level, int Width, int AddrShift, endianness_t Endian>
         public void specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(emu.detail.memory_access_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> v)  //template<int Level, int Width, int AddrShift, endianness_t Endian> void specific(emu::detail::memory_access_specific<Level, Width, AddrShift, Endian> &v) {
-            where int_Level : int_constant, new()
-            where int_Width : int_constant, new()
-            where int_AddrShift : int_constant, new()
-            where endianness_t_Endian : endianness_t_constant, new()
+            where int_Level : int_const, new()
+            where int_Width : int_const, new()
+            where int_AddrShift : int_const, new()
+            where endianness_t_Endian : endianness_t_const, new()
         {
             int Level = new int_Level().value;
             int Width = new int_Width().value;
@@ -2597,14 +2515,14 @@ namespace mame
             endianness_t Endian = new endianness_t_Endian().value;
 
             if (Level != emumem_global.handler_entry_dispatch_level(m_config.addr_width()))
-                fatalerror("Requesting specific() with wrong level, bad address width (the config says {0})\n", m_config.addr_width());
+                g.fatalerror("Requesting specific() with wrong level, bad address width (the config says {0})\n", m_config.addr_width());
             if (AddrShift != m_config.addr_shift())
-                fatalerror("Requesting specific() with address shift {0} while the config says {1}\n", AddrShift, m_config.addr_shift());
+                g.fatalerror("Requesting specific() with address shift {0} while the config says {1}\n", AddrShift, m_config.addr_shift());
             if (8 << Width != m_config.data_width())
-                fatalerror("Requesting specific() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
+                g.fatalerror("Requesting specific() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
             if (Endian != m_config.endianness())
-                fatalerror("Requesting spefific() with endianness {0} while the config says {1}\n",
-                           endianness_names[(int)Endian], endianness_names[(int)m_config.endianness()]);
+                g.fatalerror("Requesting spefific() with endianness {0} while the config says {1}\n",
+                           g.endianness_names[(int)Endian], g.endianness_names[(int)m_config.endianness()]);
 
             v.set(this, get_specific_info());
         }
@@ -2711,7 +2629,7 @@ namespace mame
             if (m_map.m_globalmask != 0)
             {
                 if ((m_map.m_globalmask & ~m_addrmask) != 0)
-                    global_object.fatalerror("Can't set a global address mask of {0} on a {1}-bits address width bus.\n", m_map.m_globalmask, addr_width());
+                    g.fatalerror("Can't set a global address mask of {0} on a {1}-bits address width bus.\n", m_map.m_globalmask, addr_width());
 
                 m_addrmask = m_map.m_globalmask;
             }
@@ -2745,7 +2663,7 @@ namespace mame
                     if (share == null)
                     {
                         if (!allow_alloc)
-                            global_object.fatalerror("Trying to create share '{0}' too late\n", fulltag);
+                            g.fatalerror("Trying to create share '{0}' too late\n", fulltag);
 
                         emumem_global.VPRINTF("Creating share '{0}' of length {1}\n", fulltag, entry.m_addrend + 1 - entry.m_addrstart);
                         share = m_manager.share_alloc(m_device, fulltag, (u8)m_config.data_width(), address_to_byte(entry.m_addrend + 1 - entry.m_addrstart), endianness());
@@ -2754,7 +2672,7 @@ namespace mame
                     {
                         string result = share.compare((u8)m_config.data_width(), address_to_byte(entry.m_addrend + 1 - entry.m_addrstart), endianness());
                         if (!result.empty())
-                            global_object.fatalerror("{0}\n", result);
+                            g.fatalerror("{0}\n", result);
                     }
 
                     entry.m_memory = share.ptr();
@@ -2780,14 +2698,14 @@ namespace mame
                     // find the region
                     memory_region region = m_manager.machine().root_device().memregion(fulltag);
                     if (region == null)
-                        global_object.fatalerror("device '{0}' {1} space memory map entry {2}-{3} references nonexistent region \"{4}\"\n", m_device.tag(), m_name, entry.m_addrstart, entry.m_addrend, entry.m_region);
+                        g.fatalerror("device '{0}' {1} space memory map entry {2}-{3} references nonexistent region \"{4}\"\n", m_device.tag(), m_name, entry.m_addrstart, entry.m_addrend, entry.m_region);
 
                     // validate the region
                     if (entry.m_rgnoffs + m_config.addr2byte(entry.m_addrend - entry.m_addrstart + 1) > region.bytes())
-                        global_object.fatalerror("device '{0}' {1} space memory map entry {2}-{3} extends beyond region \"{4}\" size ({5})\n", m_device.tag(), m_name, entry.m_addrstart, entry.m_addrend, entry.m_region, region.bytes());
+                        g.fatalerror("device '{0}' {1} space memory map entry {2}-{3} extends beyond region \"{4}\" size ({5})\n", m_device.tag(), m_name, entry.m_addrstart, entry.m_addrend, entry.m_region, region.bytes());
 
                     if (entry.m_share != null)
-                        global_object.fatalerror("device '{0}' {1} space memory map entry {2}-{3} has both .region() and .share()\n", m_device.tag(), m_name, entry.m_addrstart, entry.m_addrend);
+                        g.fatalerror("device '{0}' {1} space memory map entry {2}-{3} has both .region() and .share()\n", m_device.tag(), m_name, entry.m_addrstart, entry.m_addrend);
                 }
 
                 // convert any region-relative entries to their memory pointers
@@ -2804,7 +2722,7 @@ namespace mame
                 if (entry.m_memory == null && (entry.m_read.m_type == map_handler_type.AMH_RAM || entry.m_write.m_type == map_handler_type.AMH_RAM))
                 {
                     if (!allow_alloc)
-                        global_object.fatalerror("Trying to create memory in range {0}-{1} too late\n", entry.m_addrstart, entry.m_addrend);
+                        g.fatalerror("Trying to create memory in range {0}-{1} too late\n", entry.m_addrstart, entry.m_addrend);
 
                     entry.m_memory = m_manager.anonymous_alloc(this, address_to_byte(entry.m_addrend + 1 - entry.m_addrstart), (u8)m_config.data_width(), entry.m_addrstart, entry.m_addrend);
                 }
@@ -2845,18 +2763,18 @@ namespace mame
 
         //template<int Width, int AddrShift, endianness_t Endian>
         public handler_entry_read_unmapped<int_Width, int_AddrShift, endianness_t_Endian> get_unmap_r<int_Width, int_AddrShift, endianness_t_Endian>()  //template<int Width, int AddrShift, endianness_t Endian> handler_entry_read_unmapped <Width, AddrShift, Endian> *get_unmap_r() const { return static_cast<handler_entry_read_unmapped <Width, AddrShift, Endian> *>(m_unmap_r); }
-            where int_Width : int_constant, new()
-            where int_AddrShift : int_constant, new()
-            where endianness_t_Endian : endianness_t_constant, new()
+            where int_Width : int_const, new()
+            where int_AddrShift : int_const, new()
+            where endianness_t_Endian : endianness_t_const, new()
         {
             return (handler_entry_read_unmapped<int_Width, int_AddrShift, endianness_t_Endian>)m_unmap_r;
         }
 
         //template<int Width, int AddrShift, endianness_t Endian>
         public handler_entry_write_unmapped<int_Width, int_AddrShift, endianness_t_Endian> get_unmap_w<int_Width, int_AddrShift, endianness_t_Endian>()  //template<int Width, int AddrShift, endianness_t Endian> handler_entry_write_unmapped<Width, AddrShift, Endian> *get_unmap_w() const { return static_cast<handler_entry_write_unmapped<Width, AddrShift, Endian> *>(m_unmap_w); }
-            where int_Width : int_constant, new()
-            where int_AddrShift : int_constant, new()
-            where endianness_t_Endian : endianness_t_constant, new()
+            where int_Width : int_const, new()
+            where int_AddrShift : int_const, new()
+            where endianness_t_Endian : endianness_t_const, new()
         {
             return (handler_entry_write_unmapped<int_Width, int_AddrShift, endianness_t_Endian>)m_unmap_w;
         }
@@ -2905,7 +2823,7 @@ namespace mame
 
 
             m_tag = tag;
-            m_name = util_.string_format("Bank '%s'", m_tag);
+            m_name = util.string_format("Bank '%s'", m_tag);
             machine().save().save_item(device, "memory", m_tag, 0, m_curentry, "m_curentry");
         }
 
@@ -2955,8 +2873,8 @@ namespace mame
                 throw new emu_fatalerror("memory_bank::configure_entry called with out-of-range entry {0}", entrynum);
 
             // if we haven't allocated this many entries yet, expand our array
-            if (entrynum >= m_entries.size())
-                m_entries.resize(entrynum+1);
+            if (entrynum >= (int)m_entries.size())
+                m_entries.resize((size_t)entrynum + 1);
 
             // set the entry
             m_entries[entrynum] = new PointerRef<u8>(base_);  //m_entries[entrynum] = reinterpret_cast<u8 *>(base);
@@ -2992,7 +2910,7 @@ namespace mame
                 return;
 
             // validate
-            if (entrynum < 0 || entrynum >= m_entries.size())
+            if (entrynum < 0 || entrynum >= (int)m_entries.size())
                 throw new emu_fatalerror("memory_bank::set_entry called with out-of-range entry {0}", entrynum);
             if (m_entries[entrynum] == null)
                 throw new emu_fatalerror("memory_bank::set_entry called for bank '{0}' with invalid bank entry {1}", m_tag, entrynum);
@@ -3038,7 +2956,15 @@ namespace mame
 
         public string compare(u8 width, size_t bytes, endianness_t endianness)
         {
-            throw new emu_unimplemented();
+            if (width != m_bitwidth)
+                return util.string_format("share {0} found with unexpected width (expected {1}, found {2})", m_name, width, m_bitwidth);
+            if (bytes != m_bytes)
+                return util.string_format("share {0} found with unexpected size (expected {1}, found {2})", m_name, bytes, m_bytes);
+            if (endianness != m_endianness && m_bitwidth != 8)
+                return util.string_format("share {0} found with unexpected endianness (expected {1}, found {2})", m_name,
+                                           endianness == endianness_t.ENDIANNESS_LITTLE ? "little" : "big",
+                                           m_endianness == endianness_t.ENDIANNESS_LITTLE ? "little" : "big");
+            return "";
         }
     }
 
@@ -3186,16 +3112,16 @@ namespace mame
         public memory_view_entry op(int slot)
         {
             if (m_config == null)
-                global_object.fatalerror("A view must be in a map or a space before it can be setup.");
+                g.fatalerror("A view must be in a map or a space before it can be setup.");
 
             var i = m_entry_mapping.find(slot);
             if (i == default)
             {
                 memory_view_entry e;
-                int id = m_entries.size();
+                int id = (int)m_entries.size();
                 e = emumem_mview_global.mve_make(emumem_global.handler_entry_dispatch_level(m_config.addr_width()), m_config.data_width(), m_config.addr_shift(), m_config.endianness(),
                              m_config, m_device.machine().memory(), this, id);
-                m_entries.resize(id + 1);
+                m_entries.resize((size_t)id + 1);
                 m_entries[id] = e;  //m_entries[id].reset(e);
                 m_entry_mapping[slot] = id;
                 if (m_handler_read != null)
@@ -3216,7 +3142,7 @@ namespace mame
         {
             var i = m_entry_mapping.find(slot);
             if (i == default)
-                global_object.fatalerror("memory_view {0}: select of unknown slot {1}", m_name, slot);
+                g.fatalerror("memory_view {0}: select of unknown slot {1}", m_name, slot);
 
             m_cur_slot = slot;
             m_cur_id = i;
@@ -3234,7 +3160,7 @@ namespace mame
         public void initialize_from_address_map(offs_t addrstart, offs_t addrend, address_space_config config)
         {
             if (m_config != null)
-                global_object.fatalerror("A memory_view can be present in only one address map.");
+                g.fatalerror("A memory_view can be present in only one address map.");
 
             m_config = config;
             m_addrstart = addrstart;
@@ -3256,7 +3182,7 @@ namespace mame
 
     // ======================> memory_manager
     // holds internal state for the memory system
-    public class memory_manager : global_object
+    public class memory_manager
     {
         //friend class address_space;
         //template<int Level, int Width, int AddrShift, endianness_t Endian> friend class address_space_specific;
@@ -3298,8 +3224,6 @@ namespace mame
                 allocate(memory);
             }
 
-            allocate(m_machine.dummy().memory());
-
             // construct and preprocess the address_map for each space
             foreach (var memory in memories)
                 memory.prepare_maps();
@@ -3333,7 +3257,7 @@ namespace mame
         //-------------------------------------------------
         public PointerU8 anonymous_alloc(address_space space, size_t bytes, u8 width, offs_t start, offs_t end, string key = "")  //void *anonymous_alloc(address_space &space, size_t bytes, u8 width, offs_t start, offs_t end, const std::string &key = "");
         {
-            string name = util_.string_format("{0}{1}-{2}", key, start, end);
+            string name = util.string_format("{0}{1}-{2}", key, start, end);
             return new PointerU8(allocate_memory(space.device(), space.spacenum(), name, width, bytes));
         }
 
@@ -3347,7 +3271,7 @@ namespace mame
         {
             // make sure we don't have a share of the same name; also find the end of the list
             if (m_sharelist.find(name) != default)
-                fatalerror("share_alloc called with duplicate share name \"{0}\"\n", name);
+                g.fatalerror("share_alloc called with duplicate share name \"{0}\"\n", name);
 
             // allocate and register the memory
             MemoryU8 ptr = allocate_memory(dev, 0, name, width, bytes);
@@ -3384,7 +3308,7 @@ namespace mame
 
             // make sure we don't have a bank of the same name
             if (!ins)
-                fatalerror("bank_alloc called with duplicate bank name \"{0}\"\n", name);
+                g.fatalerror("bank_alloc called with duplicate bank name \"{0}\"\n", name);
 
             return bank;  //return ins.first->second.get();
         }
@@ -3409,7 +3333,7 @@ namespace mame
         {
             // make sure we don't have a region of the same name; also find the end of the list
             if (m_regionlist.find(name) != default)
-                fatalerror("region_alloc called with duplicate region name \"{0}\"\n", name);
+                g.fatalerror("region_alloc called with duplicate region name \"{0}\"\n", name);
 
             // allocate the region
             //return m_regionlist.emplace(name, std::make_unique<memory_region>(machine(), name, length, width, endian)).first->second.get();
@@ -3439,70 +3363,70 @@ namespace mame
                     // allocate one of the appropriate type
                     switch ((level << 8) | (spaceconfig.endianness() == endianness_t.ENDIANNESS_BIG ? 0x1000 : 0) |spaceconfig.data_width() | (spaceconfig.addr_shift() + 4))
                     {
-                        case 0x0000|0x000| 8|(4+1): memory.allocate(new address_space_specific<int_constant_0, int_constant_0, int_constant_1, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000| 8|(4+1): memory.allocate(new address_space_specific<int_constant_0, int_constant_0, int_constant_1, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100| 8|(4+1): memory.allocate(new address_space_specific<int_constant_1, int_constant_0, int_constant_1, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100| 8|(4+1): memory.allocate(new address_space_specific<int_constant_1, int_constant_0, int_constant_1, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000| 8|(4+1): memory.allocate(new address_space_specific<int_const_0, int_const_0, int_const_1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000| 8|(4+1): memory.allocate(new address_space_specific<int_const_0, int_const_0, int_const_1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100| 8|(4+1): memory.allocate(new address_space_specific<int_const_1, int_const_0, int_const_1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100| 8|(4+1): memory.allocate(new address_space_specific<int_const_1, int_const_0, int_const_1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000| 8|(4-0): memory.allocate(new address_space_specific<int_constant_0, int_constant_0,  int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000| 8|(4-0): memory.allocate(new address_space_specific<int_constant_0, int_constant_0,  int_constant_0, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100| 8|(4-0): memory.allocate(new address_space_specific<int_constant_1, int_constant_0,  int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100| 8|(4-0): memory.allocate(new address_space_specific<int_constant_1, int_constant_0,  int_constant_0, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000| 8|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_0,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000| 8|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_0,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100| 8|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_0,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100| 8|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_0,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|16|(4+3): memory.allocate(new address_space_specific<int_constant_0, int_constant_1,  int_constant_3, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|16|(4+3): memory.allocate(new address_space_specific<int_constant_0, int_constant_1,  int_constant_3, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|16|(4+3): memory.allocate(new address_space_specific<int_constant_1, int_constant_1,  int_constant_3, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|16|(4+3): memory.allocate(new address_space_specific<int_constant_1, int_constant_1,  int_constant_3, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|16|(4+3): memory.allocate(new address_space_specific<int_const_0, int_const_1,  int_const_3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|16|(4+3): memory.allocate(new address_space_specific<int_const_0, int_const_1,  int_const_3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|16|(4+3): memory.allocate(new address_space_specific<int_const_1, int_const_1,  int_const_3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|16|(4+3): memory.allocate(new address_space_specific<int_const_1, int_const_1,  int_const_3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|16|(4-0): memory.allocate(new address_space_specific<int_constant_0, int_constant_1,  int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|16|(4-0): memory.allocate(new address_space_specific<int_constant_0, int_constant_1,  int_constant_0, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|16|(4-0): memory.allocate(new address_space_specific<int_constant_1, int_constant_1,  int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|16|(4-0): memory.allocate(new address_space_specific<int_constant_1, int_constant_1,  int_constant_0, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|16|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_1,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|16|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_1,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|16|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_1,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|16|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_1,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|16|(4-1): memory.allocate(new address_space_specific<int_constant_0, int_constant_1, int_constant_n1, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|16|(4-1): memory.allocate(new address_space_specific<int_constant_0, int_constant_1, int_constant_n1, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|16|(4-1): memory.allocate(new address_space_specific<int_constant_1, int_constant_1, int_constant_n1, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|16|(4-1): memory.allocate(new address_space_specific<int_constant_1, int_constant_1, int_constant_n1, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|16|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_1, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|16|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_1, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|16|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_1, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|16|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_1, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|32|(4+3): memory.allocate(new address_space_specific<int_constant_0, int_constant_2,  int_constant_3, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|32|(4+3): memory.allocate(new address_space_specific<int_constant_0, int_constant_2,  int_constant_3, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|32|(4+3): memory.allocate(new address_space_specific<int_constant_1, int_constant_2,  int_constant_3, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|32|(4+3): memory.allocate(new address_space_specific<int_constant_1, int_constant_2,  int_constant_3, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|32|(4+3): memory.allocate(new address_space_specific<int_const_0, int_const_2,  int_const_3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|32|(4+3): memory.allocate(new address_space_specific<int_const_0, int_const_2,  int_const_3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|32|(4+3): memory.allocate(new address_space_specific<int_const_1, int_const_2,  int_const_3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|32|(4+3): memory.allocate(new address_space_specific<int_const_1, int_const_2,  int_const_3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|32|(4-0): memory.allocate(new address_space_specific<int_constant_0, int_constant_2,  int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|32|(4-0): memory.allocate(new address_space_specific<int_constant_0, int_constant_2,  int_constant_0, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|32|(4-0): memory.allocate(new address_space_specific<int_constant_1, int_constant_2,  int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|32|(4-0): memory.allocate(new address_space_specific<int_constant_1, int_constant_2,  int_constant_0, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|32|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_2,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|32|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_2,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|32|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_2,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|32|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_2,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|32|(4-1): memory.allocate(new address_space_specific<int_constant_0, int_constant_2, int_constant_n1, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|32|(4-1): memory.allocate(new address_space_specific<int_constant_0, int_constant_2, int_constant_n1, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|32|(4-1): memory.allocate(new address_space_specific<int_constant_1, int_constant_2, int_constant_n1, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|32|(4-1): memory.allocate(new address_space_specific<int_constant_1, int_constant_2, int_constant_n1, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|32|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_2, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|32|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_2, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|32|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_2, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|32|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_2, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|32|(4-2): memory.allocate(new address_space_specific<int_constant_0, int_constant_2, int_constant_n2, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|32|(4-2): memory.allocate(new address_space_specific<int_constant_0, int_constant_2, int_constant_n2, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|32|(4-2): memory.allocate(new address_space_specific<int_constant_1, int_constant_2, int_constant_n2, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|32|(4-2): memory.allocate(new address_space_specific<int_constant_1, int_constant_2, int_constant_n2, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|32|(4-2): memory.allocate(new address_space_specific<int_const_0, int_const_2, int_const_n2, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|32|(4-2): memory.allocate(new address_space_specific<int_const_0, int_const_2, int_const_n2, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|32|(4-2): memory.allocate(new address_space_specific<int_const_1, int_const_2, int_const_n2, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|32|(4-2): memory.allocate(new address_space_specific<int_const_1, int_const_2, int_const_n2, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|64|(4-0): memory.allocate(new address_space_specific<int_constant_0, int_constant_3, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|64|(4-0): memory.allocate(new address_space_specific<int_constant_0, int_constant_3, int_constant_0, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|64|(4-0): memory.allocate(new address_space_specific<int_constant_1, int_constant_3, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|64|(4-0): memory.allocate(new address_space_specific<int_constant_1, int_constant_3, int_constant_0, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|64|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|64|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|64|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|64|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|64|(4-1): memory.allocate(new address_space_specific<int_constant_0, int_constant_3, int_constant_n1, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|64|(4-1): memory.allocate(new address_space_specific<int_constant_0, int_constant_3, int_constant_n1, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|64|(4-1): memory.allocate(new address_space_specific<int_constant_1, int_constant_3, int_constant_n1, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|64|(4-1): memory.allocate(new address_space_specific<int_constant_1, int_constant_3, int_constant_n1, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|64|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|64|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|64|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|64|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|64|(4-2): memory.allocate(new address_space_specific<int_constant_0, int_constant_3, int_constant_n2, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|64|(4-2): memory.allocate(new address_space_specific<int_constant_0, int_constant_3, int_constant_n2, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|64|(4-2): memory.allocate(new address_space_specific<int_constant_1, int_constant_3, int_constant_n2, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|64|(4-2): memory.allocate(new address_space_specific<int_constant_1, int_constant_3, int_constant_n2, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|64|(4-2): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n2, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|64|(4-2): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n2, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|64|(4-2): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n2, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|64|(4-2): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n2, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
-                        case 0x0000|0x000|64|(4-3): memory.allocate(new address_space_specific<int_constant_0, int_constant_3, int_constant_n3, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|64|(4-3): memory.allocate(new address_space_specific<int_constant_0, int_constant_3, int_constant_n3, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|64|(4-3): memory.allocate(new address_space_specific<int_constant_1, int_constant_3, int_constant_n3, endianness_t_constant_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|64|(4-3): memory.allocate(new address_space_specific<int_constant_1, int_constant_3, int_constant_n3, endianness_t_constant_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x000|64|(4-3): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x000|64|(4-3): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x0000|0x100|64|(4-3): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
+                        case 0x1000|0x100|64|(4-3): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
 
                         default:
                             throw new emu_fatalerror("Invalid width {0}/shift {1} specified for address_space::allocate", spaceconfig.data_width(), spaceconfig.addr_shift());
@@ -3522,7 +3446,7 @@ namespace mame
             MemoryU8 ptr = new MemoryU8((int)bytes);
             m_datablocks.emplace_back(ptr);
 
-            global_object.memset(ptr, (u8)0);
+            std.memset(ptr, (u8)0);
 
             //throw new emu_unimplemented();
 #if false

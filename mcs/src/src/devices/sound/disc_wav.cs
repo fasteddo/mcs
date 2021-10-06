@@ -75,7 +75,7 @@ namespace mame
 
 
             if (m_is_7492 == 0 && (DSS_COUNTER__MAX < DSS_COUNTER__MIN))
-                fatalerror("MAX < MIN in NODE_{0}\n", this.index());
+                g.fatalerror("MAX < MIN in NODE_{0}\n", this.index());
 
             m_out_type    = m_clock_type & g.DISC_OUT_MASK;
             m_clock_type &= g.DISC_CLK_MASK;
@@ -773,7 +773,7 @@ namespace mame
 
             public description(double [] values, int options)
             {
-                assert(values.Length == 6);
+                g.assert(values.Length == 6);
                 this.vB       = values[0];
                 this.vOutLow  = values[1];
                 this.vOutHigh = values[2];
@@ -903,7 +903,7 @@ namespace mame
                     vG2 = this.tf(vG3);
                     break;
                 default:
-                    fatalerror("DISCRETE_INVERTER_OSC - Wrong type on NODE_{0}\n", this.index());
+                    g.fatalerror("DISCRETE_INVERTER_OSC - Wrong type on NODE_{0}\n", this.index());
                     break;
             }
 
@@ -970,7 +970,7 @@ namespace mame
                     diff = diff - diff * Math.Exp(-this.sample_time()/(mc_c * rMix));
                     break;
                 default:
-                    fatalerror("DISCRETE_INVERTER_OSC - Wrong type on NODE_{0}\n", this.index());
+                    g.fatalerror("DISCRETE_INVERTER_OSC - Wrong type on NODE_{0}\n", this.index());
                     break;
             }
 

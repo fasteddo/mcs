@@ -33,7 +33,7 @@ namespace mame
         required_device<generic_latch_8_device> m_soundlatch;
         required_device<generic_latch_8_device> m_mainlatch;
         required_device<ym2151_device> m_ym2151;
-        required_device_array<pokey_device, uint32_constant_2> m_pokey;
+        required_device_array<pokey_device, u32_const_2> m_pokey;
         optional_device<tms5220c_device> m_tms5220;  //optional_device<tms5220_device> m_tms5220;
 
         bool m_scanline_int_state;
@@ -41,7 +41,7 @@ namespace mame
         bool m_p2portwr_state;
         bool m_p2portrd_state;
 
-        required_memory_bank_array<uint32_constant_2> m_rombank;
+        required_memory_bank_array<u32_const_2> m_rombank;
         required_device<atari_slapstic_device> m_slapstic;
         memory_view m_vmmu;
         required_shared_ptr<uint16_t> m_playfieldt;
@@ -61,7 +61,7 @@ namespace mame
         //int32_t           m_spin_pos;                 /* track fake position of spinner */
         //uint32_t          m_spin_center_count;
 
-        output_finder<uint32_constant_2> m_leds;
+        output_finder<u32_const_2> m_leds;
 
 
         //static const atari_motion_objects_config s_mob_config;
@@ -83,14 +83,14 @@ namespace mame
             m_soundlatch = new required_device<generic_latch_8_device>(this, "soundlatch");
             m_mainlatch = new required_device<generic_latch_8_device>(this, "mainlatch");
             m_ym2151 = new required_device<ym2151_device>(this, "ymsnd");
-            m_pokey = new required_device_array<pokey_device, uint32_constant_2>(this, "pokey{0}", 1, (base_, tag_) => { return new device_finder<pokey_device, bool_constant_true>(base_, tag_); });
+            m_pokey = new required_device_array<pokey_device, u32_const_2>(this, "pokey{0}", 1, (base_, tag_) => { return new device_finder<pokey_device, bool_const_true>(base_, tag_); });
             m_tms5220 = new optional_device<tms5220c_device>(this, "tms");
-            m_rombank = new required_memory_bank_array<uint32_constant_2>(this, "rombank{0}", 1);
+            m_rombank = new required_memory_bank_array<u32_const_2>(this, "rombank{0}", 1);
             m_slapstic = new required_device<atari_slapstic_device>(this, "slapstic");
             m_vmmu = new memory_view(this, "vmmu");
             m_playfieldt = new required_shared_ptr<uint16_t>(this, "playfieldt");
             m_playfieldb = new required_shared_ptr<uint16_t>(this, "playfieldb");
-            m_leds = new output_finder<uint32_constant_2>(this, "led{0}", 0);
+            m_leds = new output_finder<u32_const_2>(this, "led{0}", 0);
         }
     }
 }

@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using size_t = System.UInt64;
+
 
 namespace mame
 {
@@ -11,7 +13,7 @@ namespace mame
     {
         // extern const game_driver driver_pacman
  
-        public static readonly List<game_driver> s_drivers_sorted = new List<game_driver>()
+        public static readonly game_driver [] s_drivers_sorted = new game_driver []
         {
             ___empty.driver____empty,
             _1942.driver_1942,
@@ -34,6 +36,6 @@ namespace mame
             taitosj.driver_junglek,
         };
 
-        public static readonly int s_driver_count = s_drivers_sorted.Count;
+        public static readonly size_t s_driver_count = (size_t)s_drivers_sorted.Length;
     }
 }

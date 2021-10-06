@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using size_t = System.UInt64;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
@@ -97,7 +98,7 @@ namespace mame
                         }
                         else
                         {
-                            sys = driver_list.driver(parent);
+                            sys = driver_list.driver((size_t)parent);
                             roms = rom_build_entries(sys.rom);
                             return roms[0];
                         }
@@ -132,8 +133,10 @@ namespace mame
         }
 
 
-        public static Pointer<rom_entry> rom_first_region(Pointer<rom_entry> romp)  //const rom_entry *rom_first_region(const rom_entry *romp);
+        public static Pointer<rom_entry> rom_first_region(Pointer<rom_entry> rompIn)  //const rom_entry *rom_first_region(const rom_entry *romp);
         {
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
+
             while (ROMENTRY_ISPARAMETER(romp[0]) || ROMENTRY_ISSYSTEM_BIOS(romp[0]) || ROMENTRY_ISDEFAULT_BIOS(romp[0]))
                 romp++;
             return !ROMENTRY_ISEND(romp[0]) ? romp : null;
@@ -211,7 +214,7 @@ namespace mame
                 }
 
                 /* track the maximum length */
-                maxlength = Math.Max(maxlength, curlength);
+                maxlength = std.max(maxlength, curlength);
             }
             while (ROMENTRY_ISRELOAD(romp[0]));
 
@@ -224,13 +227,13 @@ namespace mame
             rom_first_parameter - return pointer to the first
             per-game parameter
         -------------------------------------------------*/
-        public static rom_entry rom_first_parameter(device_t device, ref int curIndex)
+        public static Pointer<rom_entry> rom_first_parameter(device_t device)
         {
-            MemoryContainer<rom_entry> romp = device.rom_region_vector();
-            while (romp != null && romp.Count > 0 && romp[curIndex] != null && !ROMENTRY_ISEND(romp[curIndex]) && !ROMENTRY_ISPARAMETER(romp[curIndex]))
-                curIndex++;
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(device.rom_region_vector());
+            while (romp != null && romp.Count > 0 && !ROMENTRY_ISEND(romp[0]) && !ROMENTRY_ISPARAMETER(romp[0]))
+                romp++;
 
-            return (romp != null && romp.Count > 0 && romp[curIndex] != null && !ROMENTRY_ISEND(romp[curIndex])) ? romp[curIndex] : null;
+            return (romp != null && romp.Count > 0 && !ROMENTRY_ISEND(romp[0])) ? romp : null;
         } 
 
 
@@ -239,17 +242,15 @@ namespace mame
             rom_next_parameter - return pointer to the next
             per-game parameter
         -------------------------------------------------*/
-        public static rom_entry rom_next_parameter(device_t device, ref int curIndex)
+        public static Pointer<rom_entry> rom_next_parameter(Pointer<rom_entry> rompIn)
         {
-            //romp++;
-            curIndex++;
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
 
-            MemoryContainer<rom_entry> romp = device.rom_region_vector();
+            romp++;
+            while (!ROMENTRY_ISREGIONEND(romp[0]) && !ROMENTRY_ISPARAMETER(romp[0]))
+                romp++;
 
-            while (!ROMENTRY_ISREGIONEND(romp[curIndex]) && !ROMENTRY_ISPARAMETER(romp[curIndex]))
-                curIndex++;
-
-            return ROMENTRY_ISEND(romp[curIndex]) ? null : romp[curIndex];
+            return ROMENTRY_ISEND(romp[0]) ? null : romp;
         }
 
 
@@ -597,7 +598,7 @@ namespace mame
 
 
     // ======================> rom_load_manager
-    public class rom_load_manager : global_object
+    public class rom_load_manager
     {
         const bool LOG_LOAD = false;
         static void LOG(string format, params object [] args) { if (LOG_LOAD) debugload(format, args); }
@@ -775,7 +776,7 @@ namespace mame
                 // if we got neither an empty string nor 'default' then warn the user
                 if (!found)
                 {
-                    m_errorstring += string_format("{0}: invalid BIOS \"{1}\", reverting to default\n", device.tag(), specbios);
+                    m_errorstring += util.string_format("{0}: invalid BIOS \"{1}\", reverting to default\n", device.tag(), specbios);
                     m_warnings++;
                 }
             }
@@ -925,14 +926,14 @@ namespace mame
                     util.hash_collection all_acthashes = (acthashes.hash_types() == util.hash_collection.HASH_TYPES_ALL)
                             ? acthashes
                             : file.hashes(util.hash_collection.HASH_TYPES_ALL);
-                    m_errorstring += string_format("{0} WRONG CHECKSUMS:\n", name);
+                    m_errorstring += util.string_format("{0} WRONG CHECKSUMS:\n", name);
                     dump_wrong_and_correct_checksums(hashes, all_acthashes);
                     m_warnings++;
                 }
                 else if (hashes.flag(util.hash_collection.FLAG_BAD_DUMP))
                 {
                     // If it matches, but it is actually a bad dump, write it
-                    m_errorstring += string_format("{0} ROM NEEDS REDUMP\n", name);
+                    m_errorstring += util.string_format("{0} ROM NEEDS REDUMP\n", name);
                     m_knownbad++;
                 }
             }
@@ -948,7 +949,7 @@ namespace mame
             string buffer;
 
             if (!string.IsNullOrEmpty(name))
-                buffer = string_format("{0} ({1}%)", from_list ? "Loading Software" : "Loading Machine", (u32)(100 * m_romsloadedsize / m_romstotalsize));
+                buffer = util.string_format("{0} ({1}%)", from_list ? "Loading Software" : "Loading Machine", (u32)(100 * m_romsloadedsize / m_romstotalsize));
             else
                 buffer = "Loading Complete";
 
@@ -970,15 +971,15 @@ namespace mame
             if (m_errors != 0)
             {
                 /* create the error message and exit fatally */
-                osd_printf_error("{0}", m_errorstring);
-                throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "Required files are missing, the machine cannot be run.");
+                g.osd_printf_error("{0}", m_errorstring);
+                throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "Required files are missing, the machine cannot be run.");
             }
 
             /* if we had warnings, output them, but continue */
             if (m_warnings != 0 || m_knownbad != 0)
             {
                 m_errorstring += "WARNING: the machine might not run correctly.";
-                osd_printf_warning("{0}\n", m_errorstring);
+                g.osd_printf_warning("{0}\n", m_errorstring);
             }
         }
 
@@ -1008,7 +1009,7 @@ namespace mame
             }
 
             /* swap the endianness if we need to */
-            if (region.bytewidth() > 1 && region.endianness() != ENDIANNESS_NATIVE)
+            if (region.bytewidth() > 1 && region.endianness() != g.ENDIANNESS_NATIVE)
             {
                 LOG("+ Byte swapping region\n");
                 int datawidth = region.bytewidth();
@@ -1016,7 +1017,7 @@ namespace mame
                 for (int i = 0; i < region.bytes(); i += datawidth)
                 {
                     MemoryU8 temp = new MemoryU8(8, true);  //u8 temp[8];
-                    memcpy(new Pointer<u8>(temp), base_, (UInt32)datawidth);  //memcpy(temp, base, datawidth);
+                    std.memcpy(new Pointer<u8>(temp), base_, (UInt32)datawidth);  //memcpy(temp, base, datawidth);
                     for (int j = datawidth - 1; j >= 0; j--)
                     {
                         base_[0] = temp[j];  base_++;  //*base++ = temp[j];
@@ -1048,7 +1049,7 @@ namespace mame
             emu_file result = null;
             foreach (std.vector<string> paths in searchpath)
             {
-                result = open_rom_file(paths, tried_file_names, has_crc, crc, ROM_GETNAME(romp[0]), out filerr);
+                result = open_rom_file(paths, tried_file_names, has_crc, crc, g.ROM_GETNAME(romp[0]), out filerr);
                 if (result != null)
                     break;
             }
@@ -1071,7 +1072,7 @@ namespace mame
             tried.AddRange(paths);  //tried.insert(tried.end(), paths.begin(), paths.end());
 
             // attempt to open the file
-            emu_file result = new emu_file(machine().options().media_path(), paths, OPEN_FLAG_READ);
+            emu_file result = new emu_file(machine().options().media_path(), paths, g.OPEN_FLAG_READ);
             result.set_restrict_to_mediapath(1);
             if (has_crc)
                 filerr = result.open(name, crc);
@@ -1124,7 +1125,7 @@ namespace mame
 
             /* make sure the length was an even multiple of the group size */
             if (numbytes % groupsize != 0)
-                osd_printf_warning("Warning in RomModule definition: {0} length not an even multiple of group size\n", romp.name());
+                g.osd_printf_warning("Warning in RomModule definition: {0} length not an even multiple of group size\n", romp.name());
 
             /* make sure we only fill within the region space */
             if (romload_global.ROM_GETOFFSET(romp) + numgroups * groupsize + (numgroups - 1) * skip > m_region.bytes())
@@ -1280,7 +1281,7 @@ namespace mame
             }
             else
             {
-                memset(base_, fill_byte, numbytes);
+                std.memset(base_, fill_byte, numbytes);
             }
         }
 
@@ -1313,7 +1314,7 @@ namespace mame
                 throw new emu_fatalerror("Error in RomModule definition: COPY out of source memory region space\n");
 
             // fill the data
-            memcpy(base_, new Pointer<u8>(region.base_(), (int)srcoffs), numbytes);  // memcpy(base_, region->base_() + srcoffs, numbytes);
+            std.memcpy(base_, new Pointer<u8>(region.base_(), (int)srcoffs), numbytes);  // memcpy(base_, region->base_() + srcoffs, numbytes);
         }
 
 
@@ -1342,7 +1343,7 @@ namespace mame
 
                 if (romload_global.ROMENTRY_ISFILL(romp[0]))
                 {
-                    if (ROM_GETBIOSFLAGS(romp[0]) == 0 || ROM_GETBIOSFLAGS(romp[0]) == bios)
+                    if (g.ROM_GETBIOSFLAGS(romp[0]) == 0 || g.ROM_GETBIOSFLAGS(romp[0]) == bios)
                         fill_rom_data(romp[0]);
 
                     romp++;
@@ -1567,7 +1568,7 @@ namespace mame
                     LOG("Processing region \"{0}\" (length={1})\n", regiontag, regionlength);
 
                     // the first entry must be a region
-                    assert(romload_global.ROMENTRY_ISREGION(region[0]));
+                    g.assert(romload_global.ROMENTRY_ISREGION(region[0]));
 
                     if (romload_global.ROMREGION_ISROMDATA(region[0]))
                     {
@@ -1581,9 +1582,9 @@ namespace mame
                         LOG("Allocated {0} bytes @ {1}\n", m_region.bytes(), m_region.name());  // %X bytes @ %p\n
 
                         if (romload_global.ROMREGION_ISERASE(region[0])) // clear the region if it's requested
-                            memset(new Pointer<u8>(m_region.base_()), (u8)romload_global.ROMREGION_GETERASEVAL(region[0]), m_region.bytes());
+                            std.memset(new Pointer<u8>(m_region.base_()), (u8)romload_global.ROMREGION_GETERASEVAL(region[0]), m_region.bytes());
                         else if (m_region.bytes() <= 0x400000) // or if it's sufficiently small (<= 4MB)
-                            memset(new Pointer<u8>(m_region.base_()), (u8)0, m_region.bytes());
+                            std.memset(new Pointer<u8>(m_region.base_()), (u8)0, m_region.bytes());
 
 #if MAME_DEBUG
                         else // if we're debugging, fill region with random data to catch errors
@@ -1593,14 +1594,14 @@ namespace mame
                         // now process the entries in the region
                         if (searchpath.empty())
                             searchpath = device.searchpath();
-                        assert(!searchpath.empty());
+                        g.assert(!searchpath.empty());
                         process_rom_entries(new std.vector<string> [] { searchpath }, device.system_bios(), region[0], region + 1, false);  //process_rom_entries({ searchpath }, device.system_bios(), region, region + 1, false);
                     }
                     else if (romload_global.ROMREGION_ISDISKDATA(region[0]))
                     {
                         if (searchpath.empty())
                             searchpath = device.searchpath();
-                        assert(!searchpath.empty());
+                        g.assert(!searchpath.empty());
                         if (next_parent == null)
                         {
                             driver_device driver = (driver_device)device;  //driver_device const *const driver(dynamic_cast<driver_device const *>(&device));
@@ -1626,11 +1627,10 @@ namespace mame
             // and finally register all per-game parameters
             foreach (device_t device in deviter)
             {
-                int curIndex = 0;
-                for (rom_entry param = romload_global.rom_first_parameter(device, ref curIndex); param != null; param = romload_global.rom_next_parameter(device, ref curIndex))
+                for (Pointer<rom_entry> param = romload_global.rom_first_parameter(device); param != null; param = romload_global.rom_next_parameter(param))
                 {
-                    string regiontag = device.subtag(param.name());
-                    machine().parameters().add(regiontag, param.hashdata());
+                    string regiontag = device.subtag(param[0].name());
+                    machine().parameters().add(regiontag, param[0].hashdata());
                 }
             }
         }
@@ -1654,7 +1654,7 @@ namespace mame
             //    fclose(f);
             //}
 
-            osd_printf_info(format, args);
+            g.osd_printf_info(format, args);
         }
     }
 }

@@ -50,7 +50,7 @@ namespace mame
 
     // ======================> address_map_entry
     // address_map_entry is a linked list element describing one address range in a map
-    public class address_map_entry : global_object, simple_list_item<address_map_entry>
+    public class address_map_entry : simple_list_item<address_map_entry>
     {
         //friend class address_map;
 
@@ -64,7 +64,7 @@ namespace mame
 
         //template <typename T, bool Reqd>
         static device_t find_device<T, Reqd>(device_finder<T, Reqd> finder)  //static device_t &find_device(const device_finder<T, Reqd> &finder) {
-            where Reqd : bool_constant, new()
+            where Reqd : bool_const, new()
         {
             std.pair<device_t, string> target = finder.finder_target();  //const std::pair<device_t &, const char *> target(finder.finder_target());
             device_t device = target.first.subdevice(target.second);  //device_t *device(target.first.subdevice(target.second));
@@ -272,7 +272,7 @@ namespace mame
         public address_map_entry share(finder_base finder)  //template<typename _ptrt, bool _reqd> address_map_entry &share(const shared_ptr_finder<_ptrt, _reqd> &finder) {
         {
             std.pair<device_t, string> target = finder.finder_target();
-            assert(target.first == m_devbase);
+            g.assert(target.first == m_devbase);
             return share(target.second);
         }
 
@@ -484,21 +484,21 @@ namespace mame
         // device finder -> delegate converter
         //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
         public address_map_entry r<T, Reqd>(device_finder<T, Reqd> finder, read8sm_delegate read)  //address_map_entry &r(device_finder<T, Reqd> &finder, Ret (U::*read)(Params...), const char *read_name) {
-            where Reqd : bool_constant, new()
+            where Reqd : bool_const, new()
         {
             device_t device = find_device(finder);
             return r(read);
         }
 
         public address_map_entry r<T, Reqd>(device_finder<T, Reqd> finder, read8smo_delegate read)  //address_map_entry &r(device_finder<T, Reqd> &finder, Ret (U::*read)(Params...), const char *read_name) {
-            where Reqd : bool_constant, new()
+            where Reqd : bool_const, new()
         {
             device_t device = find_device(finder);
             return r(read);
         }
 
         public address_map_entry r<T, Reqd>(device_finder<T, Reqd> finder, read16smo_delegate read)  //address_map_entry &r(device_finder<T, Reqd> &finder, Ret (U::*read)(Params...), const char *read_name) {
-            where Reqd : bool_constant, new()
+            where Reqd : bool_const, new()
         {
             device_t device = find_device(finder);
             return r(read);
@@ -513,7 +513,7 @@ namespace mame
 
         //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
         public address_map_entry w<T, Reqd>(device_finder<T, Reqd> finder, write16s_delegate write)  //address_map_entry &w(device_finder<T, Reqd> &finder, Ret (U::*write)(Params...), const char *write_name) {
-            where Reqd : bool_constant, new()
+            where Reqd : bool_const, new()
         {
             device_t device = find_device(finder);
             return w(write);  //return w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
@@ -521,14 +521,14 @@ namespace mame
 
         //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
         public address_map_entry w<T, Reqd>(device_finder<T, Reqd> finder, write8sm_delegate write)  //address_map_entry &w(device_finder<T, Reqd> &finder, Ret (U::*write)(Params...), const char *write_name) {
-            where Reqd : bool_constant, new()
+            where Reqd : bool_const, new()
         {
             device_t device = find_device(finder);
             return w(write);  //return w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
         }
 
         public address_map_entry w<T, Reqd>(device_finder<T, Reqd> finder, write8smo_delegate write)  //address_map_entry &w(device_finder<T, Reqd> &finder, Ret (U::*write)(Params...), const char *write_name) {
-            where Reqd : bool_constant, new()
+            where Reqd : bool_const, new()
         {
             device_t device = find_device(finder);
             return w(write);  //return w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
@@ -543,7 +543,7 @@ namespace mame
 
         //template <typename T, bool Reqd, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
         public address_map_entry rw<T, Reqd>(device_finder<T, Reqd> finder, read8sm_delegate read, write8sm_delegate write)  //address_map_entry &rw(device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
-            where Reqd : bool_constant, new()
+            where Reqd : bool_const, new()
         { 
             device_t device = find_device(finder);
             return r(read).w(write);  //return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name)).w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
@@ -551,7 +551,7 @@ namespace mame
 
         //template <typename T, bool Reqd, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
         public address_map_entry rw<T, Reqd>(device_finder<T, Reqd> finder, read8m_delegate read, write8sm_delegate write)  //address_map_entry &rw(device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
-            where Reqd : bool_constant, new()
+            where Reqd : bool_const, new()
         { 
             device_t device = find_device(finder);
             return r(read).w(write);  //return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name)).w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
@@ -567,7 +567,7 @@ namespace mame
 
         //template <typename T, bool Reqd, typename U, typename Ret, typename... Params>
         public address_map_entry m<T, Reqd>(device_finder<T, Reqd> finder, address_map_constructor map)  //address_map_entry &m(device_finder<T, Reqd> &finder, Ret (U::*map)(Params...), const char *map_name) {
-            where Reqd : bool_constant, new()
+            where Reqd : bool_const, new()
         {
             device_t device = find_device(finder);
             return m(device, map);
@@ -630,7 +630,7 @@ namespace mame
 
         public address_map_entry r(read8_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_read.m_bits = 8;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -641,7 +641,7 @@ namespace mame
 
         public address_map_entry w(write8_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_write.m_bits = 8;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -652,7 +652,7 @@ namespace mame
 
         public address_map_entry r(read8m_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_M;
             m_read.m_bits = 8;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -662,7 +662,7 @@ namespace mame
 
         public address_map_entry w(write8m_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_M;
             m_write.m_bits = 8;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -673,7 +673,7 @@ namespace mame
 
         public address_map_entry r(read8s_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_S;
             m_read.m_bits = 8;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -684,7 +684,7 @@ namespace mame
 
         public address_map_entry w(write8s_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_S;
             m_write.m_bits = 8;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -695,7 +695,7 @@ namespace mame
 
         public address_map_entry r(read8sm_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SM;
             m_read.m_bits = 8;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -706,7 +706,7 @@ namespace mame
 
         public address_map_entry w(write8sm_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SM;
             m_write.m_bits = 8;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -717,7 +717,7 @@ namespace mame
 
         public address_map_entry r(read8mo_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_MO;
             m_read.m_bits = 8;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -728,7 +728,7 @@ namespace mame
 
         public address_map_entry w(write8mo_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_MO;
             m_write.m_bits = 8;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -739,7 +739,7 @@ namespace mame
 
         public address_map_entry r(read8smo_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
             m_read.m_bits = 8;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -750,7 +750,7 @@ namespace mame
 
         public address_map_entry w(write8smo_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
             m_write.m_bits = 8;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -767,7 +767,7 @@ namespace mame
 
         public address_map_entry r(read16_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_read.m_bits = 16;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -778,7 +778,7 @@ namespace mame
 
         public address_map_entry w(write16_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_write.m_bits = 16;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -789,7 +789,7 @@ namespace mame
 
         public address_map_entry r(read16m_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_M;
             m_read.m_bits = 16;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -800,7 +800,7 @@ namespace mame
 
         public address_map_entry w(write16m_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_M;
             m_write.m_bits = 16;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -811,7 +811,7 @@ namespace mame
 
         public address_map_entry r(read16s_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_S;
             m_read.m_bits = 16;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -822,7 +822,7 @@ namespace mame
 
         public address_map_entry w(write16s_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_S;
             m_write.m_bits = 16;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -833,7 +833,7 @@ namespace mame
 
         public address_map_entry r(read16sm_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SM;
             m_read.m_bits = 16;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -844,7 +844,7 @@ namespace mame
 
         public address_map_entry w(write16sm_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SM;
             m_write.m_bits = 16;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -855,7 +855,7 @@ namespace mame
 
         public address_map_entry r(read16mo_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_MO;
             m_read.m_bits = 16;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -866,7 +866,7 @@ namespace mame
 
         public address_map_entry w(write16mo_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_MO;
             m_write.m_bits = 16;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -877,7 +877,7 @@ namespace mame
 
         public address_map_entry r(read16smo_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
             m_read.m_bits = 16;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -888,7 +888,7 @@ namespace mame
 
         public address_map_entry w(write16smo_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE_SMO;
             m_write.m_bits = 16;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -905,7 +905,7 @@ namespace mame
 
         public address_map_entry r(read32_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_read.m_bits = 32;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -916,7 +916,7 @@ namespace mame
 
         public address_map_entry w(write32_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_write.m_bits = 32;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -945,7 +945,7 @@ namespace mame
 
         public address_map_entry r(read64_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_read.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_read.m_bits = 64;
             m_read.m_name = func.GetMethodInfo().Name;
@@ -956,7 +956,7 @@ namespace mame
 
         public address_map_entry w(write64_delegate func)
         {
-            assert(func != null);
+            g.assert(func != null);
             m_write.m_type = map_handler_type.AMH_DEVICE_DELEGATE;
             m_write.m_bits = 64;
             m_write.m_name = func.GetMethodInfo().Name;
@@ -1055,7 +1055,7 @@ namespace mame
 
     // ======================> address_map
     // address_map holds global map parameters plus the head of the list of entries
-    public class address_map : global_object
+    public class address_map
     {
         // public data
         int m_spacenum;         // space number of the map
@@ -1112,7 +1112,7 @@ namespace mame
         //-------------------------------------------------
         public address_map(device_t device, address_map_entry entry)
         {
-            m_spacenum = AS_PROGRAM;
+            m_spacenum = g.AS_PROGRAM;
             m_device = device;
             m_unmapval = 0;
             m_globalmask = 0;
@@ -1270,7 +1270,7 @@ namespace mame
                                 }
                                 subentry_ratio = data_width / subentry_ratio;
                                 if (ratio * subentry_ratio > data_width / 8)
-                                    fatalerror("import_submap: In range {0}-{1} mask {2} mirror {3} select {4} of device {5}, the import unitmask of {6}{7} combined with an entry unitmask of {8}{9} does not fit in {10} bits.\n", subentry.m_addrstart, subentry.m_addrend, subentry.m_addrmask, subentry.m_addrmirror, subentry.m_addrselect, entry.m_read.m_tag, data_width / 4, entry.m_mask, data_width / 4, subentry.m_mask, data_width);
+                                    g.fatalerror("import_submap: In range {0}-{1} mask {2} mirror {3} select {4} of device {5}, the import unitmask of {6}{7} combined with an entry unitmask of {8}{9} does not fit in {10} bits.\n", subentry.m_addrstart, subentry.m_addrend, subentry.m_addrmask, subentry.m_addrmirror, subentry.m_addrselect, entry.m_read.m_tag, data_width / 4, entry.m_mask, data_width / 4, subentry.m_mask, data_width);
 
                                 // Regenerate the unitmask
                                 u64 newmask = 0;

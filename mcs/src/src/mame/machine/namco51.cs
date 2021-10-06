@@ -4,13 +4,14 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -19,7 +20,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NAMCO_51XX, namco_51xx_device, "namco51", "Namco 51xx")
         static device_t device_creator_namco_51xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_51xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NAMCO_51XX = DEFINE_DEVICE_TYPE(device_creator_namco_51xx_device, "namco51", "Namco 51xx");
+        public static readonly device_type NAMCO_51XX = g.DEFINE_DEVICE_TYPE(device_creator_namco_51xx_device, "namco51", "Namco 51xx");
 
 
         const bool VERBOSE = false;
@@ -28,9 +29,9 @@ namespace mame
         //ROM_START( namco_51xx )
         static readonly MemoryContainer<tiny_rom_entry> rom_namco_51xx = new MemoryContainer<tiny_rom_entry>()
         {
-            ROM_REGION( 0x400, "mcu", 0 ),
-            ROM_LOAD( "51xx.bin",     0x0000, 0x0400, CRC("c2f57ef8") + SHA1("50de79e0d6a76bda95ffb02fcce369a79e6abfec") ),
-            ROM_END,
+            g.ROM_REGION( 0x400, "mcu", 0 ),
+            g.ROM_LOAD( "51xx.bin",     0x0000, 0x0400, g.CRC("c2f57ef8") + g.SHA1("50de79e0d6a76bda95ffb02fcce369a79e6abfec") ),
+            g.ROM_END,
         };
 
 
@@ -38,7 +39,7 @@ namespace mame
         required_device<mb88_cpu_device> m_cpu;
         uint8_t m_portO;
         uint8_t m_rw;
-        devcb_read8.array<uint32_constant_4> m_in;
+        devcb_read8.array<u64_const_4> m_in;
         devcb_write8 m_out;
         devcb_write_line m_lockout;
 
@@ -49,13 +50,13 @@ namespace mame
             m_cpu = new required_device<mb88_cpu_device>(this, "mcu");
             m_portO = 0;
             m_rw = 0;
-            m_in = new devcb_read8.array<uint32_constant_4>(this, () => { return new devcb_read8(this); });
+            m_in = new devcb_read8.array<u64_const_4>(this, () => { return new devcb_read8(this); });
             m_out = new devcb_write8(this);
             m_lockout = new devcb_write_line(this);
         }
 
 
-        public devcb_read8.binder input_callback(int N) { return m_in[N].bind(); }  //template <unsigned N> auto input_callback() { return m_in[N].bind(); }
+        public devcb_read8.binder input_callback<unsigned_N>() where unsigned_N : u32_const, new() { unsigned N = new unsigned_N().value; return m_in[N].bind(); }  //template <unsigned N> auto input_callback() { return m_in[N].bind(); }
         public devcb_write8.binder output_callback() { return m_out.bind(); }  //auto output_callback() { return m_out.bind(); }
         public devcb_write_line.binder lockout_callback() { return m_lockout.bind(); }  //auto lockout_callback() { return m_lockout.bind(); }
 
@@ -110,14 +111,14 @@ namespace mame
         protected override void device_start()
         {
             /* resolve our read callbacks */
-            m_in.resolve_all_safe(0);
+            m_in.resolve_all_safe_u8(0);
 
             /* resolve our write callbacks */
             m_out.resolve_safe();
             m_lockout.resolve_safe();
 
-            save_item(NAME(new { m_portO }));
-            save_item(NAME(new { m_rw }));
+            save_item(g.NAME(new { m_portO }));
+            save_item(g.NAME(new { m_rw }));
         }
 
         //-------------------------------------------------
@@ -134,7 +135,7 @@ namespace mame
         //-------------------------------------------------
         protected override void device_add_mconfig(machine_config config)
         {
-            MB8843(config, m_cpu, g.DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
+            g.MB8843(config, m_cpu, g.DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
             m_cpu.op[0].read_k().set(K_r).reg();
             m_cpu.op[0].read_r(0).set(R0_r).reg();
             m_cpu.op[0].read_r(1).set(R1_r).reg();
@@ -153,22 +154,22 @@ namespace mame
 
         uint8_t R0_r()
         {
-            return m_in[0].op();
+            return m_in[0].op_u8();
         }
 
         uint8_t R1_r()
         {
-            return m_in[1].op();
+            return m_in[1].op_u8();
         }
 
         uint8_t R2_r()
         {
-            return m_in[2].op();
+            return m_in[2].op_u8();
         }
 
         uint8_t R3_r()
         {
-            return m_in[3].op();
+            return m_in[3].op_u8();
         }
 
         void O_w(uint8_t data)
@@ -183,7 +184,7 @@ namespace mame
 
         void P_w(uint8_t data)
         {
-            m_out.op(data);
+            m_out.op_u8(data);
         }
 
 

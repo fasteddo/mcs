@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using unsigned = System.UInt32;
 
 
@@ -17,7 +17,7 @@ namespace mame.netlist
         //template <typename FT, int SIZE>
         class matrix_solver_SOR_mat_t<FT, FT_OPS, int_SIZE> : matrix_solver_direct_t<FT, FT_OPS, int_SIZE>  //class matrix_solver_SOR_mat_t: public matrix_solver_direct_t<FT, SIZE>
             where FT_OPS : plib.constants_operators<FT>, new()
-            where int_SIZE : int_constant, new()
+            where int_SIZE : int_const, new()
         {
             //using float_type = FT;
 
@@ -83,7 +83,7 @@ namespace mame.netlist
 #endif
 
 
-                for (int k = 0; k < iN; k++)
+                for (int k = 0; k < (int)iN; k++)
                     this.m_new_V[k] = ops.cast(this.m_terms[k].getV());  //this->m_new_V[k] = static_cast<float_type>(this->m_terms[k].getV());
 
                 do
@@ -105,10 +105,10 @@ namespace mame.netlist
                         if (this.m_params.m_use_gabs.op())
                         {
                             FT gabs_t = plib.constants<FT, FT_OPS>.zero();
-                            for (int i = 0; i < e; i++)
+                            for (int i = 0; i < (int)e; i++)
                             {
                                 if (p[i] != k)
-                                    gabs_t = ops.add(gabs_t, plib.pglobal.abs<FT, FT_OPS>(this.m_A[k][p[i]]));  //gabs_t = gabs_t + plib::abs(this->m_A[k][p[i]]);
+                                    gabs_t = ops.add(gabs_t, plib.pg.abs<FT, FT_OPS>(this.m_A[k][p[i]]));  //gabs_t = gabs_t + plib::abs(this->m_A[k][p[i]]);
                             }
 
                             gabs_t = ops.multiply(gabs_t, plib.constants<FT, FT_OPS>.one()); // derived by try and error  //gabs_t *= plib::constants<FT>::one(); // derived by try and error
@@ -119,7 +119,7 @@ namespace mame.netlist
                         }
 
                         FT delta = ops.multiply(w, ops.subtract(this.m_RHS[k], Idrive));  //const float_type delta = w * (this->m_RHS[k] - Idrive) ;
-                        cerr = ops.max(cerr, plib.pglobal.abs<FT, FT_OPS>(delta));  //cerr = std::max(cerr, plib::abs(delta));
+                        cerr = ops.max(cerr, plib.pg.abs<FT, FT_OPS>(delta));  //cerr = std::max(cerr, plib::abs(delta));
                         this.m_new_V[k] = ops.add(this.m_new_V[k], delta);  //this->m_new_V[k] += delta;
                     }
 

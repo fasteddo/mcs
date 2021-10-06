@@ -29,9 +29,9 @@ namespace mame
             8,8,
             g.RGN_FRAC(1,2),
             2,
-            digfx_global.ArrayCombineUInt32( g.RGN_FRAC(1,2), g.RGN_FRAC(0,2) ),
-            digfx_global.ArrayCombineUInt32( g.STEP8(0,1) ),
-            digfx_global.ArrayCombineUInt32( g.STEP8(0,8) ),
+            g.ArrayCombineUInt32( g.RGN_FRAC(1,2), g.RGN_FRAC(0,2) ),
+            g.ArrayCombineUInt32( g.STEP8(0,1) ),
+            g.ArrayCombineUInt32( g.STEP8(0,8) ),
             8*8
         );
     }

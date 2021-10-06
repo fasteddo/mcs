@@ -9,8 +9,6 @@ namespace mame
 {
     public static class main_global
     {
-        //enum
-        //{
         public const int EMU_ERR_NONE             = 0;    // no error
         public const int EMU_ERR_FAILED_VALIDITY  = 1;    // failed validity checks
         public const int EMU_ERR_MISSING_FILES    = 2;    // missing files
@@ -21,7 +19,6 @@ namespace mame
         const int EMU_ERR_IDENT_NONROMS    = 7;    // identified all non-ROM files
         const int EMU_ERR_IDENT_PARTIAL    = 8;    // identified some files but not all
         const int EMU_ERR_IDENT_NONE       = 9;    // identified no files
-        //}
     }
 
 
@@ -46,7 +43,7 @@ namespace mame
 
 
     // ======================> machine_manager
-    public class machine_manager : global_object
+    public class machine_manager
     {
         //DISABLE_COPYING(machine_manager);
 

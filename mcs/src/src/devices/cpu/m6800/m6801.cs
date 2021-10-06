@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -21,7 +21,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(M6801, m6801_cpu_device, "m6801", "Motorola MC6801")
         static device_t device_creator_m6801_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new m6801_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6801 = DEFINE_DEVICE_TYPE(device_creator_m6801_cpu_device, "m6801", "Motorola MC6801");
+        public static readonly device_type M6801 = g.DEFINE_DEVICE_TYPE(device_creator_m6801_cpu_device, "m6801", "Motorola MC6801");
 
 
         class device_execute_interface_m6801 : device_execute_interface_m6800
@@ -30,6 +30,7 @@ namespace mame
 
             protected override uint64_t execute_clocks_to_cycles(uint64_t clocks) { return (clocks + 4 - 1) / 4; }
             protected override uint64_t execute_cycles_to_clocks(uint64_t cycles) { return cycles * 4; }
+            protected override uint32_t execute_input_lines() { return 5; }
             protected override void execute_set_input(int irqline, int state) { ((m6801_cpu_device)device()).device_execute_interface_execute_set_input(irqline, state); }
         }
 
@@ -47,6 +48,7 @@ namespace mame
         const int M6801_IRQ_LINE = M6800_IRQ_LINE;
         const int M6801_TIN_LINE = M6800_IRQ_LINE + 1; // P20/Tin Input Capture line (edge sense). Active edge is selectable by internal reg.
         const int M6801_SC1_LINE = M6800_IRQ_LINE + 2;
+        const int M6801_IS_LINE  = M6800_IRQ_LINE + 3; // IS3(6801) or ISF(6301Y)
         //}
 
 
@@ -59,18 +61,17 @@ namespace mame
         const int LOG_SER     = 1 << 6;
         const int LOG_TIMER   = 1 << 7;
 
-        //#define VERBOSE (LOG_SER)
+        const int VERBOSE = 0;  //#define VERBOSE (LOG_SER)
         //#define LOG_OUTPUT_STREAM std::cout
         //#define LOG_OUTPUT_STREAM std::cerr
-        //#include "logmacro.h"
 
-        void LOGTX(string format, params object [] args) { LOGMASKED(LOG_TX, format, args); }
+        void LOGTX(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_TX, format, args); }
         //#define LOGTXTICK(...)  LOGMASKED(LOG_TXTICK, __VA_ARGS__)
         //#define LOGRX(...)      LOGMASKED(LOG_RX, __VA_ARGS__)
         //#define LOGRXTICK(...)  LOGMASKED(LOG_RXTICK, __VA_ARGS__)
-        public void LOGPORT(string format, params object [] args) { LOGMASKED(LOG_PORT, format, args); }
-        public void LOGSER(string format, params object [] args) { LOGMASKED(LOG_SER, format, args); }  //#define LOGSER(...)     LOGMASKED(LOG_SER, __VA_ARGS__)
-        public void LOGTIMER(string format, params object [] args) { LOGMASKED(LOG_TIMER, format, args); }  //#define LOGTIMER(...)   LOGMASKED(LOG_TIMER, __VA_ARGS__)
+        public void LOGPORT(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_PORT, format, args); }
+        public void LOGSER(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_SER, format, args); }  //#define LOGSER(...)     LOGMASKED(LOG_SER, __VA_ARGS__)
+        public void LOGTIMER(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_TIMER, format, args); }  //#define LOGTIMER(...)   LOGMASKED(LOG_TIMER, __VA_ARGS__)
 
 
         uint16_t CT { get { return m_counter.w.l; } set { m_counter.w.l = value; } }
@@ -125,10 +126,12 @@ namespace mame
 
 
         /* take interrupt */
+        //#define TAKE_ISI enter_interrupt("take ISI\n",0xfff8)
         void TAKE_ICI() { enter_interrupt("take ICI\n", 0xfff6); }
         void TAKE_OCI() { enter_interrupt("take OCI\n", 0xfff4); }
         void TAKE_TOI() { enter_interrupt("take TOI\n", 0xfff2); }
         void TAKE_SCI() { enter_interrupt("take SCI\n", 0xfff0); }
+        //#define TAKE_CMI enter_interrupt("take CMI\n",0xffec)
 
         /* mnemonicos for the Timer Control and Status Register bits */
         const uint8_t TCSR_OLVL = 0x01;
@@ -172,11 +175,13 @@ namespace mame
         };
 
 
-        devcb_read8.array<uint32_constant_4> m_in_port_func;
-        devcb_write8.array<uint32_constant_4> m_out_port_func;
+        devcb_read8.array<u64_const_4> m_in_port_func;
+        devcb_write8.array<u64_const_4> m_out_port_func;
 
         devcb_write_line m_out_sc2_func;
         devcb_write_line m_out_sertx_func;
+
+        int m_sclk_divider;
 
         /* internal registers */
         uint8_t [] m_port_ddr = new uint8_t [4];
@@ -189,7 +194,7 @@ namespace mame
         PAIR m_counter;        /* free running counter */
         PAIR m_output_compare; /* output compare       */
         uint16_t m_input_capture;  /* input capture        */
-        int m_p3csr_is3_flag_read;
+        bool m_pending_isf_clear;
         int m_port3_latched;
 
         uint8_t m_trcsr;
@@ -288,10 +293,11 @@ namespace mame
 
             init_m6803_insn();
 
-            m_in_port_func = new devcb_read8.array<uint32_constant_4>(this, () => { return new devcb_read8(this); });
-            m_out_port_func = new devcb_write8.array<uint32_constant_4>(this, () => { return new devcb_write8(this); });
+            m_in_port_func = new devcb_read8.array<u64_const_4>(this, () => { return new devcb_read8(this); });
+            m_out_port_func = new devcb_write8.array<u64_const_4>(this, () => { return new devcb_write8(this); });
             m_out_sc2_func = new devcb_write_line(this);
             m_out_sertx_func = new devcb_write_line(this);
+            m_sclk_divider = 8;
         }
 
 
@@ -342,7 +348,7 @@ namespace mame
         {
             base.device_resolve_objects();
 
-            m_in_port_func.resolve_all_safe(0xff);
+            m_in_port_func.resolve_all_safe_u8(0xff);
             m_out_port_func.resolve_all_safe();
             m_out_sc2_func.resolve_safe();
             m_out_sertx_func.resolve_safe();
@@ -355,6 +361,7 @@ namespace mame
 
             m_sci_timer = machine().scheduler().timer_alloc(sci_tick);
 
+            m_irq_state[M6801_IS_LINE] = 0;
             m_port_ddr[3] = 0;
             m_port_data[3] = 0;
             m_input_capture = 0;
@@ -363,44 +370,41 @@ namespace mame
             m_rmcr = 0;
             m_ram_ctrl = 0;
 
-            save_item(NAME(new { m_port_ddr }));
-            save_item(NAME(new { m_port_data }));
-            save_item(NAME(new { m_p3csr }));
-            save_item(NAME(new { m_tcsr }));
-            save_item(NAME(new { m_pending_tcsr }));
-            save_item(NAME(new { m_irq2 }));
-            save_item(NAME(new { m_ram_ctrl }));
+            save_item(g.NAME(new { m_port_ddr }));
+            save_item(g.NAME(new { m_port_data }));
+            save_item(g.NAME(new { m_p3csr }));
+            save_item(g.NAME(new { m_tcsr }));
+            save_item(g.NAME(new { m_pending_tcsr }));
+            save_item(g.NAME(new { m_irq2 }));
+            save_item(g.NAME(new { m_ram_ctrl }));
 
-            save_item(NAME(new { m_counter.d }));
-            save_item(NAME(new { m_output_compare.d }));
-            save_item(NAME(new { m_input_capture }));
-            save_item(NAME(new { m_p3csr_is3_flag_read }));
-            save_item(NAME(new { m_port3_latched }));
-            save_item(NAME(new { m_port2_written }));
+            save_item(g.NAME(new { m_counter.d }));
+            save_item(g.NAME(new { m_output_compare.d }));
+            save_item(g.NAME(new { m_input_capture }));
+            save_item(g.NAME(new { m_pending_isf_clear }));
+            save_item(g.NAME(new { m_port3_latched }));
+            save_item(g.NAME(new { m_port2_written }));
 
-            save_item(NAME(new { m_trcsr }));
-            save_item(NAME(new { m_rmcr }));
-            save_item(NAME(new { m_rdr }));
-            save_item(NAME(new { m_tdr }));
-            save_item(NAME(new { m_rsr }));
-            save_item(NAME(new { m_tsr }));
-            save_item(NAME(new { m_rxbits }));
-            save_item(NAME(new { m_txbits }));
-            save_item(NAME(new { m_txstate }));
-            save_item(NAME(new { m_trcsr_read_tdre }));
-            save_item(NAME(new { m_trcsr_read_orfe }));
-            save_item(NAME(new { m_trcsr_read_rdrf }));
-            save_item(NAME(new { m_tx }));
-            save_item(NAME(new { m_ext_serclock }));
-            save_item(NAME(new { m_use_ext_serclock }));
+            save_item(g.NAME(new { m_trcsr }));
+            save_item(g.NAME(new { m_rmcr }));
+            save_item(g.NAME(new { m_rdr }));
+            save_item(g.NAME(new { m_tdr }));
+            save_item(g.NAME(new { m_rsr }));
+            save_item(g.NAME(new { m_tsr }));
+            save_item(g.NAME(new { m_rxbits }));
+            save_item(g.NAME(new { m_txbits }));
+            save_item(g.NAME(new { m_txstate }));
+            save_item(g.NAME(new { m_trcsr_read_tdre }));
+            save_item(g.NAME(new { m_trcsr_read_orfe }));
+            save_item(g.NAME(new { m_trcsr_read_rdrf }));
+            save_item(g.NAME(new { m_tx }));
+            save_item(g.NAME(new { m_ext_serclock }));
+            save_item(g.NAME(new { m_use_ext_serclock }));
 
-            save_item(NAME(new { m_latch09 }));
-
-            save_item(NAME(new { m_timer_over.d }));
-
-            save_item(NAME(new { m_timer_next }));
-
-            save_item(NAME(new { m_sc1_state }));
+            save_item(g.NAME(new { m_latch09 }));
+            save_item(g.NAME(new { m_timer_over.d }));
+            save_item(g.NAME(new { m_timer_next }));
+            save_item(g.NAME(new { m_sc1_state }));
         }
 
 
@@ -416,7 +420,7 @@ namespace mame
             m_port_ddr[2] = 0x00;
             m_port_data[0] = 0;
             m_p3csr = 0x00;
-            m_p3csr_is3_flag_read = 0;
+            m_pending_isf_clear = false;
             m_port2_written = false;
             m_port3_latched = 0;
             /* TODO: on reset port 2 should be read to determine the operating mode (bits 0-2) */
@@ -448,6 +452,7 @@ namespace mame
         // device_execute_interface overrides
         //virtual uint64_t execute_clocks_to_cycles(uint64_t clocks) const override { return (clocks + 4 - 1) / 4; }
         //virtual uint64_t execute_cycles_to_clocks(uint64_t cycles) const override { return (cycles * 4); }
+        //virtual uint32_t execute_input_lines() const noexcept override { return 5; }
 
         new void device_execute_interface_execute_set_input(int irqline, int state)
         {
@@ -459,7 +464,7 @@ namespace mame
                     if (m_port3_latched == 0 && (m_p3csr & M6801_P3CSR_LE) != 0)
                     {
                         // latch input data to port 3
-                        m_port_data[2] = (uint8_t)((m_in_port_func[2].op() & (m_port_ddr[2] ^ 0xff)) | (m_port_data[2] & m_port_ddr[2]));
+                        m_port_data[2] = (uint8_t)((m_in_port_func[2].op_u8() & (m_port_ddr[2] ^ (uint32_t)0xff)) | (m_port_data[2] & (uint32_t)m_port_ddr[2]));
                         m_port3_latched = 1;
                         LOGPORT("Latched Port 3 Data: {0}\n", m_port_data[2]);
 
@@ -513,7 +518,7 @@ namespace mame
             if (m_port_ddr[0] != data)
             {
                 m_port_ddr[0] = data;
-                m_out_port_func[0].op(0, (uint8_t)((m_port_data[0] & m_port_ddr[0]) | (m_port_ddr[0] ^ 0xff)), m_port_ddr[0]);
+                m_out_port_func[0].op_u8(0, (uint8_t)((m_port_data[0] & (uint32_t)m_port_ddr[0]) | (m_port_ddr[0] ^ (uint32_t)0xff)), m_port_ddr[0]);
             }
         }
 
@@ -523,7 +528,7 @@ namespace mame
             if (m_port_ddr[0] == 0xff)
                 return m_port_data[0];
             else
-                return (uint8_t)((m_in_port_func[0].op() & (m_port_ddr[0] ^ 0xff)) | (m_port_data[0] & m_port_ddr[0]));
+                return (uint8_t)((m_in_port_func[0].op_u8() & (m_port_ddr[0] ^ (uint32_t)0xff)) | (m_port_data[0] & (uint32_t)m_port_ddr[0]));
         }
 
 
@@ -532,7 +537,7 @@ namespace mame
             LOGPORT("Port 1 Data Register: {0}\n", data);
 
             m_port_data[0] = data;
-            m_out_port_func[0].op(0, (uint8_t)((m_port_data[0] & m_port_ddr[0]) | (m_port_ddr[0] ^ 0xff)), m_port_ddr[0]);
+            m_out_port_func[0].op_u8(0, (uint8_t)((m_port_data[0] & (uint32_t)m_port_ddr[0]) | (m_port_ddr[0] ^ (uint32_t)0xff)), m_port_ddr[0]);
         }
 
 
@@ -553,7 +558,7 @@ namespace mame
             if(m_port_ddr[1] == 0xff)
                 return m_port_data[1];
             else
-                return (uint8_t)((m_in_port_func[1].op() & (m_port_ddr[1] ^ 0xff)) | (m_port_data[1] & m_port_ddr[1]));
+                return (uint8_t)((m_in_port_func[1].op_u8() & (m_port_ddr[1] ^ (uint32_t)0xff)) | (m_port_data[1] & (uint32_t)m_port_ddr[1]));
         }
 
 
@@ -574,22 +579,22 @@ namespace mame
             if (m_port_ddr[2] != data)
             {
                 m_port_ddr[2] = data;
-                m_out_port_func[2].op(0, (uint8_t)((m_port_data[2] & m_port_ddr[2]) | (m_port_ddr[2] ^ 0xff)), m_port_ddr[2]);
+                m_out_port_func[2].op_u8(0, (uint8_t)((m_port_data[2] & (uint32_t)m_port_ddr[2]) | (m_port_ddr[2] ^ (uint32_t)0xff)), m_port_ddr[2]);
             }
         }
 
 
-        uint8_t p3_data_r()
+        protected virtual uint8_t p3_data_r()
         {
             uint8_t data;
 
             if (!machine().side_effects_disabled())
             {
-                if (m_p3csr_is3_flag_read != 0)
+                if (m_pending_isf_clear)
                 {
                     LOGPORT("Cleared IS3\n");
                     m_p3csr = (uint8_t)(m_p3csr & ~M6801_P3CSR_IS3_FLAG);
-                    m_p3csr_is3_flag_read = 0;
+                    m_pending_isf_clear = false;
                 }
 
                 if ((m_p3csr & M6801_P3CSR_OSS) == 0)
@@ -601,8 +606,7 @@ namespace mame
             if (((m_p3csr & M6801_P3CSR_LE) != 0) || (m_port_ddr[2] == 0xff))
                 data = m_port_data[2];
             else
-                data = (uint8_t)((m_in_port_func[2].op() & (m_port_ddr[2] ^ 0xff))
-                    | (m_port_data[2] & m_port_ddr[2]));
+                data = (uint8_t)((m_in_port_func[2].op_u8() & (m_port_ddr[2] ^ (uint32_t)0xff)) | (m_port_data[2] & (uint32_t)m_port_ddr[2]));
 
             if (!machine().side_effects_disabled())
             {
@@ -618,15 +622,15 @@ namespace mame
         }
 
 
-        void p3_data_w(uint8_t data)
+        protected virtual void p3_data_w(uint8_t data)
         {
             LOGPORT("Port 3 Data Register: {0}\n", data);
 
-            if (m_p3csr_is3_flag_read != 0)
+            if (m_pending_isf_clear)
             {
                 LOGPORT("Cleared IS3\n");
                 m_p3csr = (uint8_t)(m_p3csr & ~M6801_P3CSR_IS3_FLAG);
-                m_p3csr_is3_flag_read = 0;
+                m_pending_isf_clear = false;
             }
 
             if ((m_p3csr & M6801_P3CSR_OSS) != 0)
@@ -635,7 +639,7 @@ namespace mame
             }
 
             m_port_data[2] = data;
-            m_out_port_func[2].op(0, (uint8_t)((m_port_data[2] & m_port_ddr[2]) | (m_port_ddr[2] ^ 0xff)), m_port_ddr[2]);
+            m_out_port_func[2].op_u8(0, (uint8_t)((m_port_data[2] & (uint32_t)m_port_ddr[2]) | (m_port_ddr[2] ^ (uint32_t)0xff)), m_port_ddr[2]);
 
             if ((m_p3csr & M6801_P3CSR_OSS) != 0)
             {
@@ -648,7 +652,7 @@ namespace mame
         {
             if (((m_p3csr & M6801_P3CSR_IS3_FLAG) != 0) && !machine().side_effects_disabled())
             {
-                m_p3csr_is3_flag_read = 1;
+                m_pending_isf_clear = true;
             }
 
             return m_p3csr;
@@ -670,7 +674,7 @@ namespace mame
             if (m_port_ddr[3] != data)
             {
                 m_port_ddr[3] = data;
-                m_out_port_func[3].op(0, (uint8_t)((m_port_data[3] & m_port_ddr[3]) | (m_port_ddr[3] ^ 0xff)), m_port_ddr[3]);
+                m_out_port_func[3].op_u8(0, (uint8_t)((m_port_data[3] & (uint32_t)m_port_ddr[3]) | (m_port_ddr[3] ^ (uint32_t)0xff)), m_port_ddr[3]);
             }
         }
 
@@ -680,7 +684,7 @@ namespace mame
             if(m_port_ddr[3] == 0xff)
                 return m_port_data[3];
             else
-                return (uint8_t)((m_in_port_func[3].op() & (m_port_ddr[3] ^ 0xff)) | (m_port_data[3] & m_port_ddr[3]));
+                return (uint8_t)((m_in_port_func[3].op_u8() & (m_port_ddr[3] ^ (uint32_t)0xff)) | (m_port_data[3] & (uint32_t)m_port_ddr[3]));
         }
 
 
@@ -689,7 +693,7 @@ namespace mame
             LOGPORT("Port 4 Data Register: {0}\n", data);
 
             m_port_data[3] = data;
-            m_out_port_func[3].op(0, (uint8_t)((m_port_data[3] & m_port_ddr[3]) | (m_port_ddr[3] ^ 0xff)), m_port_ddr[3]);
+            m_out_port_func[3].op_u8(0, (uint8_t)((m_port_data[3] & (uint32_t)m_port_ddr[3]) | (m_port_ddr[3] ^ (uint32_t)0xff)), m_port_ddr[3]);
         }
 
 
@@ -933,9 +937,6 @@ namespace mame
 
         uint8_t ff_r()
         {
-            if (!machine().side_effects_disabled())
-                logerror("PC {0}: warning - read from write-only internal register\n", state().pc());
-
             return 0xff;
         }
 
@@ -968,7 +969,6 @@ namespace mame
                      ((m_trcsr & (M6801_TRCSR_RIE | M6801_TRCSR_ORFE)) == (M6801_TRCSR_RIE | M6801_TRCSR_ORFE)) ||
                      ((m_trcsr & (M6801_TRCSR_TIE | M6801_TRCSR_TDRE)) == (M6801_TRCSR_TIE | M6801_TRCSR_TDRE)))
             {
-                LOG("SCI interrupt\n");
                 TAKE_SCI();
             }
         }
@@ -982,11 +982,11 @@ namespace mame
         }
 
 
-        public override void EAT_CYCLES() { throw new emu_unimplemented(); }
+        public override void eat_cycles() { throw new emu_unimplemented(); }
 
 
         /* cleanup high-word of counters */
-        public override void CLEANUP_COUNTERS()
+        public override void cleanup_counters()
         {
             OCH -= CTH;
             TOH -= CTH;
@@ -1042,7 +1042,7 @@ namespace mame
             {
                 TOH++;  // next IRQ point
 #if false
-                CLEANUP_COUNTERS();
+                cleanup_counters();
 #endif
                 m_tcsr |= TCSR_TOF;
                 m_pending_tcsr |= TCSR_TOF;
@@ -1062,7 +1062,7 @@ namespace mame
         }
 
 
-        void set_rmcr(uint8_t data)
+        protected virtual void set_rmcr(uint8_t data)
         {
             if (m_rmcr == data) return;
 
@@ -1116,7 +1116,7 @@ namespace mame
 
             data &= 0x1f;
 
-            m_out_port_func[1].op(0, data, ddr);
+            m_out_port_func[1].op_u8(0, data, ddr);
         }
 
 
@@ -1133,7 +1133,7 @@ namespace mame
 
 
         /*
-            if change_pc() direccted these areas ,Call hd63701_trap_pc().
+            if change_pc() directed these areas, call hd63701_trap_pc().
             'mode' is selected by the sense of p2.0,p2.1,and p2.3 at reset timming.
             mode 0,1,2,4,6 : $0000-$001f
             mode 5         : $0000-$001f,$0200-$efff
@@ -1144,7 +1144,7 @@ namespace mame
         {
             LOG("OS3: {0}\n", state);
 
-            m_out_sc2_func.op(state);
+            m_out_sc2_func.op_s32(state);
         }
     }
 
@@ -1153,7 +1153,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(M6803, m6803_cpu_device, "m6803", "Motorola MC6803")
         static device_t device_creator_m6803_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new m6803_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6803 = DEFINE_DEVICE_TYPE(device_creator_m6803_cpu_device, "m6803", "Motorola MC6803");
+        public static readonly device_type M6803 = g.DEFINE_DEVICE_TYPE(device_creator_m6803_cpu_device, "m6803", "Motorola MC6803");
 
 
         class device_disasm_interface_m6803 : device_disasm_interface_m6801

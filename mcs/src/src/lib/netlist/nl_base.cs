@@ -13,10 +13,10 @@ using netlist_state_t_nets_collection_type = mame.std.vector<mame.netlist.detail
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
-using queue_t = mame.netlist.detail.queue_base<mame.netlist.detail.net_t>;  //using queue_t = queue_base<net_t, false>;
+using queue_t = mame.netlist.detail.queue_base<mame.netlist.detail.net_t, mame.bool_const_false>;  //using queue_t = queue_base<net_t, false>;
 using queue_t_entry_t = mame.plib.pqentry_t<mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>, mame.netlist.detail.net_t>;  //using entry_t = plib::pqentry_t<netlist_time_ext, net_t *>;
 using props = mame.netlist.detail.property_store_t<mame.netlist.detail.object_t, string>;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using state_var_s32 = mame.netlist.state_var<System.Int32>;
 using unsigned = System.UInt32;
 

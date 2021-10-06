@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace mame
 {
-    class osd_watchdog : global_object
+    class osd_watchdog
     {
         //osd_ticks_t                     m_timeout;
         //osd_event                       m_event;
@@ -30,7 +30,7 @@ namespace mame
 
         ~osd_watchdog()
         {
-            assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;

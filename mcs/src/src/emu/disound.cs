@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using mixer_interface_enumerator = mame.device_interface_enumerator<mame.device_mixer_interface>;  //typedef device_interface_enumerator<device_mixer_interface> mixer_interface_enumerator;
+using size_t = System.UInt64;
 using sound_interface_enumerator = mame.device_interface_enumerator<mame.device_sound_interface>;  //typedef device_interface_enumerator<device_sound_interface> sound_interface_enumerator;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -100,7 +101,7 @@ namespace mame
 
         public device_sound_interface add_route(u32 output, device_t base_, string target, double gain, u32 input, u32 mixoutput)
         {
-            assert(!device().started());
+            g.assert(!device().started());
             m_route_list.emplace_back(new sound_route(output, input, mixoutput, (float)gain, base_, target));
             return this;
         }
@@ -184,7 +185,7 @@ namespace mame
         //-------------------------------------------------
         public sound_stream input_to_stream_input(int inputnum, out int stream_inputnum)
         {
-            assert(inputnum >= 0);
+            g.assert(inputnum >= 0);
 
             stream_inputnum = -1;
 
@@ -215,7 +216,7 @@ namespace mame
         //-------------------------------------------------
         public sound_stream output_to_stream_output(int outputnum, out int stream_outputnum)
         {
-            assert(outputnum >= 0);
+            g.assert(outputnum >= 0);
 
             stream_outputnum = -1;
 
@@ -294,14 +295,14 @@ namespace mame
             foreach (sound_route route in routes())
             {
                 // find a device with the requested tag
-                device_t target = route.m_base.get().subdevice(route.m_target);
+                device_t target = route.m_base.subdevice(route.m_target);
                 if (target == null)
-                    osd_printf_error("Attempting to route sound to non-existent device '{0}'\n", route.m_base.get().subtag(route.m_target));
+                    g.osd_printf_error("Attempting to route sound to non-existent device '{0}'\n", route.m_base.subtag(route.m_target));
 
                 // if it's not a speaker or a sound device, error
                 device_sound_interface sound;
                 if (target != null && (target.type() != speaker_device.SPEAKER) && !target.interface_(out sound))
-                    osd_printf_error("Attempting to route sound to a non-sound device '{0}' ({1})\n", target.tag(), target.name());
+                    g.osd_printf_error("Attempting to route sound to a non-sound device '{0}' ({1})\n", target.tag(), target.name());
             }
         }
 
@@ -318,7 +319,7 @@ namespace mame
                 // scan each route on the device
                 foreach (sound_route route in sound.routes())
                 {
-                    device_t target_device = route.m_base.get().subdevice(route.m_target);
+                    device_t target_device = route.m_base.subdevice(route.m_target);
                     if (target_device == device())
                     {
                         // see if we are the target of this route; if we are, make sure the source device is started
@@ -338,7 +339,7 @@ namespace mame
                 foreach (sound_route route in sound.routes())
                 {
                     // see if we are the target of this route
-                    device_t target_device = route.m_base.get().subdevice(route.m_target);
+                    device_t target_device = route.m_base.subdevice(route.m_target);
                     if (target_device == device() && route.m_input == g.AUTO_ALLOC_INPUT)
                     {
                         route.m_input = (u32)m_auto_allocated_inputs;
@@ -361,7 +362,7 @@ namespace mame
                 foreach (sound_route route in sound.routes())
                 {
                     // if we are the target of this route, hook it up
-                    device_t target_device = route.m_base.get().subdevice(route.m_target);
+                    device_t target_device = route.m_base.subdevice(route.m_target);
                     if (target_device == device())
                     {
                         // iterate over all outputs, matching any that apply
@@ -375,13 +376,13 @@ namespace mame
                                 int streamoutputnum;
                                 sound_stream outputstream = sound.output_to_stream_output(outputnum, out streamoutputnum);
                                 if (outputstream == null)
-                                    fatalerror("Sound device '{0}' specifies route for nonexistent output #{1}\n", sound.device().tag(), outputnum);
+                                    g.fatalerror("Sound device '{0}' specifies route for nonexistent output #{1}\n", sound.device().tag(), outputnum);
 
                                 // find the input stream to connect to
                                 int streaminputnum;
                                 sound_stream inputstream = input_to_stream_input(inputnum++, out streaminputnum);
                                 if (inputstream == null)
-                                    fatalerror("Sound device '{0}' targeted output #{1} to nonexistant device '{2}' input {3}\n", sound.device().tag(), outputnum, device().tag(), inputnum - 1);
+                                    g.fatalerror("Sound device '{0}' targeted output #{1} to nonexistant device '{2}' input {3}\n", sound.device().tag(), outputnum, device().tag(), inputnum - 1);
 
                                 // set the input
                                 inputstream.set_input(streaminputnum, outputstream, streamoutputnum, route.m_gain);
@@ -429,7 +430,7 @@ namespace mame
         public device_mixer_interface(machine_config mconfig, device_t device, int outputs = 1)
             : base(mconfig, device)
         {
-            m_outputs = (byte)outputs;
+            m_outputs = (u8)outputs;
             m_mixer_stream = null;
         }
 
@@ -457,7 +458,7 @@ namespace mame
             }
 
             // generate the output map
-            m_outputmap.resize(m_auto_allocated_inputs);
+            m_outputmap.resize((size_t)m_auto_allocated_inputs);
 
             // iterate through all routes that point to us and note their mixer output
             foreach (device_sound_interface sound in new sound_interface_enumerator(device().machine().root_device()))
@@ -465,12 +466,12 @@ namespace mame
                 foreach (sound_route route in sound.routes())
                 {
                     // see if we are the target of this route
-                    device_t target_device = route.m_base.get().subdevice(route.m_target);
+                    device_t target_device = route.m_base.subdevice(route.m_target);
                     if (target_device == device() && route.m_input < m_auto_allocated_inputs)
                     {
                         int count = (route.m_output == g.ALL_OUTPUTS) ? sound.outputs() : 1;
                         for (int output = 0; output < count; output++)
-                            m_outputmap[(int)(route.m_input + output)] = (byte)route.m_mixoutput;
+                            m_outputmap[(int)(route.m_input + output)] = (u8)route.m_mixoutput;
                     }
                 }
             }
@@ -507,7 +508,7 @@ namespace mame
             // special case: single input, single output, same rate
             if (inputs.size() == 1 && outputs.size() == 1 && inputs[0].sample_rate() == outputs[0].sample_rate())
             {
-                outputs[0].assign_from(inputs[0]);  //outputs[0] = inputs[0];
+                outputs[0] = new write_stream_view(inputs[0]);  //outputs[0] = inputs[0];
                 return;
             }
 

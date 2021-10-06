@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -26,7 +26,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(POKEY, pokey_device, "pokey", "Atari C012294 POKEY")
         static pokey_device device_creator_pokey_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pokey_device(mconfig, tag, owner, clock); }
-        public static readonly device_type POKEY = DEFINE_DEVICE_TYPE(device_creator_pokey_device, "pokey", "Atari C012294 POKEY");
+        public static readonly device_type POKEY = g.DEFINE_DEVICE_TYPE(device_creator_pokey_device, "pokey", "Atari C012294 POKEY");
 
 
         public class device_sound_interface_pokey : device_sound_interface
@@ -283,7 +283,7 @@ namespace mame
         uint32_t m_p9;              /* poly9 index */
         uint32_t m_p17;             /* poly17 index */
 
-        devcb_read8.array<uint32_constant_8> m_pot_r_cb;
+        devcb_read8.array<u64_const_8> m_pot_r_cb;
         devcb_read8 m_allpot_r_cb;
         devcb_read8 m_serin_r_cb;
         devcb_write8 m_serout_w_cb;
@@ -338,7 +338,7 @@ namespace mame
 
             m_icount.i = 0;  //m_icount = 0;
             m_stream = null;
-            m_pot_r_cb = new devcb_read8.array<uint32_constant_8>(this, () => { return new devcb_read8(this); });
+            m_pot_r_cb = new devcb_read8.array<u64_const_8>(this, () => { return new devcb_read8(this); });
             m_allpot_r_cb = new devcb_read8(this);
             m_serin_r_cb = new devcb_read8(this);
             m_serout_w_cb = new devcb_write8(this);
@@ -415,7 +415,7 @@ namespace mame
                 }
                 else if (!m_allpot_r_cb.isnull())
                 {
-                    data = m_allpot_r_cb.op(offset);
+                    data = m_allpot_r_cb.op_u8(offset);
                     m_ALLPOT = (uint8_t)data;
                     LOG("{0}: POKEY '{1}' ALLPOT callback {2}\n", machine().describe_context(), tag(), data);
                 }
@@ -445,7 +445,7 @@ namespace mame
 
             case SERIN_C:
                 if (!m_serin_r_cb.isnull())
-                    m_SERIN = m_serin_r_cb.op(offset);
+                    m_SERIN = m_serin_r_cb.op_u8(offset);
                 data = m_SERIN;
                 LOG("POKEY '{0}' SERIN  {1}\n", tag(), data);
                 break;
@@ -613,27 +613,27 @@ namespace mame
             save_item(STRUCT_MEMBER(m_channel, m_AUDC));
 #endif
 
-            save_item(NAME(new { m_clock_cnt }));
-            save_item(NAME(new { m_p4 }));
-            save_item(NAME(new { m_p5 }));
-            save_item(NAME(new { m_p9 }));
-            save_item(NAME(new { m_p17 }));
+            save_item(g.NAME(new { m_clock_cnt }));
+            save_item(g.NAME(new { m_p4 }));
+            save_item(g.NAME(new { m_p5 }));
+            save_item(g.NAME(new { m_p9 }));
+            save_item(g.NAME(new { m_p17 }));
 
-            save_item(NAME(new { m_POTx }));
-            save_item(NAME(new { m_AUDCTL }));
-            save_item(NAME(new { m_ALLPOT }));
-            save_item(NAME(new { m_KBCODE }));
-            save_item(NAME(new { m_SERIN }));
-            save_item(NAME(new { m_SEROUT }));
-            save_item(NAME(new { m_IRQST }));
-            save_item(NAME(new { m_IRQEN }));
-            save_item(NAME(new { m_SKSTAT }));
-            save_item(NAME(new { m_SKCTL }));
+            save_item(g.NAME(new { m_POTx }));
+            save_item(g.NAME(new { m_AUDCTL }));
+            save_item(g.NAME(new { m_ALLPOT }));
+            save_item(g.NAME(new { m_KBCODE }));
+            save_item(g.NAME(new { m_SERIN }));
+            save_item(g.NAME(new { m_SEROUT }));
+            save_item(g.NAME(new { m_IRQST }));
+            save_item(g.NAME(new { m_IRQEN }));
+            save_item(g.NAME(new { m_SKSTAT }));
+            save_item(g.NAME(new { m_SKCTL }));
 
-            save_item(NAME(new { m_pot_counter }));
-            save_item(NAME(new { m_kbd_cnt }));
-            save_item(NAME(new { m_kbd_latch }));
-            save_item(NAME(new { m_kbd_state }));
+            save_item(g.NAME(new { m_pot_counter }));
+            save_item(g.NAME(new { m_kbd_cnt }));
+            save_item(g.NAME(new { m_kbd_latch }));
+            save_item(g.NAME(new { m_kbd_state }));
 
             // State support
 
@@ -1238,7 +1238,7 @@ namespace mame
                 m_POTx[pot] = 228;
                 if( !m_pot_r_cb[pot].isnull() )
                 {
-                    int r = m_pot_r_cb[pot].op((UInt32)pot);
+                    int r = m_pot_r_cb[pot].op_u8((UInt32)pot);
 
                     LOG("POKEY {0} pot_r({1}) returned {2}\n", tag(), pot, r);  // $%02x
                     if (r >= 228)
@@ -1401,7 +1401,7 @@ namespace mame
 
             case SEROUT_C:
                 LOG("POKEY '{0}' SEROUT {1}\n", tag(), data);
-                m_serout_w_cb.op(offset, data);
+                m_serout_w_cb.op_u8(offset, data);
                 m_SKSTAT |= SK_SEROUT;
                 /*
                  * These are arbitrary values, tested with some custom boot

@@ -6,8 +6,8 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -26,7 +26,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(T11,      t11_device,      "t11",      "DEC T11")
         static device_t device_creator_t11_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new t11_device(mconfig, tag, owner, clock); }
-        public static readonly device_type T11 = DEFINE_DEVICE_TYPE(device_creator_t11_device, "t11", "DEC T11");
+        public static readonly device_type T11 = g.DEFINE_DEVICE_TYPE(device_creator_t11_device, "t11", "DEC T11");
 
 
         static uint8_t OCTAL_U8(int value) { return Convert.ToByte(value.ToString(), 8); }
@@ -173,8 +173,8 @@ namespace mame
         bool m_power_fail;
         bool m_ext_halt;
         intref m_icount = new intref();  //int m_icount;
-        memory_access<int_constant_16, int_constant_1, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache m_cache = new memory_access<int_constant_16, int_constant_1, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::cache m_cache;
-        memory_access<int_constant_16, int_constant_1, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific m_program = new memory_access<int_constant_16, int_constant_1, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::specific m_program;
+        memory_access<int_const_16, int_const_1, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache m_cache = new memory_access<int_const_16, int_const_1, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::cache m_cache;
+        memory_access<int_const_16, int_const_1, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.specific m_program = new memory_access<int_const_16, int_const_1, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::specific m_program;
 
         devcb_write_line m_out_reset_func;
         devcb_read8 m_in_iack_func;
@@ -264,29 +264,29 @@ namespace mame
 
 
             m_initial_pc = device_start_initial_pc[c_initial_mode >> 13];
-            m_dimemory.space(AS_PROGRAM).cache(m_cache);
-            m_dimemory.space(AS_PROGRAM).specific(m_program);
+            m_dimemory.space(g.AS_PROGRAM).cache(m_cache);
+            m_dimemory.space(g.AS_PROGRAM).specific(m_program);
             m_out_reset_func.resolve_safe();
-            m_in_iack_func.resolve_safe(0); // default vector (T-11 User's Guide, p. A-11)
+            m_in_iack_func.resolve_safe_u8(0); // default vector (T-11 User's Guide, p. A-11)
 
-            save_item(NAME(new { m_ppc.w.l }));
-            save_item(NAME(new { m_reg[0].w.l }));
-            save_item(NAME(new { m_reg[1].w.l }));
-            save_item(NAME(new { m_reg[2].w.l }));
-            save_item(NAME(new { m_reg[3].w.l }));
-            save_item(NAME(new { m_reg[4].w.l }));
-            save_item(NAME(new { m_reg[5].w.l }));
-            save_item(NAME(new { m_reg[6].w.l }));
-            save_item(NAME(new { m_reg[7].w.l }));
-            save_item(NAME(new { m_psw.w.l }));
-            save_item(NAME(new { m_initial_pc }));
-            save_item(NAME(new { m_wait_state }));
-            save_item(NAME(new { m_cp_state }));
-            save_item(NAME(new { m_vec_active }));
-            save_item(NAME(new { m_pf_active }));
-            save_item(NAME(new { m_hlt_active }));
-            save_item(NAME(new { m_power_fail }));
-            save_item(NAME(new { m_ext_halt }));
+            save_item(g.NAME(new { m_ppc.w.l }));
+            save_item(g.NAME(new { m_reg[0].w.l }));
+            save_item(g.NAME(new { m_reg[1].w.l }));
+            save_item(g.NAME(new { m_reg[2].w.l }));
+            save_item(g.NAME(new { m_reg[3].w.l }));
+            save_item(g.NAME(new { m_reg[4].w.l }));
+            save_item(g.NAME(new { m_reg[5].w.l }));
+            save_item(g.NAME(new { m_reg[6].w.l }));
+            save_item(g.NAME(new { m_reg[7].w.l }));
+            save_item(g.NAME(new { m_psw.w.l }));
+            save_item(g.NAME(new { m_initial_pc }));
+            save_item(g.NAME(new { m_wait_state }));
+            save_item(g.NAME(new { m_cp_state }));
+            save_item(g.NAME(new { m_vec_active }));
+            save_item(g.NAME(new { m_pf_active }));
+            save_item(g.NAME(new { m_hlt_active }));
+            save_item(g.NAME(new { m_power_fail }));
+            save_item(g.NAME(new { m_ext_halt }));
 
             // Register debugger state
             m_distate.state_add( T11_PC,  "PC",  m_reg[7].w.l).formatstr("%06O");
@@ -427,7 +427,7 @@ namespace mame
         // device_memory_interface overrides
         space_config_vector device_memory_interface_memory_space_config()
         {
-            return new space_config_vector { std.make_pair(AS_PROGRAM, m_program_config) };
+            return new space_config_vector { std.make_pair(g.AS_PROGRAM, m_program_config) };
         }
 
 
@@ -577,7 +577,7 @@ namespace mame
                     iaddr |= 16;
 
                 // vector is input on DAL<7:2>
-                uint8_t vector = m_in_iack_func.op(iaddr);
+                uint8_t vector = m_in_iack_func.op_u8(iaddr);
 
                 // nonvectored or vectored interrupt depending on VEC
                 if (g.BIT(iaddr, 4) != 0)

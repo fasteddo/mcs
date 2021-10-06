@@ -108,7 +108,7 @@ namespace mame
             tileinfo.set(1,
                     (u32)(code + ((color & 0x80) << 1)),
                     (u32)((color & 0x1f) + (0x20 * m_palette_bank)),
-                    TILE_FLIPYX((color & 0x60) >> 5));
+                    g.TILE_FLIPYX((color & 0x60) >> 5));
         }
 
 
@@ -123,6 +123,11 @@ namespace mame
             m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_COLS, 16, 16, 32, 16);
 
             m_fg_tilemap.set_transparent_pen(0);
+
+            m_bg_tilemap.set_scrolldx(128, 128);
+            m_bg_tilemap.set_scrolldy(  6,   6);
+            m_fg_tilemap.set_scrolldx(128, 128);
+            m_fg_tilemap.set_scrolldy(  6,   6);
         }
 
 
@@ -207,7 +212,7 @@ namespace mame
             {
                 rectangle cliprecty = new rectangle(cliprect.min_x, cliprect.max_x, y, y);
                 uint8_t [] objdata = new uint8_t [4];
-                uint8_t v = flip_screen() != 0 ? (uint8_t)(~(y - 1)) : (uint8_t)(y - 1);
+                uint8_t v = flip_screen() != 0 ? (uint8_t)(~(y - 1 - 6)) : (uint8_t)(y - 1 - 6);
                 for (int h = 496; h >= 128; h -= 16)
                 {
                     bool objcnt4 = g.BIT(h, 8) != g.BIT(~h, 7);
@@ -266,7 +271,7 @@ namespace mame
                         {
                             do
                             {
-                                m_gfxdecode.op[0].digfx.gfx(2).transpen(bitmap, cliprecty, (u32)(code + i), (u32)col, (int)flip_screen(), (int)flip_screen(), sx, sy + 16 * i * dir, 15);
+                                m_gfxdecode.op[0].digfx.gfx(2).transpen(bitmap, cliprecty, (u32)(code + i), (u32)col, (int)flip_screen(), (int)flip_screen(), sx + 128, sy + 6 + 16 * i * dir, 15);
                             } while (i-- > 0);
                         }
                     }

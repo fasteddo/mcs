@@ -18,7 +18,7 @@ using unsigned = System.UInt32;
 namespace mame
 {
     // ======================> video_manager
-    public class video_manager : global_object
+    public class video_manager
     {
         const bool LOG_THROTTLE = false;
 
@@ -161,12 +161,12 @@ namespace mame
             // extract initial execution state from global configuration settings
             update_refresh_speed();
 
-            UInt32 screen_count = (UInt32)(new screen_device_enumerator(machine.root_device()).count());
+            unsigned screen_count = (unsigned)(new screen_device_enumerator(machine.root_device()).count());
             bool no_screens = screen_count == 0;
 
             // create a render target for snapshots
             string viewname = machine.options().snap_view();
-            m_snap_native = !no_screens && strcmp(viewname, "native") == 0;
+            m_snap_native = !no_screens && std.strcmp(viewname, "native") == 0;
 
             // the native target is hard-coded to our internal layout and has all options disabled
             if (m_snap_native)
@@ -176,7 +176,7 @@ namespace mame
             else
             {
                 // other targets select the specified view and turn off effects
-                m_snap_target = machine.render().target_alloc(null, render_global.RENDER_CREATE_HIDDEN);
+                m_snap_target = machine.render().target_alloc(null, g.RENDER_CREATE_HIDDEN);
                 m_snap_target.set_view(m_snap_target.configured_view(viewname, 0, 1));
                 m_snap_target.set_screen_overlay_enabled(false);
             }
@@ -331,7 +331,7 @@ namespace mame
             {
                 // reset partial updates if we're paused or if the debugger is active
                 screen_device screen = new screen_device_enumerator(machine().root_device()).first();
-                bool debugger_enabled = (machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0;
+                bool debugger_enabled = (machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0;
                 bool within_instruction_hook = debugger_enabled && machine().debugger().within_instruction_hook();
                 if (screen != null && ((machine().paused() && machine().options().update_in_pause()) || from_debugger || within_instruction_hook))
                     screen.reset_partial_updates();
@@ -509,7 +509,7 @@ namespace mame
                 osd_ticks_t tps = osdcore_global.m_osdcore.osd_ticks_per_second();
                 double final_real_time = (double)m_overall_real_seconds + (double)m_overall_real_ticks / (double)tps;
                 double final_emu_time = m_overall_emutime.as_double();
-                osd_printf_info("Average speed: {0}%% ({1} seconds)\n", 100 * final_emu_time / final_real_time, (m_overall_emutime + new attotime(0, attotime.ATTOSECONDS_PER_SECOND / 2)).seconds());  // %.2f%% (%d seconds)\n
+                g.osd_printf_info("Average speed: {0}%% ({1} seconds)\n", 100 * final_emu_time / final_real_time, (m_overall_emutime + new attotime(0, attotime.ATTOSECONDS_PER_SECOND / 2)).seconds());  // %.2f%% (%d seconds)\n
             }
         }
 
@@ -749,7 +749,7 @@ namespace mame
 
                 // keep a history of whether or not emulated time beat real time over the last few
                 // updates; this can be used for future heuristics
-                m_throttle_history = (UInt32)((m_throttle_history << 1) | ((emu_delta_attoseconds > real_delta_attoseconds) ? 1 : 0));
+                m_throttle_history = (UInt32)((m_throttle_history << 1) | ((emu_delta_attoseconds > real_delta_attoseconds) ? 1U : 0));
 
                 // determine how far ahead real time is versus emulated time; note that we use the
                 // accumulated times for this instead of the deltas for the current update because
@@ -759,7 +759,7 @@ namespace mame
                 // if we're more than 1/10th of a second out, or if we are behind at all and emulation
                 // is taking longer than the real frame, we just need to resync
                 if (real_is_ahead_attoseconds < -attotime.ATTOSECONDS_PER_SECOND / 10 ||
-                    (real_is_ahead_attoseconds < 0 && eminline_global.population_count_32(m_throttle_history & 0xff) < 6))
+                    (real_is_ahead_attoseconds < 0 && g.population_count_32(m_throttle_history & 0xff) < 6))
                 {
                     if (LOG_THROTTLE)
                         machine().logerror("Resync due to being behind: {0} (history={1})\n", new attotime(0, -real_is_ahead_attoseconds).as_string(18), m_throttle_history);
@@ -919,7 +919,7 @@ namespace mame
                     // if we changed, log that verbosely
                     if (target_speed != m_speed)
                     {
-                        osd_printf_verbose("Adjusting target speed to {0}%% (hw={1}Hz, game={2}Hz, adjusted={3}Hz)\n", target_speed / 10.0, minrefresh, attotime.ATTOSECONDS_TO_HZ(min_frame_period), attotime.ATTOSECONDS_TO_HZ((attoseconds_t)(min_frame_period * 1000.0 / target_speed)));
+                        g.osd_printf_verbose("Adjusting target speed to {0}%% (hw={1}Hz, game={2}Hz, adjusted={3}Hz)\n", target_speed / 10.0, minrefresh, attotime.ATTOSECONDS_TO_HZ(min_frame_period), attotime.ATTOSECONDS_TO_HZ((attoseconds_t)(min_frame_period * 1000.0 / target_speed)));
                         m_speed = target_speed;
                     }
                 }
@@ -977,8 +977,8 @@ namespace mame
             if (m_seconds_to_run != 0 && emutime.seconds() >= m_seconds_to_run)
             {
                 // create a final screenshot
-                emu_file file = new emu_file(machine().options().snapshot_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-                osd_file.error filerr = file.open(machine().basename() + PATH_SEPARATOR + "final.png");
+                emu_file file = new emu_file(machine().options().snapshot_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
+                osd_file.error filerr = file.open(machine().basename() + g.PATH_SEPARATOR + "final.png");
                 if (filerr == osd_file.error.NONE)
                     save_snapshot(null, file);
 
@@ -1009,7 +1009,7 @@ namespace mame
             {
                 screen_device_enumerator iter = new screen_device_enumerator(machine().root_device());
                 int view_index = iter.indexof(screen);
-                assert(view_index != -1);
+                g.assert(view_index != -1);
                 m_snap_target.set_view((unsigned)view_index);
             }
 
@@ -1028,13 +1028,13 @@ namespace mame
             {
                 //typedef software_renderer<u32, 0,0,0, 16,8,0, false, true> snap_renderer_bilinear;
                 //snap_renderer_bilinear::draw_primitives(primlist, &m_snap_bitmap.pix(0), width, height, m_snap_bitmap.rowpixels());
-                software_renderer<u32,  int_constant_0, int_constant_0, int_constant_0,  int_constant_16, int_constant_8, int_constant_0, bool_constant_false, bool_constant_true>.draw_primitives(primlist, m_snap_bitmap.pix(0), (u32)width, (u32)height, (u32)m_snap_bitmap.rowpixels());
+                software_renderer<u32,  int_const_0, int_const_0, int_const_0,  int_const_16, int_const_8, int_const_0, bool_const_false, bool_const_true>.draw_primitives(primlist, m_snap_bitmap.pix(0), (u32)width, (u32)height, (u32)m_snap_bitmap.rowpixels());
             }
             else
             {
                 //typedef software_renderer<u32, 0,0,0, 16,8,0, false, false> snap_renderer;
                 //snap_renderer::draw_primitives(primlist, &m_snap_bitmap.pix(0), width, height, m_snap_bitmap.rowpixels());
-                software_renderer<u32,  int_constant_0, int_constant_0, int_constant_0,  int_constant_16, int_constant_8, int_constant_0, bool_constant_false, bool_constant_false>.draw_primitives(primlist, m_snap_bitmap.pix(0), (u32)width, (u32)height, (u32)m_snap_bitmap.rowpixels());
+                software_renderer<u32,  int_const_0, int_const_0, int_const_0,  int_const_16, int_const_8, int_const_0, bool_const_false, bool_const_false>.draw_primitives(primlist, m_snap_bitmap.pix(0), (u32)width, (u32)height, (u32)m_snap_bitmap.rowpixels());
             }
             primlist.release_lock();
         }

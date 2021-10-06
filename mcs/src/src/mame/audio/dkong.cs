@@ -66,12 +66,12 @@ namespace mame
         //#define DS_SOUND9_INP       DS_SOUND9_INV
 
 
-        public class int_constant_DS_DISCHARGE_INV : int_constant { public int value { get { return DS_DISCHARGE_INV; } } }
-        public class int_constant_DS_SOUND0_INP : int_constant { public int value { get { return DS_SOUND0_INP; } } }
-        public class int_constant_DS_SOUND1_INP : int_constant { public int value { get { return DS_SOUND1_INP; } } }
-        public class int_constant_DS_SOUND2_INP : int_constant { public int value { get { return DS_SOUND2_INP; } } }
-        public class int_constant_DS_SOUND6_INP : int_constant { public int value { get { return DS_SOUND6_INP; } } }
-        public class int_constant_DS_SOUND7_INP : int_constant { public int value { get { return DS_SOUND7_INP; } } }
+        public class int_const_DS_DISCHARGE_INV : int_const { public int value { get { return DS_DISCHARGE_INV; } } }
+        public class int_const_DS_SOUND0_INP : int_const { public int value { get { return DS_SOUND0_INP; } } }
+        public class int_const_DS_SOUND1_INP : int_const { public int value { get { return DS_SOUND1_INP; } } }
+        public class int_const_DS_SOUND2_INP : int_const { public int value { get { return DS_SOUND2_INP; } } }
+        public class int_const_DS_SOUND6_INP : int_const { public int value { get { return DS_SOUND6_INP; } } }
+        public class int_const_DS_SOUND7_INP : int_const { public int value { get { return DS_SOUND7_INP; } } }
 
 
         /* General defines */
@@ -85,68 +85,68 @@ namespace mame
 
         /* Resistors */
 
-        static readonly double DK_R1       = RES_K(47);
-        static readonly double DK_R2       = RES_K(47);
-        static readonly double DK_R3       = RES_K(5.1);
-        static readonly double DK_R4       = RES_K(2);
+        static readonly double DK_R1       = g.RES_K(47);
+        static readonly double DK_R2       = g.RES_K(47);
+        static readonly double DK_R3       = g.RES_K(5.1);
+        static readonly double DK_R4       = g.RES_K(2);
         static readonly double DK_R5       = 750;
-        static readonly double DK_R6       = RES_K(4.7);
-        static readonly double DK_R7       = RES_K(10);
-        static readonly double DK_R8       = RES_K(100);
-        static readonly double DK_R9       = RES_K(10);
-        static readonly double DK_R10      = RES_K(10);
-        static readonly double DK_R14      = RES_K(47);
+        static readonly double DK_R6       = g.RES_K(4.7);
+        static readonly double DK_R7       = g.RES_K(10);
+        static readonly double DK_R8       = g.RES_K(100);
+        static readonly double DK_R9       = g.RES_K(10);
+        static readonly double DK_R10      = g.RES_K(10);
+        static readonly double DK_R14      = g.RES_K(47);
 
-        static readonly double DK_R15      = RES_K(5.6);
-        static readonly double DK_R16      = RES_K(5.6);
-        static readonly double DK_R17      = RES_K(10);
-        static readonly double DK_R18      = RES_K(4.7);
-        static readonly double DK_R20      = RES_K(10);
+        static readonly double DK_R15      = g.RES_K(5.6);
+        static readonly double DK_R16      = g.RES_K(5.6);
+        static readonly double DK_R17      = g.RES_K(10);
+        static readonly double DK_R18      = g.RES_K(4.7);
+        static readonly double DK_R20      = g.RES_K(10);
         //#define DK_R21      RES_K(5.6)
         //#define DK_R22      RES_K(5.6)
-        static readonly double DK_R24      = RES_K(47);
-        static readonly double DK_R25      = RES_K(5.1);
-        static readonly double DK_R26      = RES_K(2);
+        static readonly double DK_R24      = g.RES_K(47);
+        static readonly double DK_R25      = g.RES_K(5.1);
+        static readonly double DK_R26      = g.RES_K(2);
         static readonly double DK_R27      = 150;
-        static readonly double DK_R28      = RES_K(4.7);
-        static readonly double DK_R29      = RES_K(10);
-        static readonly double DK_R30      = RES_K(100);
-        static readonly double DK_R31      = RES_K(10);
-        static readonly double DK_R32      = RES_K(10);
-        static readonly double DK_R35      = RES_K(1);
-        static readonly double DK_R36      = RES_K(1);
-        static readonly double DK_R38      = RES_K(18);
-        static readonly double DK_R39      = RES_M(3.3);
-        static readonly double DK_R49      = RES_K(1.2);
-        static readonly double DK_R44      = RES_K(1.2);
-        static readonly double DK_R45      = RES_K(10);
-        static readonly double DK_R46      = RES_K(12);
-        static readonly double DK_R47      = RES_K(4.3);
-        static readonly double DK_R48      = RES_K(43);
-        static readonly double DK_R50      = RES_K(10);
-        static readonly double DK_R51      = RES_K(10);
+        static readonly double DK_R28      = g.RES_K(4.7);
+        static readonly double DK_R29      = g.RES_K(10);
+        static readonly double DK_R30      = g.RES_K(100);
+        static readonly double DK_R31      = g.RES_K(10);
+        static readonly double DK_R32      = g.RES_K(10);
+        static readonly double DK_R35      = g.RES_K(1);
+        static readonly double DK_R36      = g.RES_K(1);
+        static readonly double DK_R38      = g.RES_K(18);
+        static readonly double DK_R39      = g.RES_M(3.3);
+        static readonly double DK_R49      = g.RES_K(1.2);
+        static readonly double DK_R44      = g.RES_K(1.2);
+        static readonly double DK_R45      = g.RES_K(10);
+        static readonly double DK_R46      = g.RES_K(12);
+        static readonly double DK_R47      = g.RES_K(4.3);
+        static readonly double DK_R48      = g.RES_K(43);
+        static readonly double DK_R50      = g.RES_K(10);
+        static readonly double DK_R51      = g.RES_K(10);
 
         /* Capacitors */
 
         //#define DK_C8       CAP_U(220)
-        static readonly double DK_C12      = CAP_U(1);
-        static readonly double DK_C13      = CAP_U(33);
-        static readonly double DK_C16      = CAP_U(1);
-        static readonly double DK_C17      = CAP_U(4.7);
-        static readonly double DK_C18      = CAP_U(1);
-        static readonly double DK_C19      = CAP_U(1);
-        static readonly double DK_C20      = CAP_U(3.3);
-        static readonly double DK_C21      = CAP_U(1);
+        static readonly double DK_C12      = g.CAP_U(1);
+        static readonly double DK_C13      = g.CAP_U(33);
+        static readonly double DK_C16      = g.CAP_U(1);
+        static readonly double DK_C17      = g.CAP_U(4.7);
+        static readonly double DK_C18      = g.CAP_U(1);
+        static readonly double DK_C19      = g.CAP_U(1);
+        static readonly double DK_C20      = g.CAP_U(3.3);
+        static readonly double DK_C21      = g.CAP_U(1);
 
-        static readonly double DK_C23      = CAP_U(4.7);
-        static readonly double DK_C24      = CAP_U(10);
-        static readonly double DK_C26      = CAP_U(3.3);
-        static readonly double DK_C25      = CAP_U(3.3);
-        static readonly double DK_C29      = CAP_U(3.3);
-        static readonly double DK_C30      = CAP_U(10);
-        static readonly double DK_C32      = CAP_U(10);
+        static readonly double DK_C23      = g.CAP_U(4.7);
+        static readonly double DK_C24      = g.CAP_U(10);
+        static readonly double DK_C26      = g.CAP_U(3.3);
+        static readonly double DK_C25      = g.CAP_U(3.3);
+        static readonly double DK_C29      = g.CAP_U(3.3);
+        static readonly double DK_C30      = g.CAP_U(10);
+        static readonly double DK_C32      = g.CAP_U(10);
         //#define DK_C34      CAP_N(10)
-        static readonly double DK_C159     = CAP_N(100);
+        static readonly double DK_C159     = g.CAP_N(100);
 
 
         /*
@@ -180,7 +180,7 @@ namespace mame
             new int [] { 0, 0, 0 },  /* no variable resistors */
             new double [] { 0, 0, 0 },  /* no node capacitors */
 #if DK_REVIEW
-            0, RES_K(10),
+            0, g.RES_K(10),
 #else
             0, 0,
 #endif
@@ -214,8 +214,8 @@ namespace mame
 
         static readonly discrete_op_amp_filt_info dkong_sallen_key_info = new discrete_op_amp_filt_info
         (
-            RES_K(5.6), RES_K(5.6), 0, 0, 0,
-            CAP_N(22), CAP_N(10), 0
+            g.RES_K(5.6), g.RES_K(5.6), 0, 0, 0,
+            g.CAP_N(22), g.CAP_N(10), 0
         );
 
 
@@ -266,7 +266,7 @@ namespace mame
             double DKONG_CUSTOM_C { get { return DISCRETE_INPUT(6); } }
             double DKONG_CUSTOM_V { get { return DISCRETE_INPUT(7); } }
 
-            double NE555_CV_R { get { return RES_2_PARALLEL(RES_K(5), RES_K(10)); } }
+            double NE555_CV_R { get { return g.RES_2_PARALLEL(g.RES_K(5), g.RES_K(10)); } }
 
 
             double [] m_i_in1 = new double [2];
@@ -293,7 +293,7 @@ namespace mame
                 int     in_1    = (int)DKONG_CUSTOM_IN1;
 
                 /* start of with 555 current */
-                double  i_total = DKONG_CUSTOM_V / RES_K(5);
+                double  i_total = DKONG_CUSTOM_V / g.RES_K(5);
                 /* add in current from In1 */
                 i_total += m_i_in1[in_1];
                 /* add in current from In2 */
@@ -313,11 +313,11 @@ namespace mame
                 m_i_in1[0] = DKONG_CUSTOM_V / (DKONG_CUSTOM_R1 + DKONG_CUSTOM_R2);
                 m_i_in1[1] = 0;
                 /* precalculate total resistance for input circuit */
-                m_r_in[0] = RES_2_PARALLEL((DKONG_CUSTOM_R1 + DKONG_CUSTOM_R2), DKONG_CUSTOM_R3);
-                m_r_in[1] = RES_2_PARALLEL(DKONG_CUSTOM_R2, DKONG_CUSTOM_R3);
+                m_r_in[0] = g.RES_2_PARALLEL((DKONG_CUSTOM_R1 + DKONG_CUSTOM_R2), DKONG_CUSTOM_R3);
+                m_r_in[1] = g.RES_2_PARALLEL(DKONG_CUSTOM_R2, DKONG_CUSTOM_R3);
                 /* precalculate total charging resistance */
-                m_r_total[0] = RES_2_PARALLEL(m_r_in[0] + DKONG_CUSTOM_R4, NE555_CV_R);
-                m_r_total[1] = RES_2_PARALLEL((m_r_in[1] + DKONG_CUSTOM_R4), NE555_CV_R);
+                m_r_total[0] = g.RES_2_PARALLEL(m_r_in[0] + DKONG_CUSTOM_R4, NE555_CV_R);
+                m_r_total[1] = g.RES_2_PARALLEL((m_r_in[1] + DKONG_CUSTOM_R4), NE555_CV_R);
                 /* precalculate charging exponents */
                 m_exp[0] = RC_CHARGE_EXP(m_r_total[0] * DKONG_CUSTOM_C);
                 m_exp[1] = RC_CHARGE_EXP(m_r_total[1] * DKONG_CUSTOM_C);
@@ -363,7 +363,7 @@ namespace mame
 
                 g.DISCRETE_DIODE_MIXER2(g.NODE_20, g.NODE_17, g.NODE_13, dkong_diode_mix_table), /* D1, D2 + D3 */
 
-                g.DISCRETE_RCINTEGRATE(g.NODE_22,g.NODE_20,DK_R5, RES_2_PARALLEL(DK_R4+DK_R3,DK_R6),0,DK_C19,DK_SUP_V,g.DISC_RC_INTEGRATE_TYPE1),
+                g.DISCRETE_RCINTEGRATE(g.NODE_22,g.NODE_20,DK_R5, g.RES_2_PARALLEL(DK_R4+DK_R3,DK_R6),0,DK_C19,DK_SUP_V,g.DISC_RC_INTEGRATE_TYPE1),
                 g.DISCRETE_MULTIPLY(DS_OUT_SOUND0, g.NODE_22, DK_R3 / R_SERIES(DK_R3, DK_R4)),
                 g.DISCRETE_TASK_END(),
 
@@ -386,7 +386,7 @@ namespace mame
                 DISCRETE_MIXER4(NODE_28, 1, NODE_24, NODE_25, DK_SUP_V, 0, &dkong_rc_jump_desc),
 #endif
                 /* 555 Voltage controlled */
-                g.DISCRETE_555_ASTABLE_CV(g.NODE_29, 1, RES_K(47), RES_K(27), CAP_N(47), g.NODE_28,
+                g.DISCRETE_555_ASTABLE_CV(g.NODE_29, 1, g.RES_K(47), g.RES_K(27), g.CAP_N(47), g.NODE_28,
                                         dkong_555_vco_desc),
 
                 /* Jump trigger */
@@ -397,7 +397,7 @@ namespace mame
 
                 g.DISCRETE_DIODE_MIXER2(g.NODE_38, g.NODE_35, g.NODE_29, dkong_diode_mix_table),
 
-                g.DISCRETE_RCINTEGRATE(g.NODE_39,g.NODE_38,DK_R27, RES_2_PARALLEL(DK_R28,DK_R26+DK_R25),0,DK_C16,DK_SUP_V,g.DISC_RC_INTEGRATE_TYPE1),
+                g.DISCRETE_RCINTEGRATE(g.NODE_39,g.NODE_38,DK_R27, g.RES_2_PARALLEL(DK_R28,DK_R26+DK_R25),0,DK_C16,DK_SUP_V,g.DISC_RC_INTEGRATE_TYPE1),
                 g.DISCRETE_MULTIPLY(DS_OUT_SOUND1,g.NODE_39,DK_R25/(DK_R26+DK_R25)),
                 g.DISCRETE_TASK_END(),
 
@@ -419,7 +419,7 @@ namespace mame
 #endif
 
                 /* 555 Voltage controlled */
-                g.DISCRETE_555_ASTABLE_CV(g.NODE_55, 1, RES_K(47), RES_K(27), CAP_N(33), g.NODE_54, dkong_555_vco_desc),
+                g.DISCRETE_555_ASTABLE_CV(g.NODE_55, 1, g.RES_K(47), g.RES_K(27), g.CAP_N(33), g.NODE_54, dkong_555_vco_desc),
                 /* Trigger */
                 g.DISCRETE_RCDISC_MODULATED(g.NODE_60,DS_SOUND0_INV,g.NODE_55,DK_R36,DK_R18,DK_R35,DK_R17,DK_C25,DK_SUP_V),
                 /* Filter and divide - omitted C22 */
@@ -470,11 +470,11 @@ namespace mame
 
                 /* Amplifier: internal amplifier */
                 g.DISCRETE_ADDER2(g.NODE_289,1,g.NODE_288,5.0*43.0/(100.0+43.0)),
-                g.DISCRETE_RCINTEGRATE(g.NODE_294,g.NODE_289,0,150,1000, CAP_U(33),DK_SUP_V,g.DISC_RC_INTEGRATE_TYPE3),
-                g.DISCRETE_CRFILTER(g.NODE_295,g.NODE_294, RES_K(50), DK_C13),
+                g.DISCRETE_RCINTEGRATE(g.NODE_294,g.NODE_289,0,150,1000, g.CAP_U(33),DK_SUP_V,g.DISC_RC_INTEGRATE_TYPE3),
+                g.DISCRETE_CRFILTER(g.NODE_295,g.NODE_294, g.RES_K(50), DK_C13),
                 /*DISCRETE_CRFILTER(NODE_295,1,NODE_294, 1000, DK_C13) */
                 /* EZV20 equivalent filter circuit ... */
-                g.DISCRETE_CRFILTER(g.NODE_296,g.NODE_295, RES_K(1), CAP_U(4.7)),
+                g.DISCRETE_CRFILTER(g.NODE_296,g.NODE_295, g.RES_K(1), g.CAP_U(4.7)),
 #if DK_NO_FILTERS
                 DISCRETE_OUTPUT(NODE_288, 32767.0/5.0 * 10)
 #else
@@ -575,16 +575,16 @@ namespace mame
         void dkong2b_audio(machine_config config)
         {
             /* sound latches */
-            LATCH8(config, m_ls175_3d); /* sound cmd latch */
+            g.LATCH8(config, m_ls175_3d); /* sound cmd latch */
             m_ls175_3d.op[0].set_maskout(0xf0);
             m_ls175_3d.op[0].set_xorvalue(0x0f);
 
-            LATCH8(config, m_dev_6h);
-            m_dev_6h.op[0].write_cb(0).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_SOUND0_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND0_INP>));
-            m_dev_6h.op[0].write_cb(1).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_SOUND1_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND1_INP>));
-            m_dev_6h.op[0].write_cb(2).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_SOUND2_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND2_INP>));
-            m_dev_6h.op[0].write_cb(6).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_SOUND6_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND6_INP>));
-            m_dev_6h.op[0].write_cb(7).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_SOUND7_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND7_INP>));
+            g.LATCH8(config, m_dev_6h);
+            m_dev_6h.op[0].write_cb(0).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_const_DS_SOUND0_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND0_INP>));
+            m_dev_6h.op[0].write_cb(1).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_const_DS_SOUND1_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND1_INP>));
+            m_dev_6h.op[0].write_cb(2).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_const_DS_SOUND2_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND2_INP>));
+            m_dev_6h.op[0].write_cb(6).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_const_DS_SOUND6_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND6_INP>));
+            m_dev_6h.op[0].write_cb(7).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_const_DS_SOUND7_INP>(state); }).reg();  //FUNC(discrete_device::write_line<DS_SOUND7_INP>));
 
             /*   If P2.Bit7 -> is apparently an external signal decay or other output control
              *   If P2.Bit6 -> activates the external compressed sample ROM (not radarscp1)
@@ -593,14 +593,14 @@ namespace mame
              *   P2.Bit2-0  -> select the 256 byte bank for external ROM
              */
 
-            LATCH8(config, m_dev_vp2);      /* virtual latch for port B */
+            g.LATCH8(config, m_dev_vp2);      /* virtual latch for port B */
             m_dev_vp2.op[0].set_xorvalue(0x20);  /* signal is inverted       */
             m_dev_vp2.op[0].read_cb(5).set(m_dev_6h, () => { return m_dev_6h.op[0].bit3_r(); }).reg();  //FUNC(latch8_device::bit3_r));
-            m_dev_vp2.op[0].write_cb(7).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_constant_DS_DISCHARGE_INV>(state); }).reg();  //FUNC(discrete_device::write_line<DS_DISCHARGE_INV>));
+            m_dev_vp2.op[0].write_cb(7).set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_const_DS_DISCHARGE_INV>(state); }).reg();  //FUNC(discrete_device::write_line<DS_DISCHARGE_INV>));
 
-            MB8884(config, m_soundcpu, I8035_CLOCK);
-            m_soundcpu.op[0].memory().set_addrmap(AS_PROGRAM, dkong_sound_map);
-            m_soundcpu.op[0].memory().set_addrmap(AS_IO, dkong_sound_io_map);
+            g.MB8884(config, m_soundcpu, I8035_CLOCK);
+            m_soundcpu.op[0].memory().set_addrmap(g.AS_PROGRAM, dkong_sound_map);
+            m_soundcpu.op[0].memory().set_addrmap(g.AS_IO, dkong_sound_io_map);
             m_soundcpu.op[0].bus_in_cb().set(dkong_tune_r).reg();
             m_soundcpu.op[0].bus_out_cb().set(dkong_voice_w).reg();
             m_soundcpu.op[0].p1_out_cb().set(dkong_p1_w).reg(); // only write to dac
@@ -609,8 +609,8 @@ namespace mame
             m_soundcpu.op[0].t0_in_cb().set("ls259.6h", () => { return ((latch8_device)subdevice("ls259.6h")).bit5_q_r(); }).reg();  //FUNC(latch8_device::bit5_q_r));
             m_soundcpu.op[0].t1_in_cb().set("ls259.6h", () => { return ((latch8_device)subdevice("ls259.6h")).bit4_q_r(); }).reg();  //FUNC(latch8_device::bit4_q_r));
 
-            SPEAKER(config, "mono").front_center();
-            DISCRETE(config, "discrete", dkong2b_discrete).disound.add_route(g.ALL_OUTPUTS, "mono", 1.0);
+            g.SPEAKER(config, "mono").front_center();
+            g.DISCRETE(config, "discrete", dkong2b_discrete).disound.add_route(g.ALL_OUTPUTS, "mono", 1.0);
         }
     }
 }

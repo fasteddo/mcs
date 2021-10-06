@@ -43,22 +43,22 @@ namespace mame
 
         static readonly res_net_info dkong_net_info = new res_net_info
         (
-            RES_NET_VCC_5V | RES_NET_VBIAS_5V | RES_NET_VIN_MB7052 |  RES_NET_MONITOR_SANYO_EZV20,
+            g.RES_NET_VCC_5V | g.RES_NET_VBIAS_5V | g.RES_NET_VIN_MB7052 |  g.RES_NET_MONITOR_SANYO_EZV20,
             new res_net_channel_info [] {
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470, 0, 3, new double [] { 1000, 470, 220 } ),
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470, 0, 3, new double [] { 1000, 470, 220 } ),
-                new res_net_channel_info( RES_NET_AMP_EMITTER,    680, 0, 2, new double [] {  470, 220,   0 } )  /*  dkong */
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON, 470, 0, 3, new double [] { 1000, 470, 220 } ),
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON, 470, 0, 3, new double [] { 1000, 470, 220 } ),
+                new res_net_channel_info( g.RES_NET_AMP_EMITTER,    680, 0, 2, new double [] {  470, 220,   0 } )  /*  dkong */
             }
         );
 
 
         static readonly res_net_info dkong_net_bck_info = new res_net_info
         (
-            RES_NET_VCC_5V | RES_NET_VBIAS_5V | RES_NET_VIN_MB7052 |  RES_NET_MONITOR_SANYO_EZV20,
+            g.RES_NET_VCC_5V | g.RES_NET_VBIAS_5V | g.RES_NET_VIN_MB7052 |  g.RES_NET_MONITOR_SANYO_EZV20,
             new res_net_channel_info [] {
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470, 0, 0, new double [] { 0 } ),
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470, 0, 0, new double [] { 0 } ),
-                new res_net_channel_info( RES_NET_AMP_EMITTER,    680, 0, 0, new double [] { 0 } )
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON, 470, 0, 0, new double [] { 0 } ),
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON, 470, 0, 0, new double [] { 0 } ),
+                new res_net_channel_info( g.RES_NET_AMP_EMITTER,    680, 0, 0, new double [] { 0 } )
             }
         );
 
@@ -68,22 +68,22 @@ namespace mame
 
         static readonly res_net_info radarscp_net_info = new res_net_info
         (
-            RES_NET_VCC_5V | RES_NET_VBIAS_TTL | RES_NET_VIN_MB7052 |  RES_NET_MONITOR_SANYO_EZV20,
+            g.RES_NET_VCC_5V | g.RES_NET_VBIAS_TTL | g.RES_NET_VIN_MB7052 |  g.RES_NET_MONITOR_SANYO_EZV20,
             new res_net_channel_info [] {
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470 * TRS_J1, 470*(1-TRS_J1), 3, new double [] { 1000, 470, 220 } ),
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470 * TRS_J1, 470*(1-TRS_J1), 3, new double [] { 1000, 470, 220 } ),
-                new res_net_channel_info( RES_NET_AMP_EMITTER,    680 * TRS_J1, 680*(1-TRS_J1), 2, new double [] {  470, 220,   0 } )    /*  radarscp */
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON, 470 * TRS_J1, 470*(1-TRS_J1), 3, new double [] { 1000, 470, 220 } ),
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON, 470 * TRS_J1, 470*(1-TRS_J1), 3, new double [] { 1000, 470, 220 } ),
+                new res_net_channel_info( g.RES_NET_AMP_EMITTER,    680 * TRS_J1, 680*(1-TRS_J1), 2, new double [] {  470, 220,   0 } )    /*  radarscp */
             }
         );
 
 
         static readonly res_net_info radarscp_net_bck_info = new res_net_info
         (
-            RES_NET_VCC_5V | RES_NET_VBIAS_TTL | RES_NET_VIN_MB7052 |  RES_NET_MONITOR_SANYO_EZV20,
+            g.RES_NET_VCC_5V | g.RES_NET_VBIAS_TTL | g.RES_NET_VIN_MB7052 |  g.RES_NET_MONITOR_SANYO_EZV20,
             new res_net_channel_info [] {
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470, 4700, 0, new double [] { 0 } ),
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470, 4700, 0, new double [] { 0 } ),
-                new res_net_channel_info( RES_NET_AMP_EMITTER,    470, 4700, 0, new double [] { 0 } )    /*  radarscp */
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON, 470, 4700, 0, new double [] { 0 } ),
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON, 470, 4700, 0, new double [] { 0 } ),
+                new res_net_channel_info( g.RES_NET_AMP_EMITTER,    470, 4700, 0, new double [] { 0 } )    /*  radarscp */
             }
         );
 
@@ -91,11 +91,11 @@ namespace mame
         /* Radarscp star color */
         static readonly res_net_info radarscp_stars_net_info = new res_net_info
         (
-            RES_NET_VCC_5V | RES_NET_VBIAS_5V | RES_NET_VIN_TTL_OUT | RES_NET_MONITOR_SANYO_EZV20,
+            g.RES_NET_VCC_5V | g.RES_NET_VBIAS_5V | g.RES_NET_VIN_TTL_OUT | g.RES_NET_MONITOR_SANYO_EZV20,
             new res_net_channel_info [] {
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 4700, 470, 0, new double [] { 0 } ),
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON,    1,   0, 0, new double [] { 0 } ),    /*  dummy */
-                new res_net_channel_info( RES_NET_AMP_EMITTER,       1,   0, 0, new double [] { 0 } ),    /*  dummy */
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON, 4700, 470, 0, new double [] { 0 } ),
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON,    1,   0, 0, new double [] { 0 } ),    /*  dummy */
+                new res_net_channel_info( g.RES_NET_AMP_EMITTER,       1,   0, 0, new double [] { 0 } ),    /*  dummy */
             }
         );
 
@@ -103,11 +103,11 @@ namespace mame
         /* Dummy struct to generate background palette entries */
         static readonly res_net_info radarscp_blue_net_info = new res_net_info
         (
-            RES_NET_VCC_5V | RES_NET_VBIAS_5V | RES_NET_VIN_VCC | RES_NET_MONITOR_SANYO_EZV20,
+            g.RES_NET_VCC_5V | g.RES_NET_VBIAS_5V | g.RES_NET_VIN_VCC | g.RES_NET_MONITOR_SANYO_EZV20,
             new res_net_channel_info [] {
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON,  470, 4700, 0, new double [] { 0 } ),   /*  bias/gnd exist in schematics, readable in TKG3 schematics */
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON,  470, 4700, 0, new double [] { 0 } ),   /*  bias/gnd exist in schematics, readable in TKG3 schematics */
-                new res_net_channel_info( RES_NET_AMP_EMITTER,       0,    0, 8, new double [] { 128,64,32,16,8,4,2,1 } ),    /*  dummy */
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON,  470, 4700, 0, new double [] { 0 } ),   /*  bias/gnd exist in schematics, readable in TKG3 schematics */
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON,  470, 4700, 0, new double [] { 0 } ),   /*  bias/gnd exist in schematics, readable in TKG3 schematics */
+                new res_net_channel_info( g.RES_NET_AMP_EMITTER,       0,    0, 8, new double [] { 128,64,32,16,8,4,2,1 } ),    /*  dummy */
             }
         );
 
@@ -115,11 +115,11 @@ namespace mame
         /* Dummy struct to generate grid palette entries */
         static readonly res_net_info radarscp_grid_net_info = new res_net_info
         (
-            RES_NET_VCC_5V | RES_NET_VBIAS_5V | RES_NET_VIN_TTL_OUT | RES_NET_MONITOR_SANYO_EZV20,
+            g.RES_NET_VCC_5V | g.RES_NET_VBIAS_5V | g.RES_NET_VIN_TTL_OUT | g.RES_NET_MONITOR_SANYO_EZV20,
             new res_net_channel_info [] {
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON,    0,   0, 1, new double [] { 1 } ),    /*  dummy */
-                new res_net_channel_info( RES_NET_AMP_DARLINGTON,    0,   0, 1, new double [] { 1 } ),    /*  dummy */
-                new res_net_channel_info( RES_NET_AMP_EMITTER,       0,   0, 1, new double [] { 1 } ),    /*  dummy */
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON,    0,   0, 1, new double [] { 1 } ),    /*  dummy */
+                new res_net_channel_info( g.RES_NET_AMP_DARLINGTON,    0,   0, 1, new double [] { 1 } ),    /*  dummy */
+                new res_net_channel_info( g.RES_NET_AMP_EMITTER,       0,   0, 1, new double [] { 1 } ),    /*  dummy */
             }
         );
 
@@ -129,7 +129,7 @@ namespace mame
             Pointer<uint8_t> color_prom = new Pointer<uint8_t>(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
 
             std.vector<rgb_t> rgb;
-            compute_res_net_all(out rgb, color_prom, dkong_decode_info, dkong_net_info);
+            g.compute_res_net_all(out rgb, color_prom, dkong_decode_info, dkong_net_info);
             palette.dipalette.set_pen_colors(0, rgb);
 
             // Now treat tri-state black background generation
@@ -138,10 +138,10 @@ namespace mame
             {
                 if ((i & 0x03) == 0x00)  // NOR => CS=1 => Tristate => real black
                 {
-                    int r = compute_res_net(1, 0, dkong_net_bck_info);
-                    int g = compute_res_net(1, 1, dkong_net_bck_info);
-                    int b = compute_res_net(1, 2, dkong_net_bck_info);
-                    palette.dipalette.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
+                    int r  = g.compute_res_net(1, 0, dkong_net_bck_info);
+                    int gr = g.compute_res_net(1, 1, dkong_net_bck_info);
+                    int b  = g.compute_res_net(1, 2, dkong_net_bck_info);
+                    palette.dipalette.set_pen_color((pen_t)i, (u8)r, (u8)gr, (u8)b);
                 }
             }
 
@@ -160,13 +160,13 @@ namespace mame
             for (int i = 0; i < 256; i++)
             {
                 // red component
-                int r = compute_res_net((color_prom[256] >> 1) & 0x07, 0, radarscp_net_info);
+                int r  = g.compute_res_net((color_prom[256] >> 1) & 0x07, 0, radarscp_net_info);
                 // green component
-                int g = compute_res_net(((color_prom[256] << 2) & 0x04) | ((color_prom[0] >> 2) & 0x03), 1, radarscp_net_info);
+                int gr = g.compute_res_net(((color_prom[256] << 2) & 0x04) | ((color_prom[0] >> 2) & 0x03), 1, radarscp_net_info);
                 // blue component
-                int b = compute_res_net((color_prom[0] >> 0) & 0x03, 2, radarscp_net_info);
+                int b  = g.compute_res_net((color_prom[0] >> 0) & 0x03, 2, radarscp_net_info);
 
-                palette.dipalette.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
+                palette.dipalette.set_pen_color((pen_t)i, (u8)r, (u8)gr, (u8)b);
                 color_prom++;
             }
 
@@ -176,35 +176,35 @@ namespace mame
             {
                 if ((m_vidhw != DKONG_RADARSCP_CONVERSION) && ((i & 0x03) == 0x00))  //  NOR => CS=1 => Tristate => real black
                 {
-                    int r = compute_res_net( 1, 0, radarscp_net_bck_info );
-                    int g = compute_res_net( 1, 1, radarscp_net_bck_info );
-                    int b = compute_res_net( 1, 2, radarscp_net_bck_info );
-                    palette.dipalette.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
+                    int r  = g.compute_res_net( 1, 0, radarscp_net_bck_info );
+                    int gr = g.compute_res_net( 1, 1, radarscp_net_bck_info );
+                    int b  = g.compute_res_net( 1, 2, radarscp_net_bck_info );
+                    palette.dipalette.set_pen_color((pen_t)i, (u8)r, (u8)gr, (u8)b);
                 }
             }
 
             // Star color
             palette.dipalette.set_pen_color(RADARSCP_STAR_COL,
-                    (u8)compute_res_net(1, 0, radarscp_stars_net_info),
-                    (u8)compute_res_net(0, 1, radarscp_stars_net_info),
-                    (u8)compute_res_net(0, 2, radarscp_stars_net_info));
+                    (u8)g.compute_res_net(1, 0, radarscp_stars_net_info),
+                    (u8)g.compute_res_net(0, 1, radarscp_stars_net_info),
+                    (u8)g.compute_res_net(0, 2, radarscp_stars_net_info));
 
             // Oscillating background
             for (int i = 0; i < 256; i++)
             {
-                int r = compute_res_net( 0, 0, radarscp_blue_net_info );
-                int g = compute_res_net( 0, 1, radarscp_blue_net_info );
-                int b = compute_res_net( i, 2, radarscp_blue_net_info );
+                int r  = g.compute_res_net( 0, 0, radarscp_blue_net_info );
+                int gr = g.compute_res_net( 0, 1, radarscp_blue_net_info );
+                int b  = g.compute_res_net( i, 2, radarscp_blue_net_info );
 
-                palette.dipalette.set_pen_color(RADARSCP_BCK_COL_OFFSET + (pen_t)i, (u8)r, (u8)g, (u8)b);
+                palette.dipalette.set_pen_color(RADARSCP_BCK_COL_OFFSET + (pen_t)i, (u8)r, (u8)gr, (u8)b);
             }
 
             // Grid
             for (int i = 0; i < 8; i++)
             {
-                int r = compute_res_net( g.BIT(i, 0), 0, radarscp_grid_net_info );
-                int gr = compute_res_net( g.BIT(i, 1), 1, radarscp_grid_net_info );
-                int b = compute_res_net( g.BIT(i, 2), 2, radarscp_grid_net_info );
+                int r  = g.compute_res_net( g.BIT(i, 0), 0, radarscp_grid_net_info );
+                int gr = g.compute_res_net( g.BIT(i, 1), 1, radarscp_grid_net_info );
+                int b  = g.compute_res_net( g.BIT(i, 2), 2, radarscp_grid_net_info );
 
                 palette.dipalette.set_pen_color(RADARSCP_GRID_COL_OFFSET + (pen_t)i, (u8)r, (u8)gr, (u8)b);
             }
@@ -479,33 +479,33 @@ namespace mame
             m_vidhw = -1;
             m_grid_col = 0;
 
-            save_item(NAME(new { m_vidhw }));
-            save_item(NAME(new { m_gfx_bank }));
-            save_item(NAME(new { m_palette_bank }));
-            save_item(NAME(new { m_sprite_bank }));
-            save_item(NAME(new { m_grid_on }));
+            save_item(g.NAME(new { m_vidhw }));
+            save_item(g.NAME(new { m_gfx_bank }));
+            save_item(g.NAME(new { m_palette_bank }));
+            save_item(g.NAME(new { m_sprite_bank }));
+            save_item(g.NAME(new { m_grid_on }));
 
-            save_item(NAME(new { m_grid_col }));
-            save_item(NAME(new { m_flip }));
+            save_item(g.NAME(new { m_grid_col }));
+            save_item(g.NAME(new { m_flip }));
 
             // TRS01 TRS02
-            save_item(NAME(new { m_sig30Hz }));
-            save_item(NAME(new { m_blue_level }));
-            save_item(NAME(new { m_cv1 }));
-            save_item(NAME(new { m_cv2 }));
-            save_item(NAME(new { m_vg1 }));
-            save_item(NAME(new { m_vg2 }));
-            save_item(NAME(new { m_vg3 }));
-            save_item(NAME(new { m_cv3 }));
-            save_item(NAME(new { m_cv4 }));
+            save_item(g.NAME(new { m_sig30Hz }));
+            save_item(g.NAME(new { m_blue_level }));
+            save_item(g.NAME(new { m_cv1 }));
+            save_item(g.NAME(new { m_cv2 }));
+            save_item(g.NAME(new { m_vg1 }));
+            save_item(g.NAME(new { m_vg2 }));
+            save_item(g.NAME(new { m_vg3 }));
+            save_item(g.NAME(new { m_cv3 }));
+            save_item(g.NAME(new { m_cv4 }));
 
-            save_item(NAME(new { m_lfsr_5I }));
-            save_item(NAME(new { m_grid_sig }));
-            save_item(NAME(new { m_rflip_sig }));
-            save_item(NAME(new { m_star_ff }));
-            save_item(NAME(new { m_counter }));
-            save_item(NAME(new { m_pixelcnt }));
-            save_item(NAME(new { m_bg_bits }));
+            save_item(g.NAME(new { m_lfsr_5I }));
+            save_item(g.NAME(new { m_grid_sig }));
+            save_item(g.NAME(new { m_rflip_sig }));
+            save_item(g.NAME(new { m_star_ff }));
+            save_item(g.NAME(new { m_counter }));
+            save_item(g.NAME(new { m_pixelcnt }));
+            save_item(g.NAME(new { m_bg_bits }));
         }
 
 
@@ -539,7 +539,7 @@ namespace mame
 
                     break;
                 default:
-                    fatalerror("Invalid hardware type in dkong_video_start\n");
+                    g.fatalerror("Invalid hardware type in dkong_video_start\n");
                     break;
             }
         }
@@ -547,7 +547,7 @@ namespace mame
 
         u32 screen_update_dkong(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
-            machine().tilemap().set_flip_all(m_flip != 0 ? TILEMAP_FLIPX | TILEMAP_FLIPY : 0);
+            machine().tilemap().set_flip_all(m_flip != 0 ? g.TILEMAP_FLIPX | g.TILEMAP_FLIPY : 0);
 
             switch (m_hardware_type)
             {
@@ -564,7 +564,7 @@ namespace mame
                     radarscp_draw_background(bitmap, cliprect);
                     break;
                 default:
-                    fatalerror("Invalid hardware type in dkong_video_update\n");
+                    g.fatalerror("Invalid hardware type in dkong_video_update\n");
                     break;
             }
             return 0;

@@ -121,18 +121,18 @@ namespace mame
 
         /* Mode 2 Coinage */
 
-        static void IREM_COIN_MODE_2_OLD_LOC(global_object d, string DIPBANK)
+        static void IREM_COIN_MODE_2_OLD_LOC(construct_ioport_helper d, string DIPBANK)  //#define IREM_COIN_MODE_2_OLD_LOC(DIPBANK) \
         {
-            d.PORT_DIPNAME( 0x30, 0x30, global_object.DEF_STR( global_object.Coin_A ) ); d.PORT_CONDITION("DSW2", 0x04, ioport_condition.condition_t.EQUALS, 0x00); d.PORT_DIPLOCATION(DIPBANK + ":5,6");
-            d.PORT_DIPSETTING(    0x10, global_object.DEF_STR( global_object._3C_1C ) );
-            d.PORT_DIPSETTING(    0x20, global_object.DEF_STR( global_object._2C_1C ) );
-            d.PORT_DIPSETTING(    0x30, global_object.DEF_STR( global_object._1C_1C ) );
-            d.PORT_DIPSETTING(    0x00, global_object.DEF_STR( global_object.Free_Play ) );
-            d.PORT_DIPNAME( 0xc0, 0xc0, global_object.DEF_STR( global_object.Coin_B ) ); d.PORT_CONDITION("DSW2", 0x04, ioport_condition.condition_t.EQUALS, 0x00); d.PORT_DIPLOCATION(DIPBANK + ":7,8");
-            d.PORT_DIPSETTING(    0xc0, global_object.DEF_STR( global_object._1C_2C ) );
-            d.PORT_DIPSETTING(    0x80, global_object.DEF_STR( global_object._1C_3C ) );
-            d.PORT_DIPSETTING(    0x40, global_object.DEF_STR( global_object._1C_5C ) );
-            d.PORT_DIPSETTING(    0x00, global_object.DEF_STR( global_object._1C_6C ) );
+            d.PORT_DIPNAME( 0x30, 0x30, g.DEF_STR( g.Coin_A ) ); d.PORT_CONDITION("DSW2", 0x04, ioport_condition.condition_t.EQUALS, 0x00); d.PORT_DIPLOCATION(DIPBANK + ":5,6");
+            d.PORT_DIPSETTING(    0x10, g.DEF_STR( g._3C_1C ) );
+            d.PORT_DIPSETTING(    0x20, g.DEF_STR( g._2C_1C ) );
+            d.PORT_DIPSETTING(    0x30, g.DEF_STR( g._1C_1C ) );
+            d.PORT_DIPSETTING(    0x00, g.DEF_STR( g.Free_Play ) );
+            d.PORT_DIPNAME( 0xc0, 0xc0, g.DEF_STR( g.Coin_B ) ); d.PORT_CONDITION("DSW2", 0x04, ioport_condition.condition_t.EQUALS, 0x00); d.PORT_DIPLOCATION(DIPBANK + ":7,8");
+            d.PORT_DIPSETTING(    0xc0, g.DEF_STR( g._1C_2C ) );
+            d.PORT_DIPSETTING(    0x80, g.DEF_STR( g._1C_3C ) );
+            d.PORT_DIPSETTING(    0x40, g.DEF_STR( g._1C_5C ) );
+            d.PORT_DIPSETTING(    0x00, g.DEF_STR( g._1C_6C ) );
         }
 
 
@@ -180,26 +180,26 @@ namespace mame
 
         /* Mode 1 Coinage */
 
-        public static void IREM_Z80_COINAGE_TYPE_1_LOC(global_object d, string DIPBANK)
+        public static void IREM_Z80_COINAGE_TYPE_1_LOC(construct_ioport_helper d, string DIPBANK)  //#define IREM_Z80_COINAGE_TYPE_1_LOC(DIPBANK) \
         {
             /* Coin Mode 1 */
-            d.PORT_DIPNAME( 0xf0, 0xf0, global_object.DEF_STR( global_object.Coinage ) ); d.PORT_CONDITION("DSW2", 0x04, ioport_condition.condition_t.NOTEQUALS, 0x00); d.PORT_DIPLOCATION(DIPBANK + ":5,6,7,8");
+            d.PORT_DIPNAME( 0xf0, 0xf0, g.DEF_STR( g.Coinage ) ); d.PORT_CONDITION("DSW2", 0x04, ioport_condition.condition_t.NOTEQUALS, 0x00); d.PORT_DIPLOCATION(DIPBANK + ":5,6,7,8");
         /*  PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) ) */
-            d.PORT_DIPSETTING(    0x90, global_object.DEF_STR( global_object._7C_1C ) );
-            d.PORT_DIPSETTING(    0xa0, global_object.DEF_STR( global_object._6C_1C ) );
-            d.PORT_DIPSETTING(    0xb0, global_object.DEF_STR( global_object._5C_1C ) );
-            d.PORT_DIPSETTING(    0xc0, global_object.DEF_STR( global_object._4C_1C ) );
-            d.PORT_DIPSETTING(    0xd0, global_object.DEF_STR( global_object._3C_1C ) );
-            d.PORT_DIPSETTING(    0xe0, global_object.DEF_STR( global_object._2C_1C ) );
-            d.PORT_DIPSETTING(    0xf0, global_object.DEF_STR( global_object._1C_1C ) );
-            d.PORT_DIPSETTING(    0x70, global_object.DEF_STR( global_object._1C_2C ) );
-            d.PORT_DIPSETTING(    0x60, global_object.DEF_STR( global_object._1C_3C ) );
-            d.PORT_DIPSETTING(    0x50, global_object.DEF_STR( global_object._1C_4C ) );
-            d.PORT_DIPSETTING(    0x40, global_object.DEF_STR( global_object._1C_5C ) );
-            d.PORT_DIPSETTING(    0x30, global_object.DEF_STR( global_object._1C_6C ) );
-            d.PORT_DIPSETTING(    0x20, global_object.DEF_STR( global_object._1C_7C ) );
-            d.PORT_DIPSETTING(    0x10, global_object.DEF_STR( global_object._1C_8C ) );
-            d.PORT_DIPSETTING(    0x00, global_object.DEF_STR( global_object.Free_Play ) );
+            d.PORT_DIPSETTING(    0x90, g.DEF_STR( g._7C_1C ) );
+            d.PORT_DIPSETTING(    0xa0, g.DEF_STR( g._6C_1C ) );
+            d.PORT_DIPSETTING(    0xb0, g.DEF_STR( g._5C_1C ) );
+            d.PORT_DIPSETTING(    0xc0, g.DEF_STR( g._4C_1C ) );
+            d.PORT_DIPSETTING(    0xd0, g.DEF_STR( g._3C_1C ) );
+            d.PORT_DIPSETTING(    0xe0, g.DEF_STR( g._2C_1C ) );
+            d.PORT_DIPSETTING(    0xf0, g.DEF_STR( g._1C_1C ) );
+            d.PORT_DIPSETTING(    0x70, g.DEF_STR( g._1C_2C ) );
+            d.PORT_DIPSETTING(    0x60, g.DEF_STR( g._1C_3C ) );
+            d.PORT_DIPSETTING(    0x50, g.DEF_STR( g._1C_4C ) );
+            d.PORT_DIPSETTING(    0x40, g.DEF_STR( g._1C_5C ) );
+            d.PORT_DIPSETTING(    0x30, g.DEF_STR( g._1C_6C ) );
+            d.PORT_DIPSETTING(    0x20, g.DEF_STR( g._1C_7C ) );
+            d.PORT_DIPSETTING(    0x10, g.DEF_STR( g._1C_8C ) );
+            d.PORT_DIPSETTING(    0x00, g.DEF_STR( g.Free_Play ) );
             /* Coin Mode 2 */
             IREM_COIN_MODE_2_OLD_LOC(d, "DIPBANK");
         }

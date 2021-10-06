@@ -5,12 +5,12 @@ using System;
 using System.Collections.Generic;
 
 using abstract_t_link_t = mame.std.pair<string, string>;  //using link_t = std::pair<pstring, pstring>;
-using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using models_t_map_t = mame.std.unordered_map<string, string>;  //using map_t = std::unordered_map<pstring, pstring>;
 using models_t_raw_map_t = mame.std.unordered_map<string, string>;  //using raw_map_t = std::unordered_map<pstring, pstring>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using psource_t_stream_ptr = mame.std.istream;  //using stream_ptr = plib::unique_ptr<std::istream>;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using unsigned = System.UInt32;
 
 
@@ -25,7 +25,7 @@ namespace mame.netlist
         //using map_t = std::unordered_map<pstring, pstring>;
 
 
-        public class model_t
+        public class model_t : param_value_interface
         {
             string m_model; // only for error messages
             models_t_map_t m_map;
@@ -40,7 +40,7 @@ namespace mame.netlist
 
             public string value_str(string entity)
             {
-                if (entity != plib.pglobal.ucase(entity))
+                if (entity != plib.pg.ucase(entity))
                     throw new nl_exception(nl_errstr_global.MF_MODEL_PARAMETERS_NOT_UPPERCASE_1_2(entity, model_string(m_map)));
                 var it = m_map.find(entity);
                 if (it == default)
@@ -55,7 +55,7 @@ namespace mame.netlist
                 string tmp = value_str(entity);
 
                 nl_fptype factor = nlconst.one();
-                var p = tmp[tmp.length() - 1];  //auto p = std::next(tmp.begin(), plib::narrow_cast<pstring::difference_type>(tmp.length() - 1));
+                var p = tmp[(int)tmp.length() - 1];  //auto p = std::next(tmp.begin(), plib::narrow_cast<pstring::difference_type>(tmp.length() - 1));
                 switch (p)
                 {
                     case 'M': factor = nlconst.magic(1e6); break; // NOLINT
@@ -74,10 +74,10 @@ namespace mame.netlist
                 }
 
                 if (factor != nlconst.one())
-                    tmp = plib.pglobal.left(tmp, tmp.length() - 1);
+                    tmp = plib.pg.left(tmp, tmp.length() - 1);
                 // FIXME: check for errors
                 bool err = false;
-                var val = plib.pglobal.pstonum_ne_nl_fptype(false, tmp, out err);
+                var val = plib.pg.pstonum_ne_nl_fptype(false, tmp, out err);
                 if (err)
                     throw new nl_exception(nl_errstr_global.MF_MODEL_NUMBER_CONVERSION_ERROR(entity, tmp, "double", m_model));
 
@@ -101,7 +101,7 @@ namespace mame.netlist
 
 
         models_t_raw_map_t m_models;
-        std.unordered_map<string, models_t_map_t> m_cache;
+        std.unordered_map<string, models_t_map_t> m_cache = new std.unordered_map<string, models_t_map_t>();
 
 
         public models_t(models_t_raw_map_t models)
@@ -113,6 +113,11 @@ namespace mame.netlist
         public model_t get_model(string model)
         {
             models_t_map_t map = m_cache[model];
+            if (map == default)
+            {
+                map = new models_t_map_t();
+                m_cache[model] = map;
+            }
 
             if (map.empty())
                 model_parse(model , map);
@@ -127,22 +132,22 @@ namespace mame.netlist
         void model_parse(string model_in, models_t_map_t map)
         {
             string model = model_in;
-            int pos = 0;
+            size_t pos = 0;
             string key = "";
 
             while (true)
             {
                 pos = model.find('(');
-                if (pos != -1) break;
+                if (pos != g.npos) break;
 
-                key = plib.pglobal.ucase(model);
+                key = plib.pg.ucase(model);
                 var i = m_models.find(key);
                 if (i == default)
                     throw new nl_exception(nl_errstr_global.MF_MODEL_NOT_FOUND("xx" + model));
                 model = i;
             }
 
-            string xmodel = plib.pglobal.left(model, pos);
+            string xmodel = plib.pg.left(model, pos);
 
             if (xmodel == "_")
             {
@@ -157,20 +162,20 @@ namespace mame.netlist
                     throw new nl_exception(nl_errstr_global.MF_MODEL_NOT_FOUND(model_in));
             }
 
-            string remainder = plib.pglobal.trim(model.substr(pos + 1));
-            if (!plib.pglobal.endsWith(remainder, ")"))
+            string remainder = plib.pg.trim(model.substr(pos + 1));
+            if (!plib.pg.endsWith(remainder, ")"))
                 throw new nl_exception(nl_errstr_global.MF_MODEL_ERROR_1(model));
             // FIMXE: Not optimal
-            remainder = plib.pglobal.left(remainder, remainder.length() - 1);
+            remainder = plib.pg.left(remainder, remainder.length() - 1);
 
-            var pairs = plib.pglobal.psplit(remainder, ' ', true);
+            var pairs = plib.pg.psplit(remainder, ' ', true);
             foreach (string pe in pairs)
             {
                 var pose = pe.find('=');
-                if (pose == -1)
+                if (pose == g.npos)
                     throw new nl_exception(nl_errstr_global.MF_MODEL_ERROR_ON_PAIR_1(model));
 
-                map[plib.pglobal.ucase(plib.pglobal.left(pe, pose))] = pe.substr(pose + 1);
+                map[plib.pg.ucase(plib.pg.left(pe, pose))] = pe.substr(pose + 1);
             }
         }
     }
@@ -186,16 +191,16 @@ namespace mame.netlist
             //using link_t = std::pair<pstring, pstring>;
 
 
-            public std.unordered_map<string, string> m_alias;
-            public std.vector<abstract_t_link_t> m_links;
-            public std.unordered_map<string, string> m_param_values;
-            public models_t_raw_map_t m_models;
+            public std.unordered_map<string, string> m_alias = new std.unordered_map<string, string>();
+            public std.vector<abstract_t_link_t> m_links = new std.vector<abstract_t_link_t>();
+            public std.unordered_map<string, string> m_param_values = new std.unordered_map<string, string>();
+            public models_t_raw_map_t m_models = new models_t_map_t();
 
             // need to preserve order of device creation ...
-            public std.vector<std.pair<string, factory.element_t>> m_device_factory;
+            public std.vector<std.pair<string, factory.element_t>> m_device_factory = new std.vector<std.pair<string, factory.element_t>>();
             // lifetime control only - can be cleared before run
-            public std.vector<std.pair<string, string>> m_defparams;
-            public std.unordered_map<string, bool> m_hints;
+            public std.vector<std.pair<string, string>> m_defparams = new std.vector<std.pair<string, string>>();
+            public std.unordered_map<string, bool> m_hints = new std.unordered_map<string, bool>();
             public factory.list_t m_factory;
 
 
@@ -251,11 +256,11 @@ namespace mame.netlist
         devices.nld_netlistparams m_netlist_params;
 
         // FIXME: can be cleared before run
-        std.unordered_map<string, detail.core_terminal_t> m_terminals;
+        std.unordered_map<string, detail.core_terminal_t> m_terminals = new std.unordered_map<string, detail.core_terminal_t>();
         // FIXME: Limited to 3 additional terminals
-        std.unordered_map<terminal_t, std.array<terminal_t, uint32_constant_4>> m_connected_terminals;
-        std.unordered_map<string, param_ref_t> m_params;
-        std.unordered_map<detail.core_terminal_t, devices.nld_base_proxy> m_proxies;
+        std.unordered_map<terminal_t, std.array<terminal_t, u64_const_4>> m_connected_terminals = new std.unordered_map<terminal_t, std.array<terminal_t, u64_const_4>>();
+        std.unordered_map<string, param_ref_t> m_params = new std.unordered_map<string, param_ref_t>();
+        std.unordered_map<detail.core_terminal_t, devices.nld_base_proxy> m_proxies = new std.unordered_map<detail.core_terminal_t, devices.nld_base_proxy>();
         std.vector<param_t> m_defparam_lifetime;
 
         unsigned m_proxy_cnt;
@@ -304,7 +309,7 @@ namespace mame.netlist
             do
             {
                 found_pat = false;
-                var sp = plib.pglobal.psplit(v, new std.vector<string>() {"$(", ")"});
+                var sp = plib.pg.psplit(v, new std.vector<string>() {"$(", ")"});
                 size_t p = 0;
                 v = "";
                 while (p < sp.size())
@@ -349,10 +354,10 @@ namespace mame.netlist
             }
         }
 
-        public void register_term(terminal_t term, terminal_t other_term, std.array<terminal_t, uint32_constant_2> splitter_terms)
+        public void register_term(terminal_t term, terminal_t other_term, std.array<terminal_t, u64_const_2> splitter_terms)
         {
             this.register_term(term);
-            m_connected_terminals.insert(term, new std.array<terminal_t, uint32_constant_4>(other_term, splitter_terms[0], splitter_terms[1], null));  //m_connected_terminals.insert({&term, {other_term, splitter_terms[0], splitter_terms[1], nullptr}});
+            m_connected_terminals.insert(term, new std.array<terminal_t, u64_const_4>(other_term, splitter_terms[0], splitter_terms[1], null));  //m_connected_terminals.insert({&term, {other_term, splitter_terms[0], splitter_terms[1], nullptr}});
         }
 
 
@@ -366,10 +371,10 @@ namespace mame.netlist
 
 
         // called from net_splitter
-        public std.array<terminal_t, uint32_constant_4> get_connected_terminals(terminal_t term)
+        public std.array<terminal_t, u64_const_4> get_connected_terminals(terminal_t term)
         {
             var ret = m_connected_terminals.find(term);
-            return (ret != default) ? ret : null;
+            return (ret != default) ? ret : default;
         }
 
 
@@ -596,11 +601,11 @@ namespace mame.netlist
 
         public void prepare_to_run()
         {
-            string envlog = plib.pglobal.environment("NL_LOGS", "");
+            string envlog = plib.pg.environment("NL_LOGS", "");
 
             if (!envlog.empty())
             {
-                var loglist = plib.pglobal.psplit(envlog, ':');
+                var loglist = plib.pg.psplit(envlog, ':');
                 m_parser.register_dynamic_log_devices(loglist);
             }
 
@@ -1287,24 +1292,37 @@ namespace mame.netlist
         }
 
 
+        // ----------------------------------------------------------------------------------------
+        // Device handling
+        // ----------------------------------------------------------------------------------------
+
         void delete_empty_nets()
         {
-            throw new emu_unimplemented();
-#if false
-            m_nlstate.nets().erase(
-                std::remove_if(m_nlstate.nets().begin(), m_nlstate.nets().end(),
-                    [](device_arena::owned_ptr<detail::net_t> &net)
-                    {
-                        if (net->state().core_terms(*net).empty())
-                        {
-                            // FIXME: need to remove from state->m_core_terms as well.
-                            net->state().log().verbose("Deleting net {1} ...", net->name());
-                            net->state().run_state_manager().remove_save_items(net.get());
-                            return true;
-                        }
-                        return false;
-                    }), m_nlstate.nets().end());
-#endif
+            //m_nlstate.nets().erase(
+            //    std::remove_if(m_nlstate.nets().begin(), m_nlstate.nets().end(),
+            //        [](device_arena::owned_ptr<detail::net_t> &net)
+            //        {
+            //            if (net->state().core_terms(*net).empty())
+            //            {
+            //                // FIXME: need to remove from state->m_core_terms as well.
+            //                net->state().log().verbose("Deleting net {1} ...", net->name());
+            //                net->state().run_state_manager().remove_save_items(net.get());
+            //                return true;
+            //            }
+            //            return false;
+            //        }), m_nlstate.nets().end());
+            for (int i = 0; i < m_nlstate.nets().Count; i++)
+            {
+                detail.net_t net = m_nlstate.nets()[i];
+                if (net.state().core_terms(net).empty())
+                {
+                    // FIXME: need to remove from state->m_core_terms as well.
+                    net.state().log().verbose.op("Deleting net {0} ...", net.name());
+                    net.state().run_state_manager().remove_save_items(net);
+
+                    m_nlstate.nets().erase(i);
+                }
+            }
         }
     }
 

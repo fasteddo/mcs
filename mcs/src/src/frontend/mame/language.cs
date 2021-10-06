@@ -76,10 +76,10 @@ namespace mame
             g.strreplace(ref name, " ", "_");
             g.strreplace(ref name, "(", "");
             g.strreplace(ref name, ")", "");
-            emu_file file = new emu_file(m_options.language_path(), global_object.OPEN_FLAG_READ);
-            if (file.open(name + global_object.PATH_SEPARATOR + "strings.mo") != osd_file.error.NONE)
+            emu_file file = new emu_file(m_options.language_path(), g.OPEN_FLAG_READ);
+            if (file.open(name + g.PATH_SEPARATOR + "strings.mo") != osd_file.error.NONE)
             {
-                global_object.osd_printf_error("Error opening translation file {0}\n", name);
+                g.osd_printf_error("Error opening translation file {0}\n", name);
                 return;
             }
 
@@ -87,7 +87,7 @@ namespace mame
             if (20 > size)
             {
                 file.close();
-                global_object.osd_printf_error("Error reading translation file {0}: {1}-byte file is too small to contain translation data\n", name, size);
+                g.osd_printf_error("Error reading translation file {0}: {1}-byte file is too small to contain translation data\n", name, size);
                 return;
             }
 
@@ -96,7 +96,7 @@ namespace mame
             if (f_translation_data == null)
             {
                 file.close();
-                global_object.osd_printf_error("Failed to allocate {0} bytes to load translation data file {1}\n", size, name);
+                g.osd_printf_error("Failed to allocate {0} bytes to load translation data file {1}\n", size, name);
                 return;
             }
 
@@ -104,14 +104,14 @@ namespace mame
             file.close();
             if (read != size)
             {
-                global_object.osd_printf_error("Error reading translation file {0}: requested {1} bytes but got {2} bytes\n", name, size, read);
+                g.osd_printf_error("Error reading translation file {0}: requested {1} bytes but got {2} bytes\n", name, size, read);
                 f_translation_data = null;  //f_translation_data.reset();
                 return;
             }
 
             if ((f_translation_data[0] != MO_MAGIC) && (f_translation_data[0] != MO_MAGIC_REVERSED))
             {
-                global_object.osd_printf_error("Error reading translation file {0}: unrecognized magic number 0x{1}\n", name, f_translation_data[0]);
+                g.osd_printf_error("Error reading translation file {0}: unrecognized magic number 0x{1}\n", name, f_translation_data[0]);
                 f_translation_data = null;  //f_translation_data.reset();
                 return;
             }
@@ -125,14 +125,14 @@ namespace mame
             {
                 bool reversed = f_translation_data[0] == MO_MAGIC_REVERSED;
                 var words = f_translation_data;
-                return reversed ? global_object.swapendian_int32(words[offset]) : words[offset];
+                return reversed ? g.swapendian_int32(words[offset]) : words[offset];
             });
 
             // FIXME: check major/minor version number
 
             if ((fetch_word(3) % 4) != 0 || (fetch_word(4) % 4) != 0)
             {
-                global_object.osd_printf_error("Error reading translation file {0}: table offsets {1} and {2} are not word-aligned\n", name, fetch_word(3), fetch_word(4));
+                g.osd_printf_error("Error reading translation file {0}: table offsets {1} and {2} are not word-aligned\n", name, fetch_word(3), fetch_word(4));
                 f_translation_data = null;  //f_translation_data.reset();
                 return;
             }
@@ -142,17 +142,17 @@ namespace mame
             u32 translation_table_offset = fetch_word(4) >> 2;
             if ((4 * (original_table_offset + ((u64)number_of_strings * 2))) > size)
             {
-                global_object.osd_printf_error("Error reading translation file {0}: {1}-entry original string table at offset {2} extends past end of {3}-byte file\n", name, number_of_strings, fetch_word(3), size);
+                g.osd_printf_error("Error reading translation file {0}: {1}-entry original string table at offset {2} extends past end of {3}-byte file\n", name, number_of_strings, fetch_word(3), size);
                 f_translation_data = null;  //f_translation_data.reset();
                 return;
             }
             if ((4 * (translation_table_offset + ((u64)number_of_strings * 2))) > size)
             {
-                global_object.osd_printf_error("Error reading translation file {0}: {1}-entry translated string table at offset {2} extends past end of {3}-byte file\n", name, number_of_strings, fetch_word(4), size);
+                g.osd_printf_error("Error reading translation file {0}: {1}-entry translated string table at offset {2} extends past end of {3}-byte file\n", name, number_of_strings, fetch_word(4), size);
                 f_translation_data = null;  //f_translation_data.reset();
                 return;
             }
-            global_object.osd_printf_verbose("Reading translation file {0}: {1} strings, original table at word offset {2}, translated table at word offset {3}\n", name, number_of_strings, original_table_offset, translation_table_offset);
+            g.osd_printf_verbose("Reading translation file {0}: {1} strings, original table at word offset {2}, translated table at word offset {3}\n", name, number_of_strings, original_table_offset, translation_table_offset);
 
             PointerU8 data = new PointerU8(f_translation_data);  //char const *const data = reinterpret_cast<char const *>(f_translation_data.get());
             for (u32 i = 1; number_of_strings > i; ++i)
@@ -161,12 +161,12 @@ namespace mame
                 u32 original_offset = fetch_word(original_table_offset + (2 * i) + 1);
                 if ((original_length + original_offset) >= size)
                 {
-                    global_object.osd_printf_error("Error reading translation file {0}: {1}-byte original string {2} at offset {3} extends past end of {4}-byte file\n", name, original_length, i, original_offset, size);
+                    g.osd_printf_error("Error reading translation file {0}: {1}-byte original string {2} at offset {3} extends past end of {4}-byte file\n", name, original_length, i, original_offset, size);
                     continue;
                 }
                 if (data[(int)(original_length + original_offset)] != 0)
                 {
-                    global_object.osd_printf_error("Error reading translation file {0}: {1}-byte original string {2} at offset {3} is not correctly NUL-terminated\n", name, original_length, i, original_offset);
+                    g.osd_printf_error("Error reading translation file {0}: {1}-byte original string {2} at offset {3} is not correctly NUL-terminated\n", name, original_length, i, original_offset);
                     continue;
                 }
 
@@ -174,12 +174,12 @@ namespace mame
                 u32 translation_offset = fetch_word(translation_table_offset + (2 * i) + 1);
                 if ((translation_length + translation_offset) >= size)
                 {
-                    global_object.osd_printf_error("Error reading translation file {0}: {1}-byte translated string {2} at offset {3} extends past end of {4}-byte file\n", name, translation_length, i, translation_offset, size);
+                    g.osd_printf_error("Error reading translation file {0}: {1}-byte translated string {2} at offset {3} extends past end of {4}-byte file\n", name, translation_length, i, translation_offset, size);
                     continue;
                 }
                 if (data[(int)(translation_length + translation_offset)] != 0)
                 {
-                    global_object.osd_printf_error("Error reading translation file {0}: {1}-byte translated string {2} at offset {3} is not correctly NUL-terminated\n", name, translation_length, i, translation_offset);
+                    g.osd_printf_error("Error reading translation file {0}: {1}-byte translated string {2} at offset {3} is not correctly NUL-terminated\n", name, translation_length, i, translation_offset);
                     continue;
                 }
 
@@ -187,10 +187,10 @@ namespace mame
                 string translation = data.ToString((int)translation_offset, int.MaxValue);  //string translation = &data[translation_offset];
                 var ins = f_translation_map.emplace(original, translation);
                 if (!ins)
-                    global_object.osd_printf_warning("Loading translation file {0}: translation {1} '{2}'='{3}' conflicts with previous translation '{4}'='{5}'\n", name, i, original, translation, null, null);  //ins.first->first, ins.first->second);
+                    g.osd_printf_warning("Loading translation file {0}: translation {1} '{2}'='{3}' conflicts with previous translation '{4}'='{5}'\n", name, i, original, translation, null, null);  //ins.first->first, ins.first->second);
             }
 
-            global_object.osd_printf_verbose("Loaded {0} translations from file {1}\n", f_translation_map.size(), name);
+            g.osd_printf_verbose("Loaded {0} translations from file {1}\n", f_translation_map.size(), name);
         }
     }
 }

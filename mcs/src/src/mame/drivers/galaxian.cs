@@ -132,7 +132,7 @@ namespace mame
             }
 
             /* the top bits of the counter index map to various bits here */
-            return (uint8_t)((hibit << 7) |           /* B7 is the output of the final divide-by-2 counter */
+            return (uint8_t)((uint32_t)(hibit << 7) |           /* B7 is the output of the final divide-by-2 counter */
                     (g.BIT(cycles,14) << 6) | /* B6 is the high bit of the divide-by-5 counter */
                     (g.BIT(cycles,13) << 5) | /* B5 is the 2nd highest bit of the divide-by-5 counter */
                     (g.BIT(cycles,11) << 4) | /* B4 is the high bit of the divide-by-8 counter */
@@ -348,7 +348,7 @@ namespace mame
 
             /* the first ROM of the sound CPU has data lines D0 and D1 swapped */
             for (offs = 0; offs < 0x800; offs++)
-                rombase[offs] = (byte)g.bitswap(rombase[offs], 7,6,5,4,3,2,0,1);
+                rombase[offs] = (uint8_t)g.bitswap(rombase[offs], 7,6,5,4,3,2,0,1);
         }
 
 #if false
@@ -371,7 +371,7 @@ namespace mame
 
             /* the 2nd gfx ROM has data lines D0 and D1 swapped */
             for (offs = 0x0800; offs < 0x1000; offs++)
-                rombase[offs] = (byte)g.bitswap(rombase[offs], 7,6,5,4,3,2,0,1);
+                rombase[offs] = (uint8_t)g.bitswap(rombase[offs], 7,6,5,4,3,2,0,1);
         }
 
 
@@ -518,7 +518,7 @@ namespace mame
     }
 
 
-    partial class galaxian : global_object
+    partial class galaxian : construct_ioport_helper
     {
         /*************************************
          *
@@ -533,41 +533,41 @@ namespace mame
             INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
             PORT_START("IN0");
-            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 );
-            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 );
-            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ); PORT_2WAY();
-            PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ); PORT_2WAY();
-            PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 );
-            PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) );
-            PORT_DIPSETTING(    0x00, DEF_STR( Upright ) );
-            PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) );
-            PORT_SERVICE( 0x40, IP_ACTIVE_HIGH );
-            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1 );
+            PORT_BIT( 0x01, g.IP_ACTIVE_HIGH, g.IPT_COIN1 );
+            PORT_BIT( 0x02, g.IP_ACTIVE_HIGH, g.IPT_COIN2 );
+            PORT_BIT( 0x04, g.IP_ACTIVE_HIGH, g.IPT_JOYSTICK_LEFT ); PORT_2WAY();
+            PORT_BIT( 0x08, g.IP_ACTIVE_HIGH, g.IPT_JOYSTICK_RIGHT ); PORT_2WAY();
+            PORT_BIT( 0x10, g.IP_ACTIVE_HIGH, g.IPT_BUTTON1 );
+            PORT_DIPNAME( 0x20, 0x00, g.DEF_STR( g.Cabinet ) );
+            PORT_DIPSETTING(    0x00, g.DEF_STR( g.Upright ) );
+            PORT_DIPSETTING(    0x20, g.DEF_STR( g.Cocktail ) );
+            PORT_SERVICE( 0x40, g.IP_ACTIVE_HIGH );
+            PORT_BIT( 0x80, g.IP_ACTIVE_HIGH, g.IPT_SERVICE1 );
 
             PORT_START("IN1");
-            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 );
-            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 );
-            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ); PORT_2WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ); PORT_2WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ); PORT_COCKTAIL();
-            PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED );
-            PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) );
-            PORT_DIPSETTING(    0x40, DEF_STR( _2C_1C ) );
-            PORT_DIPSETTING(    0x00, DEF_STR( _1C_1C ) );
-            PORT_DIPSETTING(    0x80, DEF_STR( _1C_2C ) );
-            PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) );
+            PORT_BIT( 0x01, g.IP_ACTIVE_HIGH, g.IPT_START1 );
+            PORT_BIT( 0x02, g.IP_ACTIVE_HIGH, g.IPT_START2 );
+            PORT_BIT( 0x04, g.IP_ACTIVE_HIGH, g.IPT_JOYSTICK_LEFT ); PORT_2WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x08, g.IP_ACTIVE_HIGH, g.IPT_JOYSTICK_RIGHT ); PORT_2WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x10, g.IP_ACTIVE_HIGH, g.IPT_BUTTON1 ); PORT_COCKTAIL();
+            PORT_BIT( 0x20, g.IP_ACTIVE_HIGH, g.IPT_UNUSED );
+            PORT_DIPNAME( 0xc0, 0x00, g.DEF_STR( g.Coinage ) );
+            PORT_DIPSETTING(    0x40, g.DEF_STR( g._2C_1C ) );
+            PORT_DIPSETTING(    0x00, g.DEF_STR( g._1C_1C ) );
+            PORT_DIPSETTING(    0x80, g.DEF_STR( g._1C_2C ) );
+            PORT_DIPSETTING(    0xc0, g.DEF_STR( g.Free_Play ) );
 
             PORT_START("IN2");
-            PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) );
+            PORT_DIPNAME( 0x03, 0x00, g.DEF_STR( g.Bonus_Life ) );
             PORT_DIPSETTING(    0x00, "7000" );
             PORT_DIPSETTING(    0x01, "10000" );
             PORT_DIPSETTING(    0x02, "12000" );
             PORT_DIPSETTING(    0x03, "20000" );
-            PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) );
+            PORT_DIPNAME( 0x04, 0x04, g.DEF_STR( g.Lives ) );
             PORT_DIPSETTING(    0x00, "2" );
             PORT_DIPSETTING(    0x04, "3" );
             PORT_DIPUNUSED( 0x08, 0x00 );
-            PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED );
+            PORT_BIT( 0xf0, g.IP_ACTIVE_HIGH, g.IPT_UNUSED );
 
             INPUT_PORTS_END();
         }
@@ -586,45 +586,45 @@ namespace mame
             INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
             PORT_START("IN0");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ); PORT_4WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ); /* 1P shoot2 - unused */
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 );
-            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ); /* 1P shoot1 - unused */
-            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_4WAY();
-            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_4WAY();
-            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 );
-            PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 );
+            PORT_BIT( 0x01, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_UP ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x02, g.IP_ACTIVE_LOW, g.IPT_UNKNOWN ); /* 1P shoot2 - unused */
+            PORT_BIT( 0x04, g.IP_ACTIVE_LOW, g.IPT_SERVICE1 );
+            PORT_BIT( 0x08, g.IP_ACTIVE_LOW, g.IPT_UNKNOWN ); /* 1P shoot1 - unused */
+            PORT_BIT( 0x10, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_RIGHT ); PORT_4WAY();
+            PORT_BIT( 0x20, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_LEFT ); PORT_4WAY();
+            PORT_BIT( 0x40, g.IP_ACTIVE_LOW, g.IPT_COIN2 );
+            PORT_BIT( 0x80, g.IP_ACTIVE_LOW, g.IPT_COIN1 );
 
             PORT_START("IN1");
-            PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) );
+            PORT_DIPNAME( 0x03, 0x00, g.DEF_STR( g.Lives ) );
             PORT_DIPSETTING(    0x00, "3" );
             PORT_DIPSETTING(    0x01, "5" );
             PORT_DIPSETTING(    0x02, "7" );
             PORT_DIPSETTING(    0x03, "256 (Cheat)");
-            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ); /* 2P shoot2 - unused */
-            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ); /* 2P shoot1 - unused */
-            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_4WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_4WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 );
-            PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 );
+            PORT_BIT( 0x04, g.IP_ACTIVE_LOW, g.IPT_UNKNOWN ); /* 2P shoot2 - unused */
+            PORT_BIT( 0x08, g.IP_ACTIVE_LOW, g.IPT_UNKNOWN ); /* 2P shoot1 - unused */
+            PORT_BIT( 0x10, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_RIGHT ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x20, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_LEFT ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x40, g.IP_ACTIVE_LOW, g.IPT_START2 );
+            PORT_BIT( 0x80, g.IP_ACTIVE_LOW, g.IPT_START1 );
 
             PORT_START("IN2");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_4WAY(); PORT_COCKTAIL();
-            PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) );
+            PORT_BIT( 0x01, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_DOWN ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_DIPNAME( 0x06, 0x00, g.DEF_STR( g.Coinage ) );
             PORT_DIPSETTING(    0x02, "A 2/1 B 2/1 C 2/1" );
             PORT_DIPSETTING(    0x04, "A 2/1 B 1/3 C 2/1" );
             PORT_DIPSETTING(    0x00, "A 1/1 B 1/1 C 1/1" );
             PORT_DIPSETTING(    0x06, "A 1/1 B 1/6 C 1/1" );
-            PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) );
-            PORT_DIPSETTING(    0x00, DEF_STR( Upright ) );
-            PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) );
-            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ); PORT_4WAY();
-            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED );
-            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_4WAY();
-            PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED );
+            PORT_DIPNAME( 0x08, 0x00, g.DEF_STR( g.Cabinet ) );
+            PORT_DIPSETTING(    0x00, g.DEF_STR( g.Upright ) );
+            PORT_DIPSETTING(    0x08, g.DEF_STR( g.Cocktail ) );
+            PORT_BIT( 0x10, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_UP ); PORT_4WAY();
+            PORT_BIT( 0x20, g.IP_ACTIVE_LOW, g.IPT_UNUSED );
+            PORT_BIT( 0x40, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_DOWN ); PORT_4WAY();
+            PORT_BIT( 0x80, g.IP_ACTIVE_LOW, g.IPT_UNUSED );
 
             PORT_START("IN3");   /* need for some PPI accesses */
-            PORT_BIT( 0xff, 0x00, IPT_UNUSED );
+            PORT_BIT( 0xff, 0x00, g.IPT_UNUSED );
 
             INPUT_PORTS_END();
         }
@@ -708,22 +708,22 @@ namespace mame
         void galaxian_base(machine_config config)
         {
             // basic machine hardware
-            Z80(config, m_maincpu, GALAXIAN_PIXEL_CLOCK/3/2);
-            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, galaxian_map);
+            g.Z80(config, m_maincpu, GALAXIAN_PIXEL_CLOCK/3/2);
+            m_maincpu.op[0].memory().set_addrmap(g.AS_PROGRAM, galaxian_map);
 
-            WATCHDOG_TIMER(config, "watchdog").set_vblank_count("screen", 8);
+            g.WATCHDOG_TIMER(config, "watchdog").set_vblank_count("screen", 8);
 
             // video hardware
-            GFXDECODE(config, m_gfxdecode, m_palette, gfx_galaxian);
-            PALETTE(config, m_palette, galaxian_palette, 32);
+            g.GFXDECODE(config, m_gfxdecode, m_palette, gfx_galaxian);
+            g.PALETTE(config, m_palette, galaxian_palette, 32);
 
-            SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+            g.SCREEN(config, m_screen, g.SCREEN_TYPE_RASTER);
             m_screen.op[0].set_raw(GALAXIAN_PIXEL_CLOCK, GALAXIAN_HTOTAL, GALAXIAN_HBEND, GALAXIAN_HBSTART, GALAXIAN_VTOTAL, GALAXIAN_VBEND, GALAXIAN_VBSTART);
             m_screen.op[0].set_screen_update(screen_update_galaxian);
             m_screen.op[0].screen_vblank().set((write_line_delegate)vblank_interrupt_w).reg();
 
             // sound hardware
-            SPEAKER(config, "speaker").front_center();
+            g.SPEAKER(config, "speaker").front_center();
         }
 
 
@@ -732,13 +732,13 @@ namespace mame
         {
             galaxian_base(config);
 
-            I8255A(config, m_ppi8255.op(0));
+            g.I8255A(config, m_ppi8255.op(0));
             m_ppi8255.op(0).op[0].in_pa_callback().set_ioport("IN0").reg();
             m_ppi8255.op(0).op[0].in_pb_callback().set_ioport("IN1").reg();
             m_ppi8255.op(0).op[0].in_pc_callback().set_ioport("IN2").reg();
             m_ppi8255.op(0).op[0].out_pc_callback().set(konami_portc_0_w).reg();
 
-            I8255A(config, m_ppi8255.op(1));
+            g.I8255A(config, m_ppi8255.op(1));
             m_ppi8255.op(1).op[0].out_pa_callback().set(m_soundlatch, (u8 data) => { ((generic_latch_8_device)subdevice("soundlatch")).write(data); }).reg();  //FUNC(generic_latch_8_device::write));
             m_ppi8255.op(1).op[0].out_pb_callback().set(konami_sound_control_w).reg();
             m_ppi8255.op(1).op[0].in_pc_callback().set_ioport("IN3").reg();
@@ -749,14 +749,14 @@ namespace mame
         void konami_sound_1x_ay8910(machine_config config)
         {
             /* 2nd CPU to drive sound */
-            Z80(config, m_audiocpu, KONAMI_SOUND_CLOCK/8);
-            m_audiocpu.op[0].memory().set_addrmap(AS_PROGRAM, frogger_sound_map);
-            m_audiocpu.op[0].memory().set_addrmap(AS_IO, frogger_sound_portmap);
+            g.Z80(config, m_audiocpu, KONAMI_SOUND_CLOCK/8);
+            m_audiocpu.op[0].memory().set_addrmap(g.AS_PROGRAM, frogger_sound_map);
+            m_audiocpu.op[0].memory().set_addrmap(g.AS_IO, frogger_sound_portmap);
 
-            GENERIC_LATCH_8(config, m_soundlatch);
+            g.GENERIC_LATCH_8(config, m_soundlatch);
 
             /* sound hardware */
-            AY8910(config, m_ay8910.op(0), KONAMI_SOUND_CLOCK/8);
+            g.AY8910(config, m_ay8910.op(0), KONAMI_SOUND_CLOCK/8);
             m_ay8910.op(0).op[0].set_flags(ay8910_global.AY8910_RESISTOR_OUTPUT);
             m_ay8910.op(0).op[0].set_resistors_load((int)1000.0, (int)1000.0, (int)1000.0);
             m_ay8910.op(0).op[0].port_a_read_callback().set(m_soundlatch, () => { return ((generic_latch_8_device)subdevice("soundlatch")).read(); }).reg();  //FUNC(generic_latch_8_device::read));
@@ -765,24 +765,24 @@ namespace mame
             m_ay8910.op(0).op[0].disound.add_route(1, "konami", 1.0, 1);
             m_ay8910.op(0).op[0].disound.add_route(2, "konami", 1.0, 2);
 
-            NETLIST_SOUND(config, "konami", 48000)
+            g.NETLIST_SOUND(config, "konami", 48000)
                 .set_source(netlist_konami1x)
                 .disound.add_route(g.ALL_OUTPUTS, "speaker", 1.0);
 
             // Filter
-            NETLIST_LOGIC_INPUT(config, "konami:ctl0", "CTL0.IN", 0);
-            NETLIST_LOGIC_INPUT(config, "konami:ctl1", "CTL1.IN", 0);
-            NETLIST_LOGIC_INPUT(config, "konami:ctl2", "CTL2.IN", 0);
-            NETLIST_LOGIC_INPUT(config, "konami:ctl3", "CTL3.IN", 0);
-            NETLIST_LOGIC_INPUT(config, "konami:ctl4", "CTL4.IN", 0);
-            NETLIST_LOGIC_INPUT(config, "konami:ctl5", "CTL5.IN", 0);
+            g.NETLIST_LOGIC_INPUT(config, "konami:ctl0", "CTL0.IN", 0);
+            g.NETLIST_LOGIC_INPUT(config, "konami:ctl1", "CTL1.IN", 0);
+            g.NETLIST_LOGIC_INPUT(config, "konami:ctl2", "CTL2.IN", 0);
+            g.NETLIST_LOGIC_INPUT(config, "konami:ctl3", "CTL3.IN", 0);
+            g.NETLIST_LOGIC_INPUT(config, "konami:ctl4", "CTL4.IN", 0);
+            g.NETLIST_LOGIC_INPUT(config, "konami:ctl5", "CTL5.IN", 0);
 
             // CHA1 - 3D
-            NETLIST_STREAM_INPUT(config, "konami:cin0", 0, "R_AY3D_A.R");
-            NETLIST_STREAM_INPUT(config, "konami:cin1", 1, "R_AY3D_B.R");
-            NETLIST_STREAM_INPUT(config, "konami:cin2", 2, "R_AY3D_C.R");
+            g.NETLIST_STREAM_INPUT(config, "konami:cin0", 0, "R_AY3D_A.R");
+            g.NETLIST_STREAM_INPUT(config, "konami:cin1", 1, "R_AY3D_B.R");
+            g.NETLIST_STREAM_INPUT(config, "konami:cin2", 2, "R_AY3D_C.R");
 
-            NETLIST_STREAM_OUTPUT(config, "konami:cout0", 0, "OUT").set_mult_offset(1.0 / 0.05, 0.0);
+            g.NETLIST_STREAM_OUTPUT(config, "konami:cout0", 0, "OUT").set_mult_offset(1.0 / 0.05, 0.0);
         }
 
 
@@ -796,7 +796,7 @@ namespace mame
         {
             galaxian_base(config);
 
-            GALAXIAN_SOUND(config, "cust", 0);
+            g.GALAXIAN_SOUND(config, "cust", 0);
         }
 
 
@@ -806,7 +806,7 @@ namespace mame
             konami_sound_1x_ay8910(config);
 
             // alternate memory map
-            m_maincpu.op[0].memory().set_addrmap(AS_PROGRAM, frogger_map);
+            m_maincpu.op[0].memory().set_addrmap(g.AS_PROGRAM, frogger_map);
         }
 
 
@@ -867,7 +867,7 @@ namespace mame
     }
 
 
-    partial class galaxian : global_object
+    partial class galaxian : construct_ioport_helper
     {
         /*************************************
          *
@@ -879,21 +879,21 @@ namespace mame
         //ROM_START( galaxian )
         static readonly MemoryContainer<tiny_rom_entry> rom_galaxian = new MemoryContainer<tiny_rom_entry>()
         {
-            ROM_REGION( 0x4000, "maincpu", 0 ),
-            ROM_LOAD( "galmidw.u",    0x0000, 0x0800, CRC("745e2d61") + SHA1("e65f74e35b1bfaccd407e168ea55678ae9b68edf") ),
-            ROM_LOAD( "galmidw.v",    0x0800, 0x0800, CRC("9c999a40") + SHA1("02fdcd95d8511e64c0d2b007b874112d53e41045") ),
-            ROM_LOAD( "galmidw.w",    0x1000, 0x0800, CRC("b5894925") + SHA1("0046b9ed697a34d088de1aead8bd7cbe526a2396") ),
-            ROM_LOAD( "galmidw.y",    0x1800, 0x0800, CRC("6b3ca10b") + SHA1("18d8714e5ef52f63ba8888ecc5a25b17b3bf17d1") ),
-            ROM_LOAD( "7l",           0x2000, 0x0800, CRC("1b933207") + SHA1("8b44b0f74420871454e27894d0f004859f9e59a9") ),
+            g.ROM_REGION( 0x4000, "maincpu", 0 ),
+            g.ROM_LOAD( "galmidw.u",    0x0000, 0x0800, g.CRC("745e2d61") + g.SHA1("e65f74e35b1bfaccd407e168ea55678ae9b68edf") ),
+            g.ROM_LOAD( "galmidw.v",    0x0800, 0x0800, g.CRC("9c999a40") + g.SHA1("02fdcd95d8511e64c0d2b007b874112d53e41045") ),
+            g.ROM_LOAD( "galmidw.w",    0x1000, 0x0800, g.CRC("b5894925") + g.SHA1("0046b9ed697a34d088de1aead8bd7cbe526a2396") ),
+            g.ROM_LOAD( "galmidw.y",    0x1800, 0x0800, g.CRC("6b3ca10b") + g.SHA1("18d8714e5ef52f63ba8888ecc5a25b17b3bf17d1") ),
+            g.ROM_LOAD( "7l",           0x2000, 0x0800, g.CRC("1b933207") + g.SHA1("8b44b0f74420871454e27894d0f004859f9e59a9") ),
 
-            ROM_REGION( 0x1000, "gfx1", 0 ),
-            ROM_LOAD( "1h.bin",       0x0000, 0x0800, CRC("39fb43a4") + SHA1("4755609bd974976f04855d51e08ec0d62ab4bc07") ),
-            ROM_LOAD( "1k.bin",       0x0800, 0x0800, CRC("7e3f56a2") + SHA1("a9795d8b7388f404f3b0e2c6ce15d713a4c5bafa") ),
+            g.ROM_REGION( 0x1000, "gfx1", 0 ),
+            g.ROM_LOAD( "1h.bin",       0x0000, 0x0800, g.CRC("39fb43a4") + g.SHA1("4755609bd974976f04855d51e08ec0d62ab4bc07") ),
+            g.ROM_LOAD( "1k.bin",       0x0800, 0x0800, g.CRC("7e3f56a2") + g.SHA1("a9795d8b7388f404f3b0e2c6ce15d713a4c5bafa") ),
 
-            ROM_REGION( 0x0020, "proms", 0 ),
-            ROM_LOAD( "6l.bpr",       0x0000, 0x0020, CRC("c3ac9467") + SHA1("f382ad5a34d282056c78a5ec00c30ec43772bae2") ),
+            g.ROM_REGION( 0x0020, "proms", 0 ),
+            g.ROM_LOAD( "6l.bpr",       0x0000, 0x0020, g.CRC("c3ac9467") + g.SHA1("f382ad5a34d282056c78a5ec00c30ec43772bae2") ),
 
-            ROM_END,
+            g.ROM_END,
         };
 
 
@@ -907,24 +907,24 @@ namespace mame
         //ROM_START( frogger )
         static readonly MemoryContainer<tiny_rom_entry> rom_frogger = new MemoryContainer<tiny_rom_entry>()
         {
-            ROM_REGION( 0x10000, "maincpu", 0 ),
-            ROM_LOAD( "frogger.26",   0x0000, 0x1000, CRC("597696d6") + SHA1("e7e021776cad00f095a1ebbef407b7c0a8f5d835") ),
-            ROM_LOAD( "frogger.27",   0x1000, 0x1000, CRC("b6e6fcc3") + SHA1("5e8692f2b0c7f4b3642b3ee6670e1c3b20029cdc") ),
-            ROM_LOAD( "frsm3.7",      0x2000, 0x1000, CRC("aca22ae0") + SHA1("5a99060ea2506a3ac7d61ca5876ce5cb3e493565") ),
+            g.ROM_REGION( 0x10000, "maincpu", 0 ),
+            g.ROM_LOAD( "frogger.26",   0x0000, 0x1000, g.CRC("597696d6") + g.SHA1("e7e021776cad00f095a1ebbef407b7c0a8f5d835") ),
+            g.ROM_LOAD( "frogger.27",   0x1000, 0x1000, g.CRC("b6e6fcc3") + g.SHA1("5e8692f2b0c7f4b3642b3ee6670e1c3b20029cdc") ),
+            g.ROM_LOAD( "frsm3.7",      0x2000, 0x1000, g.CRC("aca22ae0") + g.SHA1("5a99060ea2506a3ac7d61ca5876ce5cb3e493565") ),
 
-            ROM_REGION( 0x10000, "audiocpu", 0 ),
-            ROM_LOAD( "frogger.608",  0x0000, 0x0800, CRC("e8ab0256") + SHA1("f090afcfacf5f13cdfa0dfda8e3feb868c6ce8bc") ),
-            ROM_LOAD( "frogger.609",  0x0800, 0x0800, CRC("7380a48f") + SHA1("75582a94b696062cbdb66a4c5cf0bc0bb94f81ee") ),
-            ROM_LOAD( "frogger.610",  0x1000, 0x0800, CRC("31d7eb27") + SHA1("2e1d34ae4da385fd7cac94707d25eeddf4604e1a") ),
+            g.ROM_REGION( 0x10000, "audiocpu", 0 ),
+            g.ROM_LOAD( "frogger.608",  0x0000, 0x0800, g.CRC("e8ab0256") + g.SHA1("f090afcfacf5f13cdfa0dfda8e3feb868c6ce8bc") ),
+            g.ROM_LOAD( "frogger.609",  0x0800, 0x0800, g.CRC("7380a48f") + g.SHA1("75582a94b696062cbdb66a4c5cf0bc0bb94f81ee") ),
+            g.ROM_LOAD( "frogger.610",  0x1000, 0x0800, g.CRC("31d7eb27") + g.SHA1("2e1d34ae4da385fd7cac94707d25eeddf4604e1a") ),
 
-            ROM_REGION( 0x1000, "gfx1", 0 ),
-            ROM_LOAD( "frogger.607",  0x0000, 0x0800, CRC("05f7d883") + SHA1("78831fd287da18928651a8adb7e578d291493eff") ),
-            ROM_LOAD( "frogger.606",  0x0800, 0x0800, CRC("f524ee30") + SHA1("dd768967add61467baa08d5929001f157d6cd911") ),
+            g.ROM_REGION( 0x1000, "gfx1", 0 ),
+            g.ROM_LOAD( "frogger.607",  0x0000, 0x0800, g.CRC("05f7d883") + g.SHA1("78831fd287da18928651a8adb7e578d291493eff") ),
+            g.ROM_LOAD( "frogger.606",  0x0800, 0x0800, g.CRC("f524ee30") + g.SHA1("dd768967add61467baa08d5929001f157d6cd911") ),
 
-            ROM_REGION( 0x0020, "proms", 0 ),
-            ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, CRC("413703bf") + SHA1("66648b2b28d3dcbda5bdb2605d1977428939dd3c") ),
+            g.ROM_REGION( 0x0020, "proms", 0 ),
+            g.ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, g.CRC("413703bf") + g.SHA1("66648b2b28d3dcbda5bdb2605d1977428939dd3c") ),
 
-            ROM_END,
+            g.ROM_END,
         };
 
 
@@ -949,8 +949,8 @@ namespace mame
          *************************************/
 
         // Basic galaxian hardware
-        //                                                         creator,                 rom           YEAR,   NAME,       PARENT,  MACHINE,                           INPUT,                                 INIT,                                   MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver_galaxian = GAME( device_creator_galaxian, rom_galaxian, "1979", "galaxian", "0",     galaxian.galaxian_state_galaxian,  m_galaxian.construct_ioport_galaxian,  galaxian.galaxian_state_init_galaxian,  ROT90,  "Namco", "Galaxian (Namco set 1)", MACHINE_SUPPORTS_SAVE );
+        //                                                           creator,                 rom           YEAR,   NAME,       PARENT,  MACHINE,                  INPUT,                                 INIT,                          MONITOR,  COMPANY, FULLNAME,                 FLAGS
+        public static readonly game_driver driver_galaxian = g.GAME( device_creator_galaxian, rom_galaxian, "1979", "galaxian", "0",     galaxian_state_galaxian,  m_galaxian.construct_ioport_galaxian,  galaxian_state_init_galaxian,  g.ROT90,  "Namco", "Galaxian (Namco set 1)", g.MACHINE_SUPPORTS_SAVE );
 
 
         /*************************************
@@ -961,7 +961,7 @@ namespace mame
          *************************************/
 
         // Frogger based hardware: 2nd Z80, AY-8910A, 2 8255 PPI for I/O, custom background
-        //                                                        creator,                rom          YEAR,   NAME,      PARENT,  MACHINE,                         INPUT,                               INIT,                                 MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver_frogger = GAME( device_creator_frogger, rom_frogger, "1981", "frogger", "0",     galaxian.galaxian_state_frogger, m_galaxian.construct_ioport_frogger, galaxian.galaxian_state_init_frogger, ROT90,  "Konami", "Frogger", MACHINE_SUPPORTS_SAVE );
+        //                                                          creator,                rom          YEAR,   NAME,      PARENT,  MACHINE,                INPUT,                               INIT,                        MONITOR,  COMPANY,  FULLNAME,  FLAGS
+        public static readonly game_driver driver_frogger = g.GAME( device_creator_frogger, rom_frogger, "1981", "frogger", "0",     galaxian_state_frogger, m_galaxian.construct_ioport_frogger, galaxian_state_init_frogger, g.ROT90,  "Konami", "Frogger", g.MACHINE_SUPPORTS_SAVE );
     }
 }

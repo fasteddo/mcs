@@ -14,13 +14,17 @@ namespace mame
 {
     partial class taitosj_state : driver_device
     {
+        const int VERBOSE = 0;  //#define VERBOSE 1
+        void LOG(string format, params object [] args) { if (VERBOSE != 0) logerror(format, args); }  //#define LOG(x) do { if (VERBOSE) logerror x; } while (0)
+
+
         protected override void machine_start()
         {
             membank("bank1").configure_entry(0, new PointerU8(memregion("maincpu").base_(), 0x6000));
             membank("bank1").configure_entry(1, new PointerU8(memregion("maincpu").base_(), 0x10000));
 
-            save_item(NAME(new { m_spacecr_prot_value }));
-            save_item(NAME(new { m_protection_value }));
+            save_item(g.NAME(new { m_spacecr_prot_value }));
+            save_item(g.NAME(new { m_protection_value }));
         }
 
 
@@ -91,13 +95,13 @@ namespace mame
 
         uint8_t mcu_mem_r(offs_t offset)
         {
-            return m_maincpu.op[0].memory().space(AS_PROGRAM).read_byte(offset);
+            return m_maincpu.op[0].memory().space(g.AS_PROGRAM).read_byte(offset);
         }
 
 
         void mcu_mem_w(offs_t offset, uint8_t data)
         {
-            m_maincpu.op[0].memory().space(AS_PROGRAM).write_byte(offset, data);
+            m_maincpu.op[0].memory().space(g.AS_PROGRAM).write_byte(offset, data);
         }
 
 

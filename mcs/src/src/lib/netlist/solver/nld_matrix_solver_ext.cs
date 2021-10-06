@@ -10,7 +10,7 @@ using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using unsigned = System.UInt32;
 
 
@@ -21,10 +21,10 @@ namespace mame.netlist
         //template <typename FT, int SIZE>
         abstract class matrix_solver_ext_t<FT, FT_OPS, int_SIZE> : matrix_solver_t
             where FT_OPS : plib.constants_operators<FT>, new()
-            where int_SIZE : int_constant, new()
+            where int_SIZE : int_const, new()
         {
-            protected static plib.constants_operators<FT> ops = new FT_OPS();
-            protected static int_constant SIZE = new int_SIZE();
+            protected static readonly plib.constants_operators<FT> ops = new FT_OPS();
+            protected static readonly int SIZE = new int_SIZE().value;
 
 
             //using float_type = FT;
@@ -76,17 +76,15 @@ namespace mame.netlist
 
 
             //template <typename T, typename M>
-            protected void log_fill(object fill, object mat)  //void log_fill(const T &fill, M &mat)
+            protected void log_fill(std.vector<std.vector<unsigned>> fill, plib.pGEmatrix_cr<FT, int_SIZE> mat)  //void log_fill(const T &fill, M &mat)
             {
-                throw new emu_unimplemented();
-#if false
                 size_t iN = fill.size();
 
                 // FIXME: Not yet working, mat_cr.h needs some more work
 #if false
                 auto mat_GE = dynamic_cast<plib::pGEmatrix_cr_t<typename M::base> *>(&mat);
 #else
-                //plib.unused_var(mat);
+                //plib::unused_var(mat);
 #endif
                 std.vector<unsigned> levL = new std.vector<unsigned>(iN, 0);
                 std.vector<unsigned> levU = new std.vector<unsigned>(iN, 0);
@@ -97,7 +95,7 @@ namespace mame.netlist
                     unsigned lm = 0;
                     for (size_t j = 0; j < k; j++)
                     {
-                        if (fill[k][j] < M.FILL_INFINITY)
+                        if (fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY)  //if (fill[k][j] < M::FILL_INFINITY)
                             lm = std.max(lm, levL[j]);
                     }
 
@@ -110,7 +108,7 @@ namespace mame.netlist
                     unsigned lm = 0;
                     for (size_t j = iN; --j > k; )
                     {
-                        if (fill[k][j] < M.FILL_INFINITY)
+                        if (fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY)  //if (fill[k][j] < M::FILL_INFINITY)
                             lm = std.max(lm, levU[j]);
                     }
 
@@ -123,28 +121,27 @@ namespace mame.netlist
                     string ml = "";
                     for (size_t j = 0; j < iN; j++)
                     {
-                        ml += fill[k][j] == 0 ? 'X' : fill[k][j] < M.FILL_INFINITY ? '+' : '.';
-                        if (fill[k][j] < M.FILL_INFINITY)
+                        ml += fill[k][j] == 0 ? 'X' : fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY ? '+' : '.';  //ml += fill[k][j] == 0 ? 'X' : fill[k][j] < M::FILL_INFINITY ? '+' : '.';
+                        if (fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY)  //if (fill[k][j] < M::FILL_INFINITY)
                         {
                             if (fill[k][j] > fm)
                                 fm = fill[k][j];
                         }
                     }
+
 #if false
                     this->log().verbose("{1:4} {2} {3:4} {4:4} {5:4} {6:4}", k, ml,
                         levL[k], levU[k], mat_GE ? mat_GE->get_parallel_level(k) : 0, fm);
 #else
-                    this.log().verbose.op("{0:4} {1} {2:4} {3:4} {4:4} {5:4}", k, ml,
-                        levL[k], levU[k], 0, fm);
+                    this.log().verbose.op("{0:4} {1} {2:4} {3:4} {4:4} {5:4}", k, ml, levL[k], levU[k], 0, fm);
 #endif
                 }
-#endif
             }
 
 
             protected size_t size()
             {
-                return (SIZE.value > 0) ? (size_t)SIZE.value : m_dim;
+                return (SIZE > 0) ? (size_t)SIZE : m_dim;
             }
 
 
@@ -183,8 +180,8 @@ namespace mame.netlist
                 {
                     var vold = ops.cast(this.m_terms[i].getV());  //const auto vold(static_cast<float_type>(this->m_terms[i].getV()));
                     var vnew = m_new_V[i];
-                    var tol = ops.add(vntol, ops.multiply(reltol, ops.max(plib.pglobal.abs<FT, FT_OPS>(vnew), plib.pglobal.abs<FT, FT_OPS>(vold))));  //const auto tol(vntol + reltol * std::max(plib::abs(vnew),plib::abs(vold)));
-                    if (ops.greater_than(plib.pglobal.abs<FT, FT_OPS>(ops.subtract(vnew, vold)), tol))  //if (plib::abs(vnew - vold) > tol)
+                    var tol = ops.add(vntol, ops.multiply(reltol, ops.max(plib.pg.abs<FT, FT_OPS>(vnew), plib.pg.abs<FT, FT_OPS>(vold))));  //const auto tol(vntol + reltol * std::max(plib::abs(vnew),plib::abs(vold)));
+                    if (ops.greater_than(plib.pg.abs<FT, FT_OPS>(ops.subtract(vnew, vold)), tol))  //if (plib::abs(vnew - vold) > tol)
                         return true;
                 }
 
@@ -228,12 +225,12 @@ namespace mame.netlist
                     m_DD_n_m_1[k] = ops.cast(DD_n);
                     {
                         // save the sqrt for the end
-                        matrix_solver_t_fptype new_net_timestep_sq = m_params.m_dynamic_lte.op() / plib.pglobal.abs<nl_fptype, nl_fptype_ops>(nlconst.half() * DD2);
+                        matrix_solver_t_fptype new_net_timestep_sq = m_params.m_dynamic_lte.op() / plib.pg.abs(nlconst.half() * DD2);
                         new_solver_timestep_sq = std.min(new_net_timestep_sq, new_solver_timestep_sq);
                     }
                 }
 
-                new_solver_timestep_sq = std.max(plib.pglobal.sqrt<nl_fptype, nl_fptype_ops>(new_solver_timestep_sq), min_ts);
+                new_solver_timestep_sq = std.max(plib.pg.sqrt(new_solver_timestep_sq), min_ts);
 
                 // FIXME: Factor 2 below is important. Without, we get timing issues. This must be a bug elsewhere.
                 return std.max(netlist_time.from_fp(new_solver_timestep_sq), netlist_time.quantum() * 2);

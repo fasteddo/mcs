@@ -6,8 +6,9 @@ using System.Collections;
 using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using uint16_t = System.UInt16;
+using unsigned = System.UInt32;
 
 
 namespace mame.plib
@@ -55,7 +56,7 @@ namespace mame.plib
     class pfunction<NT, NT_OPS> 
         where NT_OPS : constants_operators<NT>, new()
     {
-        static constants_operators<NT> ops = new NT_OPS();
+        static readonly constants_operators<NT> ops = new NT_OPS();
 
 
         //using value_type = NT;
@@ -118,7 +119,7 @@ namespace mame.plib
 
         const size_t MAX_STACK = 32;
 
-        public class size_t_constant_MAX_STACK : uint32_constant { public UInt32 value { get { return MAX_STACK; } } }
+        public class size_t_const_MAX_STACK : u64_const { public UInt64 value { get { return MAX_STACK; } } }
 
 
         class pcmd_t
@@ -280,7 +281,7 @@ namespace mame.plib
             var p = pcmds().find(v);
             if (p != default)
                 return p.prio;
-            if (plib.pglobal.left(v, 1).CompareTo("a") >= 0 && plib.pglobal.left(v, 1).CompareTo("z") <= 0)
+            if (plib.pg.left(v, 1).CompareTo("a") >= 0 && plib.pg.left(v, 1).CompareTo("z") <= 0)
                 return 0;
 
             return -1;
@@ -308,7 +309,7 @@ namespace mame.plib
         {
             // Shunting-yard infix parsing
             std.vector<string> sep = new std.vector<string> {"(", ")", ",", "*", "/", "+", "-", "^", "<=", ">=", "==", "!=", "<", ">"};
-            std.vector<string> sexpr2 = plib.pglobal.psplit(plib.pglobal.replace_all(expr, " ", ""), sep);
+            std.vector<string> sexpr2 = plib.pg.psplit(plib.pg.replace_all(expr, " ", ""), sep);
             std.stack<string> opstk = new std.stack<string>();
             std.vector<string> postfix = new std.vector<string>();
             std.vector<string> sexpr1 = new std.vector<string>();
@@ -324,7 +325,7 @@ namespace mame.plib
             {
                 if (i + 2 < sexpr2.size() && sexpr2[i].length() > 1)
                 {
-                    var r = plib.pglobal.right(sexpr2[i], 1);
+                    var r = plib.pg.right(sexpr2[i], 1);
                     var ne = sexpr2[i+1];
                     if (is_number(sexpr2[i])
                         && (r == "e" || r == "E")
@@ -463,16 +464,16 @@ namespace mame.plib
         }
 
 
-        static NT ST0(Pointer<NT> ptr) { return (ptr + 1)[0]; }  //#define ST0 *(ptr+1)
-        static NT ST1(Pointer<NT> ptr) { return ptr[0]; }  //#define ST1 *ptr
-        static NT ST2(Pointer<NT> ptr) { return (ptr - 1)[0]; }  //#define ST2 *(ptr-1)
+        static NT evaluate_ST0(Pointer<NT> ptr) { return (ptr + 1)[0]; }  //#define ST0 *(ptr+1)
+        static NT evaluate_ST1(Pointer<NT> ptr) { return ptr[0]; }  //#define ST1 *ptr
+        static NT evaluate_ST2(Pointer<NT> ptr) { return (ptr - 1)[0]; }  //#define ST2 *(ptr-1)
 
         //#define OP(OP, ADJ, EXPR) \
         //case OP: \
         //    ptr-= (ADJ); \
         //    *(ptr-1) = (EXPR); \
         //    break;
-        static void OP(Pointer<NT> ptr, rpn_cmd OP, UInt32 ADJ, NT EXPR)
+        static void evaluate_OP(Pointer<NT> ptr, rpn_cmd OP, UInt32 ADJ, NT EXPR)
         {
             ptr -= ADJ;
             (ptr - 1)[0] = EXPR;  //*(ptr-1) = (EXPR); \
@@ -483,7 +484,7 @@ namespace mame.plib
         //case OP: \
         //    *(ptr++) = (EXPR); \
         //    break;
-        static void OP0(Pointer<NT> ptr, rpn_cmd OP, NT EXPR)
+        static void evaluate_OP0(Pointer<NT> ptr, rpn_cmd OP, NT EXPR)
         {
             (ptr++)[0] = EXPR;
         }
@@ -497,7 +498,7 @@ namespace mame.plib
         //template <typename NT>
         public NT evaluate(std.vector<NT> values = null)  //value_type evaluate(const values_container &values = values_container()) noexcept;
         {
-            std.array<NT, size_t_constant_MAX_STACK> stack = new std.array<NT, size_t_constant_MAX_STACK>(); // NOLINT  //std::array<value_type, MAX_STACK> stack; // NOLINT
+            std.array<NT, size_t_const_MAX_STACK> stack = new std.array<NT, size_t_const_MAX_STACK>(); // NOLINT  //std::array<value_type, MAX_STACK> stack; // NOLINT
             Pointer<NT> ptr = stack.data();  //value_type *ptr = stack.data();
             var zero = plib.constants<NT, NT_OPS>.zero();  //var zero = plib.constants<value_type>.zero();
             var one = plib.constants<NT, NT_OPS>.one();  //var one = plib.constants<value_type>.one();
@@ -505,28 +506,28 @@ namespace mame.plib
             {
                 switch (rc.cmd())
                 {
-                    case rpn_cmd.ADD:   OP(ptr, rpn_cmd.ADD,  1, ops.add(ST2(ptr), ST1(ptr))); break;
-                    case rpn_cmd.MULT:  OP(ptr, rpn_cmd.MULT, 1, ops.multiply(ST2(ptr), ST1(ptr))); break;
-                    case rpn_cmd.SUB:   OP(ptr, rpn_cmd.SUB,  1, ops.subtract(ST2(ptr), ST1(ptr))); break;
-                    case rpn_cmd.DIV:   OP(ptr, rpn_cmd.DIV,  1, ops.divide(ST2(ptr), ST1(ptr))); break;
-                    case rpn_cmd.EQ:    OP(ptr, rpn_cmd.EQ,   1, ops.equals(ST2(ptr), ST1(ptr)) ? one : zero); break;
-                    case rpn_cmd.NE:    OP(ptr, rpn_cmd.NE,   1, ops.not_equals(ST2(ptr), ST1(ptr)) ? one : zero); break;
-                    case rpn_cmd.GT:    OP(ptr, rpn_cmd.GT,   1, ops.greater_than(ST2(ptr), ST1(ptr)) ? one : zero); break;
-                    case rpn_cmd.LT:    OP(ptr, rpn_cmd.LT,   1, ops.less_than(ST2(ptr), ST1(ptr)) ? one : zero); break;
-                    case rpn_cmd.LE:    OP(ptr, rpn_cmd.LE,   1, ops.less_than_or_equal(ST2(ptr), ST1(ptr)) ? one : zero); break;
-                    case rpn_cmd.GE:    OP(ptr, rpn_cmd.GE,   1, ops.greater_than_or_equal(ST2(ptr), ST1(ptr)) ? one : zero); break;
-                    case rpn_cmd.IF:    OP(ptr, rpn_cmd.IF,   2, ops.not_equals(ST2(ptr), zero) ? ST1(ptr) : ST0(ptr)); break;
-                    case rpn_cmd.NEG:   OP(ptr, rpn_cmd.NEG,  0, ops.neg(ST2(ptr))); break;
-                    case rpn_cmd.POW:   OP(ptr, rpn_cmd.POW,  1, ops.pow(ST2(ptr), ST1(ptr))); break;
-                    case rpn_cmd.LOG:   OP(ptr, rpn_cmd.LOG,  0, ops.log(ST2(ptr))); break;
-                    case rpn_cmd.SIN:   OP(ptr, rpn_cmd.SIN,  0, ops.sin(ST2(ptr))); break;
-                    case rpn_cmd.COS:   OP(ptr, rpn_cmd.COS,  0, ops.cos(ST2(ptr))); break;
-                    case rpn_cmd.MAX:   OP(ptr, rpn_cmd.MAX,  1, ops.max(ST2(ptr), ST1(ptr))); break;
-                    case rpn_cmd.MIN:   OP(ptr, rpn_cmd.MIN,  1, ops.min(ST2(ptr), ST1(ptr))); break;
-                    case rpn_cmd.TRUNC: OP(ptr, rpn_cmd.TRUNC, 0, ops.trunc(ST2(ptr))); break;
-                    case rpn_cmd.RAND:  OP0(ptr, rpn_cmd.RAND, lfsr_random(ref m_lfsr)); break;
-                    case rpn_cmd.PUSH_INPUT: OP0(ptr, rpn_cmd.PUSH_INPUT, values[rc.index()]); break;
-                    case rpn_cmd.PUSH_CONST: OP0(ptr, rpn_cmd.PUSH_CONST, rc.value()); break;
+                    case rpn_cmd.ADD:   evaluate_OP(ptr, rpn_cmd.ADD,  1, ops.add(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(ADD,  1, ST2 + ST1)
+                    case rpn_cmd.MULT:  evaluate_OP(ptr, rpn_cmd.MULT, 1, ops.multiply(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                               //OP(MULT, 1, ST2 * ST1)
+                    case rpn_cmd.SUB:   evaluate_OP(ptr, rpn_cmd.SUB,  1, ops.subtract(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                               //OP(SUB,  1, ST2 - ST1)
+                    case rpn_cmd.DIV:   evaluate_OP(ptr, rpn_cmd.DIV,  1, ops.divide(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                 //OP(DIV,  1, ST2 / ST1)
+                    case rpn_cmd.EQ:    evaluate_OP(ptr, rpn_cmd.EQ,   1, ops.equals(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;                    //OP(EQ,   1, ST2 == ST1 ? one : zero)
+                    case rpn_cmd.NE:    evaluate_OP(ptr, rpn_cmd.NE,   1, ops.not_equals(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;                //OP(NE,   1, ST2 != ST1 ? one : zero)
+                    case rpn_cmd.GT:    evaluate_OP(ptr, rpn_cmd.GT,   1, ops.greater_than(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;              //OP(GT,   1, ST2 > ST1 ? one : zero)
+                    case rpn_cmd.LT:    evaluate_OP(ptr, rpn_cmd.LT,   1, ops.less_than(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;                 //OP(LT,   1, ST2 < ST1 ? one : zero)
+                    case rpn_cmd.LE:    evaluate_OP(ptr, rpn_cmd.LE,   1, ops.less_than_or_equal(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;        //OP(LE,   1, ST2 <= ST1 ? one : zero)
+                    case rpn_cmd.GE:    evaluate_OP(ptr, rpn_cmd.GE,   1, ops.greater_than_or_equal(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;     //OP(GE,   1, ST2 >= ST1 ? one : zero)
+                    case rpn_cmd.IF:    evaluate_OP(ptr, rpn_cmd.IF,   2, ops.not_equals(evaluate_ST2(ptr), zero) ? evaluate_ST1(ptr) : evaluate_ST0(ptr)); break;  //OP(IF,   2, (ST2 != zero) ? ST1 : ST0)
+                    case rpn_cmd.NEG:   evaluate_OP(ptr, rpn_cmd.NEG,  0, ops.neg(evaluate_ST2(ptr))); break;                                                       //OP(NEG,  0, -ST2)
+                    case rpn_cmd.POW:   evaluate_OP(ptr, rpn_cmd.POW,  1, ops.pow(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(POW,  1, plib::pow(ST2, ST1))
+                    case rpn_cmd.LOG:   evaluate_OP(ptr, rpn_cmd.LOG,  0, ops.log(evaluate_ST2(ptr))); break;                                                       //OP(LOG,  0, plib::log(ST2))
+                    case rpn_cmd.SIN:   evaluate_OP(ptr, rpn_cmd.SIN,  0, ops.sin(evaluate_ST2(ptr))); break;                                                       //OP(SIN,  0, plib::sin(ST2))
+                    case rpn_cmd.COS:   evaluate_OP(ptr, rpn_cmd.COS,  0, ops.cos(evaluate_ST2(ptr))); break;                                                       //OP(COS,  0, plib::cos(ST2))
+                    case rpn_cmd.MAX:   evaluate_OP(ptr, rpn_cmd.MAX,  1, ops.max(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(MAX,  1, std::max(ST2, ST1))
+                    case rpn_cmd.MIN:   evaluate_OP(ptr, rpn_cmd.MIN,  1, ops.min(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(MIN,  1, std::min(ST2, ST1))
+                    case rpn_cmd.TRUNC: evaluate_OP(ptr, rpn_cmd.TRUNC, 0, ops.trunc(evaluate_ST2(ptr))); break;                                                    //OP(TRUNC, 0, plib::trunc(ST2))
+                    case rpn_cmd.RAND:  evaluate_OP0(ptr, rpn_cmd.RAND, lfsr_random(ref m_lfsr)); break;                                                            //OP0(RAND, lfsr_random<value_type>(m_lfsr))
+                    case rpn_cmd.PUSH_INPUT: evaluate_OP0(ptr, rpn_cmd.PUSH_INPUT, values[rc.index()]); break;                                                      //OP0(PUSH_INPUT, values[rc.index()])
+                    case rpn_cmd.PUSH_CONST: evaluate_OP0(ptr, rpn_cmd.PUSH_CONST, rc.value()); break;                                                              //OP0(PUSH_CONST, rc.value())
                     // please compiler
                     case rpn_cmd.LP:
                     case rpn_cmd.RP:
@@ -545,9 +546,130 @@ namespace mame.plib
         //}
 
 
+        NT compress_ST0(unsigned ptr) { return m_precompiled[ptr + 0].value(); }  //#define ST0 m_precompiled[ptr+0].value()
+        NT compress_ST1(unsigned ptr) { return m_precompiled[ptr - 1].value(); }  //#define ST1 m_precompiled[ptr-1].value()
+        NT compress_ST2(unsigned ptr) { return m_precompiled[ptr - 2].value(); }  //#define ST2 m_precompiled[ptr-2].value()
+
+        //#define OP(OP, ADJ, EXPR) \
+        //    case OP: \
+        //        if (ADJ == 2) {\
+        //            if (m_precompiled[ptr-3].cmd() == PUSH_CONST && m_precompiled[ptr-2].cmd() == PUSH_CONST && m_precompiled[ptr-1].cmd() == PUSH_CONST) \
+        //            {   ptr--; m_precompiled[ptr-2] = rpn_inst(EXPR); n -= 3; ptr++; std::copy(m_precompiled.begin()+(ptr+1), m_precompiled.end(), m_precompiled.begin()+(ptr-2)); ptr-=2;} \
+        //            else { ptr++; } \
+        //        } else if (ADJ == 1) {\
+        //            if (m_precompiled[ptr-2].cmd() == PUSH_CONST && m_precompiled[ptr-1].cmd() == PUSH_CONST) \
+        //            {   m_precompiled[ptr-2] = rpn_inst(EXPR); n -= 2; std::copy(m_precompiled.begin()+(ptr+1), m_precompiled.end(), m_precompiled.begin()+(ptr-1)); ptr--;} \
+        //            else { ptr++; } \
+        //        } else if (ADJ == 0) {\
+        //            if (m_precompiled[ptr-1].cmd() == PUSH_CONST) \
+        //            { ptr++; m_precompiled[ptr-2] = rpn_inst(EXPR); n -= 1; ptr--; std::copy(m_precompiled.begin()+(ptr+1), m_precompiled.end(), m_precompiled.begin()+(ptr)); } \
+        //            else { ptr++; } \
+        //        } else ptr++; \
+        //        break;
+        void compress_OP(ref unsigned ptr, ref size_t n, int ADJ, NT EXPR)
+        {
+            if (ADJ == 2)
+            {
+                if (m_precompiled[ptr - 3].cmd() == rpn_cmd.PUSH_CONST && m_precompiled[ptr - 2].cmd() == rpn_cmd.PUSH_CONST && m_precompiled[ptr - 1].cmd() == rpn_cmd.PUSH_CONST)
+                {
+                    ptr--;
+                    m_precompiled[ptr - 2] = new rpn_inst(EXPR);
+                    n -= 3;
+                    ptr++;
+                    m_precompiled.CopyTo((int)ptr + 1, m_precompiled, (int)ptr - 2, ((int)ptr + 1) - m_precompiled.Count);
+                    ptr -= 2;
+                }
+                else
+                {
+                    ptr++;
+                }
+            }
+            else if (ADJ == 1)
+            {
+                if (m_precompiled[ptr - 2].cmd() == rpn_cmd.PUSH_CONST && m_precompiled[ptr - 1].cmd() == rpn_cmd.PUSH_CONST)
+                {
+                    m_precompiled[ptr - 2] = new rpn_inst(EXPR);
+                    n -= 2;
+                    m_precompiled.CopyTo((int)ptr + 1, m_precompiled, (int)ptr - 1, ((int)ptr + 1) - m_precompiled.Count);
+                    ptr--;
+                }
+                else
+                {
+                    ptr++;
+                }
+            }
+            else if (ADJ == 0)
+            {
+                if (m_precompiled[ptr - 1].cmd() == rpn_cmd.PUSH_CONST)
+                {
+                    ptr++;
+                    m_precompiled[ptr - 2] = new rpn_inst(EXPR);
+                    n -= 1;
+                    ptr--;
+                    m_precompiled.CopyTo((int)ptr + 1, m_precompiled, (int)ptr, ((int)ptr + 1) - m_precompiled.Count);//std::copy(m_precompiled.begin() + (ptr + 1), m_precompiled.end(), m_precompiled.begin() + (ptr));
+                }
+                else
+                {
+                    ptr++;
+                }
+            }
+            else
+            {
+                ptr++;
+            }
+        }
+
+        //#define OP0(OP, EXPR) \
+        //    case OP: \
+        //        ptr++; \
+        //        break;
+        void compress_OP0(ref unsigned ptr, NT EXPR)
+        {
+            ptr++;
+        }
+
+
         void compress()
         {
-            throw new emu_unimplemented();
+            var zero = plib.constants<NT, NT_OPS>.zero();
+            var one = plib.constants<NT, NT_OPS>.one();
+            unsigned ptr = 0;
+            var n = m_precompiled.size();
+            for (; ptr < n; )
+            {
+                switch (m_precompiled[ptr].cmd())
+                {
+                    case rpn_cmd.ADD:   compress_OP(ref ptr, ref n, 1, ops.add(compress_ST2(ptr), compress_ST1(ptr))); break;  //OP(ADD,  1, ST2 + ST1)
+                    case rpn_cmd.MULT:  compress_OP(ref ptr, ref n, 1, ops.multiply(compress_ST2(ptr), compress_ST1(ptr))); break;  //OP(MULT, 1, ST2 * ST1)
+                    case rpn_cmd.SUB:   compress_OP(ref ptr, ref n, 1, ops.subtract(compress_ST2(ptr), compress_ST1(ptr))); break;  //OP(SUB,  1, ST2 - ST1)
+                    case rpn_cmd.DIV:   compress_OP(ref ptr, ref n, 1, ops.divide(compress_ST2(ptr), compress_ST1(ptr))); break;  //OP(DIV,  1, ST2 / ST1)
+                    case rpn_cmd.EQ:    compress_OP(ref ptr, ref n, 1, ops.equals(compress_ST2(ptr), compress_ST1(ptr)) ? one : zero); break;  //OP(EQ,   1, ST2 == ST1 ? one : zero)
+                    case rpn_cmd.NE:    compress_OP(ref ptr, ref n, 1, ops.not_equals(compress_ST2(ptr), compress_ST1(ptr)) ? one : zero); break;  //OP(NE,   1, ST2 != ST1 ? one : zero)
+                    case rpn_cmd.GT:    compress_OP(ref ptr, ref n, 1, ops.greater_than(compress_ST2(ptr), compress_ST1(ptr)) ? one : zero); break;  //OP(GT,   1, ST2 > ST1 ? one : zero)
+                    case rpn_cmd.LT:    compress_OP(ref ptr, ref n, 1, ops.less_than(compress_ST2(ptr), compress_ST1(ptr)) ? one : zero); break;  //OP(LT,   1, ST2 < ST1 ? one : zero)
+                    case rpn_cmd.LE:    compress_OP(ref ptr, ref n, 1, ops.less_than_or_equal(compress_ST2(ptr), compress_ST1(ptr)) ? one : zero); break;  //OP(LE,   1, ST2 <= ST1 ? one : zero)
+                    case rpn_cmd.GE:    compress_OP(ref ptr, ref n, 1, ops.greater_than_or_equal(compress_ST2(ptr), compress_ST1(ptr)) ? one : zero); break;  //OP(GE,   1, ST2 >= ST1 ? one : zero)
+                    case rpn_cmd.IF:    compress_OP(ref ptr, ref n, 2, ops.not_equals(compress_ST2(ptr), zero) ? compress_ST1(ptr) : compress_ST0(ptr)); break;  //OP(IF,   2, (ST2 != zero) ? ST1 : ST0)
+                    case rpn_cmd.NEG:   compress_OP(ref ptr, ref n, 0, ops.neg(compress_ST2(ptr))); break;  //OP(NEG,  0, -ST2)
+                    case rpn_cmd.POW:   compress_OP(ref ptr, ref n, 1, ops.pow(compress_ST2(ptr), compress_ST1(ptr))); break;  //OP(POW,  1, plib::pow(ST2, ST1))
+                    case rpn_cmd.LOG:   compress_OP(ref ptr, ref n, 0, ops.log(compress_ST2(ptr))); break;  //OP(LOG,  0, plib::log(ST2))
+                    case rpn_cmd.SIN:   compress_OP(ref ptr, ref n, 0, ops.sin(compress_ST2(ptr))); break;  //OP(SIN,  0, plib::sin(ST2))
+                    case rpn_cmd.COS:   compress_OP(ref ptr, ref n, 0, ops.cos(compress_ST2(ptr))); break;  //OP(COS,  0, plib::cos(ST2))
+                    case rpn_cmd.MAX:   compress_OP(ref ptr, ref n, 1, ops.max(compress_ST2(ptr), compress_ST1(ptr))); break;  //OP(MAX,  1, std::max(ST2, ST1))
+                    case rpn_cmd.MIN:   compress_OP(ref ptr, ref n, 1, ops.min(compress_ST2(ptr), compress_ST1(ptr))); break;  //OP(MIN,  1, std::min(ST2, ST1))
+                    case rpn_cmd.TRUNC: compress_OP(ref ptr, ref n, 0, ops.trunc(compress_ST2(ptr))); break;  //OP(TRUNC,  0, plib::trunc(ST2))
+                    case rpn_cmd.RAND:       compress_OP0(ref ptr, lfsr_random(ref m_lfsr)); break;  //OP0(RAND, lfsr_random<value_type>(m_lfsr))
+                    case rpn_cmd.PUSH_INPUT: compress_OP0(ref ptr, default); break;  //OP0(PUSH_INPUT, values[rc.index()])
+                    case rpn_cmd.PUSH_CONST: compress_OP0(ref ptr, default); break;  //OP0(PUSH_CONST, rc.value())
+                    // please compiler
+                    case rpn_cmd.LP:
+                    case rpn_cmd.RP:
+                        break;
+                }
+            }
+
+            //printf("func %lld %lld\n", m_precompiled.size(), n);
+            m_precompiled.resize(n);
         }
 
 
@@ -581,7 +703,7 @@ namespace mame.plib
                     if (rc.cmd() != rpn_cmd.PUSH_INPUT)
                     {
                         bool err = false;
-                        var rs = plib.pglobal.right(cmd, 1);
+                        var rs = plib.pg.right(cmd, 1);
                         var r = units_si().find(rs);  //auto r=units_si<NT>().find(rs);
                         if (ops.equals(r, ops.default_))  //if (r == units_si<NT>().end())
                         {
@@ -589,7 +711,7 @@ namespace mame.plib
                         }
                         else
                         {
-                            rc = new rpn_inst(ops.multiply(ops.pstonum_ne(false, plib.pglobal.left(cmd, cmd.length() - 1), out err), r));  //rc = rpn_inst(plib::pstonum_ne<NT>(plib::left(cmd, cmd.length()-1), err) * r->second);
+                            rc = new rpn_inst(ops.multiply(ops.pstonum_ne(false, plib.pg.left(cmd, cmd.length() - 1), out err), r));  //rc = rpn_inst(plib::pstonum_ne<NT>(plib::left(cmd, cmd.length()-1), err) * r->second);
                         }
 
                         if (err)
@@ -602,7 +724,7 @@ namespace mame.plib
                 if (stk < 1)
                     throw new pexception(new plib.pfmt("pfunction: stack underflow on token <{0}> in <{1}>").op(cmd, expr));
 
-                if (stk >= MAX_STACK)
+                if (stk >= (int)MAX_STACK)
                     throw new pexception(new plib.pfmt("pfunction: stack overflow on token <{0}> in <{1}>").op(cmd, expr));
 
                 if (rc.cmd() == rpn_cmd.LP || rc.cmd() == rpn_cmd.RP)

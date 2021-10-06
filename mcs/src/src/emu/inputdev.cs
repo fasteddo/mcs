@@ -298,7 +298,7 @@ namespace mame
 
     // ======================> input_device
     // a logical device of a given class that can provide input
-    public abstract class input_device : global_object
+    public abstract class input_device
     {
         //friend class input_class;
 
@@ -360,9 +360,9 @@ namespace mame
             if (machine().phase() != machine_phase.INIT)
                 throw new emu_fatalerror("Can only call input_device::add_item at init time!");
 
-            assert(name != null);
-            assert(itemid > input_item_id.ITEM_ID_INVALID && itemid < input_item_id.ITEM_ID_MAXIMUM);
-            assert(getstate != null);
+            g.assert(name != null);
+            g.assert(itemid > input_item_id.ITEM_ID_INVALID && itemid < input_item_id.ITEM_ID_MAXIMUM);
+            g.assert(getstate != null);
 
             // if we have a generic ID, pick a new internal one
             input_item_id originalid = itemid;
@@ -375,10 +375,10 @@ namespace mame
                 }
             }
 
-            assert(itemid <= input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
+            g.assert(itemid <= input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
 
             // make sure we don't have any overlap
-            assert(m_item[(int)itemid] == null);
+            g.assert(m_item[(int)itemid] == null);
 
             // determine the class and create the appropriate item class
             switch (m_manager.device_class(devclass()).standard_item_class(originalid))
@@ -397,7 +397,7 @@ namespace mame
 
                 default:
                     m_item[(int)itemid] = null;
-                    assert(false);
+                    g.assert(false);
                     break;
             }
 
@@ -544,7 +544,7 @@ namespace mame
 
     // ======================> input_class
     // a class of device that provides input
-    public abstract class input_class : global_object
+    public abstract class input_class
     {
         // internal state
         input_manager m_manager;              // reference to our manager
@@ -570,7 +570,7 @@ namespace mame
             m_multi = multi;
 
 
-            assert(m_name != null);
+            g.assert(m_name != null);
         }
 
 
@@ -599,8 +599,8 @@ namespace mame
             if (machine().phase() != machine_phase.INIT)
                 throw new emu_fatalerror("Can only call input_class::add_device at init time!");
 
-            assert(name != null);
-            assert(id != null);
+            g.assert(name != null);
+            g.assert(id != null);
 
             // allocate a new device and add it to the index
             return add_device(make_device(name, id, internal_object));
@@ -609,7 +609,7 @@ namespace mame
 
         public input_device add_device(input_device new_device)
         {
-            assert(new_device.devclass() == m_devclass);
+            g.assert(new_device.devclass() == m_devclass);
 
             // find the next empty index
             for (int devindex = 0; devindex < input_global.DEVICE_INDEX_MAXIMUM; devindex++)
@@ -621,9 +621,9 @@ namespace mame
                     m_maxindex = Math.Max(m_maxindex, devindex);
 
                     if (new_device.id()[0] == 0)
-                        osd_printf_verbose("Input: Adding {0} #{1}: {2}\n", m_name, devindex, new_device.name());
+                        g.osd_printf_verbose("Input: Adding {0} #{1}: {2}\n", m_name, devindex, new_device.name());
                     else
-                        osd_printf_verbose("Input: Adding {0} #{1}: {2} (device id: {3})\n", m_name, devindex, new_device.name(), new_device.id());
+                        g.osd_printf_verbose("Input: Adding {0} #{1}: {2} (device id: {3})\n", m_name, devindex, new_device.name(), new_device.id());
 
                     m_device[devindex] = new_device;
                     return m_device[devindex];
@@ -783,7 +783,7 @@ namespace mame
             if (!map.parse(mapstring))
                 return false;
 
-            osd_printf_verbose("Input: Changing default joystick map = {0}\n", map.to_string());
+            g.osd_printf_verbose("Input: Changing default joystick map = {0}\n", map.to_string());
 
             // iterate over joysticks and set the map
             for (int joynum = 0; joynum <= maxindex(); joynum++)

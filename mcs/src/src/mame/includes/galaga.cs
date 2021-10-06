@@ -26,7 +26,7 @@ namespace mame
         protected required_device<gfxdecode_device> m_gfxdecode;
         protected required_device<screen_device> m_screen;
         protected required_device<palette_device> m_palette;
-        output_finder<uint32_constant_2> m_leds;
+        output_finder<u32_const_2> m_leds;
         optional_device<starfield_05xx_device> m_starfield; // not present on battles, digdug, xevious
         emu_timer m_cpu3_interrupt_timer;
 
@@ -56,7 +56,7 @@ namespace mame
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
             m_screen = new required_device<screen_device>(this, "screen");
             m_palette = new required_device<palette_device>(this, "palette");
-            m_leds = new output_finder<uint32_constant_2>(this, "led{0}", 0U);
+            m_leds = new output_finder<u32_const_2>(this, "led{0}", 0U);
             m_starfield = new optional_device<starfield_05xx_device>(this, "starfield");
             m_galaga_gfxbank = 0;
             m_main_irq_mask = 0;

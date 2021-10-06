@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using size_t = System.UInt64;
 
 
 namespace mame
@@ -72,11 +73,11 @@ namespace mame
             // set the search path to include all parents and cache it because devices search system paths
             m_searchpath.emplace_back(m_system.name);
             std.set<game_driver> seen = new std.set<game_driver>();
-            for (int ancestor = driver_list.clone(m_system); 0 <= ancestor; ancestor = driver_list.clone(ancestor))
+            for (int ancestor = driver_list.clone(m_system); 0 <= ancestor; ancestor = driver_list.clone((size_t)ancestor))
             {
-                if (!seen.insert(driver_list.driver(ancestor)))
+                if (!seen.insert(driver_list.driver((size_t)ancestor)))
                     throw new emu_fatalerror("driver_device({0}): parent/clone relationships form a loop", m_system.name);
-                m_searchpath.emplace_back(driver_list.driver(ancestor).name);
+                m_searchpath.emplace_back(driver_list.driver((size_t)ancestor).name);
             }
         }
 
@@ -241,8 +242,8 @@ namespace mame
                 video_start();
 
             // save generic states
-            save_item(NAME(new { m_flip_screen_x }));
-            save_item(NAME(new { m_flip_screen_y }));
+            save_item(g.NAME(new { m_flip_screen_x }));
+            save_item(g.NAME(new { m_flip_screen_y }));
         }
 
         //-------------------------------------------------
@@ -303,7 +304,7 @@ namespace mame
         void updateflip()
         {
             // push the flip state to all tilemaps
-            machine().tilemap().set_flip_all((TILEMAP_FLIPX & m_flip_screen_x) | (TILEMAP_FLIPY & m_flip_screen_y));
+            machine().tilemap().set_flip_all((g.TILEMAP_FLIPX & m_flip_screen_x) | (g.TILEMAP_FLIPY & m_flip_screen_y));
         }
     }
 }

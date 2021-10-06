@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using size_t = System.UInt64;
+
 
 // ----------------------------------------------------------------------------------------
 // state saving ...
@@ -153,7 +155,7 @@ namespace mame.plib
 
         //const entry_t::list_t &save_list() const
 
-        public void save_state_ptr(object owner, string stname, object dt, UInt32 count, object ptr)  //void save_state_ptr(const void *owner, const pstring &stname, const datatype_t &dt, const std::size_t count, void *ptr);
+        public void save_state_ptr(object owner, string stname, object dt, size_t count, object ptr)  //void save_state_ptr(const void *owner, const pstring &stname, const datatype_t &dt, const std::size_t count, void *ptr);
         {
             //throw new emu_unimplemented();
 #if false

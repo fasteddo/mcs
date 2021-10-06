@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 
 
 namespace mame

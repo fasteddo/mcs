@@ -10,8 +10,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using mame;
 
-using osd_ticks_t = System.UInt64;
+using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 
 
 public class Main : MonoBehaviour
@@ -249,10 +250,10 @@ public class Main : MonoBehaviour
 
                         System.Random r = new System.Random();
                         for (int i = 0; i < 10; i++)
-                            screenbuffer.set_uint32(i + 200 + 100 * stride, (UInt32)(r.Next() % 16000000));
+                            screenbuffer.SetUInt32(i + 200 + 100 * stride, (UInt32)(r.Next() % 16000000));
 
                         for (int i = 0; i < 10; i++)
-                            screenbuffer.set_uint32(i + 200 + 110 * stride, mame.rgb_t.white());
+                            screenbuffer.SetUInt32(i + 200 + 110 * stride, mame.rgb_t.white());
 
 
                         for (int y = 0; y < 400; y++)
@@ -262,7 +263,7 @@ public class Main : MonoBehaviour
 
                             for (int x = 0; x < 400; x++)
                             {
-                                UInt32 color = screenbuffer.get_uint32(sourceArrayIndex + x);
+                                UInt32 color = screenbuffer.GetUInt32(sourceArrayIndex + x);
                                 pixels[destArrayIndex + x] = ToColor32((int)color);
                             }
                         }
@@ -329,10 +330,10 @@ public class Main : MonoBehaviour
                 if (video != null)
                 {
                     osd_ticks_t tps = mame.osdcore_global.m_osdcore.osd_ticks_per_second();
-                    double final_real_time = tps == 0 ? 0 : (double)video.overall_real_seconds + (double)video.overall_real_ticks / (double)tps;
-                    double final_emu_time = video.overall_emutime.as_double();
+                    double final_real_time = tps == 0 ? 0 : (double)video.m_overall_real_seconds + (double)video.m_overall_real_ticks / (double)tps;
+                    double final_emu_time = video.m_overall_emutime.as_double();
                     double average_speed_percentage = final_real_time == 0 ? 0 : 100 * final_emu_time / final_real_time;
-                    string total_time = (video.overall_emutime + new mame.attotime(0, mame.attotime.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
+                    string total_time = (video.m_overall_emutime + new mame.attotime(0, mame.attotime.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
                     GUILayout.Label(string.Format("Avg Spd: {0:f2}% ({1} secs) - speed_text: {2}", average_speed_percentage, total_time, video.speed_text()), m_guiLabel);
                 }
 
@@ -365,8 +366,8 @@ public class Main : MonoBehaviour
 
 
                         mame.osdcore_global.set_osdcore(osdcore);
-                        mame.osdcore_global.set_osdfile(osdfile);
-                        mame.osdcore_global.set_osddirectory(osddirectory);
+                        mame.osdfile_global.set_osdfile(osdfile);
+                        mame.osdfile_global.set_osddirectory(osddirectory);
                         mame.mame_machine_manager.instance(options, osd);
 
                         Debug.Log("Starting Emulator...");
@@ -414,10 +415,10 @@ public class Main : MonoBehaviour
                 if (video != null)
                 {
                     osd_ticks_t tps = mame.osdcore_global.m_osdcore.osd_ticks_per_second();
-                    double final_real_time = tps == 0 ? 0 : (double)video.overall_real_seconds + (double)video.overall_real_ticks / (double)tps;
-                    double final_emu_time = video.overall_emutime.as_double();
+                    double final_real_time = tps == 0 ? 0 : (double)video.m_overall_real_seconds + (double)video.m_overall_real_ticks / (double)tps;
+                    double final_emu_time = video.m_overall_emutime.as_double();
                     double average_speed_percentage = final_real_time == 0 ? 0 : 100 * final_emu_time / final_real_time;
-                    string total_time = (video.overall_emutime + new mame.attotime(0, mame.attotime.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
+                    string total_time = (video.m_overall_emutime + new mame.attotime(0, mame.attotime.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
                     GUILayout.Label(string.Format("Avg Spd: {0:f2}% ({1} secs) - speed_text: {2}", average_speed_percentage, total_time, video.speed_text()), m_guiLabel);
                 }
 
@@ -446,7 +447,7 @@ public class Main : MonoBehaviour
                 GUILayout.Label(string.Format("{0}", SystemInfo.graphicsDeviceVersion), m_guiLabel);
                 GUILayout.Label(string.Format("VMem: {0}mb", SystemInfo.graphicsMemorySize), m_guiLabel);
                 GUILayout.Label(string.Format("Shader Level: {0:f1}", SystemInfo.graphicsShaderLevel / 10.0f), m_guiLabel);
-                GUILayout.Label(string.Format("Shadows:{0} FX:{1} MT:{2}", SystemInfo.supportsShadows ? "y" : "n", SystemInfo.supportsImageEffects ? "y" : "n", SystemInfo.graphicsMultiThreaded ? "y" : "n"), m_guiLabel);
+                GUILayout.Label(string.Format("Shadows:{0} MT:{2}", SystemInfo.supportsShadows ? "y" : "n", SystemInfo.graphicsMultiThreaded ? "y" : "n"), m_guiLabel);
                 GUILayout.Label(string.Format("deviceUniqueIdentifier: {0}", SystemInfo.deviceUniqueIdentifier), m_guiLabel);
                 GUILayout.Label(string.Format("deviceName: {0}", SystemInfo.deviceName), m_guiLabel);
                 GUILayout.Label(string.Format("deviceModel: {0}", SystemInfo.deviceModel), m_guiLabel);
@@ -628,7 +629,7 @@ public class Main : MonoBehaviour
     {
         Debug.Log("Starting Background thread...");
 
-        int ret = frontend.execute(new mame.std_vector<string>() { "mcsUnity" });  //Environment.GetCommandLineArgs()));
+        int ret = frontend.execute(new mame.std.vector<string>() { "mcsUnity" });  //Environment.GetCommandLineArgs()));
 
         Debug.LogFormat("frontend.execute() returned: {0}", ret);
 

@@ -204,7 +204,7 @@ namespace mame.netlist
             //NETLIB_CONSTRUCTOR(R_base)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
-            public nld_R_base(base_device_t owner, string name)
+            public nld_R_base(object owner, string name)
                 : base(owner, name)
             {
             }
@@ -212,7 +212,7 @@ namespace mame.netlist
 
             public void set_R(nl_fptype R)
             {
-                nl_fptype G = plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(R);
+                nl_fptype G = plib.pg.reciprocal(R);
                 set_mat( G, -G, nlconst.zero(),
                         -G,  G, nlconst.zero());
             }
@@ -233,7 +233,7 @@ namespace mame.netlist
         class nld_R : nld_R_base
         {
             //NETLIB_DEVICE_IMPL_NS(analog, R,    "RES",   "R")
-            public static readonly factory.constructor_ptr_t decl_R = NETLIB_DEVICE_IMPL_NS<nld_R>("analog", "RES", "R");
+            public static readonly factory.constructor_ptr_t decl_R = g.NETLIB_DEVICE_IMPL_NS<nld_R>("analog", "RES", "R");
 
 
             // protect set_R ... it's a recipe to desaster when used to bypass the parameter
@@ -247,7 +247,7 @@ namespace mame.netlist
             //NETLIB_CONSTRUCTOR(R)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
-            public nld_R(base_device_t owner, string name)
+            public nld_R(object owner, string name)
                 : base(owner, name)
             {
                 m_R = new param_fp_t(this, "R", nlconst.magic(1e9));
@@ -285,7 +285,7 @@ namespace mame.netlist
         class nld_POT : base_device_t
         {
             //NETLIB_DEVICE_IMPL_NS(analog, POT,  "POT",   "R")
-            public static readonly factory.constructor_ptr_t decl_POT = NETLIB_DEVICE_IMPL_NS<nld_POT>("analog", "POT", "R");
+            public static readonly factory.constructor_ptr_t decl_POT = g.NETLIB_DEVICE_IMPL_NS<nld_POT>("analog", "POT", "R");
 
 
             nld_R_base m_R1;  //NETLIB_SUB(R_base) m_R1;
@@ -326,7 +326,7 @@ namespace mame.netlist
             {
                 nl_fptype v = m_Dial.op();
                 if (m_DialIsLog.op())
-                    v = (plib.pglobal.exp<nl_fptype, nl_fptype_ops>(v) - nlconst.one()) / (plib.pglobal.exp<nl_fptype, nl_fptype_ops>(nlconst.one()) - nlconst.one());
+                    v = (plib.pg.exp(v) - nlconst.one()) / (plib.pg.exp(nlconst.one()) - nlconst.one());
 
                 m_R1.set_R(std.max(m_R.op() * v, exec().gmin()));
                 m_R2.set_R(std.max(m_R.op() * (nlconst.one() - v), exec().gmin()));
@@ -338,7 +338,7 @@ namespace mame.netlist
             {
                 nl_fptype v = m_Dial.op();
                 if (m_DialIsLog.op())
-                    v = (plib.pglobal.exp<nl_fptype, nl_fptype_ops>(v) - nlconst.one()) / (plib.pglobal.exp<nl_fptype, nl_fptype_ops>(nlconst.one()) - nlconst.one());
+                    v = (plib.pg.exp(v) - nlconst.one()) / (plib.pg.exp(nlconst.one()) - nlconst.one());
                 if (m_Reverse.op())
                     v = nlconst.one() - v;
 
@@ -365,7 +365,7 @@ namespace mame.netlist
         public class nld_C : nld_twoterm
         {
             //NETLIB_DEVICE_IMPL_NS(analog, C,    "CAP",   "C")
-            public static readonly factory.constructor_ptr_t decl_C = NETLIB_DEVICE_IMPL_NS<nld_C>("analog", "CAP", "C");
+            public static readonly factory.constructor_ptr_t decl_C = g.NETLIB_DEVICE_IMPL_NS<nld_C>("analog", "CAP", "C");
 
 
             param_fp_t m_C;
@@ -375,7 +375,7 @@ namespace mame.netlist
             //NETLIB_CONSTRUCTOR(C)
             //detail.family_setter_t m_famsetter;
             //template <class CLASS>
-            public nld_C(base_device_t owner, string name)
+            public nld_C(object owner, string name)
                 : base(owner, name)
             {
                 m_C = new param_fp_t(this, "C", nlconst.magic(1e-6));
@@ -384,11 +384,11 @@ namespace mame.netlist
 
 
             //NETLIB_IS_TIMESTEP(true)
-            protected override bool is_timestep() { return true; }
+            public override bool is_timestep() { return true; }
 
 
             //NETLIB_TIMESTEPI()
-            protected override void timestep(timestep_type ts_type, nl_fptype step)
+            public override void timestep(timestep_type ts_type, nl_fptype step)
             {
                 if (ts_type == timestep_type.FORWARD)
                 {
@@ -476,7 +476,7 @@ namespace mame.netlist
 
 
             //NETLIB_IS_DYNAMIC(true)
-            protected override bool is_dynamic() { return true; }
+            public override bool is_dynamic() { return true; }
 
 
             //NETLIB_UPDATE_TERMINALSI();

@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read8 = mame.devcb_read<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_read8 = devcb_read<u8>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -19,7 +19,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(TAITO_SJ_SECURITY_MCU,  taito_sj_security_mcu_device, "taitosjsecmcu", "Taito SJ Security MCU Interface")
         static device_t device_creator_taito_sj_security_mcu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taito_sj_security_mcu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TAITO_SJ_SECURITY_MCU = DEFINE_DEVICE_TYPE(device_creator_taito_sj_security_mcu_device, "taitosjsecmcu", "Taito SJ Security MCU Interface");
+        public static readonly device_type TAITO_SJ_SECURITY_MCU = g.DEFINE_DEVICE_TYPE(device_creator_taito_sj_security_mcu_device, "taitosjsecmcu", "Taito SJ Security MCU Interface");
 
 
         public enum int_mode
@@ -93,21 +93,21 @@ namespace mame
 
         protected override void device_start()
         {
-            m_68read_cb.resolve_safe(0xff);
+            m_68read_cb.resolve_safe_u8(0xff);
             m_68write_cb.resolve_safe();
             m_68intrq_cb.resolve_safe();
             m_busrq_cb.resolve_safe();
 
-            save_item(NAME(new { m_addr }));
-            save_item(NAME(new { m_mcu_data }));
-            save_item(NAME(new { m_host_data }));
-            save_item(NAME(new { m_read_data }));
-            save_item(NAME(new { m_zaccept }));
-            save_item(NAME(new { m_zready }));
-            save_item(NAME(new { m_pa_val }));
-            save_item(NAME(new { m_pb_val }));
-            save_item(NAME(new { m_busak }));
-            save_item(NAME(new { m_reset }));
+            save_item(g.NAME(new { m_addr }));
+            save_item(g.NAME(new { m_mcu_data }));
+            save_item(g.NAME(new { m_host_data }));
+            save_item(g.NAME(new { m_read_data }));
+            save_item(g.NAME(new { m_zaccept }));
+            save_item(g.NAME(new { m_zready }));
+            save_item(g.NAME(new { m_pa_val }));
+            save_item(g.NAME(new { m_pb_val }));
+            save_item(g.NAME(new { m_busak }));
+            save_item(g.NAME(new { m_reset }));
 
             m_addr = 0xffff;
             m_mcu_data = 0xff;
@@ -130,7 +130,7 @@ namespace mame
 
         protected override void device_add_mconfig(machine_config config)
         {
-            M68705P5(config, m_mcu, g.DERIVED_CLOCK(1, 1));
+            g.M68705P5(config, m_mcu, g.DERIVED_CLOCK(1, 1));
             m_mcu.op[0].porta_r().set(mcu_pa_r).reg();
             m_mcu.op[0].portc_r().set(mcu_pc_r).reg();
             m_mcu.op[0].porta_w().set(mcu_pa_w).reg();
@@ -221,7 +221,7 @@ namespace mame
 
             // 68INTRQ
             if (g.BIT(diff, 0) != 0)
-                m_68intrq_cb.op(g.BIT(data, 0) != 0 ? g.CLEAR_LINE : g.ASSERT_LINE);
+                m_68intrq_cb.op_s32(g.BIT(data, 0) != 0 ? g.CLEAR_LINE : g.ASSERT_LINE);
 
             // 68LRD
             u8 bus_val = get_bus_val();
@@ -238,13 +238,13 @@ namespace mame
 
             // BUSRQ
             if (g.BIT(diff, 3) != 0)
-                m_busrq_cb.op(g.BIT(data, 3) != 0 ? g.CLEAR_LINE : g.ASSERT_LINE);
+                m_busrq_cb.op_s32(g.BIT(data, 3) != 0 ? g.CLEAR_LINE : g.ASSERT_LINE);
 
             // 68WRITE
             if (g.BIT(diff, 4) != 0)
             {
                 if (g.BIT(~data, 4) != 0)
-                    m_68write_cb.op(m_addr, bus_val);
+                    m_68write_cb.op_u8(m_addr, bus_val);
                 else if (g.BIT(data, 5) != 0)
                     inc_addr = true;
             }
@@ -253,7 +253,7 @@ namespace mame
             if (g.BIT(diff, 5) != 0)
             {
                 if (g.BIT(~data, 5) != 0)
-                    m_read_data = m_68read_cb.op(m_addr);
+                    m_read_data = m_68read_cb.op_u8(m_addr);
                 else if (g.BIT(data, 4) != 0)
                     inc_addr = true;
             }

@@ -13,7 +13,7 @@ using u32 = System.UInt32;
 
 namespace mame
 {
-    public partial class gfx_element : global_object
+    public partial class gfx_element
     {
         // internal state
         device_palette_interface m_palette;    // palette used for drawing (optional when used as a pure decoder)
@@ -146,7 +146,7 @@ namespace mame
             m_color_depth = m_color_granularity;
 
             // copy data from the layout
-            m_layout_is_raw = gl.planeoffset[0] == digfx_global.GFX_RAW;
+            m_layout_is_raw = gl.planeoffset[0] == g.GFX_RAW;
             m_layout_planes = (byte)gl.planes;
             m_layout_charincrement = gl.charincrement;
 
@@ -188,17 +188,17 @@ namespace mame
                 m_char_modulo = m_line_modulo * m_origheight;
 
                 // allocate memory for the data
-                m_gfxdata_allocated.resize((int)(m_total_elements * m_char_modulo));
+                m_gfxdata_allocated.resize(m_total_elements * m_char_modulo);
                 m_gfxdata = new Pointer<u8>(m_gfxdata_allocated);  //m_gfxdata = &m_gfxdata_allocated[0];
             }
 
             // mark everything dirty
-            m_dirty.resize((int)m_total_elements);
-            memset(m_dirty, (u8)1, m_total_elements);
+            m_dirty.resize(m_total_elements);
+            std.memset(m_dirty, (u8)1, m_total_elements);
 
             // allocate a pen usage array for entries with 32 pens or less
             if (m_color_depth <= 32)
-                m_pen_usage.resize((int)m_total_elements);
+                m_pen_usage.resize(m_total_elements);
             else
                 m_pen_usage.clear();
         }
@@ -213,7 +213,7 @@ namespace mame
         public void set_source(Pointer<u8> source)  //void set_source(const u8 *source)
         {
             m_srcdata = source;
-            memset(m_dirty, (u8)1, elements());  //memset(&m_dirty[0], 1, elements());
+            std.memset(m_dirty, (u8)1, elements());  //memset(&m_dirty[0], 1, elements());
             if (m_layout_is_raw) m_gfxdata = source;  //if (m_layout_is_raw) m_gfxdata = const_cast<u8 *>(source);
         }
 
@@ -534,7 +534,7 @@ namespace mame
             {
                 // zap the data to 0
                 Pointer<u8> decode_base = new Pointer<u8>(m_gfxdata, (int)(code * m_char_modulo));  //u8 *decode_base = m_gfxdata + code * m_char_modulo;
-                memset(decode_base, (u8)0, m_char_modulo);  //memset(decode_base, 0, m_char_modulo);
+                std.memset(decode_base, (u8)0, m_char_modulo);  //memset(decode_base, 0, m_char_modulo);
 
                 // iterate over planes
                 int plane;
@@ -591,7 +591,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(GFXDECODE, gfxdecode_device, "gfxdecode", "gfxdecode")
         static device_t device_creator_gfxdecode_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gfxdecode_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GFXDECODE = DEFINE_DEVICE_TYPE(device_creator_gfxdecode_device, "gfxdecode", "gfxdecode");
+        public static readonly device_type GFXDECODE = g.DEFINE_DEVICE_TYPE(device_creator_gfxdecode_device, "gfxdecode", "gfxdecode");
 
 
         device_gfx_interface m_digfx;
@@ -731,10 +731,10 @@ namespace mame
                 return;
             }
 
-            global_object.assert(numrows != 0 || rowscroll == null);
-            global_object.assert(numrows == 0 || rowscroll != null);
-            global_object.assert(numcols != 0 || colscroll == null);
-            global_object.assert(numcols == 0 || colscroll != null);
+            g.assert(numrows != 0 || rowscroll == null);
+            g.assert(numrows == 0 || rowscroll != null);
+            g.assert(numcols != 0 || colscroll == null);
+            g.assert(numcols == 0 || colscroll != null);
 
             // fully scrolling X,Y playfield
             if (numrows <= 1 && numcols <= 1)
@@ -756,7 +756,7 @@ namespace mame
 
                 // determine width of each column
                 int colwidth = (int)(src.width() / numcols);
-                global_object.assert(src.width() % colwidth == 0);
+                g.assert(src.width() % colwidth == 0);
 
                 // iterate over each column
                 int groupcols;
@@ -792,7 +792,7 @@ namespace mame
 
                 // determine width of each rows
                 int rowheight = (int)(src.height() / numrows);
-                global_object.assert(src.height() % rowheight == 0);
+                g.assert(src.height() % rowheight == 0);
 
                 // iterate over each row
                 int grouprows;

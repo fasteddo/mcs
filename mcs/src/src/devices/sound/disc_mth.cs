@@ -433,14 +433,14 @@ namespace mame
             public void push(double v)
             {
                 //Store THEN increment
-                assert(pIdx <= MAX_TRANS_STACK - 1);  //p <= &stk[MAX_TRANS_STACK-1]);
+                g.assert(pIdx <= MAX_TRANS_STACK - 1);  //p <= &stk[MAX_TRANS_STACK-1]);
                 stk[pIdx++] = v;  //*p++ = v;
             }
             
             public double pop()
             {
                 //decrement THEN read
-                assert(pIdx > 0);  //assert(p > &stk[0]);
+                g.assert(pIdx > 0);  //assert(p > &stk[0]);
                 pIdx--;  //p--;
                 return stk[pIdx];  //return *p;
             }
@@ -526,7 +526,7 @@ namespace mame
                     default:
                         m_device.discrete_log("dst_transform_step - Invalid function type/variable passed: {0}", (string)this.custom_data());
                         /* that is enough to fatalerror */
-                        fatalerror("dst_transform_step - Invalid function type/variable passed: {0}\n", (string)this.custom_data());
+                        g.fatalerror("dst_transform_step - Invalid function type/variable passed: {0}\n", (string)this.custom_data());
                         break;
                 }
 
@@ -809,7 +809,7 @@ namespace mame
             int     addr;
 
             m_size = this.active_inputs() - DST_DIODE_MIX_INP_OFFSET;
-            assert(m_size <= 8);
+            g.assert(m_size <= 8);
 
             for (addr = 0; addr < m_size; addr++)
             {
@@ -1062,7 +1062,7 @@ namespace mame
                 /* Setup filter constants */
                 /* We will use 100k ohms as an average final stage impedance. */
                 /* Your amp/speaker system will have more effect on incorrect filtering then any value used here. */
-                m_exponent_c_amp = RC_CHARGE_EXP(RES_K(100) * info.cAmp);
+                m_exponent_c_amp = RC_CHARGE_EXP(g.RES_K(100) * info.cAmp);
             }
 
             if (m_type == g.DISC_MIXER_IS_OP_AMP_WITH_RI) m_gain = info.rF / info.rI;
@@ -1142,7 +1142,7 @@ namespace mame
                                             /* is there an rF? */
                                             if (has_rF != 0)
                                             {
-                                                rTemp2 = RES_2_PARALLEL(rTemp, info.rF);
+                                                rTemp2 = g.RES_2_PARALLEL(rTemp, info.rF);
                                                 break;
                                             }
                                             /* else, fall through and just use the resistor value */

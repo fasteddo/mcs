@@ -41,6 +41,8 @@ namespace mame.plib
         T cast(Int64 a);
         T cast(double a, T RES);
         double cast_double(T a);
+
+        T max();
     }
 
 
@@ -61,8 +63,10 @@ namespace mame.plib
         public bool less_than_equal(int64_t a, int64_t b) { return a <= b; }
 
         public int64_t cast(Int64 a) { return a; }
-        public int64_t cast(double a, int64_t RES) { return (int64_t)pglobal.floor<double, constants_operators_double>(a * RES + 0.5); }
+        public int64_t cast(double a, int64_t RES) { return (int64_t)pmath_global<double, constants_operators_double>.floor(a * RES + 0.5); }
         public double cast_double(int64_t a) { return a; }
+
+        public int64_t max() { return int64_t.MaxValue; }
     }
 
 
@@ -71,8 +75,8 @@ namespace mame.plib
         where TYPE_OPS : ptime_operators<TYPE>, new()
         where TYPE_RES : ptime_RES<TYPE>, new()
     {
-        static ptime_operators<TYPE> ops = new TYPE_OPS();
-        static ptime_RES<TYPE> RES = new TYPE_RES();
+        static readonly TYPE_OPS ops = new TYPE_OPS();
+        static readonly TYPE RES = new TYPE_RES().value;
 
 
         //using internal_type = TYPE;
@@ -101,7 +105,7 @@ namespace mame.plib
 
         ptime(TYPE nom, TYPE den)
         {
-            m_time = ops.multiply(nom, ops.divide(RES.value, den));  //: m_time(nom * (RES / den)) { }
+            m_time = ops.multiply(nom, ops.divide(RES, den));  //: m_time(nom * (RES / den)) { }
         }
 
 
@@ -269,7 +273,7 @@ namespace mame.plib
         //template <typename FT>
         //static constexpr std::enable_if_t<plib::is_floating_point<FT>::value, ptime>
         //from_fp(FT t) noexcept { return ptime(static_cast<internal_type>(plib::floor(t * static_cast<FT>(RES) + static_cast<FT>(0.5))), RES); }
-        public static ptime<TYPE, TYPE_OPS, TYPE_RES> from_fp(double t) { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.cast(t, RES.value), RES.value); }
+        public static ptime<TYPE, TYPE_OPS, TYPE_RES> from_fp(double t) { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.cast(t, RES), RES); }
 
         //static constexpr ptime from_double(double t) noexcept
         //{ return from_fp<double>(t); }
@@ -280,10 +284,10 @@ namespace mame.plib
         //static constexpr ptime from_long_double(long double t) noexcept
         //{ return from_fp<long double>(t); }
 
-        public static ptime<TYPE, TYPE_OPS, TYPE_RES> zero() { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.cast(0), RES.value); }
-        public static ptime<TYPE, TYPE_OPS, TYPE_RES> quantum() { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.cast(0), RES.value); }
-        //static constexpr ptime never() noexcept { return ptime(plib::numeric_limits<internal_type>::max(), RES); }
-        public static TYPE resolution() { return RES.value; }
+        public static ptime<TYPE, TYPE_OPS, TYPE_RES> zero() { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.cast(0), RES); }
+        public static ptime<TYPE, TYPE_OPS, TYPE_RES> quantum() { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.cast(0), RES); }
+        public static ptime<TYPE, TYPE_OPS, TYPE_RES> never() { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.max(), RES); }  //static constexpr ptime never() noexcept { return ptime(plib::numeric_limits<internal_type>::max(), RES); }
+        public static TYPE resolution() { return RES; }
 
         //constexpr internal_type in_nsec() const noexcept { return m_time / (RES / INT64_C(1000000000)); }
         //constexpr internal_type in_usec() const noexcept { return m_time / (RES / INT64_C(   1000000)); }
@@ -291,7 +295,7 @@ namespace mame.plib
         //constexpr internal_type in_sec()  const noexcept { return m_time / (RES / INT64_C(         1)); }
 
         //template <typename FT>
-        static TYPE inv_res() { return ops.divide(ops.cast(1), RES.value); }  //static constexpr FT inv_res() noexcept { return static_cast<FT>(1.0) / static_cast<FT>(RES); }
+        static TYPE inv_res() { return ops.divide(ops.cast(1), RES); }  //static constexpr FT inv_res() noexcept { return static_cast<FT>(1.0) / static_cast<FT>(RES); }
 
 
         public static ptime<TYPE, TYPE_OPS, TYPE_RES> Max(ptime<TYPE, TYPE_OPS, TYPE_RES> lhs, ptime<TYPE, TYPE_OPS, TYPE_RES> rhs) { return ops.less_than(lhs.m_time, rhs.m_time) ? rhs : lhs; }

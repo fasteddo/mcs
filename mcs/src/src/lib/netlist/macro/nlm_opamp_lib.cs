@@ -31,9 +31,11 @@ namespace mame
         //static NETLIST_START(opamp_layout_4_4_11)
         public static void netlist_opamp_layout_4_4_11(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.DIPPINS(setup,        /*   +--------------+   */
+            h.NETLIST_START(setup);
+
+            h.DIPPINS(        /*   +--------------+   */
                 "A.OUT",      /*   |1     ++    14|   */ "D.OUT",
                 "A.MINUS",    /*   |2           13|   */ "D.MINUS",
                 "A.PLUS",     /*   |3           12|   */ "D.PLUS",
@@ -43,10 +45,10 @@ namespace mame
                 "B.OUT",      /*   |7            8|   */ "C.OUT"
                             /*   +--------------+   */
             );
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND", "C.GND", "D.GND");
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC", "C.VCC", "D.VCC");
+            h.NET_C("A.GND", "B.GND", "C.GND", "D.GND");
+            h.NET_C("A.VCC", "B.VCC", "C.VCC", "D.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -57,19 +59,21 @@ namespace mame
         //static NETLIST_START(opamp_layout_2_8_4)
         public static void netlist_opamp_layout_2_8_4(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.DIPPINS(setup,        /*   +--------------+   */
+            h.NETLIST_START(setup);
+
+            h.DIPPINS(        /*   +--------------+   */
                 "A.OUT",      /*   |1     ++     8|   */ "A.VCC",
                 "A.MINUS",    /*   |2            7|   */ "B.OUT",
                 "A.PLUS",     /*   |3            6|   */ "B.MINUS",
                 "A.GND",      /*   |4            5|   */ "B.PLUS"
-                            /*   +--------------+   */
+                              /*   +--------------+   */
             );
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
+            h.NET_C("A.GND", "B.GND");
+            h.NET_C("A.VCC", "B.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -80,9 +84,11 @@ namespace mame
         //static NETLIST_START(opamp_layout_2_13_9_4)
         public static void netlist_opamp_layout_2_13_9_4(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.DIPPINS(setup,        /*   +--------------+   */
+            h.NETLIST_START(setup);
+
+            h.DIPPINS(        /*   +--------------+   */
                 "A.MINUS",    /*   |1     ++    14|   */ "A.N2",
                 "A.PLUS",     /*   |2           13|   */ "A.VCC",
                 "A.N1",       /*   |3           12|   */ "A.OUT",
@@ -90,11 +96,11 @@ namespace mame
                 "B.N1",       /*   |5           10|   */ "B.OUT",
                 "B.PLUS",     /*   |6            9|   */ "B.VCC",
                 "B.MINUS",    /*   |7            8|   */ "B.N2"
-                            /*   +--------------+   */
+                              /*   +--------------+   */
             );
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -106,17 +112,19 @@ namespace mame
         //static NETLIST_START(opamp_layout_1_7_4)
         public static void netlist_opamp_layout_1_7_4(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.DIPPINS(setup,             /*   +--------------+   */
+            h.NETLIST_START(setup);
+
+            h.DIPPINS(             /*   +--------------+   */
                 "NC" /* OFFSET */, /*   |1     ++     8|   */ "NC",
                 "A.MINUS",         /*   |2            7|   */ "A.VCC",
                 "A.PLUS",          /*   |3            6|   */ "A.OUT",
                 "A.GND",           /*   |4            5|   */ "NC" /* OFFSET */
-                                 /*   +--------------+   */
+                                   /*   +--------------+   */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -127,23 +135,25 @@ namespace mame
         //static NETLIST_START(opamp_layout_1_8_5)
         public static void netlist_opamp_layout_1_8_5(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.DIPPINS(setup,        /*   +--------------+   */
+            h.NETLIST_START(setup);
+
+            h.DIPPINS(        /*   +--------------+   */
                 "NC.1",       /*   |1           10|   */ "NC.3",
                 "OFFSET.N1",  /*   |2            9|   */ "NC.2",
                 "MINUS",      /*   |3            8|   */ "VCC.PLUS",
                 "PLUS",       /*   |4            7|   */ "OUT",
                 "VCC.MINUS",  /*   |5            6|   */ "OFFSET.N2"
-                            /*   +--------------+   */
+                              /*   +--------------+   */
             );
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "VCC.MINUS");
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "VCC.PLUS");
-            netlist.nl_setup_global.NET_C(setup, "A.MINUS", "MINUS");
-            netlist.nl_setup_global.NET_C(setup, "A.PLUS", "PLUS");
-            netlist.nl_setup_global.NET_C(setup, "A.OUT", "OUT");
+            h.NET_C("A.GND", "VCC.MINUS");
+            h.NET_C("A.VCC", "VCC.PLUS");
+            h.NET_C("A.MINUS", "MINUS");
+            h.NET_C("A.PLUS", "PLUS");
+            h.NET_C("A.OUT", "OUT");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -154,9 +164,11 @@ namespace mame
         //static NETLIST_START(opamp_layout_1_11_6)
         public static void netlist_opamp_layout_1_11_6(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            netlist.nl_setup_global.DIPPINS(setup,        /*   +--------------+   */
+            h.NETLIST_START(setup);
+
+            h.DIPPINS(        /*   +--------------+   */
                 "NC.1",       /*   |1     ++    14|   */ "NC.7",
                 "NC.2",       /*   |2           13|   */ "NC.6",
                 "OFFSET.N1",  /*   |3           12|   */ "NC.5",
@@ -164,22 +176,24 @@ namespace mame
                 "PLUS",       /*   |5           10|   */ "OUT",
                 "VCC.MINUS",  /*   |6            9|   */ "OFFSET.N2",
                 "NC.3",       /*   |7            8|   */ "NC.4"
-                            /*   +--------------+   */
+                              /*   +--------------+   */
             );
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "VCC.MINUS");
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "VCC.PLUS");
-            netlist.nl_setup_global.NET_C(setup, "A.MINUS", "MINUS");
-            netlist.nl_setup_global.NET_C(setup, "A.PLUS", "PLUS");
-            netlist.nl_setup_global.NET_C(setup, "A.OUT", "OUT");
+            h.NET_C("A.GND", "VCC.MINUS");
+            h.NET_C("A.VCC", "VCC.PLUS");
+            h.NET_C("A.MINUS", "MINUS");
+            h.NET_C("A.PLUS", "PLUS");
+            h.NET_C("A.OUT", "OUT");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(MB3614_DIP)
         public static void netlist_MB3614_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -189,16 +203,18 @@ namespace mame
             OPAMP(setup, "D", "MB3614");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_4_4_11");
+            h.INCLUDE("opamp_layout_4_4_11");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(MC3340_DIP)
         public static void netlist_MC3340_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             // A netlist description of the Motorola MC3340 Electronic Attenuator
             // IC, a voltage-controlled amplifier/attenuator. It amplifies or
@@ -307,94 +323,98 @@ namespace mame
             RES(setup, "R18_510", rescap_global.RES_R(510));
 #endif
 
-            netlist.nl_setup_global.ALIAS(setup, "VCC", "R1_5K1.1");
-            netlist.nl_setup_global.NET_C(setup, "R1_5K1.1", "Q1.C", "Q2.C", "R7_5K1.1", "Q3.C", "Q4.C", "Q7.C",
+            h.ALIAS("VCC", "R1_5K1.1");
+            h.NET_C("R1_5K1.1", "Q1.C", "Q2.C", "R7_5K1.1", "Q3.C", "Q4.C", "Q7.C",
                 "R13_6K2.1", "Q10.C", "R17_5K1.1");
             // Location of first diode present on 1970s schematics but omitted on
             // 1990s ones. Including it raises the control voltage threshold for
             // attenuation significantly.
-            netlist.nl_setup_global.NET_C(setup, "R1_5K1.2", "D1.A", "Q1.B");
-            netlist.nl_setup_global.NET_C(setup, "D1.K", "R2_4K7.1");
-            netlist.nl_setup_global.NET_C(setup, "R2_4K7.2", "GND");
+            h.NET_C("R1_5K1.2", "D1.A", "Q1.B");
+            h.NET_C("D1.K", "R2_4K7.1");
+            h.NET_C("R2_4K7.2", "GND");
 
-            netlist.nl_setup_global.NET_C(setup, "Q1.E", "R3_750.1", "R5_750.1");
-            netlist.nl_setup_global.NET_C(setup, "R3_750.2", "R4_10K.1", "Q2.B");
-            netlist.nl_setup_global.NET_C(setup, "R4_10K.2", "GND");
+            h.NET_C("Q1.E", "R3_750.1", "R5_750.1");
+            h.NET_C("R3_750.2", "R4_10K.1", "Q2.B");
+            h.NET_C("R4_10K.2", "GND");
 
-            netlist.nl_setup_global.NET_C(setup, "R5_750.2", "R6_3K9.1", "Q3.B");
-            netlist.nl_setup_global.ALIAS(setup, "CONTROL", "R6_3K9.2");
+            h.NET_C("R5_750.2", "R6_3K9.1", "Q3.B");
+            h.ALIAS("CONTROL", "R6_3K9.2");
 
-            netlist.nl_setup_global.ALIAS(setup, "INPUT", "Q5.B");
+            h.ALIAS("INPUT", "Q5.B");
 
-            netlist.nl_setup_global.NET_C(setup, "INPUT", "R8_20K.1");
+            h.NET_C("INPUT", "R8_20K.1");
             // Location of second diode present on 1970s schematics but omitted on
             // 1990s ones. Including it is critical to making the tone of the
             // output engine sound match that of real 280-ZZZAP machines.
-            netlist.nl_setup_global.NET_C(setup, "R7_5K1.2", "R8_20K.2", "D2.A");
-            netlist.nl_setup_global.NET_C(setup, "D2.K", "R9_510.1");
-            netlist.nl_setup_global.NET_C(setup, "R9_510.2", "GND");
+            h.NET_C("R7_5K1.2", "R8_20K.2", "D2.A");
+            h.NET_C("D2.K", "R9_510.1");
+            h.NET_C("R9_510.2", "GND");
 
-            netlist.nl_setup_global.NET_C(setup, "Q4.E", "Q6.E", "Q5.C");
-            netlist.nl_setup_global.NET_C(setup, "Q5.E", "R10_1K3.1");
-            netlist.nl_setup_global.NET_C(setup, "R10_1K3.2", "GND");
+            h.NET_C("Q4.E", "Q6.E", "Q5.C");
+            h.NET_C("Q5.E", "R10_1K3.1");
+            h.NET_C("R10_1K3.2", "GND");
 
-            netlist.nl_setup_global.NET_C(setup, "Q6.B", "Q7.B", "Q2.E", "R11_5K1.1");
-            netlist.nl_setup_global.NET_C(setup, "R11_5K1.2", "GND");
+            h.NET_C("Q6.B", "Q7.B", "Q2.E", "R11_5K1.1");
+            h.NET_C("R11_5K1.2", "GND");
 
-            netlist.nl_setup_global.NET_C(setup, "Q7.E", "Q9.E", "Q8.C");
-            netlist.nl_setup_global.NET_C(setup, "Q8.E", "R12_1K5.1");
-            netlist.nl_setup_global.NET_C(setup, "R12_1K5.2", "GND");
+            h.NET_C("Q7.E", "Q9.E", "Q8.C");
+            h.NET_C("Q8.E", "R12_1K5.1");
+            h.NET_C("R12_1K5.2", "GND");
 
-            netlist.nl_setup_global.NET_C(setup, "Q4.B", "Q9.B", "Q3.E", "R14_5K1.1");
-            netlist.nl_setup_global.NET_C(setup, "R14_5K1.2", "GND");
+            h.NET_C("Q4.B", "Q9.B", "Q3.E", "R14_5K1.1");
+            h.NET_C("R14_5K1.2", "GND");
 
             // This is where the cross-connection is erroneously omitted from
             // 1990s schematics.
-            netlist.nl_setup_global.NET_C(setup, "Q6.C", "R13_6K2.2", "Q9.C", "Q10.B");
+            h.NET_C("Q6.C", "R13_6K2.2", "Q9.C", "Q10.B");
 
             // Connection for external frequency compensation capacitor; unused
             // here.
-            netlist.nl_setup_global.ALIAS(setup, "ROLLOFF", "Q10.B");
+            h.ALIAS("ROLLOFF", "Q10.B");
 
-            netlist.nl_setup_global.NET_C(setup, "Q10.E", "R16_200.1", "R15_5K1.1");
-            netlist.nl_setup_global.NET_C(setup, "R15_5K1.2", "GND");
-            netlist.nl_setup_global.ALIAS(setup, "OUTPUT", "R16_200.2");
+            h.NET_C("Q10.E", "R16_200.1", "R15_5K1.1");
+            h.NET_C("R15_5K1.2", "GND");
+            h.ALIAS("OUTPUT", "R16_200.2");
 
-            netlist.nl_setup_global.NET_C(setup, "R17_5K1.2", "D3.A", "Q8.B");
-            netlist.nl_setup_global.NET_C(setup, "D3.K", "R18_510.1");
-            netlist.nl_setup_global.ALIAS(setup, "GND", "R18_510.2");
+            h.NET_C("R17_5K1.2", "D3.A", "Q8.B");
+            h.NET_C("D3.K", "R18_510.1");
+            h.ALIAS("GND", "R18_510.2");
 
-            netlist.nl_setup_global.ALIAS(setup, "1", "INPUT");
-            netlist.nl_setup_global.ALIAS(setup, "2", "CONTROL");
-            netlist.nl_setup_global.ALIAS(setup, "3", "GND");
-            netlist.nl_setup_global.ALIAS(setup, "6", "ROLLOFF");
-            netlist.nl_setup_global.ALIAS(setup, "7", "OUTPUT");
-            netlist.nl_setup_global.ALIAS(setup, "8", "VCC");
+            h.ALIAS("1", "INPUT");
+            h.ALIAS("2", "CONTROL");
+            h.ALIAS("3", "GND");
+            h.ALIAS("6", "ROLLOFF");
+            h.ALIAS("7", "OUTPUT");
+            h.ALIAS("8", "VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(TL081_DIP)
         public static void netlist_TL081_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             OPAMP(setup, "A", "TL084");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_1_7_4");
+            h.INCLUDE("opamp_layout_1_7_4");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(TL082_DIP)
         public static void netlist_TL082_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -402,16 +422,18 @@ namespace mame
             OPAMP(setup, "B", "TL084");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_8_4");
+            h.INCLUDE("opamp_layout_2_8_4");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(TL084_DIP)
         public static void netlist_TL084_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -421,16 +443,18 @@ namespace mame
             OPAMP(setup, "D", "TL084");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_4_4_11");
+            h.INCLUDE("opamp_layout_4_4_11");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(LM324_DIP)
         public static void netlist_LM324_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -440,16 +464,18 @@ namespace mame
             OPAMP(setup, "D", "LM324");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_4_4_11");
+            h.INCLUDE("opamp_layout_4_4_11");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(LM2902_DIP)
         public static void netlist_LM2902_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             // Same datasheet and mostly same characteristics as LM324
             throw new emu_unimplemented();
@@ -460,16 +486,39 @@ namespace mame
             OPAMP(setup, "D", "LM324");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_4_4_11");
+            h.INCLUDE("opamp_layout_4_4_11");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(LM348_DIP)
+        public static void netlist_LM348_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            OPAMP(A, "UA741")
+            OPAMP(B, "UA741")
+            OPAMP(C, "UA741")
+            OPAMP(D, "UA741")
+
+            INCLUDE(opamp_layout_4_4_11)
+#endif
+
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(LM358_DIP)
         public static void netlist_LM358_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -477,64 +526,69 @@ namespace mame
             OPAMP(setup, "B", "LM358");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_8_4");
+            h.INCLUDE("opamp_layout_2_8_4");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(UA741_DIP8)
         public static void netlist_UA741_DIP8(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            throw new emu_unimplemented();
-#if false
-            OPAMP(setup, "A", "UA741");
-#endif
+            h.NETLIST_START(setup);
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_1_7_4");
+            h.OPAMP("A", "UA741");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.INCLUDE("opamp_layout_1_7_4");
+
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(UA741_DIP10)
         public static void netlist_UA741_DIP10(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             OPAMP(setup, "A", "UA741");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_1_8_5");
+            h.INCLUDE("opamp_layout_1_8_5");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(UA741_DIP14)
         public static void netlist_UA741_DIP14(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
             OPAMP(setup, "A", "UA741");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_1_11_6");
+            h.INCLUDE("opamp_layout_1_11_6");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(MC1558_DIP)
         public static void netlist_MC1558_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -542,16 +596,18 @@ namespace mame
             OPAMP(setup, "B", "UA741");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_8_4");
+            h.INCLUDE("opamp_layout_2_8_4");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(LM747_DIP)
         public static void netlist_LM747_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -559,17 +615,19 @@ namespace mame
             OPAMP(setup, "B", "LM747");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_13_9_4");
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
+            h.INCLUDE("opamp_layout_2_13_9_4");
+            h.NET_C("A.VCC", "B.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
         //static NETLIST_START(LM747A_DIP)
         public static void netlist_LM747A_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -577,10 +635,10 @@ namespace mame
             OPAMP(setup, "B", "LM747A");
 #endif
 
-            netlist.nl_setup_global.INCLUDE(setup, "opamp_layout_2_13_9_4");
-            netlist.nl_setup_global.NET_C(setup, "A.VCC", "B.VCC");
+            h.INCLUDE("opamp_layout_2_13_9_4");
+            h.NET_C("A.VCC", "B.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -595,7 +653,9 @@ namespace mame
         //static NETLIST_START(AN6551_SIL)
         public static void netlist_AN6551_SIL(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -603,19 +663,19 @@ namespace mame
             OPAMP(setup, "B", "AN6551");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.GND", "B.GND");
+            h.NET_C("A.GND", "B.GND");
 
-            netlist.nl_setup_global.ALIAS(setup, "1", "A.VCC");
-            netlist.nl_setup_global.ALIAS(setup, "2", "A.OUT");
-            netlist.nl_setup_global.ALIAS(setup, "3", "A.MINUS");
-            netlist.nl_setup_global.ALIAS(setup, "4", "A.PLUS");
-            netlist.nl_setup_global.ALIAS(setup, "5", "A.GND");
-            netlist.nl_setup_global.ALIAS(setup, "6", "B.PLUS");
-            netlist.nl_setup_global.ALIAS(setup, "7", "B.MINUS");
-            netlist.nl_setup_global.ALIAS(setup, "8", "B.OUT");
-            netlist.nl_setup_global.ALIAS(setup, "9", "B.VCC");
+            h.ALIAS("1", "A.VCC");
+            h.ALIAS("2", "A.OUT");
+            h.ALIAS("3", "A.MINUS");
+            h.ALIAS("4", "A.PLUS");
+            h.ALIAS("5", "A.GND");
+            h.ALIAS("6", "B.PLUS");
+            h.ALIAS("7", "B.MINUS");
+            h.ALIAS("8", "B.OUT");
+            h.ALIAS("9", "B.VCC");
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -635,7 +695,9 @@ namespace mame
         //static NETLIST_START(LM3900)
         public static void netlist_LM3900(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -667,7 +729,7 @@ namespace mame
             netlist.nl_setup_global.NET_C(setup, "VS1.ON", "A.PLUS", "A.GND");
 #endif
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 #endif
 
@@ -675,59 +737,57 @@ namespace mame
         //NETLIST_START(opamp_lib)
         public static void netlist_opamp_lib(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
 
-            throw new emu_unimplemented();
-#if false
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_4_4_11", netlist_opamp_layout_4_4_11);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_2_8_4", netlist_opamp_layout_2_8_4);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_2_13_9_4", netlist_opamp_layout_2_13_9_4);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_7_4", netlist_opamp_layout_1_7_4);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_8_5", netlist_opamp_layout_1_8_5);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "opamp_layout_1_11_6", netlist_opamp_layout_1_11_6);
+            h.NETLIST_START(setup);
+
+            h.LOCAL_LIB_ENTRY("opamp_layout_4_4_11", netlist_opamp_layout_4_4_11);
+            h.LOCAL_LIB_ENTRY("opamp_layout_2_8_4", netlist_opamp_layout_2_8_4);
+            h.LOCAL_LIB_ENTRY("opamp_layout_2_13_9_4", netlist_opamp_layout_2_13_9_4);
+            h.LOCAL_LIB_ENTRY("opamp_layout_1_7_4", netlist_opamp_layout_1_7_4);
+            h.LOCAL_LIB_ENTRY("opamp_layout_1_8_5", netlist_opamp_layout_1_8_5);
+            h.LOCAL_LIB_ENTRY("opamp_layout_1_11_6", netlist_opamp_layout_1_11_6);
 
             // FIXME: JFET Opamp may need better model
             // VLL and VHH for +-6V  RI=10^12 (for numerical stability 10^9 is used below
             // RO from data sheet
-            netlist.nl_setup_global.NET_MODEL(setup, "TL084       OPAMP(TYPE=3 VLH=0.75 VLL=0.75 FPF=10 UGF=3000k SLEW=13M RI=1000M RO=192 DAB=0.0014)");
+            h.NET_MODEL("TL084       OPAMP(TYPE=3 VLH=0.75 VLL=0.75 FPF=10 UGF=3000k SLEW=13M RI=1000M RO=192 DAB=0.0014)");
 
-            netlist.nl_setup_global.NET_MODEL(setup, "LM324       OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.3M RI=1000k RO=50 DAB=0.00075)");
-            netlist.nl_setup_global.NET_MODEL(setup, "LM358       OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.3M RI=1000k RO=50 DAB=0.001)");
-            netlist.nl_setup_global.NET_MODEL(setup, "MB3614      OPAMP(TYPE=3 VLH=1.4 VLL=0.02 FPF=3 UGF=1000k SLEW=0.6M RI=1000k RO=100 DAB=0.002)");
-            netlist.nl_setup_global.NET_MODEL(setup, "UA741       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=75 DAB=0.0017)");
-            netlist.nl_setup_global.NET_MODEL(setup, "LM747       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=50 DAB=0.0017)");
-            netlist.nl_setup_global.NET_MODEL(setup, "LM747A      OPAMP(TYPE=3 VLH=2.0 VLL=2.0 FPF=5 UGF=1000k SLEW=0.7M RI=6000k RO=50 DAB=0.0015)");
-            NET_MODEL("LM748       OPAMP(TYPE=3 VLH=2.0 VLL=2.0 FPF=5 UGF=800k SLEW=0.7M RI=800k RO=60 DAB=0.001)");
+            h.NET_MODEL("LM324       OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.3M RI=1000k RO=50 DAB=0.00075)");
+            h.NET_MODEL("LM358       OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.3M RI=1000k RO=50 DAB=0.001)");
+            h.NET_MODEL("MB3614      OPAMP(TYPE=3 VLH=1.4 VLL=0.02 FPF=3 UGF=1000k SLEW=0.6M RI=1000k RO=100 DAB=0.002)");
+            h.NET_MODEL("UA741       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=75 DAB=0.0017)");
+            h.NET_MODEL("LM747       OPAMP(TYPE=3 VLH=1.0 VLL=1.0 FPF=5 UGF=1000k SLEW=0.5M RI=2000k RO=50 DAB=0.0017)");
+            h.NET_MODEL("LM747A      OPAMP(TYPE=3 VLH=2.0 VLL=2.0 FPF=5 UGF=1000k SLEW=0.7M RI=6000k RO=50 DAB=0.0015)");
+            h.NET_MODEL("LM748       OPAMP(TYPE=3 VLH=2.0 VLL=2.0 FPF=5 UGF=800k SLEW=0.7M RI=800k RO=60 DAB=0.001)");
             // TI and Motorola Datasheets differ - below are Motorola values, SLEW is average of LH and HL
-            netlist.nl_setup_global.NET_MODEL(setup, "LM3900      OPAMP(TYPE=3 VLH=1.0 VLL=0.03 FPF=2k UGF=4M SLEW=10M RI=10M RO=2k DAB=0.0015)");
+            h.NET_MODEL("LM3900      OPAMP(TYPE=3 VLH=1.0 VLL=0.03 FPF=2k UGF=4M SLEW=10M RI=10M RO=2k DAB=0.0015)");
 
-            netlist.nl_setup_global.NET_MODEL(setup, "AN6551      OPAMP(TYPE=3 VLH=1.0 VLL=0.03 FPF=20 UGF=2M SLEW=1M RI=10M RO=200 DAB=0.0015)");
+            h.NET_MODEL("AN6551      OPAMP(TYPE=3 VLH=1.0 VLL=0.03 FPF=20 UGF=2M SLEW=1M RI=10M RO=200 DAB=0.0015)");
 
 #if USE_LM3900_MODEL_1
             NET_MODEL("LM3900_NPN1 NPN(IS=1E-14 BF=150 TF=1E-9 CJC=1E-12 CJE=1E-12 VAF=150 RB=100 RE=5 IKF=0.002)")
             NET_MODEL("LM3900_PNP1 PNP(IS=1E-14 BF=40 TF=1E-7 CJC=1E-12 CJE=1E-12 VAF=150 RB=100 RE=5)")
 #endif
+            h.LOCAL_LIB_ENTRY("MB3614_DIP", netlist_MB3614_DIP);
+            h.LOCAL_LIB_ENTRY("MC3340_DIP", netlist_MC3340_DIP);
+            h.LOCAL_LIB_ENTRY("TL081_DIP", netlist_TL081_DIP);
+            h.LOCAL_LIB_ENTRY("TL082_DIP", netlist_TL082_DIP);
+            h.LOCAL_LIB_ENTRY("TL084_DIP", netlist_TL084_DIP);
+            h.LOCAL_LIB_ENTRY("LM324_DIP", netlist_LM324_DIP);
+            h.LOCAL_LIB_ENTRY("LM348_DIP", netlist_LM348_DIP);
+            h.LOCAL_LIB_ENTRY("LM358_DIP", netlist_LM358_DIP);
+            h.LOCAL_LIB_ENTRY("LM2902_DIP", netlist_LM2902_DIP);
+            h.LOCAL_LIB_ENTRY("UA741_DIP8", netlist_UA741_DIP8);
+            h.LOCAL_LIB_ENTRY("UA741_DIP10", netlist_UA741_DIP10);
+            h.LOCAL_LIB_ENTRY("UA741_DIP14", netlist_UA741_DIP14);
+            h.LOCAL_LIB_ENTRY("MC1558_DIP", netlist_MC1558_DIP);
+            h.LOCAL_LIB_ENTRY("LM747_DIP", netlist_LM747_DIP);
+            h.LOCAL_LIB_ENTRY("LM747A_DIP", netlist_LM747A_DIP);
+            h.LOCAL_LIB_ENTRY("LM3900", netlist_LM3900);
+            h.LOCAL_LIB_ENTRY("AN6551_SIL", netlist_AN6551_SIL);
 
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MB3614_DIP", netlist_MB3614_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MC3340_DIP", netlist_MC3340_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL081_DIP", netlist_TL081_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL082_DIP", netlist_TL082_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "TL084_DIP", netlist_TL084_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM324_DIP", netlist_LM324_DIP);
-            LOCAL_LIB_ENTRY(LM348_DIP)
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM358_DIP", netlist_LM358_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM2902_DIP", netlist_LM2902_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP8", netlist_UA741_DIP8);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP10", netlist_UA741_DIP10);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "UA741_DIP14", netlist_UA741_DIP14);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "MC1558_DIP", netlist_MC1558_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM747_DIP", netlist_LM747_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM747A_DIP", netlist_LM747A_DIP);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "LM3900", netlist_LM3900);
-            netlist.nl_setup_global.LOCAL_LIB_ENTRY(setup, "AN6551_SIL", netlist_AN6551_SIL);
-#endif
-
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
     }
 }

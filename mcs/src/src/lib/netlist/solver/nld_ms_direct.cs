@@ -8,7 +8,7 @@ using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
 using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 
 
 namespace mame.netlist
@@ -18,7 +18,7 @@ namespace mame.netlist
         //template <typename FT, int SIZE>
         abstract class matrix_solver_direct_t<FT, FT_OPS, int_SIZE> : matrix_solver_ext_t<FT, FT_OPS, int_SIZE>
             where FT_OPS : plib.constants_operators<FT>, new()
-            where int_SIZE : int_constant, new()
+            where int_SIZE : int_const, new()
         {
             //using float_type = FT;
 
@@ -26,8 +26,8 @@ namespace mame.netlist
             size_t m_pitch;
 
 
-            size_t SIZEABS { get { return (size_t)Math.Abs(SIZE.value); } }  //static constexpr const std::size_t SIZEABS = plib::parray<FT, SIZE>::SIZEABS();
-            size_t m_pitch_ABS { get { return (((SIZEABS + 0) + 7) / 8) * 8; } }
+            static readonly size_t SIZEABS = (size_t)Math.Abs(SIZE);
+            static readonly size_t m_pitch_ABS = (((SIZEABS + 0) + 7) / 8) * 8;
 
 
             // PALIGNAS_VECTOROPT() parrays define alignment already
@@ -40,7 +40,7 @@ namespace mame.netlist
                 m_pitch = m_pitch_ABS != 0 ? m_pitch_ABS : (((size + 0) + 7) / 8) * 8;
                 //, m_A(size, m_pitch)
                 m_A = new MemoryContainer<MemoryContainer<FT>>((int)size);
-                for (int i = 0; i < size; i++)
+                for (int i = 0; i < (int)size; i++)
                     m_A[i] = new MemoryContainer<FT>((int)m_pitch);
 
 
@@ -77,7 +77,7 @@ namespace mame.netlist
                     {
                         // FIXME: Singular matrix?
                         var Ai = m_A[i];
-                        FT f = plib.pglobal.reciprocal<FT, FT_OPS>(Ai[i]);
+                        FT f = plib.pg.reciprocal<FT, FT_OPS>(Ai[i]);
                         var nzrd = this.m_terms[i].m_nzrd;
                         var nzbd = this.m_terms[i].m_nzbd;
 
@@ -100,7 +100,7 @@ namespace mame.netlist
                         size_t maxrow = i;
                         for (size_t j = i + 1; j < kN; j++)
                         {
-                            if (ops.greater_than(plib.pglobal.abs<FT, FT_OPS>(m_A[j][i]), plib.pglobal.abs<FT, FT_OPS>(m_A[maxrow][i])))  //if (plib::abs(m_A[j][i]) > plib::abs(m_A[maxrow][i]))
+                            if (ops.greater_than(plib.pg.abs<FT, FT_OPS>(m_A[j][i]), plib.pg.abs<FT, FT_OPS>(m_A[maxrow][i])))  //if (plib::abs(m_A[j][i]) > plib::abs(m_A[maxrow][i]))
                             //if (m_A[j][i] * m_A[j][i] > m_A[maxrow][i] * m_A[maxrow][i])
                                 maxrow = j;
                         }
@@ -135,7 +135,7 @@ namespace mame.netlist
 
                         // FIXME: Singular matrix?
                         var Ai = m_A[i];
-                        FT f = plib.pglobal.reciprocal<FT, FT_OPS>(Ai[i]);  //const FT f = plib::reciprocal(Ai[i]);
+                        FT f = plib.pg.reciprocal<FT, FT_OPS>(Ai[i]);  //const FT f = plib::reciprocal(Ai[i]);
 
                         // Eliminate column i from row j
 
@@ -147,7 +147,7 @@ namespace mame.netlist
                             {
                                 Pointer<FT> pi = new Pointer<FT>(Ai, (int)i + 1);  //const FT * pi = &(Ai[i+1]);
                                 Pointer<FT> pj = new Pointer<FT>(Aj, (int)i + 1);  //FT * pj = &(Aj[i+1]);
-                                plib.pglobal.vec_add_mult_scalar_p<FT, FT_OPS>((int)(kN - i - 1), pj, pi, f1);  //plib::vec_add_mult_scalar_p(kN-i-1,pj,pi,f1);
+                                plib.pg.vec_add_mult_scalar_p<FT, FT_OPS>((int)(kN - i - 1), pj, pi, f1);  //plib::vec_add_mult_scalar_p(kN-i-1,pj,pi,f1);
                                 //for (unsigned k = i+1; k < kN; k++)
                                 //  pj[k] = pj[k] + pi[k] * f1;
                                 //for (unsigned k = i+1; k < kN; k++)

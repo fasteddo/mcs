@@ -18,7 +18,11 @@ namespace mame
         // device type definition
         //DEFINE_DEVICE_TYPE(ER2055, er2055_device, "er2055", "ER2055 EAROM (64x8)")
         static device_t device_creator_er2055_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new er2055_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ER2055 = DEFINE_DEVICE_TYPE(device_creator_er2055_device, "er2055", "ER2055 EAROM (64x8)");
+        public static readonly device_type ER2055 = g.DEFINE_DEVICE_TYPE(device_creator_er2055_device, "er2055", "ER2055 EAROM (64x8)");
+
+
+        const int VERBOSE = 0;
+        protected void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
 
 
         public class device_nvram_interface_er2055 : device_nvram_interface
@@ -128,9 +132,9 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            save_item(NAME(new { m_control_state }));
-            save_item(NAME(new { m_address }));
-            save_item(NAME(new { m_data }));
+            save_item(g.NAME(new { m_control_state }));
+            save_item(g.NAME(new { m_address }));
+            save_item(g.NAME(new { m_data }));
 
             m_rom_data = new uint8_t[SIZE_DATA];  // std::make_unique<uint8_t[]>(SIZE_DATA);
 

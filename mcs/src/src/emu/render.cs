@@ -9,8 +9,9 @@ using PointerU8 = mame.Pointer<System.Byte>;
 using render_target_view_mask_vector = mame.std.vector<mame.std.pair<mame.layout_view, System.UInt32>>;  //using view_mask_vector = std::vector<view_mask_pair>;
 using s32 = System.Int32;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using u8 = System.Byte;
+using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 using unsigned = System.UInt32;
@@ -146,21 +147,21 @@ namespace mame
         public static void apply_orientation(render_bounds bounds, int orientation)
         {
             // swap first
-            if ((orientation & global_object.ORIENTATION_SWAP_XY) != 0)
+            if ((orientation & g.ORIENTATION_SWAP_XY) != 0)
             {
                 std.swap(ref bounds.x0, ref bounds.y0);
                 std.swap(ref bounds.x1, ref bounds.y1);
             }
 
             // apply X flip
-            if ((orientation & global_object.ORIENTATION_FLIP_X) != 0)
+            if ((orientation & g.ORIENTATION_FLIP_X) != 0)
             {
                 bounds.x0 = 1.0f - bounds.x0;
                 bounds.x1 = 1.0f - bounds.x1;
             }
 
             // apply Y flip
-            if ((orientation & global_object.ORIENTATION_FLIP_Y) != 0)
+            if ((orientation & g.ORIENTATION_FLIP_Y) != 0)
             {
                 bounds.y0 = 1.0f - bounds.y0;
                 bounds.y1 = 1.0f - bounds.y1;
@@ -282,7 +283,7 @@ namespace mame
         public render_primitive m_next_get() { return m_next; }
         public void m_next_set(render_primitive value) { m_next = value; }
 
-        //bool packable(const INT32 pack_size) const { return (flags & PRIMFLAG_PACKABLE) && texture.base != nullptr && texture.width <= pack_size && texture.height <= pack_size; }
+        //bool packable(const s32 pack_size) const { return (flags & PRIMFLAG_PACKABLE) && texture.base != nullptr && texture.width <= pack_size && texture.height <= pack_size; }
         //float get_quad_width() const { return bounds.x1 - bounds.x0; }
         //float get_quad_height() const { return bounds.y1 - bounds.y0; }
         //float get_full_quad_width() const { return fabsf(full_bounds.x1 - full_bounds.x0); }
@@ -477,9 +478,9 @@ namespace mame
 
     // ======================> render_texture
     // a render_texture is used to track transformations when building an object list
-    public class render_texture : global_object, simple_list_item<render_texture>
+    public class render_texture : simple_list_item<render_texture>
     {
-        const int MAX_TEXTURE_SCALES = 16;
+        const int MAX_TEXTURE_SCALES = 20;
 
         // a scaled_texture contains a single scaled entry for a texture
         struct scaled_texture
@@ -638,7 +639,7 @@ namespace mame
         {
             render_color color = new render_color() { a = 1.0f, r = 1.0f, g = 1.0f, b = 1.0f };
             bitmap_argb32 sourcesub = new bitmap_argb32(source, sbounds);
-            rendutil_global.render_resample_argb_bitmap_hq(dest, sourcesub, color);
+            g.render_resample_argb_bitmap_hq(dest, sourcesub, color);
         }
 
 
@@ -688,7 +689,7 @@ namespace mame
                 scaled.bitmap = new bitmap_argb32();
                 scaled.seqid = 0;
                 int scalenum;
-                for (scalenum = 0; scalenum < std.size(m_scaled); scalenum++)
+                for (scalenum = 0; scalenum < (int)std.size(m_scaled); scalenum++)
                 {
                     scaled = m_scaled[scalenum];
 
@@ -698,12 +699,12 @@ namespace mame
                 }
 
                 // did we get one?
-                if (scalenum == std.size(m_scaled))
+                if (scalenum == (int)std.size(m_scaled))
                 {
                     int lowest = -1;
 
                     // didn't find one -- take the entry with the lowest seqnum
-                    for (scalenum = 0; scalenum < std.size(m_scaled); scalenum++)
+                    for (scalenum = 0; scalenum < (int)std.size(m_scaled); scalenum++)
                         if ((lowest == -1 || m_scaled[scalenum].seqid < m_scaled[lowest].seqid) && !primlist.has_reference(m_scaled[scalenum].bitmap))
                             lowest = scalenum;
 
@@ -749,7 +750,7 @@ namespace mame
             {
                 case texture_format.TEXFORMAT_PALETTE16:
 
-                    assert(m_bitmap.palette() != null);
+                    g.assert(m_bitmap.palette() != null);
 
                     // return our adjusted palette
                     return container.bcg_lookup_table(m_format, out out_length, m_bitmap.palette());
@@ -765,7 +766,7 @@ namespace mame
                     return container.bcg_lookup_table(m_format, out out_length);
 
                 default:
-                    assert(false);
+                    g.assert(false);
                     break;
             }
 
@@ -776,8 +777,7 @@ namespace mame
 
     // ======================> render_container
     // a render_container holds a list of items and an orientation for the entire collection
-    public class render_container : global_object,
-                                    simple_list_item<render_container>,
+    public class render_container : simple_list_item<render_container>,
                                     IDisposable
     {
         // user settings describes the collected user-controllable settings
@@ -898,7 +898,7 @@ namespace mame
 
         ~render_container()
         {
-            assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;
@@ -974,7 +974,7 @@ namespace mame
         //-------------------------------------------------
         //  add_line - add a line item to this container
         //-------------------------------------------------
-        public void add_line(float x0, float y0, float x1, float y1, float width, rgb_t argb, UInt32 flags)
+        public void add_line(float x0, float y0, float x1, float y1, float width, rgb_t argb, u32 flags)
         {
             item newitem = add_generic(render_global.CONTAINER_ITEM_LINE, x0, y0, x1, y1, argb);
             newitem.m_width = width;
@@ -984,7 +984,7 @@ namespace mame
         //-------------------------------------------------
         //  add_quad - add a quad item to this container
         //-------------------------------------------------
-        public void add_quad(float x0, float y0, float x1, float y1, rgb_t argb, render_texture texture, UInt32 flags)
+        public void add_quad(float x0, float y0, float x1, float y1, rgb_t argb, render_texture texture, u32 flags)
         {
             item newitem = add_generic(render_global.CONTAINER_ITEM_QUAD, x0, y0, x1, y1, argb);
             newitem.m_texture = texture;
@@ -994,7 +994,7 @@ namespace mame
         //-------------------------------------------------
         //  add_char - add a char item to this container
         //-------------------------------------------------
-        public void add_char(float x0, float y0, float height, float aspect, rgb_t argb, render_font font, UInt16 ch)
+        public void add_char(float x0, float y0, float height, float aspect, rgb_t argb, render_font font, u16 ch)
         {
             // compute the bounds of the character cell and get the texture
             render_bounds bounds = new render_bounds();
@@ -1005,13 +1005,13 @@ namespace mame
             // add it like a quad
             item newitem = add_generic(render_global.CONTAINER_ITEM_QUAD, bounds.x0, bounds.y0, bounds.x1, bounds.y1, argb);
             newitem.m_texture = texture;
-            newitem.m_flags = render_global.PRIMFLAG_TEXORIENT(emucore_global.ROT0) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | render_global.PRIMFLAG_PACKABLE;
+            newitem.m_flags = render_global.PRIMFLAG_TEXORIENT(g.ROT0) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | render_global.PRIMFLAG_PACKABLE;
             newitem.m_internal = render_global.INTERNAL_FLAG_CHAR;
         }
 
-        public void add_point(float x0, float y0, float diameter, rgb_t argb, UInt32 flags) { add_line(x0, y0, x0, y0, diameter, argb, flags); }
+        public void add_point(float x0, float y0, float diameter, rgb_t argb, u32 flags) { add_line(x0, y0, x0, y0, diameter, argb, flags); }
 
-        public void add_rect(float x0, float y0, float x1, float y1, rgb_t argb, UInt32 flags) { add_quad(x0, y0, x1, y1, argb, null, flags); }
+        public void add_rect(float x0, float y0, float x1, float y1, rgb_t argb, u32 flags) { add_quad(x0, y0, x1, y1, argb, null, flags); }
 
 
         // brightness/contrast/gamma helpers
@@ -1023,7 +1023,7 @@ namespace mame
         //  container's brightess, contrast, and gamma to
         //  an 8-bit value
         //-------------------------------------------------
-        byte apply_brightness_contrast_gamma(byte value) { return rendutil_global.apply_brightness_contrast_gamma(value, m_user.m_brightness, m_user.m_contrast, m_user.m_gamma); }
+        u8 apply_brightness_contrast_gamma(u8 value) { return rendutil_global.apply_brightness_contrast_gamma(value, m_user.m_brightness, m_user.m_contrast, m_user.m_gamma); }
 
         //-------------------------------------------------
         //  apply_brightness_contrast_gamma_fp - apply the
@@ -1045,7 +1045,7 @@ namespace mame
                     if (m_palclient == null) // if adjusted palette hasn't been created yet, create it
                     {
                         m_palclient = new palette_client(palette);
-                        m_bcglookup.resize(palette.max_index());
+                        m_bcglookup.resize((size_t)palette.max_index());
                         recompute_lookups();
                     }
                     //assert (palette == &m_palclient->palette());
@@ -1142,11 +1142,11 @@ namespace mame
             // recompute the 256 entry lookup table
             for (int i = 0; i < 0x100; i++)
             {
-                byte adjustedval = apply_brightness_contrast_gamma((byte)i);
-                m_bcglookup256[i + 0x000] = new rgb_t((UInt32)adjustedval << 0);
-                m_bcglookup256[i + 0x100] = new rgb_t((UInt32)adjustedval << 8);
-                m_bcglookup256[i + 0x200] = new rgb_t((UInt32)adjustedval << 16);
-                m_bcglookup256[i + 0x300] = new rgb_t((UInt32)adjustedval << 24);
+                u8 adjustedval = apply_brightness_contrast_gamma((u8)i);
+                m_bcglookup256[i + 0x000] = new rgb_t((u32)adjustedval << 0);
+                m_bcglookup256[i + 0x100] = new rgb_t((u32)adjustedval << 8);
+                m_bcglookup256[i + 0x200] = new rgb_t((u32)adjustedval << 16);
+                m_bcglookup256[i + 0x300] = new rgb_t((u32)adjustedval << 24);
             }
 
             // recompute the palette entries
@@ -1169,7 +1169,7 @@ namespace mame
                 }
                 else
                 {
-                    memcpy(m_bcglookup, adjusted_palette, (UInt32)colors);  //memcpy(&m_bcglookup[0], adjusted_palette, colors * sizeof(rgb_t));
+                    std.memcpy(m_bcglookup, adjusted_palette, (u32)colors);  //memcpy(&m_bcglookup[0], adjusted_palette, colors * sizeof(rgb_t));
                 }
             }
         }
@@ -1222,7 +1222,7 @@ namespace mame
                 }
                 else
                 {
-                    memcpy(new Pointer<rgb_t>(m_bcglookup, (int)mindirty), new Pointer<rgb_t>(adjusted_palette, (int)mindirty), (maxdirty - mindirty + 1));  //memcpy(&m_bcglookup[mindirty], &adjusted_palette[mindirty], (maxdirty - mindirty + 1) * sizeof(rgb_t));
+                    std.memcpy(new Pointer<rgb_t>(m_bcglookup, (int)mindirty), new Pointer<rgb_t>(adjusted_palette, (int)mindirty), (maxdirty - mindirty + 1));  //memcpy(&m_bcglookup[mindirty], &adjusted_palette[mindirty], (maxdirty - mindirty + 1) * sizeof(rgb_t));
                 }
             }
         }
@@ -1231,7 +1231,7 @@ namespace mame
 
     // ======================> render_target
     // a render_target describes a surface that is being rendered to
-    public class render_target : global_object, simple_list_item<render_target>
+    public class render_target : simple_list_item<render_target>
     {
         // constants
         const int NUM_PRIMLISTS = 3;
@@ -1299,7 +1299,7 @@ namespace mame
             m_max_refresh = 0;
             m_orientation = 0;
             m_base_view = null;
-            m_base_orientation = (int)emucore_global.ROT0;
+            m_base_orientation = g.ROT0;
             m_maxtexwidth = 65536;
             m_maxtexheight = 65536;
             m_transform_container = true;
@@ -1330,16 +1330,16 @@ namespace mame
                 m_base_orientation = rendutil_global.orientation_reverse((int)(manager.machine().system().flags & machine_flags.type.MASK_ORIENTATION));
 
             // rotate left/right
-            if (manager.machine().options().ror() || (manager.machine().options().auto_ror() && ((UInt32)manager.machine().system().flags & emucore_global.ORIENTATION_SWAP_XY) != 0))
-                m_base_orientation = rendutil_global.orientation_add((int)emucore_global.ROT90, m_base_orientation);
-            if (manager.machine().options().rol() || (manager.machine().options().auto_rol() && ((UInt32)manager.machine().system().flags & emucore_global.ORIENTATION_SWAP_XY) != 0))
-                m_base_orientation = rendutil_global.orientation_add((int)emucore_global.ROT270, m_base_orientation);
+            if (manager.machine().options().ror() || (manager.machine().options().auto_ror() && ((int)manager.machine().system().flags & g.ORIENTATION_SWAP_XY) != 0))
+                m_base_orientation = g.orientation_add(g.ROT90, m_base_orientation);
+            if (manager.machine().options().rol() || (manager.machine().options().auto_rol() && ((int)manager.machine().system().flags & g.ORIENTATION_SWAP_XY) != 0))
+                m_base_orientation = g.orientation_add(g.ROT270, m_base_orientation);
 
             // flip X/Y
             if (manager.machine().options().flipx())
-                m_base_orientation ^= (int)emucore_global.ORIENTATION_FLIP_X;
+                m_base_orientation ^= g.ORIENTATION_FLIP_X;
             if (manager.machine().options().flipy())
-                m_base_orientation ^= (int)emucore_global.ORIENTATION_FLIP_Y;
+                m_base_orientation ^= g.ORIENTATION_FLIP_Y;
 
             // set the orientation and layerconfig equal to the base
             m_orientation = m_base_orientation;
@@ -1466,10 +1466,10 @@ namespace mame
             layout_view view = null;
 
             // if it isn't "auto" or an empty string, try to match it as a view name prefix
-            if (viewname != null && !string.IsNullOrEmpty(viewname) && strcmp(viewname, "auto") != 0)
+            if (viewname != null && !string.IsNullOrEmpty(viewname) && std.strcmp(viewname, "auto") != 0)
             {
                 // scan for a matching view name
-                size_t viewlen = (size_t)strlen(viewname);
+                size_t viewlen = (size_t)std.strlen(viewname);
                 for (unsigned i = 0; (view == null) && (m_views.size() > i); ++i)
                 {
                     if (g.core_strnicmp(m_views[i].first.name(), viewname, viewlen) == 0)
@@ -1485,10 +1485,10 @@ namespace mame
             if ((view == null) && !screens.empty())
             {
                 // if we have enough targets to be one per screen, assign in order
-                if (numtargets >= screens.size())
+                if (numtargets >= (int)screens.size())
                 {
                     // find the first view with this screen and this screen only
-                    screen_device screen = screens[index() % screens.size()];
+                    screen_device screen = screens[index() % (int)screens.size()];
                     for (unsigned i = 0; (view == null) && (m_views.size() > i); ++i)
                     {
                         foreach (layout_view.item viewitem in m_views[i].first.items())
@@ -1554,7 +1554,7 @@ namespace mame
                         height = 1.0f;
 
                         // first apply target orientation
-                        if ((target_orientation & emucore_global.ORIENTATION_SWAP_XY) != 0)
+                        if ((target_orientation & g.ORIENTATION_SWAP_XY) != 0)
                             std.swap(ref width, ref height);
 
                         // apply the target pixel aspect ratio
@@ -1590,7 +1590,7 @@ namespace mame
                     float src_aspect = current_view().effective_aspect();
 
                     // apply orientation if required
-                    if ((target_orientation & emucore_global.ORIENTATION_SWAP_XY) != 0)
+                    if ((target_orientation & g.ORIENTATION_SWAP_XY) != 0)
                         src_aspect = 1.0f / src_aspect;
 
                     // get target aspect
@@ -1601,7 +1601,7 @@ namespace mame
                     int scale_mode = m_scale_mode;
                     if (m_scale_mode == render_global.SCALE_FRACTIONAL_AUTO)
                     {
-                        bool is_rotated = (((UInt32)m_manager.machine().system().flags & emucore_global.ORIENTATION_SWAP_XY) ^ (target_orientation & emucore_global.ORIENTATION_SWAP_XY)) != 0;
+                        bool is_rotated = (((int)m_manager.machine().system().flags & g.ORIENTATION_SWAP_XY) ^ (target_orientation & g.ORIENTATION_SWAP_XY)) != 0;
                         scale_mode = is_rotated ^ target_is_portrait ? render_global.SCALE_FRACTIONAL_Y : render_global.SCALE_FRACTIONAL_X;
                     }
 
@@ -1612,8 +1612,8 @@ namespace mame
                     // first compute scale factors to fit the screen
                     float xscale = (float)target_width / src_width;
                     float yscale = (float)target_height / src_height;
-                    float maxxscale = Math.Max(1.0f, (float)(m_int_overscan ? rendutil_global.render_round_nearest(xscale) : Math.Floor(xscale)));
-                    float maxyscale = Math.Max(1.0f, (float)(m_int_overscan ? rendutil_global.render_round_nearest(yscale) : Math.Floor(yscale)));
+                    float maxxscale = std.max(1.0f, (float)(m_int_overscan ? rendutil_global.render_round_nearest(xscale) : Math.Floor(xscale)));
+                    float maxyscale = std.max(1.0f, (float)(m_int_overscan ? rendutil_global.render_round_nearest(yscale) : Math.Floor(yscale)));
 
                     // now apply desired scale mode and aspect correction
                     if (m_keepaspect && target_aspect > src_aspect) xscale *= src_aspect / target_aspect * (maxyscale / yscale);
@@ -1677,7 +1677,7 @@ namespace mame
 
                     // based on the orientation of the screen container, check the bitmap
                     float xscale, yscale;
-                    if ((rendutil_global.orientation_add(m_orientation, screen.container().orientation()) & ORIENTATION_SWAP_XY) == 0)
+                    if ((g.orientation_add(m_orientation, screen.container().orientation()) & g.ORIENTATION_SWAP_XY) == 0)
                     {
                         xscale = (float)visarea.width() / bounds.width();
                         yscale = (float)visarea.height() / bounds.height();
@@ -1721,7 +1721,7 @@ namespace mame
 
             // switch to the next primitive list
             render_primitive_list list = m_primlist[m_listindex];
-            m_listindex = (m_listindex + 1) % std.size(m_primlist);
+            m_listindex = (m_listindex + 1) % (int)std.size(m_primlist);
             list.acquire_lock();
 
             // free any previous primitives
@@ -1761,7 +1761,7 @@ namespace mame
                     item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
                     item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
                     item_xform.color = curitem.color() * root_xform.color;
-                    item_xform.orientation = rendutil_global.orientation_add(curitem.orientation(), root_xform.orientation);
+                    item_xform.orientation = g.orientation_add(curitem.orientation(), root_xform.orientation);
                     item_xform.no_center = false;
 
                     // if there is no associated element, it must be a screen element
@@ -1779,7 +1779,7 @@ namespace mame
                 prim.full_bounds = prim.bounds;
                 prim.color.set(1.0f, 0.1f, 0.1f, 0.1f);
                 prim.texture.base_ = null;
-                prim.flags = PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA);
+                prim.flags = g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA);
                 list.append(prim);
 
                 if (m_width > 1 && m_height > 1)
@@ -1789,7 +1789,7 @@ namespace mame
                     prim.full_bounds = prim.bounds;
                     prim.color.set(1.0f, 0.0f, 0.0f, 0.0f);
                     prim.texture.base_ = null;
-                    prim.flags = PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA);
+                    prim.flags = g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA);
                     list.append(prim);
                 }
             }
@@ -1809,7 +1809,7 @@ namespace mame
                 ui_xform.no_center = true;
 
                 // add UI elements
-                add_container_primitives(list, root_xform, ui_xform, debug, rendertypes_global.BLENDMODE_ALPHA);
+                add_container_primitives(list, root_xform, ui_xform, debug, g.BLENDMODE_ALPHA);
             }
 
             // process the UI if we are the UI target
@@ -1827,7 +1827,7 @@ namespace mame
                 ui_xform.no_center = false;
 
                 // add UI elements
-                add_container_primitives(list, root_xform, ui_xform, m_manager.ui_container(), rendertypes_global.BLENDMODE_ALPHA);
+                add_container_primitives(list, root_xform, ui_xform, m_manager.ui_container(), g.BLENDMODE_ALPHA);
             }
 
             // optimize the list before handing it off
@@ -1861,11 +1861,11 @@ namespace mame
             }
             else
             {
-                if ((m_orientation & ORIENTATION_FLIP_X) != 0)
+                if ((m_orientation & g.ORIENTATION_FLIP_X) != 0)
                     target_f = new std.pair<float, float>(1.0f - target_f.first, target_f.second);  //target_f.first = 1.0f - target_f.first;
-                if ((m_orientation & ORIENTATION_FLIP_Y) != 0)
+                if ((m_orientation & g.ORIENTATION_FLIP_Y) != 0)
                     target_f = new std.pair<float, float>(target_f.first, 1.0f - target_f.second);  //target_f.second = 1.0f - target_f.second;
-                if ((m_orientation & ORIENTATION_SWAP_XY) != 0)
+                if ((m_orientation & g.ORIENTATION_SWAP_XY) != 0)
                     target_f = new std.pair<float, float>(target_f.second, target_f.first);  //std::swap(target_f.first, target_f.second);
 
                 // try to find the right container
@@ -1901,11 +1901,11 @@ namespace mame
         public bool map_point_input(int target_x, int target_y, out ioport_port input_port, out ioport_value input_mask, out float input_x, out float input_y)
         {
             std.pair<float, float> target_f = map_point_internal(target_x, target_y);
-            if ((m_orientation & ORIENTATION_FLIP_X) != 0)
+            if ((m_orientation & g.ORIENTATION_FLIP_X) != 0)
                 target_f = new std.pair<float, float>(1.0f - target_f.first, target_f.second);  //target_f.first = 1.0f - target_f.first;
-            if ((m_orientation & ORIENTATION_FLIP_Y) != 0)
+            if ((m_orientation & g.ORIENTATION_FLIP_Y) != 0)
                 target_f = new std.pair<float, float>(target_f.first, 1.0f - target_f.second);  //target_f.second = 1.0f - target_f.second;
-            if ((m_orientation & ORIENTATION_SWAP_XY) != 0)
+            if ((m_orientation & g.ORIENTATION_SWAP_XY) != 0)
                 target_f = new std.pair<float, float>(target_f.second, target_f.first);  //std::swap(target_f.first, target_f.second);
 
             var items = current_view().interactive_items();
@@ -1925,12 +1925,12 @@ namespace mame
                 if ((edge.position() > target_f.second) || ((edge.position() == target_f.second) && edge.trailing()))
                     break;
                 else
-                    m_hit_test[items.size() + (int)edge.index()] = !edge.trailing();
+                    m_hit_test[items.size() + edge.index()] = !edge.trailing();
             }
 
             for (unsigned i = 0; items.size() > i; ++i)
             {
-                if (m_hit_test[i] && m_hit_test[items.size() + (int)i])
+                if (m_hit_test[i] && m_hit_test[items.size() + i])
                 {
                     layout_view.item item = items[i];
                     render_bounds bounds = item.bounds();
@@ -2070,7 +2070,7 @@ namespace mame
             public load_additional_layout_files_screen_info(screen_device screen)
             {
                 m_device = screen;
-                m_rotated = (screen.orientation() & emucore_global.ORIENTATION_SWAP_XY) != 0;
+                m_rotated = (screen.orientation() & g.ORIENTATION_SWAP_XY) != 0;
                 m_physical = screen.physical_aspect();
                 m_native = new std.pair<unsigned, unsigned>((unsigned)screen.visible_area().width(), (unsigned)screen.visible_area().height());
 
@@ -2146,16 +2146,16 @@ namespace mame
                 int cloneof = driver_list.clone(system);
                 while (0 <= cloneof)
                 {
-                    if (!m_external_artwork || ((UInt64)driver_list.driver(cloneof).flags & MACHINE_IS_BIOS_ROOT) == 0)
+                    if (!m_external_artwork || ((u64)driver_list.driver((size_t)cloneof).flags & g.MACHINE_IS_BIOS_ROOT) == 0)
                     {
-                        if (!load_layout_file(driver_list.driver(cloneof).name, driver_list.driver(cloneof).name))
-                            m_external_artwork |= load_layout_file(driver_list.driver(cloneof).name, "default");
+                        if (!load_layout_file(driver_list.driver((size_t)cloneof).name, driver_list.driver((size_t)cloneof).name))
+                            m_external_artwork |= load_layout_file(driver_list.driver((size_t)cloneof).name, "default");
                         else
                             m_external_artwork = true;
                     }
 
                     // Check the parent of the parent to cover bios based artwork
-                    game_driver parent = driver_list.driver(cloneof);
+                    game_driver parent = driver_list.driver((size_t)cloneof);
                     cloneof = driver_list.clone(parent);
                 }
 
@@ -2223,7 +2223,7 @@ namespace mame
 
                     viewnode.set_attribute(
                             "name",
-                            string_format(
+                            util.string_format(
                                 "Screen {0} Standard ({1}:{2})",
                                 i, screens[i].physical_x(), screens[i].physical_y()));
                     util.xml.data_node screennode = viewnode.add_child("screen", null);
@@ -2253,7 +2253,7 @@ namespace mame
 
                         viewnode.set_attribute(
                                 "name",
-                                string_format(
+                                util.string_format(
                                     "Screen {0} Pixel Aspect ({1}:{2})",
                                     i, screens[i].native_x(), screens[i].native_y()));
 
@@ -2369,14 +2369,14 @@ namespace mame
             // build the path and optionally prepend the directory
             string fname = "";
             if (dirname != null)
-                fname = fname.append_(dirname).append_(PATH_SEPARATOR);
+                fname = fname.append_(dirname).append_(g.PATH_SEPARATOR);
             fname = fname.append_(filename).append_(".lay");
 
             // attempt to open matching files
             util.xml.parse_options parseopt = new util.xml.parse_options();
             util.xml.parse_error parseerr = new util.xml.parse_error();
             parseopt.error = parseerr;
-            emu_file layoutfile = new emu_file(m_manager.machine().options().art_path(), OPEN_FLAG_READ);
+            emu_file layoutfile = new emu_file(m_manager.machine().options().art_path(), g.OPEN_FLAG_READ);
             layoutfile.set_restrict_to_mediapath(1);
             bool result = false;
             for (osd_file.error filerr = layoutfile.open(fname); osd_file.error.NONE == filerr; filerr = layoutfile.open_next())
@@ -2387,18 +2387,18 @@ namespace mame
                 {
                     // extract directory name from location of layout file
                     string artdir = layoutfile.fullpath();
-                    var dirsep = artdir.LastIndexOf(PATH_SEPARATOR[0]);  //auto const dirsep(std::find_if(artdir.rbegin(), artdir.rend(), &util::is_directory_separator));
+                    var dirsep = artdir.LastIndexOf(g.PATH_SEPARATOR[0]);  //auto const dirsep(std::find_if(artdir.rbegin(), artdir.rend(), &util::is_directory_separator));
                     artdir = artdir.Substring(0, dirsep);  //artdir.erase(dirsep.base(), artdir.end());
 
                     // record a warning if we didn't get a properly-formatted XML file
                     if (!load_layout_file(m_manager.machine().root_device(), rootnode, null, artdir))
-                        osd_printf_warning("Improperly formatted XML layout file '{0}', ignoring\n", filename);
+                        g.osd_printf_warning("Improperly formatted XML layout file '{0}', ignoring\n", filename);
                     else
                         result = true;
                 }
                 else if (parseerr.error_message != null)
                 {
-                    osd_printf_warning(
+                    g.osd_printf_warning(
                             "Error parsing XML layout file '{0}' at line {1} column {2}: {3}, ignoring\n",
                             filename,
                             parseerr.error_line,
@@ -2407,7 +2407,7 @@ namespace mame
                 }
                 else
                 {
-                    osd_printf_warning("Error parsing XML layout file '{0}', ignorning\n", filename);
+                    g.osd_printf_warning("Error parsing XML layout file '{0}', ignorning\n", filename);
                 }
             }
 
@@ -2424,7 +2424,7 @@ namespace mame
             }
             catch (emu_fatalerror err)
             {
-                osd_printf_warning("{0}\n", err.what());
+                g.osd_printf_warning("{0}\n", err.what());
                 return false;
             }
 
@@ -2449,8 +2449,8 @@ namespace mame
             cliprect.y1 = xform.yoffs + xform.yscale;
             cliprect &= m_bounds;
 
-            float root_xoffs = root_xform.xoffs + Math.Abs(root_xform.xscale - xform.xscale) * 0.5f;
-            float root_yoffs = root_xform.yoffs + Math.Abs(root_xform.yscale - xform.yscale) * 0.5f;
+            float root_xoffs = root_xform.xoffs + std.fabsf(root_xform.xscale - xform.xscale) * 0.5f;
+            float root_yoffs = root_xform.yoffs + std.fabsf(root_xform.yscale - xform.yscale) * 0.5f;
 
             render_bounds root_cliprect = new render_bounds();
             root_cliprect.x0 = root_xoffs;
@@ -2461,14 +2461,14 @@ namespace mame
 
             // compute the container transform
             object_transform container_xform = new object_transform();
-            container_xform.orientation = rendutil_global.orientation_add(container.orientation(), xform.orientation);
+            container_xform.orientation = g.orientation_add(container.orientation(), xform.orientation);
             {
-                float xscale = (container_xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0 ? container.yscale() : container.xscale();
-                float yscale = (container_xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0 ? container.xscale() : container.yscale();
-                float xoffs = (container_xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0 ? container.yoffset() : container.xoffset();
-                float yoffs = (container_xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0 ? container.xoffset() : container.yoffset();
-                if ((container_xform.orientation & emucore_global.ORIENTATION_FLIP_X) != 0) xoffs = -xoffs;
-                if ((container_xform.orientation & emucore_global.ORIENTATION_FLIP_Y) != 0) yoffs = -yoffs;
+                float xscale = (container_xform.orientation & g.ORIENTATION_SWAP_XY) != 0 ? container.yscale() : container.xscale();
+                float yscale = (container_xform.orientation & g.ORIENTATION_SWAP_XY) != 0 ? container.xscale() : container.yscale();
+                float xoffs = (container_xform.orientation & g.ORIENTATION_SWAP_XY) != 0 ? container.yoffset() : container.xoffset();
+                float yoffs = (container_xform.orientation & g.ORIENTATION_SWAP_XY) != 0 ? container.xoffset() : container.yoffset();
+                if ((container_xform.orientation & g.ORIENTATION_FLIP_X) != 0) xoffs = -xoffs;
+                if ((container_xform.orientation & g.ORIENTATION_FLIP_Y) != 0) yoffs = -yoffs;
                 if (!m_transform_container)
                 {
                     xscale = 1.0f;
@@ -2577,11 +2577,11 @@ namespace mame
                         if (curitem.texture() != null)
                         {
                             // determine the final orientation
-                            int finalorient = rendutil_global.orientation_add((int)render_global.PRIMFLAG_GET_TEXORIENT(curitem.flags()), container_xform.orientation);
+                            int finalorient = g.orientation_add((int)render_global.PRIMFLAG_GET_TEXORIENT(curitem.flags()), container_xform.orientation);
 
                             // based on the swap values, get the scaled final texture
-                            int width = (finalorient & emucore_global.ORIENTATION_SWAP_XY) != 0 ? (int)(prim.bounds.y1 - prim.bounds.y0) : (int)(prim.bounds.x1 - prim.bounds.x0);
-                            int height = (finalorient & emucore_global.ORIENTATION_SWAP_XY) != 0 ? (int)(prim.bounds.x1 - prim.bounds.x0) : (int)(prim.bounds.y1 - prim.bounds.y0);
+                            int width = (finalorient & g.ORIENTATION_SWAP_XY) != 0 ? (int)(prim.bounds.y1 - prim.bounds.y0) : (int)(prim.bounds.x1 - prim.bounds.x0);
+                            int height = (finalorient & g.ORIENTATION_SWAP_XY) != 0 ? (int)(prim.bounds.x1 - prim.bounds.x0) : (int)(prim.bounds.y1 - prim.bounds.y0);
                             width = std.min(width, m_maxtexwidth);
                             height = std.min(height, m_maxtexheight);
 
@@ -2601,8 +2601,8 @@ namespace mame
                                 | render_global.PRIMFLAG_TEXORIENT((UInt32)finalorient)
                                 | render_global.PRIMFLAG_TEXFORMAT((UInt32)curitem.texture().format());
                             prim.flags |= blendmode != -1
-                                ? PRIMFLAG_BLENDMODE((UInt32)blendmode)
-                                : PRIMFLAG_BLENDMODE(render_global.PRIMFLAG_GET_BLENDMODE(curitem.flags()));
+                                ? g.PRIMFLAG_BLENDMODE((UInt32)blendmode)
+                                : g.PRIMFLAG_BLENDMODE(render_global.PRIMFLAG_GET_BLENDMODE(curitem.flags()));
                         }
                         else
                         {
@@ -2628,27 +2628,27 @@ namespace mame
                                 // 1  1  0   solarq      X  Y
                                 // 1  1  1   barrier    !X !Y
 
-                                bool flip_x = ((UInt32)m_manager.machine().system().flags & emucore_global.ORIENTATION_FLIP_X) == emucore_global.ORIENTATION_FLIP_X;
-                                bool flip_y = ((UInt32)m_manager.machine().system().flags & emucore_global.ORIENTATION_FLIP_Y) == emucore_global.ORIENTATION_FLIP_Y;
-                                bool swap_xy = ((UInt32)m_manager.machine().system().flags & emucore_global.ORIENTATION_SWAP_XY) == emucore_global.ORIENTATION_SWAP_XY;
+                                bool flip_x = ((int)m_manager.machine().system().flags & g.ORIENTATION_FLIP_X) == g.ORIENTATION_FLIP_X;
+                                bool flip_y = ((int)m_manager.machine().system().flags & g.ORIENTATION_FLIP_Y) == g.ORIENTATION_FLIP_Y;
+                                bool swap_xy = ((int)m_manager.machine().system().flags & g.ORIENTATION_SWAP_XY) == g.ORIENTATION_SWAP_XY;
 
                                 int vectororient = 0;
                                 if (flip_x)
                                 {
-                                    vectororient |= (int)emucore_global.ORIENTATION_FLIP_X;
+                                    vectororient |= g.ORIENTATION_FLIP_X;
                                 }
                                 if (flip_y)
                                 {
-                                    vectororient |= (int)emucore_global.ORIENTATION_FLIP_Y;
+                                    vectororient |= g.ORIENTATION_FLIP_Y;
                                 }
                                 if ((flip_x && flip_y && swap_xy) || (!flip_x && !flip_y && swap_xy))
                                 {
-                                    vectororient ^= (int)emucore_global.ORIENTATION_FLIP_X;
-                                    vectororient ^= (int)emucore_global.ORIENTATION_FLIP_Y;
+                                    vectororient ^= g.ORIENTATION_FLIP_X;
+                                    vectororient ^= g.ORIENTATION_FLIP_Y;
                                 }
 
                                 // determine the final orientation (textures are up-side down, so flip axis for vectors to immitate that behavior)
-                                int finalorient = rendutil_global.orientation_add(vectororient, container_xform.orientation);
+                                int finalorient = g.orientation_add(vectororient, container_xform.orientation);
 
                                 // determine UV coordinates
                                 prim.texcoords = new render_quad_texuv(render_global.oriented_texcoords[finalorient]);
@@ -2658,16 +2658,16 @@ namespace mame
 
                                 // apply the final orientation from the quad flags and then build up the final flags
                                 prim.flags |= (curitem.flags() & ~(render_global.PRIMFLAG_TEXORIENT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK | render_global.PRIMFLAG_TEXFORMAT_MASK))
-                                    | render_global.PRIMFLAG_TEXORIENT((UInt32)finalorient);
+                                    | render_global.PRIMFLAG_TEXORIENT((u32)finalorient);
                                 prim.flags |= blendmode != -1
-                                    ? PRIMFLAG_BLENDMODE((UInt32)blendmode)
-                                    : PRIMFLAG_BLENDMODE(render_global.PRIMFLAG_GET_BLENDMODE(curitem.flags()));
+                                    ? g.PRIMFLAG_BLENDMODE((u32)blendmode)
+                                    : g.PRIMFLAG_BLENDMODE(render_global.PRIMFLAG_GET_BLENDMODE(curitem.flags()));
                             }
                             else
                             {
                                 // set the basic flags
                                 prim.flags |= (curitem.flags() & ~render_global.PRIMFLAG_BLENDMODE_MASK)
-                                    | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA);
+                                    | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA);
 
                                 // apply clipping
                                 clipped = rendutil_global.render_clip_quad(prim.bounds, cliprect, null);
@@ -2695,15 +2695,15 @@ namespace mame
                 height = (int)(rendutil_global.render_round_nearest(prim.bounds.y1) - rendutil_global.render_round_nearest(prim.bounds.y0));
 
                 container.overlay().get_scaled(
-                    (container_xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0 ? (UInt32)height : (UInt32)width,
-                    (container_xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0 ? (UInt32)width : (UInt32)height, prim.texture, list);
+                    (container_xform.orientation & g.ORIENTATION_SWAP_XY) != 0 ? (UInt32)height : (UInt32)width,
+                    (container_xform.orientation & g.ORIENTATION_SWAP_XY) != 0 ? (UInt32)width : (UInt32)height, prim.texture, list);
 
                 // determine UV coordinates
                 prim.texcoords = new render_quad_texuv(render_global.oriented_texcoords[container_xform.orientation]);
 
                 // set the flags and add it to the list
                 prim.flags = render_global.PRIMFLAG_TEXORIENT((UInt32)container_xform.orientation)
-                    | render_global.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_RGB_MULTIPLY)
+                    | render_global.PRIMFLAG_BLENDMODE(g.BLENDMODE_RGB_MULTIPLY)
                     | render_global.PRIMFLAG_TEXFORMAT((UInt32)container.overlay().format())
                     | render_global.PRIMFLAG_TEXSHADE(1);
 
@@ -2729,14 +2729,14 @@ namespace mame
 
                 // configure the basics
                 prim.color = xform.color;
-                prim.flags = render_global.PRIMFLAG_TEXORIENT((UInt32)xform.orientation) | PRIMFLAG_BLENDMODE((UInt32)blendmode) | render_global.PRIMFLAG_TEXFORMAT((UInt32)texture.format());
+                prim.flags = render_global.PRIMFLAG_TEXORIENT((UInt32)xform.orientation) | g.PRIMFLAG_BLENDMODE((UInt32)blendmode) | render_global.PRIMFLAG_TEXFORMAT((UInt32)texture.format());
 
                 // compute the bounds
                 int width = (int)rendutil_global.render_round_nearest(xform.xscale);
                 int height = (int)rendutil_global.render_round_nearest(xform.yscale);
                 prim.bounds.set_wh(rendutil_global.render_round_nearest(xform.xoffs), rendutil_global.render_round_nearest(xform.yoffs), (float)width, (float)height);
                 prim.full_bounds = prim.bounds;
-                if ((xform.orientation & emucore_global.ORIENTATION_SWAP_XY) != 0)
+                if ((xform.orientation & g.ORIENTATION_SWAP_XY) != 0)
                     std.swap(ref width, ref height);
                 width = std.min(width, m_maxtexwidth);
                 height = std.min(height, m_maxtexheight);
@@ -2804,7 +2804,7 @@ namespace mame
         int view_index(layout_view targetview)
         {
             // return index of view, or zero if not found
-            for (int index = 0; m_views.size() > index; ++index)
+            for (int index = 0; (int)m_views.size() > index; ++index)
             {
                 if (m_views[index].first == targetview)
                     return index;
@@ -3013,7 +3013,7 @@ namespace mame
                         prim.full_bounds = prim.bounds;
                         prim.color.set(1.0f, 0.0f, 0.0f, 0.0f);
                         prim.texture.base_ = null;
-                        prim.flags = PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA);
+                        prim.flags = g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA);
                         clearlist.append(prim);
                     }
 
@@ -3061,17 +3061,17 @@ namespace mame
                             goto done;
 
                         // change the blendmode on the first primitive to be NONE
-                        if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == rendertypes_global.BLENDMODE_RGB_MULTIPLY)
+                        if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == g.BLENDMODE_RGB_MULTIPLY)
                         {
                             // RGB multiply will multiply against 0, leaving nothing
                             prim.color.set(1.0f, 0.0f, 0.0f, 0.0f);
                             prim.texture.base_ = null;
-                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE);
+                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE);
                         }
                         else
                         {
                             // for alpha or add modes, we will blend against 0 or add to 0; treat it like none
-                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_NONE);
+                            prim.flags = (prim.flags & ~render_global.PRIMFLAG_BLENDMODE_MASK) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE);
                         }
 
                         // since alpha is disabled, premultiply the RGB values and reset the alpha to 1.0
@@ -3096,7 +3096,7 @@ namespace mame
 
     // ======================> render_manager
     // contains machine-global information and operations
-    public class render_manager : global_object, IDisposable
+    public class render_manager : IDisposable
     {
         // internal state
         running_machine m_machine;          // reference back to the machine
@@ -3139,7 +3139,7 @@ namespace mame
 
         ~render_manager()
         {
-            assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;
@@ -3271,9 +3271,9 @@ namespace mame
             {
                 // ui container, aggregated multi-screen target
 
-                orient = rendutil_global.orientation_add(m_ui_target.orientation(), m_ui_container.orientation());
+                orient = g.orientation_add(m_ui_target.orientation(), m_ui_container.orientation());
                 // based on the orientation of the target, compute height/width or width/height
-                if ((orient & emucore_global.ORIENTATION_SWAP_XY) == 0)
+                if ((orient & g.ORIENTATION_SWAP_XY) == 0)
                     aspect = (float)m_ui_target.height() / (float)m_ui_target.width();
                 else
                     aspect = (float)m_ui_target.width() / (float)m_ui_target.height();
@@ -3283,7 +3283,7 @@ namespace mame
                 {
                     float pixel_aspect = m_ui_target.pixel_aspect();
 
-                    if ((orient & emucore_global.ORIENTATION_SWAP_XY) != 0)
+                    if ((orient & g.ORIENTATION_SWAP_XY) != 0)
                         pixel_aspect = 1.0f / pixel_aspect;
 
                     return aspect /= pixel_aspect;
@@ -3295,7 +3295,7 @@ namespace mame
 
                 orient = rc.orientation();
                 // based on the orientation of the target, compute height/width or width/height
-                if ((orient & emucore_global.ORIENTATION_SWAP_XY) == 0)
+                if ((orient & g.ORIENTATION_SWAP_XY) == 0)
                     aspect = (float)rc.screen().visible_area().height() / (float)rc.screen().visible_area().width();
                 else
                     aspect = (float)rc.screen().visible_area().width() / (float)rc.screen().visible_area().height();
@@ -3312,7 +3312,7 @@ namespace mame
 
 
         // UI containers
-        public render_container ui_container() { assert(m_ui_container != null);  return m_ui_container; }
+        public render_container ui_container() { g.assert(m_ui_container != null);  return m_ui_container; }
 
 
         // textures

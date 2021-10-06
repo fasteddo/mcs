@@ -4,35 +4,37 @@
 using System;
 using System.Collections.Generic;
 
-using machine_config_cache = mame.util.lru_cache_map<System.Int32, mame.machine_config>;
+using machine_config_cache = mame.util.lru_cache_map<System.UInt64, mame.machine_config>;  //typedef util::lru_cache_map<std::size_t, std::shared_ptr<machine_config> > machine_config_cache;
+using size_t = System.UInt64;
 using software_list_device_enumerator = mame.device_type_enumerator<mame.software_list_device>;  //typedef device_type_enumerator<software_list_device> software_list_device_enumerator;
+using u64 = System.UInt64;
 
 
 namespace mame
 {
     // ======================> driver_list
     // driver_list is a purely static class that wraps the global driver list
-    public class driver_list : global_object
+    public class driver_list
     {
         // use variables in drivlist_global
-        //static int s_driver_count;
-        //static List<game_driver> s_drivers_sorted = new List<game_driver>();
+        //static std::size_t const            s_driver_count;
+        //static game_driver const * const    s_drivers_sorted[];
 
 
         // getters
-        public static int total() { return drivlist_global.s_driver_count; }
+        public static size_t total() { return drivlist_global.s_driver_count; }
 
 
         // any item by index
-        public static game_driver driver(int index) { assert(index < total());  return drivlist_global.s_drivers_sorted[index]; }
-        public static int clone(int index) { return find(driver(index).parent); }
-        public static int non_bios_clone(int index) { int result = find(driver(index).parent); return (result >= 0 && ((UInt64)driver(result).flags & MACHINE_IS_BIOS_ROOT) == 0) ? result : -1; }
-        //static int compatible_with(UInt32 index) { return find(driver(index).compatible_with); }
+        public static game_driver driver(size_t index) { g.assert(index < total());  return drivlist_global.s_drivers_sorted[(int)index]; }
+        public static int clone(size_t index) { return find(driver(index).parent); }
+        public static int non_bios_clone(size_t index) { int result = find(driver(index).parent); return (result >= 0 && ((u64)driver((size_t)result).flags & g.MACHINE_IS_BIOS_ROOT) == 0) ? result : -1; }
+        //static int compatible_with(std::size_t index) { return find(driver(index).compatible_with); }
 
 
         // any item by driver
-        public static int clone(game_driver driver) { int index = find(driver); assert(index >= 0); return clone(index); }
-        public static int non_bios_clone(game_driver driver) { int index = find(driver); assert(index >= 0); return non_bios_clone(index); }
+        public static int clone(game_driver driver) { int index = find(driver); g.assert(index >= 0); return clone((size_t)index); }
+        public static int non_bios_clone(game_driver driver) { int index = find(driver); g.assert(index >= 0); return non_bios_clone((size_t)index); }
         //static int compatible_with(const game_driver &driver) { int index = find(driver); assert(index != -1); return compatible_with(index); }
 
 
@@ -54,7 +56,7 @@ namespace mame
             //game_driver result = std::lower_bound(begin, end, name, cmp);
             //return ((result == end) || core_stricmp(result.name, name)) ? -1 : std::distance(begin, result);
             int index = 0;
-            var driver = drivlist_global.s_drivers_sorted.Find(d => { index++; return d.name == name; });
+            var driver = Array.Find(drivlist_global.s_drivers_sorted, d => { index++; return d.name == name; });
             return driver == null ? -1 : index - 1;
         }
 
@@ -91,7 +93,7 @@ namespace mame
 
         // internal state
         int m_current;
-        int m_filtered_count;
+        size_t m_filtered_count;
         emu_options m_options;
         std.vector<bool> m_included;
         machine_config_cache m_config;  //mutable machine_config_cache m_config;
@@ -109,7 +111,7 @@ namespace mame
             m_options = options;
             m_included = new std.vector<bool>();
             m_included.resize(drivlist_global.s_driver_count);
-            m_config = new util.lru_cache_map<int, machine_config>(CONFIG_CACHE_COUNT);
+            m_config = new machine_config_cache(CONFIG_CACHE_COUNT);
 
 
             include_all();
@@ -129,26 +131,26 @@ namespace mame
 
 
         // getters
-        public int count() { return m_filtered_count; }
+        public size_t count() { return m_filtered_count; }
         public int current() { return m_current; }
         public emu_options options() { return m_options; }
 
 
         // current item
-        public game_driver driver() { return driver(m_current); }
-        public machine_config config() { return config(m_current, m_options); }
-        public int clone() { return clone(m_current); }
-        public int non_bios_clone() { return non_bios_clone(m_current); }
+        public game_driver driver() { return driver((size_t)m_current); }
+        public machine_config config() { return config((size_t)m_current, m_options); }
+        public int clone() { return clone((size_t)m_current); }
+        public int non_bios_clone() { return non_bios_clone((size_t)m_current); }
         //int compatible_with() { return driver_list::compatible_with(m_current); }
-        public void include() { include(m_current); }
-        void exclude() { exclude(m_current); }
+        public void include() { include((size_t)m_current); }
+        void exclude() { exclude((size_t)m_current); }
 
 
         // any item by index
 
-        public bool included(int index)
+        public bool included(size_t index)
         {
-            assert(index < m_included.size());
+            g.assert(index < m_included.size());
             return m_included[index];
         }
 
@@ -156,16 +158,16 @@ namespace mame
         //bool excluded(UInt32 index) const { assert(index >= 0 && index < s_driver_count); return !m_included[index]; }
 
 
-        public machine_config config(int index) { return config(index, m_options); }
+        public machine_config config(size_t index) { return config(index, m_options); }
 
 
         //-------------------------------------------------
         //  config - return a machine_config for the given
         //  driver, allocating on demand if needed
         //-------------------------------------------------
-        machine_config config(int index, emu_options options)
+        machine_config config(size_t index, emu_options options)
         {
-            assert(index < drivlist_global.s_driver_count);
+            g.assert(index < drivlist_global.s_driver_count);
 
             // if we don't have it cached, add it
             machine_config config = m_config.find(index);  //m_config[index];
@@ -176,9 +178,9 @@ namespace mame
         }
 
 
-        public void include(int index)
+        public void include(size_t index)
         {
-            assert(index < m_included.size());
+            g.assert(index < m_included.size());
             if (!m_included[index])
             {
                 m_included[index] = true;
@@ -187,9 +189,9 @@ namespace mame
         }
 
 
-        void exclude(int index)
+        void exclude(size_t index)
         {
-            assert(index < m_included.size());
+            g.assert(index < m_included.size());
             if (m_included[index])
             {
                 m_included[index] = false;
@@ -204,13 +206,13 @@ namespace mame
         //  filter - filter the driver list against the
         //  given string
         //-------------------------------------------------
-        int filter(string filterstring = null)
+        size_t filter(string filterstring = null)
         {
             // reset the count
             exclude_all();
 
             // match name against each driver in the list
-            for (int index = 0; index < drivlist_global.s_driver_count; index++)
+            for (size_t index = 0; index < drivlist_global.s_driver_count; index++)
             {
                 if (matches(filterstring, drivlist_global.s_drivers_sorted[index].name))
                     include(index);
@@ -224,13 +226,13 @@ namespace mame
         //  filter - filter the driver list against the
         //  given driver
         //-------------------------------------------------
-        int filter(game_driver driver)
+        size_t filter(game_driver driver)
         {
             // reset the count
             exclude_all();
 
             // match name against each driver in the list
-            for (int index = 0; index < drivlist_global.s_driver_count; index++)
+            for (size_t index = 0; index < drivlist_global.s_driver_count; index++)
             {
                 if (drivlist_global.s_drivers_sorted[index] == driver)
                     include(index);
@@ -249,7 +251,7 @@ namespace mame
             m_filtered_count = m_included.size();
 
             // always exclude the empty driver
-            exclude(find("___empty"));
+            exclude((size_t)find("___empty"));
         }
 
 
@@ -273,10 +275,10 @@ namespace mame
 
             // always advance one
             // if we have a filter, scan forward to the next match
-            for (m_current++; (m_current < drivlist_global.s_driver_count) && !m_included[m_current]; m_current++) { }
+            for (m_current++; (m_current < (int)drivlist_global.s_driver_count) && !m_included[m_current]; m_current++) { }
 
             // return true if we end up in range
-            return (m_current >= 0) && (m_current < drivlist_global.s_driver_count);
+            return (m_current >= 0) && (m_current < (int)drivlist_global.s_driver_count);
         }
 
 
@@ -290,10 +292,10 @@ namespace mame
 
             // always advance one
             // if we have a filter, scan forward to the next match
-            for (m_current++; (m_current < drivlist_global.s_driver_count) && m_included[m_current]; m_current++) { }
+            for (m_current++; (m_current < (int)drivlist_global.s_driver_count) && m_included[m_current]; m_current++) { }
 
             // return true if we end up in range
-            return (m_current >= 0) && (m_current < drivlist_global.s_driver_count);
+            return (m_current >= 0) && (m_current < (int)drivlist_global.s_driver_count);
         }
 
 
@@ -321,19 +323,19 @@ namespace mame
                 // allocate a temporary list
                 std.vector<int> templist = new std.vector<int>(m_filtered_count);
                 int arrayindex = 0;
-                for (int index = 0; index < drivlist_global.s_driver_count; index++)
+                for (int index = 0; index < (int)drivlist_global.s_driver_count; index++)
                 {
                     if (m_included[index])
                         templist[arrayindex++] = index;
                 }
 
-                assert(arrayindex == m_filtered_count);
+                g.assert(arrayindex == (int)m_filtered_count);
 
                 // shuffle
-                for (int shufnum = 0; shufnum < (4 * drivlist_global.s_driver_count); shufnum++)
+                for (int shufnum = 0; shufnum < (int)(4 * drivlist_global.s_driver_count); shufnum++)
                 {
-                    int item1 = r.Next() % m_filtered_count;
-                    int item2 = r.Next() % m_filtered_count;
+                    int item1 = r.Next() % (int)m_filtered_count;
+                    int item2 = r.Next() % (int)m_filtered_count;
                     int temp = templist[item1];
                     templist[item1] = templist[item2];
                     templist[item2] = temp;
@@ -341,34 +343,34 @@ namespace mame
 
                 // copy out the first few entries
                 for (int matchnum = 0; matchnum < count; matchnum++)
-                    results[matchnum] = templist[matchnum % m_filtered_count];
+                    results[matchnum] = templist[matchnum % (int)m_filtered_count];
             }
             else
             {
                 // allocate memory to track the penalty value
-                std.vector<KeyValuePair<double, int>> penalty = new std.vector<KeyValuePair<double, int>>();
-                penalty.reserve(count);
+                std.vector<std.pair<double, int>> penalty = new std.vector<std.pair<double, int>>();
+                penalty.reserve((size_t)count);
                 string search = unicode_global.ustr_from_utf8(unicode_global.normalize_unicode(string_, unicode_global.unicode_normalization_form.D, true));
                 string composed;
                 string candidate;
 
                 // scan the entire drivers array
-                for (int index = 0; index < drivlist_global.s_driver_count; index++)
+                for (int index = 0; index < (int)drivlist_global.s_driver_count; index++)
                 {
                     if (m_included[index])
                     {
                         // cheat on the shortname as it's always lowercase ASCII
                         game_driver drv = drivlist_global.s_drivers_sorted[index];
-                        int namelen = std.strlen(drv.name);
+                        size_t namelen = std.strlen(drv.name);
                         //candidate.resize(namelen);
                         candidate = drv.name;  //std.copy_n(drv.name, namelen, candidate.begin());
-                        double curpenalty = util_.edit_distance(search, candidate);
+                        double curpenalty = util.edit_distance(search, candidate);
 
                         // if it's not a perfect match, try the description
                         if (curpenalty != 0)
                         {
                             candidate = unicode_global.ustr_from_utf8(unicode_global.normalize_unicode(drv.type.fullname(), unicode_global.unicode_normalization_form.D, true));
-                            double p = util_.edit_distance(search, candidate);
+                            double p = util.edit_distance(search, candidate);
                             if (p < curpenalty)
                                 curpenalty = p;
                         }
@@ -380,7 +382,7 @@ namespace mame
                             composed += ' ';
                             composed += drv.type.fullname();
                             candidate = unicode_global.ustr_from_utf8(unicode_global.normalize_unicode(composed, unicode_global.unicode_normalization_form.D, true));
-                            double p = util_.edit_distance(search, candidate);
+                            double p = util.edit_distance(search, candidate);
                             if (p < curpenalty)
                                 curpenalty = p;
                         }
@@ -390,20 +392,20 @@ namespace mame
                         int it;
                         for (it = 0; it < penalty.Count; it++)
                         {
-                            if (penalty[it].Key > curpenalty)
+                            if (penalty[it].first > curpenalty)
                                 break;
                         }
 
                         if (penalty.Count != it)
                         {
-                            if (penalty.size() >= count)
-                                penalty.resize(count - 1);
+                            if ((int)penalty.size() >= count)
+                                penalty.resize((size_t)count - 1);
 
-                            penalty.emplace(it, new KeyValuePair<double, int>(curpenalty, index));
+                            penalty.emplace(it, new std.pair<double, int>(curpenalty, index));
                         }
-                        else if (penalty.size() < count)
+                        else if ((int)penalty.size() < count)
                         {
-                            penalty.emplace(it, new KeyValuePair<double, int>(curpenalty, index));
+                            penalty.emplace(it, new std.pair<double, int>(curpenalty, index));
                         }
                     }
                 }
@@ -419,7 +421,7 @@ namespace mame
                 //        -1);
                 results = new int [penalty.Count];
                 for (int i = 0; i < results.Length; i++)
-                    results[i] = penalty[i].Value;
+                    results[i] = penalty[i].second;
             }
         }
 
@@ -433,10 +435,10 @@ namespace mame
         void release_current()
         {
             // skip if no current entry
-            if ((m_current >= 0) && (m_current < drivlist_global.s_driver_count))
+            if ((m_current >= 0) && (m_current < (int)drivlist_global.s_driver_count))
             {
                 // skip if we haven't cached a config
-                var cached = m_config.find(m_current);
+                var cached = m_config.find((size_t)m_current);
                 if (cached != null)
                 {
                     // iterate over software lists in this entry and reset

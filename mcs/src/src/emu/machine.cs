@@ -37,8 +37,7 @@ namespace mame
     }
 
 
-    //typedef delegate<void ()> machine_notify_delegate;
-    public delegate void machine_notify_delegate(running_machine machine);
+    public delegate void machine_notify_delegate(running_machine machine);  //typedef delegate<void ()> machine_notify_delegate;
 
 
     public static class machine_global
@@ -62,8 +61,8 @@ namespace mame
         // global allocation helpers
         //#define auto_alloc(m, t)                pool_alloc(static_cast<running_machine &>(m).respool(), t)
         //#define auto_alloc_clear(m, t)          pool_alloc_clear(static_cast<running_machine &>(m).respool(), t)
-        public static MemoryContainer<T> auto_alloc_array<T>(running_machine m, UInt32 c) where T : new() { return global_object.pool_alloc_array<T>(c); }  //#define auto_alloc_array(m, t, c)       pool_alloc_array(static_cast<running_machine &>(m).respool(), t, c)
-        public static MemoryContainer<T> auto_alloc_array_clear<T>(running_machine m, UInt32 c) where T : new() { return global_object.pool_alloc_array_clear<T>(c); }  //#define auto_alloc_array_clear(m, t, c) pool_alloc_array_clear(static_cast<running_machine &>(m).respool(), t, c)
+        //#define auto_alloc_array(m, t, c)       pool_alloc_array(static_cast<running_machine &>(m).respool(), t, c)
+        //#define auto_alloc_array_clear(m, t, c) pool_alloc_array_clear(static_cast<running_machine &>(m).respool(), t, c)
         //#define auto_free(m, v)                 pool_free(static_cast<running_machine &>(m).respool(), v)
     }
 
@@ -125,82 +124,9 @@ namespace mame
     }
 
 
-    // ======================> dummy_space_device
-    // a dummy address space for passing to handlers outside of the memory system
-    public class dummy_space_device : device_t
-                                      //device_memory_interface
-    {
-        //DEFINE_DEVICE_TYPE(DUMMY_SPACE, dummy_space_device, "dummy_space", "Dummy Space")
-        static device_t device_creator_dummy_space_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dummy_space_device(mconfig, tag, owner, clock); }
-        public static readonly device_type DUMMY_SPACE = DEFINE_DEVICE_TYPE(device_creator_dummy_space_device, "dummy_space", "Dummy Space");
-
-
-        public class device_memory_interface_dummy : device_memory_interface
-        {
-            public device_memory_interface_dummy(machine_config mconfig, device_t device) : base(mconfig, device) { }
-
-            protected override space_config_vector memory_space_config() { return ((dummy_space_device)device()).device_memory_interface_memory_space_config(); }
-        }
-
-
-        void dummy(address_map map, device_t owner)
-        {
-            map.op(0x00000000, 0xffffffff).rw(read, write);
-        }
-
-
-        device_memory_interface_dummy m_memory;
-
-        address_space_config m_space_config;
-
-
-        public dummy_space_device(machine_config mconfig, string tag, device_t owner, u32 clock)
-            : base(mconfig, DUMMY_SPACE, tag, owner, clock)
-        {
-            m_class_interfaces.Add(new device_memory_interface_dummy(mconfig, this));
-
-            m_memory = GetClassInterface<device_memory_interface_dummy>();
-            m_space_config = new address_space_config("dummy", endianness_t.ENDIANNESS_LITTLE, 8, 32, 0, dummy);
-        }
-
-
-        public device_memory_interface_dummy memory() { return m_memory; }
-
-
-        public u8 read(offs_t offset)
-        {
-            throw new emu_fatalerror("Attempted to read from generic address space (offs {0})\n", offset);  // %X
-        }
-
-
-        public void write(offs_t offset, u8 data)
-        {
-            throw new emu_fatalerror("Attempted to write to generic address space (offs {0} = {1})\n", offset, data);  // %X = %02X
-        }
-
-
-        // device-level overrides
-        protected override void device_start() { }
-
-
-        // device_memory_interface overrides
-        //-------------------------------------------------
-        //  memory_space_config - return a description of
-        //  any address spaces owned by this device
-        //-------------------------------------------------
-        space_config_vector device_memory_interface_memory_space_config()
-        {
-            return new space_config_vector()
-            {
-                std.make_pair(0, m_space_config)
-            };
-        }
-    }
-
-
     // ======================> running_machine
     // description of the currently-running machine
-    public class running_machine : global_object, IDisposable
+    public class running_machine : IDisposable
     {
         //DISABLE_COPYING(running_machine);
 
@@ -328,9 +254,6 @@ namespace mame
         // string formatting buffer
         string m_string_buffer;  //mutable util::ovectorstream m_string_buffer;
 
-        // configuration state
-        dummy_space_device m_dummy_space;
-
 
         // construction/destruction
 
@@ -362,16 +285,12 @@ namespace mame
             m_ioport = new ioport_manager(this);
             m_scheduler = new device_scheduler(this);
             m_scheduler.device_scheduler_after_ctor(this);
-            m_dummy_space = new dummy_space_device(_config, "dummy_space", root_device(), 0);
 
 
             for (int i = 0; i < m_notifier_list.Length; i++)
                 m_notifier_list[i] = new std.list<notifier_callback_item>();
 
             m_base_time = 0;
-
-            m_dummy_space.set_machine(this);
-            m_dummy_space.config_complete();
 
             // set the machine on all devices
             device_enumerator iter = new device_enumerator(root_device());
@@ -380,12 +299,12 @@ namespace mame
 
             // fetch core options
             if (options().debug())
-                debug_flags = (machine_global.DEBUG_FLAG_ENABLED | machine_global.DEBUG_FLAG_CALL_HOOK) | (machine_global.DEBUG_FLAG_OSD_ENABLED);
+                debug_flags = (g.DEBUG_FLAG_ENABLED | g.DEBUG_FLAG_CALL_HOOK) | (g.DEBUG_FLAG_OSD_ENABLED);
         }
 
         ~running_machine()
         {
-            assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;
@@ -424,23 +343,23 @@ namespace mame
         public memory_manager memory() { return m_memory; }
         public ioport_manager ioport() { return m_ioport; }
         public parameters_manager parameters() { return m_parameters; }
-        public render_manager render() { assert(m_render != null); return m_render; }
-        public input_manager input() { assert(m_input != null); return m_input; }
+        public render_manager render() { g.assert(m_render != null); return m_render; }
+        public input_manager input() { g.assert(m_input != null); return m_input; }
         public sound_manager sound() { return m_sound; }
-        public video_manager video() { assert(m_video != null); return m_video; }
-        network_manager network() { assert(m_network != null); return m_network; }
-        public bookkeeping_manager bookkeeping() { assert(m_network != null); return m_bookkeeping; }
-        public configuration_manager configuration() { assert(m_configuration != null); return m_configuration; }
-        public output_manager output() { assert(m_output != null); return m_output; }
-        public ui_manager ui() { assert(m_ui != null); return m_ui; }
-        public ui_input_manager ui_input() { assert(m_ui_input != null); return m_ui_input; }
-        public crosshair_manager crosshair() { assert(m_crosshair != null); return m_crosshair; }
-        public image_manager image() { assert(m_image != null); return m_image; }
-        public rom_load_manager rom_load() { assert(m_rom_load != null); return m_rom_load; }
-        public tilemap_manager tilemap() { assert(m_tilemap != null); return m_tilemap; }
+        public video_manager video() { g.assert(m_video != null); return m_video; }
+        network_manager network() { g.assert(m_network != null); return m_network; }
+        public bookkeeping_manager bookkeeping() { g.assert(m_network != null); return m_bookkeeping; }
+        public configuration_manager configuration() { g.assert(m_configuration != null); return m_configuration; }
+        public output_manager output() { g.assert(m_output != null); return m_output; }
+        public ui_manager ui() { g.assert(m_ui != null); return m_ui; }
+        public ui_input_manager ui_input() { g.assert(m_ui_input != null); return m_ui_input; }
+        public crosshair_manager crosshair() { g.assert(m_crosshair != null); return m_crosshair; }
+        public image_manager image() { g.assert(m_image != null); return m_image; }
+        public rom_load_manager rom_load() { g.assert(m_rom_load != null); return m_rom_load; }
+        public tilemap_manager tilemap() { g.assert(m_tilemap != null); return m_tilemap; }
         //debug_view_manager &debug_view() const { assert(m_debug_view != NULL); return *m_debug_view; }
-        public debugger_manager debugger() { assert(m_debugger != null); return m_debugger; }
-        public natural_keyboard natkeyboard() { assert(m_natkeyboard != null); return m_natkeyboard; }
+        public debugger_manager debugger() { g.assert(m_debugger != null); return m_debugger; }
+        public natural_keyboard natkeyboard() { g.assert(m_natkeyboard != null); return m_natkeyboard; }
         public DriverClass driver_data<DriverClass>() where DriverClass : driver_device { return (DriverClass)root_device(); }
         public machine_phase phase() { return m_current_phase; }
         public bool paused() { return m_paused || (m_current_phase != machine_phase.RUNNING); }
@@ -480,7 +399,7 @@ namespace mame
         //-------------------------------------------------
         public int run(bool quiet)
         {
-            int error = EMU_ERR_NONE;
+            int error = g.EMU_ERR_NONE;
 
             // use try/catch for deep error recovery
             try
@@ -493,7 +412,7 @@ namespace mame
                 // if we have a logfile, set up the callback
                 if (options().log() && !quiet)
                 {
-                    m_logfile = new emu_file(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+                    m_logfile = new emu_file(g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
                     osd_file.error filerr = m_logfile.open("error.log");
                     if (filerr != osd_file.error.NONE)
                         throw new emu_fatalerror("running_machine::run: unable to open error.log file");
@@ -504,7 +423,7 @@ namespace mame
 
                 if (options().debug() && options().debuglog())
                 {
-                    m_debuglogfile = new emu_file(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+                    m_debuglogfile = new emu_file(g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
                     osd_file.error filerr = m_debuglogfile.open("debug.log");
                     if (filerr != osd_file.error.NONE)
                         throw new emu_fatalerror("running_machine::run: unable to open debug.log file");
@@ -798,7 +717,7 @@ namespace mame
             m_scheduler.eat_all_cycles();
 
             // if we're autosaving on exit, schedule a save as well
-            if (options().autosave() && ((UInt64)m_system.flags & MACHINE_SUPPORTS_SAVE) != 0 && this.time() > attotime.zero)
+            if (options().autosave() && ((UInt64)m_system.flags & g.MACHINE_SUPPORTS_SAVE) != 0 && this.time() > attotime.zero)
                 schedule_save("auto");
         }
 
@@ -904,12 +823,6 @@ namespace mame
         }
 
 
-        // misc
-
-        public dummy_space_device dummy() { return m_dummy_space; }
-        public address_space dummy_space() { return m_dummy_space.memory().space(AS_PROGRAM); }
-
-
         /*-------------------------------------------------
             popmessage - pop up a user-visible message
         -------------------------------------------------*/
@@ -1011,8 +924,8 @@ namespace mame
                 {
                     device_memory_interface memory = cpu.memory();
                     device_state_interface state = cpu.state();
-                    address_space prg = memory.space(AS_PROGRAM);
-                    return string_format(prg.is_octal() ? "'{0}' ({1})" :  "'{0}' ({1})", cpu.tag(), prg.logaddrchars(), state.pc());  // "'%s' (%0*o)" :  "'%s' (%0*X)"
+                    address_space prg = memory.space(g.AS_PROGRAM);
+                    return util.string_format(prg.is_octal() ? "'{0}' ({1})" :  "'{0}' ({1})", cpu.tag(), prg.logaddrchars(), state.pc());  // "'%s' (%0*o)" :  "'%s' (%0*X)"
                 }
             }
 
@@ -1106,7 +1019,7 @@ namespace mame
             m_network = new network_manager(this);
 
             // initialize the debugger
-            if ((debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0)
+            if ((debug_flags & g.DEBUG_FLAG_ENABLED) != 0)
             {
                 m_debug_view = new debug_view_manager(this);
                 m_debugger = new debugger_manager(this);
@@ -1148,7 +1061,7 @@ namespace mame
                 schedule_load(savegame);
 
             // if we're in autosave mode, schedule a load
-            else if (options().autosave() && ((UInt64)m_system.flags & MACHINE_SUPPORTS_SAVE) != 0)
+            else if (options().autosave() && ((UInt64)m_system.flags & g.MACHINE_SUPPORTS_SAVE) != 0)
                 schedule_load("auto");
 
             manager().update_machine();
@@ -1211,12 +1124,12 @@ namespace mame
                 }
 
                 if (!string.IsNullOrEmpty(software))
-                    result += PATH_SEPARATOR + software;
+                    result += g.PATH_SEPARATOR + software;
 
                 string tag = device.tag();
                 tag = tag.Remove(0, 1);
                 tag = tag.Replace(':', '_');
-                result += PATH_SEPARATOR + tag;
+                result += g.PATH_SEPARATOR + tag;
             }
 
             return result;
@@ -1230,7 +1143,7 @@ namespace mame
         {
             foreach (device_nvram_interface nvram in new nvram_interface_enumerator(root_device()))
             {
-                emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_READ);
+                emu_file file = new emu_file(options().nvram_directory(), g.OPEN_FLAG_READ);
                 if (file.open(nvram_filename(nvram.device())) == osd_file.error.NONE)
                 {
                     nvram.nvram_load(file);
@@ -1252,7 +1165,7 @@ namespace mame
             {
                 if (nvram.nvram_can_save())
                 {
-                    emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+                    emu_file file = new emu_file(options().nvram_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
                     if (file.open(nvram_filename(nvram.device())) == osd_file.error.NONE)
                     {
                         nvram.nvram_save(file);
@@ -1289,11 +1202,9 @@ namespace mame
         //-------------------------------------------------
         void start_all_devices()
         {
-            m_dummy_space.start();
-
             // iterate through the devices
             int last_failed_starts = -1;
-            while (last_failed_starts != 0)
+            do
             {
                 // iterate over all devices
                 int failed_starts = 0;
@@ -1309,25 +1220,25 @@ namespace mame
                                 device.set_machine(this);
 
                             // now start the device
-                            osd_printf_verbose("Starting {0} '{1}'\n", device.name(), device.tag());
+                            g.osd_printf_verbose("Starting {0} '{1}'\n", device.name(), device.tag());
                             device.start();
                         }
-                        catch (device_missing_dependencies)  // handle missing dependencies by moving the device to the end
+                        catch (device_missing_dependencies)
                         {
-                            // if we're the end, fail
-                            osd_printf_verbose("  (missing dependencies; rescheduling)\n");
+                            // handle missing dependencies by moving the device to the end
+                            g.osd_printf_verbose("  (missing dependencies; rescheduling)\n");
                             failed_starts++;
                         }
                     }
                 }
 
-                // each iteration should reduce the number of failed starts; error if
-                // this doesn't happen
+                // each iteration should reduce the number of failed starts; error if this doesn't happen
                 if (failed_starts == last_failed_starts)
                     throw new emu_fatalerror("Circular dependency in device startup!");
 
                 last_failed_starts = failed_starts;
             }
+            while (last_failed_starts != 0);
         }
 
         //-------------------------------------------------
@@ -1356,8 +1267,6 @@ namespace mame
             // iterate over devices and stop them
             foreach (device_t device in new device_enumerator(root_device()))
                 device.stop();
-
-            m_dummy_space.stop();
         }
 
         //-------------------------------------------------

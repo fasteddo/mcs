@@ -92,7 +92,7 @@ namespace mame.netlist.analog
         public void timestep(nl_fptype cap, nl_fptype v, nl_fptype step)
         {
             //plib::unused_var(cap);
-            m_h.op = plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(step);
+            m_h.op = plib.pg.reciprocal(step);
             m_v.op = v;
         }
 
@@ -120,7 +120,7 @@ namespace mame.netlist.analog
         // Returns { G, Ieq }
         public std.pair<nl_fptype, nl_fptype> timestep(nl_fptype cap, nl_fptype v, nl_fptype step)
         {
-            nl_fptype h = plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(step);
+            nl_fptype h = plib.pg.reciprocal(step);
             nl_fptype G = cap * h + m_gmin;
             return new std.pair<nl_fptype, nl_fptype>(G, - G * v);
         }
@@ -250,7 +250,7 @@ namespace mame.netlist.analog
                 }
                 else
                 {
-                    var IseVDVt = plib.pglobal.exp<nl_fptype, nl_fptype_ops>(m_logIs + m_Vd.op * m_VtInv);
+                    var IseVDVt = plib.pg.exp(m_logIs + m_Vd.op * m_VtInv);
                     m_Id.op = IseVDVt - m_Is;
                     m_G.op = IseVDVt * m_VtInv + m_gmin;
                 }
@@ -266,7 +266,7 @@ namespace mame.netlist.analog
                 }
                 else // log stepping should already be done in mosfet
                 {
-                    var IseVDVt = plib.pglobal.exp<nl_fptype, nl_fptype_ops>(std.min(+fp_constants_double.DIODE_MAXVOLT(), m_logIs + m_Vd.op * m_VtInv));
+                    var IseVDVt = plib.pg.exp(std.min(+fp_constants_double.DIODE_MAXVOLT(), m_logIs + m_Vd.op * m_VtInv));
                     m_Id.op = IseVDVt - m_Is;
                     m_G.op = IseVDVt * m_VtInv + m_gmin;
                 }
@@ -277,18 +277,18 @@ namespace mame.netlist.analog
         public void set_param(nl_fptype Is, nl_fptype n, nl_fptype gmin, nl_fptype temp)
         {
             m_Is = Is;
-            m_logIs = plib.pglobal.log<nl_fptype, nl_fptype_ops>(Is);
+            m_logIs = plib.pg.log(Is);
             m_gmin = gmin;
 
             m_Vt = nlconst.np_VT(n, temp);
-            m_VtInv = plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(m_Vt);
+            m_VtInv = plib.pg.reciprocal(m_Vt);
 
 #if USE_TEXTBOOK_DIODE
             m_Vmin = nlconst::diode_min_cutoff_mult() * m_Vt;
             // Vcrit : f(V) has smallest radius of curvature rho(V) == min(rho(v))
             m_Vcrit = m_Vt * plib::log(m_Vt / m_Is / nlconst::sqrt2());
 #else
-            m_Vmin = plib.pglobal.log<nl_fptype, nl_fptype_ops>(m_gmin * m_Vt / m_Is) * m_Vt;
+            m_Vmin = plib.pg.log(m_gmin * m_Vt / m_Is) * m_Vt;
             //m_Imin = plib::exp(m_logIs + m_Vmin * m_VtInv) - m_Is;
             //m_Imin = m_gmin * m_Vt - m_Is;
             // Fixme: calculate max dissipation voltage - use use 0.5 (500mW) here for typical diode
@@ -297,9 +297,9 @@ namespace mame.netlist.analog
             // ln(P/Is) = ln(V)+V/Vt ~= V - 1 + V/vt
             // V = (1+ln(P/Is))/(1 + 1/Vt)
 
-            m_Vcrit = (nlconst.one() + plib.pglobal.log<nl_fptype, nl_fptype_ops>(nlconst.half() / m_Is)) / (nlconst.one() + m_VtInv);
+            m_Vcrit = (nlconst.one() + plib.pg.log(nlconst.half() / m_Is)) / (nlconst.one() + m_VtInv);
             //printf("Vcrit: %f\n", m_Vcrit);
-            m_Icrit_p_Is = plib.pglobal.exp<nl_fptype, nl_fptype_ops>(m_logIs + m_Vcrit * m_VtInv);
+            m_Icrit_p_Is = plib.pg.exp(m_logIs + m_Vcrit * m_VtInv);
             //m_Icrit = plib::exp(m_logIs + m_Vcrit * m_VtInv) - m_Is;
 #endif
 

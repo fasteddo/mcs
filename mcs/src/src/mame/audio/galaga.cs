@@ -23,32 +23,32 @@ namespace mame
          *
          *************************************/
 
-        static readonly double GALAGA_54XX_DAC_R = 1.0 / (1.0 / RES_K(47) + 1.0 / RES_K(22) + 1.0 / RES_K(10) + 1.0 / RES_K(4.7));
+        static readonly double GALAGA_54XX_DAC_R = 1.0 / (1.0 / g.RES_K(47) + 1.0 / g.RES_K(22) + 1.0 / g.RES_K(10) + 1.0 / g.RES_K(4.7));
 
 
         static readonly discrete_dac_r1_ladder galaga_54xx_dac = new discrete_dac_r1_ladder
         (
             4,              /* number of DAC bits */
-            new double [] { RES_K(47),
-                RES_K(22),
-                RES_K(10),
-                RES_K(4.7) },
+            new double [] { g.RES_K(47),
+                g.RES_K(22),
+                g.RES_K(10),
+                g.RES_K(4.7) },
             0, 0, 0, 0      /* nothing extra */
         );
 
 
-        static readonly double GALAGA_VREF = 5.0 * (RES_K(2.2) / (RES_K(3.3) + RES_K(2.2)));
+        static readonly double GALAGA_VREF = 5.0 * (g.RES_K(2.2) / (g.RES_K(3.3) + g.RES_K(2.2)));
 
 
         static readonly discrete_op_amp_filt_info galaga_chanl1_filt = new discrete_op_amp_filt_info
         (
-            GALAGA_54XX_DAC_R + RES_K(100),
+            GALAGA_54XX_DAC_R + g.RES_K(100),
             0,                  /* no second input */
-            RES_K(22),
+            g.RES_K(22),
             0,                  /* not used */
-            RES_K(220),
-            CAP_U(0.001),
-            CAP_U(0.001),
+            g.RES_K(220),
+            g.CAP_U(0.001),
+            g.CAP_U(0.001),
             0,                  /* not used */
             GALAGA_VREF,        /* vRef */
             5,                  /* vP */
@@ -58,13 +58,13 @@ namespace mame
 
         static readonly discrete_op_amp_filt_info galaga_chanl2_filt = new discrete_op_amp_filt_info
         (
-            GALAGA_54XX_DAC_R + RES_K(47),
+            GALAGA_54XX_DAC_R + g.RES_K(47),
             0,                  /* no second input */
-            RES_K(10),
+            g.RES_K(10),
             0,                  /* not used */
-            RES_K(150),
-            CAP_U(0.01),
-            CAP_U(0.01),
+            g.RES_K(150),
+            g.CAP_U(0.01),
+            g.CAP_U(0.01),
             0,                  /* not used */
             GALAGA_VREF,      /* vRef */
             5,                  /* vP */
@@ -73,13 +73,13 @@ namespace mame
 
         static readonly discrete_op_amp_filt_info galaga_chanl3_filt = new discrete_op_amp_filt_info
         (
-            GALAGA_54XX_DAC_R + RES_K(150),
+            GALAGA_54XX_DAC_R + g.RES_K(150),
             0,                  /* no second input */
-            RES_K(22),
+            g.RES_K(22),
             0,                  /* not used */
-            RES_K(470),
-            CAP_U(0.01),
-            CAP_U(0.01),
+            g.RES_K(470),
+            g.CAP_U(0.01),
+            g.CAP_U(0.01),
             0,                  /* not used */
             GALAGA_VREF,      /* vRef */
             5,                  /* vP */
@@ -89,15 +89,15 @@ namespace mame
         static readonly discrete_mixer_desc galaga_final_mixer = new discrete_mixer_desc
         (
             g.DISC_MIXER_IS_OP_AMP,
-            new double [] { RES_K(33),
-                RES_K(33),
-                RES_K(10) },
+            new double [] { g.RES_K(33),
+                g.RES_K(33),
+                g.RES_K(10) },
             new int [] {0},            /* no rNode{} */
             new double [] {0},            /* no c{} */
             0,              /* no rI */
-            RES_K(3.3),
+            g.RES_K(3.3),
             0,              /* no cF */
-            CAP_U(0.1),
+            g.CAP_U(0.1),
             GALAGA_VREF,    /* vRef */
             40800          /* gain */
         );
@@ -109,15 +109,15 @@ namespace mame
             /************************************************
              * Input register mapping
              ************************************************/
-            g.DISCRETE_INPUT_DATA(NAMCO_54XX_0_DATA(g.NODE_01)),
-            g.DISCRETE_INPUT_DATA(NAMCO_54XX_1_DATA(g.NODE_01)),
-            g.DISCRETE_INPUT_DATA(NAMCO_54XX_2_DATA(g.NODE_01)),
+            g.DISCRETE_INPUT_DATA(g.NAMCO_54XX_0_DATA(g.NODE_01)),
+            g.DISCRETE_INPUT_DATA(g.NAMCO_54XX_1_DATA(g.NODE_01)),
+            g.DISCRETE_INPUT_DATA(g.NAMCO_54XX_2_DATA(g.NODE_01)),
 
             /************************************************
              * CHANL1 sound
              ************************************************/
             g.DISCRETE_DAC_R1(g.NODE_20,
-                            NAMCO_54XX_2_DATA(g.NODE_01),
+                            g.NAMCO_54XX_2_DATA(g.NODE_01),
                             4,          /* 4V - unmeasured*/
                             galaga_54xx_dac),
             g.DISCRETE_OP_AMP_FILTER(GALAGA_CHANL1_SND,
@@ -130,7 +130,7 @@ namespace mame
              * CHANL2 sound
              ************************************************/
             g.DISCRETE_DAC_R1(g.NODE_30,
-                            NAMCO_54XX_1_DATA(g.NODE_01),
+                            g.NAMCO_54XX_1_DATA(g.NODE_01),
                             4,          /* 4V - unmeasured*/
                             galaga_54xx_dac),
             g.DISCRETE_OP_AMP_FILTER(GALAGA_CHANL2_SND,
@@ -143,7 +143,7 @@ namespace mame
              * CHANL3 sound
              ************************************************/
             g.DISCRETE_DAC_R1(g.NODE_40,
-                            NAMCO_54XX_0_DATA(g.NODE_01),
+                            g.NAMCO_54XX_0_DATA(g.NODE_01),
                             4,          /* 4V - unmeasured*/
                             galaga_54xx_dac),
             g.DISCRETE_OP_AMP_FILTER(GALAGA_CHANL3_SND,

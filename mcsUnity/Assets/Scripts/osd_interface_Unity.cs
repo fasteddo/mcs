@@ -1,10 +1,10 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using mame;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using mame;
 
 
 namespace mcsUnity
@@ -491,8 +491,8 @@ namespace mcsUnity
 
 
         render_target m_target;
-        RawBuffer screenbuffer = new RawBuffer(640 * 480 * 2 * 4); // g_state.screenbuffer = new uint32_t[400 * 400 * 2];
-        public RawBufferPointer screenbufferptr;
+        MemoryContainer<byte> screenbuffer = new MemoryContainer<byte>(640 * 480 * 2 * 4); // g_state.screenbuffer = new uint32_t[400 * 400 * 2];
+        public Pointer<byte> screenbufferptr;
         public Queue<Int16> m_audiobuffer = new Queue<Int16>();
 
         public object osdlock = new object();
@@ -626,12 +626,11 @@ namespace mcsUnity
             /////////////////////////////////////////////
             // custom code below
 
-            validity_checker valid = new validity_checker(machine.options());
-            valid.set_validate_all(true);
+            validity_checker valid = new validity_checker(machine.options(), false);
             string sysname = machine.options().system_name();
             bool result = valid.check_all_matching(string.IsNullOrEmpty(sysname) ? "*" : sysname);
             if (!result)
-                throw new emu_fatalerror((int)EMU_ERR.EMU_ERR_FAILED_VALIDITY, "Validity check failed ({0} errors, {1} warnings in total)\n", valid.errors(), valid.warnings());
+                throw new emu_fatalerror((int)main_global.EMU_ERR_FAILED_VALIDITY, "Validity check failed ({0} errors, {1} warnings in total)\n", valid.errors(), valid.warnings());
 
             /**
              *  Save away the machine, we'll need it in osd_customize_input_type_list
@@ -658,7 +657,7 @@ namespace mcsUnity
             m_target.set_bounds(400, 400, 1.0f);
 
 
-            screenbufferptr = new RawBufferPointer(screenbuffer);
+            screenbufferptr = new Pointer<byte>(screenbuffer);
 
 
             {
@@ -733,14 +732,14 @@ namespace mcsUnity
             {
                 if (m_exitScheduled)
                 {
-                    global.osd_printf_verbose("osd_interface.update() - calling schedule_exit()");
+                    global_object.osd_printf_verbose("osd_interface.update() - calling schedule_exit()");
                     machine().schedule_exit();
                 }
             }
 
 
             if (updateCount++ % 50 == 0)
-                global.osd_printf_verbose("osd_interface.update() - {0}", updateCount);
+                global_object.osd_printf_verbose("osd_interface.update() - {0}", updateCount);
 
 
             if (!skip_redraw)
@@ -756,8 +755,7 @@ namespace mcsUnity
                 lock (osdlock)
                 {
                     //software_renderer<typeof(UInt32), 0,0,0, 16,8,0>.draw_primitives(list, g_state.screenbuffer, width, height, pitch);
-                    software_renderer<UInt32>.SetTemplateParams(32, 0,0,0, 16,8,0);
-                    software_renderer<UInt32>.draw_primitives(list, screenbufferptr, width, height, pitch);
+                    software_renderer<UInt32,  int_constant_0, int_constant_0, int_constant_0,  int_constant_16, int_constant_8, int_constant_0>.draw_primitives(list, screenbufferptr, width, height, pitch);
 
                     osdlock_screen_buffer_updated = true;
                 }
@@ -774,12 +772,18 @@ namespace mcsUnity
             m_exitScheduled = true;
         }
 
-        public override void update_audio_stream(ListPointer<Int16> buffer, int samples_this_frame)  //const int16_t *buffer, int samples_this_frame) = 0;
+
+        public override void input_update()
+        {
+        }
+
+
+        public override void update_audio_stream(Pointer<Int16> buffer, int samples_this_frame)  //const int16_t *buffer, int samples_this_frame) = 0;
         {
             base.update_audio_stream(buffer, samples_this_frame);
 
             if (audioUpdateCount++ % 10 == 0)
-                global.osd_printf_verbose("osd_interface.update_audio_stream() - {0} - samples: {1}\n", audioUpdateCount, samples_this_frame);
+                global_object.osd_printf_verbose("osd_interface.update_audio_stream() - {0} - samples: {1}\n", audioUpdateCount, samples_this_frame);
 
             lock (osdlock_audio)
             {
@@ -801,13 +805,13 @@ namespace mcsUnity
         }
 
 
-        public override void customize_input_type_list(simple_list<input_type_entry> typelist)
+        public override void customize_input_type_list(std.vector<input_type_entry> typelist)
         {
             base.customize_input_type_list(typelist);
         }
 
 
-        public override std_vector<mame.ui.menu_item> get_slider_list()
+        public override std.vector<mame.ui.menu_item> get_slider_list()
         {
             return base.get_slider_list();
         }
@@ -837,7 +841,7 @@ namespace mcsUnity
             {
                 intref item = (intref)item_internal;
 
-                if (item.i == 1) global.osd_printf_info("keyboard_get_state() - Pressed");
+                if (item.i == 1) global_object.osd_printf_info("keyboard_get_state() - Pressed");
 
                 return item.i;
             }
@@ -897,30 +901,30 @@ namespace mcsUnity
         //-------------------------------------------------
         //  output_callback  - callback for osd_printf_...
         //-------------------------------------------------
-        public override void output_callback(osd_output_channel channel, string msg)
+        public override void output_callback(osd_output_channel channel, string format, params object [] args)
         {
             switch (channel)
             {
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR:
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_WARNING:
-                    Debug.Log(msg);  //vfprintf(stderr, msg, args);
+                    Debug.LogFormat(format, args);  //vfprintf(stderr, msg, args);
                     //System.Diagnostics.Debug.Write(str);
                     break;
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_INFO:
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_LOG:
-                    Debug.Log(msg);  //vfprintf(stdout, msg, args);
+                    Debug.LogFormat(format, args);  //vfprintf(stdout, msg, args);
                     //System.Diagnostics.Debug.Write(str);
                     break;
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_VERBOSE:
                     if (verbose())
                     {
-                        Debug.Log(msg);  //vfprintf(stdout, msg, args);
+                        Debug.LogFormat(format, args);  //vfprintf(stdout, msg, args);
                         //System.Diagnostics.Debug.Write(str);
                     }
                     break;
                 case osd_output_channel.OSD_OUTPUT_CHANNEL_DEBUG:
 //#if MAME_DEBUG
-                    Debug.Log(msg);  //vfprintf(stdout, msg, args);
+                    Debug.LogFormat(format, args);  //vfprintf(stdout, msg, args);
                     //System.Diagnostics.Debug.Write(str);
 //#endif
                     break;

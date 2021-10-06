@@ -7,12 +7,14 @@ using System.Collections.Generic;
 
 namespace mame
 {
-    public static class nlm_other_global
+    public static class nlm_otheric_global
     {
         //static NETLIST_START(MC14584B_DIP)
         public static void netlist_MC14584B_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -24,9 +26,9 @@ namespace mame
             MC14584B_GATE(setup, "F");
 #endif
 
-            netlist.nl_setup_global.NET_C(setup, "A.VDD", "B.VDD", "C.VDD", "D.VDD", "E.VDD", "F.VDD");
-            netlist.nl_setup_global.NET_C(setup, "A.VSS", "B.VSS", "C.VSS", "D.VSS", "E.VSS", "F.VSS");
-            netlist.nl_setup_global.DIPPINS(setup,  /*       +--------------+      */
+            h.NET_C("A.VDD", "B.VDD", "C.VDD", "D.VDD", "E.VDD", "F.VDD");
+            h.NET_C("A.VSS", "B.VSS", "C.VSS", "D.VSS", "E.VSS", "F.VSS");
+            h.DIPPINS(  /*       +--------------+      */
                 "A.A",  /*    A1 |1     ++    14| VDD  */ "A.VDD",
                 "A.Q",  /*    Y1 |2           13| A6   */ "F.A",
                 "B.A",  /*    A2 |3           12| Y6   */ "F.Q",
@@ -34,10 +36,10 @@ namespace mame
                 "C.A",  /*    A3 |5           10| Y5   */ "E.Q",
                 "C.Q",  /*    Y3 |6            9| A4   */ "D.A",
                 "A.VSS",/*   VSS |7            8| Y4   */ "D.Q"
-                      /*       +--------------+      */
+                        /*       +--------------+      */
             );
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
         }
 
 
@@ -58,7 +60,9 @@ namespace mame
         //static NETLIST_START(NE566_DIP)
         public static void netlist_NE566_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
 
             throw new emu_unimplemented();
 #if false
@@ -130,24 +134,90 @@ namespace mame
             netlist.nl_setup_global.NET_C(setup, "COMP.VCC", "FO.A1");
 #endif
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(NE555_DIP)
+        public static void netlist_NE555_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            NE555(A)
+
+            ALIAS(1, A.GND)      // Pin 1
+            ALIAS(2, A.TRIG)     // Pin 2
+            ALIAS(3, A.OUT)      // Pin 3
+            ALIAS(4, A.RESET)    // Pin 4
+            ALIAS(5, A.CONT)     // Pin 5
+            ALIAS(6, A.THRESH)   // Pin 6
+            ALIAS(7, A.DISCH)    // Pin 7
+            ALIAS(8, A.VCC)      // Pin 8
+#endif
+
+            h.NETLIST_END();
+        }
+
+
+        //static NETLIST_START(MC1455P_DIP)
+        public static void netlist_MC1455P_DIP(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.NETLIST_START(setup);
+
+            throw new emu_unimplemented();
+#if false
+            MC1455P(A)
+
+            ALIAS(1, A.GND)      // Pin 1
+            ALIAS(2, A.TRIG)     // Pin 2
+            ALIAS(3, A.OUT)      // Pin 3
+            ALIAS(4, A.RESET)    // Pin 4
+            ALIAS(5, A.CONT)     // Pin 5
+            ALIAS(6, A.THRESH)   // Pin 6
+            ALIAS(7, A.DISCH)    // Pin 7
+            ALIAS(8, A.VCC)      // Pin 8
+#endif
+
+            h.NETLIST_END();
+        }
+
+
+        //static TRUTHTABLE_START(MC14584B_GATE, 1, 1, "")
+        static void netlist_MC14584B_GATE(netlist.nlparse_t setup)
+        {
+            netlist.helper h = new netlist.helper();
+
+            h.TRUTHTABLE_START(setup, "MC14584B_GATE", 1, 1, "");
+            h.TT_HEAD(" A | Q ");
+            h.TT_LINE(" 0 | 1 |100");
+            h.TT_LINE(" 1 | 0 |100");
+            // 2.1V negative going and 2.7V positive going at 5V
+            h.TT_FAMILY("FAMILY(TYPE=CMOS IVL=0.42 IVH=0.54 OVL=0.05 OVH=0.05 ORL=10.0 ORH=10.0)");
+            h.TRUTHTABLE_END();
         }
 
 
         //NETLIST_START(otheric_lib)
         public static void netlist_otheric_lib(netlist.nlparse_t setup)
         {
-            throw new emu_unimplemented();
-#if false
-            TRUTHTABLE_ENTRY(MC14584B_GATE);
+            netlist.helper h = new netlist.helper();
 
-            LOCAL_LIB_ENTRY(MC14584B_DIP);
-            LOCAL_LIB_ENTRY(NE566_DIP);
-            LOCAL_LIB_ENTRY(NE555_DIP);
-            LOCAL_LIB_ENTRY(MC1455P_DIP);
-#endif
+            h.NETLIST_START(setup);
 
-            netlist.nl_setup_global.NETLIST_END();
+            h.TRUTHTABLE_ENTRY("MC14584B_GATE", netlist_MC14584B_GATE);
+
+            h.LOCAL_LIB_ENTRY("MC14584B_DIP", netlist_MC14584B_DIP);
+            h.LOCAL_LIB_ENTRY("NE566_DIP", netlist_NE566_DIP);
+            h.LOCAL_LIB_ENTRY("NE555_DIP", netlist_NE555_DIP);
+            h.LOCAL_LIB_ENTRY("MC1455P_DIP", netlist_MC1455P_DIP);
+
+            h.NETLIST_END();
         }
     }
 }

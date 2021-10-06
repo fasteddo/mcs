@@ -39,7 +39,7 @@ namespace mcsForm
             if (naudioUpdateCount++ % 10 == 0)
                 System.Diagnostics.Trace.WriteLine(string.Format("MameWaveProvider16.Read() - {0} - buffer: {1} offset: {2} sampleCount: {3} osd.m_audiobuffer: {4}", naudioUpdateCount, buffer.Length, offset, sampleCount, osd.m_audiobuffer.Count));
 
-            lock (this)
+            lock (osd.osdlock_audio)
             {
                 for (int i = 0; i < sampleCount; i++)
                 {

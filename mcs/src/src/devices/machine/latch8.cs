@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read_line = mame.devcb_read<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_read_line = devcb_read<int, 1U>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -19,7 +19,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(LATCH8, latch8_device, "latch8", "8-bit latch")
         static device_t device_creator_latch8_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new latch8_device(mconfig, tag, owner, clock); }
-        public static readonly device_type LATCH8 = DEFINE_DEVICE_TYPE(device_creator_latch8_device, "latch8", "8-bit latch");
+        public static readonly device_type LATCH8 = g.DEFINE_DEVICE_TYPE(device_creator_latch8_device, "latch8", "8-bit latch");
 
 
         // internal state
@@ -32,8 +32,8 @@ namespace mame
         uint32_t           m_xorvalue;  /* after mask */
         uint32_t           m_nosync;
 
-        devcb_write_line.array<uint32_constant_8> m_write_cb;
-        devcb_read_line.array<uint32_constant_8> m_read_cb;
+        devcb_write_line.array<u64_const_8> m_write_cb;
+        devcb_read_line.array<u64_const_8> m_read_cb;
 
 
         latch8_device(machine_config mconfig, string tag, device_t owner, uint32_t clock = 0)
@@ -45,8 +45,8 @@ namespace mame
             m_maskout = 0;
             m_xorvalue = 0;
             m_nosync = 0;
-            m_write_cb = new devcb_write_line.array<uint32_constant_8>(this, () => { return new devcb_write_line(this); });
-            m_read_cb = new devcb_read_line.array<uint32_constant_8>(this, () => { return new devcb_read_line(this); });
+            m_write_cb = new devcb_write_line.array<u64_const_8>(this, () => { return new devcb_write_line(this); });
+            m_read_cb = new devcb_read_line.array<u64_const_8>(this, () => { return new devcb_read_line(this); });
         }
 
 
@@ -56,7 +56,7 @@ namespace mame
         {
             uint8_t res;
 
-            assert(offset == 0);
+            g.assert(offset == 0);
 
             res = m_value;
             if (m_has_read != 0)
@@ -64,7 +64,7 @@ namespace mame
                 for (int i = 0; i < 8; i++)
                 {
                     if (!m_read_cb[i].isnull())
-                        res = (uint8_t)((res & ~(1 << i)) | (m_read_cb[i].op() << i));
+                        res = (uint8_t)((res & ~(1 << i)) | (m_read_cb[i].op_s32() << i));
                 }
             }
 
@@ -74,7 +74,7 @@ namespace mame
 
         public void write(offs_t offset, uint8_t data)
         {
-            assert(offset == 0);
+            g.assert(offset == 0);
 
             if (m_nosync != 0xff)
                 machine().scheduler().synchronize(timerproc, (0xFF << 8) | data);
@@ -156,7 +156,7 @@ namespace mame
                 cb.resolve();
             }
 
-            save_item(NAME(new { m_value }));
+            save_item(g.NAME(new { m_value }));
         }
 
 
@@ -191,7 +191,7 @@ namespace mame
                 for (int i = 0; i < 8; i++)
                 {
                     if (g.BIT(changed, i) != 0 && !m_write_cb[i].isnull())
-                        m_write_cb[i].op(g.BIT(m_value, i));
+                        m_write_cb[i].op_s32(g.BIT(m_value, i));
                 }
             }
         }
@@ -202,7 +202,7 @@ namespace mame
             uint8_t mask = (uint8_t)(1 << (int)offset);
             uint8_t masked_data = (uint8_t)(((data >> bit) & 0x01) << (int)offset);
 
-            assert(offset < 8);
+            g.assert(offset < 8);
 
             /* No need to synchronize ? */
             if ((m_nosync & mask) != 0)

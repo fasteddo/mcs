@@ -8,6 +8,7 @@ using int16_t = System.Int16;
 using int32_t = System.Int32;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using samples_device_enumerator = mame.device_type_enumerator<mame.samples_device>;  //typedef device_type_enumerator<samples_device> samples_device_enumerator;
+using size_t = System.UInt64;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -23,7 +24,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(SAMPLES, samples_device, "samples", "Samples")
         static device_t device_creator_samples_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock = 0) { return new samples_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SAMPLES = DEFINE_DEVICE_TYPE(device_creator_samples_device, "samples", "Samples");
+        public static readonly device_type SAMPLES = g.DEFINE_DEVICE_TYPE(device_creator_samples_device, "samples", "Samples");
 
 
         class device_sound_interface_samples : device_sound_interface
@@ -123,7 +124,7 @@ namespace mame
         //-------------------------------------------------
         void stop(uint8_t channel)
         {
-            assert(channel < m_channels);
+            g.assert(channel < m_channels);
 
             // force an update before we start
             channel_t chan = m_channel[channel];
@@ -160,7 +161,7 @@ namespace mame
             uint32_t offset = file.read(new Pointer<uint8_t>(buf), 4);
             if (offset < 4)
             {
-                osd_printf_warning("Unable to read {0}, 0-byte file?\n", file.filename());
+                g.osd_printf_warning("Unable to read {0}, 0-byte file?\n", file.filename());
                 return false;
             }
 
@@ -171,7 +172,7 @@ namespace mame
                 return read_flac_sample(file, sample);
 
             // if nothing appropriate, emit a warning
-            osd_printf_warning("Unable to read {0}, corrupt file?\n", file.filename());
+            g.osd_printf_warning("Unable to read {0}, corrupt file?\n", file.filename());
 
             return false;
         }
@@ -203,11 +204,11 @@ namespace mame
                 chan.paused = false;
 
                 // register with the save state system
-                save_item(NAME(new { chan.source_num }), channel);
-                save_item(NAME(new { chan.source_len }), channel);
-                save_item(NAME(new { chan.pos }), channel);
-                save_item(NAME(new { chan.loop }), channel);
-                save_item(NAME(new { chan.paused }), channel);
+                save_item(g.NAME(new { chan.source_num }), channel);
+                save_item(g.NAME(new { chan.source_len }), channel);
+                save_item(g.NAME(new { chan.pos }), channel);
+                save_item(g.NAME(new { chan.loop }), channel);
+                save_item(g.NAME(new { chan.paused }), channel);
             }
 
             // initialize any custom handlers
@@ -253,7 +254,7 @@ namespace mame
                 {
                     if (chan.loop)
                     {
-                        double posfloor = floor(chan.pos);
+                        double posfloor = std.floor(chan.pos);
                         chan.pos -= posfloor;
                         chan.pos += (double)((int32_t)posfloor % chan.source_len);
                     }
@@ -293,7 +294,7 @@ namespace mame
                         for (int sampindex = 0; sampindex < buffer.samples(); sampindex++)
                         {
                             // do a linear interp on the sample
-                            double pos_floor = floor(chan.pos);
+                            double pos_floor = std.floor(chan.pos);
                             double frac = chan.pos - pos_floor;
                             int32_t ipos = (int32_t)pos_floor;
 
@@ -348,25 +349,25 @@ namespace mame
             offset += file.read(new Pointer<uint8_t>(filesizeBuffer), 4);
             if (offset < 8)
             {
-                osd_printf_warning("Unexpected size offset {0} ({1})\n", offset, file.filename());
+                g.osd_printf_warning("Unexpected size offset {0} ({1})\n", offset, file.filename());
                 return false;
             }
 
             filesize = filesizeBuffer.GetUInt32();
-            filesize = little_endianize_int32(filesize);
+            filesize = g.little_endianize_int32(filesize);
 
             // read the RIFF file type and make sure it's a WAVE file
             MemoryU8 buf = new MemoryU8(32, true);  //char [] buf = new char[32];
             offset += file.read(new Pointer<uint8_t>(buf), 4);
             if (offset < 12)
             {
-                osd_printf_warning("Unexpected WAVE offset {0} ({1})\n", offset, file.filename());
+                g.osd_printf_warning("Unexpected WAVE offset {0} ({1})\n", offset, file.filename());
                 return false;
             }
 
             if (!(buf[0] == 'W' && buf[1] == 'A' && buf[2] == 'V' && buf[3] == 'E'))  // memcmp(&buf[0], "WAVE", 4) != 0)
             {
-                osd_printf_warning("Could not find WAVE header ({0})\n", file.filename());
+                g.osd_printf_warning("Could not find WAVE header ({0})\n", file.filename());
                 return false;
             }
 
@@ -378,7 +379,7 @@ namespace mame
                 offset += file.read(new Pointer<uint8_t>(buf), 4);
                 offset += file.read(new Pointer<uint8_t>(lengthBuffer), 4);
                 length = lengthBuffer.GetUInt32();
-                length = little_endianize_int32(length);
+                length = g.little_endianize_int32(length);
                 if (buf[0] == 'f' && buf[1] == 'm' && buf[2] == 't' && buf[3] == ' ')  //if (memcmp(&buf[0], "fmt ", 4) == 0)
                     break;
 
@@ -387,7 +388,7 @@ namespace mame
                 offset += length;
                 if (offset >= filesize)
                 {
-                    osd_printf_warning("Could not find fmt tag ({0})\n", file.filename());
+                    g.osd_printf_warning("Could not find fmt tag ({0})\n", file.filename());
                     return false;
                 }
             }
@@ -397,20 +398,20 @@ namespace mame
             MemoryU8 temp16Buffer = new MemoryU8(2, true);
             offset += file.read(new Pointer<uint8_t>(temp16Buffer), 2);
             temp16 = temp16Buffer.GetUInt16();
-            temp16 = little_endianize_int16(temp16);
+            temp16 = g.little_endianize_int16(temp16);
             if (temp16 != 1)
             {
-                osd_printf_warning("unsupported format {0} - only PCM is supported ({1})\n", temp16, file.filename());
+                g.osd_printf_warning("unsupported format {0} - only PCM is supported ({1})\n", temp16, file.filename());
                 return false;
             }
 
             // number of channels -- only mono is supported
             offset += file.read(new Pointer<uint8_t>(temp16Buffer), 2);
             temp16 = temp16Buffer.GetUInt16();
-            temp16 = little_endianize_int16(temp16);
+            temp16 = g.little_endianize_int16(temp16);
             if (temp16 != 1)
             {
-                osd_printf_warning("unsupported number of channels {0} - only mono is supported ({1})\n", temp16, file.filename());
+                g.osd_printf_warning("unsupported number of channels {0} - only mono is supported ({1})\n", temp16, file.filename());
                 return false;
             }
 
@@ -419,7 +420,7 @@ namespace mame
             MemoryU8 rateBuffer = new MemoryU8(4, true);
             offset += file.read(new Pointer<uint8_t>(rateBuffer), 4);
             rate = rateBuffer.GetUInt32();
-            rate = little_endianize_int32(rate);
+            rate = g.little_endianize_int32(rate);
 
             // bytes/second and block alignment are ignored
             offset += file.read(new Pointer<uint8_t>(buf), 6);
@@ -429,10 +430,10 @@ namespace mame
             MemoryU8 bitsBuffer = new MemoryU8(2, true);
             offset += file.read(new Pointer<uint8_t>(bitsBuffer), 2);
             bits = bitsBuffer.GetUInt16();
-            bits = little_endianize_int16(bits);
+            bits = g.little_endianize_int16(bits);
             if (bits != 8 && bits != 16)
             {
-                osd_printf_warning("unsupported bits/sample {0} - only 8 and 16 are supported ({1})\n", bits, file.filename());
+                g.osd_printf_warning("unsupported bits/sample {0} - only 8 and 16 are supported ({1})\n", bits, file.filename());
                 return false;
             }
 
@@ -446,7 +447,7 @@ namespace mame
                 offset += file.read(new Pointer<uint8_t>(buf), 4);
                 offset += file.read(new Pointer<uint8_t>(lengthBuffer), 4);
                 length = lengthBuffer.GetUInt32();
-                length = little_endianize_int32(length);
+                length = g.little_endianize_int32(length);
                 if (buf[0] == 'd' && buf[1] == 'a' && buf[2] == 't' && buf[3] == 'a')  //if (memcmp(&buf[0], "data", 4) == 0)
                     break;
 
@@ -455,7 +456,7 @@ namespace mame
                 offset += length;
                 if (offset >= filesize)
                 {
-                    osd_printf_warning("Could not find data tag ({0})\n", file.filename());
+                    g.osd_printf_warning("Could not find data tag ({0})\n", file.filename());
                     return false;
                 }
             }
@@ -463,7 +464,7 @@ namespace mame
             // if there was a 0 length data block, we're done
             if (length == 0)
             {
-                osd_printf_warning("empty data block ({0})\n", file.filename());
+                g.osd_printf_warning("empty data block ({0})\n", file.filename());
                 return false;
             }
 
@@ -473,7 +474,7 @@ namespace mame
             // read the data in
             if (bits == 8)
             {
-                sample.data.resize((int)length);
+                sample.data.resize(length);
                 MemoryU8 sample_data_8bit = new MemoryU8((int)length, true);
                 file.read(new Pointer<uint8_t>(sample_data_8bit), length);
 
@@ -485,15 +486,15 @@ namespace mame
             else
             {
                 // 16-bit data is fine as-is
-                sample.data.resize((int)length / 2);
+                sample.data.resize(length / 2);
                 MemoryU8 sample_data_8bit = new MemoryU8((int)length, true);
                 file.read(new Pointer<uint8_t>(sample_data_8bit), length);
 
                 // swap high/low on big-endian systems
-                if (ENDIANNESS_NATIVE != endianness_t.ENDIANNESS_LITTLE)
+                if (g.ENDIANNESS_NATIVE != endianness_t.ENDIANNESS_LITTLE)
                 {
                     for (UInt32 sindex = 0; sindex < length / 2; sindex++)
-                        sample.data[sindex] = (Int16)little_endianize_int16(sample_data_8bit.GetUInt16((int)sindex));  //sample.data[sindex]);
+                        sample.data[sindex] = (Int16)g.little_endianize_int16(sample_data_8bit.GetUInt16((int)sindex));  //sample.data[sindex]);
                 }
             }
 
@@ -520,7 +521,7 @@ namespace mame
                 return false;
 
             // resize the array and read
-            sample.data.resize((int)decoder.total_samples());
+            sample.data.resize(decoder.total_samples());
             if (!decoder.decode_interleaved(sample.data, (UInt32)sample.data.Count))
                 return false;
 
@@ -549,23 +550,23 @@ namespace mame
             string altbasename = iter.altbasename();
 
             // pre-size the array
-            m_sample.resize(iter.count());
+            m_sample.resize((size_t)iter.count());
 
             // load the samples
             int index = 0;
             for (string samplename = iter.first(); samplename != null; index++, samplename = iter.next())
             {
                 // attempt to open as FLAC first
-                emu_file file = new emu_file(machine().options().sample_path(), OPEN_FLAG_READ);
-                osd_file.error filerr = file.open(string_format("{0}" + PATH_SEPARATOR + "{1}.flac", basename, samplename));
+                emu_file file = new emu_file(machine().options().sample_path(), g.OPEN_FLAG_READ);
+                osd_file.error filerr = file.open(util.string_format("{0}" + g.PATH_SEPARATOR + "{1}.flac", basename, samplename));
                 if (filerr != osd_file.error.NONE && altbasename != null)
-                    filerr = file.open(string_format("{0}" + PATH_SEPARATOR + "{1}.flac", altbasename, samplename));
+                    filerr = file.open(util.string_format("{0}" + g.PATH_SEPARATOR + "{1}.flac", altbasename, samplename));
 
                 // if not, try as WAV
                 if (filerr != osd_file.error.NONE)
-                    filerr = file.open(string_format("{0}" + PATH_SEPARATOR + "{1}.wav", basename, samplename));
+                    filerr = file.open(util.string_format("{0}" + g.PATH_SEPARATOR + "{1}.wav", basename, samplename));
                 if (filerr != osd_file.error.NONE && altbasename != null)
-                    filerr = file.open(string_format("{0}" + PATH_SEPARATOR + "{1}.wav", altbasename, samplename));
+                    filerr = file.open(util.string_format("{0}" + g.PATH_SEPARATOR + "{1}.wav", altbasename, samplename));
 
                 // if opened, read it
                 if (filerr == osd_file.error.NONE)

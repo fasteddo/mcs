@@ -78,7 +78,7 @@ namespace mame
 
         ~validity_checker()
         {
-            assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;
@@ -116,7 +116,7 @@ namespace mame
             m_drivlist.reset();
             while (m_drivlist.next())
             {
-                if (strcmp(driver.type.source(), m_drivlist.driver().type.source()) == 0)
+                if (std.strcmp(driver.type.source(), m_drivlist.driver().type.source()) == 0)
                     validate_one(m_drivlist.driver());
             }
 
@@ -172,7 +172,7 @@ namespace mame
 
             // if we failed to match anything, it
             if (str != null && !validated_any)
-                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", str);
+                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", str);
 
             return !(m_errors > 0 || m_warnings > 0);
         }
@@ -332,7 +332,7 @@ namespace mame
             }
             catch (emu_fatalerror err)
             {
-                osd_printf_error("Fatal error {0}", err.what());
+                g.osd_printf_error("Fatal error {0}", err.what());
             }
 
 
@@ -379,17 +379,17 @@ namespace mame
 
             byte a = 0xff;
             byte b = (byte)(a + 1);
-            if (b > a) osd_printf_error("UINT8 must be 8 bits\n");
+            if (b > a) g.osd_printf_error("UINT8 must be 8 bits\n");
 
             // check size of core integer types
-            if (sizeof(sbyte)  != 1) osd_printf_error("INT8 must be 8 bits\n");
-            if (sizeof(byte)   != 1) osd_printf_error("UINT8 must be 8 bits\n");
-            if (sizeof(Int16)  != 2) osd_printf_error("INT16 must be 16 bits\n");
-            if (sizeof(UInt16) != 2) osd_printf_error("UINT16 must be 16 bits\n");
-            if (sizeof(int)    != 4) osd_printf_error("INT32 must be 32 bits\n");
-            if (sizeof(UInt32) != 4) osd_printf_error("UINT32 must be 32 bits\n");
-            if (sizeof(Int64)  != 8) osd_printf_error("INT64 must be 64 bits\n");
-            if (sizeof(UInt64) != 8) osd_printf_error("UINT64 must be 64 bits\n");
+            if (sizeof(sbyte)  != 1) g.osd_printf_error("INT8 must be 8 bits\n");
+            if (sizeof(byte)   != 1) g.osd_printf_error("UINT8 must be 8 bits\n");
+            if (sizeof(Int16)  != 2) g.osd_printf_error("INT16 must be 16 bits\n");
+            if (sizeof(UInt16) != 2) g.osd_printf_error("UINT16 must be 16 bits\n");
+            if (sizeof(int)    != 4) g.osd_printf_error("INT32 must be 32 bits\n");
+            if (sizeof(UInt32) != 4) g.osd_printf_error("UINT32 must be 32 bits\n");
+            if (sizeof(Int64)  != 8) g.osd_printf_error("INT64 must be 64 bits\n");
+            if (sizeof(UInt64) != 8) g.osd_printf_error("UINT64 must be 64 bits\n");
 
             //throw new emu_unimplemented();
 #if false

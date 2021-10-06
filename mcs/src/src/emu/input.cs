@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using u32 = System.UInt32;
 
 
@@ -318,8 +318,7 @@ namespace mame
 
     // ======================> input_code
     // a combined code that describes a particular input on a particular device
-    public class input_code : global_object,
-                              IComparable<input_code>
+    public class input_code : IComparable<input_code>
     {
         public static readonly input_code INPUT_CODE_INVALID = new input_code();
 
@@ -337,11 +336,11 @@ namespace mame
         {
             m_internal = ((((UInt32)devclass & 0xf) << 28) | (((UInt32)devindex & 0xff) << 20) | (((UInt32)itemclass & 0xf) << 16) | (((UInt32)modifier & 0xf) << 12) | ((UInt32)itemid & 0xfff));
 
-            assert(devclass >= 0 && devclass < input_device_class.DEVICE_CLASS_MAXIMUM);
-            assert(devindex >= 0 && devindex < input_global.DEVICE_INDEX_MAXIMUM);
-            assert(itemclass >= 0 && itemclass < input_item_class.ITEM_CLASS_MAXIMUM);
-            assert(modifier >= 0 && modifier < input_item_modifier.ITEM_MODIFIER_MAXIMUM);
-            assert(itemid >= 0 && itemid < input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
+            g.assert(devclass >= 0 && devclass < input_device_class.DEVICE_CLASS_MAXIMUM);
+            g.assert(devindex >= 0 && devindex < input_global.DEVICE_INDEX_MAXIMUM);
+            g.assert(itemclass >= 0 && itemclass < input_item_class.ITEM_CLASS_MAXIMUM);
+            g.assert(modifier >= 0 && modifier < input_item_modifier.ITEM_MODIFIER_MAXIMUM);
+            g.assert(itemid >= 0 && itemid < input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
         }
 
         //public input_code(input_code src) { m_internal = src.m_internal; }
@@ -351,6 +350,12 @@ namespace mame
         public static bool operator ==(input_code left, input_code right) { return left.m_internal == right.m_internal; }
         public static bool operator !=(input_code left, input_code right) { return left.m_internal != right.m_internal; }
         //constexpr bool operator<(const input_code &rhs) const noexcept { return m_internal < rhs.m_internal; }
+        public override bool Equals(Object obj)
+        {
+            if (obj == null || base.GetType() != obj.GetType()) return false;
+            return this == (input_code)obj;
+        }
+        public override int GetHashCode() { return m_internal.GetHashCode(); }
         public int CompareTo(input_code other) { return m_internal.CompareTo(other.m_internal); }
 
 
@@ -371,17 +376,17 @@ namespace mame
         //}
         public void set_device_index(int devindex)
         {
-            assert(devindex >= 0 && (UInt32)devindex <= 0xff);
+            g.assert(devindex >= 0 && (UInt32)devindex <= 0xff);
             m_internal = (UInt32)((m_internal & ~(0xff << 20)) | (((UInt32)devindex & 0xff) << 20));
         }
         public void set_item_class(input_item_class itemclass)
         {
-            assert(itemclass >= 0 && (UInt32)itemclass <= 0xf);
+            g.assert(itemclass >= 0 && (UInt32)itemclass <= 0xf);
             m_internal = (UInt32)((m_internal & ~(0xf << 16)) | (((UInt32)itemclass & 0xf) << 16));
         }
         public void set_item_modifier(input_item_modifier modifier)
         {
-            assert(modifier >= 0 && (UInt32)modifier <= 0xf);
+            g.assert(modifier >= 0 && (UInt32)modifier <= 0xf);
             m_internal = (UInt32)((m_internal & ~(0xf << 12)) | (((UInt32)modifier & 0xf) << 12));
         }
         //void set_item_id(input_item_id itemid) noexcept
@@ -394,7 +399,7 @@ namespace mame
 
     // ======================> input_seq
     // a sequence of input_codes, supporting AND/OR and inversion
-    public class input_seq : global_object
+    public class input_seq
     {
         // constant codes used in sequences
         public static readonly input_code end_code = new input_code(input_device_class.DEVICE_CLASS_INTERNAL,     0, input_item_class.ITEM_CLASS_INVALID, input_item_modifier.ITEM_MODIFIER_NONE, input_item_id.ITEM_ID_SEQ_END);
@@ -407,7 +412,7 @@ namespace mame
 
 
         // internal state
-        std.array<input_code, uint32_constant_16> m_code = new std.array<input_code, uint32_constant_16>();
+        std.array<input_code, u64_const_16> m_code = new std.array<input_code, u64_const_16>();
 
 
         // construction/destruction
@@ -425,7 +430,7 @@ namespace mame
         // operators
         public static bool operator ==(input_seq lhs, input_seq rhs) { return lhs.m_code == rhs.m_code; }
         public static bool operator !=(input_seq lhs, input_seq rhs) { return lhs.m_code != rhs.m_code; }
-        public input_code this[int index] { get { return (index >= 0 && index < m_code.size()) ? m_code[index] : end_code; } }  //constexpr input_code operator[](int index) const noexcept { return (index >= 0 && index < m_code.size()) ? m_code[index] : end_code; }
+        public input_code this[int index] { get { return (index >= 0 && index < (int)m_code.size()) ? m_code[index] : end_code; } }  //constexpr input_code operator[](int index) const noexcept { return (index >= 0 && index < m_code.size()) ? m_code[index] : end_code; }
 
         //input_seq &operator+=(input_code code) noexcept;
         //-------------------------------------------------
@@ -436,10 +441,10 @@ namespace mame
         {
             // if not enough room, return FALSE
             int curlength = length();
-            if (curlength < m_code.size() - 1)
+            if (curlength < (int)m_code.size() - 1)
             {
                 m_code[curlength++] = code;
-                if ((curlength + 1) < m_code.size())
+                if ((curlength + 1) < (int)m_code.size())
                     m_code[curlength + 1] = end_code;
             }
 
@@ -464,17 +469,24 @@ namespace mame
             {
                 // otherwise, append an OR token and then the new code
                 int curlength = length();
-                if ((curlength + 1) < m_code.size())
+                if ((curlength + 1) < (int)m_code.size())
                 {
                     m_code[curlength] = or_code;
                     m_code[curlength + 1] = code;
-                    if ((curlength + 2) < m_code.size())
+                    if ((curlength + 2) < (int)m_code.size())
                         m_code[curlength + 2] = end_code;
                 }
             }
 
             return this;
         }
+
+        public override bool Equals(Object obj)
+        {
+            if (obj == null || base.GetType() != obj.GetType()) return false;
+            return this == (input_seq)obj;
+        }
+        public override int GetHashCode() { return m_code.GetHashCode(); }
 
 
         // getters
@@ -485,13 +497,13 @@ namespace mame
         int length()
         {
             // find the end token; error if none found
-            for (int seqnum = 0; seqnum < m_code.size(); seqnum++)
+            for (int seqnum = 0; seqnum < (int)m_code.size(); seqnum++)
             {
                 if (m_code[seqnum] == end_code)
                     return seqnum;
             }
 
-            return m_code.size();
+            return (int)m_code.size();
         }
 
 
@@ -510,9 +522,9 @@ namespace mame
         //}
         void set(params input_code [] codes)
         {
-            assert(codes.Length <= m_code.size(), "too many codes for input_seq");
+            g.assert(codes.Length <= (int)m_code.size(), "too many codes for input_seq");
 
-            for (int i = 0; i < m_code.size(); i++)
+            for (int i = 0; i < (int)m_code.size(); i++)
                 m_code[i] = i < codes.Length ? codes[i] : end_code;
         }
 
@@ -546,19 +558,19 @@ namespace mame
     }
 
 
-    public class size_t_constant_DEVICE_CLASS_MAXIMUM : uint32_constant { public UInt32 value { get { return (UInt32)input_device_class.DEVICE_CLASS_MAXIMUM; } } }
+    public class size_t_const_DEVICE_CLASS_MAXIMUM : u64_const { public UInt64 value { get { return (UInt64)input_device_class.DEVICE_CLASS_MAXIMUM; } } }
 
 
     // ======================> input_manager
     // global machine-level information about devices
-    public class input_manager : global_object
+    public class input_manager
     {
         // internal state
         running_machine m_machine;
         input_code [] m_switch_memory = new input_code[64];
 
         // classes
-        std.array<input_class, size_t_constant_DEVICE_CLASS_MAXIMUM> m_class = new std.array<input_class, size_t_constant_DEVICE_CLASS_MAXIMUM>();  //std::array<std::unique_ptr<input_class>, DEVICE_CLASS_MAXIMUM> m_class;
+        std.array<input_class, size_t_const_DEVICE_CLASS_MAXIMUM> m_class = new std.array<input_class, size_t_const_DEVICE_CLASS_MAXIMUM>();  //std::array<std::unique_ptr<input_class>, DEVICE_CLASS_MAXIMUM> m_class;
 
 
         // construction/destruction
@@ -588,7 +600,7 @@ namespace mame
 
         // getters
         public running_machine machine() { return m_machine; }
-        public input_class device_class(input_device_class devclass) { assert(devclass >= input_device_class.DEVICE_CLASS_FIRST_VALID && devclass <= input_device_class.DEVICE_CLASS_LAST_VALID); return m_class[(int)devclass]; }
+        public input_class device_class(input_device_class devclass) { g.assert(devclass >= input_device_class.DEVICE_CLASS_FIRST_VALID && devclass <= input_device_class.DEVICE_CLASS_LAST_VALID); return m_class[(int)devclass]; }
 
 
         // input code readers
@@ -678,7 +690,7 @@ namespace mame
             // look for the code in the memory
             bool curvalue = code_pressed(code);
             int empty = -1;
-            for (int memnum = 0; memnum < std.size(m_switch_memory); memnum++)
+            for (int memnum = 0; memnum < (int)std.size(m_switch_memory); memnum++)
             {
                 // were we previous pressed on the last time through here?
                 if (m_switch_memory[memnum] == code)

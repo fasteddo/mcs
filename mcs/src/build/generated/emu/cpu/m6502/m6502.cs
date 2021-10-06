@@ -2219,7 +2219,7 @@ namespace mame
         void brk_imp_full()
         {
 
-            // The 6502 bug when a nmi occurs in a brk is reproduced (case !irq_taken && nmi_state)
+            // The 6502 bug when a nmi occurs in a brk is reproduced (case !irq_taken && nmi_pending)
 
             if(irq_taken) {
 
@@ -2253,7 +2253,7 @@ namespace mame
 
             dec_SP();
 
-            if(nmi_state) {
+            if(nmi_pending) {
 
             if(icount == 0) { inst_substate = 6; return; }
                 PC = read_arg(0xfffa);
@@ -2263,7 +2263,7 @@ namespace mame
                 PC = set_h(PC, read_arg(0xfffb));
             icount--;
 
-                nmi_state = false;
+                nmi_pending = false;
 
                 standard_irq_callback(NMI_LINE);
 
@@ -2300,7 +2300,7 @@ namespace mame
         switch(inst_substate) {
         case 0:
 
-            // The 6502 bug when a nmi occurs in a brk is reproduced (case !irq_taken && nmi_state)
+            // The 6502 bug when a nmi occurs in a brk is reproduced (case !irq_taken && nmi_pending)
 
             if(irq_taken) {
 
@@ -2367,7 +2367,7 @@ namespace mame
 
             dec_SP();
 
-            if(nmi_state) {
+            if(nmi_pending) {
 
             if(icount == 0) { inst_substate = 6; return; }
         //case 6:
@@ -2379,7 +2379,7 @@ namespace mame
                 PC = set_h(PC, read_arg(0xfffb));
             icount--;
 
-                nmi_state = false;
+                nmi_pending = false;
 
                 standard_irq_callback(NMI_LINE);
 

@@ -423,7 +423,7 @@ namespace mame
                 case 0x02:  /* RTI   */ m_icount.i -= 24; PC = (uint16_t)POP(); PSW = (uint8_t)POP(); t11_check_irqs(); break;
                 case 0x03:  /* BPT   */ m_icount.i -= 48; PUSH(PSW); PUSH(PC); PC = (uint16_t)RWORD(0x0c); PSW = (uint8_t)RWORD(0x0e); t11_check_irqs(); break;
                 case 0x04:  /* IOT   */ m_icount.i -= 48; PUSH(PSW); PUSH(PC); PC = (uint16_t)RWORD(0x10); PSW = (uint8_t)RWORD(0x12); t11_check_irqs(); break;
-                case 0x05:  /* RESET */ m_out_reset_func.op(g.ASSERT_LINE); m_out_reset_func.op(g.CLEAR_LINE); m_icount.i -= 110; break;
+                case 0x05:  /* RESET */ m_out_reset_func.op_s32(g.ASSERT_LINE); m_out_reset_func.op_s32(g.CLEAR_LINE); m_icount.i -= 110; break;
                 case 0x06:  /* RTT   */ m_icount.i -= 33; PC = (uint16_t)POP(); PSW = (uint8_t)POP(); t11_check_irqs(); break;
                 case 0x07:  /* MFPT  */ REGB(0) = 4; break;
 

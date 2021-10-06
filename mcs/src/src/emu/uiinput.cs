@@ -8,6 +8,7 @@ using char32_t = System.UInt32;
 using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s32 = System.Int32;
+using size_t = System.UInt64;
 using u8 = System.Byte;
 
 
@@ -45,7 +46,7 @@ namespace mame
 
 
     // ======================> ui_input_manager
-    public class ui_input_manager : global_object
+    public class ui_input_manager
     {
         //enum
         //{
@@ -185,11 +186,11 @@ namespace mame
             }
 
             // is the queue filled up?
-            if ((m_events_end + 1) % std.size(m_events) == m_events_start)
+            if ((m_events_end + 1) % (int)std.size(m_events) == m_events_start)
                 return false;
 
             m_events[m_events_end++] = evt;
-            m_events_end %= std.size(m_events);
+            m_events_end %= (int)std.size(m_events);
             return true;
         }
 
@@ -203,7 +204,7 @@ namespace mame
             if (m_events_start != m_events_end)
             {
                 evt = m_events[m_events_start++];
-                m_events_start %= std.size(m_events);
+                m_events_start %= (int)std.size(m_events);
                 return true;
             }
             else
@@ -308,7 +309,7 @@ namespace mame
             profiler_global.g_profiler.start(profile_type.PROFILER_INPUT);
 
             /* get the status of this key (assumed to be only in the defaults) */
-            assert(code >= (int)ioport_type.IPT_UI_CONFIGURE && code <= (int)ioport_type.IPT_OSD_16);
+            g.assert(code >= (int)ioport_type.IPT_UI_CONFIGURE && code <= (int)ioport_type.IPT_OSD_16);
             pressed = m_seqpressed[code] == SEQ_PRESSED_TRUE;
 
             /* if down, handle it specially */

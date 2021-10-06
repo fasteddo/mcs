@@ -104,7 +104,7 @@ namespace mame
 
         /* convert from 32x32 to 36x28 */
         //TILEMAP_MAPPER_MEMBER(galaga_state::tilemap_scan)
-        protected tilemap_memory_index tilemap_scan(UInt32 col, UInt32 row, UInt32 num_cols, UInt32 num_rows)
+        protected tilemap_memory_index tilemap_scan(u32 col, u32 row, u32 num_cols, u32 num_rows)
         {
             int offs;
 
@@ -130,9 +130,9 @@ namespace mame
             int color = m_videoram.op[tile_index + 0x400] & 0x3f;
 
             tileinfo.set(0,
-                    (u32)((m_videoram.op[tile_index] & 0x7f) | (flip_screen() != 0 ? 0x80 : 0) | (m_galaga_gfxbank << 8)),
+                    (u32)(m_videoram.op[tile_index] & 0x7f) | (flip_screen() != 0 ? 0x80 : 0U) | (m_galaga_gfxbank << 8),
                     (u32)color,
-                    flip_screen() != 0 ? TILE_FLIPX : (u8)0);
+                    flip_screen() != 0 ? g.TILE_FLIPX : (u8)0);
 
             tileinfo.group = (u8)color;
         }
@@ -151,7 +151,7 @@ namespace mame
 
             m_galaga_gfxbank = 0;
 
-            save_item(NAME(new { m_galaga_gfxbank }));
+            save_item(g.NAME(new { m_galaga_gfxbank }));
         }
 
 

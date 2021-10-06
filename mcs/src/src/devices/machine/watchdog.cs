@@ -18,7 +18,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(WATCHDOG_TIMER, watchdog_timer_device, "watchdog", "Watchdog Timer")
         static device_t device_creator_watchdog_timer_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new watchdog_timer_device(mconfig, tag, owner, clock); }
-        public static readonly device_type WATCHDOG_TIMER = DEFINE_DEVICE_TYPE(device_creator_watchdog_timer_device, "watchdog", "Watchdog Timer");
+        public static readonly device_type WATCHDOG_TIMER = g.DEFINE_DEVICE_TYPE(device_creator_watchdog_timer_device, "watchdog", "Watchdog Timer");
 
 
         // configuration data
@@ -120,8 +120,8 @@ namespace mame
                     m_screen.op[0].register_vblank_callback(watchdog_vblank);
             }
 
-            save_item(NAME(new { m_enabled }));
-            save_item(NAME(new { m_counter }));
+            save_item(g.NAME(new { m_enabled }));
+            save_item(g.NAME(new { m_counter }));
         }
 
 

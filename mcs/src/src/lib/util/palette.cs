@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using int32_t = System.Int32;
-using rgb15_t = System.UInt16;
+using rgb15_t = System.UInt16;  //typedef uint16_t rgb15_t;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
@@ -17,7 +17,7 @@ namespace mame
     public class rgb_t
     {
         // an rgb15_t is a single combined 15-bit R,G,B value
-        //typedef UInt16 rgb15_t;
+        //typedef uint16_t rgb15_t;
 
 
         // constant factories
@@ -58,10 +58,10 @@ namespace mame
 
 
         // getters
-        public uint8_t a() { return (byte)(m_data >> 24); }
-        public uint8_t r() { return (byte)(m_data >> 16); }
-        public uint8_t g() { return (byte)(m_data >> 8); }
-        public uint8_t b() { return (byte)(m_data >> 0); }
+        public uint8_t a() { return (uint8_t)(m_data >> 24); }
+        public uint8_t r() { return (uint8_t)(m_data >> 16); }
+        public uint8_t g() { return (uint8_t)(m_data >> 8); }
+        public uint8_t b() { return (uint8_t)(m_data >> 0); }
         public rgb15_t as_rgb15() { return (rgb15_t)(((r() >> 3) << 10) | ((g() >> 3) << 5) | ((b() >> 3) << 0)); }
         //UINT8 brightness() const { return (r() * 222 + g() * 707 + b() * 71) / 1000; }
         //UINT32 const *ptr() const { return &m_data; }
@@ -70,7 +70,7 @@ namespace mame
 
 
         // setters
-        public rgb_t set_a(byte a) { m_data &= ~0xff000000; m_data |= (UInt32)a << 24; return this; }
+        public rgb_t set_a(uint8_t a) { m_data &= ~0xff000000; m_data |= (UInt32)a << 24; return this; }
         //rgb_t set_r(byte r) { m_data &= ~0x00ff0000; m_data |= (UInt32)r << 16; return this; }
         //rgb_t set_g(byte g) { m_data &= ~0x0000ff00; m_data |= (UInt32)g <<  8; return this; }
         //rgb_t set_b(byte b) { m_data &= ~0x000000ff; m_data |= (UInt32)b <<  0; return this; }
@@ -106,7 +106,7 @@ namespace mame
 
     // ======================> palette_client
     // a single palette client
-    public class palette_client : global_object, IDisposable
+    public class palette_client : IDisposable
     {
         // internal object to track dirty states
         class dirty_state
@@ -151,7 +151,7 @@ namespace mame
             {
                 // resize to the correct number of dwords and mark all entries dirty
                 uint32_t dirty_dwords = (colors + 31) / 32;
-                m_dirty.resize((int)dirty_dwords);
+                m_dirty.resize(dirty_dwords);
                 std.fill(m_dirty, uint32_t.MaxValue);  //std::fill(m_dirty.begin(), m_dirty.end(), ~uint32_t(0));
 
                 // mark all entries dirty
@@ -214,7 +214,7 @@ namespace mame
 
 
             // resize the dirty lists
-            UInt32 total_colors = (UInt32)(palette.num_colors() * palette.num_groups());
+            uint32_t total_colors = (uint32_t)(palette.num_colors() * palette.num_groups());
             m_dirty[0] = new dirty_state();
             m_dirty[1] = new dirty_state();
             m_dirty[0].resize(total_colors);
@@ -227,7 +227,7 @@ namespace mame
 
         ~palette_client()
         {
-            assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;
@@ -288,7 +288,7 @@ namespace mame
 
     // ======================> palette_t
     // a palette object
-    public class palette_t : global_object
+    public class palette_t
     {
         // friend class palette_client;
 
@@ -361,7 +361,7 @@ namespace mame
             if (m_entry_color[index] == rgb)
                 return;
 
-            assert(index < m_numcolors);
+            g.assert(index < m_numcolors);
 
             // set the color
             m_entry_color[index] = rgb;
@@ -387,7 +387,7 @@ namespace mame
             if (m_entry_contrast[index] == contrast)
                 return;
 
-            assert(index < m_numcolors);
+            g.assert(index < m_numcolors);
 
             // set the contrast
             m_entry_contrast[index] = contrast;
@@ -418,7 +418,7 @@ namespace mame
             if (m_group_contrast[group] == contrast)
                 return;
 
-            assert(group < m_numgroups);
+            g.assert(group < m_numgroups);
 
             // set the contrast
             m_group_contrast[group] = contrast;
@@ -576,15 +576,18 @@ namespace mame
         //  palexpand - expand a palette value to 8 bits
         //-------------------------------------------------
         //template<int _NumBits>
-        static byte palexpand(int _NumBits, byte bits)
+        static uint8_t palexpand<int__NumBits>(uint8_t bits)
+            where int__NumBits : int_const, new()
         {
-            if (_NumBits == 1) { return (bits & 1) != 0 ? (byte)0xff : (byte)0x00; }
-            if (_NumBits == 2) { bits &= 3;    return (byte)((bits << 6) | (bits << 4) | (bits << 2) | bits); }
-            if (_NumBits == 3) { bits &= 7;    return (byte)((bits << 5) | (bits << 2) | (bits >> 1)); }
-            if (_NumBits == 4) { bits &= 0xf;  return (byte)((bits << 4) | bits); }
-            if (_NumBits == 5) { bits &= 0x1f; return (byte)((bits << 3) | (bits >> 2)); }
-            if (_NumBits == 6) { bits &= 0x3f; return (byte)((bits << 2) | (bits >> 4)); }
-            if (_NumBits == 7) { bits &= 0x7f; return (byte)((bits << 1) | (bits >> 6)); }
+            int _NumBits = new int__NumBits().value;
+
+            if (_NumBits == 1) { return (bits & 1) != 0 ? (uint8_t)0xff : (uint8_t)0x00; }
+            if (_NumBits == 2) { bits &= 3;    return (uint8_t)((bits << 6) | (bits << 4) | (bits << 2) | bits); }
+            if (_NumBits == 3) { bits &= 7;    return (uint8_t)((bits << 5) | (bits << 2) | (bits >> 1)); }
+            if (_NumBits == 4) { bits &= 0xf;  return (uint8_t)((bits << 4) | bits); }
+            if (_NumBits == 5) { bits &= 0x1f; return (uint8_t)((bits << 3) | (bits >> 2)); }
+            if (_NumBits == 6) { bits &= 0x3f; return (uint8_t)((bits << 2) | (bits >> 4)); }
+            if (_NumBits == 7) { bits &= 0x7f; return (uint8_t)((bits << 1) | (bits >> 6)); }
             return bits;
         }
 
@@ -593,13 +596,13 @@ namespace mame
         //  palxbit - convert an x-bit value to 8 bits
         //-------------------------------------------------
 
-        static uint8_t pal1bit(uint8_t bits) { return palexpand(1, bits); }
-        static uint8_t pal2bit(uint8_t bits) { return palexpand(2, bits); }
-        static uint8_t pal3bit(uint8_t bits) { return palexpand(3, bits); }
-        static uint8_t pal4bit(uint8_t bits) { return palexpand(4, bits); }
-        public static uint8_t pal5bit(uint8_t bits) { return palexpand(5, bits); }
-        static uint8_t pal6bit(uint8_t bits) { return palexpand(6, bits); }
-        static uint8_t pal7bit(uint8_t bits) { return palexpand(7, bits); }
+        static uint8_t pal1bit(uint8_t bits) { return palexpand<int_const_1>(bits); }
+        static uint8_t pal2bit(uint8_t bits) { return palexpand<int_const_2>(bits); }
+        static uint8_t pal3bit(uint8_t bits) { return palexpand<int_const_3>(bits); }
+        static uint8_t pal4bit(uint8_t bits) { return palexpand<int_const_4>(bits); }
+        public static uint8_t pal5bit(uint8_t bits) { return palexpand<int_const_5>(bits); }
+        static uint8_t pal6bit(uint8_t bits) { return palexpand<int_const_6>(bits); }
+        static uint8_t pal7bit(uint8_t bits) { return palexpand<int_const_7>(bits); }
 
 
         //-------------------------------------------------
@@ -607,9 +610,12 @@ namespace mame
         //  RGB
         //-------------------------------------------------
         //template<int _RBits, int _GBits, int _BBits>
-        public static rgb_t rgbexpand(int _RBits, int _GBits, int _BBits, UInt32 data, byte rshift, byte gshift, byte bshift)
+        public static rgb_t rgbexpand<int__RBits, int__GBits, int__BBits>(uint32_t data, uint8_t rshift, uint8_t gshift, uint8_t bshift)
+            where int__RBits : int_const, new()
+            where int__GBits : int_const, new()
+            where int__BBits : int_const, new()
         {
-            return new rgb_t(palexpand(_RBits, (byte)(data >> rshift)), palexpand(_GBits, (byte)(data >> gshift)), palexpand(_BBits, (byte)(data >> bshift)));
+            return new rgb_t(palexpand<int__RBits>((uint8_t)(data >> rshift)), palexpand<int__GBits>((uint8_t)(data >> gshift)), palexpand<int__BBits>((uint8_t)(data >> bshift)));
         }
     }
 }

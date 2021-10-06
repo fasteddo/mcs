@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Generic;
 
-using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using netlist_state_t_devices_collection_type = mame.std.vector<mame.std.pair<string, mame.netlist.core_device_t>>;  //using devices_collection_type = std::vector<std::pair<pstring, poolptr<core_device_t>>>;
 using netlist_state_t_family_collection_type = mame.std.unordered_map<string, mame.netlist.logic_family_desc_t>;  //using family_collection_type = std::unordered_map<pstring, host_arena::unique_ptr<logic_family_desc_t>>;
 using netlist_state_t_nets_collection_type = mame.std.vector<mame.netlist.detail.net_t>;  //using nets_collection_type = std::vector<poolptr<detail::net_t>>;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 
 
 namespace mame.netlist
@@ -29,29 +29,33 @@ namespace mame.netlist
 
         netlist_t m_netlist;  //device_arena::unique_ptr<netlist_t>        m_netlist;
         plib.dynlib_base m_lib;  //std::unique_ptr<plib::dynlib_base>         m_lib;
-        plib.state_manager_t m_state;
+        plib.state_manager_t m_state = new plib.state_manager_t();
         log_type m_log;
 
         // FIXME: should only be available during device construction
         setup_t m_setup;  //host_arena::unique_ptr<setup_t>            m_setup;
 
-        netlist_state_t_nets_collection_type m_nets;
+        netlist_state_t_nets_collection_type m_nets = new netlist_state_t_nets_collection_type();
         // sole use is to manage lifetime of net objects
         netlist_state_t_devices_collection_type m_devices = new netlist_state_t_devices_collection_type();
         // sole use is to manage lifetime of family objects
-        netlist_state_t_family_collection_type m_family_cache;
+        netlist_state_t_family_collection_type m_family_cache = new netlist_state_t_family_collection_type();
         // all terms for a net
-        std.unordered_map<detail.net_t, std.vector<detail.core_terminal_t>> m_core_terms;  //std::unordered_map<const detail::net_t *, std::vector<detail::core_terminal_t *>> m_core_terms;
+        std.unordered_map<detail.net_t, std.vector<detail.core_terminal_t>> m_core_terms = new std.unordered_map<detail.net_t, std.vector<detail.core_terminal_t>>();  //std::unordered_map<const detail::net_t *, std::vector<detail::core_terminal_t *>> m_core_terms;
 
         // dummy version
         int m_dummy_version;
 
 
-        public netlist_state_t(string name)  //netlist_state_t(const pstring &name, plib::plog_delegate logger);
+        public netlist_state_t()  //netlist_state_t(const pstring &name, plib::plog_delegate logger);
         {
-            //see netlist_state_t_after_ctor()  //: m_log(logger)
-            m_dummy_version = 1;
+            //see netlist_state_t_after_ctor()
+        }
 
+        public void netlist_state_t_after_ctor(string name, plib.plog_delegate logger)
+        {
+            m_log = new log_type(logger);
+            m_dummy_version = 1;
 
             m_setup = new setup_t(this);  //m_setup = plib::make_unique<setup_t, host_arena>(*this);
             // create the run interface
@@ -93,11 +97,6 @@ namespace mame.netlist
             m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/macro/modules/nlmod_{1}.cpp", true);
             m_setup->parser().include("base_lib");
 #endif
-        }
-
-        public void netlist_state_t_after_ctor(plib.plog_delegate logger)
-        {
-            m_log = new log_type(logger);
         }
 
 
@@ -207,7 +206,7 @@ namespace mame.netlist
             this.run_state_manager().save_item(owner, state, module + "." + stname);  //this->run_state_manager().save_item(static_cast<void *>(&owner), state, module + pstring(".") + stname);
         }
         //template<typename O, typename C>
-        public void save(object owner, object state, string module, string stname, UInt32 count)  //void save(O &owner, C *state, const pstring &module, const pstring &stname, const std::size_t count)
+        public void save(object owner, object state, string module, string stname, size_t count)  //void save(O &owner, C *state, const pstring &module, const pstring &stname, const std::size_t count)
         {
             this.run_state_manager().save_state_ptr(owner, module + "." + stname, null, count, state);  //this->run_state_manager().save_state_ptr(static_cast<void *>(&owner), module + pstring(".") + stname, plib::state_manager_t::dtype<C>(), count, state);
         }
@@ -444,6 +443,9 @@ namespace mame.netlist
 
         public std.vector<detail.core_terminal_t> core_terms(detail.net_t net)  //std::vector<detail::core_terminal_t *> &core_terms(const detail::net_t &net) noexcept
         {
+            if (m_core_terms[net] == default)
+                m_core_terms[net] = new std.vector<detail.core_terminal_t>();
+
             return m_core_terms[net];
         }
     }

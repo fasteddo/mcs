@@ -20,7 +20,7 @@ namespace mame
 
 
     // ======================> emu_timer
-    public class emu_timer : global_object, simple_list_item<emu_timer>
+    public class emu_timer : simple_list_item<emu_timer>
     {
         //friend class device_scheduler;
         //friend class simple_list<emu_timer>;
@@ -137,7 +137,7 @@ namespace mame
         public emu_timer m_next_get() { return m_next; }
         public void m_next_set(emu_timer value) { m_next = value; }
 
-        running_machine machine() { assert(m_machine != null); return m_machine; }
+        running_machine machine() { g.assert(m_machine != null); return m_machine; }
         public bool enabled() { return m_enabled; }
         public int param() { return m_param; }
         public object ptr() { return m_ptr; }
@@ -277,7 +277,7 @@ namespace mame
 
 
     // ======================> device_scheduler
-    public class device_scheduler : global_object, IDisposable
+    public class device_scheduler : IDisposable
     {
         const bool VERBOSE = false;
         void LOG(string format, params object [] args) { if (VERBOSE) machine().logerror(format, args); }
@@ -362,7 +362,7 @@ namespace mame
 
         ~device_scheduler()
         {
-            assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;
@@ -412,7 +412,7 @@ namespace mame
         //-------------------------------------------------
         public void timeslice()
         {
-            bool call_debugger = (machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0;
+            bool call_debugger = (machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0;
 
             // build the execution list if we don't have one yet
             //if (UNEXPECTED(m_execute_list == null))
@@ -455,7 +455,7 @@ namespace mame
                         if (delta < 0 && target.seconds() > exec.m_localtime.seconds())
                             delta += attotime.ATTOSECONDS_PER_SECOND;
 
-                        assert(delta == (target - exec.m_localtime).as_attoseconds());
+                        g.assert(delta == (target - exec.m_localtime).as_attoseconds());
 
                         if (exec.m_attoseconds_per_cycle == 0)
                         {
@@ -465,7 +465,7 @@ namespace mame
                         else if (delta >= exec.m_attoseconds_per_cycle)
                         {
                             // compute how many cycles we want to execute
-                            int ran = exec.m_cycles_running = (int)divu_64x32((u64)delta >> exec.m_divshift, (u32)exec.m_divisor);
+                            int ran = exec.m_cycles_running = (int)g.divu_64x32((u64)delta >> exec.m_divshift, (u32)exec.m_divisor);
 
                             if (machine().video().frame_update_count() % 1000 == 0)
                             {
@@ -527,11 +527,11 @@ namespace mame
                             else
                             {
                                 u32 remainder;
-                                s32 secs = (s32)divu_64x32_rem((u64)ran, exec.m_cycles_per_second, out remainder);
+                                s32 secs = (s32)g.divu_64x32_rem((u64)ran, exec.m_cycles_per_second, out remainder);
                                 deltatime = new attotime(secs, remainder * exec.m_attoseconds_per_cycle);
                             }
 
-                            assert(deltatime >= attotime.zero);
+                            g.assert(deltatime >= attotime.zero);
                             exec.m_localtime += deltatime;
 
                             if (machine().video().frame_update_count() % 100 == 0)
@@ -853,7 +853,7 @@ namespace mame
         //-------------------------------------------------
         void add_scheduling_quantum(attotime quantum, attotime duration)
         {
-            assert(quantum.seconds() == 0);
+            g.assert(quantum.seconds() == 0);
 
             attotime curtime = time();
             attotime expire = curtime + duration;

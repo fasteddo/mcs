@@ -10,6 +10,7 @@ using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using s32 = System.Int32;
+using size_t = System.UInt64;
 using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -132,7 +133,7 @@ namespace mame
 
     // ======================> tilemap_t
     // core tilemap structure
-    public class tilemap_t : global_object, simple_list_item<tilemap_t>
+    public class tilemap_t : simple_list_item<tilemap_t>
     {
         //friend class tilemap_device;
         //friend class tilemap_manager;
@@ -206,7 +207,7 @@ namespace mame
         bool m_all_tiles_clean;      // true if all tiles are clean
         u32 m_palette_offset;       // palette offset
         u32 m_gfx_used;             // bitmask of gfx items used
-        u32 [] m_gfx_dirtyseq = new UInt32[digfx_global.MAX_GFX_ELEMENTS]; // dirtyseq values from last check
+        u32 [] m_gfx_dirtyseq = new u32[g.MAX_GFX_ELEMENTS]; // dirtyseq values from last check
 
         // scroll information
         u32 m_scrollrows;           // number of independently scrolled rows
@@ -281,8 +282,8 @@ namespace mame
             // reset scroll information
             m_scrollrows = 1;
             m_scrollcols = 1;
-            m_rowscroll.resize((int)m_height);
-            m_colscroll.resize((int)m_width);
+            m_rowscroll.resize(m_height);
+            m_colscroll.resize(m_width);
             m_dx = 0;
             m_dx_flipped = 0;
             m_dy = 0;
@@ -402,7 +403,7 @@ namespace mame
         //int scrolly(int which = 0) const { return (which < m_scrollcols) ? m_colscroll[which] : 0; }
         //bitmap_ind16 &pixmap() { pixmap_update(); return m_pixmap; }
         //bitmap_ind8 &flagsmap() { pixmap_update(); return m_flagsmap; }
-        //UINT8 *tile_flags() { pixmap_update(); return m_tileflags; }
+        //u8 *tile_flags() { pixmap_update(); return &m_tileflags[0]; }
         tilemap_memory_index memory_index(u32 col, u32 row) { return m_mapper(col, row, m_cols, m_rows); }
         //void get_info_debug(u32 col, u32 row, u8 &gfxnum, u32 &code, u32 &color);
 
@@ -411,16 +412,16 @@ namespace mame
         //void enable(bool enable = true) { m_enable = enable; }
         //void set_user_data(void *user_data) { m_user_data = user_data; }
         //void set_palette(device_palette_interface *palette) { m_palette = palette; }
-        //void set_palette_offset(UINT32 offset) { m_palette_offset = offset; }
+        //void set_palette_offset(u32 offset) { m_palette_offset = offset; }
         public void set_scrolldx(int dx, int dx_flipped) { m_dx = dx; m_dx_flipped = dx_flipped; }
         public void set_scrolldy(int dy, int dy_flipped) { m_dy = dy; m_dy_flipped = dy_flipped; }
         public void set_scrollx(int which, int value) { if (which < m_scrollrows) m_rowscroll[which] = value; }
         public void set_scrolly(int which, int value) { if (which < m_scrollcols) m_colscroll[which] = value; }
         public void set_scrollx(int value) { set_scrollx(0, value); }
         public void set_scrolly(int value) { set_scrolly(0, value); }
-        public void set_scroll_rows(u32 scroll_rows) { assert(scroll_rows <= m_height); m_scrollrows = scroll_rows; }
-        public void set_scroll_cols(u32 scroll_cols) { assert(scroll_cols <= m_width); m_scrollcols = scroll_cols; }
-        public void set_flip(u32 attributes) { if (m_attributes != attributes) { m_attributes = (byte)attributes; mappings_update(); } }
+        public void set_scroll_rows(u32 scroll_rows) { g.assert(scroll_rows <= m_height); m_scrollrows = scroll_rows; }
+        public void set_scroll_cols(u32 scroll_cols) { g.assert(scroll_cols <= m_width); m_scrollcols = scroll_cols; }
+        public void set_flip(u32 attributes) { if (m_attributes != attributes) { m_attributes = (u8)attributes; mappings_update(); } }
 
 
         // dirtying
@@ -467,17 +468,17 @@ namespace mame
             pen_t stop = start | ~mask;
 
             // clamp to the number of entries actually there
-            stop = Math.Min(stop, MAX_PEN_TO_FLAGS - 1);
+            stop = std.min(stop, MAX_PEN_TO_FLAGS - 1);
 
             // iterate and set
-            int arrayIdx = group * (int)MAX_PEN_TO_FLAGS;  // UINT8 *array = m_pen_to_flags + group * MAX_PEN_TO_FLAGS;
+            int arrayIdx = group * (int)MAX_PEN_TO_FLAGS;  //u8 *array = m_pen_to_flags + group * MAX_PEN_TO_FLAGS;
             bool changed = false;
             for (pen_t cur = start; cur <= stop; cur++)
             {
                 if ((cur & mask) == pen && m_pen_to_flags[arrayIdx + cur] != layermask)  //if ((cur & mask) == pen && array[cur] != layermask)
                 {
                     changed = true;
-                    m_pen_to_flags[arrayIdx + cur] = layermask;  // array[cur] = layermask;
+                    m_pen_to_flags[arrayIdx + cur] = layermask;  //array[cur] = layermask;
                 }
             }
 
@@ -512,9 +513,9 @@ namespace mame
             // iterate over all 32 pens specified
             for (pen_t pen = 0; pen < 32; pen++)
             {
-                byte fgbits = ((fgmask >> (int)pen) & 1) != 0 ? tilemap_global.TILEMAP_PIXEL_TRANSPARENT : tilemap_global.TILEMAP_PIXEL_LAYER0;
-                byte bgbits = ((bgmask >> (int)pen) & 1) != 0 ? tilemap_global.TILEMAP_PIXEL_TRANSPARENT : tilemap_global.TILEMAP_PIXEL_LAYER1;
-                map_pen_to_layer(group, pen, (byte)(fgbits | bgbits));
+                u8 fgbits = ((fgmask >> (int)pen) & 1) != 0 ? tilemap_global.TILEMAP_PIXEL_TRANSPARENT : tilemap_global.TILEMAP_PIXEL_LAYER0;
+                u8 bgbits = ((bgmask >> (int)pen) & 1) != 0 ? tilemap_global.TILEMAP_PIXEL_TRANSPARENT : tilemap_global.TILEMAP_PIXEL_LAYER1;
+                map_pen_to_layer(group, pen, (u8)(fgbits | bgbits));
             }
         }
 
@@ -525,10 +526,10 @@ namespace mame
         //-------------------------------------------------
         public void configure_groups(gfx_element gfx, indirect_pen_t transcolor)
         {
-            assert(gfx.colors() <= tilemap_global.TILEMAP_NUM_GROUPS);
+            g.assert(gfx.colors() <= tilemap_global.TILEMAP_NUM_GROUPS);
 
             // iterate over all colors in the tilemap
-            for (UInt32 color = 0; color < gfx.colors(); color++)
+            for (u32 color = 0; color < gfx.colors(); color++)
                 set_transmask((int)color, m_palette.transpen_mask(gfx, color, transcolor), 0);
         }
 
@@ -650,7 +651,7 @@ namespace mame
                 index = (int)(m_scrollrows - 1 - index);
 
             // adjust final result based on the horizontal flip and dx values
-            int value;
+            s32 value;
             if ((m_attributes & tilemap_global.TILEMAP_FLIPX) == 0)
                 value = m_dx - m_rowscroll[index];
             else
@@ -677,7 +678,7 @@ namespace mame
                 index = (int)(m_scrollcols - 1 - index);
 
             // adjust final result based on the vertical flip and dx values
-            int value;
+            s32 value;
             if ((m_attributes & tilemap_global.TILEMAP_FLIPY) == 0)
                 value = m_dy - m_colscroll[index];
             else
@@ -699,7 +700,7 @@ namespace mame
         //-------------------------------------------------
         bool gfx_elements_changed()
         {
-            UInt32 usedmask = m_gfx_used;
+            u32 usedmask = m_gfx_used;
             bool isdirty = false;
 
             // iterate over all used gfx types and set the dirty flag if any of them have changed
@@ -733,7 +734,7 @@ namespace mame
 
             // update priority across the scanline
             for (int i = 0; i < count; i++)
-                pri[i] = (byte)((pri[i] & (pcode >> 8)) | pcode);
+                pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
         }
 
         //-------------------------------------------------
@@ -750,7 +751,7 @@ namespace mame
             for (int i = 0; i < count; i++)
             {
                 if ((maskptr[i] & mask) == value)
-                    pri[i] = (byte)((pri[i] & (pcode >> 8)) | pcode);
+                    pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
             }
         }
 
@@ -765,7 +766,7 @@ namespace mame
             if (pal == 0)
             {
                 // use memcpy which should be well-optimized for the platform
-                memcpy(dest, source, (UInt32)(count * 2));
+                std.memcpy(dest, source, (size_t)(count * 2));
 
                 // skip the rest if not changing priority
                 if (pcode == 0xff00)
@@ -897,7 +898,7 @@ namespace mame
             {
                 for (int i = 0; i < count; i++)
                 {
-                    dest[i] = drawgfx_global.alpha_blend_r32(dest[i], clut[source[i]], alpha);
+                    dest[i] = g.alpha_blend_r32(dest[i], clut[source[i]], alpha);
                     pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
                 }
             }
@@ -906,7 +907,7 @@ namespace mame
             else
             {
                 for (int i = 0; i < count; i++)
-                    dest[i] = drawgfx_global.alpha_blend_r32(dest[i], clut[source[i]], alpha);
+                    dest[i] = g.alpha_blend_r32(dest[i], clut[source[i]], alpha);
             }
         }
 
@@ -926,7 +927,7 @@ namespace mame
                 {
                     if ((maskptr[i] & mask) == value)
                     {
-                        dest[i] = drawgfx_global.alpha_blend_r32(dest[i], clut[source[i]], alpha);
+                        dest[i] = g.alpha_blend_r32(dest[i], clut[source[i]], alpha);
                         pri[i] = (u8)((pri[i] & (pcode >> 8)) | pcode);
                     }
                 }
@@ -938,7 +939,7 @@ namespace mame
                 for (int i = 0; i < count; i++)
                 {
                     if ((maskptr[i] & mask) == value)
-                        dest[i] = drawgfx_global.alpha_blend_r32(dest[i], clut[source[i]], alpha);
+                        dest[i] = g.alpha_blend_r32(dest[i], clut[source[i]], alpha);
                 }
             }
         }
@@ -964,20 +965,20 @@ namespace mame
 
             // compute the maximum memory index
             tilemap_memory_index max_memory_index = 0;
-            for (UInt32 row = 0; row < m_rows; row++)
+            for (u32 row = 0; row < m_rows; row++)
             {
-                for (UInt32 col = 0; col < m_cols; col++)
+                for (u32 col = 0; col < m_cols; col++)
                 {
                     tilemap_memory_index memindex = memory_index(col, row);
-                    max_memory_index = Math.Max(max_memory_index, memindex);
+                    max_memory_index = std.max(max_memory_index, memindex);
                 }
             }
             max_memory_index++;
 
             // allocate the necessary mappings
-            m_memory_to_logical.resize((int)max_memory_index);
-            m_logical_to_memory.resize((int)max_logical_index);
-            m_tileflags.resize((int)max_logical_index);
+            m_memory_to_logical.resize(max_memory_index);
+            m_logical_to_memory.resize(max_logical_index);
+            m_tileflags.resize(max_logical_index);
 
             // update the mappings
             mappings_update();
@@ -990,13 +991,13 @@ namespace mame
         void mappings_update()
         {
             // initialize all the mappings to invalid values
-            memset(m_memory_to_logical, (UInt32)0xff, (UInt32)m_memory_to_logical.size());  //memset(&m_memory_to_logical[0], 0xff, m_memory_to_logical.size() * sizeof(m_memory_to_logical[0]));
+            std.memset(m_memory_to_logical, (UInt32)0xff, m_memory_to_logical.size());  //memset(&m_memory_to_logical[0], 0xff, m_memory_to_logical.size() * sizeof(m_memory_to_logical[0]));
 
             // now iterate over all logical indexes and populate the memory index
             for (tilemap_t_logical_index logindex = 0; logindex < m_logical_to_memory.size(); logindex++)
             {
-                UInt32 logical_col = logindex % m_cols;
-                UInt32 logical_row = logindex / m_cols;
+                u32 logical_col = logindex % m_cols;
+                u32 logical_row = logindex / m_cols;
                 tilemap_memory_index memindex = memory_index(logical_col, logical_row);
 
                 // apply tilemap flip to get the final location to store
@@ -1004,7 +1005,7 @@ namespace mame
                     logical_col = (m_cols - 1) - logical_col;
                 if ((m_attributes & tilemap_global.TILEMAP_FLIPY) != 0)
                     logical_row = (m_rows - 1) - logical_row;
-                UInt32 flipped_logindex = logical_row * m_cols + logical_col;
+                u32 flipped_logindex = logical_row * m_cols + logical_col;
 
                 // fill in entries in both arrays
                 m_memory_to_logical[memindex] = flipped_logindex;
@@ -1024,7 +1025,7 @@ namespace mame
             // flush the dirty status to all tiles
             if (m_all_tiles_dirty || gfx_elements_changed())
             {
-                memset(m_tileflags, TILE_FLAG_DIRTY, (UInt32)m_tileflags.size());  //memset(&m_tileflags[0], TILE_FLAG_DIRTY, m_tileflags.size());
+                std.memset(m_tileflags, TILE_FLAG_DIRTY, m_tileflags.size());  //memset(&m_tileflags[0], TILE_FLAG_DIRTY, m_tileflags.size());
                 m_all_tiles_dirty = false;
                 m_gfx_used = 0;
             }
@@ -1048,7 +1049,7 @@ namespace mame
             m_tile_get_info(this, ref m_tileinfo, memindex);
 
             // apply the global tilemap flip to the returned flip flags
-            u32 flags = (UInt32)(m_tileinfo.flags ^ (m_attributes & 0x03));
+            u32 flags = (u32)(m_tileinfo.flags ^ (m_attributes & 0x03));
 
             // draw the tile, using either direct or transparent
             u32 x0 = m_tilewidth * col;
@@ -1058,7 +1059,7 @@ namespace mame
 
             // if mask data is specified, apply it
             if ((flags & (tilemap_global.TILE_FORCE_LAYER0 | tilemap_global.TILE_FORCE_LAYER1 | tilemap_global.TILE_FORCE_LAYER2)) == 0 && m_tileinfo.mask_data != null)
-                m_tileflags[logindex] = tile_apply_bitmask(m_tileinfo.mask_data, x0, y0, m_tileinfo.category, (byte)flags);
+                m_tileflags[logindex] = tile_apply_bitmask(m_tileinfo.mask_data, x0, y0, m_tileinfo.category, (u8)flags);
 
             // track which gfx have been used for this tilemap
             if (m_tileinfo.gfxnum != 0xff && (m_gfx_used & (1 << m_tileinfo.gfxnum)) == 0)
@@ -1080,13 +1081,13 @@ namespace mame
         u8 tile_draw(PointerU8 pendata, u32 x0, u32 y0, u32 palette_base, u8 category, u8 group, u8 flags, u8 pen_mask)  //u8 tile_draw(const u8 *pendata, u32 x0, u32 y0, u32 palette_base, u8 category, u8 group, u8 flags, u8 pen_mask);
         {
             // OR in the force layer flags
-            category |= (byte)(flags & (tilemap_global.TILE_FORCE_LAYER0 | tilemap_global.TILE_FORCE_LAYER1 | tilemap_global.TILE_FORCE_LAYER2));
+            category |= (u8)(flags & (tilemap_global.TILE_FORCE_LAYER0 | tilemap_global.TILE_FORCE_LAYER1 | tilemap_global.TILE_FORCE_LAYER2));
 
             // if we're vertically flipped, point to the bottom row and work backwards
             int dy0 = 1;
             if ((flags & tilemap_global.TILE_FLIPY) != 0)
             {
-                y0 += (UInt32)m_tileheight - 1;
+                y0 += (u32)m_tileheight - 1;
                 dy0 = -1;
             }
 
@@ -1094,22 +1095,22 @@ namespace mame
             int dx0 = 1;
             if ((flags & tilemap_global.TILE_FLIPX) != 0)
             {
-                x0 += (UInt32)m_tilewidth - 1;
+                x0 += (u32)m_tilewidth - 1;
                 dx0 = -1;
             }
 
             // iterate over rows
             //const u8 *penmap = m_pen_to_flags + group * MAX_PEN_TO_FLAGS;
-            UInt32 penmapOffset = (UInt32)(group * MAX_PEN_TO_FLAGS);
-            u8 andmask = u8.MaxValue; // ~0;
+            u32 penmapOffset = (u32)(group * MAX_PEN_TO_FLAGS);
+            u8 andmask = u8.MaxValue;  //~0;
             u8 ormask = 0;
-            for (int ty = 0; ty < m_tileheight; ty++)
+            for (u16 ty = 0; ty < m_tileheight; ty++)
             {
                 PointerU16 pixptr = m_pixmap.pix((int)y0, (int)x0);  //u16 *pixptr = &m_pixmap.pix(y0, x0);
                 PointerU8 flagsptr = m_flagsmap.pix((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix(y0, x0);
 
                 // pre-advance to the next row
-                y0 += (UInt32)dy0;
+                y0 += (u32)dy0;
 
                 // 8bpp data
                 int xoffs = 0;
@@ -1140,7 +1141,7 @@ namespace mame
             int dy0 = 1;
             if ((flags & tilemap_global.TILE_FLIPY) != 0)
             {
-                y0 += (UInt32)m_tileheight - 1;
+                y0 += (u32)m_tileheight - 1;
                 dy0 = -1;
             }
 
@@ -1148,20 +1149,20 @@ namespace mame
             int dx0 = 1;
             if ((flags & tilemap_global.TILE_FLIPX) != 0)
             {
-                x0 += (UInt32)m_tilewidth - 1;
+                x0 += (u32)m_tilewidth - 1;
                 dx0 = -1;
             }
 
             // iterate over rows
-            byte andmask = byte.MaxValue; // ~0;
-            byte ormask = 0;
+            u8 andmask = u8.MaxValue;  //~0;
+            u8 ormask = 0;
             int bitoffs = 0;
-            for (UInt16 ty = 0; ty < m_tileheight; ty++)
+            for (u16 ty = 0; ty < m_tileheight; ty++)
             {
                 // pre-advance to the next row
                 PointerU8 flagsptr = m_flagsmap.pix((int)y0, (int)x0);  //u8 *flagsptr = &m_flagsmap.pix(y0, x0);
 
-                y0 += (UInt32)dy0;
+                y0 += (u32)dy0;
 
                 // anywhere the bitmask is 0 should be transparent
                 int xoffs = 0;
@@ -1170,7 +1171,7 @@ namespace mame
                     u8 map = flagsptr[xoffs];
 
                     if ((maskdata[bitoffs / 8] & (0x80 >> (bitoffs & 7))) == 0)
-                        map = flagsptr[xoffs] = (byte)(tilemap_global.TILEMAP_PIXEL_TRANSPARENT | category);
+                        map = flagsptr[xoffs] = (u8)(tilemap_global.TILEMAP_PIXEL_TRANSPARENT | category);
 
                     andmask &= map;
                     ormask |= map;
@@ -1179,7 +1180,7 @@ namespace mame
                 }
             }
 
-            return (byte)(andmask ^ ormask);
+            return (u8)(andmask ^ ormask);
         }
 
 
@@ -1198,12 +1199,12 @@ namespace mame
             blit.cliprect = cliprect;
 
             // set the priority code and alpha
-            blit.tilemap_priority_code = (UInt32)priority | ((UInt32)priority_mask << 8) | (m_palette_offset << 16);
-            blit.alpha = (flags & tilemap_global.TILEMAP_DRAW_ALPHA_FLAG) != 0 ? (byte)(flags >> 24) : (byte)0xff;
+            blit.tilemap_priority_code = (u32)priority | ((u32)priority_mask << 8) | (m_palette_offset << 16);
+            blit.alpha = (flags & tilemap_global.TILEMAP_DRAW_ALPHA_FLAG) != 0 ? (u8)(flags >> 24) : (u8)0xff;
 
             // tile priority; unless otherwise specified, draw anything in layer 0
             blit.mask = tilemap_global.TILEMAP_PIXEL_CATEGORY_MASK;
-            blit.value = (byte)(flags & tilemap_global.TILEMAP_PIXEL_CATEGORY_MASK);
+            blit.value = (u8)(flags & tilemap_global.TILEMAP_PIXEL_CATEGORY_MASK);
 
             // if no layers specified, draw layer 0
             if ((flags & (tilemap_global.TILEMAP_DRAW_LAYER0 | tilemap_global.TILEMAP_DRAW_LAYER1 | tilemap_global.TILEMAP_DRAW_LAYER2)) == 0)
@@ -1259,8 +1260,8 @@ namespace mame
             // configure the blit parameters based on the input parameters
             blit_parameters blit;
             configure_blit_parameters(out blit, screen.priority(), cliprect, flags, priority, priority_mask);
-            assert(dest.cliprect().contains(cliprect));
-            assert(screen.cliprect().contains(cliprect) || blit.tilemap_priority_code == 0xff00);
+            g.assert(dest.cliprect().contains(cliprect));
+            g.assert(screen.cliprect().contains(cliprect) || blit.tilemap_priority_code == 0xff00);
 
             // flush the dirty state to all tiles as appropriate
             realize_all_dirty_tiles();
@@ -1466,7 +1467,7 @@ namespace mame
 
                         // if the current tile is dirty, fix it
                         if (m_tileflags[logindex] == TILE_FLAG_DIRTY)
-                            tile_update(logindex, (UInt32)column, (UInt32)row);
+                            tile_update(logindex, (u32)column, (u32)row);
 
                         // if the current summary data is non-zero, we must draw masked
                         if ((m_tileflags[logindex] & blit.mask) != 0)
@@ -1606,7 +1607,7 @@ namespace mame
 
     // ======================> tilemap_manager
     // tilemap manager
-    public class tilemap_manager : global_object, IDisposable
+    public class tilemap_manager : IDisposable
     {
         // internal state
         running_machine m_machine;
@@ -1628,7 +1629,7 @@ namespace mame
 
         ~tilemap_manager()
         {
-            assert(m_isDisposed);  // can remove
+            g.assert(m_isDisposed);  // can remove
 
             // detach all device tilemaps since they will be destroyed as subdevices elsewhere
             bool found = true;
@@ -1700,7 +1701,7 @@ namespace mame
         //  set_flip_all - set a global flip for all the
         //  tilemaps
         //-------------------------------------------------
-        public void set_flip_all(UInt32 attributes)
+        public void set_flip_all(u32 attributes)
         {
             for (tilemap_t tmap = m_tilemap_list.first(); tmap != null; tmap = tmap.next())
                 tmap.set_flip(attributes);
@@ -1735,7 +1736,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(TILEMAP, tilemap_device, "tilemap", "Tilemap")
         static device_t device_creator_tilemap_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new tilemap_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TILEMAP = DEFINE_DEVICE_TYPE(device_creator_tilemap_device, "tilemap", "Tilemap");
+        public static readonly device_type TILEMAP = g.DEFINE_DEVICE_TYPE(device_creator_tilemap_device, "tilemap", "Tilemap");
 
 
         tilemap_t m_tilemap_t;
@@ -1853,7 +1854,7 @@ namespace mame
 
         void set_layout(tilemap_standard_mapper mapper, u32 columns, u32 rows)
         {
-            assert(tilemap_standard_mapper.TILEMAP_STANDARD_COUNT > mapper);
+            g.assert(tilemap_standard_mapper.TILEMAP_STANDARD_COUNT > mapper);
             m_standard_mapper = mapper;
             m_num_columns = columns;
             m_num_rows = rows;

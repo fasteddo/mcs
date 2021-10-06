@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace mame
 {
     // ======================> eeprom_serial_base_device
-    abstract class eeprom_serial_base_device : eeprom_base_device
+    public abstract class eeprom_serial_base_device : eeprom_base_device
     {
         // read interfaces differ between implementations
 
@@ -120,7 +120,7 @@ namespace mame
 
 
     // ======================> eeprom_serial_93cxx_device
-    class eeprom_serial_93cxx_device : eeprom_serial_base_device
+    public class eeprom_serial_93cxx_device : eeprom_serial_base_device
     {
         // read handlers
         //DECLARE_READ_LINE_MEMBER(do_read);  // combined DO+READY/BUSY

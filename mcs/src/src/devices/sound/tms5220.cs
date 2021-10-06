@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_read_line = mame.devcb_read<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_read_line = devcb_read<int, 1U>;
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using int8_t = System.SByte;
 using int16_t = System.Int16;
@@ -24,7 +24,44 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(TMS5220,   tms5220_device,   "tms5220",   "TMS5220")
         static device_t device_creator_tms5220_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new tms5220_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TMS5220 = DEFINE_DEVICE_TYPE(device_creator_tms5220_device, "tms5220", "TMS5220");
+        public static readonly device_type TMS5220 = g.DEFINE_DEVICE_TYPE(device_creator_tms5220_device, "tms5220", "TMS5220");
+
+
+        /* *****debugging defines***** */
+        // general, somewhat obsolete, catch all for debugs which don't fit elsewhere
+        const int LOG_GENERAL = 1 << 0;
+        /* 5220 only; above dumps the data written to the tms52xx to stdout, useful
+           for making logged data dumps for real hardware tests */
+        const int LOG_DUMP_INPUT_DATA = 1 << 1;
+        // 5220 only; above debugs FIFO stuff: writes, reads and flag updates
+        const int LOG_FIFO = 1 << 2;
+        // dumps each speech frame as binary
+        const int LOG_PARSE_FRAME_DUMP_BIN = 1 << 3;
+        // dumps each speech frame as hex
+        const int LOG_PARSE_FRAME_DUMP_HEX = 1 << 4;
+        // dumps info if a frame ran out of data
+        const int LOG_FRAME_ERRORS = 1 << 6;
+        // dumps all non-speech-data command writes
+        const int LOG_COMMAND_DUMP = 1 << 7;
+        // dumps decoded info about command writes
+        const int LOG_COMMAND_VERBOSE = 1 << 8;
+        // spams the errorlog with i/o ready messages whenever the ready or irq pin is read
+        const int LOG_PIN_READS = 1 << 9;
+        // dumps debug information related to the sample generation loop, i.e. whether interpolation is inhibited or not, and what the current and target values for each frame are.
+        const int LOG_GENERATION = 1 << 10;
+        // dumps MUCH MORE debug information related to the sample generation loop, namely the excitation, energy, pitch, k*, and output values for EVERY SINGLE SAMPLE during a frame.
+        const int LOG_GENERATION_VERBOSE = 1 << 11;
+        // dumps the lattice filter state data each sample.
+        const int LOG_LATTICE = 1 << 12;
+        // dumps info to stderr whenever the analog clip hardware is (or would be) clipping the signal.
+        const int LOG_CLIP = 1 << 13;
+        // debugs the io ready callback timer
+        const int LOG_IO_READY = 1 << 14;
+        // debugs the tms5220_data_r and data_w access methods which actually respect rs and ws
+        const int LOG_RS_WS = 1 << 15;
+
+        const int VERBOSE = 1;  //#define VERBOSE (LOG_GENERAL | LOG_DUMP_INPUT_DATA | LOG_FIFO | LOG_PARSE_FRAME_DUMP_HEX | LOG_FRAME_ERRORS | LOG_COMMAND_DUMP | LOG_COMMAND_VERBOSE | LOG_PIN_READS | LOG_GENERATION | LOG_GENERATION_VERBOSE | LOG_LATTICE | LOG_CLIP | LOG_IO_READY | LOG_RS_WS)
+        protected void LOGMASKED(int mask, string format, params object [] args) { LOGMASKED(VERBOSE, mask, format, args); }
 
 
         public class device_sound_interface_tms5220 : device_sound_interface
@@ -65,43 +102,6 @@ namespace mame
            per interpolation step); if 0; speak as if SPKSLOW was used (two A cycles,
            one B cycle per interpolation step) */
         const uint8_t FORCE_SUBC_RELOAD = 1;
-
-
-        /* *****debugging defines***** */
-        // general, somewhat obsolete, catch all for debugs which don't fit elsewhere
-        const int LOG_GENERAL = 1 << 0;
-        /* 5220 only; above dumps the data written to the tms52xx to stdout, useful
-           for making logged data dumps for real hardware tests */
-        const int LOG_DUMP_INPUT_DATA = 1 << 1;
-        // 5220 only; above debugs FIFO stuff: writes, reads and flag updates
-        const int LOG_FIFO = 1 << 2;
-        // dumps each speech frame as binary
-        const int LOG_PARSE_FRAME_DUMP_BIN = 1 << 3;
-        // dumps each speech frame as hex
-        const int LOG_PARSE_FRAME_DUMP_HEX = 1 << 4;
-        // dumps info if a frame ran out of data
-        const int LOG_FRAME_ERRORS = 1 << 6;
-        // dumps all non-speech-data command writes
-        const int LOG_COMMAND_DUMP = 1 << 7;
-        // dumps decoded info about command writes
-        const int LOG_COMMAND_VERBOSE = 1 << 8;
-        // spams the errorlog with i/o ready messages whenever the ready or irq pin is read
-        const int LOG_PIN_READS = 1 << 9;
-        // dumps debug information related to the sample generation loop, i.e. whether interpolation is inhibited or not, and what the current and target values for each frame are.
-        const int LOG_GENERATION = 1 << 10;
-        // dumps MUCH MORE debug information related to the sample generation loop, namely the excitation, energy, pitch, k*, and output values for EVERY SINGLE SAMPLE during a frame.
-        const int LOG_GENERATION_VERBOSE = 1 << 11;
-        // dumps the lattice filter state data each sample.
-        const int LOG_LATTICE = 1 << 12;
-        // dumps info to stderr whenever the analog clip hardware is (or would be) clipping the signal.
-        const int LOG_CLIP = 1 << 13;
-        // debugs the io ready callback timer
-        const int LOG_IO_READY = 1 << 14;
-        // debugs the tms5220_data_r and data_w access methods which actually respect rs and ws
-        const int LOG_RS_WS = 1 << 15;
-
-        //#define VERBOSE (LOG_GENERAL | LOG_DUMP_INPUT_DATA | LOG_FIFO | LOG_PARSE_FRAME_DUMP_HEX | LOG_FRAME_ERRORS | LOG_COMMAND_DUMP | LOG_COMMAND_VERBOSE | LOG_PIN_READS | LOG_GENERATION | LOG_GENERATION_VERBOSE | LOG_LATTICE | LOG_CLIP | LOG_IO_READY | LOG_RS_WS)
-        //#include "logmacro.h"
 
 
         const int MAX_SAMPLE_CHUNK    = 512;
@@ -575,7 +575,7 @@ namespace mame
                     m_coeff = tms5110r_global.tms5220_coeff;
                     break;
                 default:
-                    fatalerror("Unknown variant in tms5220_set_variant\n");
+                    g.fatalerror("Unknown variant in tms5220_set_variant\n");
                     break;
             }
 
@@ -775,46 +775,46 @@ namespace mame
             // for sanity purposes these variables should be in the same order as in tms5220.h!
 
             // 5110 specific stuff
-            save_item(NAME(new { m_PDC }));
-            save_item(NAME(new { m_CTL_pins }));
-            save_item(NAME(new { m_state }));
+            save_item(g.NAME(new { m_PDC }));
+            save_item(g.NAME(new { m_CTL_pins }));
+            save_item(g.NAME(new { m_state }));
 
             // new VSM stuff
-            save_item(NAME(new { m_address }));
-            save_item(NAME(new { m_next_is_address }));
-            save_item(NAME(new { m_schedule_dummy_read }));
-            save_item(NAME(new { m_addr_bit }));
-            save_item(NAME(new { m_CTL_buffer }));
+            save_item(g.NAME(new { m_address }));
+            save_item(g.NAME(new { m_next_is_address }));
+            save_item(g.NAME(new { m_schedule_dummy_read }));
+            save_item(g.NAME(new { m_addr_bit }));
+            save_item(g.NAME(new { m_CTL_buffer }));
 
             // old VSM stuff
-            save_item(NAME(new { m_read_byte_register }));
-            save_item(NAME(new { m_RDB_flag }));
+            save_item(g.NAME(new { m_read_byte_register }));
+            save_item(g.NAME(new { m_RDB_flag }));
 
             // FIFO
-            save_item(NAME(new { m_fifo }));
-            save_item(NAME(new { m_fifo_head }));
-            save_item(NAME(new { m_fifo_tail }));
-            save_item(NAME(new { m_fifo_count }));
-            save_item(NAME(new { m_fifo_bits_taken }));
+            save_item(g.NAME(new { m_fifo }));
+            save_item(g.NAME(new { m_fifo_head }));
+            save_item(g.NAME(new { m_fifo_tail }));
+            save_item(g.NAME(new { m_fifo_count }));
+            save_item(g.NAME(new { m_fifo_bits_taken }));
 
             // global status bits (booleans)
-            save_item(NAME(new { m_previous_talk_status }));
-            save_item(NAME(new { m_SPEN }));
-            save_item(NAME(new { m_DDIS }));
-            save_item(NAME(new { m_TALK }));
-            save_item(NAME(new { m_TALKD }));
-            save_item(NAME(new { m_buffer_low }));
-            save_item(NAME(new { m_buffer_empty }));
-            save_item(NAME(new { m_irq_pin }));
-            save_item(NAME(new { m_ready_pin }));
+            save_item(g.NAME(new { m_previous_talk_status }));
+            save_item(g.NAME(new { m_SPEN }));
+            save_item(g.NAME(new { m_DDIS }));
+            save_item(g.NAME(new { m_TALK }));
+            save_item(g.NAME(new { m_TALKD }));
+            save_item(g.NAME(new { m_buffer_low }));
+            save_item(g.NAME(new { m_buffer_empty }));
+            save_item(g.NAME(new { m_irq_pin }));
+            save_item(g.NAME(new { m_ready_pin }));
 
             // current and previous frames
-            save_item(NAME(new { m_OLDE }));
-            save_item(NAME(new { m_OLDP }));
+            save_item(g.NAME(new { m_OLDE }));
+            save_item(g.NAME(new { m_OLDP }));
 
-            save_item(NAME(new { m_new_frame_energy_idx }));
-            save_item(NAME(new { m_new_frame_pitch_idx }));
-            save_item(NAME(new { m_new_frame_k_idx }));
+            save_item(g.NAME(new { m_new_frame_energy_idx }));
+            save_item(g.NAME(new { m_new_frame_pitch_idx }));
+            save_item(g.NAME(new { m_new_frame_k_idx }));
 #if TMS5220_PERFECT_INTERPOLATION_HACK
             save_item(NAME(m_old_frame_energy_idx));
             save_item(NAME(m_old_frame_pitch_idx));
@@ -822,39 +822,39 @@ namespace mame
             save_item(NAME(m_old_zpar));
             save_item(NAME(m_old_uv_zpar));
 #endif
-            save_item(NAME(new { m_current_energy }));
-            save_item(NAME(new { m_current_pitch }));
-            save_item(NAME(new { m_current_k }));
+            save_item(g.NAME(new { m_current_energy }));
+            save_item(g.NAME(new { m_current_pitch }));
+            save_item(g.NAME(new { m_current_k }));
 
-            save_item(NAME(new { m_previous_energy }));
+            save_item(g.NAME(new { m_previous_energy }));
 
-            save_item(NAME(new { m_subcycle }));
-            save_item(NAME(new { m_subc_reload }));
-            save_item(NAME(new { m_PC }));
-            save_item(NAME(new { m_IP }));
-            save_item(NAME(new { m_inhibit }));
-            save_item(NAME(new { m_uv_zpar }));
-            save_item(NAME(new { m_zpar }));
-            save_item(NAME(new { m_pitch_zero }));
-            save_item(NAME(new { m_c_variant_rate }));
-            save_item(NAME(new { m_pitch_count }));
+            save_item(g.NAME(new { m_subcycle }));
+            save_item(g.NAME(new { m_subc_reload }));
+            save_item(g.NAME(new { m_PC }));
+            save_item(g.NAME(new { m_IP }));
+            save_item(g.NAME(new { m_inhibit }));
+            save_item(g.NAME(new { m_uv_zpar }));
+            save_item(g.NAME(new { m_zpar }));
+            save_item(g.NAME(new { m_pitch_zero }));
+            save_item(g.NAME(new { m_c_variant_rate }));
+            save_item(g.NAME(new { m_pitch_count }));
 
-            save_item(NAME(new { m_u }));
-            save_item(NAME(new { m_x }));
+            save_item(g.NAME(new { m_u }));
+            save_item(g.NAME(new { m_x }));
 
-            save_item(NAME(new { m_RNG }));
-            save_item(NAME(new { m_excitation_data }));
+            save_item(g.NAME(new { m_RNG }));
+            save_item(g.NAME(new { m_excitation_data }));
 
-            save_item(NAME(new { m_digital_select }));
+            save_item(g.NAME(new { m_digital_select }));
 
-            save_item(NAME(new { m_io_ready }));
+            save_item(g.NAME(new { m_io_ready }));
 
             // "proper" rs+ws emulation
-            save_item(NAME(new { m_true_timing }));
+            save_item(g.NAME(new { m_true_timing }));
 
-            save_item(NAME(new { m_rs_ws }));
-            save_item(NAME(new { m_read_latch }));
-            save_item(NAME(new { m_write_latch }));
+            save_item(g.NAME(new { m_rs_ws }));
+            save_item(g.NAME(new { m_read_latch }));
+            save_item(g.NAME(new { m_write_latch }));
         }
 
 
@@ -1770,7 +1770,7 @@ namespace mame
             LOGMASKED(LOG_PIN_READS, "irq pin set to state {0}\n", state);
 
             if (!m_irq_handler.isnull() && ((state != 0) != m_irq_pin))
-                m_irq_handler.op(state == 0 ? 1 : 0);
+                m_irq_handler.op_s32(state == 0 ? 1 : 0);
             m_irq_pin = state != 0;
         }
 
@@ -1785,7 +1785,7 @@ namespace mame
             {
                 LOGMASKED(LOG_PIN_READS, "ready pin set to state {0}\n", state);
                 if (!m_readyq_handler.isnull())
-                    m_readyq_handler.op((!state) ? 1 : 0);
+                    m_readyq_handler.op_s32((!state) ? 1 : 0);
                 m_ready_pin = state;
             }
         }
@@ -1834,7 +1834,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(TMS5220C,  tms5220c_device,  "tms5220c",  "TMS5220C")
         static device_t device_creator_tms5220c_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new tms5220c_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TMS5220C = DEFINE_DEVICE_TYPE(device_creator_tms5220c_device, "tms5220c", "TMS5220C");
+        public static readonly device_type TMS5220C = g.DEFINE_DEVICE_TYPE(device_creator_tms5220c_device, "tms5220c", "TMS5220C");
 
         tms5220c_device(machine_config mconfig, string tag, device_t owner, uint32_t clock) : base(mconfig, TMS5220C, tag, owner, clock, TMS5220_IS_5220C) { }
     }

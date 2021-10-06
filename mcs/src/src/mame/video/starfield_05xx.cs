@@ -16,7 +16,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(STARFIELD_05XX, starfield_05xx_device, "namco_05xx_starfield", "Namco 05xx Starfield")
         static device_t device_creator_starfield_05xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new starfield_05xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type STARFIELD_05XX = DEFINE_DEVICE_TYPE(device_creator_starfield_05xx_device, "namco_05xx_starfield", "Namco 05xx Starfield");
+        public static readonly device_type STARFIELD_05XX = g.DEFINE_DEVICE_TYPE(device_creator_starfield_05xx_device, "namco_05xx_starfield", "Namco 05xx Starfield");
 
 
         const uint16_t STARS_COLOR_BASE = 64*4+64*4;
@@ -184,16 +184,16 @@ namespace mame
 
         protected override void device_start()
         {
-            save_item(NAME(new { m_enable }));
-            save_item(NAME(new { m_lfsr }));
-            save_item(NAME(new { m_pre_vis_cycle_count }));
-            save_item(NAME(new { m_post_vis_cycle_count }));
-            save_item(NAME(new { m_set_a }));
-            save_item(NAME(new { m_set_b }));
+            save_item(g.NAME(new { m_enable }));
+            save_item(g.NAME(new { m_lfsr }));
+            save_item(g.NAME(new { m_pre_vis_cycle_count }));
+            save_item(g.NAME(new { m_post_vis_cycle_count }));
+            save_item(g.NAME(new { m_set_a }));
+            save_item(g.NAME(new { m_set_b }));
 
-            save_item(NAME(new { m_offset_x }));
-            save_item(NAME(new { m_offset_y }));
-            save_item(NAME(new { m_limit_x }));
+            save_item(g.NAME(new { m_offset_x }));
+            save_item(g.NAME(new { m_offset_y }));
+            save_item(g.NAME(new { m_limit_x }));
         }
 
 

@@ -17,7 +17,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(M6800, m6800_cpu_device, "m6800", "Motorola MC6800")
         static device_t device_creator_m6800_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6800_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6800 = DEFINE_DEVICE_TYPE(device_creator_m6800_cpu_device, "m6800", "Motorola MC6800");
+        public static readonly device_type M6800 = g.DEFINE_DEVICE_TYPE(device_creator_m6800_cpu_device, "m6800", "Motorola MC6800");
 
 
         protected class device_execute_interface_m6800 : device_execute_interface
@@ -58,6 +58,11 @@ namespace mame
 
 
         public delegate void op_func(m6800_cpu_device cpu);  //typedef void (m6800_cpu_device::*op_func)();
+
+
+        const int VERBOSE = 0;  //#define VERBOSE 0
+
+        public void LOG(string format, params object [] args) { if (VERBOSE != 0) logerror(format, args); }  //#define LOG(x)  do { if (VERBOSE) logerror x; } while (0)
 
 
         //enum
@@ -270,12 +275,12 @@ namespace mame
         uint8_t m_wai_state;      /* WAI opcode state ,(or sleep opcode state) */
         uint8_t m_nmi_state;      /* NMI line state */
         uint8_t m_nmi_pending;    /* NMI pending */
-        uint8_t [] m_irq_state = new uint8_t [3];   /* IRQ line state [IRQ1,TIN,SC1] */
+        protected uint8_t [] m_irq_state = new uint8_t [4];   /* IRQ line state [IRQ1,TIN,SC1,IS] */
 
         /* Memory spaces */
-        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache m_cprogram = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_cprogram;
-        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache m_copcodes = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.cache();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_copcodes;
-        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific m_program = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_BIG>.specific();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::specific m_program;
+        memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.cache m_cprogram = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.cache();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_cprogram;
+        memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.cache m_copcodes = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.cache();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::cache m_copcodes;
+        memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.specific m_program = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_BIG>.specific();  //memory_access<16, 0, 0, ENDIANNESS_BIG>::specific m_program;
 
         op_func [] m_insn;
         uint8_t [] m_cycles;            /* clock cycle of instruction table */
@@ -372,9 +377,9 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_m6800>();
 
 
-            m_dimemory.space(AS_PROGRAM).cache(m_cprogram);
-            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(m_copcodes);
-            m_dimemory.space(AS_PROGRAM).specific(m_program);
+            m_dimemory.space(g.AS_PROGRAM).cache(m_cprogram);
+            m_dimemory.space(m_dimemory.has_space(g.AS_OPCODES) ? g.AS_OPCODES : g.AS_PROGRAM).cache(m_copcodes);
+            m_dimemory.space(g.AS_PROGRAM).specific(m_program);
 
             m_pc.d = 0;
             m_s.d = 0;
@@ -386,16 +391,16 @@ namespace mame
             m_irq_state[1] = 0;
             m_irq_state[2] = 0;
 
-            save_item(NAME(new { m_ppc.w.l }));
-            save_item(NAME(new { m_pc.w.l }));
-            save_item(NAME(new { m_s.w.l }));
-            save_item(NAME(new { m_x.w.l }));
-            save_item(NAME(new { m_d.w.l }));
-            save_item(NAME(new { m_cc }));
-            save_item(NAME(new { m_wai_state }));
-            save_item(NAME(new { m_nmi_state }));
-            save_item(NAME(new { m_nmi_pending }));
-            save_item(NAME(new { m_irq_state }));
+            save_item(g.NAME(new { m_ppc.w.l }));
+            save_item(g.NAME(new { m_pc.w.l }));
+            save_item(g.NAME(new { m_s.w.l }));
+            save_item(g.NAME(new { m_x.w.l }));
+            save_item(g.NAME(new { m_d.w.l }));
+            save_item(g.NAME(new { m_cc }));
+            save_item(g.NAME(new { m_wai_state }));
+            save_item(g.NAME(new { m_nmi_state }));
+            save_item(g.NAME(new { m_nmi_pending }));
+            save_item(g.NAME(new { m_irq_state }));
 
             m_distate.state_add( M6800_A,         "A", m_d.b.h).formatstr("%02X");
             m_distate.state_add( M6800_B,         "B", m_d.b.l).formatstr("%02X");
@@ -439,23 +444,21 @@ namespace mame
 
         void device_execute_interface_execute_run()
         {
-            uint8_t ireg;
+            check_irq_lines();
 
-            CHECK_IRQ_LINES(); /* HJB 990417 */
-
-            CLEANUP_COUNTERS();
+            cleanup_counters();
 
             do
             {
                 if ((m_wai_state & (M6800_WAI | M6800_SLP)) != 0)
                 {
-                    EAT_CYCLES();
+                    eat_cycles();
                 }
                 else
                 {
                     pPPC = pPC;
                     debugger_instruction_hook(PCD);
-                    ireg = (uint8_t)M_RDOP(PCD);
+                    uint8_t ireg = (uint8_t)M_RDOP(PCD);
                     PC++;
                     m_insn[ireg](this);
                     increment_counter(m_cycles[ireg]);
@@ -485,19 +488,19 @@ namespace mame
         // device_memory_interface overrides
         space_config_vector device_memory_interface_memory_space_config()
         {
-            if (memory().has_configured_map(AS_OPCODES))
+            if (memory().has_configured_map(g.AS_OPCODES))
             {
                 return new space_config_vector
                 {
-                    std.make_pair(AS_PROGRAM, m_program_config),
-                    std.make_pair(AS_OPCODES, m_decrypted_opcodes_config)
+                    std.make_pair(g.AS_PROGRAM, m_program_config),
+                    std.make_pair(g.AS_OPCODES, m_decrypted_opcodes_config)
                 };
             }
             else
             {
                 return new space_config_vector
                 {
-                    std.make_pair(AS_PROGRAM, m_program_config)
+                    std.make_pair(g.AS_PROGRAM, m_program_config)
                 };
             }
         }
@@ -513,7 +516,7 @@ namespace mame
         uint32_t RM16(uint32_t Addr)
         {
             uint32_t result = RM(Addr) << 8;
-            return result | RM((Addr+1)&0xffff);
+            return result | RM((Addr + 1) & 0xffff);
         }
 
 
@@ -527,12 +530,14 @@ namespace mame
         /* IRQ enter */
         protected void enter_interrupt(string message, uint16_t irq_vector)
         {
+            int cycles_to_eat = 0;
+
             LOG(message);
 
             if ((m_wai_state & (M6800_WAI | M6800_SLP)) != 0)
             {
                 if ((m_wai_state & M6800_WAI) != 0)
-                    m_icount.i -= 4;
+                    cycles_to_eat = 4;
 
                 m_wai_state = (uint8_t)(m_wai_state & ~(M6800_WAI | M6800_SLP));
             }
@@ -543,11 +548,14 @@ namespace mame
                 PUSHBYTE(A);
                 PUSHBYTE(B);
                 PUSHBYTE(CC);
-                m_icount.i -= 12;
+                cycles_to_eat = 12;
             }
 
             SEI();
-            PCD = RM16( irq_vector );
+            PCD = RM16(irq_vector);
+
+            if (cycles_to_eat > 0)
+                increment_counter(cycles_to_eat);
         }
 
 
@@ -555,7 +563,7 @@ namespace mame
 
 
         /* check the IRQ lines for pending interrupts */
-        public void CHECK_IRQ_LINES()
+        public void check_irq_lines()
         {
             // TODO: IS3 interrupt
 
@@ -596,54 +604,17 @@ namespace mame
         }
 
 
-        public virtual void EAT_CYCLES() { throw new emu_unimplemented(); }
-        public virtual void CLEANUP_COUNTERS() { }
-        protected virtual void TAKE_TRAP() { }
+        public virtual void eat_cycles() { throw new emu_unimplemented(); }
+        public virtual void cleanup_counters() { }
+        protected virtual void take_trap() { }
     }
 
 
-#if false
-    class m6802_cpu_device : public m6800_cpu_device
-    {
-    public:
-        m6802_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+    //class m6802_cpu_device : public m6800_cpu_device
 
-        void set_ram_enable(bool re) { assert(!configured()); m_ram_enable = re; }
+    //class m6808_cpu_device : public m6802_cpu_device
 
-    protected:
-        m6802_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, const m6800_cpu_device::op_func *insn, const uint8_t *cycles);
-
-        virtual uint64_t execute_clocks_to_cycles(uint64_t clocks) const override { return (clocks + 4 - 1) / 4; }
-        virtual uint64_t execute_cycles_to_clocks(uint64_t cycles) const override { return (cycles * 4); }
-        virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
-
-        bool m_ram_enable;
-
-    private:
-        void ram_map(address_map &map);
-    };
-
-
-    class m6808_cpu_device : public m6802_cpu_device
-    {
-    public:
-        m6808_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-    protected:
-        virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
-        virtual void device_validity_check(validity_checker &valid) const override;
-    };
-
-
-    class nsc8105_cpu_device : public m6802_cpu_device
-    {
-    public:
-        nsc8105_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-    protected:
-        virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
-    };
-#endif
+    //class nsc8105_cpu_device : public m6802_cpu_device
 
 
     //DECLARE_DEVICE_TYPE(M6802, m6802_cpu_device)

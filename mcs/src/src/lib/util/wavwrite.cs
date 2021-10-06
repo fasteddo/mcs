@@ -7,6 +7,7 @@ using System.IO;
 
 using int16_t = System.Int16;
 using int32_t = System.Int32;
+using size_t = System.UInt64;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 
@@ -63,33 +64,33 @@ namespace mame
             wav.writer.Write("fmt ".ToCharArray());  //fwrite("fmt ", 1, 4, wav.file);
 
             // write the format length
-            temp32 = (UInt32)global_object.little_endianize_int32(16);
+            temp32 = (UInt32)g.little_endianize_int32(16);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             // write the format (PCM)
-            temp16 = (UInt16)global_object.little_endianize_int16(1);
+            temp16 = (UInt16)g.little_endianize_int16(1);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             // write the channels
-            temp16 = (UInt16)global_object.little_endianize_int16((Int16)channels);
+            temp16 = (UInt16)g.little_endianize_int16((Int16)channels);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             // write the sample rate
-            temp32 = (UInt32)global_object.little_endianize_int32(sample_rate);
+            temp32 = (UInt32)g.little_endianize_int32(sample_rate);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             // write the bytes/second
             uint32_t bps = (UInt32)(sample_rate * 2 * channels);
-            temp32 = (UInt32)global_object.little_endianize_int32((int)bps);
+            temp32 = (UInt32)g.little_endianize_int32((int)bps);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             // write the block align
             uint16_t align = (UInt16)(2 * channels);
-            temp16 = (UInt16)global_object.little_endianize_int16((Int16)align);
+            temp16 = (UInt16)g.little_endianize_int16((Int16)align);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             // write the bits/sample
-            temp16 = (UInt16)global_object.little_endianize_int16(16);
+            temp16 = (UInt16)g.little_endianize_int16(16);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             // write the 'data' tag
@@ -116,13 +117,13 @@ namespace mame
             /* update the total file size */
             wav.writer.Seek((int)wav.total_offs, SeekOrigin.Begin);  //fseek(wav.file, wav.total_offs, SEEK_SET);
             temp32 = total - (wav.total_offs + 4);
-            temp32 = (UInt32)global_object.little_endianize_int32((int)temp32);
+            temp32 = (UInt32)g.little_endianize_int32((int)temp32);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             /* update the data size */
             wav.writer.Seek((int)wav.data_offs, SeekOrigin.Begin);  //fseek(wav.file, wav.data_offs, SEEK_SET);
             temp32 = total - (wav.data_offs + 4);
-            temp32 = (UInt32)global_object.little_endianize_int32((int)temp32);
+            temp32 = (UInt32)g.little_endianize_int32((int)temp32);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             //fclose(wav.file);
@@ -151,13 +152,13 @@ namespace mame
                 return;
 
             /* resize dynamic array */
-            temp.resize(samples);
+            temp.resize((size_t)samples);
 
             /* clamp */
             for (i = 0; i < samples; i++)
             {
                 int val = data[i] >> shift;
-                temp[i] = (Int16)((val < -32768) ? -32768 : (val > 32767) ? 32767 : val);
+                temp[i] = (int16_t)((val < -32768) ? -32768 : (val > 32767) ? 32767 : val);
             }
 
             throw new emu_unimplemented();
@@ -172,7 +173,7 @@ namespace mame
                 return;
 
             /* resize dynamic array */
-            temp.resize(samples * 2);
+            temp.resize((size_t)samples * 2);
 
             /* interleave */
             for (i = 0; i < samples * 2; i++)
@@ -190,14 +191,14 @@ namespace mame
                 return;
 
             /* resize dynamic array */
-            temp.resize(samples);
+            temp.resize((size_t)samples);
 
             /* interleave */
             for (i = 0; i < samples * 2; i++)
             {
                 int val = (i & 1) != 0 ? right[i / 2] : left[i / 2];
                 val >>= shift;
-                temp[i] = (Int16)((val < -32768) ? -32768 : (val > 32767) ? 32767 : val);
+                temp[i] = (int16_t)((val < -32768) ? -32768 : (val > 32767) ? 32767 : val);
             }
 
             throw new emu_unimplemented();

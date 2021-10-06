@@ -4,7 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_constant_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
+using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
+using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 
 
 namespace mame.netlist
@@ -37,10 +38,11 @@ namespace mame.netlist
             //    factory::constructor_ptr_t decl_ ## p_alias = NETLIB_NAME(p_alias ## _c);
             static factory.constructor_ptr_t NETLIB_DEVICE_IMPL_BASE<chip>(string ns, string p_alias, string p_name, string p_def_param)
             {
-                throw new emu_unimplemented();
-#if false
-                return (classname) => { return new factory.device_element_t<chip>(p_name, classname, p_def_param, "__FILE__"); };
-#endif
+                return () => 
+                {
+                    properties sl = new properties(p_def_param, plib.pg.PSOURCELOC());
+                    return new factory.device_element_t<chip>(p_name, sl);
+                };
             }
         }
 
@@ -143,15 +145,15 @@ namespace mame.netlist
 
 
         //template <class C, typename... Args>
-        class device_element_t : element_t
+        class device_element_t<C> : element_t
         {
-            //std::tuple<Args...> m_args;
+            object [] m_args;  //std::tuple<Args...> m_args;
 
 
-            device_element_t(string name, properties props)
+            public device_element_t(string name, properties props, params object [] args)  //device_element_t(const pstring &name, properties &&props, Args&&... args)
                 : base(name, props)
             {
-                //m_args = std::forward<Args>(args)...)
+                m_args = args;  //m_args = std::forward<Args>(args)...)
             }
 
 
@@ -178,12 +180,30 @@ namespace mame.netlist
             //    //return pool.make_unique<C>(anetlist, name);
             //}
 
+            public core_device_t make_device(device_arena pool, netlist_state_t anetlist, string name, object [] args)
+            {
+                //return plib::make_unique<C>(pool, anetlist, name, std::forward<Args>(std::get<Is>(args))...);
+                ////return anetlist.make_pool_object<C>(anetlist, name, std::forward<Args>(std::get<Is>(args))...);
+
+                if      (typeof(C) == typeof(analog.nld_C))                   return new analog.nld_C(anetlist, name);
+                else if (typeof(C) == typeof(analog.nld_opamp))               return new analog.nld_opamp(anetlist, name);
+                else if (typeof(C) == typeof(analog.nld_POT))                 return new analog.nld_POT(anetlist, name);
+                else if (typeof(C) == typeof(analog.nld_R))                   return new analog.nld_R(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_analog_input))       return new devices.nld_analog_input(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_CD4066_GATE))        return new devices.nld_CD4066_GATE(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_gnd))                return new devices.nld_gnd(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_logic_input))        return new devices.nld_logic_input(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_netlistparams))      return new devices.nld_netlistparams(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_solver))             return new devices.nld_solver(anetlist, name);
+                else if (typeof(C) == typeof(interface_.nld_analog_callback)) { g.assert(args.Length == 2);  return new interface_.nld_analog_callback(anetlist, name, (nl_fptype)args[0], (interface_.nld_analog_callback.FUNC)args[1]); }
+                else if (typeof(C) == typeof(nld_sound_in))                   return new nld_sound_in(anetlist, name);
+                else throw new emu_unimplemented();
+            }
+
+
             public override core_device_t make_device(device_arena pool, netlist_state_t anetlist, string name)
             {
-                throw new emu_unimplemented();
-#if false
-                return new C(pool, anetlist, name);
-#endif
+                return make_device(pool, anetlist, name, m_args);
             }
 
 
@@ -195,12 +215,12 @@ namespace mame.netlist
 
             public static element_t create_nld_sound_in(string name, properties props)
             {
-                return new device_element_t(name, props);
+                return new device_element_t<nld_sound_in>(name, props);
             }
 
-            public static element_t create_nld_analog_callback(string name, properties props)
+            public static element_t create_nld_analog_callback(string name, properties props, params object [] args)
             {
-                return new device_element_t(name, props);
+                return new device_element_t<interface_.nld_analog_callback>(name, props, args);
             }
         }
 
@@ -223,12 +243,12 @@ namespace mame.netlist
             //}
             public void add_nld_sound_in(string name, properties props)
             {
-                add(device_element_t.create_nld_sound_in(name, props));
+                add(device_element_t<nld_sound_in>.create_nld_sound_in(name, props));
             }
 
-            public void add_nld_analog_callback(string name, properties props)
+            public void add_nld_analog_callback<cb_t, fptype, lb_t>(string name, properties props, fptype fp, lb_t lb)
             {
-                add(device_element_t.create_nld_analog_callback(name, props));
+                add(device_element_t<interface_.nld_analog_callback>.create_nld_analog_callback(name, props, fp, lb));
             }
 
 
@@ -256,14 +276,9 @@ namespace mame.netlist
                 throw new nl_exception(nl_errstr_global.MF_CLASS_1_NOT_FOUND(devname));
             }
 
+
             //template <class C>
-            public bool is_class<C>(element_t f)  //bool is_class(element_t::pointer f) noexcept { return dynamic_cast<device_element_t<C> *>(f) != nullptr; }
-            {
-                throw new emu_unimplemented();
-#if false
-                return f is device_element_t<C>;
-#endif
-            }
+            public bool is_class<C>(element_t f) { return f is device_element_t<C>; }  //bool is_class(element_t::pointer f) noexcept { return dynamic_cast<device_element_t<C> *>(f) != nullptr; }
 
 
             bool exists(string name)
@@ -283,8 +298,7 @@ namespace mame.netlist
         // factory_creator_ptr_t
         // -----------------------------------------------------------------------------
 
-        //using constructor_ptr_t = element_t::uptr (*const)();
-        public delegate element_t constructor_ptr_t();
+        public delegate element_t constructor_ptr_t();  //using constructor_ptr_t = element_t::uptr (*const)();
 
         //template <typename T>
         //element_t::uptr constructor_t(const pstring &name, properties &&props)

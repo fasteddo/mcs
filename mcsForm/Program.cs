@@ -47,7 +47,7 @@ namespace mcsForm
             //string gamename = "digdug";
             //string gamename = "1942";
             //string gamename = "paperboy";
-            //options.set_value(emu_options.OPTION_SYSTEMNAME, gamename, global_object.OPTION_PRIORITY_MAXIMUM);
+            //options.set_value(emu_options.OPTION_SYSTEMNAME, gamename, g.OPTION_PRIORITY_MAXIMUM);
 
             osdcore_global.set_osdcore(osdcore);
             osdfile_global.set_osdfile(osdfile);

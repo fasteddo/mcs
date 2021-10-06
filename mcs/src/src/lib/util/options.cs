@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using size_t = System.UInt64;
+
 
 namespace mame
 {
@@ -61,8 +63,7 @@ namespace mame
     }
 
 
-    public class core_options : global_object,
-                                IEnumerable<core_options.entry>
+    public class core_options : IEnumerable<core_options.entry>
     {
         public enum option_type
         {
@@ -111,12 +112,12 @@ namespace mame
             protected entry(std.vector<string> names, option_type type = option_type.STRING, string description = null)
             {
                 m_names = names;
-                m_priority = OPTION_PRIORITY_DEFAULT;
+                m_priority = g.OPTION_PRIORITY_DEFAULT;
                 m_type = type;
                 m_description = description;
 
 
-                assert(m_names.empty() == (m_type == option_type.HEADER));
+                g.assert(m_names.empty() == (m_type == option_type.HEADER));
             }
 
             protected entry(string name, option_type type = option_type.STRING, string description = null)
@@ -167,7 +168,7 @@ namespace mame
             public void set_value(string newvalue, int priority_value, bool always_override = false)
             {
                 // it is invalid to set the value on a header
-                assert(type() != option_type.HEADER);
+                g.assert(type() != option_type.HEADER);
 
                 validate(newvalue);
 
@@ -304,7 +305,7 @@ namespace mame
                 if (priority() <= priority_hi && priority() >= priority_lo)
                 {
                     set_value(default_value(), priority(), true);
-                    set_priority(OPTION_PRIORITY_DEFAULT);
+                    set_priority(g.OPTION_PRIORITY_DEFAULT);
                 }
             }
 
@@ -371,7 +372,7 @@ namespace mame
 
         // getters
         public string command() { return m_command; }
-        public std.vector<string> command_arguments() { assert(!m_command.empty()); return m_command_arguments; }
+        public std.vector<string> command_arguments() { g.assert(!m_command.empty()); return m_command_arguments; }
 
         public entry get_entry(string name)
         {
@@ -419,25 +420,25 @@ namespace mame
             {
                 // first extract any range
                 string namestr = opt.name;
-                int lparen = namestr.find_first_of('(', 0);
-                if (lparen != -1)
+                size_t lparen = namestr.find_first_of('(', 0);
+                if (lparen != g.npos)
                 {
-                    int dash = namestr.find_first_of('-', lparen + 1);
-                    if (dash != -1)
+                    size_t dash = namestr.find_first_of('-', lparen + 1);
+                    if (dash != g.npos)
                     {
-                        int rparen = namestr.find_first_of(')', dash + 1);
-                        if (rparen != -1)
+                        size_t rparen = namestr.find_first_of(')', dash + 1);
+                        if (rparen != g.npos)
                         {
-                            minimum = namestr.Substring(lparen + 1, dash - (lparen + 1)).Trim();  //minimum.assign(strtrimspace(std::string_view(&namestr[lparen + 1], dash - (lparen + 1))));
-                            maximum = namestr.Substring(dash + 1, rparen - (dash + 1)).Trim();  //maximum.assign(strtrimspace(std::string_view(&namestr[dash + 1], rparen - (dash + 1))));
-                            namestr = namestr.Remove(lparen, rparen + 1 - lparen);  //namestr.erase(lparen, rparen + 1 - lparen);
+                            minimum = namestr.Substring((int)lparen + 1, (int)(dash - (lparen + 1))).Trim();  //minimum.assign(strtrimspace(std::string_view(&namestr[lparen + 1], dash - (lparen + 1))));
+                            maximum = namestr.Substring((int)dash + 1, (int)(rparen - (dash + 1))).Trim();  //maximum.assign(strtrimspace(std::string_view(&namestr[dash + 1], rparen - (dash + 1))));
+                            namestr = namestr.Remove((int)lparen, (int)(rparen + 1 - lparen));  //namestr.erase(lparen, rparen + 1 - lparen);
                         }
                     }
                 }
 
                 // then chop up any semicolon-separated names
-                int semi;
-                while ((semi = namestr.find_first_of(';')) != -1)
+                size_t semi;
+                while ((semi = namestr.find_first_of(';')) != g.npos)
                 {
                     names.push_back(namestr.substr(0, semi));
 
@@ -445,7 +446,7 @@ namespace mame
                     if (opt.type == option_type.BOOLEAN)
                         names.push_back("no" + names.back());
 
-                    namestr = namestr.Remove(0, semi + 1);  //namestr.erase(0, semi + 1);
+                    namestr = namestr.Remove(0, (int)semi + 1);  //namestr.erase(0, semi + 1);
                 }
 
                 // finally add the last item
@@ -540,7 +541,7 @@ namespace mame
         {
             // update the data and default data
             var entry = get_entry(name);
-            assert(entry != null);
+            g.assert(entry != null);
             entry.set_default_value(defvalue);
         }
 
@@ -553,7 +554,7 @@ namespace mame
         {
             // update the data and default data
             var entry = get_entry(name);
-            assert(entry != null);
+            g.assert(entry != null);
             entry.set_description(description);
         }
 
@@ -571,7 +572,7 @@ namespace mame
         protected void set_value_changed_handler(string name, Action<string> handler)  //void core_options::set_value_changed_handler(std::string_view name, std::function<void(const char *)> &&handler)
         {
             var entry = get_entry(name);
-            assert(entry != null);
+            g.assert(entry != null);
             entry.set_value_changed_handler(handler);
         }
 
@@ -580,7 +581,7 @@ namespace mame
         //  revert - revert options at or below a certain
         //  priority back to their defaults
         //-------------------------------------------------
-        public void revert(int priority_hi = OPTION_PRIORITY_MAXIMUM, int priority_lo = OPTION_PRIORITY_DEFAULT)
+        public void revert(int priority_hi = g.OPTION_PRIORITY_MAXIMUM, int priority_lo = g.OPTION_PRIORITY_DEFAULT)
         {
             foreach (entry curentry in m_entries)
             {
@@ -609,7 +610,7 @@ namespace mame
                 if (!args[(int)arg].empty() && args[(int)arg][0] == '-')
                 {
                     var curentry = get_entry(args[arg].Substring(1));
-                    if (curentry != null && curentry.type() == OPTION_COMMAND)
+                    if (curentry != null && curentry.type() == g.OPTION_COMMAND)
                     {
                         // can only have one command
                         if (!m_command.empty())
@@ -647,12 +648,12 @@ namespace mame
                 }
 
                 // at this point, we've already processed commands
-                if (curentry.type() == OPTION_COMMAND)
+                if (curentry.type() == g.OPTION_COMMAND)
                     continue;
 
                 // get the data for this argument, special casing booleans
                 string newdata;
-                if (curentry.type() == OPTION_BOOLEAN)
+                if (curentry.type() == g.OPTION_BOOLEAN)
                 {
                     newdata = string.Compare(curarg.Remove(0, 1), 0, "no", 0, 2) == 0 ? "0" : "1";  //(strncmp(&curarg[1], "no", 2) == 0) ? "0" : "1";
                 }
@@ -682,7 +683,7 @@ namespace mame
         //  parse_ini_file - parse a series of entries in
         //  an INI file
         //-------------------------------------------------
-        public void parse_ini_file(util_.core_file inifile, int priority, bool ignore_unknown_options, bool always_override)
+        public void parse_ini_file(util.core_file inifile, int priority, bool ignore_unknown_options, bool always_override)
         {
             throw new emu_unimplemented();
         }
@@ -734,7 +735,7 @@ namespace mame
                     if (value != null)
                     {
                         // look up counterpart in diff, if diff is specified
-                        if (diff == null || strcmp(value, diff.value(name)) != 0)
+                        if (diff == null || std.strcmp(value, diff.value(name)) != 0)
                         {
                             // output header, if we have one
                             if (last_header != null)
@@ -848,7 +849,7 @@ namespace mame
         public void set_value(string name, string value, int priority)
         {
             var entry = get_entry(name);
-            assert(entry != null);
+            g.assert(entry != null);
             entry.set_value(value, priority);
         }
 
@@ -881,7 +882,7 @@ namespace mame
         void add_to_entry_map(string name, entry entry)
         {
             // it is illegal to call this method for something that already exists
-            assert(m_entrymap.find(name) == null);
+            g.assert(m_entrymap.find(name) == null);
 
             // append the entry
             m_entrymap.emplace(name, entry);

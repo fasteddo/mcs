@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using offs_t = System.UInt32;  //using offs_t = u32;
-using optional_memory_region = mame.memory_region_finder<mame.bool_constant_false>;  //using optional_memory_region = memory_region_finder<false>;
+using optional_memory_region = mame.memory_region_finder<mame.bool_const_false>;  //using optional_memory_region = memory_region_finder<false>;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -110,7 +110,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(PALETTE, palette_device, "palette", "palette")
         static device_t device_creator_palette_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new palette_device(mconfig, tag, owner); }
-        public static readonly device_type PALETTE = DEFINE_DEVICE_TYPE(device_creator_palette_device, "palette", "palette");
+        public static readonly device_type PALETTE = g.DEFINE_DEVICE_TYPE(device_creator_palette_device, "palette", "palette");
 
 
         //typedef device_delegate<void (palette_device &)> init_delegate;
@@ -507,11 +507,11 @@ namespace mame
         //-------------------------------------------------
         void update_for_write(offs_t byte_offset, int bytes_modified, bool indirect = false)
         {
-            assert((m_indirect_entries != 0) == indirect);
+            g.assert((m_indirect_entries != 0) == indirect);
 
             // determine how many entries were modified
             int bpe = m_paletteram.bytes_per_entry();
-            assert(bpe != 0);
+            g.assert(bpe != 0);
             int count = (bytes_modified + bpe - 1) / bpe;
 
             // for each entry modified, fetch the palette data and set the pen color or indirect color

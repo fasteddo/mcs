@@ -67,10 +67,10 @@ namespace mame.netlist
         }
 
 
-        public void terminal_t_after_ctor(terminal_t otherterm, std.array<terminal_t, uint32_constant_2> splitterterms = null)
+        public void terminal_t_after_ctor(terminal_t otherterm, std.array<terminal_t, u64_const_2> splitterterms = null)
         {
             if (splitterterms == null)
-                splitterterms = new std.array<terminal_t, uint32_constant_2>(null, null);
+                splitterterms = new std.array<terminal_t, u64_const_2>(null, null);
 
             state().setup().register_term(this, otherterm, splitterterms);
         }
@@ -111,7 +111,18 @@ namespace mame.netlist
         }
 
 
-        //void set_ptrs(nl_fptype *gt, nl_fptype *go, nl_fptype *Idr) noexcept(false);
+        public void set_ptrs(Pointer<nl_fptype> gt, Pointer<nl_fptype> go, Pointer<nl_fptype> Idr)
+        {
+            // NOLINTNEXTLINE(readability-implicit-bool-conversion)
+            if (!(gt != null && go != null && Idr != null) && (gt != null || go != null || Idr != null))
+            {
+                throw new nl_exception("Inconsistent nullptrs for terminal {0}", name());
+            }
+
+            m_gt = gt;
+            m_go = go;
+            m_Idr = Idr;
+        }
     }
 
 

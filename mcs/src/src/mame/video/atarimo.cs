@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using size_t = System.UInt64;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -147,7 +148,7 @@ namespace mame
         // device type definition
         //DEFINE_DEVICE_TYPE(ATARI_MOTION_OBJECTS, atari_motion_objects_device, "atarimo", "Atari Motion Objects")
         static device_t device_creator_atari_motion_objects_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new atari_motion_objects_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ATARI_MOTION_OBJECTS = DEFINE_DEVICE_TYPE(device_creator_atari_motion_objects_device, "atarimo", "Atari Motion Objects");
+        public static readonly device_type ATARI_MOTION_OBJECTS = g.DEFINE_DEVICE_TYPE(device_creator_atari_motion_objects_device, "atarimo", "Atari Motion Objects");
 
 
         // timer IDs
@@ -258,8 +259,8 @@ namespace mame
             }
 
 
-            public uint32_t extract(Pointer<uint16_t> data) { return (uint32_t)m_lower.extract(data) | (uint32_t)(m_upper.extract(data) << m_uppershift); }  //uint32_t extract(const uint16_t *data) const { return m_lower.extract(data) | (m_upper.extract(data) << m_uppershift); }
-            public uint32_t mask() { return (uint32_t)m_lower.mask() | ((uint32_t)m_upper.mask() << m_uppershift); }
+            public uint32_t extract(Pointer<uint16_t> data) { return m_lower.extract(data) | ((uint32_t)m_upper.extract(data) << m_uppershift); }  //uint32_t extract(const uint16_t *data) const { return m_lower.extract(data) | (m_upper.extract(data) << m_uppershift); }
+            public uint32_t mask() { return m_lower.mask() | ((uint32_t)m_upper.mask() << m_uppershift); }
         }
 
 
@@ -340,10 +341,10 @@ namespace mame
         {
             if (screen_tag is string)
                 m_divideo.set_screen((string)screen_tag);
-            else if (screen_tag is device_finder<screen_device, bool_constant_true>)
-                m_divideo.set_screen((device_finder<screen_device, bool_constant_true>)screen_tag);
-            else if (screen_tag is device_finder<screen_device, bool_constant_false>)
-                m_divideo.set_screen((device_finder<screen_device, bool_constant_false>)screen_tag);
+            else if (screen_tag is device_finder<screen_device, bool_const_true>)
+                m_divideo.set_screen((device_finder<screen_device, bool_const_true>)screen_tag);
+            else if (screen_tag is device_finder<screen_device, bool_const_false>)
+                m_divideo.set_screen((device_finder<screen_device, bool_const_false>)screen_tag);
             else
                 throw new emu_unimplemented();
 
@@ -388,10 +389,10 @@ namespace mame
         {
             if (screen_tag is string)
                 m_divideo.set_screen((string)screen_tag);
-            else if (screen_tag is device_finder<screen_device, bool_constant_false>)
-                m_divideo.set_screen((device_finder<screen_device, bool_constant_false>)screen_tag);
-            else if (screen_tag is device_finder<screen_device, bool_constant_true>)
-                m_divideo.set_screen((device_finder<screen_device, bool_constant_true>)screen_tag);
+            else if (screen_tag is device_finder<screen_device, bool_const_false>)
+                m_divideo.set_screen((device_finder<screen_device, bool_const_false>)screen_tag);
+            else if (screen_tag is device_finder<screen_device, bool_const_true>)
+                m_divideo.set_screen((device_finder<screen_device, bool_const_true>)screen_tag);
             else
                 throw new emu_unimplemented();
 
@@ -403,7 +404,7 @@ namespace mame
         //template <typename T> void set_gfxdecode(T &&tag) { m_gfxdecode.set_tag(std::forward<T>(tag)); }
         public void set_gfxdecode(string tag) { m_gfxdecode.set_tag(tag); }
         public void set_gfxdecode<bool_Required>(device_finder<gfxdecode_device, bool_Required> tag)
-            where bool_Required : bool_constant, new()
+            where bool_Required : bool_const, new()
         { m_gfxdecode.set_tag(tag); }
 
         void set_config(atari_motion_objects_config config) { m_atari_motion_objects_config = config; }  //void set_config(const atari_motion_objects_config &config) { static_cast<atari_motion_objects_config &>(*this) = config; }
@@ -565,19 +566,19 @@ namespace mame
 
             // allocate and initialize the code lookup
             int codesize = round_to_powerof2((int)m_codemask.mask());
-            m_codelookup.resize(codesize);
+            m_codelookup.resize((size_t)codesize);
             for (int i = 0; i < codesize; i++)
                 m_codelookup[i] = (uint32_t)i;
 
             // allocate and initialize the color lookup
             int colorsize = round_to_powerof2((int)m_colormask.mask());
-            m_colorlookup.resize(colorsize);
+            m_colorlookup.resize((size_t)colorsize);
             for (int i = 0; i < colorsize; i++)
                 m_colorlookup[i] = (uint8_t)i;
 
             // allocate and the gfx lookup
             int gfxsize = codesize / 256;
-            m_gfxlookup.resize(gfxsize);
+            m_gfxlookup.resize((size_t)gfxsize);
             for (int i = 0; i < gfxsize; i++)
                 m_gfxlookup[i] = m_atari_motion_objects_config.m_gfxindex;
 
@@ -586,9 +587,9 @@ namespace mame
             m_force_update_timer.adjust(m_divideo.screen().time_until_pos(0));
 
             // register for save states
-            save_item(NAME(new { m_bank }));
-            save_item(NAME(new { m_xscroll }));
-            save_item(NAME(new { m_yscroll }));
+            save_item(g.NAME(new { m_bank }));
+            save_item(g.NAME(new { m_xscroll }));
+            save_item(g.NAME(new { m_yscroll }));
         }
 
 

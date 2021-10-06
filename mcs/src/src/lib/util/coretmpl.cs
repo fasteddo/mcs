@@ -10,6 +10,7 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+using uX = mame.FlexPrim;
 
 
 namespace mame
@@ -317,7 +318,7 @@ namespace mame
     //class fifo : protected std::array<T, N>
 
 
-    public static partial class util_
+    public static partial class util
     {
         //template <typename CharT, typename Traits, typename Allocator>
         //std::basic_string_view<CharT, Traits> buf_to_string_view(basic_ovectorstream<CharT, Traits, Allocator> &stream)
@@ -492,6 +493,20 @@ namespace mame
         {
             return ((BIT(val,B7) << 7) | (BIT(val,B6) << 6) | (BIT(val,B5) << 5) | (BIT(val,B4) << 4) |
                     (BIT(val,B3) << 3) | (BIT(val,B2) << 2) | (BIT(val,B1) << 1) | (BIT(val,B0) << 0));
+        }
+
+        public static int bitswap(int val, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0)
+        {
+            return ((BIT(val,B10) << 10) | (BIT(val, B9) <<  9) | (BIT(val, B8) <<  8) | (BIT(val, B7) <<  7) |
+                    (BIT(val, B6) <<  6) | (BIT(val, B5) <<  5) | (BIT(val, B4) <<  4) | (BIT(val, B3) <<  3) |
+                    (BIT(val, B2) <<  2) | (BIT(val, B1) <<  1) | (BIT(val, B0) <<  0));
+        }
+
+        public static int bitswap(int val, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0)
+        {
+            return ((BIT(val,B11) << 11) | (BIT(val,B10) << 10) | (BIT(val, B9) <<  9) | (BIT(val, B8) <<  8) |
+                    (BIT(val, B7) <<  7) | (BIT(val, B6) <<  6) | (BIT(val, B5) <<  5) | (BIT(val, B4) <<  4) |
+                    (BIT(val, B3) <<  3) | (BIT(val, B2) <<  2) | (BIT(val, B1) <<  1) | (BIT(val, B0) <<  0));
         }
 
         public static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0)

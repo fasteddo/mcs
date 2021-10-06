@@ -40,7 +40,7 @@ namespace mame
         void trap()
         {
             logerror("m6800: illegal opcode: address {0}, op {1}\n", PC - 1, (int)M_RDOP_ARG((uint32_t)PC - 1) & 0xFF);
-            TAKE_TRAP();
+            take_trap();
         }
 
         /* $00 ILLEGAL */
@@ -82,7 +82,7 @@ namespace mame
         {
             CC = A;
             ONE_MORE_INSN();
-            CHECK_IRQ_LINES(); /* HJB 990417 */
+            check_irq_lines();
         }
 
         /* $07 TPA inherent ----- */
@@ -142,7 +142,7 @@ namespace mame
         {
             CLI();
             ONE_MORE_INSN();
-            CHECK_IRQ_LINES(); /* HJB 990417 */
+            check_irq_lines();
         }
 
         /* $0f SEI */
@@ -151,7 +151,7 @@ namespace mame
         {
             SEI();
             ONE_MORE_INSN();
-            CHECK_IRQ_LINES(); /* HJB 990417 */
+            check_irq_lines();
         }
 
         /* $10 SBA inherent -**** */
@@ -226,9 +226,9 @@ namespace mame
             uint16_t t;
             uint16_t cf = 0;
             msn = (uint8_t)(A & 0xf0); lsn = (uint8_t)(A & 0x0f);
-            if ( lsn > 0x09 || (CC & 0x20) != 0 ) cf |= 0x06;
-            if ( msn > 0x80 && lsn > 0x09 ) cf |= 0x60;
-            if ( msn > 0x90 || (CC & 0x01) != 0 ) cf |= 0x60;
+            if (lsn > 0x09 || (CC & 0x20) != 0 ) cf |= 0x06;
+            if (msn > 0x80 && lsn > 0x09) cf |= 0x60;
+            if (msn > 0x90 || (CC & 0x01) != 0 ) cf |= 0x60;
             t = (uint16_t)(cf + A);
             CLR_NZV(); /* keep carry from previous operation */
             SET_NZ8((uint8_t)t); SET_C8(t);
@@ -243,7 +243,7 @@ namespace mame
         {
             /* wait for next IRQ (same as waiting of wai) */
             m_wai_state |= M6800_SLP;
-            EAT_CYCLES();
+            eat_cycles();
         }
 
         /* $1b ABA inherent ***** */
@@ -478,7 +478,7 @@ namespace mame
             PULLBYTE_A();
             PULLWORD_pX();
             PULLWORD_pPC();
-            CHECK_IRQ_LINES(); /* HJB 990417 */
+            check_irq_lines();
         }
 
         /* $3c PSHX inherent ----- */
@@ -513,8 +513,8 @@ namespace mame
             PUSHBYTE(A);
             PUSHBYTE(B);
             PUSHBYTE(CC);
-            CHECK_IRQ_LINES();
-            if ((m_wai_state & M6800_WAI) != 0) EAT_CYCLES();
+            check_irq_lines();
+            if ((m_wai_state & M6800_WAI) != 0) eat_cycles();
         }
 
         /* $3f SWI absolute indirect ----- */

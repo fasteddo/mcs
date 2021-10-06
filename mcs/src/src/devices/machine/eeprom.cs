@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using offs_t = System.UInt32;  //using offs_t = u32;
-using optional_memory_region = mame.memory_region_finder<mame.bool_constant_false>;  //using optional_memory_region = memory_region_finder<false>;
+using optional_memory_region = mame.memory_region_finder<mame.bool_const_false>;  //using optional_memory_region = memory_region_finder<false>;
 using PointerU8 = mame.Pointer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -205,7 +205,7 @@ namespace mame
             m_data = new MemoryU8((int)size, true);  //m_data = std::make_unique<uint8_t []>(size);
 
             // save states
-            save_item(NAME(new { m_completion_time }));
+            save_item(g.NAME(new { m_completion_time }));
 
             //throw new emu_unimplemented();
 #if false
@@ -240,7 +240,7 @@ namespace mame
             // handle hard-coded data from the driver
             if (m_default_data != null)
             {
-                osd_printf_verbose("Warning: Driver-specific EEPROM defaults are going away soon.\n");
+                g.osd_printf_verbose("Warning: Driver-specific EEPROM defaults are going away soon.\n");
                 for (offs_t offs = 0; offs < m_default_data_size; offs++)
                 {
                     if (m_data_bits == 8)
@@ -254,14 +254,14 @@ namespace mame
             if (m_region.found())
             {
                 if (m_region.op[0].bytes() != eeprom_bytes)
-                    fatalerror("eeprom region '{0}' wrong size (expected size = 0x{1})\n", tag(), eeprom_bytes);
+                    g.fatalerror("eeprom region '{0}' wrong size (expected size = 0x{1})\n", tag(), eeprom_bytes);
                 if (m_data_bits == 8 && m_region.op[0].bytewidth() != 1)
-                    fatalerror("eeprom region '{0}' needs to be an 8-bit region\n", tag());
+                    g.fatalerror("eeprom region '{0}' needs to be an 8-bit region\n", tag());
                 if (m_data_bits == 16 && m_region.op[0].bytewidth() != 2)
-                    fatalerror("eeprom region '{0}' needs to be a 16-bit region\n", tag());
-                osd_printf_verbose("Loading data from EEPROM region '{0}'\n", tag());
+                    g.fatalerror("eeprom region '{0}' needs to be a 16-bit region\n", tag());
+                g.osd_printf_verbose("Loading data from EEPROM region '{0}'\n", tag());
 
-                memcpy(m_data, m_region.op[0].base_(), eeprom_bytes);
+                std.memcpy(m_data, m_region.op[0].base_(), eeprom_bytes);
             }
         }
 

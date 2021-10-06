@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using psource_t_stream_ptr = mame.std.istream;  //using stream_ptr = plib::unique_ptr<std::istream>;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using unsigned = System.UInt32;
 
 
@@ -17,11 +17,11 @@ namespace mame.plib
         // simple hash
         // ----------------------------------------------------------------------------------------
         //template <typename T>
-        public static UInt64 hash(string buf, size_t size)  //std::size_t hash(const T *buf, std::size_t size)
+        public static size_t hash(string buf, size_t size)  //std::size_t hash(const T *buf, std::size_t size)
         {
-            UInt64 result = 5381;
-            for (int pIdx = 0; pIdx != size; pIdx++)  //for (const T* p = buf; p != buf + size; p++)
-                result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ (size_t)buf[pIdx];  //result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ narrow_cast<std::size_t>(*p); // NOLINT
+            size_t result = 5381;
+            for (size_t pIdx = 0; pIdx != size; pIdx++)  //for (const T* p = buf; p != buf + size; p++)
+                result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ (size_t)buf[(int)pIdx];  //result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ narrow_cast<std::size_t>(*p); // NOLINT
             return result;
         }
 

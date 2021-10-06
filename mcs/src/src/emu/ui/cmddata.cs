@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using unsigned = System.UInt32;
+
 
 namespace mame
 {
@@ -27,7 +29,7 @@ namespace mame
         public class fix_command_t
         {
             public char glyph_char;
-            public UInt32 glyph_code;
+            public unsigned glyph_code;
 
             public fix_command_t(char glyph_char, UInt32 glyph_code) { this.glyph_char = glyph_char; this.glyph_code = glyph_code; }
         }
@@ -35,9 +37,6 @@ namespace mame
 
         public class fix_strings_t
         {
-            //old public string glyph_str;
-            //old public int glyph_code;
-            //old public UInt32 glyph_str_len;
             public string glyph_str;
             public int glyph_code;
 

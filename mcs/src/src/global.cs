@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
+using char32_t = System.UInt32;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
 using int64_t = System.Int64;
@@ -21,8 +22,11 @@ using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int
 using offs_t = System.UInt32;  //using offs_t = u32;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using PointerU8 = mame.Pointer<System.Byte>;
+using s8 = System.SByte;
+using s16 = System.Int16;
 using s32 = System.Int32;
-using size_t = System.UInt32;
+using s64 = System.Int64;
+using size_t = System.UInt64;
 using std_time_t = System.Int64;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -33,80 +37,128 @@ using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 using unsigned = System.UInt32;
+using uX = mame.FlexPrim;
 
 
 namespace mame
 {
-    public interface bool_constant { bool value { get; } }
-    public class bool_constant_true : bool_constant { public bool value { get { return true; } } }
-    public class bool_constant_false : bool_constant { public bool value { get { return false; } } }
+    public interface bool_const { bool value { get; } }
+    public class bool_const_true : bool_const { public bool value { get { return true; } } }
+    public class bool_const_false : bool_const { public bool value { get { return false; } } }
 
-    public interface int_constant { int value { get; } }
-    public class int_constant_n3 : int_constant { public int value { get { return -3; } } }
-    public class int_constant_n2 : int_constant { public int value { get { return -2; } } }
-    public class int_constant_n1 : int_constant { public int value { get { return -1; } } }
-    public class int_constant_0 : int_constant { public int value { get { return 0; } } }
-    public class int_constant_1 : int_constant { public int value { get { return 1; } } }
-    public class int_constant_2 : int_constant { public int value { get { return 2; } } }
-    public class int_constant_3 : int_constant { public int value { get { return 3; } } }
-    public class int_constant_4 : int_constant { public int value { get { return 4; } } }
-    public class int_constant_5 : int_constant { public int value { get { return 5; } } }
-    public class int_constant_6 : int_constant { public int value { get { return 6; } } }
-    public class int_constant_7 : int_constant { public int value { get { return 7; } } }
-    public class int_constant_8 : int_constant { public int value { get { return 8; } } }
-    public class int_constant_9 : int_constant { public int value { get { return 9; } } }
-    public class int_constant_10 : int_constant { public int value { get { return 10; } } }
-    public class int_constant_11 : int_constant { public int value { get { return 11; } } }
-    public class int_constant_12 : int_constant { public int value { get { return 12; } } }
-    public class int_constant_13 : int_constant { public int value { get { return 13; } } }
-    public class int_constant_14 : int_constant { public int value { get { return 14; } } }
-    public class int_constant_15 : int_constant { public int value { get { return 15; } } }
-    public class int_constant_16 : int_constant { public int value { get { return 16; } } }
-    public class int_constant_17 : int_constant { public int value { get { return 17; } } }
-    public class int_constant_18 : int_constant { public int value { get { return 18; } } }
-    public class int_constant_19 : int_constant { public int value { get { return 19; } } }
-    public class int_constant_20 : int_constant { public int value { get { return 20; } } }
-    public class int_constant_21 : int_constant { public int value { get { return 21; } } }
-    public class int_constant_22 : int_constant { public int value { get { return 22; } } }
-    public class int_constant_23 : int_constant { public int value { get { return 23; } } }
-    public class int_constant_24 : int_constant { public int value { get { return 24; } } }
-    public class int_constant_25 : int_constant { public int value { get { return 25; } } }
-    public class int_constant_26 : int_constant { public int value { get { return 26; } } }
-    public class int_constant_27 : int_constant { public int value { get { return 27; } } }
-    public class int_constant_28 : int_constant { public int value { get { return 28; } } }
-    public class int_constant_29 : int_constant { public int value { get { return 29; } } }
-    public class int_constant_30 : int_constant { public int value { get { return 30; } } }
-    public class int_constant_31 : int_constant { public int value { get { return 31; } } }
-    public class int_constant_32 : int_constant { public int value { get { return 32; } } }
+    public interface int_const { int value { get; } }
+    public class int_const_n512 : int_const { public int value { get { return -512; } } }
+    public class int_const_n256 : int_const { public int value { get { return -256; } } }
+    public class int_const_n128 : int_const { public int value { get { return -128; } } }
+    public class int_const_n64 : int_const { public int value { get { return -64; } } }
+    public class int_const_n32 : int_const { public int value { get { return -32; } } }
+    public class int_const_n16 : int_const { public int value { get { return -16; } } }
+    public class int_const_n3 : int_const { public int value { get { return -3; } } }
+    public class int_const_n2 : int_const { public int value { get { return -2; } } }
+    public class int_const_n1 : int_const { public int value { get { return -1; } } }
+    public class int_const_0 : int_const { public int value { get { return 0; } } }
+    public class int_const_1 : int_const { public int value { get { return 1; } } }
+    public class int_const_2 : int_const { public int value { get { return 2; } } }
+    public class int_const_3 : int_const { public int value { get { return 3; } } }
+    public class int_const_4 : int_const { public int value { get { return 4; } } }
+    public class int_const_5 : int_const { public int value { get { return 5; } } }
+    public class int_const_6 : int_const { public int value { get { return 6; } } }
+    public class int_const_7 : int_const { public int value { get { return 7; } } }
+    public class int_const_8 : int_const { public int value { get { return 8; } } }
+    public class int_const_9 : int_const { public int value { get { return 9; } } }
+    public class int_const_10 : int_const { public int value { get { return 10; } } }
+    public class int_const_11 : int_const { public int value { get { return 11; } } }
+    public class int_const_12 : int_const { public int value { get { return 12; } } }
+    public class int_const_13 : int_const { public int value { get { return 13; } } }
+    public class int_const_14 : int_const { public int value { get { return 14; } } }
+    public class int_const_15 : int_const { public int value { get { return 15; } } }
+    public class int_const_16 : int_const { public int value { get { return 16; } } }
+    public class int_const_17 : int_const { public int value { get { return 17; } } }
+    public class int_const_18 : int_const { public int value { get { return 18; } } }
+    public class int_const_19 : int_const { public int value { get { return 19; } } }
+    public class int_const_20 : int_const { public int value { get { return 20; } } }
+    public class int_const_21 : int_const { public int value { get { return 21; } } }
+    public class int_const_22 : int_const { public int value { get { return 22; } } }
+    public class int_const_23 : int_const { public int value { get { return 23; } } }
+    public class int_const_24 : int_const { public int value { get { return 24; } } }
+    public class int_const_25 : int_const { public int value { get { return 25; } } }
+    public class int_const_26 : int_const { public int value { get { return 26; } } }
+    public class int_const_27 : int_const { public int value { get { return 27; } } }
+    public class int_const_28 : int_const { public int value { get { return 28; } } }
+    public class int_const_29 : int_const { public int value { get { return 29; } } }
+    public class int_const_30 : int_const { public int value { get { return 30; } } }
+    public class int_const_31 : int_const { public int value { get { return 31; } } }
+    public class int_const_32 : int_const { public int value { get { return 32; } } }
 
-    public interface uint32_constant { UInt32 value { get; } }
-    public class uint32_constant_0 : uint32_constant { public UInt32 value { get { return 0; } } }
-    public class uint32_constant_1 : uint32_constant { public UInt32 value { get { return 1; } } }
-    public class uint32_constant_2 : uint32_constant { public UInt32 value { get { return 2; } } }
-    public class uint32_constant_3 : uint32_constant { public UInt32 value { get { return 3; } } }
-    public class uint32_constant_4 : uint32_constant { public UInt32 value { get { return 4; } } }
-    public class uint32_constant_5 : uint32_constant { public UInt32 value { get { return 5; } } }
-    public class uint32_constant_8 : uint32_constant { public UInt32 value { get { return 8; } } }
-    public class uint32_constant_10 : uint32_constant { public UInt32 value { get { return 10; } } }
-    public class uint32_constant_12 : uint32_constant { public UInt32 value { get { return 12; } } }
-    public class uint32_constant_16 : uint32_constant { public UInt32 value { get { return 16; } } }
-    public class uint32_constant_20 : uint32_constant { public UInt32 value { get { return 20; } } }
+    public interface u32_const { UInt32 value { get; } }
+    public class u32_const_0 : u32_const { public UInt32 value { get { return 0; } } }
+    public class u32_const_1 : u32_const { public UInt32 value { get { return 1; } } }
+    public class u32_const_2 : u32_const { public UInt32 value { get { return 2; } } }
+    public class u32_const_3 : u32_const { public UInt32 value { get { return 3; } } }
+    public class u32_const_4 : u32_const { public UInt32 value { get { return 4; } } }
+    public class u32_const_5 : u32_const { public UInt32 value { get { return 5; } } }
+    public class u32_const_6 : u32_const { public UInt32 value { get { return 6; } } }
+    public class u32_const_7 : u32_const { public UInt32 value { get { return 7; } } }
+    public class u32_const_8 : u32_const { public UInt32 value { get { return 8; } } }
+    public class u32_const_10 : u32_const { public UInt32 value { get { return 10; } } }
+    public class u32_const_12 : u32_const { public UInt32 value { get { return 12; } } }
+    public class u32_const_16 : u32_const { public UInt32 value { get { return 16; } } }
+    public class u32_const_20 : u32_const { public UInt32 value { get { return 20; } } }
 
-    public interface endianness_t_constant { endianness_t value { get; } }
-    public class endianness_t_constant_ENDIANNESS_LITTLE : endianness_t_constant { public endianness_t value { get { return endianness_t.ENDIANNESS_LITTLE; } } }
-    public class endianness_t_constant_ENDIANNESS_BIG : endianness_t_constant { public endianness_t value { get { return endianness_t.ENDIANNESS_BIG; } } }
+    public interface u64_const { UInt64 value { get; } }
+    public class u64_const_0 : u64_const { public UInt64 value { get { return 0; } } }
+    public class u64_const_2 : u64_const { public UInt64 value { get { return 2; } } }
+    public class u64_const_3 : u64_const { public UInt64 value { get { return 3; } } }
+    public class u64_const_4 : u64_const { public UInt64 value { get { return 4; } } }
+    public class u64_const_5 : u64_const { public UInt64 value { get { return 5; } } }
+    public class u64_const_8 : u64_const { public UInt64 value { get { return 8; } } }
+    public class u64_const_16 : u64_const { public UInt64 value { get { return 16; } } }
+
+    public interface endianness_t_const { endianness_t value { get; } }
+    public class endianness_t_const_ENDIANNESS_LITTLE : endianness_t_const { public endianness_t value { get { return endianness_t.ENDIANNESS_LITTLE; } } }
+    public class endianness_t_const_ENDIANNESS_BIG : endianness_t_const { public endianness_t value { get { return endianness_t.ENDIANNESS_BIG; } } }
 
 
     // global functions
-    public class g
+    public static class g
     {
+        // _74259
+        public static ls259_device LS259(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ls259_device>(mconfig, tag, ls259_device.LS259, clock); }
+        public static ls259_device LS259<bool_Required>(machine_config mconfig, device_finder<ls259_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ls259_device.LS259, clock); }
+
+
+        // adc0808
+        public static adc0809_device ADC0809(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<adc0809_device>(mconfig, tag, adc0809_device.ADC0809, clock); }
+
+
+        // atarimo
+        public static atari_motion_objects_device ATARI_MOTION_OBJECTS<bool_Required>(machine_config mconfig, device_finder<atari_motion_objects_device, bool_Required> finder, uint32_t clock, device_finder<screen_device, bool_Required> screen_tag, atari_motion_objects_config config)
+            where bool_Required : bool_const, new()
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, atari_motion_objects_device.ATARI_MOTION_OBJECTS, 0);
+            device.atari_motion_objects_device_after_ctor(screen_tag, config);
+            return device;
+        }
+
+
         // attotime
         public static attoseconds_t ATTOSECONDS_IN_USEC(u32 x) { return attotime.ATTOSECONDS_IN_USEC(x); }
 
 
+        // ay8910
+        public static ay8910_device AY8910(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
+        public static ay8910_device AY8910(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
+        public static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
+        public static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
+
+
+        // bankdev
+        public static address_map_bank_device ADDRESS_MAP_BANK(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<address_map_bank_device>(mconfig, tag, address_map_bank_device.ADDRESS_MAP_BANK, 0); }
+
+
         // corefile
-        public static string core_filename_extract_base(string name, bool strip_extension = false) { return util_.core_filename_extract_base(name, strip_extension); }
-        public static bool core_filename_ends_with(string filename, string extension) { return util_.core_filename_ends_with(filename, extension); }
+        public static string core_filename_extract_base(string name, bool strip_extension = false) { return util.core_filename_extract_base(name, strip_extension); }
+        public static bool core_filename_ends_with(string filename, string extension) { return util.core_filename_ends_with(filename, extension); }
 
 
         // corestr
@@ -119,31 +171,33 @@ namespace mame
 
 
         // coretmpl
-        public static u8 make_bitmask8(u32 n) { return util_.make_bitmask8(n); }
-        public static u8 make_bitmask8(s32 n) { return util_.make_bitmask8(n); }
-        public static u16 make_bitmask16(s32 n) { return util_.make_bitmask16(n); }
-        public static u16 make_bitmask16(u32 n) { return util_.make_bitmask16(n); }
-        public static u32 make_bitmask32(s32 n) { return util_.make_bitmask32(n); }
-        public static u32 make_bitmask32(u32 n) { return util_.make_bitmask32(n); }
-        public static u64 make_bitmask64(s32 n) { return util_.make_bitmask64(n); }
-        public static u64 make_bitmask64(u32 n) { return util_.make_bitmask64(n); }
-        public static uX make_bitmask_uX(int width, u32 n) { return util_.make_bitmask_uX(width, n); }
-        public static uX make_bitmask_uX(int width, s32 n) { return util_.make_bitmask_uX(width, n); }
-        public static int BIT(int x, int n) { return util_.BIT(x, n); }
-        public static UInt32 BIT(UInt32 x, int n) { return util_.BIT(x, n); }
-        public static UInt32 BIT(UInt32 x, UInt32 n, UInt32 w) { return util_.BIT(x, n, w); }
-        public static UInt32 BIT(UInt32 x, int n, UInt32 w) { return util_.BIT(x, n, w); }
-        public static UInt32 BIT(UInt32 x, int n, int w) { return util_.BIT(x, n, w); }
-        public static int bitswap(int val, int B1, int B0) { return util_.bitswap(val, B1, B0); }
-        public static int bitswap(int val, int B3, int B2, int B1, int B0) { return util_.bitswap(val, B3, B2, B1, B0); }
-        public static int bitswap(int val, int B5, int B4, int B3, int B2, int B1, int B0) { return util_.bitswap(val, B5, B4, B3, B2, B1, B0); }
-        public static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return util_.bitswap(val, B7, B6, B5, B4, B3, B2, B1, B0); }
-        public static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return util_.bitswap(val, B15, B14, B13, B12, B11, B10, B9, B8, B7, B6, B5, B4, B3, B2, B1, B0); }
-        public static sbyte iabs(sbyte v) { return util_.iabs(v); }
-        public static short iabs(short v) { return util_.iabs(v); }
-        public static int iabs(int v) { return util_.iabs(v); }
-        public static Int64 iabs(Int64 v) { return util_.iabs(v); }
-        public static void reduce_fraction(ref UInt32 num, ref UInt32 den) { util_.reduce_fraction(ref num, ref den); }
+        public static u8 make_bitmask8(u32 n) { return util.make_bitmask8(n); }
+        public static u8 make_bitmask8(s32 n) { return util.make_bitmask8(n); }
+        public static u16 make_bitmask16(s32 n) { return util.make_bitmask16(n); }
+        public static u16 make_bitmask16(u32 n) { return util.make_bitmask16(n); }
+        public static u32 make_bitmask32(s32 n) { return util.make_bitmask32(n); }
+        public static u32 make_bitmask32(u32 n) { return util.make_bitmask32(n); }
+        public static u64 make_bitmask64(s32 n) { return util.make_bitmask64(n); }
+        public static u64 make_bitmask64(u32 n) { return util.make_bitmask64(n); }
+        public static uX make_bitmask_uX(int width, u32 n) { return util.make_bitmask_uX(width, n); }
+        public static uX make_bitmask_uX(int width, s32 n) { return util.make_bitmask_uX(width, n); }
+        public static int BIT(int x, int n) { return util.BIT(x, n); }
+        public static UInt32 BIT(UInt32 x, int n) { return util.BIT(x, n); }
+        public static UInt32 BIT(UInt32 x, UInt32 n, UInt32 w) { return util.BIT(x, n, w); }
+        public static UInt32 BIT(UInt32 x, int n, UInt32 w) { return util.BIT(x, n, w); }
+        public static UInt32 BIT(UInt32 x, int n, int w) { return util.BIT(x, n, w); }
+        public static int bitswap(int val, int B1, int B0) { return util.bitswap(val, B1, B0); }
+        public static int bitswap(int val, int B3, int B2, int B1, int B0) { return util.bitswap(val, B3, B2, B1, B0); }
+        public static int bitswap(int val, int B5, int B4, int B3, int B2, int B1, int B0) { return util.bitswap(val, B5, B4, B3, B2, B1, B0); }
+        public static int bitswap(int val, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return util.bitswap(val, B7, B6, B5, B4, B3, B2, B1, B0); }
+        public static int bitswap(int val, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return util.bitswap(val, B10, B9, B8, B7, B6, B5, B4, B3, B2, B1, B0); }
+        public static int bitswap(int val, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return util.bitswap(val, B11, B10, B9, B8, B7, B6, B5, B4, B3, B2, B1, B0); }
+        public static int bitswap(int val, int B15, int B14, int B13, int B12, int B11, int B10, int B9, int B8, int B7, int B6, int B5, int B4, int B3, int B2, int B1, int B0) { return util.bitswap(val, B15, B14, B13, B12, B11, B10, B9, B8, B7, B6, B5, B4, B3, B2, B1, B0); }
+        public static sbyte iabs(sbyte v) { return util.iabs(v); }
+        public static short iabs(short v) { return util.iabs(v); }
+        public static int iabs(int v) { return util.iabs(v); }
+        public static Int64 iabs(Int64 v) { return util.iabs(v); }
+        public static void reduce_fraction(ref UInt32 num, ref UInt32 den) { util.reduce_fraction(ref num, ref den); }
 
 
         // crsshair
@@ -154,10 +208,15 @@ namespace mame
         public const int CROSSHAIR_RAW_ROWBYTES = crsshair_global.CROSSHAIR_RAW_ROWBYTES;
 
 
+        // dac
+        public static dac_8bit_r2r_device DAC_8BIT_R2R<bool_Required>(machine_config mconfig, device_finder<dac_8bit_r2r_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
+
+
         // device
         public const string DEVICE_SELF = device_global.DEVICE_SELF;
         public const string DEVICE_SELF_OWNER = device_global.DEVICE_SELF_OWNER;
         public static u32 DERIVED_CLOCK(u32 num, u32 den) { return device_global.DERIVED_CLOCK(num, den); }
+        public static device_type DEFINE_DEVICE_TYPE(device_type.create_func func, string shortname, string fullname) { return device_global.DEFINE_DEVICE_TYPE(func, shortname, fullname); }
 
 
         // diexec
@@ -170,11 +229,16 @@ namespace mame
         public const int INPUT_LINE_NMI = diexec_global.INPUT_LINE_NMI;
         public const int INPUT_LINE_RESET = diexec_global.INPUT_LINE_RESET;
         public const int INPUT_LINE_HALT = diexec_global.INPUT_LINE_HALT;
+        public const u32 SUSPEND_REASON_HALT = device_execute_interface.SUSPEND_REASON_HALT;
+        public const u32 SUSPEND_REASON_RESET = device_execute_interface.SUSPEND_REASON_RESET;
+        public const u32 SUSPEND_REASON_DISABLE = device_execute_interface.SUSPEND_REASON_DISABLE;
 
 
         // digfx
+        public const int MAX_GFX_ELEMENTS = digfx_global.MAX_GFX_ELEMENTS;
         public static readonly u32 [] EXTENDED_XOFFS = digfx_global.EXTENDED_XOFFS;
         public static readonly u32 [] EXTENDED_YOFFS = digfx_global.EXTENDED_YOFFS;
+        public const UInt32 GFX_RAW = digfx_global.GFX_RAW;
         public static UInt32 RGN_FRAC(UInt32 num, UInt32 den) { return digfx_global.RGN_FRAC(num, den); }
         public static bool IS_FRAC(UInt32 offset) { return digfx_global.IS_FRAC(offset); }
         public static UInt32 FRAC_NUM(UInt32 offset) { return digfx_global.FRAC_NUM(offset); }
@@ -194,6 +258,10 @@ namespace mame
         public static bool GFXENTRY_ISREVERSE(UInt32 x) { return digfx_global.GFXENTRY_ISREVERSE(x); }
         public static gfx_decode_entry GFXDECODE_ENTRY(string region, u32 offset, gfx_layout layout, u16 start, u16 colors) { return digfx_global.GFXDECODE_ENTRY(region, offset, layout, start, colors); }
         public static gfx_decode_entry GFXDECODE_SCALE(string region, u32 offset, gfx_layout layout, u16 start, u16 colors, u32 x, u32 y) { return digfx_global.GFXDECODE_SCALE(region, offset, layout, start, colors, x, y); }
+
+
+        // disc_flt
+        public static void calculate_filter2_coefficients(discrete_base_node node, double fc, double d, double type, ref discrete_filter_coeff coeff) { disc_flt_global.calculate_filter2_coefficients(node, fc, d, type, ref coeff); }
 
 
         // discrete
@@ -417,6 +485,20 @@ namespace mame
         public static discrete_block DISCRETE_OUTPUT(double OPNODE, double GAIN) { return discrete_global.DISCRETE_OUTPUT(OPNODE, GAIN); }
         public const int MAX_SAMPLES_PER_TASK_SLICE = discrete_global.MAX_SAMPLES_PER_TASK_SLICE;
         public const int USE_DISCRETE_TASKS = discrete_global.USE_DISCRETE_TASKS;
+        public static discrete_sound_device DISCRETE(machine_config mconfig, string tag, discrete_block [] intf)
+        {
+            var device = emu.detail.device_type_impl.op<discrete_sound_device>(mconfig, tag, discrete_sound_device.DISCRETE, 0);
+            device.set_intf(intf);
+            return device;
+        }
+        public static discrete_sound_device DISCRETE<bool_Required>(machine_config mconfig, device_finder<discrete_sound_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, discrete_sound_device.DISCRETE, 0); }
+        public static discrete_sound_device DISCRETE<bool_Required>(machine_config mconfig, device_finder<discrete_sound_device, bool_Required> finder, discrete_block [] intf)
+            where bool_Required : bool_const, new()
+        {
+            var device = DISCRETE(mconfig, finder);
+            device.set_intf(intf);
+            return device;
+        }
 
 
         // disound
@@ -431,212 +513,82 @@ namespace mame
         public const int STATE_GENFLAGS  = distate_global.STATE_GENFLAGS;
 
 
-        // ui
-        public const float UI_MAX_FONT_HEIGHT = ui_global.UI_MAX_FONT_HEIGHT;
-        public const float UI_LINE_WIDTH = ui_global.UI_LINE_WIDTH;
-        public static readonly rgb_t UI_GREEN_COLOR = ui_global.UI_GREEN_COLOR;
-        public static readonly rgb_t UI_YELLOW_COLOR = ui_global.UI_YELLOW_COLOR;
-        public static readonly rgb_t UI_RED_COLOR = ui_global.UI_RED_COLOR;
-        public const uint32_t UI_HANDLER_CANCEL = ui_global.UI_HANDLER_CANCEL;
-
-
-        // ymfm
-        public static u32 abs_sin_attenuation(u32 input) { return ymfm_global.abs_sin_attenuation(input); }
-    }
-
-
-    public class global_object
-    {
-        // these are in a seperate class so they don't clutter the debug window
-        protected class helpers
-        {
-            machine_config m_helper_config = null;
-            device_t m_helper_owner = null;
-            public device_t m_helper_device = null;
-            address_map_entry m_helper_curentry = null;
-            address_map m_helper_map = null;
-            ioport_configurer m_helper_configurer = null;
-            ioport_list m_helper_portlist = null;
-            bool m_helper_originated_from_port_include = false;
-            Stack<netlist.nlparse_t> m_helper_setups = new Stack<netlist.nlparse_t>();
-
-            public machine_config helper_config { get { return m_helper_config; } set { m_helper_config = value; } }
-            public device_t helper_owner { get { return m_helper_owner; } set { m_helper_owner = value; } }
-            public device_t helper_device { get { return m_helper_device; } set { m_helper_device = value; } }
-            public address_map_entry helper_curentry { set { m_helper_curentry = value; } }
-            public address_map helper_address_map { set { m_helper_map = value; } }
-            public ioport_configurer helper_configurer { get { return m_helper_configurer; } set { m_helper_configurer = value; } }
-            public ioport_list helper_portlist { get { return m_helper_portlist; } set { m_helper_portlist = value; } }
-            public bool helper_originated_from_port_include { get { return m_helper_originated_from_port_include; } set { m_helper_originated_from_port_include = value; } }
-            public netlist.nlparse_t helper_setup { get { return m_helper_setups.Peek(); } }
-            public void helper_setup_push(netlist.nlparse_t setup) { m_helper_setups.Push(setup); }
-            public void helper_setup_pop() { m_helper_setups.Pop(); }
-        }
-
-        protected helpers m_globals = new helpers();
-
-
-        // _74259
-        protected static ls259_device LS259(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ls259_device>(mconfig, tag, ls259_device.LS259, clock); }
-        protected static ls259_device LS259<bool_Required>(machine_config mconfig, device_finder<ls259_device, bool_Required> finder, u32 clock = 0)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op<ls259_device, bool_Required>(mconfig, finder, ls259_device.LS259, clock); }
-
-
-        // adc0808
-        protected static adc0809_device ADC0809(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<adc0809_device>(mconfig, tag, adc0809_device.ADC0809, clock); }
-
-
-        // atarimo
-        protected static atari_motion_objects_device ATARI_MOTION_OBJECTS<bool_Required>(machine_config mconfig, device_finder<atari_motion_objects_device, bool_Required> finder, uint32_t clock, device_finder<screen_device, bool_Required> screen_tag, atari_motion_objects_config config)
-            where bool_Required : bool_constant, new()
-        {
-            var device = emu.detail.device_type_impl.op(mconfig, finder, atari_motion_objects_device.ATARI_MOTION_OBJECTS, 0);
-            device.atari_motion_objects_device_after_ctor(screen_tag, config);
-            return device;
-        }
-
-
-        // ay8910
-        protected static ay8910_device AY8910(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
-        protected static ay8910_device AY8910(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
-        protected static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, u32 clock = 0)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
-        protected static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
-
-
-        // bankdev
-        protected static address_map_bank_device ADDRESS_MAP_BANK(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<address_map_bank_device>(mconfig, tag, address_map_bank_device.ADDRESS_MAP_BANK, 0); }
-
-
-        // dac
-        protected static dac_8bit_r2r_device DAC_8BIT_R2R<bool_Required>(machine_config mconfig, device_finder<dac_8bit_r2r_device, bool_Required> finder, u32 clock = 0)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
-
-
-        // device
-        protected static device_type DEFINE_DEVICE_TYPE(device_type.create_func func, string shortname, string fullname) { return device_global.DEFINE_DEVICE_TYPE(func, shortname, fullname); }
-
-
-        // disc_flt
-        protected static void calculate_filter2_coefficients(discrete_base_node node, double fc, double d, double type, ref discrete_filter_coeff coeff) { disc_flt_global.calculate_filter2_coefficients(node, fc, d, type, ref coeff); }
-
-
-        // discrete
-        protected static discrete_sound_device DISCRETE(machine_config mconfig, string tag, discrete_block [] intf)
-        {
-            var device = emu.detail.device_type_impl.op<discrete_sound_device>(mconfig, tag, discrete_sound_device.DISCRETE, 0);
-            device.set_intf(intf);
-            return device;
-        }
-        protected static discrete_sound_device DISCRETE<bool_Required>(machine_config mconfig, device_finder<discrete_sound_device, bool_Required> finder)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, discrete_sound_device.DISCRETE, 0); }
-        protected static discrete_sound_device DISCRETE<bool_Required>(machine_config mconfig, device_finder<discrete_sound_device, bool_Required> finder, discrete_block [] intf)
-            where bool_Required : bool_constant, new()
-        {
-            var device = DISCRETE(mconfig, finder);
-            device.set_intf(intf);
-            return device;
-        }
-
-
         // drawgfx
-        protected static gfxdecode_device GFXDECODE(machine_config mconfig, string tag, string palette_tag, gfx_decode_entry [] gfxinfo)
+        public static void copyscrollbitmap(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect) { drawgfx_global.copyscrollbitmap(dest, src, numrows, rowscroll, numcols, colscroll, cliprect); }
+        public static void copyscrollbitmap_trans(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen) { drawgfx_global.copyscrollbitmap_trans(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, trans_pen); }
+        public static u32 alpha_blend_r32(u32 d, u32 s, u8 level) { return drawgfx_global.alpha_blend_r32(d, s, level); }
+        public static gfxdecode_device GFXDECODE(machine_config mconfig, string tag, string palette_tag, gfx_decode_entry [] gfxinfo)
         {
             var device = emu.detail.device_type_impl.op<gfxdecode_device>(mconfig, tag, gfxdecode_device.GFXDECODE, 0);
             device.gfxdecode_device_after_ctor(palette_tag, gfxinfo);
             return device;
         }
-        protected static gfxdecode_device GFXDECODE<bool_Required>(machine_config mconfig, device_finder<gfxdecode_device, bool_Required> finder, string palette_tag, gfx_decode_entry [] gfxinfo)
-            where bool_Required : bool_constant, new()
-        {
-            var device = emu.detail.device_type_impl.op(mconfig, finder, gfxdecode_device.GFXDECODE, 0);
-            device.gfxdecode_device_after_ctor(palette_tag, gfxinfo);
-            return device;
-        }
-        protected static gfxdecode_device GFXDECODE<bool_Required>(machine_config mconfig, device_finder<gfxdecode_device, bool_Required> finder, finder_base palette, gfx_decode_entry [] gfxinfo)
-            where bool_Required : bool_constant, new()
+        public static gfxdecode_device GFXDECODE<bool_Required>(machine_config mconfig, device_finder<gfxdecode_device, bool_Required> finder, finder_base palette, gfx_decode_entry [] gfxinfo)
+            where bool_Required : bool_const, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, gfxdecode_device.GFXDECODE, 0);
             device.gfxdecode_device_after_ctor(palette, gfxinfo);
             return device;
         }
-        protected static void copyscrollbitmap(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect) { drawgfx_global.copyscrollbitmap(dest, src, numrows, rowscroll, numcols, colscroll, cliprect); }
-        protected static void copyscrollbitmap_trans(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen) { drawgfx_global.copyscrollbitmap_trans(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, trans_pen); }
 
 
         // driver
-        protected static void MCFG_MACHINE_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_MACHINE_START_OVERRIDE(config, func); }
-        protected static void MCFG_MACHINE_RESET_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_MACHINE_RESET_OVERRIDE(config, func); }
-        protected static void MCFG_VIDEO_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_VIDEO_START_OVERRIDE(config, func); }
+        public static void MCFG_MACHINE_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_MACHINE_START_OVERRIDE(config, func); }
+        public static void MCFG_MACHINE_RESET_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_MACHINE_RESET_OVERRIDE(config, func); }
+        public static void MCFG_VIDEO_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_global.MCFG_VIDEO_START_OVERRIDE(config, func); }
 
 
         // eeprom
-        protected static eeprom_parallel_2804_device EEPROM_2804(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<eeprom_parallel_2804_device>(mconfig, tag, eeprom_parallel_2804_device.EEPROM_2804, clock); }
+        public static eeprom_parallel_2804_device EEPROM_2804(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<eeprom_parallel_2804_device>(mconfig, tag, eeprom_parallel_2804_device.EEPROM_2804, clock); }
 
 
         // eminline
         public static int64_t mul_32x32(int32_t a, int32_t b) { return eminline_global.mul_32x32(a, b); }
         public static uint64_t mulu_32x32(uint32_t a, uint32_t b) { return eminline_global.mulu_32x32(a, b); }
-        protected static uint32_t divu_64x32(uint64_t a, uint32_t b) { return eminline_global.divu_64x32(a, b); }
+        public static int32_t mul_32x32_hi(int32_t a, int32_t b) { return eminline_global.mul_32x32_hi(a, b); }
+        public static int32_t div_32x32_shift(int32_t a, int32_t b, uint8_t shift) { return eminline_global.div_32x32_shift(a, b, shift); }
+        public static uint32_t divu_64x32(uint64_t a, uint32_t b) { return eminline_global.divu_64x32(a, b); }
         public static uint32_t divu_64x32_rem(uint64_t a, uint32_t b, out uint32_t remainder) { return eminline_global.divu_64x32_rem(a, b, out remainder); }
-        protected static int64_t get_profile_ticks() { return eminline_global.get_profile_ticks(); }
-
-
-        // emualloc
-        public static MemoryContainer<T> pool_alloc_array<T>(UInt32 num) where T : new() { return emualloc_global.pool_alloc_array<T>(num); }
-        public static MemoryContainer<T> pool_alloc_array_clear<T>(UInt32 num) where T : new() { return emualloc_global.pool_alloc_array_clear<T>(num); }
+        public static unsigned population_count_32(uint32_t val) { return eminline_global.population_count_32(val); }
+        public static int64_t get_profile_ticks() { return eminline_global.get_profile_ticks(); }
 
 
         // emucore
-        protected static readonly string [] endianness_names = emucore_global.endianness_names;
-        protected const endianness_t ENDIANNESS_NATIVE = emucore_global.ENDIANNESS_NATIVE;
-        public const UInt32 ORIENTATION_FLIP_X = emucore_global.ORIENTATION_FLIP_X;
-        public const UInt32 ORIENTATION_FLIP_Y = emucore_global.ORIENTATION_FLIP_Y;
-        public const UInt32 ORIENTATION_SWAP_XY = emucore_global.ORIENTATION_SWAP_XY;
-        protected const UInt32 ROT0   = emucore_global.ROT0;
-        protected const UInt32 ROT90  = emucore_global.ROT90;
-        protected const UInt32 ROT180 = emucore_global.ROT180;
-        protected const UInt32 ROT270 = emucore_global.ROT270;
-        protected static Tuple<object, string> NAME<T>(T x) { return emucore_global.NAME(x); }
-        public static void fatalerror(string format, params object [] args) { emucore_global.fatalerror(format, args); }
-        [Conditional("DEBUG")] public static void assert(bool condition) { emucore_global.assert(condition); }
-        [Conditional("DEBUG")] public static void assert(bool condition, string message) { emucore_global.assert(condition, message); }
+        public static readonly string [] endianness_names = emucore_global.endianness_names;
+        public const endianness_t ENDIANNESS_NATIVE = emucore_global.ENDIANNESS_NATIVE;
+        public const int ORIENTATION_FLIP_X = emucore_global.ORIENTATION_FLIP_X;
+        public const int ORIENTATION_FLIP_Y = emucore_global.ORIENTATION_FLIP_Y;
+        public const int ORIENTATION_SWAP_XY = emucore_global.ORIENTATION_SWAP_XY;
+        public const int ROT0   = emucore_global.ROT0;
+        public const int ROT90  = emucore_global.ROT90;
+        public const int ROT180 = emucore_global.ROT180;
+        public const int ROT270 = emucore_global.ROT270;
+        public static Tuple<object, string> NAME<T>(T x) { return emucore_global.NAME(x); }
+        [DebuggerHidden] public static void fatalerror(string format, params object [] args) { emucore_global.fatalerror(format, args); }
+        [DebuggerHidden][Conditional("DEBUG")] public static void assert(bool condition, string message = "") { emucore_global.assert(condition, message); }
         [Conditional("ASSERT_SLOW")] public static void assert_slow(bool condition) { emucore_global.assert(condition); }
-        [Conditional("DEBUG")] public static void static_assert(bool condition, string message) { assert(condition, message); }
+        [Conditional("DEBUG")] public static void static_assert(bool condition, string message = "") { emucore_global.assert(condition, message); }
 
 
         // emumem
         public const int AS_PROGRAM = emumem_global.AS_PROGRAM;
-        protected const int AS_DATA = emumem_global.AS_DATA;
+        public const int AS_DATA = emumem_global.AS_DATA;
         public const int AS_IO = emumem_global.AS_IO;
-        protected const int AS_OPCODES = emumem_global.AS_OPCODES;
+        public const int AS_OPCODES = emumem_global.AS_OPCODES;
         public static void COMBINE_DATA(ref u16 varptr, u16 data, u16 mem_mask) { emumem_global.COMBINE_DATA(ref varptr, data, mem_mask); }
-        protected static bool ACCESSING_BITS_0_7(u16 mem_mask) { return emumem_global.ACCESSING_BITS_0_7(mem_mask); }
+        public static void COMBINE_DATA(ref u32 varptr, u32 data, u32 mem_mask) { emumem_global.COMBINE_DATA(ref varptr, data, mem_mask); }
+        public static bool ACCESSING_BITS_0_7(u16 mem_mask) { return emumem_global.ACCESSING_BITS_0_7(mem_mask); }
 
 
         // emuopts
-        protected static void conditionally_peg_priority(core_options.entry entry, bool peg_priority) { emuopts_global.conditionally_peg_priority(entry, peg_priority); }
+        public static void conditionally_peg_priority(core_options.entry entry, bool peg_priority) { emuopts_global.conditionally_peg_priority(entry, peg_priority); }
 
 
         // emupal
-        protected static palette_device PALETTE(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<palette_device>(mconfig, tag, palette_device.PALETTE, 0); }
-        protected static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0); }
-        protected static palette_device PALETTE(machine_config mconfig, string tag, palette_device.init_delegate init, u32 entries = 0U, u32 indirect = 0U)
-        {
-            var device = emu.detail.device_type_impl.op<palette_device>(mconfig, tag, palette_device.PALETTE, 0);
-            device.palette_device_after_ctor(init, entries, indirect);
-            return device;
-        }
-        protected static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder, palette_device.init_delegate init, u32 entries = 0U, u32 indirect = 0U)
-            where bool_Required : bool_constant, new()
+        public static palette_device PALETTE(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<palette_device>(mconfig, tag, palette_device.PALETTE, 0); }
+        public static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0); }
+        public static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder, palette_device.init_delegate init, u32 entries = 0U, u32 indirect = 0U)
+            where bool_Required : bool_const, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0);
             device.palette_device_after_ctor(init, entries, indirect);
@@ -645,116 +597,113 @@ namespace mame
 
 
         // er2055
-        protected static er2055_device ER2055<bool_Required>(machine_config mconfig, device_finder<er2055_device, bool_Required> finder, u32 clock = 0)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, er2055_device.ER2055, clock); }
+        public static er2055_device ER2055<bool_Required>(machine_config mconfig, device_finder<er2055_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, er2055_device.ER2055, clock); }
 
 
         // galaxian
-        protected static galaxian_sound_device GALAXIAN_SOUND(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<galaxian_sound_device>(mconfig, tag, galaxian_sound_device.GALAXIAN_SOUND, clock); }
+        public static galaxian_sound_device GALAXIAN_SOUND(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<galaxian_sound_device>(mconfig, tag, galaxian_sound_device.GALAXIAN_SOUND, clock); }
 
 
         // gamedrv
-        protected const UInt64 MACHINE_TYPE_ARCADE = gamedrv_global.MACHINE_TYPE_ARCADE;
-        protected const UInt64 MACHINE_NOT_WORKING = gamedrv_global.MACHINE_NOT_WORKING;
-        protected const UInt64 MACHINE_SUPPORTS_SAVE = gamedrv_global.MACHINE_SUPPORTS_SAVE;
-        public const UInt64 MACHINE_IS_BIOS_ROOT = gamedrv_global.MACHINE_IS_BIOS_ROOT;
-        protected const UInt64 MACHINE_CLICKABLE_ARTWORK = gamedrv_global.MACHINE_CLICKABLE_ARTWORK;
-        protected const UInt64 MACHINE_NO_SOUND_HW = gamedrv_global.MACHINE_NO_SOUND_HW;
-        protected const UInt64 MACHINE_UNEMULATED_PROTECTION = gamedrv_global.MACHINE_UNEMULATED_PROTECTION;
-        protected const UInt64 MACHINE_WRONG_COLORS = gamedrv_global.MACHINE_WRONG_COLORS;
-        protected const UInt64 MACHINE_IMPERFECT_COLORS = gamedrv_global.MACHINE_IMPERFECT_COLORS;
-        protected const UInt64 MACHINE_IMPERFECT_GRAPHICS = gamedrv_global.MACHINE_IMPERFECT_GRAPHICS;
-        protected const UInt64 MACHINE_NO_SOUND = gamedrv_global.MACHINE_NO_SOUND;
-        protected const UInt64 MACHINE_IMPERFECT_SOUND = gamedrv_global.MACHINE_IMPERFECT_SOUND;
-        protected const UInt64 MACHINE_IMPERFECT_CONTROLS = gamedrv_global.MACHINE_IMPERFECT_CONTROLS;
-        protected const UInt64 MACHINE_NODEVICE_MICROPHONE = gamedrv_global.MACHINE_NODEVICE_MICROPHONE;
-        protected const UInt64 MACHINE_NODEVICE_PRINTER = gamedrv_global.MACHINE_NODEVICE_PRINTER;
-        protected const UInt64 MACHINE_NODEVICE_LAN = gamedrv_global.MACHINE_NODEVICE_LAN;
-        protected const UInt64 MACHINE_IMPERFECT_TIMING = gamedrv_global.MACHINE_IMPERFECT_TIMING;
-        protected static game_driver GAME(device_type.create_func creator, MemoryContainer<tiny_rom_entry> roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, UInt32 MONITOR, string COMPANY, string FULLNAME, UInt64 FLAGS) { return gamedrv_global.GAME(creator, roms, YEAR, NAME, PARENT, MACHINE, INPUT, INIT, MONITOR, COMPANY, FULLNAME, FLAGS); }
+        public const u64 MACHINE_TYPE_ARCADE = gamedrv_global.MACHINE_TYPE_ARCADE;
+        public const u64 MACHINE_NOT_WORKING = gamedrv_global.MACHINE_NOT_WORKING;
+        public const u64 MACHINE_SUPPORTS_SAVE = gamedrv_global.MACHINE_SUPPORTS_SAVE;
+        public const u64 MACHINE_IS_BIOS_ROOT = gamedrv_global.MACHINE_IS_BIOS_ROOT;
+        public const u64 MACHINE_CLICKABLE_ARTWORK = gamedrv_global.MACHINE_CLICKABLE_ARTWORK;
+        public const u64 MACHINE_NO_SOUND_HW = gamedrv_global.MACHINE_NO_SOUND_HW;
+        public const u64 MACHINE_UNEMULATED_PROTECTION = gamedrv_global.MACHINE_UNEMULATED_PROTECTION;
+        public const u64 MACHINE_WRONG_COLORS = gamedrv_global.MACHINE_WRONG_COLORS;
+        public const u64 MACHINE_IMPERFECT_COLORS = gamedrv_global.MACHINE_IMPERFECT_COLORS;
+        public const u64 MACHINE_IMPERFECT_GRAPHICS = gamedrv_global.MACHINE_IMPERFECT_GRAPHICS;
+        public const u64 MACHINE_NO_SOUND = gamedrv_global.MACHINE_NO_SOUND;
+        public const u64 MACHINE_IMPERFECT_SOUND = gamedrv_global.MACHINE_IMPERFECT_SOUND;
+        public const u64 MACHINE_IMPERFECT_CONTROLS = gamedrv_global.MACHINE_IMPERFECT_CONTROLS;
+        public const u64 MACHINE_NODEVICE_MICROPHONE = gamedrv_global.MACHINE_NODEVICE_MICROPHONE;
+        public const u64 MACHINE_NODEVICE_PRINTER = gamedrv_global.MACHINE_NODEVICE_PRINTER;
+        public const u64 MACHINE_NODEVICE_LAN = gamedrv_global.MACHINE_NODEVICE_LAN;
+        public const u64 MACHINE_IMPERFECT_TIMING = gamedrv_global.MACHINE_IMPERFECT_TIMING;
+        public static game_driver GAME(device_type.create_func creator, MemoryContainer<tiny_rom_entry> roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, int MONITOR, string COMPANY, string FULLNAME, u64 FLAGS) { return gamedrv_global.GAME(creator, roms, YEAR, NAME, PARENT, MACHINE, INPUT, INIT, MONITOR, COMPANY, FULLNAME, FLAGS); }
 
 
         // gen_latch
-        protected static generic_latch_8_device GENERIC_LATCH_8(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<generic_latch_8_device>(mconfig, tag, generic_latch_8_device.GENERIC_LATCH_8, clock); }
-        protected static generic_latch_8_device GENERIC_LATCH_8<bool_Required>(machine_config mconfig, device_finder<generic_latch_8_device, bool_Required> finder, u32 clock = 0)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, generic_latch_8_device.GENERIC_LATCH_8, clock); }
+        public static generic_latch_8_device GENERIC_LATCH_8<bool_Required>(machine_config mconfig, device_finder<generic_latch_8_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, generic_latch_8_device.GENERIC_LATCH_8, clock); }
 
 
         // hash
-        protected static string CRC(string x) { return util.hash_global.CRC(x); }
-        protected static string SHA1(string x) { return util.hash_global.SHA1(x); }
-        protected const string NO_DUMP = util.hash_global.NO_DUMP;
+        public static string CRC(string x) { return hash_global.CRC(x); }
+        public static string SHA1(string x) { return hash_global.SHA1(x); }
+        public const string NO_DUMP = hash_global.NO_DUMP;
 
 
         // i8255
-        protected static i8255_device I8255A(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<i8255_device>(mconfig, tag, i8255_device.I8255A, clock); }
-        protected static i8255_device I8255A<bool_Required>(machine_config mconfig, device_finder<i8255_device, bool_Required> finder, u32 clock = 0)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, i8255_device.I8255A, clock); }
+        public static i8255_device I8255A<bool_Required>(machine_config mconfig, device_finder<i8255_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8255_device.I8255A, clock); }
 
 
         // i8257
-        protected static i8257_device I8257<bool_Required>(machine_config mconfig, device_finder<i8257_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, i8257_device.I8257, clock); }
+        public static i8257_device I8257<bool_Required>(machine_config mconfig, device_finder<i8257_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8257_device.I8257, clock); }
 
 
         // input
-        protected static readonly input_code KEYCODE_F1 = input_global.KEYCODE_F1;
+        public static readonly input_code KEYCODE_F1 = input_global.KEYCODE_F1;
+        public static readonly input_code KEYCODE_LSHIFT = input_global.KEYCODE_LSHIFT;
+        public static readonly input_code KEYCODE_RSHIFT = input_global.KEYCODE_RSHIFT;
+        public static readonly input_code KEYCODE_LALT = input_global.KEYCODE_LALT;
+        public static readonly input_code KEYCODE_RALT = input_global.KEYCODE_RALT;
+        public static readonly input_code KEYCODE_LCONTROL = input_global.KEYCODE_LCONTROL;
+        public static readonly input_code KEYCODE_RCONTROL = input_global.KEYCODE_RCONTROL;
 
 
         // input_merger
-        protected static input_merger_device INPUT_MERGER_ANY_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder, u32 clock = 0)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, clock); }
-        protected static input_merger_device INPUT_MERGER_ALL_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder, u32 clock = 0)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_all_high_device.INPUT_MERGER_ALL_HIGH, clock); }
+        public static input_merger_device INPUT_MERGER_ANY_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, clock); }
+        public static input_merger_device INPUT_MERGER_ALL_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_all_high_device.INPUT_MERGER_ALL_HIGH, clock); }
 
 
         // ioport
-        protected const ioport_value IP_ACTIVE_HIGH = ioport_global.IP_ACTIVE_HIGH;
-        protected const ioport_value IP_ACTIVE_LOW = ioport_global.IP_ACTIVE_LOW;
-        protected const int MAX_PLAYERS = ioport_global.MAX_PLAYERS;
-        protected const ioport_type IPT_UNUSED = ioport_type.IPT_UNUSED;
-        protected const ioport_type IPT_UNKNOWN = ioport_type.IPT_UNKNOWN;
-        protected const ioport_type IPT_START1 = ioport_type.IPT_START1;
-        protected const ioport_type IPT_START2 = ioport_type.IPT_START2;
-        protected const ioport_type IPT_COIN1 = ioport_type.IPT_COIN1;
-        protected const ioport_type IPT_COIN2 = ioport_type.IPT_COIN2;
-        protected const ioport_type IPT_COIN3 = ioport_type.IPT_COIN3;
-        protected const ioport_type IPT_SERVICE1 = ioport_type.IPT_SERVICE1;
-        protected const ioport_type IPT_SERVICE = ioport_type.IPT_SERVICE;
-        protected const ioport_type IPT_TILT = ioport_type.IPT_TILT;
-        protected const ioport_type IPT_JOYSTICK_UP = ioport_type.IPT_JOYSTICK_UP;
-        protected const ioport_type IPT_JOYSTICK_DOWN = ioport_type.IPT_JOYSTICK_DOWN;
-        protected const ioport_type IPT_JOYSTICK_LEFT = ioport_type.IPT_JOYSTICK_LEFT;
-        protected const ioport_type IPT_JOYSTICK_RIGHT = ioport_type.IPT_JOYSTICK_RIGHT;
-        protected const ioport_type IPT_BUTTON1 = ioport_type.IPT_BUTTON1;
-        protected const ioport_type IPT_BUTTON2 = ioport_type.IPT_BUTTON2;
-        protected const ioport_type IPT_AD_STICK_X = ioport_type.IPT_AD_STICK_X;
-        protected const ioport_type IPT_AD_STICK_Y = ioport_type.IPT_AD_STICK_Y;
-        protected const ioport_type IPT_DIAL = ioport_type.IPT_DIAL;
-        protected const ioport_type IPT_DIAL_V = ioport_type.IPT_DIAL_V;
-        protected const ioport_type IPT_TRACKBALL_X = ioport_type.IPT_TRACKBALL_X;
-        protected const ioport_type IPT_TRACKBALL_Y = ioport_type.IPT_TRACKBALL_Y;
-        protected const ioport_type IPT_SPECIAL = ioport_type.IPT_SPECIAL;
-        protected const ioport_type IPT_CUSTOM = ioport_type.IPT_CUSTOM;
-        protected const INPUT_STRING Off = INPUT_STRING.INPUT_STRING_Off;
-        protected const INPUT_STRING On = INPUT_STRING.INPUT_STRING_On;
-        protected const INPUT_STRING No = INPUT_STRING.INPUT_STRING_No;
-        protected const INPUT_STRING Yes = INPUT_STRING.INPUT_STRING_Yes;
-        protected const INPUT_STRING Lives = INPUT_STRING.INPUT_STRING_Lives;
-        protected const INPUT_STRING Bonus_Life = INPUT_STRING.INPUT_STRING_Bonus_Life;
-        protected const INPUT_STRING Difficulty = INPUT_STRING.INPUT_STRING_Difficulty;
-        protected const INPUT_STRING Demo_Sounds = INPUT_STRING.INPUT_STRING_Demo_Sounds;
+        public const ioport_value IP_ACTIVE_HIGH = ioport_global.IP_ACTIVE_HIGH;
+        public const ioport_value IP_ACTIVE_LOW = ioport_global.IP_ACTIVE_LOW;
+        public const int MAX_PLAYERS = ioport_global.MAX_PLAYERS;
+        public const char32_t UCHAR_SHIFT_1 = ioport_global.UCHAR_SHIFT_1;
+        public const char32_t UCHAR_SHIFT_2 = ioport_global.UCHAR_SHIFT_2;
+        public const char32_t UCHAR_SHIFT_BEGIN = ioport_global.UCHAR_SHIFT_BEGIN;
+        public const char32_t UCHAR_SHIFT_END = ioport_global.UCHAR_SHIFT_END;
+        public const char32_t UCHAR_MAMEKEY_BEGIN = ioport_global.UCHAR_MAMEKEY_BEGIN;
+        public const ioport_type IPT_UNUSED = ioport_type.IPT_UNUSED;
+        public const ioport_type IPT_UNKNOWN = ioport_type.IPT_UNKNOWN;
+        public const ioport_type IPT_START1 = ioport_type.IPT_START1;
+        public const ioport_type IPT_START2 = ioport_type.IPT_START2;
+        public const ioport_type IPT_COIN1 = ioport_type.IPT_COIN1;
+        public const ioport_type IPT_COIN2 = ioport_type.IPT_COIN2;
+        public const ioport_type IPT_COIN3 = ioport_type.IPT_COIN3;
+        public const ioport_type IPT_SERVICE1 = ioport_type.IPT_SERVICE1;
+        public const ioport_type IPT_SERVICE = ioport_type.IPT_SERVICE;
+        public const ioport_type IPT_TILT = ioport_type.IPT_TILT;
+        public const ioport_type IPT_JOYSTICK_UP = ioport_type.IPT_JOYSTICK_UP;
+        public const ioport_type IPT_JOYSTICK_DOWN = ioport_type.IPT_JOYSTICK_DOWN;
+        public const ioport_type IPT_JOYSTICK_LEFT = ioport_type.IPT_JOYSTICK_LEFT;
+        public const ioport_type IPT_JOYSTICK_RIGHT = ioport_type.IPT_JOYSTICK_RIGHT;
+        public const ioport_type IPT_BUTTON1 = ioport_type.IPT_BUTTON1;
+        public const ioport_type IPT_BUTTON2 = ioport_type.IPT_BUTTON2;
+        public const ioport_type IPT_AD_STICK_X = ioport_type.IPT_AD_STICK_X;
+        public const ioport_type IPT_AD_STICK_Y = ioport_type.IPT_AD_STICK_Y;
+        public const ioport_type IPT_DIAL = ioport_type.IPT_DIAL;
+        public const ioport_type IPT_DIAL_V = ioport_type.IPT_DIAL_V;
+        public const ioport_type IPT_TRACKBALL_X = ioport_type.IPT_TRACKBALL_X;
+        public const ioport_type IPT_TRACKBALL_Y = ioport_type.IPT_TRACKBALL_Y;
+        public const ioport_type IPT_SPECIAL = ioport_type.IPT_SPECIAL;
+        public const ioport_type IPT_CUSTOM = ioport_type.IPT_CUSTOM;
+        public const INPUT_STRING Off = INPUT_STRING.INPUT_STRING_Off;
+        public const INPUT_STRING On = INPUT_STRING.INPUT_STRING_On;
+        public const INPUT_STRING No = INPUT_STRING.INPUT_STRING_No;
+        public const INPUT_STRING Yes = INPUT_STRING.INPUT_STRING_Yes;
+        public const INPUT_STRING Lives = INPUT_STRING.INPUT_STRING_Lives;
+        public const INPUT_STRING Bonus_Life = INPUT_STRING.INPUT_STRING_Bonus_Life;
+        public const INPUT_STRING Difficulty = INPUT_STRING.INPUT_STRING_Difficulty;
+        public const INPUT_STRING Demo_Sounds = INPUT_STRING.INPUT_STRING_Demo_Sounds;
         public const INPUT_STRING Coinage = INPUT_STRING.INPUT_STRING_Coinage;
         public const INPUT_STRING Coin_A = INPUT_STRING.INPUT_STRING_Coin_A;
         public const INPUT_STRING Coin_B = INPUT_STRING.INPUT_STRING_Coin_B;
-        protected const INPUT_STRING _9C_1C = INPUT_STRING.INPUT_STRING_9C_1C;
-        protected const INPUT_STRING _8C_1C = INPUT_STRING.INPUT_STRING_8C_1C;
+        public const INPUT_STRING _9C_1C = INPUT_STRING.INPUT_STRING_9C_1C;
+        public const INPUT_STRING _8C_1C = INPUT_STRING.INPUT_STRING_8C_1C;
         public const INPUT_STRING _7C_1C = INPUT_STRING.INPUT_STRING_7C_1C;
         public const INPUT_STRING _6C_1C = INPUT_STRING.INPUT_STRING_6C_1C;
         public const INPUT_STRING _5C_1C = INPUT_STRING.INPUT_STRING_5C_1C;
@@ -762,7 +711,7 @@ namespace mame
         public const INPUT_STRING _3C_1C = INPUT_STRING.INPUT_STRING_3C_1C;
         public const INPUT_STRING _2C_1C = INPUT_STRING.INPUT_STRING_2C_1C;
         public const INPUT_STRING _1C_1C = INPUT_STRING.INPUT_STRING_1C_1C;
-        protected const INPUT_STRING _2C_3C = INPUT_STRING.INPUT_STRING_2C_3C;
+        public const INPUT_STRING _2C_3C = INPUT_STRING.INPUT_STRING_2C_3C;
         public const INPUT_STRING _1C_2C = INPUT_STRING.INPUT_STRING_1C_2C;
         public const INPUT_STRING _1C_3C = INPUT_STRING.INPUT_STRING_1C_3C;
         public const INPUT_STRING _1C_4C = INPUT_STRING.INPUT_STRING_1C_4C;
@@ -771,231 +720,141 @@ namespace mame
         public const INPUT_STRING _1C_7C = INPUT_STRING.INPUT_STRING_1C_7C;
         public const INPUT_STRING _1C_8C = INPUT_STRING.INPUT_STRING_1C_8C;
         public const INPUT_STRING Free_Play = INPUT_STRING.INPUT_STRING_Free_Play;
-        protected const INPUT_STRING Cabinet = INPUT_STRING.INPUT_STRING_Cabinet;
-        protected const INPUT_STRING Upright = INPUT_STRING.INPUT_STRING_Upright;
-        protected const INPUT_STRING Cocktail = INPUT_STRING.INPUT_STRING_Cocktail;
-        protected const INPUT_STRING Flip_Screen = INPUT_STRING.INPUT_STRING_Flip_Screen;
-        protected const INPUT_STRING Language = INPUT_STRING.INPUT_STRING_Language;
-        protected const INPUT_STRING English = INPUT_STRING.INPUT_STRING_English;
-        protected const INPUT_STRING Japanese = INPUT_STRING.INPUT_STRING_Japanese;
-        protected const INPUT_STRING Chinese = INPUT_STRING.INPUT_STRING_Chinese;
-        protected const INPUT_STRING French = INPUT_STRING.INPUT_STRING_French;
-        protected const INPUT_STRING German = INPUT_STRING.INPUT_STRING_German;
-        protected const INPUT_STRING Italian = INPUT_STRING.INPUT_STRING_Italian;
-        protected const INPUT_STRING Korean = INPUT_STRING.INPUT_STRING_Korean;
-        protected const INPUT_STRING Spanish = INPUT_STRING.INPUT_STRING_Spanish;
-        protected const INPUT_STRING Easiest = INPUT_STRING.INPUT_STRING_Easiest;
-        protected const INPUT_STRING Easy = INPUT_STRING.INPUT_STRING_Easy;
-        protected const INPUT_STRING Normal = INPUT_STRING.INPUT_STRING_Normal;
-        protected const INPUT_STRING Medium = INPUT_STRING.INPUT_STRING_Medium;
-        protected const INPUT_STRING Medium_Hard = INPUT_STRING.INPUT_STRING_Medium_Hard;
-        protected const INPUT_STRING Hard = INPUT_STRING.INPUT_STRING_Hard;
-        protected const INPUT_STRING Hardest = INPUT_STRING.INPUT_STRING_Hardest;
-        protected const INPUT_STRING Difficult = INPUT_STRING.INPUT_STRING_Difficult;
-        protected const INPUT_STRING Very_Difficult = INPUT_STRING.INPUT_STRING_Very_Difficult;
-        protected const INPUT_STRING Allow_Continue = INPUT_STRING.INPUT_STRING_Allow_Continue;
-        protected const INPUT_STRING Unused = INPUT_STRING.INPUT_STRING_Unused;
-        protected const INPUT_STRING Unknown = INPUT_STRING.INPUT_STRING_Unknown;
-        protected const INPUT_STRING Alternate = INPUT_STRING.INPUT_STRING_Alternate;
-        protected const INPUT_STRING None = INPUT_STRING.INPUT_STRING_None;
-        protected void INPUT_PORTS_START(device_t owner, ioport_list portlist, ref string errorbuf)
-        {
-            // if we're inside PORT_INCLUDE, we already have a configurer, and don't need to create a new one
-            if (!m_globals.helper_originated_from_port_include)
-            {
-                ioport_configurer configurer = new ioport_configurer(owner, portlist, ref errorbuf);
-                m_globals.helper_configurer = configurer;
-                m_globals.helper_owner = owner;
-                m_globals.helper_portlist = portlist;
-            }
-        }
-        protected void INPUT_PORTS_END()
-        {
-            // if we're inside PORT_INCLUDE, don't null out our helper variables, we need them still
-            if (!m_globals.helper_originated_from_port_include)
-            {
-                m_globals.helper_configurer = null;
-                m_globals.helper_owner = null;
-                m_globals.helper_portlist = null;
-            }
-        }
-        protected void PORT_INCLUDE(ioport_constructor name, ref string errorbuf)
-        {
-            m_globals.helper_originated_from_port_include = true;
-            ioport_global.PORT_INCLUDE(name, m_globals.helper_owner, m_globals.helper_portlist, ref errorbuf);
-            m_globals.helper_originated_from_port_include = false;
-        }
-        protected void PORT_START(string tag) { ioport_global.PORT_START(m_globals.helper_configurer, tag); }
-        protected void PORT_MODIFY(string tag) { ioport_global.PORT_MODIFY(m_globals.helper_configurer, tag); }
-        protected void PORT_BIT(ioport_value mask, ioport_value default_, ioport_type type) { ioport_global.PORT_BIT(m_globals.helper_configurer, mask, default_, type); }
-        protected void PORT_CODE(input_code code) { ioport_global.PORT_CODE(m_globals.helper_configurer, code); }
-        protected void PORT_2WAY() { ioport_global.PORT_2WAY(m_globals.helper_configurer); }
-        protected void PORT_4WAY() { ioport_global.PORT_4WAY(m_globals.helper_configurer); }
-        protected void PORT_8WAY() { ioport_global.PORT_8WAY(m_globals.helper_configurer); }
-        protected void PORT_NAME(string _name) { ioport_global.PORT_NAME(m_globals.helper_configurer, _name); }
-        protected void PORT_PLAYER(int player) { ioport_global.PORT_PLAYER(m_globals.helper_configurer, player); }
-        protected void PORT_COCKTAIL() { ioport_global.PORT_COCKTAIL(m_globals.helper_configurer); }
-        protected void PORT_IMPULSE(u8 duration) { ioport_global.PORT_IMPULSE(m_globals.helper_configurer, duration); }
-        protected void PORT_REVERSE() { ioport_global.PORT_REVERSE(m_globals.helper_configurer); }
-        protected void PORT_MINMAX(ioport_value _min, ioport_value _max) { ioport_global.PORT_MINMAX(m_globals.helper_configurer, _min, _max); }
-        protected void PORT_SENSITIVITY(int sensitivity) { ioport_global.PORT_SENSITIVITY(m_globals.helper_configurer, sensitivity); }
-        protected void PORT_KEYDELTA(int delta) { ioport_global.PORT_KEYDELTA(m_globals.helper_configurer, delta); }
-        protected void PORT_FULL_TURN_COUNT(u16 _count) { ioport_global.PORT_FULL_TURN_COUNT(m_globals.helper_configurer, _count); }
-        protected void PORT_CUSTOM_MEMBER(string device, ioport_field_read_delegate callback) { ioport_global.PORT_CUSTOM_MEMBER(m_globals.helper_configurer, device, callback); }
-        protected void PORT_READ_LINE_DEVICE_MEMBER(string device, Func<int> _member) { ioport_global.PORT_READ_LINE_DEVICE_MEMBER(m_globals.helper_configurer, device, _member); }
-        public void PORT_DIPNAME(ioport_value mask, ioport_value default_, string name) { ioport_global.PORT_DIPNAME(m_globals.helper_configurer, mask, default_, name); }
-        public void PORT_DIPSETTING(ioport_value default_, string name) { ioport_global.PORT_DIPSETTING(m_globals.helper_configurer, default_, name); }
-        public void PORT_DIPLOCATION(string location) { ioport_global.PORT_DIPLOCATION(m_globals.helper_configurer, location); }
-        public void PORT_CONDITION(string tag, ioport_value mask, ioport_condition.condition_t condition, ioport_value value) { ioport_global.PORT_CONDITION(m_globals.helper_configurer, tag, mask, condition, value); }
-        protected void PORT_ADJUSTER(ioport_value default_, string name) { ioport_global.PORT_ADJUSTER(m_globals.helper_configurer, default_, name); }
-        protected void PORT_CONFNAME(ioport_value mask, ioport_value default_, string name) { ioport_global.PORT_CONFNAME(m_globals.helper_configurer, mask, default_, name); }
-        protected void PORT_CONFSETTING(ioport_value default_, string name) { ioport_global.PORT_CONFSETTING(m_globals.helper_configurer, default_, name); }
-        protected void PORT_DIPUNUSED_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_DIPUNUSED_DIPLOC(m_globals.helper_configurer, mask, default_, diploc); }
-        protected void PORT_DIPUNUSED(ioport_value mask, ioport_value default_) { ioport_global.PORT_DIPUNUSED(m_globals.helper_configurer, mask, default_); }
-        protected void PORT_DIPUNKNOWN_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_DIPUNKNOWN_DIPLOC(m_globals.helper_configurer, mask, default_, diploc); }
-        protected void PORT_SERVICE_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_SERVICE_DIPLOC(m_globals.helper_configurer, mask, default_, diploc); }
-        protected void PORT_SERVICE(ioport_value mask, ioport_value default_) { ioport_global.PORT_SERVICE(m_globals.helper_configurer, mask, default_); }
-        protected void PORT_VBLANK(string screen) { ioport_global.PORT_VBLANK(m_globals.helper_configurer, screen, (screen_device)m_globals.helper_owner.subdevice(screen)); }
+        public const INPUT_STRING Cabinet = INPUT_STRING.INPUT_STRING_Cabinet;
+        public const INPUT_STRING Upright = INPUT_STRING.INPUT_STRING_Upright;
+        public const INPUT_STRING Cocktail = INPUT_STRING.INPUT_STRING_Cocktail;
+        public const INPUT_STRING Flip_Screen = INPUT_STRING.INPUT_STRING_Flip_Screen;
+        public const INPUT_STRING Language = INPUT_STRING.INPUT_STRING_Language;
+        public const INPUT_STRING English = INPUT_STRING.INPUT_STRING_English;
+        public const INPUT_STRING Japanese = INPUT_STRING.INPUT_STRING_Japanese;
+        public const INPUT_STRING Chinese = INPUT_STRING.INPUT_STRING_Chinese;
+        public const INPUT_STRING French = INPUT_STRING.INPUT_STRING_French;
+        public const INPUT_STRING German = INPUT_STRING.INPUT_STRING_German;
+        public const INPUT_STRING Italian = INPUT_STRING.INPUT_STRING_Italian;
+        public const INPUT_STRING Korean = INPUT_STRING.INPUT_STRING_Korean;
+        public const INPUT_STRING Spanish = INPUT_STRING.INPUT_STRING_Spanish;
+        public const INPUT_STRING Easiest = INPUT_STRING.INPUT_STRING_Easiest;
+        public const INPUT_STRING Easy = INPUT_STRING.INPUT_STRING_Easy;
+        public const INPUT_STRING Normal = INPUT_STRING.INPUT_STRING_Normal;
+        public const INPUT_STRING Medium = INPUT_STRING.INPUT_STRING_Medium;
+        public const INPUT_STRING Medium_Hard = INPUT_STRING.INPUT_STRING_Medium_Hard;
+        public const INPUT_STRING Hard = INPUT_STRING.INPUT_STRING_Hard;
+        public const INPUT_STRING Hardest = INPUT_STRING.INPUT_STRING_Hardest;
+        public const INPUT_STRING Difficult = INPUT_STRING.INPUT_STRING_Difficult;
+        public const INPUT_STRING Very_Difficult = INPUT_STRING.INPUT_STRING_Very_Difficult;
+        public const INPUT_STRING Allow_Continue = INPUT_STRING.INPUT_STRING_Allow_Continue;
+        public const INPUT_STRING Unused = INPUT_STRING.INPUT_STRING_Unused;
+        public const INPUT_STRING Unknown = INPUT_STRING.INPUT_STRING_Unknown;
+        public const INPUT_STRING Alternate = INPUT_STRING.INPUT_STRING_Alternate;
+        public const INPUT_STRING None = INPUT_STRING.INPUT_STRING_None;
+        public static char32_t UCHAR_MAMEKEY(char32_t code) { return ioport_global.UCHAR_MAMEKEY(code); }
         public static string DEF_STR(INPUT_STRING str_num) { return ioport_global.DEF_STR(str_num); }
 
 
         // irem
-        protected static m52_soundc_audio_device IREM_M52_SOUNDC_AUDIO(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<m52_soundc_audio_device>(mconfig, tag, m52_soundc_audio_device.IREM_M52_SOUNDC_AUDIO, clock); }
+        public static m52_soundc_audio_device IREM_M52_SOUNDC_AUDIO(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<m52_soundc_audio_device>(mconfig, tag, m52_soundc_audio_device.IREM_M52_SOUNDC_AUDIO, clock); }
 
 
         // language
-        protected static string __(string param) { return language_global.__(param); }
+        public static string __(string param) { return language_global.__(param); }
 
 
         // latch8
-        protected static latch8_device LATCH8<bool_Required>(machine_config mconfig, device_finder<latch8_device, bool_Required> finder, u32 clock = 0)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, latch8_device.LATCH8, clock); }
+        public static latch8_device LATCH8<bool_Required>(machine_config mconfig, device_finder<latch8_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, latch8_device.LATCH8, clock); }
 
 
         // logmacro
-        protected const int LOG_WARN = 1 << 0;
-
-        protected static void LOGMASKED(int mask, device_t device, string format, params object [] args) { logmacro_global.LOGMASKED(mask, device, format, args); }
-        protected static void LOG(device_t device, string format, params object [] args) { logmacro_global.LOG(device, format, args); }
-
-
-        // main
-        protected const int EMU_ERR_NONE = main_global.EMU_ERR_NONE;
-        protected const int EMU_ERR_FAILED_VALIDITY = main_global.EMU_ERR_FAILED_VALIDITY;
-        protected const int EMU_ERR_MISSING_FILES = main_global.EMU_ERR_MISSING_FILES;
-        protected const int EMU_ERR_DEVICE = main_global.EMU_ERR_DEVICE;
-        protected const int EMU_ERR_NO_SUCH_SYSTEM = main_global.EMU_ERR_NO_SUCH_SYSTEM;
-        protected const int EMU_ERR_INVALID_CONFIG = main_global.EMU_ERR_INVALID_CONFIG;
+        public static void LOGMASKED(int VERBOSE, int mask, device_t device, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, device, format, args); }
+        public static void LOGMASKED(int VERBOSE, int mask, device_t device, logmacro_global.LOG_OUTPUT_FUNC log_output_func, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, device, log_output_func, format, args); }
+        public static void LOG(int VERBOSE, device_t device, string format, params object [] args) { logmacro_global.LOG(VERBOSE, device, format, args); }
+        public static void LOG(int VERBOSE, device_t device, logmacro_global.LOG_OUTPUT_FUNC log_output_func, string format, params object [] args) { logmacro_global.LOG(VERBOSE, device, log_output_func, format, args); }
 
 
         // m6502
-        protected static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, u32 clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
-        protected static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
+        public static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
+        public static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
 
 
         // m6801
-        protected static m6803_cpu_device M6803<bool_Required>(machine_config mconfig, device_finder<m6803_cpu_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
+        public static m6803_cpu_device M6803<bool_Required>(machine_config mconfig, device_finder<m6803_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
 
 
         // m68705
-        protected static m68705p_device M68705P5<bool_Required>(machine_config mconfig, device_finder<m68705p_device, bool_Required> finder, u32 clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, m68705p5_device.M68705P5, clock); }
+        public static m68705p_device M68705P5<bool_Required>(machine_config mconfig, device_finder<m68705p_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m68705p5_device.M68705P5, clock); }
 
 
         // machine
-        protected const int DEBUG_FLAG_ENABLED = machine_global.DEBUG_FLAG_ENABLED;
-        protected static MemoryContainer<T> auto_alloc_array<T>(running_machine m, UInt32 c) where T : new() { return machine_global.auto_alloc_array<T>(m, c); }
-        protected static MemoryContainer<T> auto_alloc_array_clear<T>(running_machine m, UInt32 c) where T : new() { return machine_global.auto_alloc_array_clear<T>(m, c); }
+        public const int DEBUG_FLAG_ENABLED = machine_global.DEBUG_FLAG_ENABLED;
+        public const int DEBUG_FLAG_CALL_HOOK = machine_global.DEBUG_FLAG_CALL_HOOK;
+        public const int DEBUG_FLAG_OSD_ENABLED = machine_global.DEBUG_FLAG_OSD_ENABLED;
+
+
+        // main
+        public const int EMU_ERR_NONE = main_global.EMU_ERR_NONE;
+        public const int EMU_ERR_FAILED_VALIDITY = main_global.EMU_ERR_FAILED_VALIDITY;
+        public const int EMU_ERR_MISSING_FILES = main_global.EMU_ERR_MISSING_FILES;
+        public const int EMU_ERR_DEVICE = main_global.EMU_ERR_DEVICE;
+        public const int EMU_ERR_NO_SUCH_SYSTEM = main_global.EMU_ERR_NO_SUCH_SYSTEM;
+        public const int EMU_ERR_INVALID_CONFIG = main_global.EMU_ERR_INVALID_CONFIG;
 
 
         // mcs48
-        protected static mcs48_cpu_device MB8884<bool_Required>(machine_config mconfig, device_finder<mcs48_cpu_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, mb8884_device.MB8884, clock); }
+        public static mcs48_cpu_device MB8884<bool_Required>(machine_config mconfig, device_finder<mcs48_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8884_device.MB8884, clock); }
 
 
         // mb88xx
-        protected static mb88_cpu_device MB8842<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, mb8842_cpu_device.MB8842, clock); }
-        protected static mb88_cpu_device MB8843<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, mb8843_cpu_device.MB8843, clock); }
-        protected static mb88_cpu_device MB8844<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, mb8844_cpu_device.MB8844, clock); }
+        public static mb88_cpu_device MB8842<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8842_cpu_device.MB8842, clock); }
+        public static mb88_cpu_device MB8843<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8843_cpu_device.MB8843, clock); }
+        public static mb88_cpu_device MB8844<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8844_cpu_device.MB8844, clock); }
 
 
         // msm5205
-        protected static msm5205_device MSM5205<bool_Required>(machine_config mconfig, device_finder<msm5205_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, msm5205_device.MSM5205, clock); }
+        public static msm5205_device MSM5205<bool_Required>(machine_config mconfig, device_finder<msm5205_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, msm5205_device.MSM5205, clock); }
 
 
         // namco
-        protected static namco_device NAMCO(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<namco_device>(mconfig, tag, namco_device.NAMCO, clock); }
-        protected static namco_device NAMCO<bool_Required>(machine_config mconfig, device_finder<namco_device, bool_Required> finder, u32 clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
-        protected static namco_device NAMCO<bool_Required>(machine_config mconfig, device_finder<namco_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
+        public static namco_device NAMCO<bool_Required>(machine_config mconfig, device_finder<namco_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
 
 
         // namco06
-        protected static namco_06xx_device NAMCO_06XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_06xx_device>(mconfig, tag, namco_06xx_device.NAMCO_06XX, clock); }
+        public static namco_06xx_device NAMCO_06XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_06xx_device>(mconfig, tag, namco_06xx_device.NAMCO_06XX, clock); }
 
 
         // namco50
-        protected static namco_50xx_device NAMCO_50XX(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<namco_50xx_device>(mconfig, tag, namco_50xx_device.NAMCO_50XX, clock); }
-        protected static namco_50xx_device NAMCO_50XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_50xx_device>(mconfig, tag, namco_50xx_device.NAMCO_50XX, clock); }
+        public static namco_50xx_device NAMCO_50XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_50xx_device>(mconfig, tag, namco_50xx_device.NAMCO_50XX, clock); }
 
 
         // namco51
-        protected static namco_51xx_device NAMCO_51XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_51xx_device>(mconfig, tag, namco_51xx_device.NAMCO_51XX, clock); }
+        public static namco_51xx_device NAMCO_51XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_51xx_device>(mconfig, tag, namco_51xx_device.NAMCO_51XX, clock); }
 
 
         // namco53
-        protected static namco_53xx_device NAMCO_53XX(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<namco_53xx_device>(mconfig, tag, namco_53xx_device.NAMCO_53XX, clock); }
-        protected static namco_53xx_device NAMCO_53XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_53xx_device>(mconfig, tag, namco_53xx_device.NAMCO_53XX, clock); }
+        public static namco_53xx_device NAMCO_53XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_53xx_device>(mconfig, tag, namco_53xx_device.NAMCO_53XX, clock); }
 
 
         // namco54
-        protected static namco_54xx_device NAMCO_54XX(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<namco_54xx_device>(mconfig, tag, namco_54xx_device.NAMCO_54XX, clock); }
-        protected static namco_54xx_device NAMCO_54XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_54xx_device>(mconfig, tag, namco_54xx_device.NAMCO_54XX, clock); }
-        protected static int NAMCO_54XX_0_DATA(int base_node) { return namco54_global.NAMCO_54XX_0_DATA(base_node); }
-        protected static int NAMCO_54XX_1_DATA(int base_node) { return namco54_global.NAMCO_54XX_1_DATA(base_node); }
-        protected static int NAMCO_54XX_2_DATA(int base_node) { return namco54_global.NAMCO_54XX_2_DATA(base_node); }
-
-
-        // net_lib
-        protected void SOLVER(string name, int freq) { netlist.devices.net_lib_global.SOLVER(m_globals.helper_setup, name, freq); }
+        public static int NAMCO_54XX_0_DATA(int base_node) { return namco54_global.NAMCO_54XX_0_DATA(base_node); }
+        public static int NAMCO_54XX_1_DATA(int base_node) { return namco54_global.NAMCO_54XX_1_DATA(base_node); }
+        public static int NAMCO_54XX_2_DATA(int base_node) { return namco54_global.NAMCO_54XX_2_DATA(base_node); }
+        public static namco_54xx_device NAMCO_54XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_54xx_device>(mconfig, tag, namco_54xx_device.NAMCO_54XX, clock); }
 
 
         // netlist
-        protected static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
-        protected static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
-        protected static netlist_mame_logic_input_device NETLIST_LOGIC_INPUT(machine_config mconfig, string tag, string param_name, uint32_t shift)
+        public static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
+        public static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
+        public static netlist_mame_logic_input_device NETLIST_LOGIC_INPUT(machine_config mconfig, string tag, string param_name, uint32_t shift)
         {
             var device = emu.detail.device_type_impl.op<netlist_mame_logic_input_device>(mconfig, tag, netlist_mame_logic_input_device.NETLIST_LOGIC_INPUT, 0);
             device.set_params(param_name, shift);
             return device;
         }
-        protected static netlist_mame_stream_input_device NETLIST_STREAM_INPUT(machine_config mconfig, string tag, int channel, string param_name)
+        public static netlist_mame_stream_input_device NETLIST_STREAM_INPUT(machine_config mconfig, string tag, int channel, string param_name)
         {
             var device = emu.detail.device_type_impl.op<netlist_mame_stream_input_device>(mconfig, tag, netlist_mame_stream_input_device.NETLIST_STREAM_INPUT, 0);
             device.set_params(channel, param_name);
             return device;
         }
-        protected static netlist_mame_stream_output_device NETLIST_STREAM_OUTPUT(machine_config mconfig, string tag, int channel, string out_name)
+        public static netlist_mame_stream_output_device NETLIST_STREAM_OUTPUT(machine_config mconfig, string tag, int channel, string out_name)
         {
             var device = emu.detail.device_type_impl.op<netlist_mame_stream_output_device>(mconfig, tag, netlist_mame_stream_output_device.NETLIST_STREAM_OUTPUT, 0);
             device.set_params(channel, out_name);
@@ -1004,35 +863,22 @@ namespace mame
 
 
         // nl_factory
-        protected static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_ALIAS<chip>(string p_alias, string p_name, string p_def_param) { return netlist.factory.nl_factory_global.NETLIB_DEVICE_IMPL_ALIAS<chip>(p_alias, p_name, p_def_param); }
-        protected static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL<chip>(string p_name, string p_def_param) { return netlist.factory.nl_factory_global.NETLIB_DEVICE_IMPL<chip>(p_name, p_def_param); }
-        protected static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_NS<chip>(string ns, string p_name, string p_def_param) { return netlist.factory.nl_factory_global.NETLIB_DEVICE_IMPL_NS<chip>(ns, p_name, p_def_param); }
-
-
-        // nl_setup
-        protected void ALIAS(string alias, string name) { netlist.nl_setup_global.ALIAS(m_globals.helper_setup, alias, name); }
-        protected void INCLUDE(string name) { netlist.nl_setup_global.INCLUDE(m_globals.helper_setup, name); }
-        protected void LOCAL_SOURCE(string name, netlist.nlsetup_func netlist_name) { netlist.nl_setup_global.LOCAL_SOURCE(m_globals.helper_setup, name, netlist_name); }
-        protected void NET_C(params string [] term1) { netlist.nl_setup_global.NET_C(m_globals.helper_setup, term1); }
-        protected void PARAM(string name, int val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
-        protected void PARAM(string name, double val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
-        protected void PARAM(string name, string val) { netlist.nl_setup_global.PARAM(m_globals.helper_setup, name, val); }
-        protected void SUBMODEL(string model, string name) { netlist.nl_setup_global.SUBMODEL(m_globals.helper_setup, model, name); }
-        protected void NETLIST_START(netlist.nlparse_t setup) { m_globals.helper_setup_push(setup);  netlist.nl_setup_global.NETLIST_START(); }
-        protected void NETLIST_END() { m_globals.helper_setup_pop();  netlist.nl_setup_global.NETLIST_END(); }
+        public static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_ALIAS<chip>(string p_alias, string p_name, string p_def_param) { return netlist.factory.nl_factory_global.NETLIB_DEVICE_IMPL_ALIAS<chip>(p_alias, p_name, p_def_param); }
+        public static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL<chip>(string p_name, string p_def_param) { return netlist.factory.nl_factory_global.NETLIB_DEVICE_IMPL<chip>(p_name, p_def_param); }
+        public static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_NS<chip>(string ns, string p_name, string p_def_param) { return netlist.factory.nl_factory_global.NETLIB_DEVICE_IMPL_NS<chip>(ns, p_name, p_def_param); }
 
 
         // options
-        protected const int OPTION_PRIORITY_DEFAULT = options_global.OPTION_PRIORITY_DEFAULT;
-        protected const int OPTION_PRIORITY_NORMAL = options_global.OPTION_PRIORITY_NORMAL;
-        protected const int OPTION_PRIORITY_HIGH = options_global.OPTION_PRIORITY_HIGH;
+        public const int OPTION_PRIORITY_DEFAULT = options_global.OPTION_PRIORITY_DEFAULT;
+        public const int OPTION_PRIORITY_NORMAL = options_global.OPTION_PRIORITY_NORMAL;
+        public const int OPTION_PRIORITY_HIGH = options_global.OPTION_PRIORITY_HIGH;
         public const int OPTION_PRIORITY_MAXIMUM = options_global.OPTION_PRIORITY_MAXIMUM;
-        protected const core_options.option_type OPTION_HEADER = options_global.OPTION_HEADER;
-        protected const core_options.option_type OPTION_COMMAND = options_global.OPTION_COMMAND;
-        protected const core_options.option_type OPTION_BOOLEAN = options_global.OPTION_BOOLEAN;
-        protected const core_options.option_type OPTION_INTEGER = options_global.OPTION_INTEGER;
-        protected const core_options.option_type OPTION_FLOAT = options_global.OPTION_FLOAT;
-        protected const core_options.option_type OPTION_STRING = options_global.OPTION_STRING;
+        public const core_options.option_type OPTION_HEADER = options_global.OPTION_HEADER;
+        public const core_options.option_type OPTION_COMMAND = options_global.OPTION_COMMAND;
+        public const core_options.option_type OPTION_BOOLEAN = options_global.OPTION_BOOLEAN;
+        public const core_options.option_type OPTION_INTEGER = options_global.OPTION_INTEGER;
+        public const core_options.option_type OPTION_FLOAT = options_global.OPTION_FLOAT;
+        public const core_options.option_type OPTION_STRING = options_global.OPTION_STRING;
 
 
         // osdcomm
@@ -1044,12 +890,6 @@ namespace mame
 
 
         // osdcore
-        public const string PATH_SEPARATOR = osdfile_global.PATH_SEPARATOR;
-        public const uint32_t OPEN_FLAG_READ = osdfile_global.OPEN_FLAG_READ;
-        protected const uint32_t OPEN_FLAG_WRITE = osdfile_global.OPEN_FLAG_WRITE;
-        protected const uint32_t OPEN_FLAG_CREATE = osdfile_global.OPEN_FLAG_CREATE;
-        protected const uint32_t OPEN_FLAG_CREATE_PATHS = osdfile_global.OPEN_FLAG_CREATE_PATHS;
-        protected const uint32_t OPEN_FLAG_NO_PRELOAD = osdfile_global.OPEN_FLAG_NO_PRELOAD;
         public static void osd_printf_error(string format, params object [] args) { osdcore_interface.osd_printf_error(format, args); }
         public static void osd_printf_warning(string format, params object [] args) { osdcore_interface.osd_printf_warning(format, args); }
         public static void osd_printf_info(string format, params object [] args) { osdcore_interface.osd_printf_info(format, args); }
@@ -1057,105 +897,136 @@ namespace mame
         public static void osd_printf_debug(string format, params object [] args) { osdcore_interface.osd_printf_debug(format, args); }
 
 
+        // osdfile
+        public const string PATH_SEPARATOR = osdfile_global.PATH_SEPARATOR;
+        public const uint32_t OPEN_FLAG_READ = osdfile_global.OPEN_FLAG_READ;
+        public const uint32_t OPEN_FLAG_WRITE = osdfile_global.OPEN_FLAG_WRITE;
+        public const uint32_t OPEN_FLAG_CREATE = osdfile_global.OPEN_FLAG_CREATE;
+        public const uint32_t OPEN_FLAG_CREATE_PATHS = osdfile_global.OPEN_FLAG_CREATE_PATHS;
+        public const uint32_t OPEN_FLAG_NO_PRELOAD = osdfile_global.OPEN_FLAG_NO_PRELOAD;
+
+
         // palette
-        protected static uint8_t pal5bit(uint8_t bits) { return palette_global.pal5bit(bits); }
-        protected static rgb_t rgbexpand(int _RBits, int _GBits, int _BBits, UInt32 data, byte rshift, byte gshift, byte bshift) { return palette_global.rgbexpand(_RBits, _GBits, _BBits, data, rshift, gshift, bshift); }
+        public static uint8_t pal5bit(uint8_t bits) { return palette_global.pal5bit(bits); }
+        public static rgb_t rgbexpand<int__RBits, int__GBits, int__BBits>(uint32_t data, uint8_t rshift, uint8_t gshift, uint8_t bshift)
+            where int__RBits : int_const, new()
+            where int__GBits : int_const, new()
+            where int__BBits : int_const, new()
+        { return palette_global.rgbexpand<int__RBits, int__GBits, int__BBits>(data, rshift, gshift, bshift); }
 
 
         // pokey
-        protected static pokey_device POKEY(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<pokey_device>(mconfig, tag, pokey_device.POKEY, clock); }
-        protected static pokey_device POKEY<bool_Required>(machine_config mconfig, device_finder<pokey_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, pokey_device.POKEY, clock); }
+        public static pokey_device POKEY(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<pokey_device>(mconfig, tag, pokey_device.POKEY, clock); }
+        public static pokey_device POKEY<bool_Required>(machine_config mconfig, device_finder<pokey_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, pokey_device.POKEY, clock); }
 
 
         // render
+        public const byte RENDER_CREATE_HIDDEN = render_global.RENDER_CREATE_HIDDEN;
+        public static u32 PRIMFLAG_TEXORIENT(u32 x) { return render_global.PRIMFLAG_TEXORIENT(x); }
         public static u32 PRIMFLAG_BLENDMODE(u32 x) { return render_global.PRIMFLAG_BLENDMODE(x); }
-        protected static u32 PRIMFLAG_TEXWRAP(u32 x) { return render_global.PRIMFLAG_TEXWRAP(x); }
-        protected const u32 PRIMFLAG_PACKABLE = render_global.PRIMFLAG_PACKABLE;
+        public static u32 PRIMFLAG_ANTIALIAS(u32 x) { return render_global.PRIMFLAG_ANTIALIAS(x); }
+        public static u32 PRIMFLAG_SCREENTEX(u32 x) { return render_global.PRIMFLAG_SCREENTEX(x); }
+        public static u32 PRIMFLAG_TEXWRAP(u32 x) { return render_global.PRIMFLAG_TEXWRAP(x); }
+        public const u32 PRIMFLAG_PACKABLE = render_global.PRIMFLAG_PACKABLE;
+
+
+        // rendertypes
+        public const int BLENDMODE_NONE = rendertypes_global.BLENDMODE_NONE;
+        public const int BLENDMODE_ALPHA = rendertypes_global.BLENDMODE_ALPHA;
+        public const int BLENDMODE_RGB_MULTIPLY = rendertypes_global.BLENDMODE_RGB_MULTIPLY;
+        public const int BLENDMODE_ADD = rendertypes_global.BLENDMODE_ADD;
 
 
         // rendutil
-        protected static void render_load_jpeg(out bitmap_argb32 bitmap, util_.core_file file) { rendutil_global.render_load_jpeg(out bitmap, file); }
-        protected static bool render_load_png(out bitmap_argb32 bitmap, util_.core_file file, bool load_as_alpha_to_existing = false) { return rendutil_global.render_load_png(out bitmap, file, load_as_alpha_to_existing); }
+        public static void render_resample_argb_bitmap_hq(bitmap_argb32 dest, bitmap_argb32 source, render_color color, bool force = false) { rendutil_global.render_resample_argb_bitmap_hq(dest, source, color, force); }
+        public static void render_load_msdib(out bitmap_argb32 bitmap, util.core_file file) { rendutil_global.render_load_msdib(out bitmap, file); }
+        public static void render_load_jpeg(out bitmap_argb32 bitmap, util.core_file file) { rendutil_global.render_load_jpeg(out bitmap, file); }
+        public static bool render_load_png(out bitmap_argb32 bitmap, util.core_file file, bool load_as_alpha_to_existing = false) { return rendutil_global.render_load_png(out bitmap, file, load_as_alpha_to_existing); }
+        public static int orientation_add(int orientation1, int orientation2) { return rendutil_global.orientation_add(orientation1, orientation2); }
 
 
         // rescap
-        protected static double RES_K(double res) { return rescap_global.RES_K(res); }
-        protected static double RES_M(double res) { return rescap_global.RES_M(res); }
-        protected static double CAP_U(double cap) { return rescap_global.CAP_U(cap); }
-        protected static double CAP_N(double cap) { return rescap_global.CAP_N(cap); }
-        protected static double RES_VOLTAGE_DIVIDER(double r1, double r2) { return rescap_global.RES_VOLTAGE_DIVIDER(r1, r2); }
-        protected static double RES_2_PARALLEL(double r1, double r2) { return rescap_global.RES_2_PARALLEL(r1, r2); }
-        protected static double RES_3_PARALLEL(double r1, double r2, double r3) { return rescap_global.RES_3_PARALLEL(r1, r2, r3); }
+        public static double RES_K(double res) { return rescap_global.RES_K(res); }
+        public static double RES_M(double res) { return rescap_global.RES_M(res); }
+        public static double CAP_U(double cap) { return rescap_global.CAP_U(cap); }
+        public static double CAP_N(double cap) { return rescap_global.CAP_N(cap); }
+        public static double RES_VOLTAGE_DIVIDER(double r1, double r2) { return rescap_global.RES_VOLTAGE_DIVIDER(r1, r2); }
+        public static double RES_2_PARALLEL(double r1, double r2) { return rescap_global.RES_2_PARALLEL(r1, r2); }
+        public static double RES_3_PARALLEL(double r1, double r2, double r3) { return rescap_global.RES_3_PARALLEL(r1, r2, r3); }
 
 
         // resnet
-        protected const u32 RES_NET_AMP_DARLINGTON = resnet_global.RES_NET_AMP_DARLINGTON;
-        protected const u32 RES_NET_AMP_EMITTER = resnet_global.RES_NET_AMP_EMITTER;
-        protected const u32 RES_NET_VCC_5V = resnet_global.RES_NET_VCC_5V;
-        protected const u32 RES_NET_VBIAS_5V = resnet_global.RES_NET_VBIAS_5V;
-        protected const u32 RES_NET_VBIAS_TTL = resnet_global.RES_NET_VBIAS_TTL;
-        protected const u32 RES_NET_VIN_VCC = resnet_global.RES_NET_VIN_VCC;
-        protected const u32 RES_NET_VIN_TTL_OUT = resnet_global.RES_NET_VIN_TTL_OUT;
-        protected const u32 RES_NET_MONITOR_SANYO_EZV20 = resnet_global.RES_NET_MONITOR_SANYO_EZV20;
-        protected const u32 RES_NET_VIN_MB7052 = resnet_global.RES_NET_VIN_MB7052;
-        protected static int compute_res_net(int inputs, int channel, res_net_info di) { return resnet_global.compute_res_net(inputs, channel, di); }
-        protected static void compute_res_net_all(out std.vector<rgb_t> rgb, Pointer<u8> prom, res_net_decode_info rdi, res_net_info di) { resnet_global.compute_res_net_all(out rgb, prom, rdi, di); }
-        protected static double compute_resistor_weights(int minval, int maxval, double scaler, int count_1, int [] resistances_1, out double [] weights_1, int pulldown_1, int pullup_1, int count_2, int [] resistances_2, out double [] weights_2, int pulldown_2, int pullup_2, int count_3, int [] resistances_3, out double [] weights_3, int pulldown_3, int pullup_3 ) { return resnet_global.compute_resistor_weights(minval, maxval, scaler, count_1, resistances_1, out weights_1, pulldown_1, pullup_1, count_2, resistances_2, out weights_2, pulldown_2, pullup_2, count_3, resistances_3, out weights_3, pulldown_3, pullup_3); }
-        protected static int combine_weights(double [] tab, int w0, int w1, int w2) { return resnet_global.combine_weights(tab, w0, w1, w2); }
-        protected static int combine_weights(double [] tab, int w0, int w1) { return resnet_global.combine_weights(tab, w0, w1); }
+        public const u32 RES_NET_AMP_DARLINGTON = resnet_global.RES_NET_AMP_DARLINGTON;
+        public const u32 RES_NET_AMP_EMITTER = resnet_global.RES_NET_AMP_EMITTER;
+        public const u32 RES_NET_VCC_5V = resnet_global.RES_NET_VCC_5V;
+        public const u32 RES_NET_VBIAS_5V = resnet_global.RES_NET_VBIAS_5V;
+        public const u32 RES_NET_VBIAS_TTL = resnet_global.RES_NET_VBIAS_TTL;
+        public const u32 RES_NET_VIN_VCC = resnet_global.RES_NET_VIN_VCC;
+        public const u32 RES_NET_VIN_TTL_OUT = resnet_global.RES_NET_VIN_TTL_OUT;
+        public const u32 RES_NET_MONITOR_SANYO_EZV20 = resnet_global.RES_NET_MONITOR_SANYO_EZV20;
+        public const u32 RES_NET_VIN_MB7052 = resnet_global.RES_NET_VIN_MB7052;
+        public static int compute_res_net(int inputs, int channel, res_net_info di) { return resnet_global.compute_res_net(inputs, channel, di); }
+        public static void compute_res_net_all(out std.vector<rgb_t> rgb, Pointer<u8> prom, res_net_decode_info rdi, res_net_info di) { resnet_global.compute_res_net_all(out rgb, prom, rdi, di); }
+        public static double compute_resistor_weights(int minval, int maxval, double scaler, int count_1, int [] resistances_1, out double [] weights_1, int pulldown_1, int pullup_1, int count_2, int [] resistances_2, out double [] weights_2, int pulldown_2, int pullup_2, int count_3, int [] resistances_3, out double [] weights_3, int pulldown_3, int pullup_3 ) { return resnet_global.compute_resistor_weights(minval, maxval, scaler, count_1, resistances_1, out weights_1, pulldown_1, pullup_1, count_2, resistances_2, out weights_2, pulldown_2, pullup_2, count_3, resistances_3, out weights_3, pulldown_3, pullup_3); }
+        public static int combine_weights(double [] tab, int w0, int w1, int w2) { return resnet_global.combine_weights(tab, w0, w1, w2); }
+        public static int combine_weights(double [] tab, int w0, int w1) { return resnet_global.combine_weights(tab, w0, w1); }
 
 
         // romentry
-        protected const           UInt32 ROMREGION_INVERT = romentry_global.ROMREGION_INVERT;
-        protected static readonly UInt32 ROMREGION_ERASE00 = romentry_global.ROMREGION_ERASE00;
-        protected static readonly UInt32 ROMREGION_ERASEFF = romentry_global.ROMREGION_ERASEFF;
-        protected static tiny_rom_entry ROM_END { get { return romentry_global.ROM_END; } }
-        protected static tiny_rom_entry ROM_REGION(UInt32 length, string tag, UInt32 flags) { return romentry_global.ROM_REGION(length, tag, flags); }
-        protected static tiny_rom_entry ROM_LOAD(string name, UInt32 offset, UInt32 length, string hash) { return romentry_global.ROM_LOAD(name, offset, length, hash); }
-        protected static tiny_rom_entry ROM_CONTINUE(u32 offset, u32 length) { return romentry_global.ROM_CONTINUE(offset, length); }
-        protected static tiny_rom_entry ROM_FILL(UInt32 offset, UInt32 length, byte value) { return romentry_global.ROM_FILL(offset, length, value); }
-        protected static tiny_rom_entry ROM_LOAD16_BYTE(string name, u32 offset, u32 length, string hash) { return romentry_global.ROM_LOAD16_BYTE(name, offset, length, hash); }
-        protected static tiny_rom_entry ROM_RELOAD(UInt32 offset, UInt32 length) { return romentry_global.ROM_RELOAD(offset, length); }
+        public const           UInt32 ROMREGION_INVERT = romentry_global.ROMREGION_INVERT;
+        public static readonly UInt32 ROMREGION_ERASE00 = romentry_global.ROMREGION_ERASE00;
+        public static readonly UInt32 ROMREGION_ERASEFF = romentry_global.ROMREGION_ERASEFF;
+        public static tiny_rom_entry ROM_END { get { return romentry_global.ROM_END; } }
+        public static tiny_rom_entry ROM_REGION(UInt32 length, string tag, UInt32 flags) { return romentry_global.ROM_REGION(length, tag, flags); }
+        public static tiny_rom_entry ROM_LOAD(string name, UInt32 offset, UInt32 length, string hash) { return romentry_global.ROM_LOAD(name, offset, length, hash); }
+        public static tiny_rom_entry ROM_CONTINUE(u32 offset, u32 length) { return romentry_global.ROM_CONTINUE(offset, length); }
+        public static tiny_rom_entry ROM_FILL(UInt32 offset, UInt32 length, byte value) { return romentry_global.ROM_FILL(offset, length, value); }
+        public static tiny_rom_entry ROM_LOAD16_BYTE(string name, u32 offset, u32 length, string hash) { return romentry_global.ROM_LOAD16_BYTE(name, offset, length, hash); }
+        public static tiny_rom_entry ROM_RELOAD(UInt32 offset, UInt32 length) { return romentry_global.ROM_RELOAD(offset, length); }
 
 
         // romload
-        protected static bool ROMENTRY_ISFILE(rom_entry_interface r) { return romload_global.ROMENTRY_ISFILE(r); }
-        protected static bool ROMENTRY_ISEND(rom_entry_interface r) { return romload_global.ROMENTRY_ISEND(r); }
-        protected static bool ROMENTRY_ISSYSTEM_BIOS(rom_entry_interface r) { return romload_global.ROMENTRY_ISSYSTEM_BIOS(r); }
-        protected static bool ROMENTRY_ISDEFAULT_BIOS(rom_entry_interface r) { return romload_global.ROMENTRY_ISDEFAULT_BIOS(r); }
-        protected static bool ROMREGION_ISROMDATA(rom_entry_interface r) { return romload_global.ROMREGION_ISROMDATA(r); }
-        protected static bool ROMREGION_ISDISKDATA(rom_entry_interface r) { return romload_global.ROMREGION_ISDISKDATA(r); }
-        protected static string ROM_GETNAME(rom_entry_interface r) { return romload_global.ROM_GETNAME(r); }
-        protected static UInt32 ROM_GETBIOSFLAGS(rom_entry_interface r) { return romload_global.ROM_GETBIOSFLAGS(r); }
-        protected static std.vector<rom_entry> rom_build_entries(Pointer<tiny_rom_entry> tinyentries) { return romload_global.rom_build_entries(tinyentries); }
+        public static bool ROMENTRY_ISFILE(rom_entry_interface r) { return romload_global.ROMENTRY_ISFILE(r); }
+        public static bool ROMENTRY_ISREGION(rom_entry_interface r) { return romload_global.ROMENTRY_ISREGION(r); }
+        public static bool ROMENTRY_ISEND(rom_entry_interface r) { return romload_global.ROMENTRY_ISEND(r); }
+        public static bool ROMENTRY_ISSYSTEM_BIOS(rom_entry_interface r) { return romload_global.ROMENTRY_ISSYSTEM_BIOS(r); }
+        public static bool ROMENTRY_ISDEFAULT_BIOS(rom_entry_interface r) { return romload_global.ROMENTRY_ISDEFAULT_BIOS(r); }
+        public static bool ROMREGION_ISROMDATA(rom_entry_interface r) { return romload_global.ROMREGION_ISROMDATA(r); }
+        public static bool ROMREGION_ISDISKDATA(rom_entry_interface r) { return romload_global.ROMREGION_ISDISKDATA(r); }
+        public static string ROM_GETNAME(rom_entry_interface r) { return romload_global.ROM_GETNAME(r); }
+        public static bool ROM_ISOPTIONAL(rom_entry_interface r) { return romload_global.ROM_ISOPTIONAL(r); }
+        public static UInt32 ROM_GETBIOSFLAGS(rom_entry_interface r) { return romload_global.ROM_GETBIOSFLAGS(r); }
+        public static Pointer<rom_entry> rom_first_region(device_t device) { return romload_global.rom_first_region(device); }
+        public static Pointer<rom_entry> rom_first_region(Pointer<rom_entry> romp) { return romload_global.rom_first_region(romp); }
+        public static Pointer<rom_entry> rom_first_file(Pointer<rom_entry> rompIn) { return romload_global.rom_first_file(rompIn); }
+        public static u32 rom_file_size(Pointer<rom_entry> rompIn) { return romload_global.rom_file_size(rompIn); }
+        public static std.vector<rom_entry> rom_build_entries(Pointer<tiny_rom_entry> tinyentries) { return romload_global.rom_build_entries(tinyentries); }
 
 
         // screen
-        protected static screen_device SCREEN(machine_config mconfig, string tag, screen_type_enum type)
+        public const screen_type_enum SCREEN_TYPE_RASTER = screen_type_enum.SCREEN_TYPE_RASTER;
+        public const screen_type_enum SCREEN_TYPE_VECTOR = screen_type_enum.SCREEN_TYPE_VECTOR;
+        public const screen_type_enum SCREEN_TYPE_LCD = screen_type_enum.SCREEN_TYPE_LCD;
+        public const screen_type_enum SCREEN_TYPE_SVG = screen_type_enum.SCREEN_TYPE_SVG;
+        public const screen_type_enum SCREEN_TYPE_INVALID = screen_type_enum.SCREEN_TYPE_INVALID;
+        public static screen_device SCREEN(machine_config mconfig, string tag, screen_type_enum type)
         {
             var device = emu.detail.device_type_impl.op<screen_device>(mconfig, tag, screen_device.SCREEN, 0);
             device.screen_device_after_ctor(type);
             return device;
         }
-        protected static screen_device SCREEN<bool_Required>(machine_config mconfig, device_finder<screen_device, bool_Required> finder, screen_type_enum type)
-            where bool_Required : bool_constant, new()
+        public static screen_device SCREEN<bool_Required>(machine_config mconfig, device_finder<screen_device, bool_Required> finder, screen_type_enum type)
+            where bool_Required : bool_const, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, screen_device.SCREEN, 0);
             device.screen_device_after_ctor(type);
             return device;
         }
-        protected const screen_type_enum SCREEN_TYPE_RASTER = screen_type_enum.SCREEN_TYPE_RASTER;
-        protected const screen_type_enum SCREEN_TYPE_VECTOR = screen_type_enum.SCREEN_TYPE_VECTOR;
-        protected const screen_type_enum SCREEN_TYPE_LCD = screen_type_enum.SCREEN_TYPE_LCD;
-        protected const screen_type_enum SCREEN_TYPE_SVG = screen_type_enum.SCREEN_TYPE_SVG;
-        protected const screen_type_enum SCREEN_TYPE_INVALID = screen_type_enum.SCREEN_TYPE_INVALID;
 
 
         // slapstic
-        protected static atari_slapstic_device SLAPSTIC<bool_Required>(machine_config mconfig, device_finder<atari_slapstic_device, bool_Required> finder, int chipnum)
-            where bool_Required : bool_constant, new()
+        public static atari_slapstic_device SLAPSTIC<bool_Required>(machine_config mconfig, device_finder<atari_slapstic_device, bool_Required> finder, int chipnum)
+            where bool_Required : bool_const, new()
         {
             var device = emu.detail.device_type_impl.op<atari_slapstic_device, bool_Required>(mconfig, finder, atari_slapstic_device.SLAPSTIC, 0);
             device.atari_slapstic_device_after_ctor(chipnum);
@@ -1164,47 +1035,39 @@ namespace mame
 
 
         // speaker
-        protected static speaker_device SPEAKER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<speaker_device>(mconfig, tag, speaker_device.SPEAKER, 0); }
+        public static speaker_device SPEAKER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<speaker_device>(mconfig, tag, speaker_device.SPEAKER, 0); }
 
 
         // starfield
-        protected static starfield_05xx_device STARFIELD_05XX<bool_Required>(machine_config mconfig, device_finder<starfield_05xx_device, bool_Required> finder, uint32_t clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, starfield_05xx_device.STARFIELD_05XX, clock); }
-
-
-        // strformat
-        public static string string_format(string format, params object [] args) { return util_.string_format(format, args); }
+        public static starfield_05xx_device STARFIELD_05XX<bool_Required>(machine_config mconfig, device_finder<starfield_05xx_device, bool_Required> finder, uint32_t clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, starfield_05xx_device.STARFIELD_05XX, clock); }
 
 
         // t11
-        protected static t11_device T11<bool_Required>(machine_config mconfig, device_finder<t11_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, t11_device.T11, clock); }
+        public static t11_device T11<bool_Required>(machine_config mconfig, device_finder<t11_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, t11_device.T11, clock); }
 
 
         // taitosjsec
-        protected static taito_sj_security_mcu_device TAITO_SJ_SECURITY_MCU<bool_Required>(machine_config mconfig, device_finder<taito_sj_security_mcu_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, taito_sj_security_mcu_device.TAITO_SJ_SECURITY_MCU, clock); }
+        public static taito_sj_security_mcu_device TAITO_SJ_SECURITY_MCU<bool_Required>(machine_config mconfig, device_finder<taito_sj_security_mcu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, taito_sj_security_mcu_device.TAITO_SJ_SECURITY_MCU, clock); }
 
 
         // tilemap
-        protected const u32 TILEMAP_DRAW_OPAQUE = tilemap_global.TILEMAP_DRAW_OPAQUE;
-        protected const u8 TILE_FLIPX = tilemap_global.TILE_FLIPX;
-        protected const u8 TILE_FORCE_LAYER0 = tilemap_global.TILE_FORCE_LAYER0;
-        protected const u32 TILEMAP_FLIPX = tilemap_global.TILEMAP_FLIPX;
-        protected const u32 TILEMAP_FLIPY = tilemap_global.TILEMAP_FLIPY;
-        protected static u8 TILE_FLIPYX(int YX) { return tilemap_global.TILE_FLIPYX(YX); }
-        protected static tilemap_device TILEMAP<bool_Required>(machine_config mconfig, device_finder<tilemap_device, bool_Required> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows)
-            where bool_Required : bool_constant, new()
+        public const u32 TILEMAP_DRAW_CATEGORY_MASK = tilemap_global.TILEMAP_DRAW_CATEGORY_MASK;
+        public const u32 TILEMAP_DRAW_OPAQUE = tilemap_global.TILEMAP_DRAW_OPAQUE;
+        public const u32 TILEMAP_DRAW_ALL_CATEGORIES = tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES;
+        public const u8 TILE_FLIPX = tilemap_global.TILE_FLIPX;
+        public const u8 TILE_FORCE_LAYER0 = tilemap_global.TILE_FORCE_LAYER0;
+        public const u32 TILEMAP_FLIPX = tilemap_global.TILEMAP_FLIPX;
+        public const u32 TILEMAP_FLIPY = tilemap_global.TILEMAP_FLIPY;
+        public static u8 TILE_FLIPYX(int YX) { return tilemap_global.TILE_FLIPYX(YX); }
+        public static tilemap_device TILEMAP<bool_Required>(machine_config mconfig, device_finder<tilemap_device, bool_Required> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows)
+            where bool_Required : bool_const, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, tilemap_device.TILEMAP, 0);
             device.tilemap_device_after_ctor(gfxtag, entrybytes, tilewidth, tileheight, mapper, columns, rows);
             return device;
         }
-        protected static tilemap_device TILEMAP<bool_Required>(machine_config mconfig, device_finder<tilemap_device, bool_Required> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows, pen_t transpen)
-            where bool_Required : bool_constant, new()
+        public static tilemap_device TILEMAP<bool_Required>(machine_config mconfig, device_finder<tilemap_device, bool_Required> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows, pen_t transpen)
+            where bool_Required : bool_const, new()
         {
             var device = emu.detail.device_type_impl.op(mconfig, finder, tilemap_device.TILEMAP, 0);
             device.tilemap_device_after_ctor(gfxtag, entrybytes, tilewidth, tileheight, mapper, columns, rows, transpen);
@@ -1213,36 +1076,33 @@ namespace mame
 
 
         // timer
-        protected static timer_device TIMER(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<timer_device>(mconfig, tag, timer_device.TIMER, clock); }
+        public static timer_device TIMER(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<timer_device>(mconfig, tag, timer_device.TIMER, clock); }
 
 
         // tms5220
-        protected static tms5220c_device TMS5220C<bool_Required>(machine_config mconfig, device_finder<tms5220c_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, tms5220c_device.TMS5220C, clock); }
+        public static tms5220c_device TMS5220C<bool_Required>(machine_config mconfig, device_finder<tms5220c_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, tms5220c_device.TMS5220C, clock); }
+
+
+        // ui
+        public const float UI_MAX_FONT_HEIGHT = ui_global.UI_MAX_FONT_HEIGHT;
+        public const float UI_LINE_WIDTH = ui_global.UI_LINE_WIDTH;
+        public static readonly rgb_t UI_GREEN_COLOR = ui_global.UI_GREEN_COLOR;
+        public static readonly rgb_t UI_YELLOW_COLOR = ui_global.UI_YELLOW_COLOR;
+        public static readonly rgb_t UI_RED_COLOR = ui_global.UI_RED_COLOR;
+        public const uint32_t UI_HANDLER_CANCEL = ui_global.UI_HANDLER_CANCEL;
 
 
         // watchdog
-        protected static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<watchdog_timer_device>(mconfig, tag, watchdog_timer_device.WATCHDOG_TIMER, 0); }
-        protected static watchdog_timer_device WATCHDOG_TIMER<bool_Required>(machine_config mconfig, device_finder<watchdog_timer_device, bool_Required> finder)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, watchdog_timer_device.WATCHDOG_TIMER, 0); }
+        public static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<watchdog_timer_device>(mconfig, tag, watchdog_timer_device.WATCHDOG_TIMER, 0); }
+        public static watchdog_timer_device WATCHDOG_TIMER<bool_Required>(machine_config mconfig, device_finder<watchdog_timer_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, watchdog_timer_device.WATCHDOG_TIMER, 0); }
 
 
         // ym2151
-        protected static ym2151_device YM2151<bool_Required>(machine_config mconfig, device_finder<ym2151_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, ym2151_device.YM2151, clock); }
+        public static ym2151_device YM2151<bool_Required>(machine_config mconfig, device_finder<ym2151_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ym2151_device.YM2151, clock); }
 
 
         // z80
-        protected static cpu_device Z80(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<cpu_device>(mconfig, tag, z80_device.Z80, clock); }
-        protected static cpu_device Z80<bool_Required>(machine_config mconfig, device_finder<cpu_device, bool_Required> finder, u32 clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
-        protected static cpu_device Z80<bool_Required>(machine_config mconfig, device_finder<cpu_device, bool_Required> finder, XTAL clock)
-            where bool_Required : bool_constant, new()
-        { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
+        public static cpu_device Z80<bool_Required>(machine_config mconfig, device_finder<cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
 
 
         // c++
@@ -1275,52 +1135,23 @@ namespace mame
         }
 
 
-        // c++ float.h  - https://www.johndcook.com/blog/2012/01/05/double-epsilon-dbl_epsilon/
-        protected const double DBL_EPSILON = 2.2204460492503131e-016; /* smallest such that 1.0+DBL_EPSILON != 1.0 */
+        // c++ cfloat  - https://www.johndcook.com/blog/2012/01/05/double-epsilon-dbl_epsilon/
+        public const double DBL_EPSILON = 2.2204460492503131e-016; /* smallest such that 1.0+DBL_EPSILON != 1.0 */
 
 
-        // c++ math.h
-        protected const double M_PI = Math.PI;
-        protected static float fabs(float arg) { return std.fabs(arg); }
-        protected static double fabs(double arg) { return std.fabs(arg); }
-        protected static float floor(float x) { return std.floor(x); }
-        protected static double floor(double x) { return std.floor(x); }
-        protected static float log(float arg) { return std.log(arg); }
-        protected static double log(double arg) { return std.log(arg); }
-        protected static int lround(double x) { return std.lround(x); }
-        protected static float pow(float base_, float exponent) { return std.pow(base_, exponent); }
-        protected static double pow(double base_, double exponent) { return std.pow(base_, exponent); }
-        protected static float sin(float arg) { return std.sin(arg); }
-        protected static double sin(double arg) { return std.sin(arg); }
+        // c++ cmath
+        public const double M_PI = Math.PI;
 
 
-        // c++ stdio.h
-        protected static int memcmp<T>(MemoryContainer<T> ptr1, MemoryContainer<T> ptr2, UInt32 num) { return ptr1.CompareTo(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
-        protected static int memcmp<T>(Pointer<T> ptr1, Pointer<T> ptr2, UInt32 num) { return ptr1.CompareTo(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
-        protected static void memcpy<T>(MemoryContainer<T> destination, MemoryContainer<T> source, UInt32 num) { std.memcpy(destination, source, num); }  //  void * destination, const void * source, size_t num );
-        protected static void memcpy<T>(Pointer<T> destination, Pointer<T> source, UInt32 num) { std.memcpy(destination, source, num); }  //  void * destination, const void * source, size_t num );
-        protected static void memset<T>(MemoryContainer<T> destination, T value) { std.memset(destination, value); }
-        protected static void memset<T>(MemoryContainer<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
-        protected static void memset<T>(Pointer<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
-        protected static void memset<T>(IList<T> destination, T value) { std.memset(destination, value, (UInt32)destination.Count); }
-        protected static void memset<T>(IList<T> destination, T value, UInt32 num) { std.memset(destination, value, num); }
-        protected static void memset<T>(T [,] destination, T value) { std.memset(destination, value); }
-
-
-        // c++ string.h
-        protected static MemoryContainer<T> memmove<T>(MemoryContainer<T> destination, MemoryContainer<T> source, UInt32 num) { memcpy(destination, source, num); return destination; }
-        protected static Pointer<T> memmove<T>(Pointer<T> destination, Pointer<T> source, UInt32 num) { memcpy(destination, source, num); return destination; }
-        protected static int strlen(string str) { return std.strlen(str); }
-        protected static int strcmp(string str1, string str2) { return std.strcmp(str1, str2); }
-        protected static int strncmp(string str1, string str2, int num) { return std.strncmp(str1, str2, num); }
+        public const size_t npos = size_t.MaxValue;
     }
 
 
     public static class std
     {
-        public static int size(string x) { return x.Length; }
-        public static int size<T>(T [] x) { return x.Length; }
-        public static int size<T>(std.vector<T> x) { return x.Count; }
+        public static size_t size(string x) { return (size_t)x.Length; }
+        public static size_t size<T>(T [] x) { return (size_t)x.Length; }
+        public static size_t size<T>(std.vector<T> x) { return (size_t)x.Count; }
 
 
         // c++ chrono
@@ -1344,12 +1175,12 @@ namespace mame
         public static void fill<T>(MemoryContainer<T> destination, T value) { std.memset(destination, value); }
         public static void fill<T>(IList<T> destination, T value) { std.memset(destination, value); }
         public static void fill<T>(IList<T> destination, Func<T> value) { std.memset(destination, value); }
-        public static void fill_n<T>(MemoryContainer<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
-        public static void fill_n<T>(Pointer<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
-        public static void fill_n(PointerU16 destination, int count, UInt16 value) { std.memset(destination, value, (UInt32)count); }
-        public static void fill_n(PointerU32 destination, int count, UInt32 value) { std.memset(destination, value, (UInt32)count); }
-        public static void fill_n(PointerU64 destination, int count, UInt64 value) { std.memset(destination, value, (UInt32)count); }
-        public static void fill_n<T>(IList<T> destination, int count, T value) { std.memset(destination, value, (UInt32)count); }
+        public static void fill_n<T>(MemoryContainer<T> destination, size_t count, T value) { std.memset(destination, value, count); }
+        public static void fill_n<T>(Pointer<T> destination, size_t count, T value) { std.memset(destination, value, count); }
+        public static void fill_n(PointerU16 destination, size_t count, UInt16 value) { std.memset(destination, value, count); }
+        public static void fill_n(PointerU32 destination, size_t count, UInt32 value) { std.memset(destination, value, count); }
+        public static void fill_n(PointerU64 destination, size_t count, UInt64 value) { std.memset(destination, value, count); }
+        public static void fill_n<T>(IList<T> destination, size_t count, T value) { std.memset(destination, value, count); }
         public static T find_if<T>(IEnumerable<T> list, Func<T, bool> pred) { foreach (var item in list) { if (pred(item)) return item; } return default;  }
         public static int lower_bound<C, V>(C collection, V value) where C : IList<V> where V : IComparable<V> { return lower_bound<C, V, V>(collection, value, (i, v) => { return i.CompareTo(v) < 0; }); }
         public static int lower_bound<C, I, V>(C collection, V value, Func<I, V, bool> func)
@@ -1378,18 +1209,23 @@ namespace mame
 
             return first;
         }
+        // std::min/max behaves differently than Math.Min/Max with respect to NaN
+        // https://docs.microsoft.com/en-us/dotnet/api/system.math.min?view=net-5.0#System_Math_Min_System_Single_System_Single_
+        // https://stackoverflow.com/a/39919244
         public static int max(int a, int b) { return Math.Max(a, b); }
         public static UInt32 max(UInt32 a, UInt32 b) { return Math.Max(a, b); }
         public static Int64 max(Int64 a, Int64 b) { return Math.Max(a, b); }
-        public static float max(float a, float b) { return Math.Max(a, b); }
-        public static double max(double a, double b) { return Math.Max(a, b); }
+        public static UInt64 max(UInt64 a, UInt64 b) { return Math.Max(a, b); }
+        public static float max(float a, float b) { if (float.IsNaN(a) || float.IsNaN(b)) return a; else return Math.Max(a, b); }
+        public static double max(double a, double b) { if (double.IsNaN(a) || double.IsNaN(b)) return a; else return Math.Max(a, b); }
         public static attotime max(attotime a, attotime b) { return attotime.Max(a, b); }
         public static netlist_time max(netlist_time a, netlist_time b) { return netlist_time.Max(a, b); }
         public static int min(int a, int b) { return Math.Min(a, b); }
         public static UInt32 min(UInt32 a, UInt32 b) { return Math.Min(a, b); }
         public static Int64 min(Int64 a, Int64 b) { return Math.Min(a, b); }
-        public static float min(float a, float b) { return Math.Min(a, b); }
-        public static double min(double a, double b) { return Math.Min(a, b); }
+        public static UInt64 min(UInt64 a, UInt64 b) { return Math.Min(a, b); }
+        public static float min(float a, float b) { if (float.IsNaN(a) || float.IsNaN(b)) return a; else return Math.Min(a, b); }
+        public static double min(double a, double b) { if (double.IsNaN(a) || double.IsNaN(b)) return a; else return Math.Min(a, b); }
         public static attotime min(attotime a, attotime b) { return attotime.Min(a, b); }
         public static void sort<T>(MemoryContainer<T> list, Comparison<T> pred) { list.Sort(pred); }
 
@@ -1402,6 +1238,7 @@ namespace mame
         public static double atan(double arg) { return Math.Atan(arg); }
         public static float cos(float arg) { return (float)Math.Cos(arg); }
         public static double cos(double arg) { return Math.Cos(arg); }
+        public static float exp(float x) { return (float)Math.Exp(x); }
         public static double exp(double x) { return Math.Exp(x); }
         public static float fabs(float arg) { return Math.Abs(arg); }
         public static double fabs(double arg) { return Math.Abs(arg); }
@@ -1409,6 +1246,8 @@ namespace mame
         public static float floor(float arg) { return (float)Math.Floor(arg); }
         public static double floor(double arg) { return Math.Floor(arg); }
         public static float floorf(float arg) { return (float)Math.Floor(arg); }
+        public static bool isnan(float arg) { return Single.IsNaN(arg); }
+        public static bool isnan(double arg) { return Double.IsNaN(arg); }
         public static float log(float arg) { return (float)Math.Log(arg); }
         public static double log(double arg) { return Math.Log(arg); }
         public static float pow(float base_, float exponent) { return (float)Math.Pow(base_, exponent); }
@@ -1418,34 +1257,39 @@ namespace mame
         public static double sin(double arg) { return Math.Sin(arg); }
         public static float sqrt(float arg) { return (float)Math.Sqrt(arg); }
         public static double sqrt(double arg) { return Math.Sqrt(arg); }
+        public static float tan(float arg) { return (float)Math.Tan(arg); }
+        public static double tan(double arg) { return Math.Tan(arg); }
         public static float trunc(float arg) { return (float)Math.Truncate(arg); }
         public static double trunc(double arg) { return Math.Truncate(arg); }
 
 
         // c++ cstdlib
         public static void abort() { terminate(); }
+        public static int atoi(string str) { return Convert.ToInt32(str); }
         public static string getenv(string env_var) { return System.Environment.GetEnvironmentVariable(env_var); }
         public static UInt64 strtoul(string str, string endptr, int base_) { return Convert.ToUInt64(str, 16); }
 
 
         // c++ cstring
-        public static void memcpy<T>(MemoryContainer<T> destination, MemoryContainer<T> source, UInt32 num) { source.CopyTo(0, destination, 0, (int)num); }  //void * destination, const void * source, size_t num );
-        public static void memcpy<T>(Pointer<T> destination, Pointer<T> source, UInt32 num) { source.CopyTo(0, destination, 0, (int)num); }  //void * destination, const void * source, size_t num );
+        public static int memcmp<T>(MemoryContainer<T> ptr1, MemoryContainer<T> ptr2, size_t num) { return ptr1.CompareTo(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
+        public static int memcmp<T>(Pointer<T> ptr1, Pointer<T> ptr2, size_t num) { return ptr1.CompareTo(ptr2, (int)num) ? 0 : 1; }  //  const void * ptr1, const void * ptr2, size_t num
+        public static void memcpy<T>(MemoryContainer<T> destination, MemoryContainer<T> source, size_t num) { source.CopyTo(0, destination, 0, (int)num); }  //void * destination, const void * source, size_t num );
+        public static void memcpy<T>(Pointer<T> destination, Pointer<T> source, size_t num) { source.CopyTo(0, destination, 0, (int)num); }  //void * destination, const void * source, size_t num );
         public static void memset<T>(MemoryContainer<T> destination, T value) { destination.Fill(value); }
-        public static void memset<T>(MemoryContainer<T> destination, T value, UInt32 num) { destination.Fill(value, (int)num); }
-        public static void memset<T>(Pointer<T> destination, T value, UInt32 num) { destination.Fill(value, (int)num); }
-        public static void memset(PointerU16 destination, UInt16 value, UInt32 num) { destination.Fill(value, (int)num); }
-        public static void memset(PointerU32 destination, UInt32 value, UInt32 num) { destination.Fill(value, (int)num); }
-        public static void memset(PointerU64 destination, UInt64 value, UInt32 num) { destination.Fill(value, (int)num); }
-        public static void memset<T>(IList<T> destination, T value) { memset(destination, value, (UInt32)destination.Count); }
-        public static void memset<T>(IList<T> destination, T value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value; }
-        public static void memset<T>(IList<T> destination, Func<T> value) { memset(destination, value, (UInt32)destination.Count); }
-        public static void memset<T>(IList<T> destination, Func<T> value, UInt32 num) { for (int i = 0; i < num; i++) destination[i] = value(); }
+        public static void memset<T>(MemoryContainer<T> destination, T value, size_t num) { destination.Fill(value, (int)num); }
+        public static void memset<T>(Pointer<T> destination, T value, size_t num) { destination.Fill(value, (int)num); }
+        public static void memset(PointerU16 destination, UInt16 value, size_t num) { destination.Fill(value, (int)num); }
+        public static void memset(PointerU32 destination, UInt32 value, size_t num) { destination.Fill(value, (int)num); }
+        public static void memset(PointerU64 destination, UInt64 value, size_t num) { destination.Fill(value, (int)num); }
+        public static void memset<T>(IList<T> destination, T value) { memset(destination, value, (size_t)destination.Count); }
+        public static void memset<T>(IList<T> destination, T value, size_t num) { for (int i = 0; i < (int)num; i++) destination[i] = value; }
+        public static void memset<T>(IList<T> destination, Func<T> value) { memset(destination, value, (size_t)destination.Count); }
+        public static void memset<T>(IList<T> destination, Func<T> value, size_t num) { for (int i = 0; i < (int)num; i++) destination[i] = value(); }
         public static void memset<T>(T [,] destination, T value) { for (int i = 0; i < destination.GetLength(0); i++) for (int j = 0; j < destination.GetLength(1); j++) destination[i, j] = value; }
         public static int strchr(string str, char character) { return str.IndexOf(character); }
         public static int strcmp(string str1, string str2) { return string.Compare(str1, str2); }
-        public static int strlen(string str) { return str.Length; }
-        public static int strncmp(string str1, string str2, int num) { return string.Compare(str1, 0, str2, 0, num); }
+        public static size_t strlen(string str) { return (size_t)str.Length; }
+        public static int strncmp(string str1, string str2, size_t num) { return string.Compare(str1, 0, str2, 0, (int)num); }
         public static int strstr(string str1, string str2) { return str1.IndexOf(str2); }
         public static string to_string(int val) { return val.ToString(); }
         public static string to_string(UInt32 val) { return val.ToString(); }
@@ -1473,7 +1317,7 @@ namespace mame
         // c++ utility
         public static void swap<T>(ref T val1, ref T val2)
         {
-            global_object.assert(typeof(T).GetTypeInfo().IsValueType);
+            g.assert(typeof(T).GetTypeInfo().IsValueType);
 
             T temp = val1;
             val1 = val2;
@@ -1485,19 +1329,19 @@ namespace mame
 
         // c++ array
         public class array<T, size_t_N> : IList<T>
-            where size_t_N : uint32_constant, new()
+            where size_t_N : u64_const, new()
         {
-            protected static uint32_constant N = new size_t_N();
+            protected static readonly size_t N = new size_t_N().value;
 
 
-            MemoryContainer<T> m_data = new MemoryContainer<T>((int)N.value, true);
+            MemoryContainer<T> m_data = new MemoryContainer<T>((int)N, true);
 
 
             public array() { }
             public array(params T [] args)
             {
-                if (args.Length != N.value)
-                    throw new emu_fatalerror("array() parameter count doen't match size. Provided: {0}, Expected: {1}", args.Length, N.value);
+                if (args.Length != (int)N)
+                    throw new emu_fatalerror("array() parameter count doen't match size. Provided: {0}, Expected: {1}", args.Length, N);
 
                 for (int i = 0; i < args.Length; i++)
                     m_data[i] = args[i];
@@ -1527,14 +1371,14 @@ namespace mame
                 if (ReferenceEquals(lhs, rhs))
                     return true;
 
-                if (lhs == null || rhs == null)
+                if (ReferenceEquals(lhs, default) || ReferenceEquals(rhs, default))
                     return false;
 
                 if (lhs.size() != rhs.size())
                     return false;
 
                 EqualityComparer<T> comparer = EqualityComparer<T>.Default;
-                for (int i = 0; i < lhs.size(); i++)
+                for (size_t i = 0; i < lhs.size(); i++)
                 {
                     if (!comparer.Equals(lhs[i], rhs[i])) return false;
                 }
@@ -1560,10 +1404,10 @@ namespace mame
             }
 
             public T this[int index] { get { return m_data[index]; } set { m_data[index] = value; } }
-            public T this[UInt32 index] { get { return m_data[index]; } set { m_data[index] = value; } }
+            public T this[UInt64 index] { get { return m_data[index]; } set { m_data[index] = value; } }
 
 
-            public int size() { return Count; }
+            public size_t size() { return (size_t)Count; }
             public void fill(T value) { std.fill(this, value); }
             public Pointer<T> data() { return new Pointer<T>(m_data); }
         }
@@ -1615,7 +1459,7 @@ namespace mame
             public bool empty() { return m_list.Count == 0; }
             public void push_back(T item) { m_list.AddLast(item); }
             public void push_front(T item) { m_list.AddFirst(item); }
-            public int size() { return m_list.Count; }
+            public size_t size() { return (size_t)m_list.Count; }
         }
 
 
@@ -1650,7 +1494,7 @@ namespace mame
             public bool emplace(K key, V value) { if (m_dictionary.ContainsKey(key)) { return false; } else { m_dictionary.Add(key, value); return true; } }
             public void erase(K key) { m_dictionary.Remove(key); }
             public V find(K key) { V value; if (m_dictionary.TryGetValue(key, out value)) return value; else return default; }
-            public int size() { return m_dictionary.Count; }
+            public size_t size() { return (size_t)m_dictionary.Count; }
         }
 
 
@@ -1796,7 +1640,7 @@ namespace mame
             public V find(K key) { return at(key); }
             public bool insert(K key, V value) { if (m_dictionary.ContainsKey(key)) { return false; } else { m_dictionary.Add(key, value); return true; } }
             public bool insert(std.pair<K, V> keyvalue) { return insert(keyvalue.first, keyvalue.second); }
-            public int size() { return m_dictionary.Count; }
+            public size_t size() { return (size_t)m_dictionary.Count; }
         }
 
 
@@ -1827,8 +1671,8 @@ namespace mame
         {
             public vector() : base() { }
             // this is different behavior as List<T> so that it matches how std::vector works
-            public vector(int count, T data = default) : base(count) { resize(count, data); }
-            public vector(u32 count, T data = default) : this((int)count, data) { }
+            public vector(s32 count, T data = default) : base(count) { resize((size_t)count, data); }
+            public vector(size_t count, T data = default) : base((int)count) { resize(count, data); }
             public vector(IEnumerable<T> collection) : base(collection) { }
 
 
@@ -1845,9 +1689,9 @@ namespace mame
             public void pop_back() { if (Count > 0) { RemoveAt(Count - 1); } }
             public void push_back(T item) { Add(item); }
             public void push_front(T item) { Insert(0, item); }
-            public void resize(int count, T data = default) { Resize(count, data); }
-            public void reserve(int value) { Capacity = value; }
-            public int size() { return Count; }
+            public void resize(size_t count, T data = default) { Resize((int)count, data); }
+            public void reserve(size_t value) { Capacity = (int)value; }
+            public size_t size() { return (size_t)Count; }
         }
     }
 
@@ -1856,7 +1700,7 @@ namespace mame
     // std.vector and MemoryU8 derive from this.
     public class MemoryContainer<T> : IList<T>
     {
-        class MemoryContainerEnumerator<T> : IEnumerator<T>
+        class MemoryContainerEnumerator : IEnumerator<T>
         {
             MemoryContainer<T> m_list;
             int m_index;
@@ -1954,7 +1798,7 @@ namespace mame
         }
         public virtual int Count { get { return m_actualLength; } }
         bool ICollection<T>.IsReadOnly { get { return ((ICollection<T>)m_data).IsReadOnly; } }
-        public virtual IEnumerator<T> GetEnumerator() { return new MemoryContainerEnumerator<T>(this); }
+        public virtual IEnumerator<T> GetEnumerator() { return new MemoryContainerEnumerator(this); }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
 
@@ -1992,8 +1836,9 @@ namespace mame
 
         public Memory<T> memory { get { return m_memory; } }
 
-        // UInt32 helper
-        public virtual T this[u32 index] { get { return this[(int)index]; } set { this[(int)index] = value; } }
+
+        // UInt64 helper
+        public virtual T this[UInt64 index] { get { return m_data[index]; } set { m_data[index] = value; } }
 
 
         public bool MemoryEquals(MemoryContainer<T> other) { return m_data == other.m_data; }
@@ -2032,7 +1877,7 @@ namespace mame
         public virtual void Resize(int count) { ResizeInternal(count, default); }
         public virtual void Resize(int count, T data)
         {
-            global_object.assert(typeof(T).GetTypeInfo().IsValueType ? true : (data == null || data.Equals(default)) ? true : false);  // this function doesn't do what you'd expect for ref classes since it doesn't new() for each item.  Manually Add() in this case.
+            g.assert(typeof(T).GetTypeInfo().IsValueType ? true : (data == null || data.Equals(default)) ? true : false);  // this function doesn't do what you'd expect for ref classes since it doesn't new() for each item.  Manually Add() in this case.
             ResizeInternal(count, data);
         }
 
@@ -2096,7 +1941,7 @@ namespace mame
 
 
         public virtual T this[int i] { get { return m_memory[m_offset + i]; } set { m_memory[m_offset + i] = value; } }
-        public virtual T this[UInt32 i] { get { return m_memory[m_offset + (int)i]; } set { m_memory[m_offset + (int)i] = value; } }
+        public virtual T this[UInt64 i] { get { return m_memory[m_offset + (int)i]; } set { m_memory[m_offset + (int)i] = value; } }
 
 
         public static Pointer<T> operator +(Pointer<T> left, int right) { return new Pointer<T>(left, right); }
@@ -2130,6 +1975,7 @@ namespace mame
     }
 
 
+    // this class holds a Pointer reference so that if the pointer changes, this class will track it.
     public class PointerRef<T>
     {
         public Pointer<T> m_pointer;
@@ -2178,7 +2024,7 @@ namespace mame
         public PointerU16(Pointer<byte> listPtr, int offset16 = 0) : base(listPtr, offset16 << 1) { }
 
         public new UInt16 this[int i] { get { return this.GetUInt16(i); } set { this.SetUInt16(i, value); } }
-        public new UInt16 this[UInt32 i] { get { return this.GetUInt16((int)i); } set { this.SetUInt16((int)i, value); } }
+        public new UInt16 this[UInt64 i] { get { return this.GetUInt16((int)i); } set { this.SetUInt16((int)i, value); } }
 
         public static PointerU16 operator +(PointerU16 left, int right) { return new PointerU16(left, right); }
         public static PointerU16 operator +(PointerU16 left, UInt32 right) { return new PointerU16(left, (int)right); }
@@ -2198,7 +2044,7 @@ namespace mame
         public PointerU32(Pointer<byte> listPtr, int offset32 = 0) : base(listPtr, offset32 << 2) { }
 
         public new UInt32 this[int i] { get { return this.GetUInt32(i); } set { this.SetUInt32(i, value); } }
-        public new UInt32 this[UInt32 i] { get { return this.GetUInt32((int)i); } set { this.SetUInt32((int)i, value); } }
+        public new UInt32 this[UInt64 i] { get { return this.GetUInt32((int)i); } set { this.SetUInt32((int)i, value); } }
 
         public static PointerU32 operator +(PointerU32 left, int right) { return new PointerU32(left, right); }
         public static PointerU32 operator +(PointerU32 left, UInt32 right) { return new PointerU32(left, (int)right); }
@@ -2218,7 +2064,7 @@ namespace mame
         public PointerU64(Pointer<byte> listPtr, int offset64 = 0) : base(listPtr, offset64 << 3) { }
 
         public new UInt64 this[int i] { get { return this.GetUInt64(i); } set { this.SetUInt64(i, value); } }
-        public new UInt64 this[UInt32 i] { get { return this.GetUInt64((int)i); } set { this.SetUInt64((int)i, value); } }
+        public new UInt64 this[UInt64 i] { get { return this.GetUInt64((int)i); } set { this.SetUInt64((int)i, value); } }
 
         public static PointerU64 operator +(PointerU64 left, int right) { return new PointerU64(left, right); }
         public static PointerU64 operator +(PointerU64 left, UInt32 right) { return new PointerU64(left, (int)right); }
@@ -2278,21 +2124,21 @@ namespace mame
 
         public static void SetUInt16Offs8(this MemoryContainer<byte> container, int offset8, UInt16 value)
         {
-            global_object.assert_slow(offset8 < container.Count);
+            g.assert_slow(offset8 < container.Count);
             var span = container.memory.Slice(offset8, 2).Span;
             BinaryPrimitives.WriteUInt16LittleEndian(span, value);
         }
 
         public static void SetUInt32Offs8(this MemoryContainer<byte> container, int offset8, UInt32 value)
         {
-            global_object.assert_slow(offset8 < container.Count);
+            g.assert_slow(offset8 < container.Count);
             var span = container.memory.Slice(offset8, 4).Span;
             BinaryPrimitives.WriteUInt32LittleEndian(span, value);
         }
 
         public static void SetUInt64Offs8(this MemoryContainer<byte> container, int offset8, UInt64 value)
         {
-            global_object.assert_slow(offset8 < container.Count);
+            g.assert_slow(offset8 < container.Count);
             var span = container.memory.Slice(offset8, 8).Span;
             BinaryPrimitives.WriteUInt64LittleEndian(span, value);
         }
@@ -2303,21 +2149,21 @@ namespace mame
 
         public static UInt16 GetUInt16Offs8(this MemoryContainer<byte> container, int offset8 = 0)
         {
-            global_object.assert_slow(offset8 < container.Count);
+            g.assert_slow(offset8 < container.Count);
             var span = container.memory.Slice(offset8, 2).Span;
             return BinaryPrimitives.ReadUInt16LittleEndian(span);
         }
 
         public static UInt32 GetUInt32Offs8(this MemoryContainer<byte> container, int offset8 = 0)
         {
-            global_object.assert_slow(offset8 < container.Count);
+            g.assert_slow(offset8 < container.Count);
             var span = container.memory.Slice(offset8, 4).Span;
             return BinaryPrimitives.ReadUInt32LittleEndian(span);
         }
 
         public static UInt64 GetUInt64Offs8(this MemoryContainer<byte> container, int offset8 = 0)
         {
-            global_object.assert_slow(offset8 < container.Count);
+            g.assert_slow(offset8 < container.Count);
             var span = container.memory.Slice(offset8, 8).Span;
             return BinaryPrimitives.ReadUInt16LittleEndian(span);
         }
@@ -2353,5 +2199,208 @@ namespace mame
         // these might cause trouble, by replacing the ref, which is what we want to avoid
         //public static implicit operator int(intref x) { return x.get(); }
         //public static implicit operator intref(int x) { return new intref(x); }
+    }
+
+
+    // a flexible primitive type, used when the return is unknown (eg with templates)
+    // the size is set at construction.  See uX and devcb_value
+    public struct FlexPrim
+    {
+        Type m_type;
+
+        // use u128 here so that we don't need so much checking
+        u64 m_value_u;
+        s64 m_value_s;
+
+
+        public FlexPrim(Type type, u64 value = 0U)
+        {
+            m_type = type;
+            m_value_s = (s64)value;
+            m_value_u = value;
+        }
+
+        public FlexPrim(Type type, u32 value = 0U) : this(type, (u64)value) { }
+
+        public FlexPrim(Type type, s64 value = 0)
+        {
+            m_type = type;
+            m_value_s = value;
+            m_value_u = (u64)value;
+        }
+
+        public FlexPrim(Type type, FlexPrim other)
+        {
+            // convert to specified type
+            if (IsUnsigned(other.m_type))
+            {
+                m_type = type;
+                m_value_s = (s64)other.Get_u;
+                m_value_u = other.Get_u;
+            }
+            else
+            {
+                m_type = type;
+                m_value_s = other.Get_s;
+                m_value_u = (u64)other.Get_s;
+            }
+        }
+
+        public FlexPrim(FlexPrim other) : this(other.m_type, other) { }
+
+        public FlexPrim(int width, u64 value = 0) : this(WidthToType(width), value) { }
+        public FlexPrim(int width, FlexPrim other) : this(WidthToType(width), other) { }
+
+
+        public Type type { get { return m_type; } }
+        public int width { get { return TypeToWidth(type); } }
+
+        // cast to appropriate type, but return largest type
+        public u64 Get_u
+        {
+            get
+            {
+                if      (m_type == typeof(u8))  return (u8)m_value_u;
+                else if (m_type == typeof(u16)) return (u16)m_value_u;
+                else if (m_type == typeof(u32)) return (u32)m_value_u;
+                else if (m_type == typeof(u64)) return (u64)m_value_u;
+                else if (m_type == typeof(s8))  return (u64)(s8)m_value_s;
+                else if (m_type == typeof(s16)) return (u64)(s16)m_value_s;
+                else if (m_type == typeof(s32)) return (u64)(s32)m_value_s;
+                else if (m_type == typeof(s64)) return (u64)(s64)m_value_s;
+                else throw new emu_unimplemented();
+            }
+        }
+
+        public s64 Get_s
+        {
+            get
+            {
+                if      (m_type == typeof(u8))  return (s64)(u8)m_value_u;
+                else if (m_type == typeof(u16)) return (s64)(u16)m_value_u;
+                else if (m_type == typeof(u32)) return (s64)(u32)m_value_u;
+                else if (m_type == typeof(u64)) return (s64)(u64)m_value_u;
+                else if (m_type == typeof(s8))  return (s8)m_value_s;
+                else if (m_type == typeof(s16)) return (s16)m_value_s;
+                else if (m_type == typeof(s32)) return (s32)m_value_s;
+                else if (m_type == typeof(s64)) return (s64)m_value_s;
+                else throw new emu_unimplemented();
+            }
+        }
+
+
+        // cast to appropriate type, and return appropriate type
+        public u8 u8 { get { return (u8)Get_u; } }
+        public u16 u16 { get { return (u16)Get_u; } }
+        public u32 u32 { get { return (u32)Get_u; } }
+        public u64 u64 { get { return (u64)Get_u; } }
+        public s8 s8 { get { return (s8)Get_s; } }
+        public s16 s16 { get { return (s16)Get_s; } }
+        public s32 s32 { get { return (s32)Get_s; } }
+        public s64 s64 { get { return (s64)Get_s; } }
+
+
+        public bool IsUnsigned() { return IsUnsigned(m_type); }
+        public int TypeToWidth() { return TypeToWidth(m_type); }
+
+
+        public s32 sizeof_() { return g.sizeof_(m_type); }
+
+
+        public override bool Equals(Object obj)
+        {
+            if (obj == null || base.GetType() != obj.GetType()) return false;
+            return this == (FlexPrim)obj;
+        }
+        public override int GetHashCode() { return m_type.GetHashCode() ^ m_value_u.GetHashCode() ^ m_value_s.GetHashCode(); }
+
+
+        public override string ToString() { return string.Format("type: {0} Get_u: {1} Get_s: {2}", type, Get_u, Get_s); }
+
+
+        public static Type make_unsigned(Type type)
+        {
+            if      (type == typeof(u8)) return typeof(u8);
+            else if (type == typeof(u32)) return typeof(u32);
+            else if (type == typeof(s32)) return typeof(u32);
+            else throw new emu_unimplemented();
+        }
+
+
+        public static bool operator ==(FlexPrim left, FlexPrim right) { if (IsUnsigned(left.m_type)) return left.Get_u == right.Get_u; else return left.Get_s == right.Get_s; }
+        public static bool operator ==(FlexPrim left, u64 right) { g.assert(IsUnsigned(left)); return left.Get_u == right; }
+        public static bool operator ==(FlexPrim left, u32 right) { g.assert(IsUnsigned(left)); return left.Get_u == right; }
+        public static bool operator ==(FlexPrim left, s64 right) { g.assert(!IsUnsigned(left)); return left.Get_s == right; }
+        public static bool operator !=(FlexPrim left, FlexPrim right) { if (IsUnsigned(left.m_type)) return left.Get_u != right.Get_u; else return left.Get_s != right.Get_s; }
+        public static bool operator !=(FlexPrim left, u64 right) { g.assert(IsUnsigned(left)); return left.Get_u != right; }
+        public static bool operator !=(FlexPrim left, u32 right) { g.assert(IsUnsigned(left)); return left.Get_u != right; }
+        public static bool operator !=(FlexPrim left, s64 right) { g.assert(!IsUnsigned(left)); return left.Get_s != right; }
+
+
+        public static FlexPrim operator +(FlexPrim left, FlexPrim right) { if (IsUnsigned(left.m_type)) return new FlexPrim(left.m_type, left.Get_u + right.Get_u); else return new FlexPrim(left.m_type, left.Get_s + right.Get_s); }
+        public static FlexPrim operator +(FlexPrim left, u64 right) { g.assert(IsUnsigned(left)); return new FlexPrim(left.m_type, left.Get_u + right); }
+        public static FlexPrim operator +(FlexPrim left, s64 right) { g.assert(!IsUnsigned(left)); return new FlexPrim(left.m_type, left.Get_s + right); }
+
+        public static FlexPrim operator >>(FlexPrim left, int right) { if (IsUnsigned(left.m_type)) return new FlexPrim(left.m_type, left.Get_u >> right); else return new FlexPrim(left.m_type, left.Get_s >> right); }
+        public static FlexPrim operator <<(FlexPrim left, int right) { if (IsUnsigned(left.m_type)) return new FlexPrim(left.m_type, left.Get_u << right); else return new FlexPrim(left.m_type, left.Get_s << right); }
+        public static FlexPrim operator &(FlexPrim left, FlexPrim right) { if (IsUnsigned(left.m_type)) return new FlexPrim(left.m_type, left.Get_u & right.Get_u); else return new FlexPrim(left.m_type, left.Get_s & right.Get_s); }
+        public static FlexPrim operator &(FlexPrim left, u64 right) { g.assert(IsUnsigned(left)); return new FlexPrim(left.m_type, left.Get_u & right); }
+        public static FlexPrim operator &(FlexPrim left, s64 right) { g.assert(!IsUnsigned(left)); return new FlexPrim(left.m_type, left.Get_s & right); }
+        public static FlexPrim operator |(FlexPrim left, FlexPrim right) { if (IsUnsigned(left.m_type)) return new FlexPrim(left.m_type, left.Get_u | right.Get_u); else return new FlexPrim(left.m_type, left.Get_s | right.Get_s); }
+        public static FlexPrim operator |(FlexPrim left, u64 right) { g.assert(IsUnsigned(left)); return new FlexPrim(left.m_type, left.Get_u | right); }
+        public static FlexPrim operator |(FlexPrim left, s64 right) { g.assert(!IsUnsigned(left)); return new FlexPrim(left.m_type, left.Get_s | right); }
+        public static FlexPrim operator ^(FlexPrim left, FlexPrim right) { if (IsUnsigned(left.m_type)) return new FlexPrim(left.m_type, left.Get_u ^ right.Get_u); else return new FlexPrim(left.m_type, left.Get_s ^ right.Get_s); }
+        public static FlexPrim operator ^(FlexPrim left, u64 right) { g.assert(IsUnsigned(left)); return new FlexPrim(left.m_type, left.Get_u ^ right); }
+        public static FlexPrim operator ^(FlexPrim left, s64 right) { g.assert(!IsUnsigned(left)); return new FlexPrim(left.m_type, left.Get_s ^ right); }
+
+        public static FlexPrim operator ~(FlexPrim left) { if (IsUnsigned(left)) return new FlexPrim(left.m_type, ~left.Get_u); else return new FlexPrim(left.m_type, ~left.Get_s); }
+
+
+        public static bool IsUnsigned(FlexPrim value) { return IsUnsigned(value.m_type); }
+
+        public static bool IsUnsigned(Type type)
+        {
+            if (type == typeof(u8) ||
+                type == typeof(u16) ||
+                type == typeof(u32) ||
+                type == typeof(u64))
+                return true;
+            else if (type == typeof(s8) ||
+                     type == typeof(s16) ||
+                     type == typeof(s32) ||
+                     type == typeof(s64))
+                return false;
+            else
+                throw new emu_unimplemented();
+        }
+
+
+        public static FlexPrim MaxValue(Type type) { return new FlexPrim(type, u64.MaxValue); }
+        public static FlexPrim MaxValue(int width) { return new FlexPrim(width, u64.MaxValue); }
+
+
+        public static Type WidthToType(int width)
+        {
+            switch (width)
+            {
+                case 0: return typeof(u8);
+                case 1: return typeof(u16);
+                case 2: return typeof(u32);
+                case 3: return typeof(u64);
+                default: throw new emu_unimplemented();
+            }
+        }
+
+        public static int TypeToWidth(Type type)
+        {
+            if      (type == typeof(u8)) return 0;
+            else if (type == typeof(u16)) return 1;
+            else if (type == typeof(u32)) return 2;
+            else if (type == typeof(u64)) return 3;
+            else throw new emu_unimplemented();
+        }
+
+
+        public static s32 sizeof_(int width) { return g.sizeof_(WidthToType(width)); }
     }
 }

@@ -1590,7 +1590,7 @@ namespace mame
 
         public static void emplace_core_types(std.vector<input_type_entry> typelist)
         {
-            typelist.reserve((int)core_input_types_count());
+            typelist.reserve(core_input_types_count());
 
             emplace_core_types_p1(typelist);
             emplace_core_types_p1_mahjong(typelist);

@@ -13,7 +13,7 @@ using unsigned = System.UInt32;
 namespace mame
 {
     // ======================> output_manager
-    public class output_manager : global_object
+    public class output_manager
     {
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask> friend class devcb_write;
 
@@ -90,7 +90,7 @@ namespace mame
         }
 
 
-        public class item_proxy : global_object
+        public class item_proxy
         {
             output_item m_item = null;
 
@@ -101,7 +101,7 @@ namespace mame
             //**************************************************************************
             public void resolve(device_t device, string name)
             {
-                assert(m_item == null);
+                g.assert(m_item == null);
                 m_item = device.machine().output().find_or_create_item(name, 0);
             }
 
@@ -117,7 +117,7 @@ namespace mame
 
         //template <typename X, unsigned... N>
         public class output_finder<X, unsigned_N>
-            where unsigned_N : uint32_constant, new()
+            where unsigned_N : u32_const, new()
         {
             static readonly unsigned N = new unsigned_N().value;
 
@@ -241,8 +241,8 @@ namespace mame
         -------------------------------------------------*/
         public void register_save()
         {
-            assert(m_save_order.empty());
-            assert(m_save_data == null);
+            g.assert(m_save_order.empty());
+            g.assert(m_save_data == null);
 
             // make space for the data
             m_save_order.clear();
@@ -261,7 +261,7 @@ namespace mame
 #endif
 
             if (OUTPUT_VERBOSE)
-                osd_printf_verbose("Registered {0} outputs for save states\n", m_itemtable.size());
+                g.osd_printf_verbose("Registered {0} outputs for save states\n", m_itemtable.size());
         }
 
 
@@ -357,14 +357,14 @@ namespace mame
         output_item create_new_item(string outname, int value)
         {
             if (OUTPUT_VERBOSE)
-                osd_printf_verbose("Creating output {0} = {1}{2}\n", outname, value, m_save_data != null ? " (will not be saved)" : "");
+                g.osd_printf_verbose("Creating output {0} = {1}{2}\n", outname, value, m_save_data != null ? " (will not be saved)" : "");
 
             var output_item = new output_item(this, outname, m_uniqueid++, value);
             var ins = m_itemtable.emplace(
                     //std::piecewise_construct,
                     outname,  //std::forward_as_tuple(outname),
                     output_item);  // std::forward_as_tuple(this, outname, m_uniqueid++, value));
-            assert(ins);  //ins.second);
+            g.assert(ins);  //ins.second);
             return output_item;  //ins.first.second;
         }
 
@@ -412,5 +412,5 @@ namespace mame
 
 
     //template <unsigned... N> using output_finder = output_manager::output_finder<void, N...>;
-    public class output_finder<unsigned_N> : output_manager.output_finder<int, unsigned_N> where unsigned_N : uint32_constant, new() { public output_finder(device_t device, string format, u32 start) : base(device, format, start) { } }
+    public class output_finder<unsigned_N> : output_manager.output_finder<int, unsigned_N> where unsigned_N : u32_const, new() { public output_finder(device_t device, string format, u32 start) : base(device, format, start) { } }
 }

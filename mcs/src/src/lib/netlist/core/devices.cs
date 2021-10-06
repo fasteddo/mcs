@@ -35,7 +35,7 @@ namespace mame.netlist
                 m_freq = new param_fp_t(this, "FREQ", nlconst.magic(7159000.0 * 5));
 
 
-                m_inc = netlist_time.from_fp(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(m_freq.op() * nlconst.two()));
+                m_inc = netlist_time.from_fp(plib.pg.reciprocal(m_freq.op() * nlconst.two()));
             }
 
 
@@ -49,7 +49,7 @@ namespace mame.netlist
             //NETLIB_UPDATE_PARAMI()
             public override void update_param()
             {
-                m_inc = netlist_time.from_fp(plib.pglobal.reciprocal<nl_fptype, nl_fptype_ops>(m_freq.op() * nlconst.two()));
+                m_inc = netlist_time.from_fp(plib.pg.reciprocal(m_freq.op() * nlconst.two()));
             }
         }
 
@@ -123,7 +123,7 @@ namespace mame.netlist
         public class nld_netlistparams : device_t
         {
             //NETLIB_DEVICE_IMPL(netlistparams,       "PARAMETER",              "")
-            public static readonly factory.constructor_ptr_t decl_netlistparams = NETLIB_DEVICE_IMPL<nld_netlistparams>("PARAMETER", "");
+            public static readonly factory.constructor_ptr_t decl_netlistparams = g.NETLIB_DEVICE_IMPL<nld_netlistparams>("PARAMETER", "");
 
 
             public param_logic_t m_use_deactivate;
@@ -177,7 +177,7 @@ namespace mame.netlist
         class nld_gnd : device_t
         {
             //NETLIB_DEVICE_IMPL(gnd,                 "GNDA",                   "")
-            public static readonly factory.constructor_ptr_t decl_gnd = NETLIB_DEVICE_IMPL<nld_gnd>("GNDA", "");
+            public static readonly factory.constructor_ptr_t decl_gnd = g.NETLIB_DEVICE_IMPL<nld_gnd>("GNDA", "");
 
 
             analog_output_t m_Q;

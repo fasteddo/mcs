@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 
 
 namespace mame.netlist
@@ -18,9 +18,12 @@ namespace mame.netlist
         // using timed_queue = plib::timed_queue_heap<T, TS>;
 
         //template <class T, bool TS>
-        public class timed_queue<T> : plib.timed_queue_linear<T>  //using timed_queue = plib::timed_queue_linear<T, TS>;
+        public class timed_queue<T, bool_TS, U, V> : plib.timed_queue_linear<T, bool_TS, U, V>  //using timed_queue = plib::timed_queue_linear<T, TS>;
+            where T : plib.pqentry_t<U, V>
+            where bool_TS : bool_const, new()
+            where U : netlist_time_ext
         {
-            protected timed_queue(bool TS, size_t list_size) : base(TS, list_size) { }
+            protected timed_queue(size_t list_size) : base(list_size) { }
         }
 
 
@@ -32,8 +35,9 @@ namespace mame.netlist
         // solvers will update inputs after parallel processing.
 
         //template <typename O, bool TS>
-        class queue_base<O> : timed_queue<plib.pqentry_t<netlist_time_ext, O>>,
-                              plib.state_manager_t.callback_t
+        class queue_base<O, bool_TS> : timed_queue<plib.pqentry_t<netlist_time_ext, O>, bool_TS, netlist_time_ext, O>,
+                                       plib.state_manager_t.callback_t
+            where bool_TS : bool_const, new()
         {
             //using entry_t = plib::pqentry_t<netlist_time_ext, O *>;
             //using base_queue = timed_queue<entry_t, false>;
@@ -48,8 +52,8 @@ namespace mame.netlist
             Func<size_t, O> m_obj_by_id;  //obj_delegate m_obj_by_id;
 
 
-            public queue_base(bool TS, size_t size, Func<O, size_t> get_id, Func<size_t, O> get_obj)
-                : base(TS, size)  //: timed_queue<plib::pqentry_t<netlist_time_ext, O *>, false>(size)
+            public queue_base(size_t size, Func<O, size_t> get_id, Func<size_t, O> get_obj)
+                : base(size)  //: timed_queue<plib::pqentry_t<netlist_time_ext, O *>, false>(size)
             {
                 m_qsize = 0;
                 m_times = new std.vector<Int64>(size);

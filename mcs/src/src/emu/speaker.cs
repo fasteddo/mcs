@@ -23,11 +23,11 @@ namespace mame
 
     // ======================> speaker_device
     public class speaker_device : device_t
-                                  // public device_mixer_interface
+                                  //public device_mixer_interface
     {
         //DEFINE_DEVICE_TYPE(SPEAKER, speaker_device, "speaker", "Speaker")
         static device_t device_creator_speaker_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new speaker_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SPEAKER = DEFINE_DEVICE_TYPE(device_creator_speaker_device, "speaker", "Speaker");
+        public static readonly device_type SPEAKER = g.DEFINE_DEVICE_TYPE(device_creator_speaker_device, "speaker", "Speaker");
 
 
         device_mixer_interface m_dimixer;
@@ -74,6 +74,7 @@ namespace mame
 
         // device_sound_interface
         public sound_stream device_sound_interface_output_to_stream_output(int outputnum, out int stream_outputnum) { return m_dimixer.output_to_stream_output(outputnum, out stream_outputnum); }
+        public int device_sound_interface_outputs() { return m_dimixer.outputs(); }
 
 
         // inline configuration helpers
@@ -110,10 +111,7 @@ namespace mame
             // get a view on the desired range
             read_stream_view view = m_dimixer.m_mixer_stream.update_view(start, end);
 
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(view.samples() >= expected_samples);
-#endif
+            sound_global.sound_assert(view.samples() >= expected_samples);
 
             // track maximum sample value for each 0.1s bucket
             if (machine().options().speaker_report() != 0)
@@ -192,14 +190,14 @@ namespace mame
 
                 // levels 1 and 2 just get a summary
                 if (clipped != 0 || report == 2 || report == 4)
-                    osd_printf_info("Speaker \"{0}\" - max = {1} (gain *= {2}) - clipped in {3}/{4} ({5}%%) buckets\n", tag(), overallmax, 1 / (overallmax != 0 ? overallmax : 1), clipped, m_max_sample.size(), clipped * 100 / m_max_sample.size());
+                    g.osd_printf_info("Speaker \"{0}\" - max = {1} (gain *= {2}) - clipped in {3}/{4} ({5}%%) buckets\n", tag(), overallmax, 1 / (overallmax != 0 ? overallmax : 1), clipped, m_max_sample.size(), clipped * 100 / m_max_sample.size());
 
                 // levels 3 and 4 get a full dump
                 if (report >= 3)
                 {
                     const string s_stars  = "************************************************************";
                     const string s_spaces = "                                                            ";
-                    int totalstars = strlen(s_stars);
+                    int totalstars = (int)std.strlen(s_stars);
                     double t = 0;
                     if (overallmax < 1.0)
                         overallmax = (stream_buffer_sample_t)1.0;
@@ -208,24 +206,24 @@ namespace mame
                     {
                         if (curmax > (stream_buffer_sample_t)1.0 || report == 4)
                         {
-                            osd_printf_info("{0}: {1} |", t, curmax);
+                            g.osd_printf_info("{0}: {1} |", t, curmax);
                             if (curmax == 0)
                             {
-                                osd_printf_info("{0}{1}|\n", leftstars, s_spaces);
+                                g.osd_printf_info("{0}{1}|\n", leftstars, s_spaces);
                             }
                             else if (curmax <= 1.0)
                             {
                                 int stars = std.max(1, std.min(leftstars, (int)(curmax * totalstars / overallmax)));
-                                osd_printf_info("{0}{1}", stars, s_stars);
+                                g.osd_printf_info("{0}{1}", stars, s_stars);
                                 int spaces = leftstars - stars;
                                 if (spaces != 0)
-                                    osd_printf_info("{0}{1}", spaces, s_spaces);
-                                osd_printf_info("|\n");
+                                    g.osd_printf_info("{0}{1}", spaces, s_spaces);
+                                g.osd_printf_info("|\n");
                             }
                             else
                             {
                                 int rightstars = std.max(1, std.min(totalstars, (int)(curmax * totalstars / overallmax)) - leftstars);
-                                osd_printf_info("{0}|{1}\n", leftstars, s_stars, rightstars, s_stars);
+                                g.osd_printf_info("{0}|{1}\n", leftstars, s_stars, rightstars, s_stars);
                             }
                         }
 

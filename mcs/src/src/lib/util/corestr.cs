@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 
 
 namespace mame
@@ -152,14 +152,14 @@ namespace mame
 
         public static int strreplace(ref string str, string search, string replace)
         {
-            int searchlen = search.length();
-            int replacelen = replace.length();
+            int searchlen = (int)search.length();
+            int replacelen = (int)replace.length();
             int matches = 0;
 
-            for (int curindex = str.find(search, 0); curindex != -1; curindex = str.find(search, curindex + replacelen))
+            for (int curindex = (int)str.find(search, 0); curindex != -1; curindex = (int)str.find(search, (size_t)(curindex + replacelen)))
             {
                 matches++;
-                str = str.Remove(curindex, searchlen).insert_(curindex, replace);  //str.erase(curindex, searchlen).insert(curindex, replace);
+                str = str.Remove(curindex, searchlen).insert_((size_t)curindex, replace);  //str.erase(curindex, searchlen).insert(curindex, replace);
             }
 
             return matches;
@@ -167,7 +167,7 @@ namespace mame
     }
 
 
-    public static partial class util_
+    public static partial class util
     {
         /**
          * @fn  double edit_distance(std::u32string const &lhs, std::u32string const &rhs)
@@ -198,13 +198,13 @@ namespace mame
             std.fill_n(match_idx, shorter.length(), -1);
             std.fill_n(match_flg, longer.length(), false);
             long match_cnt = 0;
-            for (int i = 0; shorter.length() > i; ++i)
+            for (long i = 0; (long)shorter.length() > i; ++i)
             {
-                char ch = shorter[i];
+                char ch = shorter[(int)i];
                 long n = std.min(i + range + 1L, (long)longer.length());
-                for (int j = std.max(i - (int)range, 0); n > j; ++j)
+                for (long j = std.max(i - range, 0); n > j; ++j)
                 {
-                    if (!match_flg[j] && (ch == longer[j]))
+                    if (!match_flg[j] && (ch == longer[(int)j]))
                     {
                         match_idx[i] = j;
                         match_flg[j] = true;
@@ -220,23 +220,23 @@ namespace mame
 
             // now find transpositions
             char [] ms = new char [2 * match_cnt];  //std::unique_ptr<char32_t []> ms(std::make_unique<char32_t []>(2 * match_cnt));
-            std.fill_n(ms, (int)(2 * match_cnt), (char)0);
+            std.fill_n(ms, 2 * (size_t)match_cnt, (char)0);
             int ms1Idx = 0;  //char32_t *const ms1(&ms[0]);
             int ms2Idx = (int)match_cnt;  //char32_t *const ms2(&ms[match_cnt]);
-            for (int i = 0, j = 0; shorter.length() > i; ++i)
+            for (long i = 0, j = 0; (long)shorter.length() > i; ++i)
             {
                 if (0 <= match_idx[i])
-                    ms[ms1Idx + j++] = shorter[i];  //ms1[j++] = shorter[i];
+                    ms[ms1Idx + j++] = shorter[(int)i];  //ms1[j++] = shorter[i];
             }
             match_idx = null;  //match_idx.reset();
-            for (int i = 0, j = 0; longer.length() > i; ++i)
+            for (long i = 0, j = 0; (long)longer.length() > i; ++i)
             {
                 if (match_flg[i])
-                    ms[ms2Idx + j++] = longer[i];  //ms2[j++] = longer[i];
+                    ms[ms2Idx + j++] = longer[(int)i];  //ms2[j++] = longer[i];
             }
             match_flg = null;  //match_flg.reset();
             long halftrans_cnt = 0;
-            for (int i = 0; match_cnt > i; ++i)
+            for (long i = 0; match_cnt > i; ++i)
             {
                 if (ms[ms1Idx + i] != ms[ms2Idx + i])  //if (ms1[i] != ms2[i])
                     ++halftrans_cnt;
@@ -245,7 +245,7 @@ namespace mame
 
             // simple prefix detection
             long prefix_len = 0;
-            for (int i = 0; (std.min((long)shorter.length(), MAX_PREFIX) > i) && (lhs[i] == rhs[i]); ++i)
+            for (long i = 0; (std.min((long)shorter.length(), MAX_PREFIX) > i) && (lhs[(int)i] == rhs[(int)i]); ++i)
                 ++prefix_len;
 
             // do the weighting

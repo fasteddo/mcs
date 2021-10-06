@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u64 = System.UInt64;
+using uX = mame.FlexPrim;
 
 
 namespace mame
@@ -117,9 +118,11 @@ namespace mame
         {
             throw new emu_unimplemented();
 #if false
-            // no map specified, use the space-specific one
-            if (map == null)
-                map = m_map;
+            // no map specified, use the space-specific one and import the submaps
+            if (map == nullptr) {
+                map = m_map.get();
+                map->import_submaps(m_manager.machine(), m_view.m_device, data_width(), endianness(), addr_shift());
+            }
 
             prepare_map_generic(map, true);
 
@@ -593,8 +596,8 @@ namespace mame
         {
             switch (Level)
             {
-                case 0: return mve_make_1<int_constant_0, int_Width, int_AddrShift, endianness_t_Endian>(config, manager, view, id);
-                case 1: return mve_make_1<int_constant_1, int_Width, int_AddrShift, endianness_t_Endian>(config, manager, view, id);
+                case 0: return mve_make_1<int_const_0, int_Width, int_AddrShift, endianness_t_Endian>(config, manager, view, id);
+                case 1: return mve_make_1<int_const_1, int_Width, int_AddrShift, endianness_t_Endian>(config, manager, view, id);
                 default: std.abort(); return null;
             }
         }
@@ -604,8 +607,8 @@ namespace mame
         {
             switch (Endian)
             {
-                case endianness_t.ENDIANNESS_LITTLE: return mve_make_2<int_Width, int_AddrShift, endianness_t_constant_ENDIANNESS_LITTLE>(Level, config, manager, view, id);
-                case endianness_t.ENDIANNESS_BIG:    return mve_make_2<int_Width, int_AddrShift, endianness_t_constant_ENDIANNESS_BIG>   (Level, config, manager, view, id);
+                case endianness_t.ENDIANNESS_LITTLE: return mve_make_2<int_Width, int_AddrShift, endianness_t_const_ENDIANNESS_LITTLE>(Level, config, manager, view, id);
+                case endianness_t.ENDIANNESS_BIG:    return mve_make_2<int_Width, int_AddrShift, endianness_t_const_ENDIANNESS_BIG>   (Level, config, manager, view, id);
                 default: std.abort(); return null;
             }
         }
@@ -614,19 +617,19 @@ namespace mame
         {
             switch (Width | (AddrShift + 4))
             {
-                case  8|(4+1): return mve_make_3<int_constant_0, int_constant_1> (Level, Endian, config, manager, view, id);
-                case  8|(4-0): return mve_make_3<int_constant_0, int_constant_0> (Level, Endian, config, manager, view, id);
-                case 16|(4+3): return mve_make_3<int_constant_1, int_constant_3> (Level, Endian, config, manager, view, id);
-                case 16|(4-0): return mve_make_3<int_constant_1, int_constant_0> (Level, Endian, config, manager, view, id);
-                case 16|(4-1): return mve_make_3<int_constant_1, int_constant_n1>(Level, Endian, config, manager, view, id);
-                case 32|(4+3): return mve_make_3<int_constant_2, int_constant_3> (Level, Endian, config, manager, view, id);
-                case 32|(4-0): return mve_make_3<int_constant_2, int_constant_0> (Level, Endian, config, manager, view, id);
-                case 32|(4-1): return mve_make_3<int_constant_2, int_constant_n1>(Level, Endian, config, manager, view, id);
-                case 32|(4-2): return mve_make_3<int_constant_2, int_constant_n2>(Level, Endian, config, manager, view, id);
-                case 64|(4-0): return mve_make_3<int_constant_3, int_constant_0> (Level, Endian, config, manager, view, id);
-                case 64|(4-1): return mve_make_3<int_constant_3, int_constant_n1>(Level, Endian, config, manager, view, id);
-                case 64|(4-2): return mve_make_3<int_constant_3, int_constant_n2>(Level, Endian, config, manager, view, id);
-                case 64|(4-3): return mve_make_3<int_constant_3, int_constant_n3>(Level, Endian, config, manager, view, id);
+                case  8|(4+1): return mve_make_3<int_const_0, int_const_1> (Level, Endian, config, manager, view, id);
+                case  8|(4-0): return mve_make_3<int_const_0, int_const_0> (Level, Endian, config, manager, view, id);
+                case 16|(4+3): return mve_make_3<int_const_1, int_const_3> (Level, Endian, config, manager, view, id);
+                case 16|(4-0): return mve_make_3<int_const_1, int_const_0> (Level, Endian, config, manager, view, id);
+                case 16|(4-1): return mve_make_3<int_const_1, int_const_n1>(Level, Endian, config, manager, view, id);
+                case 32|(4+3): return mve_make_3<int_const_2, int_const_3> (Level, Endian, config, manager, view, id);
+                case 32|(4-0): return mve_make_3<int_const_2, int_const_0> (Level, Endian, config, manager, view, id);
+                case 32|(4-1): return mve_make_3<int_const_2, int_const_n1>(Level, Endian, config, manager, view, id);
+                case 32|(4-2): return mve_make_3<int_const_2, int_const_n2>(Level, Endian, config, manager, view, id);
+                case 64|(4-0): return mve_make_3<int_const_3, int_const_0> (Level, Endian, config, manager, view, id);
+                case 64|(4-1): return mve_make_3<int_const_3, int_const_n1>(Level, Endian, config, manager, view, id);
+                case 64|(4-2): return mve_make_3<int_const_3, int_const_n2>(Level, Endian, config, manager, view, id);
+                case 64|(4-3): return mve_make_3<int_const_3, int_const_n3>(Level, Endian, config, manager, view, id);
                 default: std.abort(); return null;
             }
         }

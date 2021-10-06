@@ -4,12 +4,13 @@
 using System;
 using System.Collections.Generic;
 
-using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_operators_u8_u8, mame.devcb_operators_u8_u8>;  //using devcb_write8 = devcb_write<u8>;
-using devcb_write_line = mame.devcb_write<int, uint, mame.devcb_operators_s32_u32, mame.devcb_operators_u32_s32, mame.devcb_constant_1<uint, uint, mame.devcb_operators_u32_u32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 /* On an NMOS Z80, if LD A,I or LD A,R is interrupted, P/V flag gets reset,
@@ -25,7 +26,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(Z80, z80_device, "z80", "Zilog Z80")
         static device_t device_creator_z80_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new z80_device(mconfig, tag, owner, clock); }
-        public static readonly device_type Z80 = DEFINE_DEVICE_TYPE(device_creator_z80_device, "z80", "Zilog Z80");
+        public static readonly device_type Z80 = g.DEFINE_DEVICE_TYPE(device_creator_z80_device, "z80", "Zilog Z80");
 
 
         public class device_execute_interface_z80 : device_execute_interface
@@ -263,10 +264,10 @@ namespace mame
         address_space_config m_program_config;
         address_space_config m_opcodes_config;
         address_space_config m_io_config;
-        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache m_args = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache m_args;
-        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache m_opcodes = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache m_opcodes;
-        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific m_data = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific m_data;
-        memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific m_io = new memory_access<int_constant_16, int_constant_0, int_constant_0, endianness_t_constant_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific m_io;
+        memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache m_args = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache m_args;
+        memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache m_opcodes = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache m_opcodes;
+        memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.specific m_data = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific m_data;
+        memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.specific m_io = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.specific();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::specific m_io;
 
         devcb_write_line m_irqack_cb;
         devcb_write8 m_refresh_cb;
@@ -505,34 +506,34 @@ namespace mame
                 tables_initialised = true;
             }
 
-            save_item(NAME(new { m_prvpc.w.l }));
-            save_item(NAME(new { PC }));
-            save_item(NAME(new { SP }));
-            save_item(NAME(new { AF }));
-            save_item(NAME(new { BC }));
-            save_item(NAME(new { DE }));
-            save_item(NAME(new { HL }));
-            save_item(NAME(new { IX }));
-            save_item(NAME(new { IY }));
-            save_item(NAME(new { WZ }));
-            save_item(NAME(new { m_af2.w.l }));
-            save_item(NAME(new { m_bc2.w.l }));
-            save_item(NAME(new { m_de2.w.l }));
-            save_item(NAME(new { m_hl2.w.l }));
-            save_item(NAME(new { m_r }));
-            save_item(NAME(new { m_r2 }));
-            save_item(NAME(new { m_iff1 }));
-            save_item(NAME(new { m_iff2 }));
-            save_item(NAME(new { m_halt }));
-            save_item(NAME(new { m_im }));
-            save_item(NAME(new { m_i }));
-            save_item(NAME(new { m_nmi_state }));
-            save_item(NAME(new { m_nmi_pending }));
-            save_item(NAME(new { m_irq_state }));
-            save_item(NAME(new { m_wait_state }));
-            save_item(NAME(new { m_busrq_state }));
-            save_item(NAME(new { m_after_ei }));
-            save_item(NAME(new { m_after_ldair }));
+            save_item(g.NAME(new { m_prvpc.w.l }));
+            save_item(g.NAME(new { PC }));
+            save_item(g.NAME(new { SP }));
+            save_item(g.NAME(new { AF }));
+            save_item(g.NAME(new { BC }));
+            save_item(g.NAME(new { DE }));
+            save_item(g.NAME(new { HL }));
+            save_item(g.NAME(new { IX }));
+            save_item(g.NAME(new { IY }));
+            save_item(g.NAME(new { WZ }));
+            save_item(g.NAME(new { m_af2.w.l }));
+            save_item(g.NAME(new { m_bc2.w.l }));
+            save_item(g.NAME(new { m_de2.w.l }));
+            save_item(g.NAME(new { m_hl2.w.l }));
+            save_item(g.NAME(new { m_r }));
+            save_item(g.NAME(new { m_r2 }));
+            save_item(g.NAME(new { m_iff1 }));
+            save_item(g.NAME(new { m_iff2 }));
+            save_item(g.NAME(new { m_halt }));
+            save_item(g.NAME(new { m_im }));
+            save_item(g.NAME(new { m_i }));
+            save_item(g.NAME(new { m_nmi_state }));
+            save_item(g.NAME(new { m_nmi_pending }));
+            save_item(g.NAME(new { m_irq_state }));
+            save_item(g.NAME(new { m_wait_state }));
+            save_item(g.NAME(new { m_busrq_state }));
+            save_item(g.NAME(new { m_after_ei }));
+            save_item(g.NAME(new { m_after_ldair }));
 
             /* Reset registers to their initial values */
             PRVPC = 0;
@@ -565,10 +566,10 @@ namespace mame
             m_after_ldair = false;
             m_ea = 0;
 
-            m_dimemory.space(AS_PROGRAM).cache(m_args);
-            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(m_opcodes);
-            m_dimemory.space(AS_PROGRAM).specific(m_data);
-            m_dimemory.space(AS_IO).specific(m_io);
+            m_dimemory.space(g.AS_PROGRAM).cache(m_args);
+            m_dimemory.space(m_dimemory.has_space(g.AS_OPCODES) ? g.AS_OPCODES : g.AS_PROGRAM).cache(m_opcodes);
+            m_dimemory.space(g.AS_PROGRAM).specific(m_data);
+            m_dimemory.space(g.AS_IO).specific(m_io);
 
             IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
             F = ZF;           /* Zero flag is set */
@@ -693,7 +694,7 @@ namespace mame
 
 
                 if (opcount % 200000 == 0)
-                    osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, opcode, A, B, C, F, HL);
+                    g.osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, opcode, A, B, C, F, HL);
 
                 //if (opcount >= 0 && opcount < 500)
                 //    global.osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, r, A, B, C, F, HL);
@@ -744,21 +745,21 @@ namespace mame
         // device_memory_interface overrides
         space_config_vector device_memory_interface_memory_space_config()
         {
-            if (memory().has_configured_map(AS_OPCODES))
+            if (memory().has_configured_map(g.AS_OPCODES))
             {
                 return new space_config_vector()
                 {
-                    std.make_pair(AS_PROGRAM, m_program_config),
-                    std.make_pair(AS_OPCODES, m_opcodes_config),
-                    std.make_pair(AS_IO,      m_io_config)
+                    std.make_pair(g.AS_PROGRAM, m_program_config),
+                    std.make_pair(g.AS_OPCODES, m_opcodes_config),
+                    std.make_pair(g.AS_IO,      m_io_config)
                 };
             }
             else
             {
                 return new space_config_vector()
                 {
-                    std.make_pair(AS_PROGRAM, m_program_config),
-                    std.make_pair(AS_IO,      m_io_config)
+                    std.make_pair(g.AS_PROGRAM, m_program_config),
+                    std.make_pair(g.AS_IO,      m_io_config)
                 };
             }
         }
@@ -3059,7 +3060,7 @@ namespace mame
             if (m_halt == 0)
             {
                 m_halt = 1;
-                m_halt_cb.op(1);
+                m_halt_cb.op_s32(1);
             }
         }
 
@@ -3071,7 +3072,7 @@ namespace mame
             if (m_halt > 0)
             {
                 m_halt = 0;
-                m_halt_cb.op(0);
+                m_halt_cb.op_s32(0);
             }
         }
 
@@ -3136,7 +3137,7 @@ namespace mame
             PC++;
             uint8_t res = m_opcodes.read_byte(pc);
             m_icount.i -= 2;  // m_icount -= 2;
-            m_refresh_cb.op((UInt16)((m_i << 8) | (m_r2 & 0x80) | ((m_r-1) & 0x7f)), 0x00, 0xff);
+            m_refresh_cb.op_u8((UInt16)((m_i << 8) | (m_r2 & 0x80) | ((m_r-1) & 0x7f)), 0x00, 0xff);
             m_icount.i += 2;  //m_icount += 2;
             return res;
         }
@@ -3551,10 +3552,10 @@ namespace mame
          ***************************************************************/
         void cp(uint8_t value)
         {
-            UInt32 val = value;
-            UInt32 ah = AFD & 0xff00;
-            UInt32 res = (byte)((ah >> 8) - val);
-            F = (byte)((SZHVC_sub[ah | res] & ~(YF | XF)) | (val & (YF | XF)));
+            unsigned val = value;
+            uint32_t ah = AFD & 0xff00;
+            uint32_t res = (byte)((ah >> 8) - val);
+            F = (uint8_t)((uint32_t)(SZHVC_sub[ah | res] & ~(YF | XF)) | (val & (YF | XF)));
         }
 
         /***************************************************************
@@ -3603,12 +3604,12 @@ namespace mame
          ***************************************************************/
         void add16(ref PAIR dr, PAIR sr)
         {
-            UInt32 res = dr.d + sr.d;
-            WZ = (UInt16)(dr.d + 1);
-            F = (byte)((F & (SF | ZF | VF)) |
+            uint32_t res = dr.d + sr.d;
+            WZ = (uint16_t)(dr.d + 1);
+            F = (uint8_t)(((uint32_t)F & (SF | ZF | VF)) |
                 (((dr.d ^ res ^ sr.d) >> 8) & HF) |
                 ((res >> 16) & CF) | ((res >> 8) & (YF | XF)));
-            dr.w.l = (UInt16)res;
+            dr.w.l = (uint16_t)res;
         }
 
         /***************************************************************
@@ -3616,14 +3617,14 @@ namespace mame
          ***************************************************************/
         void adc_hl(PAIR r)
         {
-            UInt32 res = (UInt32)(HLD + r.d + (F & CF));
-            WZ = (UInt16)(HL + 1);
-            F = (byte)((((HLD ^ res ^ r.d) >> 8) & HF) |
+            uint32_t res = (uint32_t)(HLD + r.d + (F & CF));
+            WZ = (uint16_t)(HL + 1);
+            F = (uint8_t)((((HLD ^ res ^ r.d) >> 8) & HF) |
                 ((res >> 16) & CF) |
                 ((res >> 8) & (SF | YF | XF)) |
-                (((res & 0xffff) != 0) ? 0 : ZF) |
+                (((res & 0xffff) != 0) ? 0U : ZF) |
                 (((r.d ^ HLD ^ 0x8000) & (r.d ^ res) & 0x8000) >> 13));
-            HL = (UInt16)res;
+            HL = (uint16_t)res;
         }
 
         /***************************************************************
@@ -3631,14 +3632,14 @@ namespace mame
          ***************************************************************/
         void sbc_hl(PAIR r)
         {
-            UInt32 res = (UInt32)(HLD - r.d - (F & CF));
-            WZ = (UInt16)(HL + 1);
-            F = (byte)((((HLD ^ res ^ r.d) >> 8) & HF) | NF |
+            uint32_t res = (uint32_t)(HLD - r.d - (F & CF));
+            WZ = (uint16_t)(HL + 1);
+            F = (uint8_t)((((HLD ^ res ^ r.d) >> 8) & HF) | NF |
                 ((res >> 16) & CF) |
                 ((res >> 8) & (SF | YF | XF)) |
-                (((res & 0xffff) != 0) ? 0 : ZF) |
+                (((res & 0xffff) != 0) ? 0U : ZF) |
                 (((r.d ^ HLD) & (HLD ^ res) &0x8000) >> 13));
-            HL = (UInt16)res;
+            HL = (uint16_t)res;
         }
 
         /***************************************************************
@@ -3668,25 +3669,25 @@ namespace mame
         /***************************************************************
          * RL   r8
          ***************************************************************/
-        byte rl(uint8_t value)
+        uint8_t rl(uint8_t value)
         {
-            UInt32 res = value;
-            UInt32 c = (res & 0x80) != 0 ? CF : 0U;
-            res = (byte)(((res << 1) | (F & CF)) & 0xff);
-            F = (byte)(SZP[res] | c);
-            return (byte)res;
+            unsigned res = value;
+            unsigned c = (res & 0x80) != 0 ? CF : 0U;
+            res = ((res << 1) | ((uint32_t)F & CF)) & 0xff;
+            F = (uint8_t)(SZP[res] | c);
+            return (uint8_t)res;
         }
 
         /***************************************************************
          * RR   r8
          ***************************************************************/
-        byte rr(uint8_t value)
+        uint8_t rr(uint8_t value)
         {
-            UInt32 res = value;
-            UInt32 c = (res & 0x01) != 0 ? CF : 0U;
-            res = (byte)(((res >> 1) | (F << 7)) & 0xff);
-            F = (byte)(SZP[res] | c);
-            return (byte)res;
+            unsigned res = value;
+            unsigned c = (res & 0x01) != 0 ? CF : 0U;
+            res = ((res >> 1) | ((uint32_t)F << 7)) & 0xff;
+            F = (uint8_t)(SZP[res] | c);
+            return (uint8_t)res;
         }
 
         /***************************************************************
@@ -3758,7 +3759,7 @@ namespace mame
          ***************************************************************/
         void bit_xy(int bit, uint8_t value)
         {
-            F = (byte)((F & CF) | HF | (SZ_BIT[value & (1 << bit)] & ~(YF | XF)) | ((m_ea >> 8) & (YF | XF)));
+            F = (uint8_t)(((uint32_t)F & CF) | HF | (uint32_t)(SZ_BIT[value & (1 << bit)] & ~(YF | XF)) | ((m_ea >> 8) & (YF | XF)));
         }
 
         /***************************************************************
@@ -4043,7 +4044,7 @@ namespace mame
             m_iff1 = m_iff2 = 0;
 
             // say hi
-            m_irqack_cb.op(1);
+            m_irqack_cb.op_s32(1);
 
             // fetch the IRQ vector
             device_z80daisy_interface intf = m_daisy.daisy_get_irq_device();

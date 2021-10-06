@@ -4,14 +4,14 @@
 using System;
 using System.Collections.Generic;
 
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 
 
 namespace mame.netlist
 {
     //template<class C, std::size_t N>
     class object_array_base_t<C, size_t_N> : plib.static_vector<C, size_t_N>  //class object_array_base_t : public plib::static_vector<C, N>
-        where size_t_N : uint32_constant, new()
+        where size_t_N : u64_const, new()
     {
         //template<class D, typename... Args>
         ////object_array_base_t(D &dev, const std::initializer_list<const char *> &names, Args&&... args)
@@ -69,7 +69,7 @@ namespace mame.netlist
 
     //template<class C, std::size_t N>
     class object_array_t<C, size_t_N> : object_array_base_t<C, size_t_N>  //class object_array_t : public object_array_base_t<C, N>
-        where size_t_N : uint32_constant, new()
+        where size_t_N : u64_const, new()
     {
         //using base_type = object_array_base_t<C, N>;
         //using base_type::base_type;

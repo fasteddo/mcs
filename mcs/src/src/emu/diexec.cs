@@ -67,7 +67,7 @@ namespace mame
 
 
         // internal information about the state of inputs
-        class device_input : global_object
+        class device_input
         {
             void LOG(string format, params object [] args) { if (VERBOSE) m_execute.device().logerror(format, args); }
 
@@ -133,13 +133,13 @@ namespace mame
             {
                 LOG("set_state_synced('{0}',{1},{2},{3})\n", m_execute.device().tag(), m_linenum, state, vector);
 
-                if (TEMPLOG) osd_printf_info("setline({0},{1},{2},{3})\n", m_execute.device().tag(), m_linenum, state, (vector == USE_STORED_VECTOR) ? 0 : vector);
+                if (TEMPLOG) g.osd_printf_info("setline({0},{1},{2},{3})\n", m_execute.device().tag(), m_linenum, state, (vector == USE_STORED_VECTOR) ? 0 : vector);
 
-                assert(state == (int)g.ASSERT_LINE || state == (int)g.HOLD_LINE || state == (int)g.CLEAR_LINE);
+                g.assert(state == (int)g.ASSERT_LINE || state == (int)g.HOLD_LINE || state == (int)g.CLEAR_LINE);
 
                 // if we're full of events, flush the queue and log a message
                 int event_index = m_qindex++;
-                if (event_index >= std.size(m_queue))
+                if (event_index >= (int)std.size(m_queue))
                 {
                     m_qindex--;
                     empty_event_queue();
@@ -148,7 +148,7 @@ namespace mame
                 }
 
                 // enqueue the event
-                if (event_index < std.size(m_queue))
+                if (event_index < (int)std.size(m_queue))
                 {
                     if (vector == USE_STORED_VECTOR)
                         vector = (UInt32)m_stored_vector;
@@ -187,7 +187,7 @@ namespace mame
             //TIMER_CALLBACK_MEMBER(empty_event_queue);
             void empty_event_queue(object ptr = null, int param = 0)
             {
-                if (TEMPLOG) osd_printf_info("empty_queue({0},{1},{2})\n", m_execute.device().tag(), m_linenum, m_qindex);
+                if (TEMPLOG) g.osd_printf_info("empty_queue({0},{1},{2})\n", m_execute.device().tag(), m_linenum, m_qindex);
 
                 // loop over all events
                 for (int curevent = 0; curevent < m_qindex; curevent++)
@@ -198,9 +198,9 @@ namespace mame
                     m_curstate = (u8)(input_event & 0xff);
                     m_curvector = input_event >> 8;
 
-                    if (TEMPLOG) osd_printf_info(" ({0},{1})\n", m_curstate, m_curvector);
+                    if (TEMPLOG) g.osd_printf_info(" ({0},{1})\n", m_curstate, m_curvector);
 
-                    assert(m_curstate == (u8)g.ASSERT_LINE || m_curstate == (u8)g.HOLD_LINE || m_curstate == (u8)g.CLEAR_LINE);
+                    g.assert(m_curstate == (u8)g.ASSERT_LINE || m_curstate == (u8)g.HOLD_LINE || m_curstate == (u8)g.CLEAR_LINE);
 
                     // special case: RESET
                     if (m_linenum == g.INPUT_LINE_RESET)
@@ -263,14 +263,14 @@ namespace mame
 
 
         // suspension reasons for executing devices
-        public const UInt32 SUSPEND_REASON_HALT        = 0x0001;   // HALT line set (or equivalent)
-        public const UInt32 SUSPEND_REASON_RESET       = 0x0002;   // RESET line set (or equivalent)
-        public const UInt32 SUSPEND_REASON_SPIN        = 0x0004;   // currently spinning
-        public const UInt32 SUSPEND_REASON_TRIGGER     = 0x0008;   // waiting for a trigger
-        public const UInt32 SUSPEND_REASON_DISABLE     = 0x0010;   // disabled (due to disable flag)
-        public const UInt32 SUSPEND_REASON_TIMESLICE   = 0x0020;   // waiting for the next timeslice
-        public const UInt32 SUSPEND_REASON_CLOCK       = 0x0040;   // currently not clocked
-        public const UInt32 SUSPEND_ANY_REASON         = ~0U;       // all of the above
+        public const u32 SUSPEND_REASON_HALT        = 0x0001;   // HALT line set (or equivalent)
+        public const u32 SUSPEND_REASON_RESET       = 0x0002;   // RESET line set (or equivalent)
+        public const u32 SUSPEND_REASON_SPIN        = 0x0004;   // currently spinning
+        public const u32 SUSPEND_REASON_TRIGGER     = 0x0008;   // waiting for a trigger
+        public const u32 SUSPEND_REASON_DISABLE     = 0x0010;   // disabled (due to disable flag)
+        public const u32 SUSPEND_REASON_TIMESLICE   = 0x0020;   // waiting for the next timeslice
+        public const u32 SUSPEND_REASON_CLOCK       = 0x0040;   // currently not clocked
+        public const u32 SUSPEND_ANY_REASON         = ~0U;       // all of the above
 
 
         const int TRIGGER_INT           = -2000;
@@ -357,7 +357,7 @@ namespace mame
 
 
             // configure the fast accessor
-            assert(device.interfaces().m_execute == null);
+            g.assert(device.interfaces().m_execute == null);
             device.interfaces().m_execute = this;
         }
 
@@ -444,7 +444,7 @@ namespace mame
 
 
         // execution management
-        device_scheduler scheduler() { assert(m_scheduler != null); return m_scheduler; }
+        device_scheduler scheduler() { g.assert(m_scheduler != null); return m_scheduler; }
         bool executing() { return scheduler().currently_executing() == this; }
         s32 cycles_remaining() { return executing() ? m_icountptr.i : 0; }  // *m_icountptr : 0; } // cycles remaining in this timeslice
         public void eat_cycles(int cycles) { if (executing()) m_icountptr.i = (cycles > m_icountptr.i) ? 0 : (m_icountptr.i - cycles); }  // *m_icountptr = (cycles > *m_icountptr) ? 0 : (*m_icountptr - cycles); }
@@ -514,7 +514,7 @@ namespace mame
         //-------------------------------------------------
         void suspend(u32 reason, bool eatcycles)
         {
-            if (TEMPLOG) osd_printf_info("suspend {0} ({1})\n", device().tag(), reason);
+            if (TEMPLOG) g.osd_printf_info("suspend {0} ({1})\n", device().tag(), reason);
 
             // set the suspend reason and eat cycles flag
             m_nextsuspend |= reason;
@@ -528,7 +528,7 @@ namespace mame
         //-------------------------------------------------
         void resume(u32 reason)
         {
-            if (TEMPLOG) osd_printf_info("resume {0} ({1})\n", device().tag(), reason);
+            if (TEMPLOG) g.osd_printf_info("resume {0} ({1})\n", device().tag(), reason);
 
             // clear the suspend reason and eat cycles flag
             m_nextsuspend &= ~reason;
@@ -608,7 +608,7 @@ namespace mame
         {
             if (executing())
             {
-                assert(m_cycles_running >= m_icountptr.i);
+                g.assert(m_cycles_running >= m_icountptr.i);
                 return m_totalcycles + (u64)m_cycles_running - (u64)m_icountptr.i;
             }
             else
@@ -704,15 +704,15 @@ namespace mame
             {
                 screen_device_enumerator iter = new screen_device_enumerator(device().mconfig().root_device());
                 if (iter.first() == null)
-                    osd_printf_error("VBLANK interrupt specified, but the driver is screenless\n");
+                    g.osd_printf_error("VBLANK interrupt specified, but the driver is screenless\n");
                 else if (m_vblank_interrupt_screen != null && device().siblingdevice(m_vblank_interrupt_screen) == null)
-                    osd_printf_error("VBLANK interrupt references a nonexistant screen tag '{0}'\n", m_vblank_interrupt_screen);
+                    g.osd_printf_error("VBLANK interrupt references a nonexistant screen tag '{0}'\n", m_vblank_interrupt_screen);
             }
 
             if (m_timed_interrupt != null && m_timed_interrupt_period == attotime.zero)
-                osd_printf_error("Timed interrupt handler specified with 0 period\n");
+                g.osd_printf_error("Timed interrupt handler specified with 0 period\n");
             else if (m_timed_interrupt == null && m_timed_interrupt_period != attotime.zero)
-                osd_printf_error("No timer interrupt handler specified, but has a non-0 period given\n");
+                g.osd_printf_error("No timer interrupt handler specified, but has a non-0 period given\n");
         }
 
         //-------------------------------------------------
@@ -750,13 +750,13 @@ namespace mame
                 throw new emu_fatalerror("m_icountptr never initialized!");
 
             // register for save states
-            device().save_item(NAME(new { m_suspend }));
-            device().save_item(NAME(new { m_nextsuspend }));
-            device().save_item(NAME(new { m_eatcycles }));
-            device().save_item(NAME(new { m_nexteatcycles }));
-            device().save_item(NAME(new { m_trigger }));
-            device().save_item(NAME(new { m_totalcycles }));
-            device().save_item(NAME(new { m_localtime }));
+            device().save_item(g.NAME(new { m_suspend }));
+            device().save_item(g.NAME(new { m_nextsuspend }));
+            device().save_item(g.NAME(new { m_eatcycles }));
+            device().save_item(g.NAME(new { m_nexteatcycles }));
+            device().save_item(g.NAME(new { m_trigger }));
+            device().save_item(g.NAME(new { m_totalcycles }));
+            device().save_item(g.NAME(new { m_localtime }));
 
             //throw new emu_unimplemented();
 #if false
@@ -767,7 +767,7 @@ namespace mame
 #endif
 
             // fill in the input states and IRQ callback information
-            for (int line = 0; line < std.size(m_input); line++)
+            for (int line = 0; line < (int)std.size(m_input); line++)
                 m_input[line].start(this, line);
         }
 
@@ -864,7 +864,7 @@ namespace mame
         // for use by devcpu for now...
 
         int current_input_state(UInt32 i) { return (int)m_input[i].m_curstate; }
-        public void set_icountptr(intref icount) { assert(m_icountptr == null); m_icountptr = icount; }
+        public void set_icountptr(intref icount) { g.assert(m_icountptr == null); m_icountptr = icount; }
 
         //IRQ_CALLBACK_MEMBER(standard_irq_callback_member);
         //int standard_irq_callback(int irqline);
@@ -889,7 +889,7 @@ namespace mame
                 vector = m_driver_irq(device(), irqline);
 
             // notify the debugger
-            if ((device().machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0)
+            if ((device().machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0)
                 device().debug().interrupt_hook(irqline);
 
             return vector;
@@ -898,14 +898,14 @@ namespace mame
 
         // debugger hooks
         //bool debugger_enabled() const { return bool(device().machine().debug_flags & DEBUG_FLAG_ENABLED); }
-        public void debugger_instruction_hook(offs_t curpc) { if ((device().machine().debug_flags & machine_global.DEBUG_FLAG_CALL_HOOK) != 0) device().debug().instruction_hook(curpc); }
+        public void debugger_instruction_hook(offs_t curpc) { if ((device().machine().debug_flags & g.DEBUG_FLAG_CALL_HOOK) != 0) device().debug().instruction_hook(curpc); }
         //void debugger_exception_hook(int exception) { if (device().machine().debug_flags & DEBUG_FLAG_ENABLED) device().debug()->exception_hook(exception); }
         //void debugger_privilege_hook() { if (device().machine().debug_flags & DEBUG_FLAG_ENABLED) device().debug()->privilege_hook(); }
 
 
         // internal debugger hooks
-        public void debugger_start_cpu_hook(attotime endtime) { if ((device().machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0) device().debug().start_hook(endtime); }
-        public void debugger_stop_cpu_hook() { if ((device().machine().debug_flags & machine_global.DEBUG_FLAG_ENABLED) != 0) device().debug().stop_hook(); }
+        public void debugger_start_cpu_hook(attotime endtime) { if ((device().machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0) device().debug().start_hook(endtime); }
+        public void debugger_stop_cpu_hook() { if ((device().machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0) device().debug().stop_hook(); }
 
 
         // callbacks

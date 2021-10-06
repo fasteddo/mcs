@@ -22,7 +22,7 @@ namespace mame
 
 
     // ======================> configuration_manager
-    public class configuration_manager : global_object
+    public class configuration_manager
     {
         class config_element
         {
@@ -82,8 +82,8 @@ namespace mame
             if (!string.IsNullOrEmpty(controller))
             {
                 /* open the config file */
-                emu_file file = new emu_file(machine().options().ctrlr_path(), OPEN_FLAG_READ);
-                osd_printf_verbose("Attempting to parse: {0}.cfg\n", controller);
+                emu_file file = new emu_file(machine().options().ctrlr_path(), g.OPEN_FLAG_READ);
+                g.osd_printf_verbose("Attempting to parse: {0}.cfg\n", controller);
                 osd_file.error filerr = file.open(controller + ".cfg");
 
                 if (filerr != osd_file.error.NONE)
@@ -98,15 +98,15 @@ namespace mame
 
             {
                 /* next load the defaults file */
-                emu_file file = new emu_file(machine().options().cfg_directory(), OPEN_FLAG_READ);
+                emu_file file = new emu_file(machine().options().cfg_directory(), g.OPEN_FLAG_READ);
                 osd_file.error filerr = file.open("default.cfg");
-                osd_printf_verbose("Attempting to parse: default.cfg\n");
+                g.osd_printf_verbose("Attempting to parse: default.cfg\n");
                 if (filerr == osd_file.error.NONE)
                     load_xml(file, config_type.DEFAULT);
 
                 /* finally, load the game-specific file */
                 filerr = file.open(machine().basename() + ".cfg");
-                osd_printf_verbose("Attempting to parse: {0}.cfg\n", machine().basename());
+                g.osd_printf_verbose("Attempting to parse: {0}.cfg\n", machine().basename());
                 if (filerr == osd_file.error.NONE)
                     loaded = load_xml(file, config_type.GAME);
 
@@ -130,7 +130,7 @@ namespace mame
                 type.save(config_type.INIT, null);
 
             /* save the defaults file */
-            emu_file file = new emu_file(machine().options().cfg_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+            emu_file file = new emu_file(machine().options().cfg_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
             osd_file.error filerr = file.open("default.cfg");
             if (filerr == osd_file.error.NONE)
                 save_xml(file, config_type.DEFAULT);

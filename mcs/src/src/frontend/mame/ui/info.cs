@@ -7,14 +7,14 @@ using System.Collections.Generic;
 using device_t_feature = mame.emu.detail.device_feature;  //using feature = emu::detail::device_feature;
 using execute_interface_enumerator = mame.device_interface_enumerator<mame.device_execute_interface>;  //typedef device_interface_enumerator<device_execute_interface> execute_interface_enumerator;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using sound_interface_enumerator = mame.device_interface_enumerator<mame.device_sound_interface>;  //typedef device_interface_enumerator<device_sound_interface> sound_interface_enumerator;
 using u32 = System.UInt32;
 
 
 namespace mame.ui
 {
-    public class machine_static_info : global_object
+    public class machine_static_info
     {
         protected const machine_flags.type MACHINE_ERRORS    = machine_flags.type.NOT_WORKING | machine_flags.type.MECHANICAL;
         protected const machine_flags.type MACHINE_WARNINGS  = machine_flags.type.NO_COCKTAIL | machine_flags.type.REQUIRES_ARTWORK;
@@ -105,9 +105,9 @@ namespace mame.ui
                 device_slot_interface slot = device.GetClassInterface<device_slot_interface>();  //device_slot_interface const *const slot(dynamic_cast<device_slot_interface const *>(parent));
                 if (parent == null || (slot != null && (slot.get_card_device() == device)))
                 {
-                    for (Pointer<tiny_rom_entry> rom = device.rom_region(); !m_has_bioses && rom != null && !romload_global.ROMENTRY_ISEND(rom[0]); ++rom)  //for (tiny_rom_entry const *rom = device.rom_region(); !m_has_bioses && rom && !ROMENTRY_ISEND(rom); ++rom)
+                    for (Pointer<tiny_rom_entry> rom = device.rom_region(); !m_has_bioses && rom != null && !g.ROMENTRY_ISEND(rom[0]); ++rom)  //for (tiny_rom_entry const *rom = device.rom_region(); !m_has_bioses && rom && !ROMENTRY_ISEND(rom); ++rom)
                     {
-                        if (romload_global.ROMENTRY_ISSYSTEM_BIOS(rom[0]))
+                        if (g.ROMENTRY_ISSYSTEM_BIOS(rom[0]))
                             m_has_bioses = true;
                     }
                 }
@@ -312,7 +312,7 @@ namespace mame.ui
                 // find the parent of this driver
                 driver_enumerator drivlist = new driver_enumerator(m_machine.options());
                 int maindrv = driver_list.find(m_machine.system());
-                int clone_of = driver_list.non_bios_clone(maindrv);
+                int clone_of = driver_list.non_bios_clone((size_t)maindrv);
                 if (clone_of != -1)
                     maindrv = clone_of;
 
@@ -374,7 +374,7 @@ namespace mame.ui
                 string name = exec.device().name();
                 foreach (device_execute_interface scan in execiter)
                 {
-                    if (exec.device().type() == scan.device().type() && strcmp(name, scan.device().name()) == 0 && exec.device().clock() == scan.device().clock())
+                    if (exec.device().type() == scan.device().type() && std.strcmp(name, scan.device().name()) == 0 && exec.device().clock() == scan.device().clock())
                         if (exectags.insert(scan.device().tag()))  //.second)
                             count++;
                 }
@@ -383,10 +383,10 @@ namespace mame.ui
                 int d = (clock >= 1000000000) ? 9 : (clock >= 1000000) ? 6 : (clock >= 1000) ? 3 : 0;
                 if (d > 0)
                 {
-                    int dpos = hz.length() - d;
+                    size_t dpos = hz.length() - (size_t)d;
                     hz = hz.insert_(dpos, ".");
-                    int last = hz.find_last_not_of('0');
-                    hz = hz.substr(0, last + (last != dpos ? 1 : 0));
+                    size_t last = hz.find_last_not_of('0');
+                    hz = hz.substr(0, last + (last != dpos ? 1U : 0U));
                 }
 
                 // if more than one, prepend a #x in front of the CPU name and display clock
@@ -427,10 +427,10 @@ namespace mame.ui
                 int d = (clock >= 1000000000) ? 9 : (clock >= 1000000) ? 6 : (clock >= 1000) ? 3 : 0;
                 if (d > 0)
                 {
-                    int dpos = hz.length() - d;
+                    size_t dpos = hz.length() - (size_t)d;
                     hz = hz.insert_(dpos, ".");
-                    int last = hz.find_last_not_of('0');
-                    hz = hz.substr(0, last + (last != dpos ? 1 : 0));
+                    size_t last = hz.find_last_not_of('0');
+                    hz = hz.substr(0, last + (last != dpos ? 1U : 0U));
                 }
 
                 // if more than one, prepend a #x in front of the soundchip name and display clock
@@ -462,14 +462,14 @@ namespace mame.ui
                     else
                     {
                         string hz = std.to_string((float)screen.frame_period().as_hz());
-                        int last = hz.find_last_not_of('0');
-                        int dpos = hz.find_last_of('.');
-                        hz = hz.substr(0, last + (last != dpos ? 1 : 0));
+                        size_t last = hz.find_last_not_of('0');
+                        size_t dpos = hz.find_last_of('.');
+                        hz = hz.substr(0, last + (last != dpos ? 1U : 0U));
 
                         rectangle visarea = screen.visible_area();
-                        detail = string_format("{0} X {1} ({2}) {3} Hz",  //detail = string_format("%d " UTF8_MULTIPLY " %d (%s) %s" UTF8_NBSP "Hz",
+                        detail = util.string_format("{0} X {1} ({2}) {3} Hz",  //detail = string_format("%d " UTF8_MULTIPLY " %d (%s) %s" UTF8_NBSP "Hz",
                                 visarea.width(), visarea.height(),
-                                (screen.orientation() & ORIENTATION_SWAP_XY) != 0 ? "V" : "H",
+                                (screen.orientation() & g.ORIENTATION_SWAP_XY) != 0 ? "V" : "H",
                                 hz);
                     }
 

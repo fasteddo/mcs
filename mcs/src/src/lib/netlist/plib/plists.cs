@@ -6,8 +6,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
-using size_t = System.UInt32;
-using static_vector_size_type = System.UInt32;  //using size_type = std::size_t;
+using size_t = System.UInt64;
+using static_vector_size_type = System.UInt64;  //using size_type = std::size_t;
 using unsigned = System.UInt32;
 
 
@@ -20,7 +20,7 @@ namespace mame.plib
     ///
     //template <class C, std::size_t N>
     class uninitialised_array<C, size_t_N>
-        where size_t_N : uint32_constant, new()
+        where size_t_N : u64_const, new()
     {
         //using value_type = C;
         //using pointer = value_type *;
@@ -62,7 +62,7 @@ namespace mame.plib
 
         //constexpr const_reference operator[](size_type index) const noexcept
         public C this[int index] { get { return m_buf[index]; } set { m_buf[index] = value; } }
-        public C this[UInt32 index] { get { return m_buf[(int)index]; } set { m_buf[(int)index] = value; } }
+        public C this[UInt64 index] { get { return m_buf[index]; } set { m_buf[index] = value; } }
 
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -106,9 +106,9 @@ namespace mame.plib
     ///
     //template <class C, std::size_t N>
     class static_vector<C, size_t_N>
-        where size_t_N : uint32_constant, new()
+        where size_t_N : u64_const, new()
     {
-        protected static uint32_constant N = new size_t_N();
+        protected static readonly size_t N = new size_t_N().value;
 
 
         //using value_type = C;
@@ -180,10 +180,10 @@ namespace mame.plib
 
 
         //LC *m_head;
-        LinkedList<LC> m_list;
+        LinkedList<LC> m_list = new LinkedList<LC>();
 
 
-        linkedlist_t() { }  //constexpr element_t() : m_next(nullptr), m_prev(nullptr) {}
+        public linkedlist_t() { }  //constexpr element_t() : m_next(nullptr), m_prev(nullptr) {}
 
 
         //constexpr iter_t begin() const noexcept { return iter_t(m_head); }

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using gfx_interface_enumerator = mame.device_interface_enumerator<mame.device_gfx_interface>;  //typedef device_interface_enumerator<device_gfx_interface> gfx_interface_enumerator;
+using int32_t = System.Int32;
 using palette_interface_enumerator = mame.device_interface_enumerator<mame.device_palette_interface>;  //typedef device_interface_enumerator<device_palette_interface> palette_interface_enumerator;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
@@ -29,12 +30,12 @@ namespace mame
         {
             public device_gfx_interface interface_;    // pointer to device's gfx interface
             public uint8_t setcount;                     // how many gfx sets device has
-            public uint8_t [] rotate = new uint8_t[digfx_global.MAX_GFX_ELEMENTS];     // current rotation (orientation) value
-            public uint8_t [] columns = new uint8_t[digfx_global.MAX_GFX_ELEMENTS];    // number of items per row
-            public int [] offset = new int[digfx_global.MAX_GFX_ELEMENTS];     // current offset of top,left item
-            public int [] color = new int[digfx_global.MAX_GFX_ELEMENTS];      // current color selected
-            public device_palette_interface [] palette = new device_palette_interface[digfx_global.MAX_GFX_ELEMENTS]; // associated palette (maybe multiple choice one day?)
-            public int [] color_count = new int[digfx_global.MAX_GFX_ELEMENTS]; // Range of color values
+            public uint8_t [] rotate = new uint8_t[g.MAX_GFX_ELEMENTS];     // current rotation (orientation) value
+            public uint8_t [] columns = new uint8_t[g.MAX_GFX_ELEMENTS];    // number of items per row
+            public int [] offset = new int[g.MAX_GFX_ELEMENTS];     // current offset of top,left item
+            public int [] color = new int[g.MAX_GFX_ELEMENTS];      // current color selected
+            public device_palette_interface [] palette = new device_palette_interface[g.MAX_GFX_ELEMENTS]; // associated palette (maybe multiple choice one day?)
+            public int [] color_count = new int[g.MAX_GFX_ELEMENTS]; // Range of color values
         }
 
 
@@ -134,7 +135,7 @@ namespace mame
             {
                 state.gfxdev[i].interface_ = null;
                 state.gfxdev[i].setcount = 0;
-                for (uint8_t j = 0; j < digfx_global.MAX_GFX_ELEMENTS; j++)
+                for (uint8_t j = 0; j < g.MAX_GFX_ELEMENTS; j++)
                 {
                     state.gfxdev[i].rotate[j] = rotate;
                     state.gfxdev[i].columns[j] = 16;
@@ -151,7 +152,7 @@ namespace mame
             state.tilemap.yoffs = 0;
             state.tilemap.zoom = 0;
             state.tilemap.rotate = rotate;
-            state.tilemap.flags = tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES;
+            state.tilemap.flags = g.TILEMAP_DRAW_ALL_CATEGORIES;
         }
 
 
@@ -283,7 +284,7 @@ cancel:
             {
                 // count the gfx sets in each device, skipping devices with none
                 byte count = 0;
-                while (count < digfx_global.MAX_GFX_ELEMENTS && interface_.gfx(count) != null)
+                while (count < g.MAX_GFX_ELEMENTS && interface_.gfx(count) != null)
                     count++;
 
                 // count = index of first nullptr
@@ -453,7 +454,7 @@ cancel:
                 // if we're skipping, draw a point between the character and the box to indicate which
                 // one it's referring to
                 if (skip != 0)
-                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + cellboxbounds.y0), g.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + cellboxbounds.y0), g.UI_LINE_WIDTH, rgb_t.white(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
             }
 
             // draw the side column headers
@@ -470,7 +471,7 @@ cancel:
                     x0 = boxbounds.x0 + 5.5f * chwidth;
                     y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight;
                     if (skip != 0)
-                        container.add_point(0.5f * (x0 + cellboxbounds.x0), y0 + 0.5f * cellheight, g.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                        container.add_point(0.5f * (x0 + cellboxbounds.x0), y0 + 0.5f * cellheight, g.UI_LINE_WIDTH, rgb_t.white(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
 
                     // draw the row header
                     buffer = string.Format("{0:X5}", state.palette.offset + y * state.palette.columns);  // %5X
@@ -493,7 +494,7 @@ cancel:
                         pen_t pen = state.palette.which != 0 ? palette.indirect_color(index) : raw_color[index];
                         container.add_rect(cellboxbounds.x0 + x * cellwidth, cellboxbounds.y0 + y * cellheight,
                                            cellboxbounds.x0 + (x + 1) * cellwidth, cellboxbounds.y0 + (y + 1) * cellheight,
-                                           new rgb_t(0xff000000 | pen), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                                           new rgb_t(0xff000000 | pen), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
                     }
                 }
             }
@@ -644,8 +645,8 @@ cancel:
             cellboxheight = (int)((cellboxbounds.y1 - cellboxbounds.y0) * (float)targheight);
 
             // compute the number of source pixels in a cell
-            cellxpix = 1 + ((info.rotate[set] & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width());
-            cellypix = 1 + ((info.rotate[set] & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
+            cellxpix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width());
+            cellypix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
 
             // compute the largest pixel scale factor that still fits
             xcells = info.columns[set];
@@ -710,11 +711,11 @@ cancel:
                 if (code < gfx.elements() && xpixel < (cellxpix - 1) && ypixel < (cellypix - 1))
                 {
                     found_pixel = true;
-                    if ((info.rotate[set] & global_object.ORIENTATION_FLIP_X) != 0)
+                    if ((info.rotate[set] & g.ORIENTATION_FLIP_X) != 0)
                         xpixel = (cellxpix - 2) - xpixel;
-                    if ((info.rotate[set] & global_object.ORIENTATION_FLIP_Y) != 0)
+                    if ((info.rotate[set] & g.ORIENTATION_FLIP_Y) != 0)
                         ypixel = (cellypix - 2) - ypixel;
-                    if ((info.rotate[set] & global_object.ORIENTATION_SWAP_XY) != 0)
+                    if ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0)
                         std.swap(ref xpixel, ref ypixel);
                     byte pixdata = gfx.get_data((UInt32)code)[xpixel + ypixel * (int)gfx.rowbytes()];
                     title_buf += string.Format(" #{0}:{1} @ {2},{3} = {4}",  // #%X:%X @ %d,%d = %X",
@@ -758,7 +759,7 @@ cancel:
                 // if we're skipping, draw a point between the character and the box to indicate which
                 // one it's referring to
                 if (skip != 0)
-                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + boxbounds.y0 + 3.5f * chheight), g.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + boxbounds.y0 + 3.5f * chheight), g.UI_LINE_WIDTH, rgb_t.white(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
             }
 
             // draw the side column headers
@@ -775,7 +776,7 @@ cancel:
                     x0 = boxbounds.x0 + 5.5f * chwidth;
                     y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight;
                     if (skip != 0)
-                        container.add_point(0.5f * (x0 + boxbounds.x0 + 6.0f * chwidth), y0 + 0.5f * cellheight, g.UI_LINE_WIDTH, rgb_t.white(), global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                        container.add_point(0.5f * (x0 + boxbounds.x0 + 6.0f * chwidth), y0 + 0.5f * cellheight, g.UI_LINE_WIDTH, rgb_t.white(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
 
                     // draw the row header
                     buffer = string.Format("{0:X5}", info.offset[set] + y * xcells);
@@ -792,7 +793,7 @@ cancel:
 
             // add the final quad
             container.add_quad(cellboxbounds.x0, cellboxbounds.y0, cellboxbounds.x1, cellboxbounds.y1,
-                               rgb_t.white(), state.texture, global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA));
+                               rgb_t.white(), state.texture, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
 
             // handle keyboard navigation before drawing
             gfxset_handle_keys(mui.machine(), state, xcells, ycells);
@@ -857,7 +858,7 @@ cancel:
             // handle rotation (R)
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ROTATE))
             {
-                info.rotate[set] = (byte)rendutil_global.orientation_add((int)emucore_global.ROT90, info.rotate[set]);
+                info.rotate[set] = (uint8_t)g.orientation_add(g.ROT90, info.rotate[set]);
                 state.bitmap_dirty = true;
             }
 
@@ -913,8 +914,8 @@ cancel:
             int y;
 
             // compute the number of source pixels in a cell
-            cellxpix = 1 + ((info.rotate[set] & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width());
-            cellypix = 1 + ((info.rotate[set] & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
+            cellxpix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width());
+            cellypix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
 
             // realloc the bitmap if it is too small
             if (!state.bitmap.valid() || state.texture == null || state.bitmap.width() != cellxpix * xcells || state.bitmap.height() != cellypix * ycells)
@@ -985,8 +986,8 @@ cancel:
         //-------------------------------------------------
         static void gfxset_draw_item(running_machine machine, gfx_element gfx, int index, bitmap_rgb32 bitmap, int dstx, int dsty, int color, int rotate, device_palette_interface dpalette)
         {
-            int width = (rotate & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width();
-            int height = (rotate & global_object.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height();
+            int width = (rotate & g.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width();
+            int height = (rotate & g.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height();
             Pointer<rgb_t> palette = new Pointer<rgb_t>(dpalette.palette().entry_list_raw(), (int)gfx.colorbase() + color * gfx.granularity());  //const rgb_t *palette = dpalette->palette()->entry_list_raw() + gfx.colorbase() + color * gfx.granularity();
 
             // loop over rows in the cell
@@ -1003,18 +1004,18 @@ cancel:
                     Pointer<uint8_t> s;  //const uint8_t *s;
 
                     // compute effective x,y values after rotation
-                    if ((rotate & global_object.ORIENTATION_SWAP_XY) == 0)
+                    if ((rotate & g.ORIENTATION_SWAP_XY) == 0)
                     {
-                        if ((rotate & global_object.ORIENTATION_FLIP_X) != 0)
+                        if ((rotate & g.ORIENTATION_FLIP_X) != 0)
                             effx = gfx.width() - 1 - effx;
-                        if ((rotate & global_object.ORIENTATION_FLIP_Y) != 0)
+                        if ((rotate & g.ORIENTATION_FLIP_Y) != 0)
                             effy = gfx.height() - 1 - effy;
                     }
                     else
                     {
-                        if ((rotate & global_object.ORIENTATION_FLIP_X) != 0)
+                        if ((rotate & g.ORIENTATION_FLIP_X) != 0)
                             effx = gfx.height() - 1 - effx;
-                        if ((rotate & global_object.ORIENTATION_FLIP_Y) != 0)
+                        if ((rotate & g.ORIENTATION_FLIP_Y) != 0)
                             effy = gfx.width() - 1 - effy;
                         std.swap(ref effx, ref effy);
                     }
@@ -1053,9 +1054,9 @@ cancel:
 
             // get the size of the tilemap itself
             tilemap_t tilemap = mui.machine().tilemap().find(state.tilemap.which);
-            UInt32 mapwidth = tilemap.width();
-            UInt32 mapheight = tilemap.height();
-            if ((state.tilemap.rotate & global_object.ORIENTATION_SWAP_XY) != 0)
+            uint32_t mapwidth = tilemap.width();
+            uint32_t mapheight = tilemap.height();
+            if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
                 std.swap(ref mapwidth, ref mapheight);
 
             // add a half character padding for the box
@@ -1089,12 +1090,12 @@ cancel:
                 int maxyscale;
                 for (maxxscale = 1; mapwidth * (maxxscale + 1) < mapboxwidth; maxxscale++) { }
                 for (maxyscale = 1; mapheight * (maxyscale + 1) < mapboxheight; maxyscale++) { }
-                pixelscale = Math.Min(maxxscale, maxyscale);
+                pixelscale = std.min(maxxscale, maxyscale);
             }
 
             // recompute the final box size
-            mapboxwidth = Math.Min(mapboxwidth, (int)mapwidth * pixelscale);
-            mapboxheight = Math.Min(mapboxheight, (int)mapheight * pixelscale);
+            mapboxwidth = std.min(mapboxwidth, (int)mapwidth * pixelscale);
+            mapboxheight = std.min(mapboxheight, (int)mapheight * pixelscale);
 
             // recompute the bounds, centered within the existing bounds
             mapboxbounds.x0 += 0.5f * ((mapboxbounds.x1 - mapboxbounds.x0) - (float)mapboxwidth / (float)targwidth);
@@ -1113,8 +1114,8 @@ cancel:
             title_buf += string.Format("TILEMAP {0}/{1}", state.tilemap.which + 1, mui.machine().tilemap().count() - 1);
 
             // if the mouse pointer is over a tile, add some info about its coordinates and color
-            int mouse_target_x;
-            int mouse_target_y;
+            int32_t mouse_target_x;
+            int32_t mouse_target_y;
             float mouse_x;
             float mouse_y;
             bool mouse_button;
@@ -1125,11 +1126,11 @@ cancel:
             {
                 int xpixel = (int)((mouse_x - mapboxbounds.x0) * targwidth);
                 int ypixel = (int)((mouse_y - mapboxbounds.y0) * targheight);
-                if ((state.tilemap.rotate & global_object.ORIENTATION_FLIP_X) != 0)
+                if ((state.tilemap.rotate & g.ORIENTATION_FLIP_X) != 0)
                     xpixel = (mapboxwidth - 1) - xpixel;
-                if ((state.tilemap.rotate & global_object.ORIENTATION_FLIP_Y) != 0)
+                if ((state.tilemap.rotate & g.ORIENTATION_FLIP_Y) != 0)
                     ypixel = (mapboxheight - 1) - ypixel;
-                if ((state.tilemap.rotate & global_object.ORIENTATION_SWAP_XY) != 0)
+                if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
                     std.swap(ref xpixel, ref ypixel);
 
                 throw new emu_unimplemented();
@@ -1139,7 +1140,7 @@ cancel:
                 title_buf += string.Format(" {0}x{1} OFFS {2},{3}", tilemap.width(), tilemap.height(), state.tilemap.xoffs, state.tilemap.yoffs);
             }
 
-            if (state.tilemap.flags != tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES)
+            if (state.tilemap.flags != g.TILEMAP_DRAW_ALL_CATEGORIES)
                 title_buf += string.Format(" CAT {0}", state.tilemap.flags);
 
             // expand the outer box to fit the title
@@ -1170,7 +1171,7 @@ cancel:
             container.add_quad(mapboxbounds.x0, mapboxbounds.y0,
                                mapboxbounds.x1, mapboxbounds.y1,
                                rgb_t.white(), state.texture,
-                               global_object.PRIMFLAG_BLENDMODE(rendertypes_global.BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXORIENT(state.tilemap.rotate));
+                               g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXORIENT(state.tilemap.rotate));
 
             // handle keyboard input
             tilemap_handle_keys(mui.machine(), state, mapboxwidth, mapboxheight);
@@ -1191,8 +1192,8 @@ cancel:
 
             // cache some info in locals
             tilemap_t tilemap = machine.tilemap().find(state.tilemap.which);
-            UInt32 mapwidth = tilemap.width();
-            UInt32 mapheight = tilemap.height();
+            uint32_t mapwidth = tilemap.width();
+            uint32_t mapheight = tilemap.height();
 
             // handle zoom (minus,plus)
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_OUT) && state.tilemap.zoom > 0)
@@ -1215,7 +1216,7 @@ cancel:
             // handle rotation (R)
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ROTATE))
             {
-                state.tilemap.rotate = (byte)rendutil_global.orientation_add((int)emucore_global.ROT90, state.tilemap.rotate);
+                state.tilemap.rotate = (uint8_t)g.orientation_add(g.ROT90, state.tilemap.rotate);
                 state.bitmap_dirty = true;
             }
 
@@ -1228,7 +1229,7 @@ cancel:
             }
 
             // handle flags (category)
-            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_PAGE_UP) && state.tilemap.flags != tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES)
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_PAGE_UP) && state.tilemap.flags != g.TILEMAP_DRAW_ALL_CATEGORIES)
             {
                 if (state.tilemap.flags > 0)
                 {
@@ -1237,14 +1238,14 @@ cancel:
                 }
                 else
                 {
-                    state.tilemap.flags = tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES;
+                    state.tilemap.flags = g.TILEMAP_DRAW_ALL_CATEGORIES;
                     machine.popmessage("Category All");
                 }
                 state.bitmap_dirty = true;
             }
-            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_PAGE_DOWN) && (state.tilemap.flags < tilemap_global.TILEMAP_DRAW_CATEGORY_MASK || (state.tilemap.flags == tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES)))
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_PAGE_DOWN) && (state.tilemap.flags < g.TILEMAP_DRAW_CATEGORY_MASK || (state.tilemap.flags == g.TILEMAP_DRAW_ALL_CATEGORIES)))
             {
-                if (state.tilemap.flags == tilemap_global.TILEMAP_DRAW_ALL_CATEGORIES)
+                if (state.tilemap.flags == g.TILEMAP_DRAW_ALL_CATEGORIES)
                     state.tilemap.flags = 0;
                 else
                     state.tilemap.flags++;
@@ -1254,38 +1255,38 @@ cancel:
 
             // handle navigation (up,down,left,right), taking orientation into account
             int step = 8;
-            if (machine.input().code_pressed(input_global.KEYCODE_LSHIFT)) step = 1;
-            if (machine.input().code_pressed(input_global.KEYCODE_LCONTROL)) step = 64;
+            if (machine.input().code_pressed(g.KEYCODE_LSHIFT)) step = 1;
+            if (machine.input().code_pressed(g.KEYCODE_LCONTROL)) step = 64;
             if (machine.ui_input().pressed_repeat((int)ioport_type.IPT_UI_UP, 4))
             {
-                if ((state.tilemap.rotate & global_object.ORIENTATION_SWAP_XY) != 0)
-                    state.tilemap.xoffs -= (state.tilemap.rotate & global_object.ORIENTATION_FLIP_Y) != 0 ? -step : step;
+                if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
+                    state.tilemap.xoffs -= (state.tilemap.rotate & g.ORIENTATION_FLIP_Y) != 0 ? -step : step;
                 else
-                    state.tilemap.yoffs -= (state.tilemap.rotate & global_object.ORIENTATION_FLIP_Y) != 0 ? -step : step;
+                    state.tilemap.yoffs -= (state.tilemap.rotate & g.ORIENTATION_FLIP_Y) != 0 ? -step : step;
                 state.bitmap_dirty = true;
             }
             if (machine.ui_input().pressed_repeat((int)ioport_type.IPT_UI_DOWN, 4))
             {
-                if ((state.tilemap.rotate & global_object.ORIENTATION_SWAP_XY) != 0)
-                    state.tilemap.xoffs += (state.tilemap.rotate & global_object.ORIENTATION_FLIP_Y) != 0 ? -step : step;
+                if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
+                    state.tilemap.xoffs += (state.tilemap.rotate & g.ORIENTATION_FLIP_Y) != 0 ? -step : step;
                 else
-                    state.tilemap.yoffs += (state.tilemap.rotate & global_object.ORIENTATION_FLIP_Y) != 0 ? -step : step;
+                    state.tilemap.yoffs += (state.tilemap.rotate & g.ORIENTATION_FLIP_Y) != 0 ? -step : step;
                 state.bitmap_dirty = true;
             }
             if (machine.ui_input().pressed_repeat((int)ioport_type.IPT_UI_LEFT, 6))
             {
-                if ((state.tilemap.rotate & global_object.ORIENTATION_SWAP_XY) != 0)
-                    state.tilemap.yoffs -= (state.tilemap.rotate & global_object.ORIENTATION_FLIP_X) != 0 ? -step : step;
+                if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
+                    state.tilemap.yoffs -= (state.tilemap.rotate & g.ORIENTATION_FLIP_X) != 0 ? -step : step;
                 else
-                    state.tilemap.xoffs -= (state.tilemap.rotate & global_object.ORIENTATION_FLIP_X) != 0 ? -step : step;
+                    state.tilemap.xoffs -= (state.tilemap.rotate & g.ORIENTATION_FLIP_X) != 0 ? -step : step;
                 state.bitmap_dirty = true;
             }
             if (machine.ui_input().pressed_repeat((int)ioport_type.IPT_UI_RIGHT, 6))
             {
-                if ((state.tilemap.rotate & global_object.ORIENTATION_SWAP_XY) != 0)
-                    state.tilemap.yoffs += (state.tilemap.rotate & global_object.ORIENTATION_FLIP_X) != 0 ? -step : step;
+                if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
+                    state.tilemap.yoffs += (state.tilemap.rotate & g.ORIENTATION_FLIP_X) != 0 ? -step : step;
                 else
-                    state.tilemap.xoffs += (state.tilemap.rotate & global_object.ORIENTATION_FLIP_X) != 0 ? -step : step;
+                    state.tilemap.xoffs += (state.tilemap.rotate & g.ORIENTATION_FLIP_X) != 0 ? -step : step;
                 state.bitmap_dirty = true;
             }
 
@@ -1308,7 +1309,7 @@ cancel:
         static void tilemap_update_bitmap(running_machine machine, ui_gfx_state state, int width, int height)
         {
             // swap the coordinates back if they were talking about a rotated surface
-            if ((state.tilemap.rotate & global_object.ORIENTATION_SWAP_XY) != 0)
+            if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
                 std.swap(ref width, ref height);
 
             // realloc the bitmap if it is too small

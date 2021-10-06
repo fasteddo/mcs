@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using categoryindex = mame.std.vector<System.Collections.Generic.KeyValuePair<string, System.Int64>>;
 using favorites_set = mame.std.set<mame.ui_software_info>;//, favorite_compare>;
+using size_t = System.UInt64;
 using sorted_favorites = mame.std.vector<mame.ui_software_info>;
 
 
@@ -15,7 +16,7 @@ namespace mame
     //  INIFILE MANAGER
     //-------------------------------------------------
 
-    public class inifile_manager : global_object
+    public class inifile_manager
     {
         // ini file structure
         //using categoryindex = std::vector<std::pair<std::string, int64_t>>;
@@ -46,7 +47,7 @@ namespace mame
                 string name = dir.name;
                 if (g.core_filename_ends_with(name, ".ini"))
                 {
-                    emu_file file = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
+                    emu_file file = new emu_file(m_options.categoryini_path(), g.OPEN_FLAG_READ);
                     if (file.open(name) == osd_file.error.NONE)
                     {
                         init_category(name, file);
@@ -64,10 +65,10 @@ namespace mame
         public void load_ini_category(UInt32 file, UInt32 category, std.unordered_set<game_driver> result)
         {
             string filename = m_ini_index[(int)file].first;
-            emu_file fp = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
+            emu_file fp = new emu_file(m_options.categoryini_path(), g.OPEN_FLAG_READ);
             if (fp.open(filename) != osd_file.error.NONE)
             {
-                osd_printf_error("Failed to open category file {0} for reading\n", filename);
+                g.osd_printf_error("Failed to open category file {0} for reading\n", filename);
                 return;
             }
 
@@ -75,7 +76,7 @@ namespace mame
             if (fp.seek(offset, emu_file.SEEK_SET) != 0 || (fp.tell() != (UInt64)offset))
             {
                 fp.close();
-                osd_printf_error("Failed to seek to category offset in file {0}\n", filename);
+                g.osd_printf_error("Failed to seek to category offset in file {0}\n", filename);
                 return;
             }
 
@@ -88,7 +89,7 @@ namespace mame
                 rbuf = rbuf.Substring(tail);
                 int dfind = driver_list.find(rbuf);
                 if (0 <= dfind)
-                    result.emplace(driver_list.driver(dfind));
+                    result.emplace(driver_list.driver((size_t)dfind));
             }
 
             fp.close();
@@ -96,10 +97,10 @@ namespace mame
 
 
         // getters
-        public UInt32 get_file_count() { return (UInt32)m_ini_index.size(); }
-        public string get_file_name(UInt32 file) { return m_ini_index[(int)file].first; }
-        public UInt32 get_category_count(UInt32 file) { return (UInt32)m_ini_index[(int)file].second.size(); }
-        public string get_category_name(UInt32 file, UInt32 category) { return m_ini_index[(int)file].second[(int)category].Key; }
+        public size_t get_file_count() { return m_ini_index.size(); }
+        public string get_file_name(size_t file) { return m_ini_index[(int)file].first; }
+        public size_t get_category_count(size_t file) { return m_ini_index[(int)file].second.size(); }
+        public string get_category_name(size_t file, size_t category) { return m_ini_index[(int)file].second[(int)category].Key; }
 
 
         // init category index
@@ -113,7 +114,7 @@ namespace mame
     //-------------------------------------------------
     //  FAVORITE MANAGER
     //-------------------------------------------------
-    public class favorite_manager : global_object
+    public class favorite_manager
     {
         //using running_software_key = std::tuple<game_driver const &, char const *, std::string const &>;
 
@@ -128,7 +129,7 @@ namespace mame
             //bool operator()(game_driver const &lhs, ui_software_info const &rhs) const;
             public static bool op(game_driver lhs, ui_software_info rhs)
             {
-                global_object.assert(rhs.driver != null);
+                g.assert(rhs.driver != null);
 
                 if (rhs.startempty == 0)
                     return true;
@@ -166,7 +167,7 @@ namespace mame
             m_need_sort = true;
 
 
-            emu_file file = new emu_file(m_options.ui_path(), OPEN_FLAG_READ);
+            emu_file file = new emu_file(m_options.ui_path(), g.OPEN_FLAG_READ);
             if (file.open(FAVORITE_FILENAME) == osd_file.error.NONE)
             {
                 string readbuf;
@@ -196,7 +197,7 @@ namespace mame
                     var dx = driver_list.find(readbuf);
                     if (0 > dx)
                         continue;
-                    tmpmatches.driver = driver_list.driver(dx);
+                    tmpmatches.driver = driver_list.driver((size_t)dx);
                     file.gets(out readbuf, 1024);
                     tmpmatches.listname = utils_global.chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);

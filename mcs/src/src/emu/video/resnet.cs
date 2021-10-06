@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using s16 = System.Int16;
+using size_t = System.UInt64;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -249,7 +250,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    global_object.fatalerror("compute_res_net: Unknown amplifier type\n");
+                    g.fatalerror("compute_res_net: Unknown amplifier type\n");
                     break;
             }
 
@@ -262,7 +263,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    global_object.fatalerror("compute_res_net: Unknown vcc type\n");
+                    g.fatalerror("compute_res_net: Unknown vcc type\n");
                     break;
             }
 
@@ -281,7 +282,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    global_object.fatalerror("compute_res_net: Unknown vcc type\n");
+                    g.fatalerror("compute_res_net: Unknown vcc type\n");
                     break;
             }
 
@@ -309,7 +310,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    global_object.fatalerror("compute_res_net: Unknown vin type\n");
+                    g.fatalerror("compute_res_net: Unknown vin type\n");
                     break;
             }
 
@@ -336,7 +337,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    global_object.fatalerror("compute_res_net: Unknown amplifier type\n");
+                    g.fatalerror("compute_res_net: Unknown amplifier type\n");
                     break;
             }
 
@@ -355,7 +356,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    global_object.fatalerror("compute_res_net: Unknown vcc type\n");
+                    g.fatalerror("compute_res_net: Unknown vcc type\n");
                     break;
             }
 
@@ -469,7 +470,7 @@ namespace mame
         public static void compute_res_net_all(out std.vector<rgb_t> rgb, Pointer<u8> prom, res_net_decode_info rdi, res_net_info di)  //std::vector<rgb_t> &rgb, const u8 *prom, const res_net_decode_info &rdi, const res_net_info &di);
         {
             rgb = new std.vector<rgb_t>();
-            rgb.resize(rdi.end - rdi.start + 1);
+            rgb.resize((size_t)(rdi.end - rdi.start + 1));
             for (int i = rdi.start; i <= rdi.end; i++)
             {
                 u8 [] t = new u8[3] {0, 0, 0};
@@ -517,7 +518,7 @@ namespace mame
             weights_2 = new double[count_2];
             weights_3 = new double[count_3];
 
-            global_object.assert(minval < maxval);
+            g.assert(minval < maxval);
 
             int [] rescount = new int[MAX_NETS];     /* number of resistors in each of the nets */
             double [,] r = new double[MAX_NETS, MAX_RES_PER_NET];        /* resistances */
@@ -667,25 +668,25 @@ namespace mame
             /* debug code */
             if (resnet_global.VERBOSE)
             {
-                global_object.osd_printf_info("compute_resistor_weights():  scaler = %{0}\n",scale);  // %15.10f
-                global_object.osd_printf_info("min val :{0}  max val:{1}  Total number of networks :{2}\n", minval, maxval, networks_no);  // %i
+                g.osd_printf_info("compute_resistor_weights():  scaler = %{0}\n",scale);  // %15.10f
+                g.osd_printf_info("min val :{0}  max val:{1}  Total number of networks :{2}\n", minval, maxval, networks_no);  // %i
 
                 for (int i = 0; i < networks_no;i++)
                 {
                     double sum = 0.0;
 
-                    global_object.osd_printf_info(" Network no.{0}=>  resistances: {1}", i, rescount[i]);  // %i
+                    g.osd_printf_info(" Network no.{0}=>  resistances: {1}", i, rescount[i]);  // %i
                     if (r_pu[i] != 0)
-                        global_object.osd_printf_info(", pullup resistor: {0} Ohms", r_pu[i]);  // %i
+                        g.osd_printf_info(", pullup resistor: {0} Ohms", r_pu[i]);  // %i
                     if (r_pd[i] != 0)
-                        global_object.osd_printf_info(", pulldown resistor: {0} Ohms", r_pd[i]);  // %i
-                    global_object.osd_printf_info("\n  maximum output of this network:{0} (scaled to {1})\n", max_out[i], max_out[i] * scale);  // :%10.5f (scaled to %15.10f)
+                        g.osd_printf_info(", pulldown resistor: {0} Ohms", r_pd[i]);  // %i
+                    g.osd_printf_info("\n  maximum output of this network:{0} (scaled to {1})\n", max_out[i], max_out[i] * scale);  // :%10.5f (scaled to %15.10f)
                     for (int n = 0; n < rescount[i]; n++)
                     {
-                        global_object.osd_printf_info("   res {0}:{1} Ohms  weight={2} (scaled = {3})\n", n, r[i, n], w[i, n], ws[i, n]);  //    res %2i:%9.1f Ohms  weight=%10.5f (scaled = %15.10f)\n
+                        g.osd_printf_info("   res {0}:{1} Ohms  weight={2} (scaled = {3})\n", n, r[i, n], w[i, n], ws[i, n]);  //    res %2i:%9.1f Ohms  weight=%10.5f (scaled = %15.10f)\n
                         sum += ws[i, n];
                     }
-                    global_object.osd_printf_info("                              sum of scaled weights = {0}\n", sum);  // %15.10f
+                    g.osd_printf_info("                              sum of scaled weights = {0}\n", sum);  // %15.10f
                 }
             }
             /* debug end */

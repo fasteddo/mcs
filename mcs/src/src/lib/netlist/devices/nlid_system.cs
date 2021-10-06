@@ -38,10 +38,10 @@ namespace mame.netlist.devices
     class nld_logic_input : device_t
     {
         //NETLIB_DEVICE_IMPL(logic_input, "LOGIC_INPUT", "IN,FAMILY")
-        public static readonly factory.constructor_ptr_t decl_logic_input = NETLIB_DEVICE_IMPL<nld_logic_input>("LOGIC_INPUT", "IN,FAMILY");
+        public static readonly factory.constructor_ptr_t decl_logic_input = g.NETLIB_DEVICE_IMPL<nld_logic_input>("LOGIC_INPUT", "IN,FAMILY");
 
         //NETLIB_DEVICE_IMPL_ALIAS(logic_input_ttl, logic_input, "TTL_INPUT", "IN")
-        public static readonly factory.constructor_ptr_t decl_logic_input_ttl = NETLIB_DEVICE_IMPL_ALIAS<nld_logic_input>("logic_input_ttl", "TTL_INPUT", "IN");
+        public static readonly factory.constructor_ptr_t decl_logic_input_ttl = g.NETLIB_DEVICE_IMPL_ALIAS<nld_logic_input>("logic_input_ttl", "TTL_INPUT", "IN");
 
 
         logic_output_t m_Q;
@@ -82,7 +82,7 @@ namespace mame.netlist.devices
     class nld_analog_input : device_t
     {
         //NETLIB_DEVICE_IMPL(analog_input,        "ANALOG_INPUT",           "IN")
-        public static readonly factory.constructor_ptr_t decl_analog_input = NETLIB_DEVICE_IMPL<nld_analog_input>("ANALOG_INPUT", "IN");
+        public static readonly factory.constructor_ptr_t decl_analog_input = g.NETLIB_DEVICE_IMPL<nld_analog_input>("ANALOG_INPUT", "IN");
 
 
         analog_output_t m_Q;

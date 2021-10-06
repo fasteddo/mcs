@@ -31,7 +31,7 @@ namespace mame.netlist
             state_var<netlist_sig_t> m_new_Q;
             state_var<netlist_sig_t> m_cur_Q;
             state_var<queue_status> m_in_queue;
-            plib.linkedlist_t<core_terminal_t> m_list_active;
+            plib.linkedlist_t<core_terminal_t> m_list_active = new plib.linkedlist_t<core_terminal_t>();
             state_var<netlist_time_ext> m_next_scheduled_time;
 
             core_terminal_t m_railterminal;

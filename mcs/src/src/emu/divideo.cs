@@ -62,7 +62,7 @@ namespace mame
 
         //template <class ObjectClass, bool Required>
         public void set_screen<ObjectClass, bool_Required>(device_finder<ObjectClass, bool_Required> finder)  //void set_screen(device_finder<ObjectClass, Required> &finder)
-            where bool_Required : bool_constant, new()
+            where bool_Required : bool_const, new()
         {
             m_screen_base = finder.finder_target().first;
             m_screen_tag = finder.finder_target().second;
@@ -78,7 +78,7 @@ namespace mame
         public override void interface_config_complete()
         {
             // find the screen if explicitly configured
-            if (m_screen_tag != null && strcmp(m_screen_tag, s_unconfigured_screen_tag) != 0)
+            if (m_screen_tag != null && std.strcmp(m_screen_tag, s_unconfigured_screen_tag) != 0)
                 m_screen = m_screen_base.subdevice<screen_device>(m_screen_tag);
 
             // device_config_complete may now do whatever it needs to with the screen
@@ -99,7 +99,7 @@ namespace mame
             // only look up screens if we haven't explicitly requested no screen
             if (!string.IsNullOrEmpty(m_screen_tag))
             {
-                if (strcmp(m_screen_tag, s_unconfigured_screen_tag) != 0)
+                if (std.strcmp(m_screen_tag, s_unconfigured_screen_tag) != 0)
                 {
                     // find the screen device if explicitly configured
                     m_screen = m_screen_base.subdevice<screen_device>(m_screen_tag);

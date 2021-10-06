@@ -26,7 +26,7 @@ namespace mame.netlist
             public param_model_t_value_t m_DAB;    //!< Differential Amp Bias - total quiescent current
 
 
-            public opamp_model_t(param_model_t model)
+            public opamp_model_t(param_value_interface model)
             {
                 m_TYPE = new param_model_t_value_t(model, "TYPE");
                 m_FPF = new param_model_t_value_t(model, "FPF");
@@ -45,7 +45,7 @@ namespace mame.netlist
         class nld_opamp : base_device_t
         {
             //NETLIB_DEVICE_IMPL_NS(analog, opamp, "OPAMP", "MODEL")
-            public static readonly factory.constructor_ptr_t decl_opamp = NETLIB_DEVICE_IMPL_NS<nld_opamp>("analog", "OPAMP", "MODEL");
+            public static readonly factory.constructor_ptr_t decl_opamp = g.NETLIB_DEVICE_IMPL_NS<nld_opamp>("analog", "OPAMP", "MODEL");
 
 
             analog.nld_R_base m_RP;
@@ -159,7 +159,7 @@ namespace mame.netlist
             {
                 nl_fptype cVt = nlconst.np_VT(nlconst.one()); // * m_n;
                 nl_fptype cId = m_modacc.m_DAB.op(); // 3 mA
-                nl_fptype cVd = cVt * plib.pglobal.log<nl_fptype, nl_fptype_ops>(cId / nlconst.np_Is() + nlconst.one());
+                nl_fptype cVd = cVt * plib.pg.log(cId / nlconst.np_Is() + nlconst.one());
 
                 m_VH.push(m_VCC.op() - m_modacc.m_VLH.op() - cVd);
                 m_VL.push(m_GND.op() + m_modacc.m_VLL.op() + cVd);

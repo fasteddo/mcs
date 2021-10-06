@@ -8,7 +8,7 @@ using System.Linq;
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using media_auditor_record_list = mame.std.list<mame.media_auditor.audit_record>;  //using record_list = std::list<audit_record>;
 using samples_device_enumerator = mame.device_type_enumerator<mame.samples_device>;  //typedef device_type_enumerator<samples_device> samples_device_enumerator;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
@@ -17,9 +17,14 @@ namespace mame
 {
     // ======================> media_auditor
     // class which manages auditing of items
-    class media_auditor : global_object
+    class media_auditor
     {
         //using record_list = std::list<audit_record>;
+
+
+        const int VERBOSE = 0;  //#define VERBOSE 1
+        static void LOG_OUTPUT_FUNC_audit(device_t device, string format, params object [] args) { g.osd_printf_verbose(format, args); }  //#define LOG_OUTPUT_FUNC osd_printf_verbose
+        public static void LOG(string format, params object [] args) { g.LOG(VERBOSE, null, LOG_OUTPUT_FUNC_audit, format, args); }
 
 
         // media types
@@ -206,11 +211,11 @@ namespace mame
 
             // first walk the parent chain for required ROMs
             parent_rom_vector parentroms = new parent_rom_vector();
-            for (var drvindex = driver_list.find(m_enumerator.driver().parent); 0 <= drvindex; drvindex = driver_list.find(driver_list.driver(drvindex).parent))  //for (auto drvindex = m_enumerator.find(m_enumerator.driver().parent); 0 <= drvindex; drvindex = m_enumerator.find(m_enumerator.driver(drvindex).parent))
+            for (var drvindex = driver_list.find(m_enumerator.driver().parent); 0 <= drvindex; drvindex = driver_list.find(driver_list.driver((size_t)drvindex).parent))  //for (auto drvindex = m_enumerator.find(m_enumerator.driver().parent); 0 <= drvindex; drvindex = m_enumerator.find(m_enumerator.driver(drvindex).parent))
             {
-                game_driver parent = driver_list.driver(drvindex);
+                game_driver parent = driver_list.driver((size_t)drvindex);
                 LOG(null, "Checking parent {0} for ROM files\n", parent.type.shortname());
-                std.vector<rom_entry> roms = rom_build_entries(parent.rom);
+                std.vector<rom_entry> roms = g.rom_build_entries(parent.rom);
                 for (Pointer<rom_entry> region = romload_global.rom_first_region(new Pointer<rom_entry>(roms)); region != null; region = romload_global.rom_next_region(region))  //for (rom_entry const *region = rom_first_region(&roms.front()); region; region = rom_next_region(region))
                 {
                     for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))  //for (rom_entry const *rom = rom_first_file(region); rom; rom = rom_next_file(rom))
@@ -251,14 +256,14 @@ namespace mame
                         string name = rom[0].name();
                         util.hash_collection hashes = new util.hash_collection(rom[0].hashdata());
                         bool dumped = !hashes.flag(util.hash_collection.FLAG_NO_DUMP);
-                        device_type shared_device = parentroms.find_shared_device(device, name, hashes, romload_global.rom_file_size(rom));
+                        device_type shared_device = parentroms.find_shared_device(device, name, hashes, g.rom_file_size(rom));
                         if (shared_device != null)
-                            LOG(null, "File '{0}' {1}{2}dumped shared with {3}\n", name, romload_global.ROM_ISOPTIONAL(rom[0]) ? "optional " : "", dumped ? "" : "un", shared_device.shortname());
+                            LOG(null, "File '{0}' {1}{2}dumped shared with {3}\n", name, g.ROM_ISOPTIONAL(rom[0]) ? "optional " : "", dumped ? "" : "un", shared_device.shortname());
                         else
-                            LOG(null, "File '{0}' {1}{2}dumped\n", name, romload_global.ROM_ISOPTIONAL(rom[0]) ? "optional " : "", dumped ? "" : "un");
+                            LOG(null, "File '{0}' {1}{2}dumped\n", name, g.ROM_ISOPTIONAL(rom[0]) ? "optional " : "", dumped ? "" : "un");
 
                         // count the number of files with hashes
-                        if (dumped && !romload_global.ROM_ISOPTIONAL(rom[0]))
+                        if (dumped && !g.ROM_ISOPTIONAL(rom[0]))
                         {
                             required++;
                             if (shared_device != null)
@@ -267,11 +272,11 @@ namespace mame
 
                         // audit a file
                         audit_record record = null;
-                        if (romload_global.ROMREGION_ISROMDATA(region[0]))
+                        if (g.ROMREGION_ISROMDATA(region[0]))
                             record = audit_one_rom(searchpath, rom);
 
                         // audit a disk
-                        else if (romload_global.ROMREGION_ISDISKDATA(region[0]))
+                        else if (g.ROMREGION_ISDISKDATA(region[0]))
                             record = audit_one_disk(rom, device);
 
                         if (record != null)
@@ -331,14 +336,14 @@ namespace mame
             audit_regions(
                     (rom_entry region, Pointer<rom_entry> rom) =>  //[this, &device, &searchpath] (rom_entry const *region, rom_entry const *rom) -> audit_record const *
                     {
-                        if (ROMREGION_ISROMDATA(region))
+                        if (g.ROMREGION_ISROMDATA(region))
                         {
                             if (searchpath.empty())
                                 searchpath = device.searchpath();
 
                             return audit_one_rom(searchpath, rom);
                         }
-                        else if (ROMREGION_ISDISKDATA(region))
+                        else if (g.ROMREGION_ISDISKDATA(region))
                         {
                             return audit_one_disk(rom, device);
                         }
@@ -347,7 +352,7 @@ namespace mame
                             return null;
                         }
                     },
-                    romload_global.rom_first_region(device)[0],
+                    g.rom_first_region(device)[0],
                     out found,
                     out required);
 
@@ -446,7 +451,7 @@ namespace mame
                     audit_record record = m_record_list.emplace_back(new audit_record(samplename, media_type.SAMPLE)).Value;  //audit_record &record = *m_record_list.emplace(m_record_list.end(), samplename, media_type::SAMPLE);
 
                     // look for the files
-                    emu_file file = new emu_file(m_enumerator.options().sample_path(), osdfile_global.OPEN_FLAG_READ | osdfile_global.OPEN_FLAG_NO_PRELOAD);
+                    emu_file file = new emu_file(m_enumerator.options().sample_path(), g.OPEN_FLAG_READ | g.OPEN_FLAG_NO_PRELOAD);
                     path_iterator path = new path_iterator(searchpath);
                     string curpath;
                     while (path.next(out curpath, samplename))
@@ -564,7 +569,7 @@ namespace mame
                         break;
 
                     default:
-                        assert(false);
+                        g.assert(false);
                         break;
                 }
 
@@ -597,7 +602,7 @@ namespace mame
             bool has_crc = record.expected_hashes().crc(out crc);
 
             // find the file and checksum it, getting the file length along the way
-            emu_file file = new emu_file(m_enumerator.options().media_path(), searchpath, OPEN_FLAG_READ | OPEN_FLAG_NO_PRELOAD);
+            emu_file file = new emu_file(m_enumerator.options().media_path(), searchpath, g.OPEN_FLAG_READ | g.OPEN_FLAG_NO_PRELOAD);
             file.set_restrict_to_mediapath(1);
 
             // open the file if we can
@@ -668,7 +673,7 @@ namespace mame
                     record.set_status(audit_status.NOT_FOUND, audit_substatus.NOT_FOUND_NODUMP);
 
                 // optional ROM
-                else if (romload_global.ROM_ISOPTIONAL(rom))
+                else if (g.ROM_ISOPTIONAL(rom))
                     record.set_status(audit_status.NOT_FOUND, audit_substatus.NOT_FOUND_OPTIONAL);
 
                 // just plain old not found
@@ -803,11 +808,11 @@ namespace mame
             bool matches_device_undumped = false;
             if (current.owner() != null)
             {
-                for (Pointer<rom_entry> region = romload_global.rom_first_region(current); region != null; region = romload_global.rom_next_region(region))
+                for (Pointer<rom_entry> region = g.rom_first_region(current); region != null; region = romload_global.rom_next_region(region))
                 {
-                    for (Pointer<rom_entry> rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
+                    for (Pointer<rom_entry> rom = g.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                     {
-                        if (romload_global.rom_file_size(rom) == record.actual_length())
+                        if (g.rom_file_size(rom) == record.actual_length())
                         {
                             util.hash_collection hashes = new util.hash_collection(rom[0].hashdata());
                             if (hashes == record.actual_hashes())

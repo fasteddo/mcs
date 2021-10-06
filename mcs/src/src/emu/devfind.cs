@@ -5,13 +5,13 @@ using System;
 using System.Collections.Generic;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
-using optional_address_space = mame.address_space_finder<mame.bool_constant_false>;  //using optional_address_space = address_space_finder<false>;
-using optional_memory_bank = mame.memory_bank_finder<mame.bool_constant_false>;  //using optional_memory_bank = memory_bank_finder<false>;
-using optional_memory_region = mame.memory_region_finder<mame.bool_constant_false>;  //using optional_memory_region = memory_region_finder<false>;
+using optional_address_space = mame.address_space_finder<mame.bool_const_false>;  //using optional_address_space = address_space_finder<false>;
+using optional_memory_bank = mame.memory_bank_finder<mame.bool_const_false>;  //using optional_memory_bank = memory_bank_finder<false>;
+using optional_memory_region = mame.memory_region_finder<mame.bool_const_false>;  //using optional_memory_region = memory_region_finder<false>;
 using PointerU8 = mame.Pointer<System.Byte>;
-using required_memory_bank = mame.memory_bank_finder<mame.bool_constant_true>;  //using required_memory_bank = memory_bank_finder<true>;
-using required_memory_region = mame.memory_region_finder<mame.bool_constant_true>;  //using required_memory_region = memory_region_finder<true>;
-using size_t = System.UInt32;
+using required_memory_bank = mame.memory_bank_finder<mame.bool_const_true>;  //using required_memory_bank = memory_bank_finder<true>;
+using required_memory_region = mame.memory_region_finder<mame.bool_const_true>;  //using required_memory_region = memory_region_finder<true>;
+using size_t = System.UInt64;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -30,7 +30,7 @@ namespace mame
     //template <typename T, unsigned Count>
     public class object_array_finder<T, unsigned_Count>
         where T : finder_base
-        where unsigned_Count : uint32_constant, new()
+        where unsigned_Count : u32_const, new()
     {
         protected static readonly unsigned Count = new unsigned_Count().value;
 
@@ -227,7 +227,7 @@ namespace mame
         /// \param [in] index Index of desired element (zero-based).
         /// \return Reference to element at specified index.
         //T &operator[](unsigned index) { assert(index < Count); return m_array[index]; }
-        public virtual T op(int index) { global_object.assert(index < Count);  return at(index); }
+        public virtual T op(int index) { g.assert(index < Count);  return at(index); }
 
         /// \brief Checked element accessor
         ///
@@ -249,7 +249,7 @@ namespace mame
     /// Abstract non-template base class for object auto-discovery helpers.
     /// Provides the interface that the device_t uses to manage discovery at
     /// resolution time.
-    public abstract class finder_base : global_object
+    public abstract class finder_base
     {
         /// \brief Dummy tag always treated as not found
         public const string DUMMY_TAG = "finder_dummy_tag";
@@ -335,7 +335,7 @@ namespace mame
         /// \param [in] tag Updated search tag.  This is not copied, it is
         ///   the caller's responsibility to ensure this pointer remains
         ///   valid until resolution time.
-        public void set_tag(device_t base_, string tag) { assert(!m_resolved); m_base = base_; m_tag = tag; }
+        public void set_tag(device_t base_, string tag) { g.assert(!m_resolved); m_base = base_; m_tag = tag; }
 
         /// \brief Set search tag
         ///
@@ -346,7 +346,7 @@ namespace mame
         ///   device being configured.  This is not copied, it is the
         ///   caller's responsibility to ensure this pointer remains valid
         ///   until resolution time.
-        public void set_tag(string tag) { m_base = m_base.get().mconfig().current_device(); m_tag = tag; }
+        public void set_tag(string tag) { m_base = m_base.mconfig().current_device(); m_tag = tag; }
 
         /// \brief Set search tag
         ///
@@ -354,7 +354,7 @@ namespace mame
         /// this must be done before resolution time to take effect.
         /// \param [in] finder Object finder to take the search base and tag
         ///   from.
-        public void set_tag(finder_base finder) { assert(!m_resolved); var kvp = finder.finder_target(); m_base = kvp.first; m_tag = kvp.second; }  //std::tie(m_base, m_tag) = finder.finder_target(); }
+        public void set_tag(finder_base finder) { g.assert(!m_resolved); var kvp = finder.finder_target(); m_base = kvp.first; m_tag = kvp.second; }  //std::tie(m_base, m_tag) = finder.finder_target(); }
 
 
         // helpers
@@ -365,7 +365,7 @@ namespace mame
         protected MemoryU8 find_memregion(u8 width, out size_t length, bool required)  //void *finder_base::find_memregion(u8 width, size_t &length, bool required) const
         {
             // look up the region and return nullptr if not found
-            memory_region region = m_base.get().memregion(m_tag);
+            memory_region region = m_base.memregion(m_tag);
             if (region == null)
             {
                 length = 0;
@@ -376,7 +376,7 @@ namespace mame
             if (region.bytewidth() != width)
             {
                 if (required)
-                    osd_printf_warning("Region '{0}' found but is width {1}, not {2} as requested\n", m_tag, region.bitwidth(), width * 8);
+                    g.osd_printf_warning("Region '{0}' found but is width {1}, not {2} as requested\n", m_tag, region.bitwidth(), width * 8);
                 length = 0;
                 return null;
             }
@@ -391,10 +391,10 @@ namespace mame
         {
             // make sure we can resolve the full path to the region
             size_t bytes_found = 0;
-            string region_fulltag = m_base.get().subtag(m_tag);
+            string region_fulltag = m_base.subtag(m_tag);
 
             // look for the region
-            foreach (device_t dev in new device_enumerator(m_base.get().mconfig().root_device()))
+            foreach (device_t dev in new device_enumerator(m_base.mconfig().root_device()))
             {
                 foreach (tiny_rom_entry region in new romload.entries(dev.rom_region()).get_regions())
                 {
@@ -419,14 +419,14 @@ namespace mame
         protected PointerU8 find_memshare(u8 width, ref size_t bytes, bool required)  //void *finder_base::find_memshare(u8 width, size_t &bytes, bool required) const
         {
             // look up the share and return nullptr if not found
-            memory_share share = m_base.get().memshare(m_tag);
+            memory_share share = m_base.memshare(m_tag);
             if (share == null)
                 return null;
 
             // check the width and warn if not correct
             if (width != 0 && share.bitwidth() != width)
             {
-                osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", m_tag, share.bitwidth(), width);
+                g.osd_printf_warning("Shared ptr '{0}' found but is width {1}, not {2} as requested\n", m_tag, share.bitwidth(), width);
                 return null;
             }
 
@@ -457,7 +457,7 @@ namespace mame
         protected address_space find_addrspace(int spacenum, u8 width, bool required)
         {
             // look up the device and return nullptr if not found
-            device_t device = m_base.get().subdevice(m_tag);
+            device_t device = m_base.subdevice(m_tag);
             if (device == null)
                 return null;
 
@@ -466,14 +466,14 @@ namespace mame
             if (!device.interface_(out memory))
             {
                 if (required)
-                    osd_printf_warning("Device '{0}' found but lacks memory interface\n", m_tag);
+                    g.osd_printf_warning("Device '{0}' found but lacks memory interface\n", m_tag);
                 return null;
             }
 
             if (!memory.has_space(spacenum))
             {
                 if (required)
-                    osd_printf_warning("Device '{0}' found but lacks address space #{1}\n", m_tag, spacenum);
+                    g.osd_printf_warning("Device '{0}' found but lacks address space #{1}\n", m_tag, spacenum);
                 return null;
             }
 
@@ -481,7 +481,7 @@ namespace mame
             address_space space = memory.space(spacenum);
             if (width != 0 && width != space.data_width())
             {
-                osd_printf_warning("Device '{0}' found but address space #{1} has the wrong data width (expected {2}, found {3})\n", m_tag, spacenum, width, space.data_width());
+                g.osd_printf_warning("Device '{0}' found but address space #{1} has the wrong data width (expected {2}, found {3})\n", m_tag, spacenum, width, space.data_width());
                 return null;
             }
 
@@ -507,7 +507,7 @@ namespace mame
         protected bool validate_addrspace(int spacenum, u8 width, bool required)
         {
             // look up the device and return false if not found
-            device_t device = m_base.get().subdevice(m_tag);
+            device_t device = m_base.subdevice(m_tag);
             if (device == null)
                 return report_missing(false, "address space", required);
 
@@ -520,14 +520,14 @@ namespace mame
                 if (required)
                 {
                     if (config == null)
-                        osd_printf_warning("Device '{0}' found but lacks address space #{1}\n", m_tag, spacenum);
+                        g.osd_printf_warning("Device '{0}' found but lacks address space #{1}\n", m_tag, spacenum);
                     else if (width != 0 && width != config.data_width())
-                        osd_printf_warning("Device '{0}' found but space #{1} has the wrong data width (expected {2}, found {3})\n", m_tag, spacenum, width, config.data_width());
+                        g.osd_printf_warning("Device '{0}' found but space #{1} has the wrong data width (expected {2}, found {3})\n", m_tag, spacenum, width, config.data_width());
                 }
             }
             else if (required)
             {
-                osd_printf_warning("Device '{0}' found but lacks memory interface\n", m_tag);
+                g.osd_printf_warning("Device '{0}' found but lacks memory interface\n", m_tag);
             }
 
             // report result
@@ -543,7 +543,7 @@ namespace mame
         {
             if (required && (DUMMY_TAG == m_tag))
             {
-                osd_printf_error("Tag not defined for required {0}\n", objname);
+                g.osd_printf_error("Tag not defined for required {0}\n", objname);
                 return false;
             }
             else if (found)
@@ -554,11 +554,11 @@ namespace mame
             else
             {
                 // otherwise, report
-                string region_fulltag = m_base.get().subtag(m_tag);
+                string region_fulltag = m_base.subtag(m_tag);
                 if (required)
-                    osd_printf_error("Required {0} '{1}' not found\n", objname, region_fulltag);
+                    g.osd_printf_error("Required {0} '{1}' not found\n", objname, region_fulltag);
                 else if (DUMMY_TAG != m_tag)
-                    osd_printf_verbose("Optional {0} '{1}' not found\n", objname, region_fulltag);
+                    g.osd_printf_verbose("Optional {0} '{1}' not found\n", objname, region_fulltag);
 
                 return !required;
             }
@@ -573,11 +573,11 @@ namespace mame
         Pointer<T> cast(PointerU8 memory);
     }
 
-    public class object_finder_operations_null<T> : object_finder_operations<T>
+    public class object_finder_operations_ay8910_device : object_finder_operations<ay8910_device>
     {
-        public T cast(device_t device) { throw new emu_unimplemented(); }
-        public T cast(device_interface device) { throw new emu_unimplemented(); }
-        public Pointer<T> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+        public ay8910_device cast(device_t device) { return (ay8910_device)device; }
+        public ay8910_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<ay8910_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
     public class object_finder_operations_device_palette_interface : object_finder_operations<device_palette_interface>
@@ -585,6 +585,13 @@ namespace mame
         public device_palette_interface cast(device_t device) { throw new emu_unimplemented(); }
         public device_palette_interface cast(device_interface device) { return (device_palette_interface)device; }
         public Pointer<device_palette_interface> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_er2055_device : object_finder_operations<er2055_device>
+    {
+        public er2055_device cast(device_t device) { return (er2055_device)device; }
+        public er2055_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<er2055_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
     public class object_finder_operations_memory_bank : object_finder_operations<memory_bank>
@@ -608,11 +615,60 @@ namespace mame
         public Pointer<ioport_port> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_dac_byte_interface : object_finder_operations<dac_byte_interface>
+    {
+        public dac_byte_interface cast(device_t device) { throw new emu_unimplemented(); }
+        public dac_byte_interface cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<dac_byte_interface> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_cpu_device : object_finder_operations<cpu_device>
     {
         public cpu_device cast(device_t device) { return (cpu_device)device; }
         public cpu_device cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<cpu_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_dac_8bit_r2r_device : object_finder_operations<dac_8bit_r2r_device>
+    {
+        public dac_8bit_r2r_device cast(device_t device) { return (dac_8bit_r2r_device)device; }
+        public dac_8bit_r2r_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<dac_8bit_r2r_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_digitalker_device : object_finder_operations<digitalker_device>
+    {
+        public digitalker_device cast(device_t device) { return (digitalker_device)device; }
+        public digitalker_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<digitalker_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_discrete_device : object_finder_operations<discrete_device>
+    {
+        public discrete_device cast(device_t device) { return (discrete_device)device; }
+        public discrete_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<discrete_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_discrete_sound_device : object_finder_operations<discrete_sound_device>
+    {
+        public discrete_sound_device cast(device_t device) { return (discrete_sound_device)device; }
+        public discrete_sound_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<discrete_sound_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_eeprom_serial_93cxx_device : object_finder_operations<eeprom_serial_93cxx_device>
+    {
+        public eeprom_serial_93cxx_device cast(device_t device) { return (eeprom_serial_93cxx_device)device; }
+        public eeprom_serial_93cxx_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<eeprom_serial_93cxx_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_generic_latch_8_device : object_finder_operations<generic_latch_8_device>
+    {
+        public generic_latch_8_device cast(device_t device) { return (generic_latch_8_device)device; }
+        public generic_latch_8_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<generic_latch_8_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
     public class object_finder_operations_gfxdecode_device : object_finder_operations<gfxdecode_device>
@@ -622,6 +678,34 @@ namespace mame
         public Pointer<gfxdecode_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_i8255_device : object_finder_operations<i8255_device>
+    {
+        public i8255_device cast(device_t device) { return (i8255_device)device; }
+        public i8255_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<i8255_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_i8257_device : object_finder_operations<i8257_device>
+    {
+        public i8257_device cast(device_t device) { return (i8257_device)device; }
+        public i8257_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<i8257_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_input_merger_device : object_finder_operations<input_merger_device>
+    {
+        public input_merger_device cast(device_t device) { return (input_merger_device)device; }
+        public input_merger_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<input_merger_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_latch8_device : object_finder_operations<latch8_device>
+    {
+        public latch8_device cast(device_t device) { return (latch8_device)device; }
+        public latch8_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<latch8_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_ls259_device : object_finder_operations<ls259_device>
     {
         public ls259_device cast(device_t device) { return (ls259_device)device; }
@@ -629,11 +713,53 @@ namespace mame
         public Pointer<ls259_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_m68705p_device : object_finder_operations<m68705p_device>
+    {
+        public m68705p_device cast(device_t device) { return (m68705p_device)device; }
+        public m68705p_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<m68705p_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_mb88_cpu_device : object_finder_operations<mb88_cpu_device>
+    {
+        public mb88_cpu_device cast(device_t device) { return (mb88_cpu_device)device; }
+        public mb88_cpu_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<mb88_cpu_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_mcs48_cpu_device : object_finder_operations<mcs48_cpu_device>
+    {
+        public mcs48_cpu_device cast(device_t device) { return (mcs48_cpu_device)device; }
+        public mcs48_cpu_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<mcs48_cpu_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_m6502_device : object_finder_operations<m6502_device>
+    {
+        public m6502_device cast(device_t device) { return (m6502_device)device; }
+        public m6502_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<m6502_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_namco_device : object_finder_operations<namco_device>
     {
         public namco_device cast(device_t device) { return (namco_device)device; }
         public namco_device cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<namco_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_netlist_mame_logic_input_device : object_finder_operations<netlist_mame_logic_input_device>
+    {
+        public netlist_mame_logic_input_device cast(device_t device) { return (netlist_mame_logic_input_device)device; }
+        public netlist_mame_logic_input_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<netlist_mame_logic_input_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_netlist_mame_sound_device : object_finder_operations<netlist_mame_sound_device>
+    {
+        public netlist_mame_sound_device cast(device_t device) { return (netlist_mame_sound_device)device; }
+        public netlist_mame_sound_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<netlist_mame_sound_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
     public class object_finder_operations_palette_device : object_finder_operations<palette_device>
@@ -650,11 +776,32 @@ namespace mame
         public Pointer<screen_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_starfield_05xx_device : object_finder_operations<starfield_05xx_device>
+    {
+        public starfield_05xx_device cast(device_t device) { return (starfield_05xx_device)device; }
+        public starfield_05xx_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<starfield_05xx_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_taito_sj_security_mcu_device : object_finder_operations<taito_sj_security_mcu_device>
+    {
+        public taito_sj_security_mcu_device cast(device_t device) { return (taito_sj_security_mcu_device)device; }
+        public taito_sj_security_mcu_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<taito_sj_security_mcu_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_watchdog_timer_device : object_finder_operations<watchdog_timer_device>
     {
         public watchdog_timer_device cast(device_t device) { return (watchdog_timer_device)device; }
         public watchdog_timer_device cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<watchdog_timer_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_intref : object_finder_operations<intref>
+    {
+        public intref cast(device_t device) { throw new emu_unimplemented(); }
+        public intref cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<intref> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
     public class object_finder_operations_u8 : object_finder_operations<u8>
@@ -675,21 +822,44 @@ namespace mame
     /// found.
     //template <class ObjectClass, bool Required>
     public abstract class object_finder_common_base<ObjectClass, bool_Required> : finder_base
-        where bool_Required : bool_constant, new()
+        where bool_Required : bool_const, new()
     {
         static object_finder_operations<ObjectClass> create_object_finder_operations()
         {
-            if      (typeof(ObjectClass) == typeof(device_palette_interface)) return (object_finder_operations<ObjectClass>)new object_finder_operations_device_palette_interface();
-            else if (typeof(ObjectClass) == typeof(memory_region))            return (object_finder_operations<ObjectClass>)new object_finder_operations_memory_region();
-            else if (typeof(ObjectClass) == typeof(cpu_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_cpu_device();
-            else if (typeof(ObjectClass) == typeof(gfxdecode_device))         return (object_finder_operations<ObjectClass>)new object_finder_operations_gfxdecode_device();
-            else if (typeof(ObjectClass) == typeof(ls259_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_ls259_device();
-            else if (typeof(ObjectClass) == typeof(namco_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_namco_device();
-            else if (typeof(ObjectClass) == typeof(palette_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_palette_device();
-            else if (typeof(ObjectClass) == typeof(screen_device))            return (object_finder_operations<ObjectClass>)new object_finder_operations_screen_device();
-            else if (typeof(ObjectClass) == typeof(watchdog_timer_device))    return (object_finder_operations<ObjectClass>)new object_finder_operations_watchdog_timer_device();
-            else if (typeof(ObjectClass) == typeof(u8))                       return (object_finder_operations<ObjectClass>)new object_finder_operations_u8();
-            else return new object_finder_operations_null<ObjectClass>();
+            if      (typeof(ObjectClass) == typeof(ay8910_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_ay8910_device();
+            else if (typeof(ObjectClass) == typeof(device_palette_interface))   return (object_finder_operations<ObjectClass>)new object_finder_operations_device_palette_interface();
+            else if (typeof(ObjectClass) == typeof(er2055_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_er2055_device();
+            else if (typeof(ObjectClass) == typeof(memory_region))              return (object_finder_operations<ObjectClass>)new object_finder_operations_memory_region();
+            else if (typeof(ObjectClass) == typeof(ioport_port))                return (object_finder_operations<ObjectClass>)new object_finder_operations_ioport_port();
+            else if (typeof(ObjectClass) == typeof(dac_byte_interface))         return (object_finder_operations<ObjectClass>)new object_finder_operations_dac_byte_interface();
+            else if (typeof(ObjectClass) == typeof(cpu_device))                 return (object_finder_operations<ObjectClass>)new object_finder_operations_cpu_device();
+            else if (typeof(ObjectClass) == typeof(dac_8bit_r2r_device))        return (object_finder_operations<ObjectClass>)new object_finder_operations_dac_8bit_r2r_device();
+            else if (typeof(ObjectClass) == typeof(digitalker_device))          return (object_finder_operations<ObjectClass>)new object_finder_operations_digitalker_device();
+            else if (typeof(ObjectClass) == typeof(discrete_device))            return (object_finder_operations<ObjectClass>)new object_finder_operations_discrete_device();
+            else if (typeof(ObjectClass) == typeof(discrete_sound_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_discrete_sound_device();
+            else if (typeof(ObjectClass) == typeof(eeprom_serial_93cxx_device)) return (object_finder_operations<ObjectClass>)new object_finder_operations_eeprom_serial_93cxx_device();
+            else if (typeof(ObjectClass) == typeof(generic_latch_8_device))     return (object_finder_operations<ObjectClass>)new object_finder_operations_generic_latch_8_device();
+            else if (typeof(ObjectClass) == typeof(gfxdecode_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_gfxdecode_device();
+            else if (typeof(ObjectClass) == typeof(i8255_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_i8255_device();
+            else if (typeof(ObjectClass) == typeof(i8257_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_i8257_device();
+            else if (typeof(ObjectClass) == typeof(input_merger_device))        return (object_finder_operations<ObjectClass>)new object_finder_operations_input_merger_device();
+            else if (typeof(ObjectClass) == typeof(latch8_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_latch8_device();
+            else if (typeof(ObjectClass) == typeof(ls259_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_ls259_device();
+            else if (typeof(ObjectClass) == typeof(m68705p_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_m68705p_device();
+            else if (typeof(ObjectClass) == typeof(mb88_cpu_device))            return (object_finder_operations<ObjectClass>)new object_finder_operations_mb88_cpu_device();
+            else if (typeof(ObjectClass) == typeof(mcs48_cpu_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_mcs48_cpu_device();
+            else if (typeof(ObjectClass) == typeof(m6502_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_m6502_device();
+            else if (typeof(ObjectClass) == typeof(namco_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_namco_device();
+            else if (typeof(ObjectClass) == typeof(netlist_mame_logic_input_device)) return (object_finder_operations<ObjectClass>)new object_finder_operations_netlist_mame_logic_input_device();
+            else if (typeof(ObjectClass) == typeof(netlist_mame_sound_device))  return (object_finder_operations<ObjectClass>)new object_finder_operations_netlist_mame_sound_device();
+            else if (typeof(ObjectClass) == typeof(palette_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_palette_device();
+            else if (typeof(ObjectClass) == typeof(screen_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_screen_device();
+            else if (typeof(ObjectClass) == typeof(starfield_05xx_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_starfield_05xx_device();
+            else if (typeof(ObjectClass) == typeof(taito_sj_security_mcu_device)) return (object_finder_operations<ObjectClass>)new object_finder_operations_taito_sj_security_mcu_device();
+            else if (typeof(ObjectClass) == typeof(watchdog_timer_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_watchdog_timer_device();
+            else if (typeof(ObjectClass) == typeof(intref))                     return (object_finder_operations<ObjectClass>)new object_finder_operations_intref();
+            else if (typeof(ObjectClass) == typeof(u8))                         return (object_finder_operations<ObjectClass>)new object_finder_operations_u8();
+            else throw new emu_unimplemented();
         }
         protected static readonly object_finder_operations<ObjectClass> ops = create_object_finder_operations();
         protected static readonly bool Required = new bool_Required().value;
@@ -717,7 +887,7 @@ namespace mame
         /// target during configuration.  This needs to be cleared to ensure
         /// the correct target is found if a device further up the hierarchy
         /// subsequently removes or replaces devices.
-        public override void end_configuration() { assert(!m_resolved); m_target = default; }
+        public override void end_configuration() { g.assert(!m_resolved); m_target = default; }
 
 
         /// \brief Get pointer to target object
@@ -756,7 +926,7 @@ namespace mame
     /// is considered an error.
     //template <class ObjectClass, bool Required>
     public abstract class object_finder_base<ObjectClass, bool_Required> : object_finder_common_base<ObjectClass, bool_Required>
-        where bool_Required : bool_constant, new()
+        where bool_Required : bool_const, new()
     {
         //using object_finder_common_base<ObjectClass, Required>::object_finder_common_base;
 
@@ -805,7 +975,7 @@ namespace mame
     /// \sa optional_device required_device
     //template<class DeviceClass, bool Required>
     public class device_finder<DeviceClass, bool_Required> : object_finder_base<DeviceClass, bool_Required>
-        where bool_Required : bool_constant, new()
+        where bool_Required : bool_const, new()
     {
         //using object_finder_base<DeviceClass, Required>::set_tag;
 
@@ -842,11 +1012,11 @@ namespace mame
         //std::enable_if_t<std::is_convertible<T *, DeviceClass *>::value, T &> operator=(T &device)
         public DeviceClass assign(DeviceClass device)
         {
-            assert(!this.m_resolved);
+            g.assert(!this.m_resolved);
 
             //assert(is_expected_tag(device));
-            if (device is device_t d) assert(is_expected_tag_device_t(d));
-            else if (device is device_interface di) assert(is_expected_tag_device_interface(di));
+            if (device is device_t d) g.assert(is_expected_tag_device_t(d));
+            else if (device is device_interface di) g.assert(is_expected_tag_device_interface(di));
             else throw new emu_unimplemented();
 
             this.m_target = new Pointer<DeviceClass>(new MemoryContainer<DeviceClass>() { device });
@@ -860,7 +1030,7 @@ namespace mame
         //template <typename T>
         bool is_expected_tag_device_t(device_t device)  //std::enable_if_t<emu::detail::is_device_implementation<T>::value, bool> is_expected_tag(T const &device) const
         {
-            return this.m_base.get().subtag(this.m_tag) == device.tag();  //return this->m_base.get().subtag(this->m_tag) == device.tag();
+            return this.m_base.subtag(this.m_tag) == device.tag();  //return this->m_base.get().subtag(this->m_tag) == device.tag();
         }
 
         /// \brief Check that device mixin has expected tag
@@ -870,7 +1040,7 @@ namespace mame
         //template <typename T>
         bool is_expected_tag_device_interface(device_interface interface_)  //std::enable_if_t<emu::detail::is_device_interface<T>::value, bool> is_expected_tag(T const &interface) const
         {
-            return this.m_base.get().subtag(this.m_tag) == interface_.device().tag();  //return this->m_base.get().subtag(this->m_tag) == interface.device().tag();
+            return this.m_base.subtag(this.m_tag) == interface_.device().tag();  //return this->m_base.get().subtag(this->m_tag) == interface.device().tag();
         }
 
         // finder
@@ -889,11 +1059,11 @@ namespace mame
         {
             if (valid == null)
             {
-                assert(!this.m_resolved);
+                g.assert(!this.m_resolved);
                 this.m_resolved = true;
             }
 
-            device_t device = this.m_base.get().subdevice(this.m_tag);  //device_t *const device = this->m_base.get().subdevice(this->m_tag);
+            device_t device = this.m_base.subdevice(this.m_tag);  //device_t *const device = this->m_base.get().subdevice(this->m_tag);
 
             if (device == null)
                 this.m_target = new Pointer<DeviceClass>(new MemoryContainer<DeviceClass>() { default });  //this->m_target = dynamic_cast<DeviceClass *>(device);
@@ -904,7 +1074,7 @@ namespace mame
 
             if (device != null && this.m_target == default)
             {
-                osd_printf_warning("Device '{0}' found but is of incorrect type (actual type is {1})\n", this.m_tag, device.name());
+                g.osd_printf_warning("Device '{0}' found but is of incorrect type (actual type is {1})\n", this.m_tag, device.name());
             }
 
             return this.report_missing("device");
@@ -922,7 +1092,7 @@ namespace mame
     /// optional_device_array.
     /// \sa required_device optional_device_array device_finder
     //template <class DeviceClass> using optional_device = device_finder<DeviceClass, false>;
-    public class optional_device<DeviceClass> : device_finder<DeviceClass, bool_constant_false>
+    public class optional_device<DeviceClass> : device_finder<DeviceClass, bool_const_false>
     {
         public optional_device(device_t base_, string tag) : base(base_, tag) { }
     }
@@ -937,7 +1107,7 @@ namespace mame
     /// consider using required_device_array.
     /// \sa optional_device required_device_array device_finder
     //template <class DeviceClass> using required_device = device_finder<DeviceClass, true>;
-    public class required_device<DeviceClass> : device_finder<DeviceClass, bool_constant_true>
+    public class required_device<DeviceClass> : device_finder<DeviceClass, bool_const_true>
     {
         public required_device(device_t base_, string tag) : base(base_, tag) { }
     }
@@ -945,26 +1115,26 @@ namespace mame
 
     //template <class DeviceClass, unsigned Count, bool Required> using device_array_finder = object_array_finder<device_finder<DeviceClass, Required>, Count>;
     public class device_array_finder<DeviceClass, unsigned_Count, bool_Required> : object_array_finder<device_finder<DeviceClass, bool_Required>, unsigned_Count>
-        where unsigned_Count : uint32_constant, new()
-        where bool_Required : bool_constant, new()
+        where unsigned_Count : u32_const, new()
+        where bool_Required : bool_const, new()
     {
         protected device_array_finder(device_t base_, string format, int start, Func<device_t, string, finder_base> creator_func) : base(base_, format, start, creator_func) { }
     }
 
 
     //template <class DeviceClass, unsigned Count> using optional_device_array = device_array_finder<DeviceClass, Count, false>;
-    public class optional_device_array<DeviceClass, unsigned_Count> : device_array_finder<DeviceClass, unsigned_Count, bool_constant_false>
-        where unsigned_Count : uint32_constant, new()
+    public class optional_device_array<DeviceClass, unsigned_Count> : device_array_finder<DeviceClass, unsigned_Count, bool_const_false>
+        where unsigned_Count : u32_const, new()
     {
-        public optional_device_array(device_t base_, string format, int start, Func<device_t, string, device_finder<DeviceClass, bool_constant_false>> creator_func) : base(base_, format, start, creator_func) { }
+        public optional_device_array(device_t base_, string format, int start, Func<device_t, string, device_finder<DeviceClass, bool_const_false>> creator_func) : base(base_, format, start, creator_func) { }
     }
 
 
     //template <class DeviceClass, unsigned Count> using required_device_array = device_array_finder<DeviceClass, Count, true>;
-    public class required_device_array<DeviceClass, unsigned_Count> : device_array_finder<DeviceClass, unsigned_Count, bool_constant_true>
-        where unsigned_Count : uint32_constant, new()
+    public class required_device_array<DeviceClass, unsigned_Count> : device_array_finder<DeviceClass, unsigned_Count, bool_const_true>
+        where unsigned_Count : u32_const, new()
     {
-        public required_device_array(device_t base_, string format, int start, Func<device_t, string, device_finder<DeviceClass, bool_constant_true>> creator_func) : base(base_, format, start, creator_func) { }
+        public required_device_array(device_t base_, string format, int start, Func<device_t, string, device_finder<DeviceClass, bool_const_true>> creator_func) : base(base_, format, start, creator_func) { }
     }
 
 
@@ -977,7 +1147,7 @@ namespace mame
     /// \sa optional_memory_region required_memory_region
     //template <bool Required>
     public class memory_region_finder<bool_Required> : object_finder_base<memory_region, bool_Required>
-        where bool_Required : bool_constant, new()
+        where bool_Required : bool_const, new()
     {
         /// \brief Memory region finder constructor
         /// \param [in] base Base device to search from.
@@ -1002,9 +1172,9 @@ namespace mame
             if (valid != null)
                 return this.validate_memregion(Required);
 
-            assert(!this.m_resolved);
+            g.assert(!this.m_resolved);
             this.m_resolved = true;
-            this.m_target = new Pointer<memory_region>(new MemoryContainer<memory_region>() { this.m_base.get().memregion(this.m_tag) });  //this->m_target = this->m_base.get().memregion(this->m_tag);
+            this.m_target = new Pointer<memory_region>(new MemoryContainer<memory_region>() { this.m_base.memregion(this.m_tag) });  //this->m_target = this->m_base.get().memregion(this->m_tag);
             return report_missing("memory region");
         }
     }
@@ -1044,7 +1214,7 @@ namespace mame
     /// \sa optional_memory_bank required_memory_bank
     //template <bool Required>
     public class memory_bank_finder<bool_Required> : object_finder_base<memory_bank, bool_Required>
-        where bool_Required : bool_constant, new()
+        where bool_Required : bool_const, new()
     {
         /// \brief Memory bank finder constructor
         /// \param [in] base Base device to search from.
@@ -1069,9 +1239,9 @@ namespace mame
             if (valid != null)
                 return true;
 
-            assert(!this.m_resolved);
+            g.assert(!this.m_resolved);
             this.m_resolved = true;
-            this.m_target = new Pointer<memory_bank>(new MemoryContainer<memory_bank>() { this.m_base.get().membank(this.m_tag) });  //this->m_target = this->m_base.get().membank(this->m_tag);
+            this.m_target = new Pointer<memory_bank>(new MemoryContainer<memory_bank>() { this.m_base.membank(this.m_tag) });  //this->m_target = this->m_base.get().membank(this->m_tag);
             return this.report_missing("memory bank");
         }
     }
@@ -1100,8 +1270,8 @@ namespace mame
 
     //template <unsigned Count, bool Required> using memory_bank_array_finder = object_array_finder<memory_bank_finder<Required>, Count>;
     public class memory_bank_array_finder<unsigned_Count, bool_Required> : object_array_finder<memory_bank_finder<bool_Required>, unsigned_Count>
-        where unsigned_Count : uint32_constant, new()
-        where bool_Required : bool_constant, new()
+        where unsigned_Count : u32_const, new()
+        where bool_Required : bool_const, new()
     {
         protected memory_bank_array_finder(device_t base_, string format, int start) : base(base_, format, start)
         {
@@ -1112,15 +1282,15 @@ namespace mame
 
 
     //template <unsigned Count> using optional_memory_bank_array = memory_bank_array_finder<Count, false>;
-    public class optional_memory_bank_array<unsigned_Count> : memory_bank_array_finder<unsigned_Count, bool_constant_false>
-        where unsigned_Count : uint32_constant, new()
+    public class optional_memory_bank_array<unsigned_Count> : memory_bank_array_finder<unsigned_Count, bool_const_false>
+        where unsigned_Count : u32_const, new()
     {
         public optional_memory_bank_array(device_t base_, string format, int start) : base(base_, format, start) { }
     }
 
     //template <unsigned Count> using required_memory_bank_array = memory_bank_array_finder<Count, true>;
-    public class required_memory_bank_array<unsigned_Count> : memory_bank_array_finder<unsigned_Count, bool_constant_true>
-        where unsigned_Count : uint32_constant, new()
+    public class required_memory_bank_array<unsigned_Count> : memory_bank_array_finder<unsigned_Count, bool_const_true>
+        where unsigned_Count : u32_const, new()
     {
         public required_memory_bank_array(device_t base_, string format, int start) : base(base_, format, start) { }
     }
@@ -1167,7 +1337,15 @@ namespace mame
 
         public override bool findit(validity_checker valid)
         {
-            throw new emu_unimplemented();
+            if (valid != null)
+                return true;
+
+            device_t dev = m_base;
+            memory_manager manager = dev.machine().memory();
+            string tag = dev.subtag(m_tag);
+            memory_bank bank = manager.bank_find(tag);
+            m_target = bank != null ? bank : manager.bank_alloc(dev, tag);
+            return true;
         }
 
 
@@ -1198,7 +1376,7 @@ namespace mame
     /// \sa optional_ioport required_ioport
     //template <bool Required>
     public class ioport_finder<bool_Required> : object_finder_base<ioport_port, bool_Required>
-        where bool_Required : bool_constant, new()
+        where bool_Required : bool_const, new()
     {
         /// \brief I/O port finder constructor
         /// \param [in] base Base device to search from.
@@ -1221,11 +1399,11 @@ namespace mame
         public override bool findit(validity_checker valid)
         {
             if (valid != null)
-                return base.report_missing(!valid.ioport_missing(this.m_base.get().subtag(this.m_tag)), "I/O port", Required);
+                return base.report_missing(!valid.ioport_missing(this.m_base.subtag(this.m_tag)), "I/O port", Required);
 
-            assert(!this.m_resolved);
+            g.assert(!this.m_resolved);
             this.m_resolved = true;
-            this.m_target = new Pointer<ioport_port>(new MemoryContainer<ioport_port>() { this.m_base.get().ioport(this.m_tag) });  //this->m_target = this->m_base.get().ioport(this->m_tag);
+            this.m_target = new Pointer<ioport_port>(new MemoryContainer<ioport_port>() { this.m_base.ioport(this.m_tag) });  //this->m_target = this->m_base.get().ioport(this->m_tag);
             return this.report_missing("I/O port");
         }
     }
@@ -1239,7 +1417,7 @@ namespace mame
     /// using optional_ioport_array.
     /// \sa required_ioport optional_ioport_array ioport_finder
     //using optional_ioport = ioport_finder<false>;
-    public class optional_ioport : ioport_finder<bool_constant_false>
+    public class optional_ioport : ioport_finder<bool_const_false>
     {
         public optional_ioport(device_t base_, string tag) : base(base_, tag) { }
     }
@@ -1251,7 +1429,7 @@ namespace mame
     /// similar required I/O ports, consider using required_ioport_array.
     /// \sa optional_ioport required_ioport_array ioport_finder
     //using required_ioport = ioport_finder<true>;
-    public class required_ioport : ioport_finder<bool_constant_true>
+    public class required_ioport : ioport_finder<bool_const_true>
     {
         public required_ioport(device_t base_, string tag) : base(base_, tag) { }
     }
@@ -1259,8 +1437,8 @@ namespace mame
 
     //template <unsigned Count, bool Required> using ioport_array_finder = object_array_finder<ioport_finder<Required>, Count>;
     public class ioport_array_finder<unsigned_Count, bool_Required> : object_array_finder<ioport_finder<bool_Required>, unsigned_Count>
-        where unsigned_Count : uint32_constant, new()
-        where bool_Required : bool_constant, new()
+        where unsigned_Count : u32_const, new()
+        where bool_Required : bool_const, new()
     {
         protected ioport_array_finder(device_t base_, string format, int start) : base(base_, format, start)
         {
@@ -1271,15 +1449,15 @@ namespace mame
 
 
     //template <unsigned Count> using optional_ioport_array = ioport_array_finder<Count, false>;
-    public class optional_ioport_array<unsigned_Count> : ioport_array_finder<unsigned_Count, bool_constant_false>
-        where unsigned_Count : uint32_constant, new()
+    public class optional_ioport_array<unsigned_Count> : ioport_array_finder<unsigned_Count, bool_const_false>
+        where unsigned_Count : u32_const, new()
     {
         public optional_ioport_array(device_t base_, string format, int start) : base(base_, format, start) { }
     }
 
     //template <unsigned Count> using required_ioport_array = ioport_array_finder<Count, true>;
-    public class required_ioport_array<unsigned_Count> : ioport_array_finder<unsigned_Count, bool_constant_true>
-        where unsigned_Count : uint32_constant, new()
+    public class required_ioport_array<unsigned_Count> : ioport_array_finder<unsigned_Count, bool_const_true>
+        where unsigned_Count : u32_const, new()
     {
         public required_ioport_array(device_t base_, string format, int start) : base(base_, format, start) { }
     }
@@ -1294,7 +1472,7 @@ namespace mame
     /// \sa optional_address_space required_address_space
     //template <bool Required>
     class address_space_finder<bool_Required> : object_finder_base<address_space, bool_Required>
-        where bool_Required : bool_constant, new()
+        where bool_Required : bool_const, new()
     {
         int m_spacenum;
         u8 m_data_width;
@@ -1389,7 +1567,7 @@ namespace mame
             if (valid != null)
                 return this.validate_addrspace(this.m_spacenum, this.m_data_width, Required);
 
-            assert(!this.m_resolved);
+            g.assert(!this.m_resolved);
             this.m_resolved = true;
             this.m_target = new Pointer<address_space>(new MemoryContainer<address_space>() { this.find_addrspace(this.m_spacenum, this.m_data_width, Required) });
             return this.report_missing("address space");
@@ -1423,7 +1601,7 @@ namespace mame
     /// \sa optional_region_ptr required_region_ptr
     //template<typename PointerType, bool Required>
     class region_ptr_finder<PointerType, bool_Required> : object_finder_base<PointerType, bool_Required>  //class region_ptr_finder : public object_finder_base<PointerType, Required>
-        where bool_Required : bool_constant, new()
+        where bool_Required : bool_const, new()
     {
         /// \brief Region length
         ///
@@ -1448,8 +1626,8 @@ namespace mame
         /// \param [in] index Non-negative element index.
         /// \return Non-const reference to element at requested index.
         //PointerType &operator[](int index) const { assert(index < m_length); return this->m_target[index]; }
-        public Pointer<PointerType> this[int index] { get { assert(index < m_length); return new Pointer<PointerType>(this.m_target, index); } set { throw new emu_unimplemented(); } }
-        public Pointer<PointerType> this[UInt32 index] { get { assert(index < m_length); return new Pointer<PointerType>(this.m_target, (int)index); } set { throw new emu_unimplemented(); } }
+        public Pointer<PointerType> this[int index] { get { g.assert((size_t)index < m_length); return new Pointer<PointerType>(this.m_target, index); } set { throw new emu_unimplemented(); } }
+        public Pointer<PointerType> this[UInt32 index] { get { g.assert(index < m_length); return new Pointer<PointerType>(this.m_target, (int)index); } set { throw new emu_unimplemented(); } }
 
 
         /// \brief Get length in units of elements
@@ -1483,9 +1661,9 @@ namespace mame
             if (valid != null)
                 return this.validate_memregion(Required);
 
-            assert(!this.m_resolved);
+            g.assert(!this.m_resolved);
             this.m_resolved = true;
-            this.m_target = ops.cast(new PointerU8(this.find_memregion((u8)sizeof_(typeof(PointerType)), out m_length, Required)));  //this->m_target = reinterpret_cast<PointerType *>(this->find_memregion(sizeof(PointerType), m_length, Required));
+            this.m_target = ops.cast(new PointerU8(this.find_memregion((u8)g.sizeof_(typeof(PointerType)), out m_length, Required)));  //this->m_target = reinterpret_cast<PointerType *>(this->find_memregion(sizeof(PointerType), m_length, Required));
             return this.report_missing("memory region");
         }
     }
@@ -1500,7 +1678,7 @@ namespace mame
     /// optional_region_ptr_array.
     /// \sa required_region_ptr optional_region_ptr_array region_ptr_finder
     //template <typename PointerType> using optional_region_ptr = region_ptr_finder<PointerType, false>;
-    class optional_region_ptr<PointerType> : region_ptr_finder<PointerType, bool_constant_false>
+    class optional_region_ptr<PointerType> : region_ptr_finder<PointerType, bool_const_false>
     {
         public optional_region_ptr(device_t base_, string tag) : base(base_, tag) { }
     }
@@ -1513,7 +1691,7 @@ namespace mame
     /// regions, consider using required_region_ptr_array.
     /// \sa optional_region_ptr required_region_ptr_array region_ptr_finder
     //template <typename PointerType> using required_region_ptr = region_ptr_finder<PointerType, true>;
-    class required_region_ptr<PointerType> : region_ptr_finder<PointerType, bool_constant_true>
+    class required_region_ptr<PointerType> : region_ptr_finder<PointerType, bool_const_true>
     {
         public required_region_ptr(device_t base_, string tag) : base(base_, tag) { }
     }
@@ -1534,7 +1712,7 @@ namespace mame
     /// \sa optional_shared_ptr required_shared_ptr
     //template<typename PointerType, bool Required>
     public class shared_ptr_finder<PointerType, bool_Required> : object_finder_base<PointerType, bool_Required>
-        where bool_Required : bool_constant, new()
+        where bool_Required : bool_const, new()
     {
         /// \brief Memory share length
         ///
@@ -1597,9 +1775,9 @@ namespace mame
             if (valid != null)
                 return true;
 
-            assert(!this.m_resolved);
+            g.assert(!this.m_resolved);
             this.m_resolved = true;
-            this.m_target = ops.cast(this.find_memshare((u8)(sizeof_(typeof(PointerType)) * 8), ref m_bytes, Required));  //this->m_target = reinterpret_cast<PointerType *>(this->find_memshare(sizeof(PointerType)*8, m_bytes, Required));
+            this.m_target = ops.cast(this.find_memshare((u8)(g.sizeof_(typeof(PointerType)) * 8), ref m_bytes, Required));  //this->m_target = reinterpret_cast<PointerType *>(this->find_memshare(sizeof(PointerType)*8, m_bytes, Required));
             return this.report_missing("shared pointer");
         }
     }
@@ -1613,7 +1791,7 @@ namespace mame
     /// optional memory regions, consider using optional_shared_ptr_array.
     /// \sa required_shared_ptr optional_shared_ptr_array shared_ptr_finder
     //template <typename PointerType> using optional_shared_ptr = shared_ptr_finder<PointerType, false>;
-    public class optional_shared_ptr<PointerType> : shared_ptr_finder<PointerType, bool_constant_false>
+    public class optional_shared_ptr<PointerType> : shared_ptr_finder<PointerType, bool_const_false>
     {
         public optional_shared_ptr(device_t base_, string tag)
             : base(base_, tag) { }
@@ -1628,7 +1806,7 @@ namespace mame
     /// consider using required_shared_ptr_array.
     /// \sa optional_shared_ptr required_shared_ptr_array shared_ptr_finder
     //template <typename PointerType> using required_shared_ptr = shared_ptr_finder<PointerType, true>;
-    class required_shared_ptr<PointerType> : shared_ptr_finder<PointerType, bool_constant_true>
+    class required_shared_ptr<PointerType> : shared_ptr_finder<PointerType, bool_const_true>
     {
         public required_shared_ptr(device_t base_, string tag)
             : base(base_, tag) { }

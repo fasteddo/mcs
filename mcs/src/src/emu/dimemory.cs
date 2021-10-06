@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using memory_interface_enumerator = mame.device_interface_enumerator<mame.device_memory_interface>;  //typedef device_interface_enumerator<device_memory_interface> memory_interface_enumerator;
+using size_t = System.UInt64;
 using u32 = System.UInt32;
 
 
@@ -56,7 +57,7 @@ namespace mame
         // configuration access
         public address_map_constructor get_addrmap(int spacenum = 0) { return spacenum >= 0 && spacenum < (int)(m_address_map.size()) ? m_address_map[spacenum] : null; }
         public address_space_config space_config(int spacenum = 0) { return spacenum >= 0 && spacenum < (int)(m_address_config.size()) ? m_address_config[spacenum] : null; }
-        public int max_space_count() { return m_address_config.size(); }
+        public int max_space_count() { return (int)m_address_config.size(); }
 
 
         // configuration helpers
@@ -77,10 +78,10 @@ namespace mame
         //-------------------------------------------------
         public void set_addrmap(int spacenum, address_map_constructor map)
         {
-            assert(0 <= spacenum);
+            g.assert(0 <= spacenum);
 
             if (spacenum >= (int)(m_address_map.size()))
-                m_address_map.resize(spacenum + 1);
+                m_address_map.resize((size_t)spacenum + 1);
 
             m_address_map[spacenum] = map;
         }
@@ -89,7 +90,7 @@ namespace mame
         // basic information getters
         public bool has_space(int index = 0) { return index >= 0 && index < (int)m_addrspace.size() && m_addrspace[index] != null; }
         public bool has_configured_map(int index = 0) { return index >= 0 && index < (int)m_address_map.size() && m_address_map[index] != null; }
-        public address_space space(int index = 0) { assert(index >= 0 && index < (int)m_addrspace.size() && m_addrspace[index] != null); return m_addrspace[index]; }
+        public address_space space(int index = 0) { g.assert(index >= 0 && index < (int)m_addrspace.size() && m_addrspace[index] != null); return m_addrspace[index]; }
 
 
         // address translation
@@ -104,9 +105,9 @@ namespace mame
         //template <typename Space>
         public void allocate(address_space Space, memory_manager manager, int spacenum)
         {
-            assert((0 <= spacenum) && (max_space_count() > spacenum));
-            m_addrspace.resize(std.max(m_addrspace.size(), spacenum + 1));
-            assert(m_addrspace[spacenum] == null);
+            g.assert((0 <= spacenum) && (max_space_count() > spacenum));
+            m_addrspace.resize(std.max(m_addrspace.size(), (size_t)spacenum + 1));
+            g.assert(m_addrspace[spacenum] == null);
             m_addrspace[spacenum] = Space;  //std::make_unique<Space>(manager, *this, spacenum, space_config(spacenum)->addr_width());
         }
         public void prepare_maps() { foreach (var space in m_addrspace) { if (space != null) { space.prepare_map(); } } }
@@ -134,7 +135,7 @@ namespace mame
             foreach (var entry in r)
             {
                 if (entry.first >= (int)(m_address_config.size()))
-                    m_address_config.resize(entry.first + 1);
+                    m_address_config.resize((size_t)entry.first + 1);
                 m_address_config[entry.first] = entry.second;
             }
         }

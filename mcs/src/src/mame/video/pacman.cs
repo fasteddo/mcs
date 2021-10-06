@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 
+using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -74,7 +76,6 @@ namespace mame
           bit 0 -- 1  kohm resistor  -- RED
 
         ***************************************************************************/
-
         void pacman_palette(palette_device palette)
         {
             Pointer<uint8_t> color_prom = new Pointer<uint8_t>(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
@@ -85,7 +86,7 @@ namespace mame
             double [] rweights = new double[3];
             double [] gweights = new double[3];
             double [] bweights = new double[2];
-            compute_resistor_weights(0, 255, -1.0,
+            g.compute_resistor_weights(0, 255, -1.0,
                     3, resistances3, out rweights, 0, 0,
                     3, resistances3, out gweights, 0, 0,
                     2, resistances2, out bweights, 0, 0);
@@ -101,20 +102,20 @@ namespace mame
                 bit0 = g.BIT(color_prom[i], 0);
                 bit1 = g.BIT(color_prom[i], 1);
                 bit2 = g.BIT(color_prom[i], 2);
-                int r = combine_weights(rweights, bit0, bit1, bit2);
+                int r = g.combine_weights(rweights, bit0, bit1, bit2);
 
                 // green component
                 bit0 = g.BIT(color_prom[i], 3);
                 bit1 = g.BIT(color_prom[i], 4);
                 bit2 = g.BIT(color_prom[i], 5);
-                int gr = combine_weights(gweights, bit0, bit1, bit2);
+                int gr = g.combine_weights(gweights, bit0, bit1, bit2);
 
                 // blue component
                 bit0 = g.BIT(color_prom[i], 6);
                 bit1 = g.BIT(color_prom[i], 7);
-                int b = combine_weights(bweights, bit0, bit1);
+                int b = g.combine_weights(bweights, bit0, bit1);
 
-                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r, (byte)gr, (byte)b));
+                palette.dipalette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
 
             // color_prom now points to the beginning of the lookup table
@@ -126,18 +127,18 @@ namespace mame
                 uint8_t ctabentry = (uint8_t)(color_prom[i] & 0x0f);
 
                 // first palette bank
-                palette.dipalette.set_pen_indirect((UInt32)i, ctabentry);
+                palette.dipalette.set_pen_indirect((pen_t)i, ctabentry);
 
                 // second palette bank
-                palette.dipalette.set_pen_indirect((UInt32)(i + 64 * 4), (UInt16)(0x10 + ctabentry));
+                palette.dipalette.set_pen_indirect((pen_t)(i + 64 * 4), (indirect_pen_t)(0x10 + ctabentry));
             }
         }
 
 
         //TILEMAP_MAPPER_MEMBER(pacman_state::pacman_scan_rows)
-        tilemap_memory_index pacman_scan_rows(UInt32 col, UInt32 row, UInt32 num_cols, UInt32 num_rows)
+        tilemap_memory_index pacman_scan_rows(u32 col, u32 row, u32 num_cols, u32 num_rows)
         {
-            UInt32 offs;
+            u32 offs;  //int offs;
 
             row += 2;
             col -= 2;
@@ -153,7 +154,7 @@ namespace mame
         void pacman_get_tile_info(tilemap_t tilemap, ref tile_data tileinfo, tilemap_memory_index tile_index)
         {
             int code = m_videoram.op[tile_index] | (m_charbank << 8);
-            int attr = (m_colorram.op[tile_index] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6 );
+            int attr = (m_colorram.op[tile_index] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6);
 
             tileinfo.set(0, (u32)code, (u32)attr, 0);
         }
@@ -161,14 +162,14 @@ namespace mame
 
         void init_save_state()
         {
-            save_item(NAME(new { m_charbank }));
-            save_item(NAME(new { m_spritebank }));
-            save_item(NAME(new { m_palettebank }));
-            save_item(NAME(new { m_colortablebank }));
-            save_item(NAME(new { m_flipscreen }));
-            save_item(NAME(new { m_bgpriority }));
-            save_item(NAME(new { m_irq_mask }));
-            save_item(NAME(new { m_interrupt_vector }));
+            save_item(g.NAME(new { m_charbank }));
+            save_item(g.NAME(new { m_spritebank }));
+            save_item(g.NAME(new { m_palettebank }));
+            save_item(g.NAME(new { m_colortablebank }));
+            save_item(g.NAME(new { m_flipscreen }));
+            save_item(g.NAME(new { m_bgpriority }));
+            save_item(g.NAME(new { m_irq_mask }));
+            save_item(g.NAME(new { m_interrupt_vector }));
         }
 
 
@@ -212,7 +213,7 @@ namespace mame
         void flipscreen_w(int state)
         {
             m_flipscreen = (byte)state;
-            m_bg_tilemap.set_flip(m_flipscreen * ( TILEMAP_FLIPX + TILEMAP_FLIPY ) );
+            m_bg_tilemap.set_flip(m_flipscreen * (g.TILEMAP_FLIPX + g.TILEMAP_FLIPY));
         }
 
 
@@ -221,9 +222,9 @@ namespace mame
             if (m_bgpriority != 0)
                 bitmap.fill(0, cliprect);
             else
-                m_bg_tilemap.draw(screen, bitmap, cliprect, TILEMAP_DRAW_OPAQUE, 0);
+                m_bg_tilemap.draw(screen, bitmap, cliprect, g.TILEMAP_DRAW_OPAQUE, 0);
 
-            if ( m_spriteram != null )
+            if (m_spriteram != null)
             {
                 Pointer<uint8_t> spriteram = m_spriteram.op;  //uint8_t *spriteram = m_spriteram;
                 Pointer<uint8_t> spriteram_2 = m_spriteram2.op;  //uint8_t *spriteram_2 = m_spriteram2;
@@ -239,8 +240,8 @@ namespace mame
                     int color;
                     int sx;
                     int sy;
-                    byte fx;
-                    byte fy;
+                    uint8_t fx;
+                    uint8_t fy;
 
                     if (m_inv_spr != 0)
                     {
@@ -253,25 +254,25 @@ namespace mame
                         sy = spriteram_2[offs] - 31;
                     }
 
-                    fx = (byte)((spriteram[offs] & 1) ^ m_inv_spr);
-                    fy = (byte)((spriteram[offs] & 2) ^ ((m_inv_spr) << 1));
+                    fx = (uint8_t)((spriteram[offs] & 1) ^ m_inv_spr);
+                    fy = (uint8_t)((spriteram[offs] & 2) ^ ((m_inv_spr) << 1));
 
-                    color = ( spriteram[offs + 1] & 0x1f ) | (m_colortablebank << 5) | (m_palettebank << 6 );
+                    color = (spriteram[offs + 1] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6);
 
                     m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
-                            (UInt32)(( spriteram[offs] >> 2 ) | (m_spritebank << 6)),
-                            (UInt32)color,
+                            (u32)(( spriteram[offs] >> 2) | (m_spritebank << 6)),
+                            (u32)color,
                             fx,fy,
                             sx,sy,
-                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (u32)color & 0x3f, 0));
 
                     /* also plot the sprite with wraparound (tunnel in Crush Roller) */
                     m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
-                            (UInt32)(( spriteram[offs] >> 2 ) | (m_spritebank << 6)),
-                            (UInt32)color,
+                            (u32)(( spriteram[offs] >> 2) | (m_spritebank << 6)),
+                            (u32)color,
                             fx,fy,
                             sx - 256,sy,
-                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (u32)color & 0x3f, 0));
                 }
 
                 /* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
@@ -281,8 +282,8 @@ namespace mame
                     int color;
                     int sx;
                     int sy;
-                    byte fx;
-                    byte fy;
+                    uint8_t fx;
+                    uint8_t fy;
 
                     if (m_inv_spr != 0)
                     {
@@ -295,25 +296,25 @@ namespace mame
                         sy = spriteram_2[offs] - 31;
                     }
 
-                    color = ( spriteram[offs + 1] & 0x1f ) | (m_colortablebank << 5) | (m_palettebank << 6 );
+                    color = (spriteram[offs + 1] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6);
 
-                    fx = (byte)((spriteram[offs] & 1) ^ m_inv_spr);
-                    fy = (byte)((spriteram[offs] & 2) ^ ((m_inv_spr) << 1));
+                    fx = (uint8_t)((spriteram[offs] & 1) ^ m_inv_spr);
+                    fy = (uint8_t)((spriteram[offs] & 2) ^ ((m_inv_spr) << 1));
 
                     m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
-                            (UInt32)(( spriteram[offs] >> 2 ) | (m_spritebank << 6)),
-                            (UInt32)color,
+                            (u32)((spriteram[offs] >> 2) | (m_spritebank << 6)),
+                            (u32)color,
                             fx,fy,
                             sx,sy + m_xoffsethack,
-                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (u32)color & 0x3f, 0));
 
                     /* also plot the sprite with wraparound (tunnel in Crush Roller) */
                     m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
-                            (UInt32)(( spriteram[offs] >> 2 ) | (m_spritebank << 6)),
-                            (UInt32)color,
+                            (u32)((spriteram[offs] >> 2) | (m_spritebank << 6)),
+                            (u32)color,
                             fx,fy,
                             sx - 256,sy + m_xoffsethack,
-                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color & 0x3f, 0));
+                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (u32)color & 0x3f, 0));
                 }
             }
 

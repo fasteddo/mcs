@@ -221,22 +221,22 @@ namespace mame
 
         static readonly double M52_R9      = 560;
         static readonly double M52_R10     = 330;
-        static readonly double M52_R12     = RES_K(10);
-        static readonly double M52_R13     = RES_K(10);
-        static readonly double M52_R14     = RES_K(10);
-        static readonly double M52_R15     = RES_K(2.2);  /* schematics RES_K(22) , althought 10-Yard states 2.2 */
-        static readonly double M52_R19     = RES_K(10);
-        static readonly double M52_R22     = RES_K(47);
-        static readonly double M52_R23     = RES_K(2.2);
-        static readonly double M52_R25     = RES_K(10);
-        static readonly double M52_VR1     = RES_K(50);
+        static readonly double M52_R12     = g.RES_K(10);
+        static readonly double M52_R13     = g.RES_K(10);
+        static readonly double M52_R14     = g.RES_K(10);
+        static readonly double M52_R15     = g.RES_K(2.2);  /* schematics RES_K(22) , althought 10-Yard states 2.2 */
+        static readonly double M52_R19     = g.RES_K(10);
+        static readonly double M52_R22     = g.RES_K(47);
+        static readonly double M52_R23     = g.RES_K(2.2);
+        static readonly double M52_R25     = g.RES_K(10);
+        static readonly double M52_VR1     = g.RES_K(50);
 
-        static readonly double M52_C28     = CAP_U(1);
-        static readonly double M52_C30     = CAP_U(0.022);
-        static readonly double M52_C32     = CAP_U(0.022);
-        static readonly double M52_C35     = CAP_U(47);
-        static readonly double M52_C37     = CAP_U(0.1);
-        static readonly double M52_C38     = CAP_U(0.0068);
+        static readonly double M52_C28     = g.CAP_U(1);
+        static readonly double M52_C30     = g.CAP_U(0.022);
+        static readonly double M52_C32     = g.CAP_U(0.022);
+        static readonly double M52_C35     = g.CAP_U(47);
+        static readonly double M52_C37     = g.CAP_U(0.1);
+        static readonly double M52_C38     = g.CAP_U(0.0068);
 
 
         static readonly discrete_mixer_desc m52_sound_c_stage1 = new discrete_mixer_desc
@@ -261,7 +261,7 @@ namespace mame
                 new double [] {      0,       0 },    /* node capacitors      */
                         0, M52_VR1,     /* rI, rF               */
                 0,                      /* cF                   */
-                CAP_U(1),               /* cAmp                 */
+                g.CAP_U(1),               /* cAmp                 */
                 0, 1);
 
 
@@ -324,9 +324,9 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            save_item(NAME(new { m_port1 }));
-            save_item(NAME(new { m_port2 }));
-            save_item(NAME(new { m_soundlatch }));
+            save_item(g.NAME(new { m_port1 }));
+            save_item(g.NAME(new { m_port2 }));
+            save_item(g.NAME(new { m_soundlatch }));
         }
 
         //-------------------------------------------------
@@ -346,7 +346,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(IREM_M52_SOUNDC_AUDIO, m52_soundc_audio_device, "m52_soundc_audio", "Irem M52 SoundC Audio")
         static device_t device_creator_m52_soundc_audio_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m52_soundc_audio_device(mconfig, tag, owner, clock); }
-        public static readonly device_type IREM_M52_SOUNDC_AUDIO = DEFINE_DEVICE_TYPE(device_creator_m52_soundc_audio_device, "m52_soundc_audio", "Irem M52 SoundC Audio");
+        public static readonly device_type IREM_M52_SOUNDC_AUDIO = g.DEFINE_DEVICE_TYPE(device_creator_m52_soundc_audio_device, "m52_soundc_audio", "Irem M52 SoundC Audio");
 
 
         m52_soundc_audio_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
@@ -358,35 +358,35 @@ namespace mame
         protected override void device_add_mconfig(machine_config config)
         {
             /* basic machine hardware */
-            m6803_cpu_device cpu = M6803(config, m_cpu, new XTAL(3579545)); /* verified on pcb */
-            cpu.memory().set_addrmap(AS_PROGRAM, m52_small_sound_map);
+            m6803_cpu_device cpu = g.M6803(config, m_cpu, new XTAL(3579545)); /* verified on pcb */
+            cpu.memory().set_addrmap(g.AS_PROGRAM, m52_small_sound_map);
             cpu.in_p1_cb().set(m6803_port1_r).reg();
             cpu.out_p1_cb().set(m6803_port1_w).reg();
             cpu.in_p2_cb().set(m6803_port2_r).reg();
             cpu.out_p2_cb().set(m6803_port2_w).reg();
 
             /* sound hardware */
-            SPEAKER(config, "mono").front_center();
+            g.SPEAKER(config, "mono").front_center();
 
-            AY8910(config, m_ay_45M, new XTAL(3579545)/4); /* verified on pcb */
+            g.AY8910(config, m_ay_45M, new XTAL(3579545)/4); /* verified on pcb */
             m_ay_45M.op[0].set_flags(ay8910_device.AY8910_SINGLE_OUTPUT | ay8910_global.AY8910_DISCRETE_OUTPUT);
             m_ay_45M.op[0].set_resistors_load(470, 0, 0);
             m_ay_45M.op[0].port_a_read_callback().set(soundlatch_r).reg();
             m_ay_45M.op[0].port_b_write_callback().set(ay8910_45M_portb_w).reg();
             m_ay_45M.op[0].disound.add_route(0, "filtermix", 1.0, 0);
 
-            AY8910(config, m_ay_45L, new XTAL(3579545)/4); /* verified on pcb */
+            g.AY8910(config, m_ay_45L, new XTAL(3579545)/4); /* verified on pcb */
             m_ay_45L.op[0].set_flags(ay8910_device.AY8910_SINGLE_OUTPUT | ay8910_global.AY8910_DISCRETE_OUTPUT);
             m_ay_45L.op[0].set_resistors_load(470, 0, 0);
             m_ay_45L.op[0].port_a_write_callback().set(ay8910_45L_porta_w).reg();
             m_ay_45L.op[0].disound.add_route(0, "filtermix", 1.0, 1);
 
-            MSM5205(config, m_adpcm1, new XTAL(384000)); /* verified on pcb */
+            g.MSM5205(config, m_adpcm1, new XTAL(384000)); /* verified on pcb */
             m_adpcm1.op[0].vck_callback().set_inputline(m_cpu, g.INPUT_LINE_NMI).reg(); // driven through NPN inverter
             m_adpcm1.op[0].set_prescaler_selector(msm5205_device.S96_4B);      /* default to 4KHz, but can be changed at run time */
             m_adpcm1.op[0].disound.add_route(0, "filtermix", 1.0, 2);
 
-            DISCRETE(config, "filtermix", m52_sound_c_discrete).disound.add_route(g.ALL_OUTPUTS, "mono", 1.0);
+            g.DISCRETE(config, "filtermix", m52_sound_c_discrete).disound.add_route(g.ALL_OUTPUTS, "mono", 1.0);
         }
     }
 }

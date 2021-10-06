@@ -22,7 +22,7 @@ namespace mame
 
             /* calculate digital filter coefficents */
             /*wc = 2.0*M_PI*fc; no pre-warping */
-            wc = node.sample_rate() * 2.0 * Math.Tan(Math.PI * fc / node.sample_rate()); /* pre-warping */
+            wc = node.sample_rate() * 2.0 * std.tan(g.M_PI * fc / node.sample_rate()); /* pre-warping */
             wc_squared = wc * wc;
 
             den = two_over_T_squared + d*wc*two_over_T + wc_squared;
@@ -32,7 +32,7 @@ namespace mame
 
             if (type == g.DISC_FILTER_LOWPASS)
             {
-                coeff.b0 = coeff.b2 = wc_squared/den;
+                coeff.b0 = coeff.b2 = wc_squared / den;
                 coeff.b1 = 2.0 * (coeff.b0);
             }
             else if (type == g.DISC_FILTER_BANDPASS)
@@ -113,15 +113,15 @@ namespace mame
             switch ((int)DST_SALLEN_KEY__TYPE)
             {
                 case g.DISC_SALLEN_KEY_LOW_PASS:
-                    freq = 1.0 / ( 2.0 * Math.PI * Math.Sqrt(info.c1 * info.c2 * info.r1 * info.r2));
-                    q = Math.Sqrt(info.c1 * info.c2 * info.r1 * info.r2) / (info.c2 * (info.r1 + info.r2));
+                    freq = 1.0 / ( 2.0 * g.M_PI * std.sqrt(info.c1 * info.c2 * info.r1 * info.r2));
+                    q = std.sqrt(info.c1 * info.c2 * info.r1 * info.r2) / (info.c2 * (info.r1 + info.r2));
                     break;
                 default:
-                    fatalerror("Unknown sallen key filter type\n");
+                    g.fatalerror("Unknown sallen key filter type\n");
                     break;
             }
 
-            calculate_filter2_coefficients(this, freq, 1.0 / q, g.DISC_FILTER_LOWPASS, ref m_fc);
+            g.calculate_filter2_coefficients(this, freq, 1.0 / q, g.DISC_FILTER_LOWPASS, ref m_fc);
             set_output(0,  0);
         }
 
@@ -289,8 +289,7 @@ namespace mame
         //DISCRETE_RESET(dst_op_amp_filt)
         public override void reset()
         {
-            //DISCRETE_DECLARE_INFO(discrete_op_amp_filt_info)
-            discrete_op_amp_filt_info info = (discrete_op_amp_filt_info)custom_data();
+            discrete_op_amp_filt_info info = (discrete_op_amp_filt_info)custom_data();  //DISCRETE_DECLARE_INFO(discrete_op_amp_filt_info)
 
             /* Convert the passed filter type into an int for easy use. */
             m_type = (int)DST_OP_AMP_FILT__TYPE() & g.DISC_OP_AMP_FILTER_TYPE_MASK;
@@ -351,17 +350,17 @@ namespace mame
                     if (info.r2 == 0)
                         m_rTotal = info.r1;
                     else
-                        m_rTotal = RES_2_PARALLEL(info.r1, info.r2);
+                        m_rTotal = g.RES_2_PARALLEL(info.r1, info.r2);
 
                     goto case g.DISC_OP_AMP_FILTER_IS_BAND_PASS_1M;  //[[fallthrough]];
 
                 case g.DISC_OP_AMP_FILTER_IS_BAND_PASS_1M:
                 {
-                    double fc = 1.0 / (2 * Math.PI * Math.Sqrt(m_rTotal * info.rF * info.c1 * info.c2));
-                    double d  = (info.c1 + info.c2) / Math.Sqrt(info.rF / m_rTotal * info.c1 * info.c2);
+                    double fc = 1.0 / (2 * g.M_PI * std.sqrt(m_rTotal * info.rF * info.c1 * info.c2));
+                    double d  = (info.c1 + info.c2) / std.sqrt(info.rF / m_rTotal * info.c1 * info.c2);
                     double gain = -info.rF / m_rTotal * info.c2 / (info.c1 + info.c2);
 
-                    calculate_filter2_coefficients(this, fc, d, g.DISC_FILTER_BANDPASS, ref m_fc);
+                    g.calculate_filter2_coefficients(this, fc, d, g.DISC_FILTER_BANDPASS, ref m_fc);
                     m_fc.b0 *= gain;
                     m_fc.b1 *= gain;
                     m_fc.b2 *= gain;
@@ -375,8 +374,8 @@ namespace mame
                 }
 
                 case g.DISC_OP_AMP_FILTER_IS_BAND_PASS_0 | g.DISC_OP_AMP_IS_NORTON:
-                    m_exponentC1 = RC_CHARGE_EXP(RES_2_PARALLEL(info.r1, info.r2 + info.r3 + info.r4) * info.c1);
-                    m_exponentC2 = RC_CHARGE_EXP(RES_2_PARALLEL(info.r1 + info.r2, info.r3 + info.r4) * info.c2);
+                    m_exponentC1 = RC_CHARGE_EXP(g.RES_2_PARALLEL(info.r1, info.r2 + info.r3 + info.r4) * info.c1);
+                    m_exponentC2 = RC_CHARGE_EXP(g.RES_2_PARALLEL(info.r1 + info.r2, info.r3 + info.r4) * info.c2);
                     m_exponentC3 = RC_CHARGE_EXP((info.r1 + info.r2 + info.r3 + info.r4) * info.c3);
                     break;
 
@@ -820,15 +819,15 @@ namespace mame
             m_vCE  = 0;
 
             /* pre-calculate fixed values */
-            m_gain_r1_r2 = RES_VOLTAGE_DIVIDER(DST_RCINTEGRATE__R1, DST_RCINTEGRATE__R2);
+            m_gain_r1_r2 = g.RES_VOLTAGE_DIVIDER(DST_RCINTEGRATE__R1, DST_RCINTEGRATE__R2);
 
             r = DST_RCINTEGRATE__R1 / DST_RCINTEGRATE__R2 * DST_RCINTEGRATE__R3 + DST_RCINTEGRATE__R1 + DST_RCINTEGRATE__R3;
 
-            m_f = RES_VOLTAGE_DIVIDER(DST_RCINTEGRATE__R3, DST_RCINTEGRATE__R2);
+            m_f = g.RES_VOLTAGE_DIVIDER(DST_RCINTEGRATE__R3, DST_RCINTEGRATE__R2);
             m_exponent0 = -1.0 * r * m_f * DST_RCINTEGRATE__C;
             m_exponent1 = -1.0 * (DST_RCINTEGRATE__R1 + DST_RCINTEGRATE__R2) * DST_RCINTEGRATE__C;
-            m_exp_exponent0 = Math.Exp(dt / m_exponent0);
-            m_exp_exponent1 = Math.Exp(dt / m_exponent1);
+            m_exp_exponent0 = std.exp(dt / m_exponent0);
+            m_exp_exponent1 = std.exp(dt / m_exponent1);
             m_c_exp0 =  DST_RCINTEGRATE__C / m_exponent0 * m_exp_exponent0;
             m_c_exp1 =  DST_RCINTEGRATE__C / m_exponent1 * m_exp_exponent1;
 
@@ -862,7 +861,7 @@ namespace mame
             u  = DST_RCINTEGRATE__IN1;
             vP = DST_RCINTEGRATE__VP;
 
-            if ( u - 0.7  < m_vCap * m_gain_r1_r2)
+            if (u - 0.7  < m_vCap * m_gain_r1_r2)
             {
                 /* discharge .... */
                 diff  = 0.0 - m_vCap;
@@ -898,14 +897,14 @@ namespace mame
                 iQc = EM_IC(u - vE);
             }
 
-            m_vCE = Math.Min(vP - 0.1, vP - RG * iQc);
+            m_vCE = std.min(vP - 0.1, vP - RG * iQc);
 
             /* Avoid oscillations
              * The method tends to largely overshoot - no wonder without
              * iterative solution approximation
              */
 
-            m_vCE = Math.Max(m_vCE, 0.1 );
+            m_vCE = std.max(m_vCE, 0.1 );
             m_vCE = 0.1 * m_vCE + 0.9 * (vP - vE - iQ * DST_RCINTEGRATE__R3);
 
             switch (m_type)
@@ -917,7 +916,7 @@ namespace mame
                     set_output(0,  vE);
                     break;
                 case g.DISC_RC_INTEGRATE_TYPE3:
-                    set_output(0, Math.Max(0.0, vP - iQ * DST_RCINTEGRATE__R3));
+                    set_output(0, std.max(0.0, vP - iQ * DST_RCINTEGRATE__R3));
                     break;
             }
         }
@@ -968,28 +967,28 @@ namespace mame
             rc[0] = DST_RCDISC_MOD__R1 + DST_RCDISC_MOD__R2;
             if (rc[0] < 1) rc[0] = 1;
             m_exp_low[0]  = RC_DISCHARGE_EXP(DST_RCDISC_MOD__C * rc[0]);
-            m_gain[0]     = RES_VOLTAGE_DIVIDER(rc[0], DST_RCDISC_MOD__R4);
+            m_gain[0]     = g.RES_VOLTAGE_DIVIDER(rc[0], DST_RCDISC_MOD__R4);
             /* DST_RCDISC_MOD__IN1 > 0.5 */
             rc[1] = DST_RCDISC_MOD__R2;
             if (rc[1] < 1) rc[1] = 1;
             m_exp_low[1]  = RC_DISCHARGE_EXP(DST_RCDISC_MOD__C * rc[1]);
-            m_gain[1]     = RES_VOLTAGE_DIVIDER(rc[1], DST_RCDISC_MOD__R4);
+            m_gain[1]     = g.RES_VOLTAGE_DIVIDER(rc[1], DST_RCDISC_MOD__R4);
             /* DST_RCDISC_MOD__IN2 <= 0.6 */
             rc2[0] = DST_RCDISC_MOD__R4;
             /* DST_RCDISC_MOD__IN2 > 0.6 */
-            rc2[1] = RES_2_PARALLEL(DST_RCDISC_MOD__R3, DST_RCDISC_MOD__R4);
+            rc2[1] = g.RES_2_PARALLEL(DST_RCDISC_MOD__R3, DST_RCDISC_MOD__R4);
             /* DST_RCDISC_MOD__IN1 <= 0.5 && DST_RCDISC_MOD__IN2 <= 0.6 */
             m_exp_high[0] = RC_DISCHARGE_EXP(DST_RCDISC_MOD__C * (rc[0] + rc2[0]));
-            m_vd_gain[0]  = RES_VOLTAGE_DIVIDER(rc[0], rc2[0]);
+            m_vd_gain[0]  = g.RES_VOLTAGE_DIVIDER(rc[0], rc2[0]);
             /* DST_RCDISC_MOD__IN1 > 0.5  && DST_RCDISC_MOD__IN2 <= 0.6 */
             m_exp_high[1] = RC_DISCHARGE_EXP(DST_RCDISC_MOD__C * (rc[1] + rc2[0]));
-            m_vd_gain[1]  = RES_VOLTAGE_DIVIDER(rc[1], rc2[0]);
+            m_vd_gain[1]  = g.RES_VOLTAGE_DIVIDER(rc[1], rc2[0]);
             /* DST_RCDISC_MOD__IN1 <= 0.5 && DST_RCDISC_MOD__IN2 > 0.6 */
             m_exp_high[2] = RC_DISCHARGE_EXP(DST_RCDISC_MOD__C * (rc[0] + rc2[1]));
-            m_vd_gain[2]  = RES_VOLTAGE_DIVIDER(rc[0], rc2[1]);
+            m_vd_gain[2]  = g.RES_VOLTAGE_DIVIDER(rc[0], rc2[1]);
             /* DST_RCDISC_MOD__IN1 > 0.5  && DST_RCDISC_MOD__IN2 > 0.6 */
             m_exp_high[3] = RC_DISCHARGE_EXP(DST_RCDISC_MOD__C * (rc[1] + rc2[1]));
-            m_vd_gain[3]  = RES_VOLTAGE_DIVIDER(rc[1], rc2[1]);
+            m_vd_gain[3]  = g.RES_VOLTAGE_DIVIDER(rc[1], rc2[1]);
 
             m_v_cap  = 0;
             set_output(0,  0);
@@ -1155,7 +1154,7 @@ namespace mame
         double DST_RCFILTER_SW__VIN { get { return DISCRETE_INPUT(1); } }
         double DST_RCFILTER_SW__SWITCH { get { return DISCRETE_INPUT(2); } }
         double DST_RCFILTER_SW__R { get { return DISCRETE_INPUT(3); } }
-        double DST_RCFILTER_SW__C(int x) { return DISCRETE_INPUT(4+x); }
+        double DST_RCFILTER_SW__C(int x) { return DISCRETE_INPUT(4 + x); }
 
 
         /* 74HC4066 : 15
@@ -1209,7 +1208,7 @@ namespace mame
                         rs += DST_RCFILTER_SW__R;
                 }
 
-                m_f1[bits] = RES_VOLTAGE_DIVIDER(rs, CD4066_ON_RES);
+                m_f1[bits] = g.RES_VOLTAGE_DIVIDER(rs, CD4066_ON_RES);
                 m_f2[bits] = DST_RCFILTER_SW__R / (CD4066_ON_RES + rs);
             }
 
@@ -1217,7 +1216,7 @@ namespace mame
             /* fast cases */
             m_exp0 = RC_CHARGE_EXP((CD4066_ON_RES + DST_RCFILTER_SW__R) * DST_RCFILTER_SW__C(0));
             m_exp1 = RC_CHARGE_EXP((CD4066_ON_RES + DST_RCFILTER_SW__R) * DST_RCFILTER_SW__C(1));
-            m_factor = RES_VOLTAGE_DIVIDER(DST_RCFILTER_SW__R, CD4066_ON_RES);
+            m_factor = g.RES_VOLTAGE_DIVIDER(DST_RCFILTER_SW__R, CD4066_ON_RES);
 
             set_output(0,  0);
         }

@@ -226,8 +226,8 @@ namespace mame
 
 
         // getters
-        public device_palette_interface palette() { assert(m_palette.bool_); return m_palette.op[0]; }  //{ assert(m_palette); return *m_palette; }
-        public gfx_element gfx(int index) { assert(index < digfx_global.MAX_GFX_ELEMENTS); return m_gfx[index]; }
+        public device_palette_interface palette() { g.assert(m_palette.bool_); return m_palette.op[0]; }  //{ assert(m_palette); return *m_palette; }
+        public gfx_element gfx(int index) { g.assert(index < digfx_global.MAX_GFX_ELEMENTS); return m_gfx[index]; }
 
 
         // decoding
@@ -289,10 +289,10 @@ namespace mame
                     region_length = 0;
                     region_base = null;
                     region_width = 1;
-                    region_endianness = ENDIANNESS_NATIVE;
+                    region_endianness = g.ENDIANNESS_NATIVE;
                 }
 
-                if (region_endianness != ENDIANNESS_NATIVE)
+                if (region_endianness != g.ENDIANNESS_NATIVE)
                 {
                     switch (region_width)
                     {
@@ -324,8 +324,8 @@ namespace mame
                 if (glcopy.planeoffset[0] != digfx_global.GFX_RAW)
                 {
                     // copy the X and Y offsets into our temporary arrays
-                    extxoffs.resize((int)(glcopy.width * xscale));
-                    extyoffs.resize((int)(glcopy.height * yscale));
+                    extxoffs.resize(glcopy.width * xscale);
+                    extyoffs.resize(glcopy.height * yscale);
 
                     //memcpy(&extxoffs[0], (glcopy.extxoffs != null) ? glcopy.extxoffs : glcopy.xoffset, glcopy.width * sizeof(UInt32));
                     //memcpy(&extyoffs[0], (glcopy.extyoffs != null) ? glcopy.extyoffs : glcopy.yoffset, glcopy.height * sizeof(UInt32));
@@ -428,11 +428,11 @@ namespace mame
                 std.pair<device_t, string> target = m_palette.finder_target();
                 if (target.second == finder_base.DUMMY_TAG)
                 {
-                    osd_printf_error("No palette specified for device '{0}'\n", device().tag());
+                    g.osd_printf_error("No palette specified for device '{0}'\n", device().tag());
                 }
                 else
                 {
-                    osd_printf_error(
+                    g.osd_printf_error(
                             "Device '{0}' specifies nonexistent device '{1}' relative to '{2}' as palette\n",
                             device().tag(),
                             target.second,
@@ -462,7 +462,7 @@ namespace mame
 
                     UInt32 region_length = (UInt32)valid.region_length(gfxregion);
                     if (region_length == 0)
-                        osd_printf_error("gfx[{0}] references nonexistent region '{1}'\n", gfxnum, gfxregion);
+                        g.osd_printf_error("gfx[{0}] references nonexistent region '{1}'\n", gfxnum, gfxregion);
 
                     // if we have a valid region, and we're not using auto-sizing, check the decode against the region length
                     else if (!g.IS_FRAC(layout.total))
@@ -484,7 +484,7 @@ namespace mame
 
                         // if not, this is an error
                         if ((start + len) / 8 > avail)
-                            osd_printf_error("gfx[{0}] extends past allocated memory of region '{1}'\n", gfxnum, region);
+                            g.osd_printf_error("gfx[{0}] extends past allocated memory of region '{1}'\n", gfxnum, region);
                     }
                 }
 
@@ -495,9 +495,9 @@ namespace mame
                 if (layout.planeoffset[0] == digfx_global.GFX_RAW)
                 {
                     if (layout.total != g.RGN_FRAC(1,1))
-                        osd_printf_error("gfx[{0}] RAW layouts can only be RGN_FRAC(1,1)\n", gfxnum);
+                        g.osd_printf_error("gfx[{0}] RAW layouts can only be RGN_FRAC(1,1)\n", gfxnum);
                     if (xscale != 1 || yscale != 1)
-                        osd_printf_error("gfx[{0}] RAW layouts do not support xscale/yscale\n", gfxnum);
+                        g.osd_printf_error("gfx[{0}] RAW layouts do not support xscale/yscale\n", gfxnum);
                 }
 
                 // verify traditional decode doesn't have too many planes,
@@ -520,11 +520,11 @@ namespace mame
                 std.pair<device_t, string> target = m_palette.finder_target();
                 if (target.second == finder_base.DUMMY_TAG)
                 {
-                    fatalerror("No palette specified for device {0}\n", device().tag());
+                    g.fatalerror("No palette specified for device {0}\n", device().tag());
                 }
                 else
                 {
-                    fatalerror(
+                    g.fatalerror(
                             "Device '{0}' specifies nonexistent device '{1}' relative to '{2}' as palette\n",
                             device().tag(),
                             target.second,

@@ -16,7 +16,7 @@ namespace mame.plib
         //        : plib::perrmsg(str, std::forward<Args>(args)...) \
         //        { static_assert(narg == sizeof...(args), "Argument count mismatch"); } \
         //    };
-        public static string PERRMSGV(int narg, string format, params object [] args) { global_object.static_assert(narg == args.Length, "Argument count mismatch"); return String.Format(format, args); }
+        public static string PERRMSGV(int narg, string format, params object [] args) { g.static_assert(narg == args.Length, "Argument count mismatch"); return String.Format(format, args); }
     }
 
 
@@ -84,9 +84,9 @@ namespace mame.plib
 
     //template <class T, bool build_enabled = true>
     public abstract class pfmt_writer_t<T, bool_build_enabled>
-        where bool_build_enabled : bool_constant, new()
+        where bool_build_enabled : bool_const, new()
     {
-        static bool_build_enabled build_enabled = new bool_build_enabled();
+        static readonly bool build_enabled = new bool_build_enabled().value;
 
 
         bool m_enabled;
@@ -124,7 +124,7 @@ namespace mame.plib
         //}
         public void op(string format, params object [] args)
         {
-            if (build_enabled.value && m_enabled)
+            if (build_enabled && m_enabled)
             {
                 string s = string.Format(format, args);
                 vdowrite(s);  //static_cast<const T *>(this)->vdowrite(xlog(pf, std::forward<Args>(args)...));
@@ -148,7 +148,7 @@ namespace mame.plib
     }
 
 
-    public abstract class pfmt_writer_t<T> : pfmt_writer_t<T, bool_constant_true>
+    public abstract class pfmt_writer_t<T> : pfmt_writer_t<T, bool_const_true>
     {
     }
 
@@ -156,7 +156,7 @@ namespace mame.plib
     public delegate void plog_delegate(plog_level level, string log);  //using plog_delegate = plib::pmfp<void, plog_level, const pstring &>;
 
 
-    public class plog_channel<plog_level_L> : plog_channel<plog_level_L, bool_constant_true>
+    public class plog_channel<plog_level_L> : plog_channel<plog_level_L, bool_const_true>
         where plog_level_L : plog_level_constant, new()
     {
         public plog_channel(plog_delegate logger) : base(logger) { }
@@ -165,10 +165,10 @@ namespace mame.plib
     //template <plog_level::E L, bool build_enabled = true>
     public class plog_channel<plog_level_L, bool_build_enabled> : pfmt_writer_t<plog_channel<plog_level_L, bool_build_enabled>, bool_build_enabled>  //class plog_channel : public pfmt_writer_t<plog_channel<L, build_enabled>, build_enabled>
         where plog_level_L : plog_level_constant, new()
-        where bool_build_enabled : bool_constant, new()
+        where bool_build_enabled : bool_const, new()
     {
-        static plog_level_L L = new plog_level_L();
-        static bool_build_enabled build_enabled = new bool_build_enabled();
+        static readonly plog_level L = new plog_level_L().value;
+        static readonly bool build_enabled = new bool_build_enabled().value;
 
 
         //friend class pfmt_writer_t<plog_channel<T, L, build_enabled>, build_enabled>;
@@ -190,16 +190,16 @@ namespace mame.plib
 
         protected override void vdowrite(string ls)
         {
-            m_logger(L.value, ls);
+            m_logger(L, ls);
         }
     }
 
 
     //template<bool debug_enabled>
     public class plog_base<bool_debug_enabled>
-        where bool_debug_enabled : bool_constant, new()
+        where bool_debug_enabled : bool_const, new()
     {
-        static bool_debug_enabled debug_enabled = new bool_debug_enabled();
+        static readonly bool debug_enabled = new bool_debug_enabled().value;
 
 
         public plog_channel<plog_level_constant_DEBUG, bool_debug_enabled> debug;

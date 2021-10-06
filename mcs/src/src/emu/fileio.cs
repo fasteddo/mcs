@@ -5,19 +5,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using emu_file_searchpath_vector = mame.std.vector<mame.std.pair<mame.path_iterator, string>>;  //using searchpath_vector = std::vector<std::pair<path_iterator, std::string> >;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using s64 = System.Int64;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
 {
     // ======================> path_iterator
     // helper class for iterating over configured paths
-    class path_iterator : global_object
+    class path_iterator
     {
         // internal state
         string m_searchpath;
@@ -73,8 +76,8 @@ namespace mame
             if (name != null)
             {
                 // compute the full pathname
-                if (!buffer.empty() && !util_.is_directory_separator(buffer.back()))
-                    buffer += PATH_SEPARATOR;
+                if (!buffer.empty() && !util.is_directory_separator(buffer.back()))
+                    buffer += g.PATH_SEPARATOR;
 
                 buffer += name;
             }
@@ -156,20 +159,17 @@ namespace mame
 
 
     // ======================> emu_file
-    public class emu_file : global_object, IDisposable
+    public class emu_file : IDisposable
     {
+        const int VERBOSE = 0;  //#define VERBOSE 1
+        static void LOG_OUTPUT_FUNC_fileio(device_t device, string format, params object [] args) { g.osd_printf_verbose(format, args); }  //#define LOG_OUTPUT_FUNC osd_printf_verbose
+        public static void LOG(string format, params object [] args) { g.LOG(VERBOSE, null, LOG_OUTPUT_FUNC_fileio, format, args); }
+
+
         enum empty_t { EMPTY }
 
 
         //using searchpath_vector = std::vector<std::pair<path_iterator, std::string> >;
-        class searchpath_vector : std.vector<std.pair<path_iterator, string>>
-        {
-            public searchpath_vector() : base() { }
-            // this is different behavior as List<T> so that it matches how std::vector works
-            public searchpath_vector(int count, std.pair<path_iterator, string> data = default) : base(count, data) { }
-            public searchpath_vector(u32 count, std.pair<path_iterator, string> data = default) : base(count, data) { }
-            public searchpath_vector(IEnumerable<std.pair<path_iterator, string>> collection) : base(collection) { }
-        }
 
 
         // from stdio.h
@@ -184,9 +184,9 @@ namespace mame
         // internal state
         string m_filename;                     // original filename provided
         string m_fullpath;                     // full filename
-        util_.core_file m_file;  //util::core_file::ptr    m_file;                 // core file pointer
-        searchpath_vector m_iterator;             // iterator for paths
-        searchpath_vector m_mediapaths;           // media-path iterator
+        util.core_file m_file;  //util::core_file::ptr    m_file;                 // core file pointer
+        emu_file_searchpath_vector m_iterator;             // iterator for paths
+        emu_file_searchpath_vector m_mediapaths;           // media-path iterator
         bool m_first;                // true if this is the start of iteration
         u32 m_crc;                          // file's CRC
         u32 m_openflags;                    // flags we used for the open
@@ -226,8 +226,8 @@ namespace mame
             m_filename = "";
             m_fullpath = "";
             m_file = null;
-            m_iterator = new searchpath_vector();
-            m_mediapaths = new searchpath_vector();
+            m_iterator = new emu_file_searchpath_vector();
+            m_mediapaths = new emu_file_searchpath_vector();
             m_first = true;
             m_crc = 0;
             m_openflags = openflags;
@@ -238,7 +238,7 @@ namespace mame
 
 
             // sanity check the open flags
-            if ((m_openflags & OPEN_FLAG_HAS_CRC) != 0 && (m_openflags & OPEN_FLAG_WRITE) != 0)
+            if ((m_openflags & OPEN_FLAG_HAS_CRC) != 0 && (m_openflags & g.OPEN_FLAG_WRITE) != 0)
                 throw new emu_fatalerror("Attempted to open a file for write with OPEN_FLAG_HAS_CRC");
         }
 
@@ -269,7 +269,7 @@ namespace mame
 
         // getters
         //operator core_file &();
-        public util_.core_file core_file_get()
+        public util.core_file core_file_get()
         {
             // load the ZIP file now if we haven't yet
             if (compressed_file_ready())
@@ -295,7 +295,7 @@ namespace mame
             // determine which hashes we need
             string needed = "";
             foreach (char scan in types)
-                if (already_have.find_first_of(scan) == -1)
+                if (already_have.find_first_of(scan) == g.npos)
                     needed += scan;
 
             // if we need nothing, skip it
@@ -312,7 +312,7 @@ namespace mame
             // if we have ZIP data, just hash that directly
             if (!m_zipdata.empty())
             {
-                m_hashes.compute(new Pointer<u8>(m_zipdata), (UInt32)m_zipdata.size(), needed);  //m_hashes.compute(&m_zipdata[0], m_zipdata.size(), needed.c_str());
+                m_hashes.compute(new Pointer<u8>(m_zipdata), (uint32_t)m_zipdata.size(), needed);  //m_hashes.compute(&m_zipdata[0], m_zipdata.size(), needed.c_str());
                 return m_hashes;
             }
 
@@ -435,17 +435,17 @@ namespace mame
                 foreach (var path in m_iterator)  //for (searchpath_vector::value_type const &path : m_iterator)
                 {
                     m_fullpath = m_fullpath.append_(path.second);
-                    if (!m_fullpath.empty() && !util_.is_directory_separator(m_fullpath.back()))
-                        m_fullpath = m_fullpath.append_(PATH_SEPARATOR);
+                    if (!m_fullpath.empty() && !util.is_directory_separator(m_fullpath.back()))
+                        m_fullpath = m_fullpath.append_(g.PATH_SEPARATOR);
                 }
                 m_fullpath = m_fullpath.append_(m_filename);
 
                 // attempt to open the file directly
                 LOG(null, "emu_file: attempting to open '{0}' directly\n", m_fullpath);
-                filerr = util_.core_file.open(m_fullpath, m_openflags, out m_file);
+                filerr = util.core_file.open(m_fullpath, m_openflags, out m_file);
 
                 // if we're opening for read-only we have other options
-                if ((osd_file.error.NONE != filerr) && ((m_openflags & (OPEN_FLAG_READ | OPEN_FLAG_WRITE)) == OPEN_FLAG_READ))
+                if ((osd_file.error.NONE != filerr) && ((m_openflags & (g.OPEN_FLAG_READ | g.OPEN_FLAG_WRITE)) == g.OPEN_FLAG_READ))
                 {
                     LOG(null, "emu_file: attempting to open '{0}' from archives\n", m_fullpath);
                     filerr = attempt_zipped();
@@ -467,7 +467,7 @@ namespace mame
             m_crc = 0;
 
             // use the core_file's built-in RAM support
-            return util_.core_file.open_ram(data, length, m_openflags, out m_file);
+            return util.core_file.open_ram(data, length, m_openflags, out m_file);
         }
 
 
@@ -693,7 +693,7 @@ namespace mame
             if (m_restrict_to_mediapath == 0)
                 return true;
 
-            for (size_t i = 0U; (m_mediapaths.size() > i) && ((0 > m_restrict_to_mediapath) || (i < m_restrict_to_mediapath)); i++)
+            for (size_t i = 0U; (m_mediapaths.size() > i) && ((0 > m_restrict_to_mediapath) || (i < (size_t)m_restrict_to_mediapath)); i++)
             {
                 m_mediapaths[i].first.reset();
 
@@ -709,11 +709,11 @@ namespace mame
             while (true)
             {
                 mediapath = "";  //mediapath.clear();
-                for (size_t i = 0U; (m_mediapaths.size() > i) && ((0 > m_restrict_to_mediapath) || (i < m_restrict_to_mediapath)); i++)
+                for (size_t i = 0U; (m_mediapaths.size() > i) && ((0 > m_restrict_to_mediapath) || (i < (size_t)m_restrict_to_mediapath)); i++)
                 {
                     mediapath = mediapath.append_(m_mediapaths[i].second);
-                    if (!mediapath.empty() && !util_.is_directory_separator(mediapath.back()))
-                        mediapath = mediapath.append_(PATH_SEPARATOR);
+                    if (!mediapath.empty() && !util.is_directory_separator(mediapath.back()))
+                        mediapath = mediapath.append_(g.PATH_SEPARATOR);
                 }
 
                 if (path.compare(0, mediapath.size(), mediapath) == 0)
@@ -724,7 +724,7 @@ namespace mame
 
                 {
                     size_t i = 0U;
-                    while ((m_mediapaths.size() > i) && ((0 > m_restrict_to_mediapath) || (i < m_restrict_to_mediapath)))
+                    while ((m_mediapaths.size() > i) && ((0 > m_restrict_to_mediapath) || (i < (size_t)m_restrict_to_mediapath)))
                     {
                         //if (m_mediapaths[i].first.next(m_mediapaths[i].second))
                         string next;
@@ -746,7 +746,7 @@ namespace mame
                         i++;
                     }
 
-                    if ((m_mediapaths.size() == i) || ((0 <= m_restrict_to_mediapath) && (i == m_restrict_to_mediapath)))
+                    if ((m_mediapaths.size() == i) || ((0 <= m_restrict_to_mediapath) && (i == (size_t)m_restrict_to_mediapath)))
                     {
                         LOG(null, "emu_file: path '{0}' not in media path\n", path);
                         return false;
@@ -788,7 +788,7 @@ namespace mame
             // loop over archive types
             string savepath = m_fullpath;
             string filename = "";
-            for (int i = 0; i < std.size(suffixes); i++, m_fullpath = savepath, filename = "")
+            for (unsigned i = 0; i < std.size(suffixes); i++, m_fullpath = savepath, filename = "")
             {
                 // loop over directory parts up to the start of filename
                 while (true)
@@ -801,17 +801,17 @@ namespace mame
                     //if (dirsepiter == m_fullpath.rend())
                     //    break;
                     //std::string::size_type const dirsep(std::distance(m_fullpath.begin(), dirsepiter.base()) - 1);
-                    var dirsep = m_fullpath.find_last_of(PATH_SEPARATOR[0]);
-                    if (dirsep == -1)
+                    var dirsep = m_fullpath.find_last_of(g.PATH_SEPARATOR[0]);
+                    if (dirsep == g.npos)
                         break;
 
                     // insert the part from the right of the separator into the head of the filename
                     if (!filename.empty())
-                        filename = filename.Insert(0, "/");
-                    filename = filename.Insert(0, m_fullpath.substr(dirsep + 1));
+                        filename = filename.insert_(0, "/");
+                    filename = filename.insert_(0, m_fullpath.substr(dirsep + 1));
 
                     // remove this part of the filename and append an archive extension
-                    m_fullpath = m_fullpath.Substring(0, dirsep);
+                    m_fullpath = m_fullpath.Substring(0, (int)dirsep);
                     m_fullpath += suffixes[i];
                     LOG(null, "emu_file: looking for '{0}' in archive '{1}'\n", filename, m_fullpath);
 
@@ -855,7 +855,7 @@ namespace mame
                         m_hashes.reset();
                         m_hashes.add_crc(m_zipfile.current_crc());
                         m_fullpath = savepath;
-                        return ((m_openflags & OPEN_FLAG_NO_PRELOAD) != 0) ? osd_file.error.NONE : load_zipped_file();
+                        return ((m_openflags & g.OPEN_FLAG_NO_PRELOAD) != 0) ? osd_file.error.NONE : load_zipped_file();
                     }
 
                     // close up the archive file and try the next level
@@ -873,12 +873,12 @@ namespace mame
         //-------------------------------------------------
         osd_file.error load_zipped_file()
         {
-            assert(m_file == null);
-            assert(m_zipdata.empty());
-            assert(m_zipfile != null);
+            g.assert(m_file == null);
+            g.assert(m_zipdata.empty());
+            g.assert(m_zipfile != null);
 
             // allocate some memory
-            m_zipdata.resize((int)m_ziplength);
+            m_zipdata.resize(m_ziplength);
 
             // read the data into our buffer and return
             var ziperr = m_zipfile.decompress(m_zipdata, (UInt32)m_zipdata.size());
@@ -889,7 +889,7 @@ namespace mame
             }
 
             // convert to RAM file
-            osd_file.error filerr = util_.core_file.open_ram(m_zipdata, (UInt32)m_zipdata.size(), m_openflags, out m_file);
+            osd_file.error filerr = util.core_file.open_ram(m_zipdata, (UInt32)m_zipdata.size(), m_openflags, out m_file);
             if (filerr != osd_file.error.NONE)
             {
                 m_zipdata.clear();

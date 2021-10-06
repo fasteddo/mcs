@@ -9,7 +9,7 @@ using mat_index_type = System.UInt16;  //using mat_index_type = typename plib::m
 using matrix_solver_t_fptype = System.Double;  //using fptype = nl_fptype;
 using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using size_t = System.UInt32;
+using size_t = System.UInt64;
 using uint16_t = System.UInt16;
 using unsigned = System.UInt32;
 
@@ -19,9 +19,9 @@ namespace mame.netlist
     namespace solver
     {
         //template <typename FT, int SIZE>
-        abstract class matrix_solver_GCR_t<FT, FT_OPS, int_SIZE> : matrix_solver_ext_t<FT, FT_OPS, int_SIZE>  //class matrix_solver_GCR_t: public matrix_solver_ext_t<FT, SIZE>
+        class matrix_solver_GCR_t<FT, FT_OPS, int_SIZE> : matrix_solver_ext_t<FT, FT_OPS, int_SIZE>  //class matrix_solver_GCR_t: public matrix_solver_ext_t<FT, SIZE>
             where FT_OPS : plib.constants_operators<FT>, new()
-            where int_SIZE : int_constant, new()
+            where int_SIZE : int_const, new()
         {
             //using mat_type = plib::pGEmatrix_cr<plib::pmatrix_cr_t<FT, SIZE>>;
             //using base_type = matrix_solver_ext_t<FT, SIZE>;
@@ -33,7 +33,7 @@ namespace mame.netlist
             plib.dynproc m_proc;  //plib::dynproc<void, FT *, nl_fptype *, nl_fptype *, nl_fptype *, nl_fptype ** > m_proc;
 
 
-            matrix_solver_GCR_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver.solver_parameters_t params_, size_t size)
+            public matrix_solver_GCR_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver.solver_parameters_t params_, size_t size)
                 : base(main_solver, name, nets, params_, size)
             {
                 mat = new plib.pGEmatrix_cr<FT, int_SIZE>((uint16_t)size);  //mat(static_cast<typename mat_type::index_type>(size))
@@ -45,13 +45,13 @@ namespace mame.netlist
                 // build the final matrix
 
                 std.vector<std.vector<unsigned>> fill = new std.vector<std.vector<unsigned>>(iN);
-                fill.Fill(() => { return new std.vector<size_t>(); });
+                fill.Fill(() => { return new std.vector<unsigned>(); });
 
                 size_t raw_elements = 0;
 
                 for (size_t k = 0; k < iN; k++)
                 {
-                    fill[k].resize((int)iN, (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY);
+                    fill[k].resize(iN, (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY);
                     foreach (var j in this.m_terms[k].m_nz)
                     {
                         fill[k][j] = 0;
@@ -76,21 +76,15 @@ namespace mame.netlist
                         {
                             if (other == (int)mat.col_idx[i])
                             {
-                                throw new emu_unimplemented();
-#if false
-                                this.m_mat_ptr[k][j] = new Pointer<nl_fptype>(mat.A, i);
+                                this.m_mat_ptr.op(k)[j] = new Pointer<FT>(mat.A, i);  //this->m_mat_ptr[k][j] = &mat.A[i];
                                 cnt++;
                                 break;
-#endif
                             }
                         }
                     }
 
-                    throw new emu_unimplemented();
-#if false
                     nl_config_global.nl_assert(cnt == this.m_terms[k].railstart());
-                    this.m_mat_ptr[k][this.m_terms[k].railstart()] = new Pointer<nl_fptype>(mat.A, mat.diag[k]);
-#endif
+                    this.m_mat_ptr.op(k)[this.m_terms[k].railstart()] = new Pointer<FT>(mat.A, mat.diag[k]);  //this->m_mat_ptr[k][this->m_terms[k].railstart()] = &mat.A[mat.diag[k]];
                 }
 
                 this.state().log().verbose.op("maximum fill: {0}", gr.first);
@@ -162,7 +156,7 @@ namespace mame.netlist
             {
                 strm = "";
 
-                size_t iN = (size_t)this.size();
+                size_t iN = this.size();
                 string fptype = fp_constants_double.name();  //pstring fptype(fp_constants<FT>::name());
                 string fpsuffix = fp_constants_double.suffix();  //pstring fpsuffix(fp_constants<FT>::suffix());
 
@@ -181,9 +175,7 @@ namespace mame.netlist
                     //auto gtot_t = std::accumulate(gt, gt + term_count, plib::constants<FT>::zero());
                     //*tcr_r[railstart] = static_cast<FT>(gtot_t); //mat.A[mat.diag[k]] += gtot_t;
 
-                    throw new emu_unimplemented();
-#if false
-                    var pd = this.m_mat_ptr[k][net.railstart()] - new Pointer<nl_fptype>(this.mat.A, 0);  //auto pd = this->m_mat_ptr[k][net.railstart()] - &this->mat.A[0];
+                    var pd = this.m_mat_ptr.op(k)[net.railstart()] - new Pointer<FT>(this.mat.A, 0);  //auto pd = this->m_mat_ptr[k][net.railstart()] - &this->mat.A[0];
 #if false
                     string terms = new plib.pfmt("m_A{0} = gt[{1}]").op(pd.Offset, this.m_gtn.didx(k,0));
                     for (size_t i = 1; i < net.count(); i++)
@@ -200,7 +192,7 @@ namespace mame.netlist
 
                     for (size_t i = 0; i < net.railstart(); i++)
                     {
-                        var p = this.m_mat_ptr[k][i] - new Pointer<nl_fptype>(this.mat.A, 0);
+                        var p = this.m_mat_ptr.op(k)[i] - new Pointer<FT>(this.mat.A, 0);  //auto p = this->m_mat_ptr[k][i] - &this->mat.A[0];
                         strm += string.Format("\tm_A{0} += go[{1}];\n", p, this.m_gonn.didx(k,i));
                     }
 
@@ -228,13 +220,10 @@ namespace mame.netlist
                     for (size_t i = net.railstart(); i < net.count(); i++)
                         strm += string.Format("\tRHS{0} -= go[{1}] * *cnV[{2}];\n", k, this.m_gonn.didx(k,i), this.m_connected_net_Vn.didx(k,i));
 #endif
-#endif
                 }
 
                 for (size_t i = 0; i < iN - 1; i++)
                 {
-                    throw new emu_unimplemented();
-#if false
                     //const auto &nzbd = this->m_terms[i].m_nzbd;
                     var nzbd = mat.nzbd(i);
                     var nzbd_count = mat.nzbd_count(i);
@@ -246,7 +235,7 @@ namespace mame.netlist
                         //const FT f = 1.0 / m_A[pi++];
                         strm += string.Format("\tconst {0} f{1} = 1.0{2} / m_A{3};\n", fptype, i, fpsuffix, pi);
                         pi++;
-                        size_t piie = mat.row_idx[i+1];
+                        size_t piie = mat.row_idx[i + 1];
 
                         //for (auto & j : nzbd)
                         for (size_t jj = 0; jj < nzbd_count; jj++)
@@ -276,7 +265,6 @@ namespace mame.netlist
                             strm += string.Format("\tRHS{0} += f{1}_{2} * RHS{3};\n", j, i, j, i);
                         }
                     }
-#endif
                 }
 
                 //new_V[iN - 1] = RHS[iN - 1] / mat.A[mat.diag[iN - 1]];
@@ -326,7 +314,7 @@ namespace mame.netlist
                 var t = w;
 
                 ////std::hash<typename std::remove_const<std::remove_reference<decltype(t.str())>::type>::type> h;
-                return new plib.pfmt("nl_gcr_{0:x}_{1}_{2}_{3}").op(plib.pglobal.hash(t, (size_t)t.size()), mat.nz_num, str_fptype, str_floattype);
+                return new plib.pfmt("nl_gcr_{0:x}_{1}_{2}_{3}").op(plib.pg.hash(t, (size_t)t.size()), mat.nz_num, str_fptype, str_floattype);
             }
         }
     }

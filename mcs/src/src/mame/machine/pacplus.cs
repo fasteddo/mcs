@@ -5,13 +5,14 @@ using System;
 using System.Collections.Generic;
 
 using uint8_t = System.Byte;
+using uint32_t = System.UInt32;
 
 
 namespace mame
 {
     partial class pacman_state : driver_device
     {
-        static readonly byte [,] swap_xor_table = new byte[6, 9]
+        static readonly uint8_t [,] swap_xor_table = new uint8_t[6, 9]
         {
             { 7,6,5,4,3,2,1,0, 0x00 },
             { 7,6,5,4,3,2,1,0, 0x28 },
@@ -27,13 +28,13 @@ namespace mame
             2,2,4,0,4,2,4,0,0,4,0,4,4,2,4,2
         };
 
-        byte pacplus_decrypt(int addr, byte e)
+        uint8_t pacplus_decrypt(int addr, uint8_t e)
         {
-            UInt32 method = 0;
+            uint32_t method = 0;
             //const UINT8 *tbl;
 
             /* pick method from bits 0 2 5 7 9 of the address */
-            method = (UInt32)picktable[
+            method = (uint32_t)picktable[
                 (addr & 0x001) |
                 ((addr & 0x004) >> 1) |
                 ((addr & 0x020) >> 3) |
@@ -45,7 +46,7 @@ namespace mame
                 method ^= 1;
 
             //tbl = swap_xor_table[method];
-            return (byte)(g.bitswap(e,swap_xor_table[method,0],swap_xor_table[method,1],swap_xor_table[method,2],swap_xor_table[method,3],swap_xor_table[method,4],swap_xor_table[method,5],swap_xor_table[method,6],swap_xor_table[method,7]) ^ swap_xor_table[method,8]);
+            return (uint8_t)(g.bitswap(e,swap_xor_table[method,0],swap_xor_table[method,1],swap_xor_table[method,2],swap_xor_table[method,3],swap_xor_table[method,4],swap_xor_table[method,5],swap_xor_table[method,6],swap_xor_table[method,7]) ^ swap_xor_table[method,8]);
         }
 
         void pacplus_decode()
