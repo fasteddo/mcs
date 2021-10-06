@@ -8,7 +8,7 @@ using devcb_write8 = mame.devcb_write<System.Byte, System.Byte, mame.devcb_opera
 using offs_t = System.UInt32;  //using offs_t = u32;
 using uint32_t = System.UInt32;
 using u8 = System.Byte;
-using ymopm_engine = mame.ymfm_engine_base<mame.ymopm_registers>;
+using ymopm_engine = mame.ymfm_engine_base<mame.ymopm_registers, mame.ymfm_engine_base_operators_ymopm_registers>;  //using ymopm_engine = ymfm_engine_base<ymopm_registers>;
 
 
 namespace mame
@@ -20,6 +20,10 @@ namespace mame
         //DEFINE_DEVICE_TYPE(YM2151, ym2151_device, "ym2151", "YM2151 OPM")
         static device_t device_creator_ym2151_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new ym2151_device(mconfig, tag, owner, clock); }
         public static readonly device_type YM2151 = DEFINE_DEVICE_TYPE(device_creator_ym2151_device, "ym2151", "YM2151 OPM");
+
+
+        // YM2151 is OPM
+        //using fm_engine = ymopm_engine;
 
 
         public class device_sound_interface_ym2151 : device_sound_interface
@@ -34,7 +38,7 @@ namespace mame
 
 
         // internal state
-        ymopm_engine m_opm;              // core OPM engine
+        ymopm_engine m_fm;              // core OPM engine  //fm_engine m_fm;                  // core FM engine
         sound_stream m_stream;          // sound stream
         devcb_write8 m_port_w;           // port write handler
         attotime m_busy_duration;        // precomputed busy signal duration
@@ -56,10 +60,10 @@ namespace mame
             m_disound = GetClassInterface<device_sound_interface_ym2151>();
 
 
-            m_opm = new ymopm_engine(this, (regdata) => { return new ymopm_registers(regdata); });
+            m_fm = new ymopm_engine(this);
             m_stream = null;
             m_port_w = new devcb_write8(this);
-            m_busy_duration = m_opm.compute_busy_duration();
+            m_busy_duration = m_fm.compute_busy_duration();
             m_address = 0;
             m_reset_state = 1;
         }
@@ -69,7 +73,7 @@ namespace mame
 
 
         // configuration helpers
-        //auto irq_handler() { return m_opm.irq_handler(); }
+        //auto irq_handler() { return m_fm.irq_handler(); }
         //auto port_write_handler() { return m_port_w.bind(); }
 
 
@@ -88,7 +92,7 @@ namespace mame
                     break;
 
                 case 1: // status port, YM2203 compatible
-                    result = m_opm.status();
+                    result = m_fm.status();
                     break;
             }
 
@@ -117,14 +121,14 @@ namespace mame
                     // force an update
                     m_stream.update();
 
-                    // write to OPM
-                    m_opm.write(m_address, value);
+                    // write to FM
+                    m_fm.write(m_address, value);
 
                     // special cases
                     if (m_address == 0x01 && g.BIT(value, 1) != 0)
                     {
                         // writes to the test register can reset the LFO
-                        m_opm.reset_lfo();
+                        m_fm.reset_lfo();
                     }
                     else if (m_address == 0x1b)
                     {
@@ -133,7 +137,7 @@ namespace mame
                     }
 
                     // mark busy for a bit
-                    m_opm.set_busy_end(machine().time() + m_busy_duration);
+                    m_fm.set_busy_end(machine().time() + m_busy_duration);
                     break;
             }
         }

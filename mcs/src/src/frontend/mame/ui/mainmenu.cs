@@ -92,19 +92,13 @@ namespace mame.ui
 #if false
             if (machine().crosshair().get_usage())
                 item_append("Crosshair Options", null, 0, ui_menu_main_options.CROSSHAIR);
-#endif
 
-            throw new emu_unimplemented();
-#if false
             if (machine().options().cheat() && machine().cheat().first() != null)
                 item_append("Cheat", null, 0, ui_menu_main_options.CHEAT);
-#endif
 
-            if (machine().options().plugins())
+            if (machine().options().plugins() && !mame_machine_manager::instance()->lua()->get_menu().empty())
                 item_append("Plugin Options", 0, menu_options.PLUGINS);
 
-            throw new emu_unimplemented();
-#if false
             if (mame_machine_manager::instance()->lua()->call_plugin_check<const char *>("data_list", true))
                 item_append("External DAT View", null, 0, ui_menu_main_options.EXTERNAL_DATS);
 

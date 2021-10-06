@@ -78,12 +78,14 @@ namespace mame
              3276800, /* 3.2768_MHz_XTAL        SP0256 clock in Speech Synthesis for Dragon 32 */
              3521280, /* 3.52128_MHz_XTAL       RCA COSMAC VIP */
              3546800, /* 3.5468_MHz_XTAL        Atari 400 PAL */
+             3546894, /* 3.546894_MHz_XTAL      Atari 2600 PAL */
              3547000, /* 3.547_MHz_XTAL         Philips G7200, Philips C7240 */
              3562500, /* 3.5625_MHz_XTAL        Jopac JO7400 */
              3570000, /* 3.57_MHz_XTAL          Telmac TMC-600 */
              3578640, /* 3.57864_MHz_XTAL       Atari Portfolio PCD3311T */
              3579000, /* 3.579_MHz_XTAL         BeebOPL */
              3579545, /* 3.579545_MHz_XTAL      NTSC color subcarrier, extremely common, used on 100's of PCBs (Keytronic custom part #48-300-010 is equivalent) */
+             3579575, /* 3.579575_MHz_XTAL      Atari 2600 NTSC */
              3686400, /* 3.6864_MHz_XTAL        Baud rate clock for MC68681 and similar UARTs */
              3840000, /* 3.84_MHz_XTAL          Fairlight CMI Alphanumeric Keyboard */
              3900000, /* 3.9_MHz_XTAL           Resonator - Used on some Fidelity boards */

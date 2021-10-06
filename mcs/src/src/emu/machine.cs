@@ -532,6 +532,8 @@ namespace mame
                 if (!quiet)
                     sound().start_recording();
 
+                m_hard_reset_pending = false;
+
                 // initialize ui lists
                 // display the startup screens
                 manager().ui_initialize(this);
@@ -544,8 +546,6 @@ namespace mame
                     handle_saveload();
 
                 export_http_api();
-
-                m_hard_reset_pending = false;
 
 #if EMSCRIPTEN
                 // break out to our async javascript loop and halt

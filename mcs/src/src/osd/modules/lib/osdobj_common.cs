@@ -186,7 +186,7 @@ namespace mame
 
             new options_entry(null,                                   null,             OPTION_HEADER,    "OSD SOUND OPTIONS"),
             new options_entry(OSDOPTION_SOUND,                        OSDOPTVAL_AUTO,   OPTION_STRING,    "sound output method: "),
-            new options_entry(OSDOPTION_AUDIO_LATENCY + "(1-5)",      "2",              OPTION_INTEGER,   "set audio latency (increase to reduce glitches, decrease for responsiveness)"),
+            new options_entry(OSDOPTION_AUDIO_LATENCY + "(0-5)",      "2",              OPTION_INTEGER,   "set audio latency (increase to reduce glitches, decrease for responsiveness)"),
 
 #if NO_USE_PORTAUDIO
             { nullptr,                                nullptr,          OPTION_HEADER,    "PORTAUDIO OPTIONS" },

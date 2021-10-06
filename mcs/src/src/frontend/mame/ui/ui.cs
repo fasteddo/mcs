@@ -456,6 +456,7 @@ namespace mame
             switch_code_poller poller = new switch_code_poller(machine().input());
             string warning_text = "";
             rgb_t warning_color = new rgb_t();
+            bool config_menu = false;
             handler_callback_func handler_messagebox_anykey =
                 (render_container container, mame_ui_manager mui) =>
                 {
@@ -466,6 +467,11 @@ namespace mame
                     {
                         // if the user cancels, exit out completely
                         machine().schedule_exit();
+                        return g.UI_HANDLER_CANCEL;
+                    }
+                    else if (machine().ui_input().pressed((int)ioport_type.IPT_UI_CONFIGURE))
+                    {
+                        config_menu = true;
                         return g.UI_HANDLER_CANCEL;
                     }
                     else if (poller.poll() != input_code.INPUT_CODE_INVALID)
@@ -608,9 +614,14 @@ namespace mame
                 poller.reset();
                 while (poller.poll() != input_code.INPUT_CODE_INVALID) { }
 
-                // loop while we have a handler
-                while (m_handler_callback_type == ui_callback_type.MODAL && !machine().scheduled_event_pending() && !ui.menu.stack_has_special_main_menu(machine()))
-                    machine().video().frame_update();
+                if (m_handler_callback_type == ui_callback_type.MODAL)
+                {
+                    config_menu = false;
+
+                    // loop while we have a handler
+                    while (m_handler_callback_type == ui_callback_type.MODAL && !machine().scheduled_event_pending() && !ui.menu.stack_has_special_main_menu(machine()))
+                        machine().video().frame_update();
+                }
 
                 // clear the handler and force an update
                 set_handler(ui_callback_type.GENERAL, handler_ingame);
@@ -623,7 +634,17 @@ namespace mame
 
             // if we're the empty driver, force the menus on
             if (ui.menu.stack_has_special_main_menu(machine()))
+            {
                 show_menu();
+            }
+            else if (config_menu)
+            {
+                show_menu();
+
+                // loop while we have a handler
+                while (m_handler_callback_type != ui_callback_type.GENERAL && !machine().scheduled_event_pending())
+                    machine().video().frame_update();
+            }
         }
 
 

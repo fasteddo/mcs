@@ -668,18 +668,9 @@ namespace mame
 
 
         // safely write a sample to the buffer
-        public void put(s32 index, stream_buffer_sample_t sample)
+        public void put(s32 start, stream_buffer_sample_t sample)
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(u32(index) < samples());
-#endif
-
-            index += m_start;
-            if (index >= m_buffer.size())
-                index -= (s32)m_buffer.size();
-
-            m_buffer.put(index, sample);
+            m_buffer.put((s32)index_to_buffer_index(start), sample);
         }
 
 
@@ -706,18 +697,10 @@ namespace mame
         }
 
         // safely add a sample to the buffer
-        void add(s32 index, stream_buffer_sample_t sample)
+        void add(s32 start, stream_buffer_sample_t sample)
         {
-            //throw new emu_unimplemented();
-#if false
-            sound_assert(u32(index) < samples());
-#endif
-
-            index += m_start;
-            if (index >= m_buffer.size())
-                index -= (s32)m_buffer.size();
-
-            m_buffer.put(index, m_buffer.get(index) + sample);
+            u32 index = index_to_buffer_index(start);
+            m_buffer.put(start, m_buffer.get((s32)index) + sample);
         }
 
 
@@ -733,7 +716,7 @@ namespace mame
         {
             if (start + count > samples())
                 count = (s32)samples() - start;
-            u32 index = (u32)(start + m_start);
+            u32 index = index_to_buffer_index(start);
             for (s32 sampindex = 0; sampindex < count; sampindex++)
             {
                 m_buffer.put((s32)index, value);
@@ -751,7 +734,7 @@ namespace mame
         {
             if (start + count > samples())
                 count = (s32)samples() - start;
-            u32 index = (u32)(start + m_start);
+            u32 index = index_to_buffer_index(start);
             for (s32 sampindex = 0; sampindex < count; sampindex++)
             {
                 m_buffer.put((s32)index, src.get(start + sampindex));
@@ -768,7 +751,7 @@ namespace mame
         {
             if (start + count > samples())
                 count = (s32)samples() - start;
-            u32 index = (u32)(start + m_start);
+            u32 index = index_to_buffer_index(start);
             for (s32 sampindex = 0; sampindex < count; sampindex++)
             {
                 m_buffer.put((s32)index, m_buffer.get((s32)index) + src.get(start + sampindex));
@@ -778,6 +761,21 @@ namespace mame
 
         public void add(read_stream_view src, s32 start) { add(src, start, (s32)samples() - start); }
         public void add(read_stream_view src) { add(src, 0, (s32)samples()); }
+
+
+        // given a stream starting offset, return the buffer index
+        u32 index_to_buffer_index(s32 start)
+        {
+            //throw new emu_unimplemented();
+#if false
+            sound_assert(u32(start) < samples());
+#endif
+
+            u32 index = (u32)(start + m_start);
+            if (index >= m_buffer.size())
+                index -= m_buffer.size();
+            return index;
+        }
     }
 
 
@@ -1936,12 +1934,14 @@ namespace mame
         //-------------------------------------------------
         void mute(bool mute, u8 reason)
         {
+            bool old_muted = m_muted != 0;
             if (mute)
                 m_muted |= reason;
             else
                 m_muted &= (u8)~reason;
 
-            set_attenuation(m_attenuation);
+            if (old_muted != (m_muted != 0))
+                set_attenuation(m_attenuation);
         }
 
 

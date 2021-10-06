@@ -401,6 +401,16 @@ namespace mame
             return (x >> (int)n) & make_bitmask32(w);
         }
 
+        public static UInt32 BIT(UInt32 x, int n, UInt32 w)  //template <typename T, typename U, typename V> constexpr T BIT(T x, U n, V w)
+        {
+            return (x >> n) & make_bitmask32(w);
+        }
+
+        public static UInt32 BIT(UInt32 x, int n, int w)  //template <typename T, typename U, typename V> constexpr T BIT(T x, U n, V w)
+        {
+            return (x >> n) & make_bitmask32(w);
+        }
+
 
         /// \brief Extract and right-align a single bit field
         ///

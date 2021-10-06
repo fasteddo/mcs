@@ -132,6 +132,8 @@ namespace mame
         public static int BIT(int x, int n) { return util_.BIT(x, n); }
         public static UInt32 BIT(UInt32 x, int n) { return util_.BIT(x, n); }
         public static UInt32 BIT(UInt32 x, UInt32 n, UInt32 w) { return util_.BIT(x, n, w); }
+        public static UInt32 BIT(UInt32 x, int n, UInt32 w) { return util_.BIT(x, n, w); }
+        public static UInt32 BIT(UInt32 x, int n, int w) { return util_.BIT(x, n, w); }
         public static int bitswap(int val, int B1, int B0) { return util_.bitswap(val, B1, B0); }
         public static int bitswap(int val, int B3, int B2, int B1, int B0) { return util_.bitswap(val, B3, B2, B1, B0); }
         public static int bitswap(int val, int B5, int B4, int B3, int B2, int B1, int B0) { return util_.bitswap(val, B5, B4, B3, B2, B1, B0); }
@@ -436,6 +438,10 @@ namespace mame
         public static readonly rgb_t UI_YELLOW_COLOR = ui_global.UI_YELLOW_COLOR;
         public static readonly rgb_t UI_RED_COLOR = ui_global.UI_RED_COLOR;
         public const uint32_t UI_HANDLER_CANCEL = ui_global.UI_HANDLER_CANCEL;
+
+
+        // ymfm
+        public static u32 abs_sin_attenuation(u32 input) { return ymfm_global.abs_sin_attenuation(input); }
     }
 
 

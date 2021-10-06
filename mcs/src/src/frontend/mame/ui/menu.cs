@@ -502,6 +502,10 @@ namespace mame.ui
         }
 
 
+        /***************************************************************************
+            MENU STACK MANAGEMENT
+        ***************************************************************************/
+
         void do_handle()
         {
             if (m_items.empty())
@@ -509,7 +513,10 @@ namespace mame.ui
                 // add an item to return - this is a really hacky way of doing this
                 if (m_parent == null)
                 {
-                    item_append(__("Return to Machine"), 0, null);
+                    if (machine().phase() == machine_phase.INIT)
+                        item_append(__("Start Machine"), 0, null);
+                    else
+                        item_append(__("Return to Machine"), 0, null);
                 }
                 else if (m_parent.is_special_main_menu())
                 {
