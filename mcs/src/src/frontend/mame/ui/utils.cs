@@ -114,13 +114,13 @@ namespace mame
         public string parentname;
         public string year;
         public string publisher;
-        public byte supported = 0;
+        public software_support supported = software_support.SUPPORTED;
         public string part;
         public game_driver driver = null;
         public string listname;
         public string interface_;
         public string instance;
-        public byte startempty = 0;
+        public uint8_t startempty = 0;
         public string parentlongname;
         public string usage;
         public string devicetype;
@@ -128,14 +128,19 @@ namespace mame
 
 
         public ui_software_info() {}
-        public ui_software_info(string sname, string lname, string pname, string y, string pub,
-            byte s, string pa, game_driver d, string li, string i, string istring, byte em,
-            string plong, string u, string de, bool av)
-        {
-            shortname = sname; longname = lname; parentname = pname; year = y; publisher = pub;
-            supported = s; part = pa; driver = d; listname = li; interface_ = i; instance = istring; startempty = em;
-            parentlongname = plong; usage = u; devicetype = de; available = av;
-        }
+
+        // info for software list item
+        //ui_software_info(
+        //        software_info const &info,
+        //        software_part const &p,
+        //        game_driver const &d,
+        //        std::string const &li,
+        //        std::string const &is,
+        //        std::string const &de);
+
+        // info for starting empty
+        //ui_software_info(game_driver const &d);
+
 
         public static bool operator!=(ui_software_info left, ui_software_info right) { return !(left == right); }
         public static bool operator==(ui_software_info left, ui_software_info right)
@@ -2217,7 +2222,7 @@ namespace mame
         {
             public supported_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.SUPPORTED) { }
 
-            public override bool apply(ui_software_info info) { return softlist_global.SOFTWARE_SUPPORTED_YES == info.supported; }
+            public override bool apply(ui_software_info info) { return software_support.SUPPORTED == info.supported; }
         }
 
 
@@ -2225,7 +2230,7 @@ namespace mame
         {
             public partial_supported_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.PARTIAL_SUPPORTED) { }
 
-            public override bool apply(ui_software_info info) { return softlist_global.SOFTWARE_SUPPORTED_PARTIAL == info.supported; }
+            public override bool apply(ui_software_info info) { return software_support.PARTIALLY_SUPPORTED == info.supported; }
         }
 
 
@@ -2233,7 +2238,7 @@ namespace mame
         {
             public unsupported_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.UNSUPPORTED) { }
 
-            public override bool apply(ui_software_info info) { return softlist_global.SOFTWARE_SUPPORTED_NO == info.supported; }
+            public override bool apply(ui_software_info info) { return software_support.UNSUPPORTED == info.supported; }
         }
 
 

@@ -1159,10 +1159,10 @@ namespace mame.netlist
         {
             //throw new emu_unimplemented();
 #if false
-            nl_assert(out.is_logic());
+            gsl_Expects(out.is_logic());
 #endif
 
-            var out_cast = (logic_output_t)out_;
+            var out_cast = (logic_output_t)out_;  //const auto &out_cast = dynamic_cast<const logic_output_t &>(out);
             var iter_proxy = m_proxies.find(out_);
 
             if (iter_proxy != default)

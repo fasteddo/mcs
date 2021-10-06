@@ -1236,7 +1236,8 @@ namespace mame
             for (sampindex = 0; sampindex < (int)m_buffer.size(); sampindex++)
                 target.put(sampindex, m_buffer[sampindex]);
 
-            target.fill((stream_buffer_sample_t)m_cur, sampindex);
+            if (sampindex < target.samples())
+                target.fill((stream_buffer_sample_t)m_cur, sampindex);
         }
 
 
@@ -1250,7 +1251,7 @@ namespace mame
             m_cur = 0.0;
             m_last_buffer_time = netlist_time_ext.zero();
 
-            save_item(g.NAME(m_cur));
+            save_item(g.NAME(new { m_cur }));
             m_sample_time.save_state(new save_helper(this, "m_sample_time"));
             m_last_buffer_time.save_state(new save_helper(this, "m_last_buffer_time"));
         }
@@ -1259,7 +1260,7 @@ namespace mame
         protected override void device_reset()
         {
             LOGDEVCALLS("reset {0}\n", name());
-#if false
+#if false //#if 0
             m_cur = 0.0;
             m_last_buffer_time = netlist_time_ext.zero();
 #endif

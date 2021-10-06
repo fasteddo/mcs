@@ -64,7 +64,7 @@ namespace mame.netlist
                 m_new_Q.op = 0;
                 m_cur_Q.op = 0;
 
-                var p = (analog_net_t)this;
+                var p = this is analog_net_t ? (analog_net_t)this : null;  //auto *p = dynamic_cast<analog_net_t *>(this);
 
                 if (p != null)
                     p.set_Q_Analog(nlconst.zero());

@@ -91,7 +91,7 @@ namespace mame.netlist
         public void qpush(plib.pqentry_t<netlist_time_ext, detail.net_t> e)  //void qpush(Args&&...args) noexcept
         {
 #if !NL_USE_QUEUE_STATS
-            m_queue.emplace(false, e); // NOLINT(performance-move-const-arg)  //m_queue.emplace<false>(std::forward<Args>(args)...); // NOLINT(performance-move-const-arg)
+            m_queue.emplace<bool_const_false>(e); // NOLINT(performance-move-const-arg)  //m_queue.emplace<false>(std::forward<Args>(args)...); // NOLINT(performance-move-const-arg)
 #else
             if (!m_use_stats)
                 m_queue.emplace<false>(std::forward<Args>(args)...); // NOLINT(performance-move-const-arg)
@@ -105,7 +105,7 @@ namespace mame.netlist
         public void qremove(detail.net_t elem)  //void qremove(const R &elem) noexcept
         {
 #if !NL_USE_QUEUE_STATS
-            m_queue.remove(false, elem);
+            m_queue.remove<bool_const_false>(elem);
 #else
             if (!m_use_stats)
                 m_queue.remove<false>(elem);
@@ -166,7 +166,7 @@ namespace mame.netlist
 
         void print_stats()
         {
-            throw new emu_unimplemented();
+            //throw new emu_unimplemented();
 #if false
 #endif
         }

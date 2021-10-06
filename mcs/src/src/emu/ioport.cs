@@ -3579,6 +3579,9 @@ namespace mame
         int m_timecode_count;
         attotime m_timecode_last_time;
 
+        // storage for inactive configuration
+        util.xml.file m_deselected_card_config; // using smart pointer would pull xmlfile.h into emu.h
+
 
         // construction/destruction
 
@@ -3598,6 +3601,7 @@ namespace mame
             m_timecode_file = new emu_file(machine.options().input_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
             m_timecode_count = 0;
             m_timecode_last_time = attotime.zero;
+            m_deselected_card_config = null;
 
 
             //memset(m_type_to_entry, 0, sizeof(m_type_to_entry));
@@ -3976,10 +3980,6 @@ namespace mame
             if (parentnode == null)
                 return;
 
-            // iterate over all the remap nodes for controller configs only
-            if (cfg_type == config_type.CONTROLLER)
-                load_remap_table(parentnode);
-
             throw new emu_unimplemented();
 #if false
 #endif
@@ -3995,7 +3995,7 @@ namespace mame
         }
 
         //bool load_default_config(xml_data_node *portnode, int type, int player, const input_seq *newseq);
-        //bool load_game_config(xml_data_node *portnode, int type, int player, const input_seq *newseq);
+        //void load_game_config(xml_data_node *portnode, int type, int player, const input_seq *newseq);
 
         //-------------------------------------------------
         //  save_config - config callback for saving input
@@ -4015,7 +4015,7 @@ namespace mame
         //void save_default_inputs(xml_data_node *parentnode);
         //void save_game_inputs(xml_data_node *parentnode);
 
-        //template<typename _Type> _Type playback_read(_Type &result);
+        //template<typename Type> Type playback_read(_Type &result);
 
 
         //-------------------------------------------------
@@ -4125,8 +4125,8 @@ namespace mame
         //-------------------------------------------------
         //  record_write - write a value to the record file
         //-------------------------------------------------
-        //template<typename _Type>
-        void record_write(PointerU8 buffer)  //void record_write(_Type value)
+        //template<typename Type>
+        void record_write(PointerU8 buffer)  //void record_write(Type value)
         {
             // protect against nullptr handles if previous reads fail
             if (!m_record_file.is_open())
@@ -4328,7 +4328,7 @@ namespace mame
         }
 
 
-        //template<typename _Type> void timecode_write(_Type value);
+        //template<typename Type> void timecode_write(Type value);
 
 
         void timecode_init()

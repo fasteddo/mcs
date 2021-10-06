@@ -208,6 +208,7 @@ namespace mame.netlist
 
 
             nldelegate m_delegate;
+            core_device_t m_delegate_device;
             net_t m_net;
             state_var<state_e> m_state;
 
@@ -290,8 +291,9 @@ namespace mame.netlist
             public void set_copied_input(netlist_sig_t val) { }// plib::unused_var(val); } // NOLINT: static means more message elsewhere
 #endif
 
-            public void set_delegate(nldelegate delegate_) { m_delegate = delegate_; }
+            public void set_delegate(nldelegate delegate_, core_device_t device) { m_delegate = delegate_; m_delegate_device = device; }
             public nldelegate delegate_() { return m_delegate; }
+            public core_device_t delegate_device() { return m_delegate_device; }
             public void run_delegate() { m_delegate(); }
         }
     } // namespace detail

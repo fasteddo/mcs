@@ -3371,7 +3371,7 @@ namespace mame
             }
 
 
-            string expand(string str)  //std::pair<char const *, char const *> expand(char const *str)
+            string expand(string str)  //std::string_view expand(std::string_view str)
             {
                 char variable_start_char = '~';
                 char variable_end_char = '~';
@@ -3396,6 +3396,7 @@ namespace mame
                             // variable found
                             if (start == 0)
                                 m_buffer = "";  //m_buffer.seekp(0);
+                            g.assert(start < str.length());
                             m_buffer += str.Substring((int)start, (int)pos - (int)start);  //m_buffer.write(&str[start], pos - start);
                             m_buffer += text.first;  //m_buffer.write(text.first.data(), text.first.length());
                             start = (size_t)termIdx + 1;  //start = term - str.begin() + 1;
@@ -3416,7 +3417,8 @@ namespace mame
                 }
                 else
                 {
-                    m_buffer += str.Substring((int)start, (int)str.length() - (int)start);  //m_buffer.write(&str[start], str.length() - start);
+                    if (start < str.length())
+                        m_buffer += str.Substring((int)start, (int)str.length() - (int)start);  //m_buffer.write(&str[start], str.length() - start);
                     return m_buffer;
                 }
             }

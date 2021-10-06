@@ -158,8 +158,7 @@ namespace mame
         /***************************************************************************
           Start the video hardware emulation.
         ***************************************************************************/
-        //VIDEO_START_MEMBER(digdug_state,digdug)
-        void video_start_digdug()
+        protected override void video_start()
         {
             m_bg_select = 0;
             m_tx_color_mode = 0;

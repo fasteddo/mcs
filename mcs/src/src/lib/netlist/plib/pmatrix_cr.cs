@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using nl_fptype_ops = mame.plib.constants_operators_double;
 using size_t = System.UInt64;
 using uint16_t = System.UInt16;
 using unsigned = System.UInt32;
@@ -13,30 +12,15 @@ using unsigned = System.UInt32;
 
 namespace mame.plib
 {
-    interface pmatrix_cr_operators<T>
-    {
-        T cast(UInt64 a);
-        int cast_int32(T a);
-        UInt32 cast_uint32(T a);
-        T add(T a, UInt64 b);
-    }
-
-    class pmatrix_cr_operators_uint16 : pmatrix_cr_operators<uint16_t>
-    {
-        public uint16_t cast(UInt64 a) { return (uint16_t)a; }
-        public int cast_int32(uint16_t a) { return a; }
-        public UInt32 cast_uint32(uint16_t a) { return a; }
-        public uint16_t add(uint16_t a, UInt64 b) { return (uint16_t)(a + b); }
-    }
-
-
     //template<typename T, int N, typename C = uint16_t>
-    class pmatrix_cr<T, int_N, C, C_OPS>  //struct pmatrix_cr
+    class pmatrix_cr<T, T_OPS, int_N, C, C_OPS>  //struct pmatrix_cr
+        where T_OPS : constants_operators<T>, new()
         where int_N : int_const, new()
-        where C_OPS : pmatrix_cr_operators<C>, new()
+        where C_OPS : constants_operators<C>, new()
     {
+        protected static readonly T_OPS t_ops = new T_OPS();
         static readonly int N = new int_N().value;
-        static readonly C_OPS ops = new C_OPS();
+        protected static readonly C_OPS c_ops = new C_OPS();
 
 
         //using index_type = C;
@@ -64,7 +48,7 @@ namespace mame.plib
         public size_t nz_num;
 
         ////parray<std::vector<index_type>, N > m_nzbd;    // Support for gaussian elimination
-        pmatrix2d_vrl<C> m_nzbd;    // Support for gaussian elimination  //pmatrix2d_vrl<index_type> m_nzbd;    // Support for gaussian elimination
+        protected pmatrix2d_vrl<C> m_nzbd;    // Support for gaussian elimination  //pmatrix2d_vrl<index_type> m_nzbd;    // Support for gaussian elimination
         size_t m_size;
 
 
@@ -82,7 +66,7 @@ namespace mame.plib
 
             for (size_t i = 0; i < n + 1; i++)
             {
-                row_idx[i] = ops.cast(0);
+                row_idx[i] = c_ops.cast(0);
             }
         }
 
@@ -93,7 +77,11 @@ namespace mame.plib
 
         //void clear()
 
-        public void set_scalar(T scalar) { throw new emu_unimplemented(); }  //void set_scalar(T scalar) noexcept
+        public void set_scalar(T scalar)  //void set_scalar(T scalar) noexcept
+        {
+            for (size_t i = 0, e = nz_num; i < e; i++)
+                A[i] = scalar;
+        }
 
         //void set_row_scalar(C r, T val) noexcept
 
@@ -103,7 +91,7 @@ namespace mame.plib
         //template <typename M>
         public void build_from_fill_mat(std.vector<std.vector<unsigned>> f, size_t max_fill = (size_t)constants_e.FILL_INFINITY - 1, size_t band_width = (size_t)constants_e.FILL_INFINITY)  //void build_from_fill_mat(const M &f, std::size_t max_fill = FILL_INFINITY - 1, std::size_t band_width = FILL_INFINITY)
         {
-            C nz = ops.cast(0);  //C nz = 0;
+            C nz = c_ops.cast(0);  //C nz = 0;
             if (nz_num != 0)
                 throw new pexception("build_from_mat only allowed on empty CR matrix");
 
@@ -115,16 +103,16 @@ namespace mame.plib
                 {
                     if (f[k][j] <= max_fill && plib.pg.abs((int)k - (int)j) <= (int)band_width)
                     {
-                        col_idx[ops.cast_int32(nz)] = ops.cast(j);  //col_idx[nz] = static_cast<C>(j);
+                        col_idx[c_ops.cast_int(nz)] = c_ops.cast(j);  //col_idx[nz] = static_cast<C>(j);
                         if (j == k)
                             diag[k] = nz;
-                        nz = ops.add(nz, 1);  //nz++;
+                        nz = c_ops.add(nz, c_ops.cast(1));  //nz++;
                     }
                 }
             }
 
             row_idx[size()] = nz;
-            nz_num = ops.cast_uint32(nz);
+            nz_num = c_ops.cast_size_t(nz);
 
             // build nzbd
 
@@ -133,10 +121,10 @@ namespace mame.plib
                 for (size_t j = k + 1; j < size(); j++)
                 {
                     if (f[j][k] < (size_t)constants_e.FILL_INFINITY)
-                        m_nzbd.set(k, m_nzbd.colcount(k), ops.cast(j));  //m_nzbd.set(k, m_nzbd.colcount(k), narrow_cast<C>(j));
+                        m_nzbd.set(k, m_nzbd.colcount(k), c_ops.cast(j));  //m_nzbd.set(k, m_nzbd.colcount(k), narrow_cast<C>(j));
                 }
 
-                m_nzbd.set(k, m_nzbd.colcount(k), ops.cast(0)); // end of sequence
+                m_nzbd.set(k, m_nzbd.colcount(k), c_ops.cast(0)); // end of sequence
             }
         }
 
@@ -162,7 +150,8 @@ namespace mame.plib
     }
 
 
-    class pmatrix_cr<T, int_N> : pmatrix_cr<T, int_N, uint16_t, pmatrix_cr_operators_uint16>
+    class pmatrix_cr<T, T_OPS, int_N> : pmatrix_cr<T, T_OPS, int_N, uint16_t, constants_operators_u16>
+        where T_OPS : constants_operators<T>, new()
         where int_N : int_const, new()
     {
         public pmatrix_cr(size_t n) : base(n) { }
@@ -170,7 +159,8 @@ namespace mame.plib
 
 
     //template<typename B>
-    class pGEmatrix_cr<B, int_N> : pmatrix_cr<B, int_N>  //struct pGEmatrix_cr : public B
+    class pGEmatrix_cr<B, B_OPS, int_N> : pmatrix_cr<B, B_OPS, int_N>  //struct pGEmatrix_cr : public B
+        where B_OPS : constants_operators<B>, new()
         where int_N : int_const, new()
     {
         //using base_type = B;
@@ -194,14 +184,14 @@ namespace mame.plib
                 ops++; // 1/A(k,k)
                 for (size_t row = k + 1; row < fill.size(); row++)
                 {
-                    if (fill[row][k] < (size_t)pmatrix_cr<B, int_N>.constants_e.FILL_INFINITY)
+                    if (fill[row][k] < (size_t)pmatrix_cr<B, B_OPS, int_N>.constants_e.FILL_INFINITY)
                     {
                         ops++;
                         for (size_t col = k + 1; col < fill[row].size(); col++)
                             //if (fill[k][col] < FILL_INFINITY)
                             {
                                 var f = std.min(fill[row][col], 1 + fill[row][k] + fill[k][col]);
-                                if (f < (size_t)pmatrix_cr<B, int_N>.constants_e.FILL_INFINITY)
+                                if (f < (size_t)pmatrix_cr<B, B_OPS, int_N>.constants_e.FILL_INFINITY)
                                 {
                                     if (f > fill_max)
                                         fill_max = f;
@@ -220,7 +210,47 @@ namespace mame.plib
 
 
         //template <typename V>
-        public void gaussian_elimination(B [] RHS) { throw new emu_unimplemented(); }  //void gaussian_elimination(V & RHS)
+        public void gaussian_elimination(B [] RHS)  //void gaussian_elimination(V & RHS)
+        {
+            size_t iN = base.size();  //const std::size_t iN = base_type::size();
+
+            for (size_t i = 0; i < iN - 1; i++)
+            {
+                size_t nzbdp = 0;
+                size_t pi = base.diag[i];  //std::size_t pi = base_type::diag[i];
+                var f = plib.pg.reciprocal(t_ops.cast_double(base.A[pi++]));  //auto f = reciprocal(base_type::A[pi++]);
+                size_t piie = base.row_idx[i + 1];  //const std::size_t piie = base_type::row_idx[i+1];
+
+                var nz = base.m_nzbd.op(i);  //const auto *nz = base_type::m_nzbd[i];
+                uint16_t j;
+                while ((j = nz[nzbdp++]) != 0)  //while (auto j = nz[nzbdp++]) // NOLINT(bugprone-infinite-loop)
+                {
+                    // proceed to column i
+
+                    size_t pj = base.row_idx[j];  //std::size_t pj = base_type::row_idx[j];
+                    size_t pje = base.row_idx[j + 1];  //std::size_t pje = base_type::row_idx[j+1];
+
+                    while (base.col_idx[pj] < i)  //while (base_type::col_idx[pj] < i)
+                        pj++;
+
+                    B f1 = t_ops.multiply(t_ops.neg(base.A[pj++]), t_ops.cast(f));  //const typename base_type::value_type f1 = - base_type::A[pj++] * f;
+
+                    // subtract row i from j
+                    // fill-in available assumed, i.e. matrix was prepared
+
+                    for (size_t pii = pi; pii < piie && pj < pje; pii++)
+                    {
+                        while (base.col_idx[pj] < base.col_idx[pii])
+                            pj++;
+
+                        if (base.col_idx[pj] == base.col_idx[pii])
+                            base.A[pj++] = t_ops.add(base.A[pj], t_ops.multiply(base.A[pii], f1));  //base_type::A[pj++] += base_type::A[pii] * f1;
+                    }
+
+                    RHS[j] = t_ops.add(RHS[j], t_ops.multiply(f1, RHS[i]));  //RHS[j] += f1 * RHS[i];
+                }
+            }
+        }
 
 
         //int get_parallel_level(std::size_t k) const
@@ -246,7 +276,7 @@ namespace mame.plib
                 rt[k] = new std.vector<size_t>();
                 for (size_t j = k + 1; j < base.size(); j++)
                 {
-                    if (fill[j][k] < (size_t)pmatrix_cr<B, int_N>.constants_e.FILL_INFINITY)
+                    if (fill[j][k] < (size_t)pmatrix_cr<B, B_OPS, int_N>.constants_e.FILL_INFINITY)
                     {
                         rt[k].push_back(j);
                     }

@@ -29,14 +29,14 @@ namespace mame.netlist
             //using mat_index_type = typename plib::pmatrix_cr<FT, SIZE>::index_type;
 
 
-            plib.pGEmatrix_cr<FT, int_SIZE> mat;  //mat_type mat;
+            plib.pGEmatrix_cr<FT, FT_OPS, int_SIZE> mat;  //mat_type mat;
             plib.dynproc m_proc;  //plib::dynproc<void, FT *, nl_fptype *, nl_fptype *, nl_fptype *, nl_fptype ** > m_proc;
 
 
             public matrix_solver_GCR_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver.solver_parameters_t params_, size_t size)
                 : base(main_solver, name, nets, params_, size)
             {
-                mat = new plib.pGEmatrix_cr<FT, int_SIZE>((uint16_t)size);  //mat(static_cast<typename mat_type::index_type>(size))
+                mat = new plib.pGEmatrix_cr<FT, FT_OPS, int_SIZE>((uint16_t)size);  //mat(static_cast<typename mat_type::index_type>(size))
                 m_proc = new plib.dynproc();
 
 
@@ -51,7 +51,7 @@ namespace mame.netlist
 
                 for (size_t k = 0; k < iN; k++)
                 {
-                    fill[k].resize(iN, (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY);
+                    fill[k].resize(iN, (unsigned)plib.pGEmatrix_cr<FT, FT_OPS, int_SIZE>.constants_e.FILL_INFINITY);
                     foreach (var j in this.m_terms[k].m_nz)
                     {
                         fill[k][j] = 0;

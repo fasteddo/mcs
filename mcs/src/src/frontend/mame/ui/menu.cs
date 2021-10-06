@@ -74,12 +74,13 @@ namespace mame.ui
         // flags to pass to process
         //enum
         //{
-        const uint32_t PROCESS_NOKEYS      = 1;
-        protected const uint32_t PROCESS_LR_REPEAT   = 2;
-        protected const uint32_t PROCESS_CUSTOM_ONLY = 4;
-        const uint32_t PROCESS_ONLYCHAR    = 8;
-        protected const uint32_t PROCESS_NOINPUT     = 16;
-        const uint32_t PROCESS_NOIMAGE     = 32;
+        const uint32_t PROCESS_NOKEYS      = 1 << 0;
+        const uint32_t PROCESS_LR_ALWAYS   = 1 << 1;
+        protected const uint32_t PROCESS_LR_REPEAT   = 1 << 2;
+        protected const uint32_t PROCESS_CUSTOM_ONLY = 1 << 3;
+        const uint32_t PROCESS_ONLYCHAR    = 1 << 4;
+        protected const uint32_t PROCESS_NOINPUT     = 1 << 5;
+        const uint32_t PROCESS_NOIMAGE     = 1 << 6;
         //}
 
 
@@ -1380,8 +1381,8 @@ namespace mame.ui
             validate_selection(1);
 
             // swallow left/right keys if they are not appropriate
-            bool ignoreleft = (selected_item().flags & FLAG_LEFT_ARROW) == 0;
-            bool ignoreright = (selected_item().flags & FLAG_RIGHT_ARROW) == 0;
+            bool ignoreleft = (flags & PROCESS_LR_ALWAYS) == 0 && (selected_item().flags & FLAG_LEFT_ARROW) == 0;
+            bool ignoreright = (flags & PROCESS_LR_ALWAYS) == 0 && (selected_item().flags & FLAG_RIGHT_ARROW) == 0;
 
             if ((m_items[0].flags & FLAG_UI_DATS) != 0)
                 ignoreleft = ignoreright = false;

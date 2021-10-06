@@ -9,7 +9,7 @@ namespace mame
 {
     public static class version_global
     {
-        const string BARE_BUILD_VERSION = "0.232";
+        const string BARE_BUILD_VERSION = "0.233";
 
         public const string bare_build_version = BARE_BUILD_VERSION;
         public const string build_version = BARE_BUILD_VERSION + " (mcs)";

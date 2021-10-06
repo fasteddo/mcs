@@ -51,45 +51,36 @@ namespace mame
             double [] rweights;
             double [] gweights;
             double [] bweights;
-            int i;
 
-            /* compute the color output resistor weights */
+            // compute the color output resistor weights
             g.compute_resistor_weights(0, 255, -1.0,
                     3, resistances, out rweights, 0, 0,
                     3, resistances, out gweights, 0, 0,
                     3, resistances, out bweights, 0, 0);
 
-            for (i = 0; i < 0x40; i++)
+            for (int i = 0; i < 0x40; i++)
             {
-                int bit0;
-                int bit1;
-                int bit2;
-                int r;
-                int gr;
-                int b;
-                int val;
-
-                /* red component */
-                val = m_paletteram.op[(i << 1) | 0x01];
-                bit0 = (~val >> 6) & 0x01;
-                bit1 = (~val >> 7) & 0x01;
+                // red component
+                int val = m_paletteram.op[(i << 1) | 0x01];
+                int bit0 = (~val >> 6) & 0x01;
+                int bit1 = (~val >> 7) & 0x01;
                 val = m_paletteram.op[(i << 1) | 0x00];
-                bit2 = (~val >> 0) & 0x01;
-                r = g.combine_weights(rweights, bit0, bit1, bit2);
+                int bit2 = (~val >> 0) & 0x01;
+                int r = g.combine_weights(rweights, bit0, bit1, bit2);
 
-                /* green component */
+                // green component
                 val = m_paletteram.op[(i << 1) | 0x01];
                 bit0 = (~val >> 3) & 0x01;
                 bit1 = (~val >> 4) & 0x01;
                 bit2 = (~val >> 5) & 0x01;
-                gr = g.combine_weights(gweights, bit0, bit1, bit2);
+                int gr = g.combine_weights(gweights, bit0, bit1, bit2);
 
-                /* blue component */
+                // blue component
                 val = m_paletteram.op[(i << 1) | 0x01];
                 bit0 = (~val >> 0) & 0x01;
                 bit1 = (~val >> 1) & 0x01;
                 bit2 = (~val >> 2) & 0x01;
-                b = g.combine_weights(bweights, bit0, bit1, bit2);
+                int b = g.combine_weights(bweights, bit0, bit1, bit2);
 
                 m_palette.op[0].dipalette.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)gr, (u8)b));
             }
@@ -101,18 +92,16 @@ namespace mame
         ***************************************************************************/
         void compute_draw_order()
         {
-            int i;
             var color_prom = memregion("proms").base_();  //uint8_t *color_prom = memregion("proms")->base();
 
-            /* do a simple conversion of the PROM into layer priority order. Note that */
-            /* this is a simplification, which assumes the PROM encodes a sensible priority */
-            /* scheme. */
-            for (i = 0; i < 32; i++)
+            /* do a simple conversion of the PROM into layer priority order. Note that
+               this is a simplification, which assumes the PROM encodes a sensible priority
+               scheme. */
+            for (int i = 0; i < 32; i++)
             {
-                int j;
-                int mask = 0;   /* start with all four layers active, so we'll get the highest */
-                                /* priority one in the first loop */
-                for (j = 3; j >= 0; j--)
+                int mask = 0;   /* start with all four layers active, so we'll get the highest
+                                   priority one in the first loop */
+                for (int j = 3; j >= 0; j--)
                 {
                     int data = color_prom[0x10 * (i & 0x0f) + mask] & 0x0f;
 
@@ -121,21 +110,28 @@ namespace mame
                     else
                         data = data & 0x03;
 
-                    mask |= (1 << data);    /* in next loop, we'll see which of the remaining */
-                                            /* layers has top priority when this one is transparent */
+                    mask |= (1 << data);    /* in next loop, we'll see which of the remaining
+                                               layers has top priority when this one is transparent */
                     m_draw_order[i, j] = data;
                 }
             }
         }
 
 
+        protected override void device_post_load()
+        {
+            m_gfxdecode.op[0].digfx.gfx(0).mark_all_dirty();
+            m_gfxdecode.op[0].digfx.gfx(1).mark_all_dirty();
+            m_gfxdecode.op[0].digfx.gfx(2).mark_all_dirty();
+            m_gfxdecode.op[0].digfx.gfx(3).mark_all_dirty();
+        }
+
+
         protected override void video_start()
         {
-            int i;
+            m_sprite_layer_collbitmap1.allocate(16, 16);
 
-            m_sprite_layer_collbitmap1.allocate(16,16);
-
-            for (i = 0; i < 3; i++)
+            for (int i = 0; i < 3; i++)
             {
                 m_layer_bitmap[i] = new bitmap_ind16();
                 m_screen.op[0].register_screen_bitmap(m_layer_bitmap[i]);
@@ -155,14 +151,14 @@ namespace mame
         }
 
 
-        uint8_t taitosj_gfxrom_r()
+        uint8_t gfxrom_r()
         {
             uint8_t ret;
 
             offs_t offs = (offs_t)(m_gfxpointer.op[0] | (m_gfxpointer.op[1] << 8));
 
             if (offs < 0x8000)
-                ret = memregion("gfx1").base_()[offs];
+                ret = m_gfx.op[offs];
             else
                 ret = 0;
 
@@ -175,7 +171,7 @@ namespace mame
         }
 
 
-        void taitosj_characterram_w(offs_t offset, uint8_t data)
+        void characterram_w(offs_t offset, uint8_t data)
         {
             if (m_characterram.op[offset] != data)
             {
@@ -195,7 +191,7 @@ namespace mame
         }
 
 
-        void taitosj_collision_reg_clear_w(uint8_t data)
+        void collision_reg_clear_w(uint8_t data)
         {
             m_collision_reg[0].op = 0;
             m_collision_reg[1].op = 0;
@@ -233,7 +229,7 @@ namespace mame
             offs_t offs1 = (offs_t)(which1 * 4);
             offs_t offs2 = (offs_t)(which2 * 4);
 
-            /* normalize coordinates to (0,0) and compute overlap */
+            // normalize coordinates to (0,0) and compute overlap
             if (sx1 < sx2)
             {
                 sx2 -= sx1;
@@ -260,9 +256,9 @@ namespace mame
                 miny = sy1;
             }
 
-            /* draw the sprites into separate bitmaps and check overlapping region */
-            m_sprite_layer_collbitmap1.fill(TRANSPARENT_PEN);
-                get_sprite_gfx_element((uint8_t)which1).transpen(m_sprite_sprite_collbitmap1,m_sprite_sprite_collbitmap1.cliprect(),
+            // draw the sprites into separate bitmaps and check overlapping region
+            m_sprite_sprite_collbitmap1.fill(TRANSPARENT_PEN);
+                get_sprite_gfx_element((uint8_t)which1).transpen(m_sprite_sprite_collbitmap1, m_sprite_sprite_collbitmap1.cliprect(),
                     (u32)(m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs1 + 3] & 0x3f),
                     0,
                     m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs1 + 2] & 0x01,
@@ -270,7 +266,7 @@ namespace mame
                     sx1, sy1, 0);
 
             m_sprite_sprite_collbitmap2.fill(TRANSPARENT_PEN);
-                get_sprite_gfx_element((uint8_t)which2).transpen(m_sprite_sprite_collbitmap2,m_sprite_sprite_collbitmap2.cliprect(),
+                get_sprite_gfx_element((uint8_t)which2).transpen(m_sprite_sprite_collbitmap2, m_sprite_sprite_collbitmap2.cliprect(),
                     (u32)(m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs2 + 3] & 0x3f),
                     0,
                     m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs2 + 2] & 0x01,
@@ -295,29 +291,26 @@ namespace mame
         {
             if (SPRITES_ON)
             {
-                int which1;
-
-                /* chech each pair of sprites */
-                for (which1 = 0; which1 < 0x20; which1++)
+                // chech each pair of sprites
+                for (int which1 = 0; which1 < 0x20; which1++)
                 {
-                    int which2;
                     uint8_t sx1;
                     uint8_t sy1;
 
-                    if ((which1 >= 0x10) && (which1 <= 0x17)) continue; /* no sprites here */
+                    if ((which1 >= 0x10) && (which1 <= 0x17)) continue; // no sprites here
 
                     if (!get_sprite_xy((uint8_t)which1, out sx1, out sy1)) continue;
 
-                    for (which2 = which1 + 1; which2 < 0x20; which2++)
+                    for (int which2 = which1 + 1; which2 < 0x20; which2++)
                     {
                         uint8_t sx2;
                         uint8_t sy2;
 
-                        if ((which2 >= 0x10) && (which2 <= 0x17)) continue;   /* no sprites here */
+                        if ((which2 >= 0x10) && (which2 <= 0x17)) continue;   // no sprites here
 
                         if (!get_sprite_xy((uint8_t)which2, out sx2, out sy2)) continue;
 
-                        /* quickly rule out any pairs that cannot be touching */
+                        // quickly rule out any pairs that cannot be touching
                         if ((std.abs((int8_t)sx1 - (int8_t)sx2) < 16) &&
                             (std.abs((int8_t)sy1 - (int8_t)sy2) < 16))
                         {
@@ -325,12 +318,12 @@ namespace mame
 
                             if (check_sprite_sprite_bitpattern(sx1, sy1, which1, sx2, sy2, which2) == 0)  continue;
 
-                            /* mark sprite as collided */
-                            /* note that only the sprite with the higher number is marked */
-                            /* as collided. This is how the hardware works and required */
-                            /* by Pirate Pete to be able to finish the last round. */
+                            /* mark sprite as collided
+                               note that only the sprite with the higher number is marked
+                               as collided. This is how the hardware works and required
+                               by Pirate Pete to be able to finish the last round. */
 
-                            /* the last sprite has to be moved at the start of the list */
+                            // the last sprite has to be moved at the start of the list
                             if (which2 == 0x1f)
                             {
                                 reg = which1 >> 3;
@@ -354,16 +347,15 @@ namespace mame
 
         void calculate_sprite_areas(int [] sprites_on, rectangle [] sprite_areas)
         {
-            int which;
             int width = m_screen.op[0].width();
             int height = m_screen.op[0].height();
 
-            for (which = 0; which < 0x20; which++)
+            for (int which = 0; which < 0x20; which++)
             {
                 uint8_t sx;
                 uint8_t sy;
 
-                if ((which >= 0x10) && (which <= 0x17)) continue;   /* no sprites here */
+                if ((which >= 0x10) && (which <= 0x17)) continue;   // no sprites here
 
                 if (get_sprite_xy((uint8_t)which, out sx, out sy))
                 {
@@ -381,7 +373,7 @@ namespace mame
                     maxx = minx + 15;
                     maxy = miny + 15;
 
-                    /* check for bitmap bounds to avoid illegal memory access */
+                    // check for bitmap bounds to avoid illegal memory access
                     if (minx < 0) minx = 0;
                     if (miny < 0) miny = 0;
                     if (maxx >= width - 1)
@@ -396,7 +388,7 @@ namespace mame
 
                     sprites_on[which] = 1;
                 }
-                /* sprite is off */
+                // sprite is off
                 else
                 {
                     sprites_on[which] = 0;
@@ -408,7 +400,7 @@ namespace mame
         int check_sprite_layer_bitpattern(int which, rectangle [] sprite_areas)
         {
             offs_t offs = (offs_t)(which * 4);
-            int result = 0;  /* no collisions */
+            int result = 0;  // no collisions
 
             int check_layer_1 = m_video_mode.op[0] & layer_enable_mask[0];
             int check_layer_2 = m_video_mode.op[0] & layer_enable_mask[1];
@@ -422,9 +414,9 @@ namespace mame
             int flip_x = (m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] & 0x01) ^ (GLOBAL_FLIP_X ? 1 : 0);
             int flip_y = (m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 2] & 0x02) ^ (GLOBAL_FLIP_Y ? 1 : 0);
 
-            /* draw sprite into a bitmap and check if layers collide */
+            // draw sprite into a bitmap and check if layers collide
             m_sprite_layer_collbitmap1.fill(TRANSPARENT_PEN);
-            get_sprite_gfx_element((uint8_t)which).transpen(m_sprite_layer_collbitmap1,m_sprite_layer_collbitmap1.cliprect(),
+            get_sprite_gfx_element((uint8_t)which).transpen(m_sprite_layer_collbitmap1, m_sprite_layer_collbitmap1.cliprect(),
                     (u32)(m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 3] & 0x3f),
                     0,
                     flip_x, flip_y,
@@ -434,16 +426,16 @@ namespace mame
             {
                 for (int x = minx; x < maxx; x++)
                 {
-                    if (m_sprite_layer_collbitmap1.pix16(y - miny, x - minx)[0] != TRANSPARENT_PEN) /* is there anything to check for ? */
+                    if (m_sprite_layer_collbitmap1.pix16(y - miny, x - minx)[0] != TRANSPARENT_PEN) // is there anything to check for ?
                     {
                         if (check_layer_1 != 0 && (m_sprite_layer_collbitmap2[0].pix(y, x)[0] != TRANSPARENT_PEN))
-                            result |= 0x01;  /* collided with layer 1 */
+                            result |= 0x01;  // collided with layer 1
 
                         if (check_layer_2 != 0 && (m_sprite_layer_collbitmap2[1].pix(y, x)[0] != TRANSPARENT_PEN))
-                            result |= 0x02;  /* collided with layer 2 */
+                            result |= 0x02;  // collided with layer 2
 
                         if (check_layer_3 != 0 && (m_sprite_layer_collbitmap2[2].pix(y, x)[0] != TRANSPARENT_PEN))
-                            result |= 0x04;  /* collided with layer 3 */
+                            result |= 0x04;  // collided with layer 3
                     }
                 }
             }
@@ -456,10 +448,10 @@ namespace mame
         {
             if (SPRITES_ON)
             {
-                /* check each sprite */
+                // check each sprite
                 for (int which = 0; which < 0x20; which++)
                 {
-                    if ((which >= 0x10) && (which <= 0x17)) continue;   /* no sprites here */
+                    if ((which >= 0x10) && (which <= 0x17)) continue;   // no sprites here
 
                     if (sprites_on[which] != 0)
                         m_collision_reg.op[3] |= (uint8_t)check_sprite_layer_bitpattern(which, sprite_areas);
@@ -470,13 +462,11 @@ namespace mame
 
         void draw_layers()
         {
-            offs_t offs;
-
             m_layer_bitmap[0].fill(TRANSPARENT_PEN);
             m_layer_bitmap[1].fill(TRANSPARENT_PEN);
             m_layer_bitmap[2].fill(TRANSPARENT_PEN);
 
-            for (offs = 0; offs < 0x0400; offs++)
+            for (offs_t offs = 0; offs < 0x0400; offs++)
             {
                 int sx = (int)(offs % 32);
                 int sy = (int)(offs / 32);
@@ -484,23 +474,23 @@ namespace mame
                 if (GLOBAL_FLIP_X) sx = 31 - sx;
                 if (GLOBAL_FLIP_Y) sy = 31 - sy;
 
-                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[0] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[0],m_layer_bitmap[0].cliprect(),
-                        m_videoram_1.op[offs],
+                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[0] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[0], m_layer_bitmap[0].cliprect(),
+                        m_videoram.op(0).op[offs],
                         (u32)(m_colorbank.op[0] & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
-                        8*sx,8*sy,0);
+                        8 * sx, 8 * sy, 0);
 
-                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[0] & 0x80) != 0 ? 2 : 0).transpen(m_layer_bitmap[1],m_layer_bitmap[1].cliprect(),
-                        m_videoram_2.op[offs],
+                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[0] & 0x80) != 0 ? 2 : 0).transpen(m_layer_bitmap[1], m_layer_bitmap[1].cliprect(),
+                        m_videoram.op(1).op[offs],
                         (u32)((m_colorbank.op[0] >> 4) & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
-                        8*sx,8*sy,0);
+                        8 * sx, 8 * sy, 0);
 
-                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[1] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[2],m_layer_bitmap[2].cliprect(),
-                        m_videoram_3.op[offs],
+                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[1] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[2], m_layer_bitmap[2].cliprect(),
+                        m_videoram.op(2).op[offs],
                         (u32)(m_colorbank.op[1] & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
-                        8*sx,8*sy,0);
+                        8 * sx, 8 * sy, 0);
             }
         }
 
@@ -518,18 +508,16 @@ namespace mame
 
             if (SPRITES_ON)
             {
-                int sprite;
-
-                /* drawing order is a bit strange. The last sprite has to be moved at the start of the list. */
-                for (sprite = 0x1f; sprite >= 0; sprite--)
+                // drawing order is a bit strange. The last sprite has to be moved at the start of the list.
+                for (int sprite = 0x1f; sprite >= 0; sprite--)
                 {
                     uint8_t sx;
                     uint8_t sy;
 
-                    int which = (sprite - 1) & 0x1f;    /* move last sprite at the head of the list */
+                    int which = (sprite - 1) & 0x1f;    // move last sprite at the head of the list
                     offs_t offs = (offs_t)(which * 4);
 
-                    if ((which >= 0x10) && (which <= 0x17)) continue;   /* no sprites here */
+                    if ((which >= 0x10) && (which <= 0x17)) continue;   // no sprites here
 
                     if (get_sprite_xy((uint8_t)which, out sx, out sy))
                     {
@@ -550,19 +538,19 @@ namespace mame
                             flip_y = flip_y == 0 ? 1 : 0;
                         }
 
-                        get_sprite_gfx_element((uint8_t)which).transpen(bitmap,GLOBAL_FLIP_X ? spritevisibleareaflip : spritevisiblearea, (u32)code, (u32)color,
-                                flip_x, flip_y, sx, sy,0);
+                        get_sprite_gfx_element((uint8_t)which).transpen(bitmap, GLOBAL_FLIP_X ? spritevisibleareaflip : spritevisiblearea, (u32)code, (u32)color,
+                                flip_x, flip_y, sx, sy, 0);
 
-                        /* draw with wrap around. The horizontal games (eg. sfposeid) need this */
-                        get_sprite_gfx_element((uint8_t)which).transpen(bitmap,GLOBAL_FLIP_X ? spritevisibleareaflip : spritevisiblearea, (u32)code, (u32)color,
-                                flip_x, flip_y, sx - 0x100, sy,0);
+                        // draw with wrap around. The horizontal games (eg. sfposeid) need this
+                        get_sprite_gfx_element((uint8_t)which).transpen(bitmap, GLOBAL_FLIP_X ? spritevisibleareaflip : spritevisiblearea, (u32)code, (u32)color,
+                                flip_x, flip_y, sx - 0x100, sy, 0);
                     }
                 }
             }
         }
 
 
-        void taitosj_copy_layer(bitmap_ind16 bitmap, rectangle cliprect, int which, int [] sprites_on, rectangle [] sprite_areas)
+        void copy_layer(bitmap_ind16 bitmap, rectangle cliprect, int which, int [] sprites_on, rectangle [] sprite_areas)
         {
             int [] fudge1 = new int [3] { 3,  1, -1 };
             int [] fudge2 = new int [3] { 8, 10, 12 };
@@ -593,10 +581,10 @@ namespace mame
 
                 g.copyscrollbitmap_trans(bitmap, m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, cliprect, TRANSPARENT_PEN);
 
-                /* store parts covered with sprites for sprites/layers collision detection */
+                // store parts covered with sprites for sprites/layers collision detection
                 for (i = 0; i < 0x20; i++)
                 {
-                    if ((i >= 0x10) && (i <= 0x17)) continue; /* no sprites here */
+                    if ((i >= 0x10) && (i <= 0x17)) continue; // no sprites here
 
                     if (sprites_on[i] != 0)
                         g.copyscrollbitmap(m_sprite_layer_collbitmap2[which], m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, sprite_areas[i]);
@@ -616,12 +604,10 @@ namespace mame
 
         void copy_layers(bitmap_ind16 bitmap, rectangle cliprect, copy_layer_func_t copy_layer_func, int [] sprites_on, rectangle [] sprite_areas)
         {
-            int i = 0;
-
-            /* fill the screen with the background color */
+            // fill the screen with the background color
             bitmap.fill((uint32_t)(8 * (m_colorbank.op[1] & 0x07)), cliprect);
 
-            for (i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 int which = m_draw_order[m_video_priority.op[0] & 0x1f, i];
 
@@ -636,14 +622,14 @@ namespace mame
 
             check_sprite_layer_collision(sprites_on, sprite_areas);
 
-            /*check_layer_layer_collision();*/  /* not implemented !!! */
+            // check_layer_layer_collision(); // not implemented !!!
         }
 
 
         int video_update_common(bitmap_ind16 bitmap, rectangle cliprect, copy_layer_func_t copy_layer_func)
         {
-            int [] sprites_on = new int[0x20];           /* 1 if sprite is active */
-            rectangle [] sprite_areas = new rectangle[0x20];   /* areas on bitmap (sprite locations) */
+            int [] sprites_on = new int[0x20];                 // 1 if sprite is active
+            rectangle [] sprite_areas = new rectangle[0x20];   // areas on bitmap (sprite locations)
 
             set_pens();
 
@@ -653,16 +639,16 @@ namespace mame
 
             copy_layers(bitmap, cliprect, copy_layer_func, sprites_on, sprite_areas);
 
-            /*check_sprite_layer_collision() uses drawn bitmaps, so it must me called _AFTER_ draw_layers() */
+            //check_sprite_layer_collision() uses drawn bitmaps, so it must me called _AFTER_ draw_layers()
             check_collision(sprites_on, sprite_areas);
 
             return 0;
         }
 
 
-        u32 screen_update_taitosj(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
+        u32 screen_update(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
-            return (u32)video_update_common(bitmap, cliprect, taitosj_copy_layer);
+            return (u32)video_update_common(bitmap, cliprect, copy_layer);
         }
     }
 }

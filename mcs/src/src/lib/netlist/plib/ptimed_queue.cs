@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using size_t = System.UInt64;
@@ -23,7 +23,7 @@ namespace mame.plib
     // This degrades performance significantly.
 
     //template <typename Time, typename Element>
-    public class pqentry_t<Time, Element>
+    public class pqentry_t<Time, Element> : IComparable<pqentry_t<Time, Element>>
         where Time : netlist_time_ext
     {
         // Time == eg, netlist_time_ext
@@ -66,6 +66,7 @@ namespace mame.plib
             return this == (pqentry_t<Time, Element>)obj;
         }
         public override int GetHashCode() { return m_object.GetHashCode(); }
+        public int CompareTo(pqentry_t<Time, Element> other) { return m_exec_time.CompareTo(other.m_exec_time); }
 
 
         public static pqentry_t<Time, Element> never()  //static constexpr pqentry_t never() noexcept { return pqentry_t(Time::never(), nullptr); }
@@ -91,7 +92,7 @@ namespace mame.plib
 
         object m_lock = new object();  //mutex_type               m_lock;
         //T *                      m_end;
-        aligned_vector<T> m_list;
+        SortedSet<T> m_list;  //aligned_vector<T> m_list;
 
 
         // profiling
@@ -103,7 +104,7 @@ namespace mame.plib
 
         protected timed_queue_linear(size_t list_size)
         {
-            m_list = new aligned_vector<T>((int)list_size);
+            m_list = new SortedSet<T>();  //m_list(list_size)
 
 
             clear();
@@ -114,96 +115,105 @@ namespace mame.plib
         //PCOPYASSIGNMOVE(timed_queue_linear, delete)
 
         //std::size_t capacity() const noexcept { return m_list.capacity() - 1; }
-        public bool empty() { throw new emu_unimplemented(); }  //bool empty() const noexcept { return (m_end == &m_list[1]); }
+
+
+        public bool empty() { return m_list.Count == 1; }  //bool empty() const noexcept { return (m_end == &m_list[1]); }
 
 
         //template<bool KEEPSTAT, typename... Args>
-        public void emplace(bool KEEPSTAT, object args)  //void emplace(Args&&... args) noexcept
+        public void emplace<bool_KEEPSTAT>(T e)  //void emplace(Args&&... args) noexcept
         {
-            throw new emu_unimplemented();
-#if false
             // Lock
-            lock_guard_type lck(m_lock);
-            T * i(m_end++);
-            *i = T(std::forward<Args>(args)...);
+            //lock_guard_type lck(m_lock);
+            //T * i(m_end++);
+            //*i = T(std::forward<Args>(args)...);
+            //
+            //if (!KEEPSTAT)
+            //{
+            //    for (; *(i-1) < *i; --i)
+            //    {
+            //        std::swap(*(i-1), *(i));
+            //    }
+            //}
+            //else
+            //{
+            //    for (; *(i-1) < *i; --i)
+            //    {
+            //        std::swap(*(i-1), *(i));
+            //        m_prof_sortmove.inc();
+            //    }
+            //    m_prof_call.inc();
+            //}
 
-            if (!KEEPSTAT)
+            lock (m_lock)
             {
-                for (; *(i-1) < *i; --i)
-                {
-                    std::swap(*(i-1), *(i));
-                }
+                m_list.Add(e);
             }
-            else
-            {
-                for (; *(i-1) < *i; --i)
-                {
-                    std::swap(*(i-1), *(i));
-                    m_prof_sortmove.inc();
-                }
-                m_prof_call.inc();
-            }
-#endif
         }
 
 
         //template<bool KEEPSTAT>
-        public void push(bool KEEPSTAT, T e)  //void push(T && e) noexcept
+        public void push<bool_KEEPSTAT>(T e)  //void push(T && e) noexcept
         {
-            throw new emu_unimplemented();
-#if false
             // Lock
-            lock_guard_type lck(m_lock);
-            T * i(m_end++);
-            *i = std::move(e);
-            for (; *(i-1) < *i; --i)
-            {
-                std::swap(*(i-1), *(i));
-                if (KEEPSTAT)
-                    m_prof_sortmove.inc();
-            }
+            //lock_guard_type lck(m_lock);
+            //T * i(m_end++);
+            //*i = std::move(e);
+            //for (; *(i-1) < *i; --i)
+            //{
+            //    std::swap(*(i-1), *(i));
+            //    if (KEEPSTAT)
+            //        m_prof_sortmove.inc();
+            //}
+            //
+            //if (KEEPSTAT)
+            //    m_prof_call.inc();
 
-            if (KEEPSTAT)
-                m_prof_call.inc();
-#endif
+            emplace<bool_KEEPSTAT>(e);
         }
 
 
-        public void pop()  //void pop() noexcept       { --m_end; }
-        {
-            throw new emu_unimplemented();
-#if false
-            { --m_end; }
-#endif
-        }
-        public T top()  //const T &top() const noexcept { return *(m_end-1); }
-        {
-            throw new emu_unimplemented();
-#if false
-            { return *(m_end-1); }
-#endif
-        }
+        public void pop() { m_list.Remove(top()); }  //void pop() noexcept       { --m_end; }
+
+
+        public T top() { return m_list.Reverse().ElementAt(1); }  //const T &top() const noexcept { return *(m_end-1); }
 
 
         //template <bool KEEPSTAT, class R>
-        public void remove(bool KEEPSTAT, object elem)  //void remove(const R &elem) noexcept
+        public void remove<bool_KEEPSTAT>(V elem)  //void remove(const R &elem) noexcept
         {
-            throw new emu_unimplemented();
-#if false
             // Lock
-            lock_guard_type lck(m_lock);
-            if (KEEPSTAT)
-                m_prof_remove.inc();
-            for (T * i = m_end - 1; i > &m_list[0]; --i)
+            //lock_guard_type lck(m_lock);
+            //if (KEEPSTAT)
+            //    m_prof_remove.inc();
+            //for (T * i = m_end - 1; i > &m_list[0]; --i)
+            //{
+            //    // == operator ignores time!
+            //    if (*i == elem)
+            //    {
+            //        std::copy(i+1, m_end--, i);
+            //        return;
+            //    }
+            //}
+
+            lock (m_lock)
             {
-                // == operator ignores time!
-                if (*i == elem)
+                bool first = true;
+                foreach (var i in m_list.Reverse())
                 {
-                    std::copy(i+1, m_end--, i);
-                    return;
+                    if (first)
+                    {
+                        first = false;
+                        continue;
+                    }
+
+                    if (i == elem)
+                    {
+                        m_list.Remove(i);
+                        break;
+                    }
                 }
             }
-#endif
         }
 
 
@@ -218,7 +228,7 @@ namespace mame.plib
                 //
                 //m_list[0] = T::never();
                 //m_end++;
-                m_list.clear();
+                m_list.Clear();
                 m_list.Add((T)pqentry_t<U, V>.never());
             }
         }

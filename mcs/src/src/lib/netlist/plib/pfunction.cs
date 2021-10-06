@@ -473,7 +473,7 @@ namespace mame.plib
         //    ptr-= (ADJ); \
         //    *(ptr-1) = (EXPR); \
         //    break;
-        static void evaluate_OP(Pointer<NT> ptr, rpn_cmd OP, UInt32 ADJ, NT EXPR)
+        static void evaluate_OP(ref Pointer<NT> ptr, rpn_cmd OP, UInt32 ADJ, NT EXPR)
         {
             ptr -= ADJ;
             (ptr - 1)[0] = EXPR;  //*(ptr-1) = (EXPR); \
@@ -484,9 +484,10 @@ namespace mame.plib
         //case OP: \
         //    *(ptr++) = (EXPR); \
         //    break;
-        static void evaluate_OP0(Pointer<NT> ptr, rpn_cmd OP, NT EXPR)
+        static void evaluate_OP0(ref Pointer<NT> ptr, rpn_cmd OP, NT EXPR)
         {
-            (ptr++)[0] = EXPR;
+            ptr[0] = EXPR;
+            ptr++;
         }
 
 
@@ -506,28 +507,28 @@ namespace mame.plib
             {
                 switch (rc.cmd())
                 {
-                    case rpn_cmd.ADD:   evaluate_OP(ptr, rpn_cmd.ADD,  1, ops.add(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(ADD,  1, ST2 + ST1)
-                    case rpn_cmd.MULT:  evaluate_OP(ptr, rpn_cmd.MULT, 1, ops.multiply(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                               //OP(MULT, 1, ST2 * ST1)
-                    case rpn_cmd.SUB:   evaluate_OP(ptr, rpn_cmd.SUB,  1, ops.subtract(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                               //OP(SUB,  1, ST2 - ST1)
-                    case rpn_cmd.DIV:   evaluate_OP(ptr, rpn_cmd.DIV,  1, ops.divide(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                 //OP(DIV,  1, ST2 / ST1)
-                    case rpn_cmd.EQ:    evaluate_OP(ptr, rpn_cmd.EQ,   1, ops.equals(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;                    //OP(EQ,   1, ST2 == ST1 ? one : zero)
-                    case rpn_cmd.NE:    evaluate_OP(ptr, rpn_cmd.NE,   1, ops.not_equals(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;                //OP(NE,   1, ST2 != ST1 ? one : zero)
-                    case rpn_cmd.GT:    evaluate_OP(ptr, rpn_cmd.GT,   1, ops.greater_than(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;              //OP(GT,   1, ST2 > ST1 ? one : zero)
-                    case rpn_cmd.LT:    evaluate_OP(ptr, rpn_cmd.LT,   1, ops.less_than(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;                 //OP(LT,   1, ST2 < ST1 ? one : zero)
-                    case rpn_cmd.LE:    evaluate_OP(ptr, rpn_cmd.LE,   1, ops.less_than_or_equal(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;        //OP(LE,   1, ST2 <= ST1 ? one : zero)
-                    case rpn_cmd.GE:    evaluate_OP(ptr, rpn_cmd.GE,   1, ops.greater_than_or_equal(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;     //OP(GE,   1, ST2 >= ST1 ? one : zero)
-                    case rpn_cmd.IF:    evaluate_OP(ptr, rpn_cmd.IF,   2, ops.not_equals(evaluate_ST2(ptr), zero) ? evaluate_ST1(ptr) : evaluate_ST0(ptr)); break;  //OP(IF,   2, (ST2 != zero) ? ST1 : ST0)
-                    case rpn_cmd.NEG:   evaluate_OP(ptr, rpn_cmd.NEG,  0, ops.neg(evaluate_ST2(ptr))); break;                                                       //OP(NEG,  0, -ST2)
-                    case rpn_cmd.POW:   evaluate_OP(ptr, rpn_cmd.POW,  1, ops.pow(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(POW,  1, plib::pow(ST2, ST1))
-                    case rpn_cmd.LOG:   evaluate_OP(ptr, rpn_cmd.LOG,  0, ops.log(evaluate_ST2(ptr))); break;                                                       //OP(LOG,  0, plib::log(ST2))
-                    case rpn_cmd.SIN:   evaluate_OP(ptr, rpn_cmd.SIN,  0, ops.sin(evaluate_ST2(ptr))); break;                                                       //OP(SIN,  0, plib::sin(ST2))
-                    case rpn_cmd.COS:   evaluate_OP(ptr, rpn_cmd.COS,  0, ops.cos(evaluate_ST2(ptr))); break;                                                       //OP(COS,  0, plib::cos(ST2))
-                    case rpn_cmd.MAX:   evaluate_OP(ptr, rpn_cmd.MAX,  1, ops.max(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(MAX,  1, std::max(ST2, ST1))
-                    case rpn_cmd.MIN:   evaluate_OP(ptr, rpn_cmd.MIN,  1, ops.min(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(MIN,  1, std::min(ST2, ST1))
-                    case rpn_cmd.TRUNC: evaluate_OP(ptr, rpn_cmd.TRUNC, 0, ops.trunc(evaluate_ST2(ptr))); break;                                                    //OP(TRUNC, 0, plib::trunc(ST2))
-                    case rpn_cmd.RAND:  evaluate_OP0(ptr, rpn_cmd.RAND, lfsr_random(ref m_lfsr)); break;                                                            //OP0(RAND, lfsr_random<value_type>(m_lfsr))
-                    case rpn_cmd.PUSH_INPUT: evaluate_OP0(ptr, rpn_cmd.PUSH_INPUT, values[rc.index()]); break;                                                      //OP0(PUSH_INPUT, values[rc.index()])
-                    case rpn_cmd.PUSH_CONST: evaluate_OP0(ptr, rpn_cmd.PUSH_CONST, rc.value()); break;                                                              //OP0(PUSH_CONST, rc.value())
+                    case rpn_cmd.ADD:   evaluate_OP(ref ptr, rpn_cmd.ADD,  1, ops.add(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(ADD,  1, ST2 + ST1)
+                    case rpn_cmd.MULT:  evaluate_OP(ref ptr, rpn_cmd.MULT, 1, ops.multiply(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                               //OP(MULT, 1, ST2 * ST1)
+                    case rpn_cmd.SUB:   evaluate_OP(ref ptr, rpn_cmd.SUB,  1, ops.subtract(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                               //OP(SUB,  1, ST2 - ST1)
+                    case rpn_cmd.DIV:   evaluate_OP(ref ptr, rpn_cmd.DIV,  1, ops.divide(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                 //OP(DIV,  1, ST2 / ST1)
+                    case rpn_cmd.EQ:    evaluate_OP(ref ptr, rpn_cmd.EQ,   1, ops.equals(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;                    //OP(EQ,   1, ST2 == ST1 ? one : zero)
+                    case rpn_cmd.NE:    evaluate_OP(ref ptr, rpn_cmd.NE,   1, ops.not_equals(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;                //OP(NE,   1, ST2 != ST1 ? one : zero)
+                    case rpn_cmd.GT:    evaluate_OP(ref ptr, rpn_cmd.GT,   1, ops.greater_than(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;              //OP(GT,   1, ST2 > ST1 ? one : zero)
+                    case rpn_cmd.LT:    evaluate_OP(ref ptr, rpn_cmd.LT,   1, ops.less_than(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;                 //OP(LT,   1, ST2 < ST1 ? one : zero)
+                    case rpn_cmd.LE:    evaluate_OP(ref ptr, rpn_cmd.LE,   1, ops.less_than_or_equal(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;        //OP(LE,   1, ST2 <= ST1 ? one : zero)
+                    case rpn_cmd.GE:    evaluate_OP(ref ptr, rpn_cmd.GE,   1, ops.greater_than_or_equal(evaluate_ST2(ptr), evaluate_ST1(ptr)) ? one : zero); break;     //OP(GE,   1, ST2 >= ST1 ? one : zero)
+                    case rpn_cmd.IF:    evaluate_OP(ref ptr, rpn_cmd.IF,   2, ops.not_equals(evaluate_ST2(ptr), zero) ? evaluate_ST1(ptr) : evaluate_ST0(ptr)); break;  //OP(IF,   2, (ST2 != zero) ? ST1 : ST0)
+                    case rpn_cmd.NEG:   evaluate_OP(ref ptr, rpn_cmd.NEG,  0, ops.neg(evaluate_ST2(ptr))); break;                                                       //OP(NEG,  0, -ST2)
+                    case rpn_cmd.POW:   evaluate_OP(ref ptr, rpn_cmd.POW,  1, ops.pow(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(POW,  1, plib::pow(ST2, ST1))
+                    case rpn_cmd.LOG:   evaluate_OP(ref ptr, rpn_cmd.LOG,  0, ops.log(evaluate_ST2(ptr))); break;                                                       //OP(LOG,  0, plib::log(ST2))
+                    case rpn_cmd.SIN:   evaluate_OP(ref ptr, rpn_cmd.SIN,  0, ops.sin(evaluate_ST2(ptr))); break;                                                       //OP(SIN,  0, plib::sin(ST2))
+                    case rpn_cmd.COS:   evaluate_OP(ref ptr, rpn_cmd.COS,  0, ops.cos(evaluate_ST2(ptr))); break;                                                       //OP(COS,  0, plib::cos(ST2))
+                    case rpn_cmd.MAX:   evaluate_OP(ref ptr, rpn_cmd.MAX,  1, ops.max(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(MAX,  1, std::max(ST2, ST1))
+                    case rpn_cmd.MIN:   evaluate_OP(ref ptr, rpn_cmd.MIN,  1, ops.min(evaluate_ST2(ptr), evaluate_ST1(ptr))); break;                                    //OP(MIN,  1, std::min(ST2, ST1))
+                    case rpn_cmd.TRUNC: evaluate_OP(ref ptr, rpn_cmd.TRUNC, 0, ops.trunc(evaluate_ST2(ptr))); break;                                                    //OP(TRUNC, 0, plib::trunc(ST2))
+                    case rpn_cmd.RAND:  evaluate_OP0(ref ptr, rpn_cmd.RAND, lfsr_random(ref m_lfsr)); break;                                                            //OP0(RAND, lfsr_random<value_type>(m_lfsr))
+                    case rpn_cmd.PUSH_INPUT: evaluate_OP0(ref ptr, rpn_cmd.PUSH_INPUT, values[rc.index()]); break;                                                      //OP0(PUSH_INPUT, values[rc.index()])
+                    case rpn_cmd.PUSH_CONST: evaluate_OP0(ref ptr, rpn_cmd.PUSH_CONST, rc.value()); break;                                                              //OP0(PUSH_CONST, rc.value())
                     // please compiler
                     case rpn_cmd.LP:
                     case rpn_cmd.RP:

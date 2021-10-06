@@ -56,14 +56,15 @@ namespace mame
         }
 
 
-        // callback
+        // configuration
         public devcb_write_line.binder output_handler() { return m_output_handler.bind(); }
+        //auto &initial_state(u32 val) { m_initval = val; return *this; } // initial input pin(s) state, be wary about the unused pins
 
         // input lines
         //template <unsigned Bit>
         public void in_w<unsigned_Bit>(int state) where unsigned_Bit : u32_const, new() { unsigned Bit = new unsigned_Bit().value;  g.static_assert(Bit < 32, "invalid bit"); machine().scheduler().synchronize(update_state, ((int)Bit << 1) | (state != 0 ? 1 : 0)); }  //DECLARE_WRITE_LINE_MEMBER(in_w) { static_assert(Bit < 32, "invalid bit"); machine().scheduler().synchronize(timer_expired_delegate(FUNC(input_merger_device::update_state), this), (Bit << 1) | (state ? 1U : 0U)); }
-        //template <unsigned Bit> void in_set(u8 data) { in_w<Bit>(1); }
-        //template <unsigned Bit> void in_clear(u8 data) { in_w<Bit>(0); }
+        //template <unsigned Bit> void in_set(u8 data = 0) { in_w<Bit>(1); }
+        //template <unsigned Bit> void in_clear(u8 data = 0) { in_w<Bit>(0); }
 
 
         //-------------------------------------------------
@@ -84,7 +85,7 @@ namespace mame
 
     class input_merger_any_high_device : input_merger_device
     {
-        //DEFINE_DEVICE_TYPE(INPUT_MERGER_ANY_HIGH, input_merger_any_high_device, "ipt_merge_any_hi", "Input Merger (any high)")
+        //DEFINE_DEVICE_TYPE(INPUT_MERGER_ANY_HIGH, input_merger_any_high_device, "ipt_merge_any_hi", "Input Merger (any high)") // OR
         static device_t device_creator_input_merger_any_high_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new input_merger_any_high_device(mconfig, tag, owner, clock); }
         public static readonly device_type INPUT_MERGER_ANY_HIGH = g.DEFINE_DEVICE_TYPE(device_creator_input_merger_any_high_device, "ipt_merge_any_hi", "Input Merger (any high)");
 
@@ -96,7 +97,7 @@ namespace mame
 
     class input_merger_all_high_device : input_merger_device
     {
-        //DEFINE_DEVICE_TYPE(INPUT_MERGER_ALL_HIGH, input_merger_all_high_device, "ipt_merge_all_hi", "Input Merger (all high)")
+        //DEFINE_DEVICE_TYPE(INPUT_MERGER_ALL_HIGH, input_merger_all_high_device, "ipt_merge_all_hi", "Input Merger (all high)") // AND
         static device_t device_creator_input_merger_all_high_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new input_merger_all_high_device(mconfig, tag, owner, clock); }
         public static readonly device_type INPUT_MERGER_ALL_HIGH = g.DEFINE_DEVICE_TYPE(device_creator_input_merger_all_high_device, "ipt_merge_all_hi", "Input Merger (all high)");
 
@@ -104,4 +105,7 @@ namespace mame
             : base(mconfig, INPUT_MERGER_ALL_HIGH, tag, owner, clock, ~0U, ~0U, 0)
         { }
     }
+
+    //DEFINE_DEVICE_TYPE(INPUT_MERGER_ANY_LOW,  input_merger_any_low_device,  "ipt_merge_any_lo", "Input Merger (any low)") // NAND
+    //DEFINE_DEVICE_TYPE(INPUT_MERGER_ALL_LOW,  input_merger_all_low_device,  "ipt_merge_all_lo", "Input Merger (all low)") // NOR
 }

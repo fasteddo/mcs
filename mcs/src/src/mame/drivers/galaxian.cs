@@ -816,22 +816,16 @@ namespace mame
          *
          *************************************/
 
-        void common_init(galaxian_draw_bullet_func draw_bullet, galaxian_draw_background_func draw_background,
-            galaxian_extend_tile_info_func extend_tile_info, galaxian_extend_sprite_info_func extend_sprite_info)
+        void common_init(
+            draw_bullet_delegate draw_bullet,  //draw_bullet_func draw_bullet,
+            draw_background_delegate draw_background,  //draw_background_func draw_background,
+            extend_tile_info_delegate extend_tile_info,  //extend_tile_info_func extend_tile_info,
+            extend_sprite_info_delegate extend_sprite_info)  //extend_sprite_info_func extend_sprite_info)
         {
-            m_x_scale = GALAXIAN_XSCALE;
-            m_h0_start = GALAXIAN_H0START;
-            m_irq_enabled = 0;
-            m_irq_line = g.INPUT_LINE_NMI;
-            m_numspritegens = 1;
-            m_bullets_base = 0x60;
-            m_sprites_base = 0x40;
-            m_frogger_adjust = 0;  //false;
-            m_sfx_tilemap = 0;  //false;
-            m_draw_bullet_ptr = (draw_bullet != null) ? draw_bullet : galaxian_draw_bullet;
-            m_draw_background_ptr = (draw_background != null) ? draw_background : galaxian_draw_background;
-            m_extend_tile_info_ptr = extend_tile_info;
-            m_extend_sprite_info_ptr = extend_sprite_info;
+            m_draw_bullet_ptr = draw_bullet != null ? draw_bullet : galaxian_draw_bullet;
+            m_draw_background_ptr = draw_background != null ? draw_background : galaxian_draw_background;
+            m_extend_tile_info_ptr = extend_tile_info != null ? extend_tile_info : empty_extend_tile_info;
+            m_extend_sprite_info_ptr = extend_sprite_info != null ? extend_sprite_info : empty_extend_sprite_info;
         }
 
 

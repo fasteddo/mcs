@@ -651,12 +651,12 @@ namespace mame.ui
                     tempbuf[2] = "Software is parent";
 
                 // next line is supported status
-                if (swinfo.supported == softlist_global.SOFTWARE_SUPPORTED_NO)
+                if (swinfo.supported == software_support.UNSUPPORTED)
                 {
                     tempbuf[3] = "Supported: No";
                     color = g.UI_RED_COLOR;
                 }
-                else if (swinfo.supported == softlist_global.SOFTWARE_SUPPORTED_PARTIAL)
+                else if (swinfo.supported == software_support.PARTIALLY_SUPPORTED)
                 {
                     tempbuf[3] = "Supported: Partial";
                     color = g.UI_YELLOW_COLOR;
@@ -668,7 +668,7 @@ namespace mame.ui
                 }
 
                 // last line is romset name
-                tempbuf[4] = string.Format("romset: {0}", swinfo.shortname);  // %1$-.100s
+                tempbuf[4] = string.Format(g.__("Software list/item: {0}:{1}"), swinfo.listname, swinfo.shortname);
             }
             else if (driver != null)
             {

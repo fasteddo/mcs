@@ -403,13 +403,10 @@ namespace mame.netlist
                                 term.run_delegate();
                             }
 
-                            throw new emu_unimplemented();
-#if false
                             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-                            auto *dev = reinterpret_cast<core_device_t *>(term->delegate().object());  //auto *dev = reinterpret_cast<core_device_t *>(term->delegate().object());
+                            var dev = (core_device_t)term.delegate_device();  //auto *dev = reinterpret_cast<core_device_t *>(term->delegate().object());
                             if (!plib.container.contains(devices_called, dev))
                                 devices_called.push_back(dev);
-#endif
                         }
                     }
 

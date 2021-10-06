@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using s32 = System.Int32;
@@ -229,7 +228,7 @@ namespace mame
 
         // operations
         public void mark_dirty(u32 code) { if (code < elements()) { m_dirty[code] = 1; m_dirtyseq++; } }
-        //void mark_all_dirty() { memset(&m_dirty[0], 1, elements()); }
+        public void mark_all_dirty() { std.memset(m_dirty, (u8)1, elements()); }
 
         public Pointer<u8> get_data(u32 code)  //const u8 *get_data(u32 code)
         {
@@ -319,7 +318,7 @@ namespace mame
 
             // render
             color = colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(color, trans_pen, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(trans_pen, color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
         }
 
 
@@ -372,7 +371,7 @@ namespace mame
                 return;
 
             // render
-            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(color, trans_pen, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(trans_pen, color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
         }
 
         public void transpen_raw(bitmap_rgb32 dest, rectangle cliprect,
@@ -418,7 +417,7 @@ namespace mame
 
             // render
             color = colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSMASK(color, trans_mask, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSMASK(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSMASK(trans_mask, color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSMASK(destp, srcp); });
         }
 
         public void transmask(bitmap_rgb32 dest, rectangle cliprect,
@@ -450,11 +449,8 @@ namespace mame
             }
 
             // render
-            pen_t paldata = m_palette.pens()[colorbase() + granularity() * (color % colors())];  //const pen_t *paldata = m_palette->pens() + colorbase() + granularity() * (color % colors());
-            throw new emu_unimplemented();
-#if false
-            drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSMASK(destp, srcp); });
-#endif
+            Pointer<rgb_t> paldata = new Pointer<rgb_t>(m_palette.pens(), (int)(colorbase() + granularity() * (color % colors())));  //const pen_t *paldata = m_palette->pens() + colorbase() + granularity() * (color % colors());
+            drawgfx_core<bitmap_rgb32, u32, PixelType_operators_u32, PointerU32>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u32 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REMAP_TRANSMASK(trans_mask, paldata, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSMASK(destp, srcp); });
         }
 
 

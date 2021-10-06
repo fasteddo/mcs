@@ -20,8 +20,8 @@ namespace mame
 
         protected override void machine_start()
         {
-            membank("bank1").configure_entry(0, new PointerU8(memregion("maincpu").base_(), 0x6000));
-            membank("bank1").configure_entry(1, new PointerU8(memregion("maincpu").base_(), 0x10000));
+            m_mainbank.op[0].configure_entry(0, new PointerU8(memregion("maincpu").base_(), 0x6000));
+            m_mainbank.op[0].configure_entry(1, new PointerU8(memregion("maincpu").base_(), 0x10000));
 
             save_item(g.NAME(new { m_spacecr_prot_value }));
             save_item(g.NAME(new { m_protection_value }));
@@ -30,15 +30,15 @@ namespace mame
 
         protected override void machine_reset()
         {
-            /* set the default ROM bank (many games only have one bank and */
-            /* never write to the bank selector register) */
-            taitosj_bankswitch_w(0);
+            /* set the default ROM bank (many games only have one bank and
+               never write to the bank selector register) */
+            bankswitch_w(0);
 
             m_spacecr_prot_value = 0;
         }
 
 
-        void taitosj_bankswitch_w(uint8_t data)
+        void bankswitch_w(uint8_t data)
         {
             machine().bookkeeping().coin_lockout_global_w(~data & 1);
 
@@ -47,16 +47,15 @@ namespace mame
                 amplitude-overdrive-mute stuff done by
                 bit 1 here should be done on a netlist.
             */
-            m_ay1.op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f); // 3 outputs for Ay1 since it doesn't use tied together outs
-            m_ay1.op[0].disound.set_output_gain(1, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay1.op[0].disound.set_output_gain(2, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay2.op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay3.op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay4.op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay.op(0).op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f); // 3 outputs for Ay1 since it doesn't use tied together outs
+            m_ay.op(0).op[0].disound.set_output_gain(1, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay.op(0).op[0].disound.set_output_gain(2, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay.op(1).op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay.op(2).op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay.op(3).op[0].disound.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
             m_dac.op[0].set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
 
-            if ((data & 0x80) != 0) membank("bank1").set_entry(1);
-            else membank("bank1").set_entry(0);
+            m_mainbank.op[0].set_entry(g.BIT(data, 7));
         }
 
 
@@ -73,20 +72,20 @@ namespace mame
          direct access to the Z80 memory space. It can also trigger IRQs on the Z80.
 
         ***************************************************************************/
-        uint8_t taitosj_fake_data_r()
+        uint8_t fake_data_r()
         {
             LOG("{0}: protection read\n", m_maincpu.op[0].state().pc());
             return 0;
         }
 
 
-        void taitosj_fake_data_w(uint8_t data)
+        void fake_data_w(uint8_t data)
         {
             LOG("{0}: protection write {1}\n", m_maincpu.op[0].state().pc(), data);
         }
 
 
-        uint8_t taitosj_fake_status_r()
+        uint8_t fake_status_r()
         {
             LOG("{0}: protection status read\n", m_maincpu.op[0].state().pc());
             return 0xff;

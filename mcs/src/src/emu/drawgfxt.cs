@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using pen_t = System.UInt32;  //typedef u32 pen_t;
 using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using u8 = System.Byte;
@@ -151,42 +152,77 @@ namespace mame
         //        (DEST) = color + srcdata;                                                   \
         //}                                                                                   \
         //while (0)
-        public static void PIXEL_OP_REBASE_TRANSPEN(u32 color, u32 trans_pen, ref u8 DEST, u8 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSPEN(u32 trans_pen, u32 color, ref u8 DEST, u8 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (srcdata != trans_pen)
                 DEST = (u8)(color + srcdata);
         }
-        public static void PIXEL_OP_REBASE_TRANSPEN(u32 color, u32 trans_pen, ref u16 DEST, u8 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSPEN(u32 trans_pen, u32 color, ref u16 DEST, u8 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (srcdata != trans_pen)
                 DEST = (u16)(color + srcdata);
         }
-        public static void PIXEL_OP_REBASE_TRANSPEN(u32 color, u32 trans_pen, ref u16 DEST, u16 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSPEN(u32 trans_pen, u32 color, ref u16 DEST, u16 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (srcdata != trans_pen)
                 DEST = (u16)(color + srcdata);
         }
-        public static void PIXEL_OP_REBASE_TRANSPEN(u32 color, u32 trans_pen, ref u32 DEST, u8 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSPEN(u32 trans_pen, u32 color, ref u32 DEST, u8 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (srcdata != trans_pen)
-                DEST = (u16)(color + srcdata);
+                DEST = (u32)(color + srcdata);
         }
-        public static void PIXEL_OP_REBASE_TRANSPEN(u32 color, u32 trans_pen, ref u32 DEST, u16 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSPEN(u32 trans_pen, u32 color, ref u32 DEST, u16 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (srcdata != trans_pen)
-                DEST = (u16)(color + srcdata);
+                DEST = (u32)(color + srcdata);
         }
-        public static void PIXEL_OP_REBASE_TRANSPEN(u32 color, u32 trans_pen, ref u32 DEST, u32 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSPEN(u32 trans_pen, u32 color, ref u32 DEST, u32 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (srcdata != trans_pen)
-                DEST = (u16)(color + srcdata);
+                DEST = (u32)(color + srcdata);
         }
+
+
+        /*-------------------------------------------------
+            PIXEL_OP_REMAP_TRANSMASK - render all pixels
+            except those matching 'trans_mask', mapping the
+            pen via the 'paldata' array
+        -------------------------------------------------*/
+        //#define PIXEL_OP_REMAP_TRANSMASK(DEST, SOURCE)                                      \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if (((trans_mask >> srcdata) & 1) == 0)                                         \
+        //        (DEST) = paldata[srcdata];                                                  \
+        //}                                                                                   \
+        //while (0)
+        public static void PIXEL_OP_REMAP_TRANSMASK(u32 trans_mask, Pointer<rgb_t> paldata, ref u32 DEST, u8 SOURCE)
+        {
+            u32 srcdata = SOURCE;
+            if (((trans_mask >> (int)srcdata) & 1) == 0)
+                DEST = paldata[srcdata];
+        }
+
+
+        //#define PIXEL_OP_REMAP_TRANSMASK_PRIORITY(DEST, PRIORITY, SOURCE)                   \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if (((trans_mask >> srcdata) & 1) == 0)                                         \
+        //    {                                                                               \
+        //        if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
+        //            (DEST) = paldata[srcdata];                                              \
+        //        (PRIORITY) = 31;                                                            \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
 
 
         /*-------------------------------------------------
@@ -202,43 +238,161 @@ namespace mame
         //        (DEST) = color + srcdata;                                                   \
         //}                                                                                   \
         //while (0)
-        public static void PIXEL_OP_REBASE_TRANSMASK(u32 color, u32 trans_mask, ref u8 DEST, u8 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSMASK(u32 trans_mask, u32 color, ref u8 DEST, u8 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (((trans_mask >> (int)srcdata) & 1) == 0)
                 DEST = (u8)(color + srcdata);
         }
-        public static void PIXEL_OP_REBASE_TRANSMASK(u32 color, u32 trans_mask, ref u16 DEST, u8 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSMASK(u32 trans_mask, u32 color, ref u16 DEST, u8 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (((trans_mask >> (int)srcdata) & 1) == 0)
                 DEST = (u16)(color + srcdata);
         }
-        public static void PIXEL_OP_REBASE_TRANSMASK(u32 color, u32 trans_mask, ref u16 DEST, u16 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSMASK(u32 trans_mask, u32 color, ref u16 DEST, u16 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (((trans_mask >> (int)srcdata) & 1) == 0)
                 DEST = (u16)(color + srcdata);
         }
-        public static void PIXEL_OP_REBASE_TRANSMASK(u32 color, u32 trans_mask, ref u32 DEST, u8 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSMASK(u32 trans_mask, u32 color, ref u32 DEST, u8 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (((trans_mask >> (int)srcdata) & 1) == 0)
                 DEST = color + srcdata;
         }
-        public static void PIXEL_OP_REBASE_TRANSMASK(u32 color, u32 trans_mask, ref u32 DEST, u16 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSMASK(u32 trans_mask, u32 color, ref u32 DEST, u16 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (((trans_mask >> (int)srcdata) & 1) == 0)
                 DEST = color + srcdata;
         }
-        public static void PIXEL_OP_REBASE_TRANSMASK(u32 color, u32 trans_mask, ref u32 DEST, u32 SOURCE)
+        public static void PIXEL_OP_REBASE_TRANSMASK(u32 trans_mask, u32 color, ref u32 DEST, u32 SOURCE)
         {
             u32 srcdata = SOURCE;
             if (((trans_mask >> (int)srcdata) & 1) == 0)
                 DEST = color + srcdata;
         }
     }
+
+
+    /*-------------------------------------------------
+        PIXEL_OP_REBASE_TRANSTABLE - look up each pen in
+        'pentable'; if the entry is DRAWMODE_NONE,
+        don't draw it; if the entry is DRAWMODE_SOURCE,
+        add 'color' to the pen value; if the entry is
+        DRAWMODE_SHADOW, generate a shadow of the
+        destination pixel using 'shadowtable'
+
+        PIXEL_OP_REMAP_TRANSTABLE - look up each pen in
+        'pentable'; if the entry is DRAWMODE_NONE,
+        don't draw it; if the entry is DRAWMODE_SOURCE,
+        look up the pen via the 'paldata' array; if the
+        entry is DRAWMODE_SHADOW, generate a shadow of
+        the destination pixel using 'shadowtable'
+    -------------------------------------------------*/
+    //#define PIXEL_OP_REBASE_TRANSTABLE16(DEST, SOURCE)                                  \
+    //do                                                                                  \
+    //{                                                                                   \
+    //    u32 srcdata = (SOURCE);                                                         \
+    //    u32 entry = pentable[srcdata];                                                  \
+    //    if (entry != DRAWMODE_NONE)                                                     \
+    //    {                                                                               \
+    //        if (entry == DRAWMODE_SOURCE)                                               \
+    //            (DEST) = color + srcdata;                                               \
+    //        else                                                                        \
+    //            (DEST) = shadowtable[DEST];                                             \
+    //    }                                                                               \
+    //}                                                                                   \
+    //while (0)
+    //#define PIXEL_OP_REMAP_TRANSTABLE32(DEST, SOURCE)                                   \
+    //do                                                                                  \
+    //{                                                                                   \
+    //    u32 srcdata = (SOURCE);                                                         \
+    //    u32 entry = pentable[srcdata];                                                  \
+    //    if (entry != DRAWMODE_NONE)                                                     \
+    //    {                                                                               \
+    //        if (entry == DRAWMODE_SOURCE)                                               \
+    //            (DEST) = paldata[srcdata];                                              \
+    //        else                                                                        \
+    //            (DEST) = shadowtable[rgb_t(DEST).as_rgb15()];                           \
+    //    }                                                                               \
+    //}                                                                                   \
+    //while (0)
+    //#define PIXEL_OP_REBASE_TRANSTABLE16_PRIORITY(DEST, PRIORITY, SOURCE)               \
+    //do                                                                                  \
+    //{                                                                                   \
+    //    u32 srcdata = (SOURCE);                                                         \
+    //    u32 entry = pentable[srcdata];                                                  \
+    //    if (entry != DRAWMODE_NONE)                                                     \
+    //    {                                                                               \
+    //        u8 pridata = (PRIORITY);                                                    \
+    //        if (entry == DRAWMODE_SOURCE)                                               \
+    //        {                                                                           \
+    //            if (((1 << (pridata & 0x1f)) & pmask) == 0)                             \
+    //                (DEST) = color + srcdata;                                           \
+    //            (PRIORITY) = 31;                                                        \
+    //        }                                                                           \
+    //        else if ((pridata & 0x80) == 0 && ((1 << (pridata & 0x1f)) & pmask) == 0)   \
+    //        {                                                                           \
+    //            (DEST) = shadowtable[DEST];                                             \
+    //            (PRIORITY) = pridata | 0x80;                                            \
+    //        }                                                                           \
+    //    }                                                                               \
+    //}                                                                                   \
+    //while (0)
+    //#define PIXEL_OP_REMAP_TRANSTABLE32_PRIORITY(DEST, PRIORITY, SOURCE)                \
+    //do                                                                                  \
+    //{                                                                                   \
+    //    u32 srcdata = (SOURCE);                                                         \
+    //    u32 entry = pentable[srcdata];                                                  \
+    //    if (entry != DRAWMODE_NONE)                                                     \
+    //    {                                                                               \
+    //        u8 pridata = (PRIORITY);                                                    \
+    //        if (entry == DRAWMODE_SOURCE)                                               \
+    //        {                                                                           \
+    //            if (((1 << (pridata & 0x1f)) & pmask) == 0)                             \
+    //                (DEST) = paldata[srcdata];                                          \
+    //            (PRIORITY) = 31;                                                        \
+    //        }                                                                           \
+    //        else if ((pridata & 0x80) == 0 && ((1 << (pridata & 0x1f)) & pmask) == 0)   \
+    //        {                                                                           \
+    //            (DEST) = shadowtable[rgb_t(DEST).as_rgb15()];                           \
+    //            (PRIORITY) = pridata | 0x80;                                            \
+    //        }                                                                           \
+    //    }                                                                               \
+    //}                                                                                   \
+    //while (0)
+
+
+    /*-------------------------------------------------
+        PIXEL_OP_REMAP_TRANSPEN_ALPHA - render all
+        pixels except those matching 'transpen',
+        mapping the pen to via the 'paldata' array;
+        the resulting color is RGB alpha blended
+        against the destination using 'alpha'
+    -------------------------------------------------*/
+    //#define PIXEL_OP_REMAP_TRANSPEN_ALPHA32(DEST, SOURCE)                               \
+    //do                                                                                  \
+    //{                                                                                   \
+    //    u32 srcdata = (SOURCE);                                                         \
+    //    if (srcdata != trans_pen)                                                       \
+    //        (DEST) = alpha_blend_r32((DEST), paldata[srcdata], alpha_val);              \
+    //}                                                                                   \
+    //while (0)
+    //#define PIXEL_OP_REMAP_TRANSPEN_ALPHA32_PRIORITY(DEST, PRIORITY, SOURCE)            \
+    //do                                                                                  \
+    //{                                                                                   \
+    //    u32 srcdata = (SOURCE);                                                         \
+    //    if (srcdata != trans_pen)                                                       \
+    //    {                                                                               \
+    //        if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
+    //            (DEST) = alpha_blend_r32((DEST), paldata[srcdata], alpha_val);          \
+    //        (PRIORITY) = 31;                                                            \
+    //    }                                                                               \
+    //}                                                                                   \
+    //while (0)
 
 
     public partial class gfx_element

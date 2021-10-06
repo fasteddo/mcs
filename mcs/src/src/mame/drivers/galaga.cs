@@ -648,8 +648,6 @@ namespace mame
             g.STARFIELD_05XX(config, m_starfield, 0);
             m_starfield.op[0].set_starfield_config(STARFIELD_X_OFFSET_GALAGA, 0, STARFIELD_X_LIMIT_GALAGA);
 
-            g.MCFG_VIDEO_START_OVERRIDE(config, video_start_galaga);
-
             /* sound hardware */
             g.SPEAKER(config, "mono").front_center();
 
@@ -728,8 +726,6 @@ namespace mame
 
             g.GFXDECODE(config, m_gfxdecode, m_palette, gfx_xevious);
             g.PALETTE(config, m_palette, xevious_palette, 128*4 + 64*8 + 64*2, 128+1);
-
-            g.MCFG_VIDEO_START_OVERRIDE(config, video_start_xevious);
 
             /* sound hardware */
             g.SPEAKER(config, "mono").front_center();
@@ -817,8 +813,6 @@ namespace mame
 
             g.GFXDECODE(config, m_gfxdecode, m_palette, gfx_digdug);
             g.PALETTE(config, m_palette, digdug_palette, 16*2 + 64*4 + 64*4, 32);
-
-            g.MCFG_VIDEO_START_OVERRIDE(config, video_start_digdug);
 
             /* sound hardware */
             g.SPEAKER(config, "mono").front_center();

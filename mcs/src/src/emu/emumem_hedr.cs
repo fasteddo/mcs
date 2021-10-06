@@ -319,7 +319,7 @@ namespace mame
                 {
                     if (m_u_dispatch[start_entry].is_dispatch())
                     {
-                        m_u_dispatch[start_entry].populate_mismatched_nomirror(start & LOWMASK, end & LOWMASK, ostart, oend, descriptor, rkey, mappings);
+                        m_u_dispatch[start_entry].populate_mismatched_nomirror(0, LOWMASK, ostart, oend, descriptor, rkey, mappings);
                     }
                     else
                     {
@@ -348,25 +348,22 @@ namespace mame
                     rkey &= unchecked((u8)~handler_entry.END);
                 }
 
-                if (start_entry <= end_entry)
+                for (offs_t ent = start_entry; ent <= end_entry; ent++)
                 {
-                    for (offs_t ent = start_entry; ent <= end_entry; ent++)
-                    {
-                        u8 rkey1 = rkey;
-                        if (ent != start_entry)
-                            rkey1 &= unchecked((u8)~handler_entry.START);
-                        if (ent != end_entry)
-                            rkey1 &= unchecked((u8)~handler_entry.END);
+                    u8 rkey1 = rkey;
+                    if (ent != start_entry)
+                        rkey1 &= unchecked((u8)~handler_entry.START);
+                    if (ent != end_entry)
+                        rkey1 &= unchecked((u8)~handler_entry.END);
 
-                        if (m_u_dispatch[ent].is_dispatch())
-                        {
-                            m_u_dispatch[ent].populate_mismatched_nomirror(start & LOWMASK, end & LOWMASK, ostart, oend, descriptor, rkey1, mappings);
-                        }
-                        else
-                        {
-                            var temp = m_u_dispatch[ent];  mismatched_patch(descriptor, rkey1, mappings, ref temp);  temp = m_u_dispatch[ent];  //mismatched_patch(descriptor, rkey1, mappings, m_u_dispatch[ent]);
-                            m_u_ranges[ent].set(ostart, oend);
-                        }
+                    if (m_u_dispatch[ent].is_dispatch())
+                    {
+                        m_u_dispatch[ent].populate_mismatched_nomirror(0, LOWMASK, ostart, oend, descriptor, rkey1, mappings);
+                    }
+                    else
+                    {
+                        var temp = m_u_dispatch[ent];  mismatched_patch(descriptor, rkey1, mappings, ref temp);  temp = m_u_dispatch[ent];  //mismatched_patch(descriptor, rkey1, mappings, m_u_dispatch[ent]);
+                        m_u_ranges[ent].set(ostart, oend);
                     }
                 }
             }

@@ -11,6 +11,7 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -22,44 +23,58 @@ namespace mame
         public static readonly device_type LATCH8 = g.DEFINE_DEVICE_TYPE(device_creator_latch8_device, "latch8", "8-bit latch");
 
 
-        // internal state
-        uint8_t            m_value;
-        uint8_t            m_has_write;
-        uint8_t            m_has_read;
-
-        /* only for byte reads, does not affect bit reads and node_map */
-        uint32_t           m_maskout;
-        uint32_t           m_xorvalue;  /* after mask */
-        uint32_t           m_nosync;
-
         devcb_write_line.array<u64_const_8> m_write_cb;
         devcb_read_line.array<u64_const_8> m_read_cb;
+
+        // internal state
+        uint8_t m_value;
+        bool m_has_write;
+        bool m_has_read;
+
+        // only for byte reads, does not affect bit reads and node_map
+        uint32_t m_maskout;
+        uint32_t m_xorvalue;  // after mask
+        uint32_t m_nosync;
 
 
         latch8_device(machine_config mconfig, string tag, device_t owner, uint32_t clock = 0)
             : base(mconfig, LATCH8, tag, owner, clock)
         {
+            m_write_cb = new devcb_write_line.array<u64_const_8>(this, () => { return new devcb_write_line(this); });
+            m_read_cb = new devcb_read_line.array<u64_const_8>(this, () => { return new devcb_read_line(this); });
             m_value = 0;
-            m_has_write = 0;
-            m_has_read = 0;
+            m_has_write = false;
+            m_has_read = false;
             m_maskout = 0;
             m_xorvalue = 0;
             m_nosync = 0;
-            m_write_cb = new devcb_write_line.array<u64_const_8>(this, () => { return new devcb_write_line(this); });
-            m_read_cb = new devcb_read_line.array<u64_const_8>(this, () => { return new devcb_read_line(this); });
         }
 
 
-        /* write & read full byte */
+        // Write bit to discrete node
+        public devcb_write_line.binder write_cb<unsigned_N>() where unsigned_N : u32_const, new() { unsigned N = new unsigned_N().value;  return m_write_cb[N].bind(); }  //template <unsigned N> auto write_cb() { return m_write_cb[N].bind(); }
+
+        // Upon read, replace bits by reading from another device handler
+        public devcb_read_line.binder read_cb<unsigned_N>() where unsigned_N : u32_const, new() { unsigned N = new unsigned_N().value;  return m_read_cb[N].bind(); }  //template <unsigned N> auto read_cb() { return m_read_cb[N].bind(); }
+
+        // Bit mask specifying bits to be masked *out*
+        public void set_maskout(uint32_t maskout) { m_maskout = maskout; }
+
+        // Bit mask specifying bits to be inverted
+        public void set_xorvalue(uint32_t xorvalue) { m_xorvalue = xorvalue; }
+
+        // Bit mask specifying bits not needing cpu synchronization.
+        //void set_nosync(uint32_t nosync) { m_nosync = nosync; }
+
+
+        // write & read full byte
 
         public uint8_t read(offs_t offset)
         {
-            uint8_t res;
-
             g.assert(offset == 0);
 
-            res = m_value;
-            if (m_has_read != 0)
+            uint8_t res = m_value;
+            if (m_has_read)
             {
                 for (int i = 0; i < 8; i++)
                 {
@@ -77,18 +92,17 @@ namespace mame
             g.assert(offset == 0);
 
             if (m_nosync != 0xff)
-                machine().scheduler().synchronize(timerproc, (0xFF << 8) | data);
+                machine().scheduler().synchronize(timerproc, (0xff << 8) | data);
             else
-                update(data, 0xFF);
+                update(data, 0xff);
         }
 
 
-        /* reset the latch */
+        // reset the latch
         //void reset_w(offs_t offset, uint8_t data);
 
-        /* read bit x                 */
-        /* return (latch >> x) & 0x01 */
-
+        // read bit x
+        // FIXME: does not honour read callbacks or XOR mask
         //DECLARE_READ_LINE_MEMBER( bit0_r ) { return BIT(m_value, 0); }
         //DECLARE_READ_LINE_MEMBER( bit1_r ) { return BIT(m_value, 1); }
         //DECLARE_READ_LINE_MEMBER( bit2_r ) { return BIT(m_value, 2); }
@@ -98,22 +112,20 @@ namespace mame
         //DECLARE_READ_LINE_MEMBER( bit6_r ) { return BIT(m_value, 6); }
         //DECLARE_READ_LINE_MEMBER( bit7_r ) { return BIT(m_value, 7); }
 
-        /* read inverted bit x        */
-        /* return (latch >> x) & 0x01 */
+        // read inverted bit
+        // FIXME: does not honour read callbacks or XOR mask
+        //DECLARE_READ_LINE_MEMBER( bit0_q_r ) { return BIT(~m_value, 0); }
+        //DECLARE_READ_LINE_MEMBER( bit1_q_r ) { return BIT(~m_value, 1); }
+        //DECLARE_READ_LINE_MEMBER( bit2_q_r ) { return BIT(~m_value, 2); }
+        //DECLARE_READ_LINE_MEMBER( bit3_q_r ) { return BIT(~m_value, 3); }
+        public int bit4_q_r() { return g.BIT(~m_value, 4); }  //DECLARE_READ_LINE_MEMBER( bit4_q_r ) { return BIT(~m_value, 4); }
+        public int bit5_q_r() { return g.BIT(~m_value, 5); }  //DECLARE_READ_LINE_MEMBER( bit5_q_r ) { return BIT(~m_value, 5); }
+        //DECLARE_READ_LINE_MEMBER( bit6_q_r ) { return BIT(~m_value, 6); }
+        //DECLARE_READ_LINE_MEMBER( bit7_q_r ) { return BIT(~m_value, 7); }
 
-        //DECLARE_READ_LINE_MEMBER( bit0_q_r ) { return BIT(m_value, 0) ^ 1; }
-        //DECLARE_READ_LINE_MEMBER( bit1_q_r ) { return BIT(m_value, 1) ^ 1; }
-        //DECLARE_READ_LINE_MEMBER( bit2_q_r ) { return BIT(m_value, 2) ^ 1; }
-        //DECLARE_READ_LINE_MEMBER( bit3_q_r ) { return BIT(m_value, 3) ^ 1; }
-        public int bit4_q_r() { return g.BIT(m_value, 4) ^ 1; }  //DECLARE_READ_LINE_MEMBER( bit4_q_r ) { return BIT(m_value, 4) ^ 1; }
-        public int bit5_q_r() { return g.BIT(m_value, 5) ^ 1; }  //DECLARE_READ_LINE_MEMBER( bit5_q_r ) { return BIT(m_value, 5) ^ 1; }
-        //DECLARE_READ_LINE_MEMBER( bit6_q_r ) { return BIT(m_value, 6) ^ 1; }
-        //DECLARE_READ_LINE_MEMBER( bit7_q_r ) { return BIT(m_value, 7) ^ 1; }
-
-        /* write bit x from data into bit determined by offset */
-        /* latch = (latch & ~(1<<offset)) | (((data >> x) & 0x01) << offset) */
-
-        public void bit0_w(offs_t offset, uint8_t data) { bitx_w(0, offset, data); }
+        // write bit x from data into bit determined by offset
+        // latch = (latch & ~(1<<offset)) | (((data >> x) & 0x01) << offset)
+        public void bit0_w(offs_t offset, uint8_t data) { bitx_w<int_const_0>(offset, data); }
         //void bit1_w(offs_t offset, uint8_t data);
         //void bit2_w(offs_t offset, uint8_t data);
         //void bit3_w(offs_t offset, uint8_t data);
@@ -122,37 +134,24 @@ namespace mame
         //void bit6_w(offs_t offset, uint8_t data);
         //void bit7_w(offs_t offset, uint8_t data);
 
-        /* Bit mask specifying bits to be masked *out* */
-        public void set_maskout(uint32_t maskout) { m_maskout = maskout; }
-
-        /* Bit mask specifying bits to be inverted */
-        public void set_xorvalue(uint32_t xorvalue) { m_xorvalue = xorvalue; }
-
-        /* Bit mask specifying bits not needing cpu synchronization. */
-        //void set_nosync(uint32_t nosync) { m_nosync = nosync; }
-
-        /* Write bit to discrete node */
-        public devcb_write_line.binder write_cb(int N) { return m_write_cb[N].bind(); }
-
-        /* Upon read, replace bits by reading from another device handler */
-        public devcb_read_line.binder read_cb(int N) { return m_read_cb[N].bind(); }
-
 
         // device-level overrides
 
         protected override void device_start()
         {
-            /* setup nodemap */
+            // setup nodemap
             foreach (var cb in m_write_cb)
             {
-                if (!cb.isnull()) m_has_write = 1;
+                if (!cb.isnull())
+                    m_has_write = true;
                 cb.resolve();
             }
 
-            /* setup device read handlers */
+            // setup device read handlers
             foreach (var cb in m_read_cb)
             {
-                if (!cb.isnull()) m_has_read = 1;
+                if (!cb.isnull())
+                    m_has_read = true;
                 cb.resolve();
             }
 
@@ -185,7 +184,7 @@ namespace mame
 
             m_value = (uint8_t)((m_value & ~mask) | (new_val & mask));
 
-            if (m_has_write != 0)
+            if (m_has_write)
             {
                 uint8_t changed = (uint8_t)(old_val ^ m_value);
                 for (int i = 0; i < 8; i++)
@@ -197,10 +196,14 @@ namespace mame
         }
 
 
-        void bitx_w(int bit, offs_t offset, uint8_t data)
+        //template <int Bit>
+        void bitx_w<int_Bit>(offs_t offset, uint8_t data)  //void bitx_w(offs_t offset, uint8_t data);
+            where int_Bit : int_const, new()
         {
-            uint8_t mask = (uint8_t)(1 << (int)offset);
-            uint8_t masked_data = (uint8_t)(((data >> bit) & 0x01) << (int)offset);
+            int Bit = new int_Bit().value;
+
+            uint8_t mask = (uint8_t)(1U << (int)offset);
+            uint8_t masked_data = (uint8_t)(g.BIT(data, Bit) << (int)offset);
 
             g.assert(offset < 8);
 

@@ -285,7 +285,7 @@ namespace mame.plib
         //{ return from_fp<long double>(t); }
 
         public static ptime<TYPE, TYPE_OPS, TYPE_RES> zero() { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.cast(0), RES); }
-        public static ptime<TYPE, TYPE_OPS, TYPE_RES> quantum() { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.cast(0), RES); }
+        public static ptime<TYPE, TYPE_OPS, TYPE_RES> quantum() { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.cast(1), RES); }
         public static ptime<TYPE, TYPE_OPS, TYPE_RES> never() { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.max(), RES); }  //static constexpr ptime never() noexcept { return ptime(plib::numeric_limits<internal_type>::max(), RES); }
         public static TYPE resolution() { return RES; }
 

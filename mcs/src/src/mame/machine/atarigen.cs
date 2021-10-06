@@ -28,6 +28,8 @@ namespace mame
         protected optional_device<gfxdecode_device> m_gfxdecode;
         protected optional_device<screen_device> m_screen;
 
+        //std::unique_ptr<u8[]> m_blended_data;
+
 
         // construction/destruction
         protected atarigen_state(machine_config mconfig, device_type type, string tag)

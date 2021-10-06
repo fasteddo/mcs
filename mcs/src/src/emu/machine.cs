@@ -52,18 +52,6 @@ namespace mame
         public const int DEBUG_FLAG_WPW_DATA       = 0x00000200;       // watchpoints are enabled for DATA memory writes
         public const int DEBUG_FLAG_WPW_IO         = 0x00000400;       // watchpoints are enabled for IO memory writes
         public const int DEBUG_FLAG_OSD_ENABLED    = 0x00001000;       // The OSD debugger is enabled
-
-
-        //**************************************************************************
-        //  MACROS
-        //**************************************************************************
-
-        // global allocation helpers
-        //#define auto_alloc(m, t)                pool_alloc(static_cast<running_machine &>(m).respool(), t)
-        //#define auto_alloc_clear(m, t)          pool_alloc_clear(static_cast<running_machine &>(m).respool(), t)
-        //#define auto_alloc_array(m, t, c)       pool_alloc_array(static_cast<running_machine &>(m).respool(), t, c)
-        //#define auto_alloc_array_clear(m, t, c) pool_alloc_array_clear(static_cast<running_machine &>(m).respool(), t, c)
-        //#define auto_free(m, v)                 pool_free(static_cast<running_machine &>(m).respool(), v)
     }
 
 
@@ -160,9 +148,6 @@ namespace mame
             //side_effect_disabler(side_effect_disabler &&) = default;
         }
 
-
-        // must be at top of member variables
-        //resource_pool           m_respool;              // pool of resources for this machine
 
         // side effect disable counter
         u32 m_side_effects_disabled;
@@ -337,7 +322,6 @@ namespace mame
         public game_driver system() { return m_system; }
         public osd_interface osd() { return m_manager.osd(); }
         machine_manager manager() { return m_manager; }
-        //resource_pool &respool() { return m_respool; }
         public device_scheduler scheduler() { return m_scheduler; }
         public save_manager save() { return m_save; }
         public memory_manager memory() { return m_memory; }

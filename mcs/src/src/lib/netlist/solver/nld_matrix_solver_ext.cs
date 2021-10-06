@@ -23,7 +23,7 @@ namespace mame.netlist
             where FT_OPS : plib.constants_operators<FT>, new()
             where int_SIZE : int_const, new()
         {
-            protected static readonly plib.constants_operators<FT> ops = new FT_OPS();
+            protected static readonly FT_OPS ops = new FT_OPS();
             protected static readonly int SIZE = new int_SIZE().value;
 
 
@@ -76,7 +76,7 @@ namespace mame.netlist
 
 
             //template <typename T, typename M>
-            protected void log_fill(std.vector<std.vector<unsigned>> fill, plib.pGEmatrix_cr<FT, int_SIZE> mat)  //void log_fill(const T &fill, M &mat)
+            protected void log_fill(std.vector<std.vector<unsigned>> fill, plib.pGEmatrix_cr<FT, FT_OPS, int_SIZE> mat)  //void log_fill(const T &fill, M &mat)
             {
                 size_t iN = fill.size();
 
@@ -95,7 +95,7 @@ namespace mame.netlist
                     unsigned lm = 0;
                     for (size_t j = 0; j < k; j++)
                     {
-                        if (fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY)  //if (fill[k][j] < M::FILL_INFINITY)
+                        if (fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, FT_OPS, int_SIZE>.constants_e.FILL_INFINITY)  //if (fill[k][j] < M::FILL_INFINITY)
                             lm = std.max(lm, levL[j]);
                     }
 
@@ -108,7 +108,7 @@ namespace mame.netlist
                     unsigned lm = 0;
                     for (size_t j = iN; --j > k; )
                     {
-                        if (fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY)  //if (fill[k][j] < M::FILL_INFINITY)
+                        if (fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, FT_OPS, int_SIZE>.constants_e.FILL_INFINITY)  //if (fill[k][j] < M::FILL_INFINITY)
                             lm = std.max(lm, levU[j]);
                     }
 
@@ -121,8 +121,8 @@ namespace mame.netlist
                     string ml = "";
                     for (size_t j = 0; j < iN; j++)
                     {
-                        ml += fill[k][j] == 0 ? 'X' : fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY ? '+' : '.';  //ml += fill[k][j] == 0 ? 'X' : fill[k][j] < M::FILL_INFINITY ? '+' : '.';
-                        if (fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, int_SIZE>.constants_e.FILL_INFINITY)  //if (fill[k][j] < M::FILL_INFINITY)
+                        ml += fill[k][j] == 0 ? 'X' : fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, FT_OPS, int_SIZE>.constants_e.FILL_INFINITY ? '+' : '.';  //ml += fill[k][j] == 0 ? 'X' : fill[k][j] < M::FILL_INFINITY ? '+' : '.';
+                        if (fill[k][j] < (unsigned)plib.pGEmatrix_cr<FT, FT_OPS, int_SIZE>.constants_e.FILL_INFINITY)  //if (fill[k][j] < M::FILL_INFINITY)
                         {
                             if (fill[k][j] > fm)
                                 fm = fill[k][j];
@@ -238,7 +238,7 @@ namespace mame.netlist
 
 
             //template <typename M>
-            protected void build_mat_ptr(object mat)
+            protected void build_mat_ptr(MemoryContainer<MemoryContainer<FT>> mat)  //void build_mat_ptr(M &mat)
             {
                 size_t iN = size();
 
@@ -260,11 +260,8 @@ namespace mame.netlist
                         }
                     }
 
-                    throw new emu_unimplemented();
-#if false
                     nl_config_global.nl_assert_always(cnt == this.m_terms[k].railstart(), "Count and railstart mismatch");
-                    m_mat_ptr[k][this.m_terms[k].railstart()] = &(mat[k][k]);
-#endif
+                    m_mat_ptr.op(k)[this.m_terms[k].railstart()] = new Pointer<FT>(mat[k], (int)k);  //m_mat_ptr[k][this->m_terms[k].railstart()] = &(mat[k][k]);
                 }
             }
 
@@ -292,36 +289,37 @@ namespace mame.netlist
 
                 for (size_t k = 0; k < N; k++)
                 {
-                    throw new emu_unimplemented();
-#if false
-                    var net = m_terms[k];
-                    var tcr_r = &(m_mat_ptr[k][0]);  //auto **tcr_r = &(m_mat_ptr[k][0]);
+                    var net = m_terms[k];  //auto &net = m_terms[k];
+                    var tcr_r = m_mat_ptr.op(k)[0];  //auto **tcr_r = &(m_mat_ptr[k][0]);
 
                     //using source_type = typename decltype(m_gtn)::value_type;
                     size_t term_count = net.count();
                     size_t railstart = net.railstart();
-                    var go = m_gonn[k];
-                    var gt = m_gtn[k];
-                    var Idr = m_Idrn[k];
-                    var cnV = m_connected_net_Vn[k];
+                    var go = m_gonn.op(k);
+                    var gt = m_gtn.op(k);
+                    var Idr = m_Idrn.op(k);
+                    var cnV = m_connected_net_Vn.op(k);
 
                     // FIXME: gonn, gtn and Idr - which float types should they have?
 
-                    var gtot_t = std.accumulate(gt, gt + term_count, plib.constants<source_type>.zero());
+                    var gtot_t = plib.constants<matrix_solver_t_fptype, plib.constants_operators_double>.zero();  //auto gtot_t = std::accumulate(gt, gt + term_count, plib::constants<source_type>::zero());
+                    for (size_t i = 0; i < term_count; i++)
+                        gtot_t += (gt + (int)i)[0];
 
                     // update diagonal element ...
-                    *tcr_r[railstart] = (nl_fptype)gtot_t; //mat.A[mat.diag[k]] += gtot_t;
+                    tcr_r[railstart] = ops.cast(gtot_t); //mat.A[mat.diag[k]] += gtot_t;  //*tcr_r[railstart] = static_cast<FT>(gtot_t); //mat.A[mat.diag[k]] += gtot_t;
 
                     for (size_t i = 0; i < railstart; i++)
-                        *tcr_r[i] += static_cast<FT>(go[i]);
+                        tcr_r[i]       = ops.add(tcr_r[i], ops.cast(go[i]));  //*tcr_r[i]       += static_cast<FT>(go[i]);
 
-                    var RHS_t = std.accumulate(Idr, Idr + term_count, plib.constants<source_type>.zero());
+                    var RHS_t = plib.constants<matrix_solver_t_fptype, plib.constants_operators_double>.zero();  //auto RHS_t(std::accumulate(Idr, Idr + term_count, plib::constants<source_type>::zero()));
+                    for (size_t i = 0; i < term_count; i++)
+                        RHS_t += (Idr + (int)i)[0];
 
                     for (size_t i = railstart; i < term_count; i++)
-                        RHS_t +=  (- go[i]) * *cnV[i];
+                        RHS_t +=  (- go[i]) * cnV[i][0];  //RHS_t +=  (- go[i]) * *cnV[i];
 
-                    m_RHS[k] = (nl_fptype)RHS_t;
-#endif
+                    m_RHS[k] = ops.cast(RHS_t);  //m_RHS[k] = static_cast<FT>(RHS_t);
                 }
             }
         }

@@ -199,11 +199,7 @@ namespace mame.netlist
                 switch (net_count)
                 {
                     case 1:
-                        throw new emu_unimplemented();
-#if false
-                        return new solver.matrix_solver_direct1_t(state(), sname, nets, m_params);  //return plib::make_unique<solver::matrix_solver_direct1_t<FT>>(state(), sname, nets, &m_params);
-#endif
-                        break;
+                        return new solver.matrix_solver_direct1_t<FT, FT_OPS>(this, sname, nets, params_);  //return plib::make_unique<solver::matrix_solver_direct1_t<FT>, device_arena>(*this, sname, nets, params);
                     case 2:
                         throw new emu_unimplemented();
 #if false
@@ -296,11 +292,11 @@ namespace mame.netlist
             public override void reset()
             {
                 if (exec().stats_enabled())
-                    m_fb_step.set_delegate(fb_step<bool_const_true>);  //m_fb_step.set_delegate(NETLIB_DELEGATE(fb_step<true>));
+                    m_fb_step.set_delegate(fb_step<bool_const_true>, this);  //m_fb_step.set_delegate(NETLIB_DELEGATE(fb_step<true>));
                 foreach (var s in m_mat_solvers)
                     s.reset();
                 foreach (var s in m_mat_solvers)
-                    m_queue.push(false, new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(netlist_time_ext.zero(), s));
+                    m_queue.push<bool_const_false>(new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(netlist_time_ext.zero(), s));
             }
 
 
@@ -311,8 +307,8 @@ namespace mame.netlist
             {
                 netlist_time_ext now = exec().time();
                 netlist_time_ext sched = now + ts;
-                m_queue.remove(false, solv);
-                m_queue.push(false, new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(sched, solv));
+                m_queue.remove<bool_const_false>(solv);
+                m_queue.push<bool_const_false>(new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(sched, solv));
 
                 if (m_Q_step.net().is_queued())
                 {
@@ -395,7 +391,7 @@ namespace mame.netlist
                     for (size_t i = 0; i < p; i++)
                     {
                         if (nt[i] != netlist_time.zero())
-                            m_queue.push(false, new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(now + nt[i], tmp[i]));
+                            m_queue.push<bool_const_false>(new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(now + nt[i], tmp[i]));
                         tmp[i].update_inputs();
                     }
                 }
@@ -414,7 +410,7 @@ namespace mame.netlist
                     for (size_t i = 0; i < p; i++)
                     {
                         if (nt[i] != netlist_time.zero())
-                            m_queue.push(false, new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(now + nt[i], tmp[i]));
+                            m_queue.push<bool_const_false>(new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(now + nt[i], tmp[i]));
                         tmp[i].update_inputs();
                     }
                 }

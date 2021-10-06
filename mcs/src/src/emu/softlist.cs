@@ -1,28 +1,24 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using System;
+using System.Collections;
 using System.Collections.Generic;
-
-using u32 = System.UInt32;
 
 
 namespace mame
 {
-    public static class softlist_global
+    public enum software_support
     {
-        public const int SOFTWARE_SUPPORTED_YES     = 0;
-        public const int SOFTWARE_SUPPORTED_PARTIAL = 1;
-        public const int SOFTWARE_SUPPORTED_NO      = 2;
+        SUPPORTED,
+        PARTIALLY_SUPPORTED,
+        UNSUPPORTED
     }
 
 
-    // ======================> feature_list_item
     // an item in a list of name/value pairs
-    class feature_list_item : simple_list_item<feature_list_item>
+    class feature_list_item
     {
         // internal state
-        feature_list_item m_next;
         string m_name;
         string m_value;
 
@@ -30,7 +26,6 @@ namespace mame
         // construction/destruction
         feature_list_item(string name = null, string value = null)
         {
-            m_next = null;
             m_name = name;
             m_value = value;
         }
@@ -42,24 +37,18 @@ namespace mame
 
 
         // getters
-        public feature_list_item next() { return m_next; }
-        public feature_list_item m_next_get() { return m_next; }
-        public void m_next_set(feature_list_item value) { m_next = value; }
-
         public string name() { return m_name; }
         public string value() { return m_value; }
     }
 
 
-    // ======================> software_part
     // a single part of a software item
-    public class software_part : simple_list_item<software_part>
+    public class software_part
     {
-        //friend class softlist_parser;
+        //friend class detail::softlist_parser;
 
 
         // internal state
-        software_part m_next;
         software_info m_info;
         string m_name;
         string m_interface;
@@ -73,7 +62,6 @@ namespace mame
         //-------------------------------------------------
         software_part(software_info info, string name, string interface_name)
         {
-            m_next = null;
             m_info = info;
             m_name = name;
             m_interface = interface_name;
@@ -86,10 +74,6 @@ namespace mame
 
 
         // getters
-        public software_part next() { return m_next; }
-        public software_part m_next_get() { return m_next; }
-        public void m_next_set(software_part value) { m_next = value; }
-
         public software_info info() { return m_info; }
         public string name() { return m_name; }
         //const char *interface() const { return m_interface; }
@@ -147,15 +131,14 @@ namespace mame
     }
 
 
-    // ======================> software_info
     // a single software item
     public class software_info
     {
-        //friend class softlist_parser;
+        //friend class detail::softlist_parser;
 
 
         // internal state
-        u32 m_supported;
+        software_support m_supported;
         string m_shortname;
         string m_longname;
         string m_parentname;
@@ -173,16 +156,16 @@ namespace mame
         //-------------------------------------------------
         software_info(string name, string parent, string supported)
         {
-            m_supported = softlist_global.SOFTWARE_SUPPORTED_YES;
+            m_supported = software_support.SUPPORTED;
             m_shortname = name;
             m_parentname = parent;
 
 
             // handle the supported flag if provided
             if (supported == "partial")
-                m_supported = softlist_global.SOFTWARE_SUPPORTED_PARTIAL;
+                m_supported = software_support.PARTIALLY_SUPPORTED;
             else if (supported == "no")
-                m_supported = softlist_global.SOFTWARE_SUPPORTED_NO;
+                m_supported = software_support.UNSUPPORTED;
         }
 
         //software_info(software_info const &) = delete;
@@ -199,7 +182,7 @@ namespace mame
         //const char *publisher() const { return m_publisher; }
         //const simple_list<feature_list_item> &other_info() const { return m_other_info; }
         //const simple_list<feature_list_item> &shared_info() const { return m_shared_info; }
-        //UINT32 supported() const { return m_supported; }
+        //software_support supported() const { return m_supported; }
         public std.list<software_part> parts() { return m_partdata; }
 
 
@@ -215,7 +198,7 @@ namespace mame
             //var iter = std::find_if(
             //    m_partdata.begin(),
             //    m_partdata.end(),
-            //    [&](const software_part &part)
+            //    [&part_name, interface] (const software_part &part)
             //    {
             //        // try to match the part_name (or all parts if part_name is empty), and then try
             //        // to match the interface (or all interfaces if interface is nullptr)
@@ -264,69 +247,27 @@ namespace mame
     }
 
 
-    // ======================> softlist_parser
-    class softlist_parser
+    namespace detail
     {
-        enum parse_position
-        {
-            POS_ROOT,
-            POS_MAIN,
-            POS_SOFT,
-            POS_PART,
-            POS_DATA
-        }
+        //**************************************************************************
+        //  SOFTWARE LIST PARSER
+        //**************************************************************************
 
-
-        // internal parsing state
-        //util::core_file &                   m_file;
-        //std::string                         m_filename;
-        //std::list<software_info> &  m_infolist;
-        //std::ostringstream &        m_errors;
-        //struct XML_ParserStruct *   m_parser;
-        //bool                        m_done;
-        //std::string &               m_description;
-        //bool                    m_data_accum_expected;
-        //std::string             m_data_accum;
-        //software_info *         m_current_info;
-        //software_part *         m_current_part;
-        //parse_position          m_pos;
-
-
-        // construction (== execution)
-        //softlist_parser(util::core_file &file, const std::string &filename, std::string &description, std::list<software_info> &infolist, std::ostringstream &errors);
-
-
-        // internal parsing helpers
-        //const char *infoname() const { return (m_current_info != nullptr) ? m_current_info->shortname().c_str() : "???"; }
-        //int line() const;
-        //int column() const;
-        //const char *parser_error() const;
-
-
-        // internal error helpers
-        //template <typename Format, typename... Params> void parse_error(Format &&fmt, Params &&... args);
-        //void unknown_tag(const char *tagname) { parse_error("Unknown tag: %s", tagname); }
-        //void unknown_attribute(const char *attrname) { parse_error("Unknown attribute: %s", attrname); }
-
-
-        // internal helpers
-        //template <typename T> std::vector<std::string> parse_attributes(const char **attributes, const T &attrlist);
-        //bool parse_name_and_value(const char **attributes, std::string &name, std::string &value);
-        //void add_rom_entry(std::string &&name, std::string &&hashdata, u32 offset, u32 length, u32 flags);
-
-
-        // expat callbacks
-        //static void start_handler(void *data, const char *tagname, const char **attributes);
-        //static void data_handler(void *data, const char *s, int len);
-        //static void end_handler(void *data, const char *name);
-
-
-        // internal parsing
-        //void parse_root_start(const char *tagname, const char **attributes);
-        //void parse_main_start(const char *tagname, const char **attributes);
-        //void parse_soft_start(const char *tagname, const char **attributes);
-        //void parse_part_start(const char *tagname, const char **attributes);
-        //void parse_data_start(const char *tagname, const char **attributes);
-        //void parse_soft_end(const char *name);
+        //class softlist_parser
     }
+
+
+    // ----- Helpers -----
+
+    // parses a software list
+    //void parse_software_list(
+    //        util::core_file &file,
+    //        std::string_view filename,
+    //        std::string &listname,
+    //        std::string &description,
+    //        std::list<software_info> &infolist,
+    //        std::ostream &errors);
+
+    // parses a software identifier (e.g. - 'apple2e:agentusa:flop1') into its constituent parts (returns false if cannot parse)
+    //bool software_name_parse(std::string_view identifier, std::string *list_name = nullptr, std::string *software_name = nullptr, std::string *part_name = nullptr);
 }

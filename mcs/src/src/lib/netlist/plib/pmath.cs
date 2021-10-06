@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
+using size_t = System.UInt64;
+using u16 = System.UInt16;
 
 
 namespace mame.plib
@@ -33,6 +35,7 @@ namespace mame.plib
         T cast(UInt64 a);
         T cast(double a);
         int cast_int(T a);
+        size_t cast_size_t(T a);
         double cast_double(T a);
 
         T min(T a, T b);
@@ -49,9 +52,50 @@ namespace mame.plib
     }
 
 
+    public class constants_operators_u16 : constants_operators<u16>
+    {
+        public u16 default_ { get { return 0; } }
+
+        public u16 add(u16 a, u16 b) { return (u16)(a + b); }
+        public u16 subtract(u16 a, u16 b) { throw new emu_unimplemented(); }
+        public u16 multiply(u16 a, u16 b) { throw new emu_unimplemented(); }
+        public u16 divide(u16 a, u16 b) { throw new emu_unimplemented(); }
+
+        public u16 neg(u16 a) { throw new emu_unimplemented(); }
+
+        public u16 abs(u16 a) { throw new emu_unimplemented(); }
+        public u16 cos(u16 a) { throw new emu_unimplemented(); }
+        public u16 exp(u16 a) { throw new emu_unimplemented(); }
+        public u16 floor(u16 a) { throw new emu_unimplemented(); }
+        public u16 log(u16 a) { throw new emu_unimplemented(); }
+        public u16 pow(u16 a, u16 b) { throw new emu_unimplemented(); }
+        public u16 sin(u16 a) { throw new emu_unimplemented(); }
+        public u16 sqrt(u16 a) { throw new emu_unimplemented(); }
+        public u16 trunc(u16 a) { throw new emu_unimplemented(); }
+
+        public u16 cast(UInt64 a) { return (u16)a; }
+        public u16 cast(double a) { throw new emu_unimplemented(); }
+        public int cast_int(u16 a) { return a; }
+        public size_t cast_size_t(u16 a) { return a; }
+        public double cast_double(u16 a) { throw new emu_unimplemented(); }
+
+        public u16 min(u16 a, u16 b) { throw new emu_unimplemented(); }
+        public u16 max(u16 a, u16 b) { throw new emu_unimplemented(); }
+
+        public bool equals(u16 a, u16 b) { throw new emu_unimplemented(); }
+        public bool not_equals(u16 a, u16 b) { throw new emu_unimplemented(); }
+        public bool greater_than(u16 a, u16 b) { throw new emu_unimplemented(); }
+        public bool greater_than_or_equal(u16 a, u16 b) { throw new emu_unimplemented(); }
+        public bool less_than(u16 a, u16 b) { throw new emu_unimplemented(); }
+        public bool less_than_or_equal(u16 a, u16 b) { throw new emu_unimplemented(); }
+
+        public u16 pstonum_ne(bool CLOCALE, string arg, out bool err) { throw new emu_unimplemented(); }
+    }
+
+
     public class constants_operators_float : constants_operators<float>
     {
-        public float default_ { get { return default; } }
+        public float default_ { get { return 0; } }
 
         public float add(float a, float b) { return a + b; }
         public float subtract(float a, float b) { return a - b; }
@@ -73,6 +117,7 @@ namespace mame.plib
         public float cast(UInt64 a) { return a; }
         public float cast(double a) { return (float)a; }
         public int cast_int(float a) { return (int)a; }
+        public size_t cast_size_t(float a) { return (size_t)a; }
         public double cast_double(float a) { return a; }
 
         public float min(float a, float b) { return std.min(a, b); }
@@ -91,7 +136,7 @@ namespace mame.plib
 
     public class constants_operators_double : constants_operators<double>
     {
-        public double default_ { get { return default; } }
+        public double default_ { get { return 0; } }
 
         public double add(double a, double b) { return a + b; }
         public double subtract(double a, double b) { return a - b; }
@@ -113,6 +158,7 @@ namespace mame.plib
         public double cast(UInt64 a) { return a; }
         public double cast(double a) { return a; }
         public int cast_int(double a) { return (int)a; }
+        public size_t cast_size_t(double a) { return (size_t)a; }
         public double cast_double(double a) { return a; }
 
         public double min(double a, double b) { return std.min(a, b); }

@@ -12,14 +12,14 @@ namespace mame.netlist
     namespace solver
     {
         //template <typename FT>
-        abstract class matrix_solver_direct1_t<FT, FT_OPS> : matrix_solver_direct_t<FT, FT_OPS, int_const_1>  //class matrix_solver_direct1_t: public matrix_solver_direct_t<FT, 1>
+        class matrix_solver_direct1_t<FT, FT_OPS> : matrix_solver_direct_t<FT, FT_OPS, int_const_1>  //class matrix_solver_direct1_t: public matrix_solver_direct_t<FT, 1>
             where FT_OPS : plib.constants_operators<FT>, new()
         {
             //typedef FT float_type;
             //typedef matrix_solver_direct_t<FT, 1> base_type;
 
 
-            matrix_solver_direct1_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver.solver_parameters_t params_)
+            public matrix_solver_direct1_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver.solver_parameters_t params_)
                 : base(main_solver, name, nets, params_, 1)
             { }
 

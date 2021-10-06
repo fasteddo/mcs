@@ -315,8 +315,7 @@ namespace mame
             uint8_t attrib = m_spriteram.op[x * 2 + 1];
             uint8_t color = (uint8_t)(attrib & 7);
 
-            if (m_extend_tile_info_ptr != null)
-                m_extend_tile_info_ptr(ref code, ref color, attrib, x, y);
+            m_extend_tile_info_ptr(ref code, ref color, attrib, x, y);
 
             tileinfo.set(0, code, color, 0);
         }
@@ -359,8 +358,7 @@ namespace mame
                 uint8_t sx = (uint8_t)(base_[3] + hoffset);
 
                 /* extend the sprite information */
-                if (m_extend_sprite_info_ptr != null)
-                    m_extend_sprite_info_ptr(base_, ref sx, ref sy, ref flipx, ref flipy, ref code, ref color);
+                m_extend_sprite_info_ptr(base_, ref sx, ref sy, ref flipx, ref flipy, ref code, ref color);
 
                 /* apply flipscreen in X direction */
                 if (m_flipscreen_x != 0)
@@ -377,7 +375,6 @@ namespace mame
                 }
 
                 /* draw */
-
                 m_gfxdecode.op[0].digfx.gfx(1).transpen(bitmap,clip,
                 code, color,
                 flipx, flipy,
@@ -394,27 +391,24 @@ namespace mame
 
         void bullets_draw(bitmap_rgb32 bitmap, rectangle cliprect, Pointer<uint8_t> base_)  //void bullets_draw(bitmap_rgb32 &bitmap, const rectangle &cliprect, const uint8_t *base)
         {
-            int y;
-
             /* iterate over scanlines */
-            for (y = cliprect.min_y; y <= cliprect.max_y; y++)
+            for (int y = cliprect.min_y; y <= cliprect.max_y; y++)
             {
                 uint8_t shell = 0xff;
                 uint8_t missile = 0xff;
                 uint8_t effy;
-                int which;
 
                 /* the first 3 entries match Y-1 */
                 effy = m_flipscreen_y != 0 ? (uint8_t)((y - 1) ^ 255) : (uint8_t)(y - 1);
-                for (which = 0; which < 3; which++)
-                    if ((uint8_t)(base_[which*4+1] + effy) == 0xff)
+                for (int which = 0; which < 3; which++)
+                    if ((uint8_t)(base_[which * 4 + 1] + effy) == 0xff)
                         shell = (uint8_t)which;
 
                 /* remaining entries match Y */
                 effy = m_flipscreen_y != 0 ? (uint8_t)(y ^ 255) : (uint8_t)y;
-                for (which = 3; which < 8; which++)
+                for (int which = 3; which < 8; which++)
                 {
-                    if ((uint8_t)(base_[which*4+1] + effy) == 0xff)
+                    if ((uint8_t)(base_[which * 4 + 1] + effy) == 0xff)
                     {
                         if (which != 7)
                             shell = (uint8_t)which;
@@ -425,9 +419,9 @@ namespace mame
 
                 /* draw the shell */
                 if (shell != 0xff)
-                    m_draw_bullet_ptr(bitmap, cliprect, shell, 255 - base_[shell*4+3], y);
+                    m_draw_bullet_ptr(bitmap, cliprect, shell, 255 - base_[shell * 4 + 3], y);
                 if (missile != 0xff)
-                    m_draw_bullet_ptr(bitmap, cliprect, missile, 255 - base_[missile*4+3], y);
+                    m_draw_bullet_ptr(bitmap, cliprect, missile, 255 - base_[missile * 4 + 3], y);
             }
         }
 
@@ -751,20 +745,26 @@ namespace mame
          *
          *************************************/
 
-#if false
         /*** generic ***/
-        void galaxian_state::upper_extend_tile_info(uint16_t *code, uint8_t *color, uint8_t attrib, uint8_t x, uint8_t y)
+        void empty_extend_tile_info(ref uint16_t code, ref uint8_t color, uint8_t attrib, uint8_t x, uint8_t y)
         {
-            /* tiles are in the upper half of a larger ROM */
-            *code += 0x100;
         }
 
-        void galaxian_state::upper_extend_sprite_info(const uint8_t *base, uint8_t *sx, uint8_t *sy, uint8_t *flipx, uint8_t *flipy, uint16_t *code, uint8_t *color)
+        void empty_extend_sprite_info(Pointer<uint8_t> base_, ref uint8_t sx, ref uint8_t sy, ref uint8_t flipx, ref uint8_t flipy, ref uint16_t code, ref uint8_t color)
         {
-            /* sprites are in the upper half of a larger ROM */
-            *code += 0x40;
         }
-#endif
+
+        //void galaxian_state::upper_extend_tile_info(uint16_t *code, uint8_t *color, uint8_t attrib, uint8_t x, uint8_t y)
+        //{
+        //    /* tiles are in the upper half of a larger ROM */
+        //    *code += 0x100;
+        //}
+
+        //void galaxian_state::upper_extend_sprite_info(const uint8_t *base, uint8_t *sx, uint8_t *sy, uint8_t *flipx, uint8_t *flipy, uint16_t *code, uint8_t *color)
+        //{
+        //    /* sprites are in the upper half of a larger ROM */
+        //    *code += 0x40;
+        //}
 
 
         /*** Frogger ***/
@@ -774,7 +774,7 @@ namespace mame
         }
 
 
-        void frogger_extend_sprite_info(Pointer<uint8_t> basePtr, ref uint8_t sx, ref uint8_t sy, ref uint8_t flipx, ref uint8_t flipy, ref uint16_t code, ref uint8_t color)  //void frogger_extend_sprite_info(const uint8_t *base, uint8_t *sx, uint8_t *sy, uint8_t *flipx, uint8_t *flipy, uint16_t *code, uint8_t *color)
+        void frogger_extend_sprite_info(Pointer<uint8_t> base_, ref uint8_t sx, ref uint8_t sy, ref uint8_t flipx, ref uint8_t flipy, ref uint16_t code, ref uint8_t color)  //void frogger_extend_sprite_info(const uint8_t *base, uint8_t *sx, uint8_t *sy, uint8_t *flipx, uint8_t *flipy, uint16_t *code, uint8_t *color)
         {
             color = (uint8_t)(((color >> 1) & 0x03) | ((color << 2) & 0x04));
         }

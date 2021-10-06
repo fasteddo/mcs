@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using int32_t = System.Int32;
 using uint8_t = System.Byte;
 
 
@@ -19,17 +20,9 @@ namespace mame
         required_shared_ptr<uint8_t> m_xevious_fg_videoram;
         required_shared_ptr<uint8_t> m_xevious_bg_videoram;
         optional_device<samples_device> m_samples;
-
-        int [] m_xevious_bs = new int[2];
-
-        //UINT8 m_customio[16];
-        //char m_battles_customio_command;
-        //char m_battles_customio_prev_command;
-        //char m_battles_customio_command_count;
-        //char m_battles_customio_data;
-        //char m_battles_sound_played;
-
         optional_device<cpu_device> m_subcpu3;
+
+        int32_t [] m_xevious_bs = new int32_t[2];
 
 
         public xevious_state(machine_config mconfig, device_type type, string tag)

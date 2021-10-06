@@ -89,7 +89,7 @@ namespace mame
 
         // public state
         address_map_entry m_next;                 // pointer to the next entry
-        address_map m_map;                  // reference to our owning map
+        public address_map m_map;                  // reference to our owning map
         public device_t m_devbase;              // reference to "base" device for tag lookups
 
         // basic information
@@ -337,11 +337,14 @@ namespace mame
         //    return bankrw(target.second);
         //}
 
-        //template<bool _reqd> address_map_entry &bankr(const memory_bank_finder<_reqd> &finder) {
-        //    const std::pair<device_t &, const char *> target(finder.finder_target());
-        //    assert(&target.first == &m_devbase);
-        //    return bankr(target.second);
-        //}
+        //template<bool _reqd>
+        public address_map_entry bankr<bool_reqd>(memory_bank_finder<bool_reqd> finder)  //address_map_entry &bankr(const memory_bank_finder<_reqd> &finder) {
+            where bool_reqd : bool_const, new()
+        {
+            std.pair<device_t, string> target = finder.finder_target();
+            g.assert(target.first == m_devbase);
+            return bankr(target.second);
+        }
         //template<bool _reqd> address_map_entry &bankw(const memory_bank_finder<_reqd> &finder) {
         //    const std::pair<device_t &, const char *> target(finder.finder_target());
         //    assert(&target.first == &m_devbase);
@@ -1060,7 +1063,7 @@ namespace mame
         // public data
         int m_spacenum;         // space number of the map
         device_t m_device;       // associated device
-        //memory_view *                   m_view;         // view, when in one
+        memory_view m_view;         // view, when in one
         address_space_config m_config;       // space configuration
         public u8 m_unmapval;         // unmapped memory value
         public offs_t m_globalmask;       // global mask
@@ -1114,6 +1117,8 @@ namespace mame
         {
             m_spacenum = g.AS_PROGRAM;
             m_device = device;
+            m_view = null;
+            m_config = entry.m_map.m_config;
             m_unmapval = 0;
             m_globalmask = 0;
 
@@ -1130,6 +1135,8 @@ namespace mame
         {
             m_spacenum = space.spacenum();
             m_device = device;
+            m_view = null;
+            m_config = space.space_config();
             m_unmapval = (u8)space.unmap();
             m_globalmask = space.addrmask();
 

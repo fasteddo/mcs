@@ -259,6 +259,8 @@ namespace mame
 
             g.SCREEN(config, m_screen, g.SCREEN_TYPE_RASTER);
             m_screen.op[0].set_raw(MASTER_CLOCK/2, 384, 128, 0, 262, 22, 246);   // hsync is 50..77, vsync is 257..259
+            m_screen.op[0].set_screen_update(screen_update);
+            m_screen.op[0].set_palette(m_palette);
 
             /* sound hardware */
             g.SPEAKER(config, "mono").front_center();

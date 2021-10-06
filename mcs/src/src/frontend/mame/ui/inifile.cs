@@ -189,7 +189,7 @@ namespace mame
                     file.gets(out readbuf, 1024);
                     tmpmatches.publisher = utils_global.chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.supported = Convert.ToByte(readbuf);
+                    tmpmatches.supported = (software_support)std.atoi(readbuf);
                     file.gets(out readbuf, 1024);
                     tmpmatches.part = utils_global.chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);

@@ -111,7 +111,7 @@ namespace mame.netlist
 
     public class param_num_t_operators_double : param_num_t_operators<double>
     {
-        public bool is_integral() { return true; }
+        public bool is_integral() { return false; }
         public double cast(double a) { return a; }
     }
 

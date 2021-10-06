@@ -212,16 +212,12 @@ namespace mame.netlist.interface_
         }
 
 
-        public void buffer_reset(netlist_time sample_time, size_t num_samples, object inputs)  //void buffer_reset(netlist_time sample_time, std::size_t num_samples, T *inputs)
+        public void buffer_reset(netlist_time sample_time, size_t num_samples, T inputs)  //void buffer_reset(netlist_time sample_time, std::size_t num_samples, T *inputs)
         {
             m_samples = num_samples;
             m_sample_time = sample_time;
             m_pos = 0;
-
-            throw new emu_unimplemented();
-#if false
             m_buffer = inputs;
-#endif
         }
 
 

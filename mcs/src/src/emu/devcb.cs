@@ -2289,6 +2289,7 @@ namespace mame
             //    return delegate_builder<delegate_type_t<T> >(m_target, m_append, target.first, target.second, std::forward<T>(func), name);
             //}
 
+            public delegate_builder<write8sm_delegate> set<U, bool_R>(device_finder<U, bool_R> finder, write8sm_delegate func) where bool_R : bool_const, new() { return set_internal(finder, func); }
             public delegate_builder<write8smo_delegate> set<U, bool_R>(device_finder<U, bool_R> finder, write8smo_delegate func) where bool_R : bool_const, new() { return set_internal(finder, func); }
             public delegate_builder<write_line_delegate> set<U, bool_R>(device_finder<U, bool_R> finder, write_line_delegate func) where bool_R : bool_const, new() { return set_internal(finder, func); }
 

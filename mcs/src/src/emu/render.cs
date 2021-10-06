@@ -480,6 +480,11 @@ namespace mame
     // a render_texture is used to track transformations when building an object list
     public class render_texture : simple_list_item<render_texture>
     {
+        //friend class simple_list<render_texture>;
+        //friend class fixed_allocator<render_texture>;
+        //friend class render_manager;
+        //friend class render_target;
+
         const int MAX_TEXTURE_SCALES = 20;
 
         // a scaled_texture contains a single scaled entry for a texture
@@ -780,6 +785,11 @@ namespace mame
     public class render_container : simple_list_item<render_container>,
                                     IDisposable
     {
+        //friend class simple_list<render_container>;
+        //friend class render_manager;
+        //friend class render_target;
+
+
         // user settings describes the collected user-controllable settings
         public class user_settings
         {

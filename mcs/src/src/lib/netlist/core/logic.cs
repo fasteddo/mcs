@@ -19,6 +19,7 @@ namespace mame.netlist
         public logic_t(device_t dev, string aname, state_e terminal_state, nldelegate delegate_)
             : base(dev, aname, terminal_state, delegate_)
         {
+            m_logic_family = dev.logic_family();  //, logic_family_t(dev.logic_family())
         }
 
 

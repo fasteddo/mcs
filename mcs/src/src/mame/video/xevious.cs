@@ -151,8 +151,7 @@ namespace mame
           Start the video hardware emulation.
 
         ***************************************************************************/
-        //VIDEO_START_MEMBER(xevious_state,xevious)
-        void video_start_xevious()
+        protected override void video_start()
         {
             m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_bg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);
             m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_fg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8,8,64,32);  //tilemap_get_info_delegate(FUNC(xevious_state::get_fg_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32);

@@ -1689,7 +1689,7 @@ namespace mame
         }
 
 
-        //const address_space_config &space_config() const { return m_config; }
+        public address_space_config space_config() { return m_config; }
         public int data_width() { return m_config.data_width(); }
         public int addr_width() { return m_config.addr_width(); }
         //int logaddr_width() const { return m_config.logaddr_width(); }
@@ -3152,6 +3152,9 @@ namespace mame
 
 
         //void disable();
+
+
+        //std::optional<int> entry() const { return m_cur_id == -1 ? std::optional<int>() : m_cur_slot; }
 
 
         //const std::string &name() const { return m_name; }
