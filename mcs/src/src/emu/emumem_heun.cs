@@ -23,7 +23,7 @@ namespace mame
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
-        public handler_entry_read_unmapped(address_space space) : base(space, 0) { }
+        public handler_entry_read_unmapped(address_space space) : base(space, handler_entry.F_UNMAP) { }
         //~handler_entry_read_unmapped() = default;
 
 
@@ -52,7 +52,7 @@ namespace mame
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
-        public handler_entry_write_unmapped(address_space space) : base(space, 0) { }
+        public handler_entry_write_unmapped(address_space space) : base(space, handler_entry.F_UNMAP) { }
         //~handler_entry_write_unmapped() = default;
 
 

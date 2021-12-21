@@ -22,66 +22,22 @@ namespace mame
             TYPE DEFINITIONS
         ***************************************************************************/
 
-        class CSzFile
+        class CFileInStream //: ISeekInStream
         {
-            uint64_t currfpos;
-            public uint64_t length;
-            public osd_file osdfile;
+            public random_read file;  //random_read::ptr    file;
+            //std::uint64_t       currfpos = 0;
+            public uint64_t length = 0;
 
 
-            public CSzFile()
-            {
-                currfpos = 0;
-                length = 0;
-                osdfile = null;
-            }
-
-
-#if false
-            SRes read(void *data, std::size_t &size)
-            {
-                if (!osdfile)
-                {
-                    osd_printf_error("un7z: called CSzFile::read without file\n");
-                    return SZ_ERROR_READ;
-                }
-
-                if (!size)
-                    return SZ_OK;
-
-                // TODO: this casts a size_t to a uint32_t, so it will fail if >=4GB is requested at once (need a loop)
-                std::uint32_t read_length(0);
-                auto const err = osdfile->read(data, currfpos, size, read_length);
-                size = read_length;
-                currfpos += read_length;
-
-                return (osd_file::error::NONE == err) ? SZ_OK : SZ_ERROR_READ;
-            }
-
-            SRes seek(Int64 &pos, ESzSeek origin)
-            {
-                switch (origin)
-                {
-                case SZ_SEEK_CUR: currfpos += pos; break;
-                case SZ_SEEK_SET: currfpos = pos; break;
-                case SZ_SEEK_END: currfpos = length + pos; break;
-                default: return SZ_ERROR_READ;
-                }
-                pos = currfpos;
-                return SZ_OK;
-            }
-#endif
-        }
-
-
-        class CFileInStream : //ISeekInStream
-                              CSzFile
-        {
             public CFileInStream()
             {
-                //Read = &FileInStream_Read;
-                //Seek = &FileInStream_Seek;
+                //Read = [] (void *pp, void *buf, size_t *size) { return reinterpret_cast<CFileInStream *>(pp)->read(buf, *size); };
+                //Seek = [] (void *pp, Int64 *pos, ESzSeek origin) { return reinterpret_cast<CFileInStream *>(pp)->seek(*pos, origin); };
             }
+
+            //SRes read(void *data, std::size_t &size) noexcept
+
+            //SRes seek(Int64 &pos, ESzSeek origin) noexcept
         }
 
 
@@ -133,9 +89,9 @@ namespace mame
                 m_curr_length = 0;
                 m_curr_modified = 0;
                 m_curr_crc = 0;
-                //m_utf16_buf = new std_vector<UInt16>(128);
-                //m_uchar_buf = new std_vector<double>(128);
-                //m_utf8_buf = new std_vector<char>(512);
+                //, m_utf16_buf()
+                //, m_uchar_buf()
+                //, m_utf8_buf()
                 m_inited = false;
                 m_block_index = 0;
                 //m_out_buffer(nullptr);
@@ -153,13 +109,13 @@ namespace mame
                 //LookToRead_Init(&m_look_stream);
             }
 
-            //~m7z_file_impl()
+            //m7z_file_impl(random_read::ptr &&file) noexcept
+            //    : m7z_file_impl(std::string())
             //{
-            //    if (m_out_buffer)
-            //        IAlloc_Free(&m_alloc_imp, m_out_buffer);
-            //    if (m_inited)
-            //        SzArEx_Free(&m_db, &m_alloc_imp);
+            //    m_archive_stream.file = std::move(file);
             //}
+
+            //~m7z_file_impl()
 
 
             public static m7z_file_impl find_cached(string filename)
@@ -171,7 +127,8 @@ namespace mame
                         // if we have a valid entry and it matches our filename, use it and remove from the cache
                         if (s_cache[cachenum] != null && (filename == s_cache[cachenum].m_filename))
                         {
-                            m7z_file_impl result;
+                            //using std::swap;
+                            m7z_file_impl result;  //ptr result;
                             result = s_cache[cachenum];  //std::swap(s_cache[cachenum], result);
                             s_cache[cachenum] = null;
                             g.osd_printf_verbose("un7z: found {0} in cache\n", filename);
@@ -186,42 +143,48 @@ namespace mame
 
             public static void close(m7z_file_impl archive)
             {
-                if (archive == null) return;
-
-                // close the open files
-                //global.osd_printf_verbose("un7z: closing archive file {0} and sending to cache\n", archive.m_filename.c_str());
-
-                archive.m_sharpCompressArchive.Dispose();
-                archive.m_archive_stream.osdfile = null;
-
-
-                //throw new emu_unimplemented();
-#if false
-                // find the first nullptr entry in the cache
-                lock (s_cache_mutex)  //std::lock_guard<std::mutex> guard(s_cache_mutex);
+                // if the filename isn't empty, the implementation can be cached
+                if (archive != null && !archive.m_filename.empty())
                 {
-                    int cachenum;
-                    for (cachenum = 0; cachenum < s_cache.Length; cachenum++)
-                        if (s_cache[cachenum] == null)
+                    archive.m_sharpCompressArchive.Dispose();
+                    archive.m_archive_stream.file = null;
+
+#if false
+                    // close the open files
+                    osd_printf_verbose("un7z: closing archive file %s and sending to cache\n", archive->m_filename);
+                    archive->m_archive_stream.file.reset();
+
+                    // find the first nullptr entry in the cache
+                    std::lock_guard<std::mutex> guard(s_cache_mutex);
+                    std::size_t cachenum;
+                    for (cachenum = 0; cachenum < s_cache.size(); cachenum++)
+                        if (!s_cache[cachenum])
                             break;
 
                     // if no room left in the cache, free the bottommost entry
-                    if (cachenum == s_cache.Length)
+                    if (cachenum == s_cache.size())
                     {
                         cachenum--;
-                        global.osd_printf_verbose("un7z: removing {0} from cache to make space\n", s_cache[cachenum].m_filename.c_str());
-                        s_cache[cachenum] = null;
+                        osd_printf_verbose("un7z: removing %s from cache to make space\n", s_cache[cachenum]->m_filename);
+                        s_cache[cachenum].reset();
                     }
 
                     // move everyone else down and place us at the top
                     for ( ; cachenum > 0; cachenum--)
-                        s_cache[cachenum] = s_cache[cachenum - 1];
-                    s_cache[0] = archive;
-                }
+                        s_cache[cachenum] = std::move(s_cache[cachenum - 1]);
+                    s_cache[0] = std::move(archive);
 #endif
+                }
+
+                // make sure it's cleaned up
+                archive = null;  //archive.reset();
             }
 
 
+            /*-------------------------------------------------
+                _7z_file_cache_clear - clear the _7Z file
+                cache and free all memory
+            -------------------------------------------------*/
             public static void m7z_file_cache_clear()
             {
                 // This is a trampoline called from unzip.cpp to avoid the need to have the zip and 7zip code in one file
@@ -234,21 +197,55 @@ namespace mame
                 // clear call cache entries
                 lock (s_cache_mutex)  //std::lock_guard<std::mutex> guard(s_cache_mutex);
                 {
-                    for (int cachenum = 0; cachenum < s_cache.Length; s_cache[cachenum++] = null) { }
+                    for (int i = 0; i < s_cache.Length; i++)  //for (auto &cached : s_cache)
+                        s_cache[i] = null;  //cached.reset();
                 }
             }
 
 
-            public archive_file.error initialize()
+            public std.error_condition initialize()
             {
-                osd_file.error err = osdfile_global.m_osdfile.open(m_filename, g.OPEN_FLAG_READ, out m_archive_stream.osdfile, out m_archive_stream.length);
-                if (err != osd_file.error.NONE)
-                    return archive_file.error.FILE_ERROR;
+#if false
+                try
+                {
+                    if (m_utf16_buf.size() < 128)
+                        m_utf16_buf.resize(128);
+                    if (m_uchar_buf.size() < 128)
+                        m_uchar_buf.resize(128);
+                    m_utf8_buf.reserve(512);
+                }
+                catch (...)
+                {
+                    return std::errc::not_enough_memory;
+                }
+#endif
 
-                //global.osd_printf_verbose("un7z: opened archive file {0}\n", m_filename);
+                if (m_archive_stream.file == null)
+                {
+                    osd_file file;  //osd_file::ptr file;
+                    std.error_condition err = osdfile_global.m_osdfile.open(m_filename, g.OPEN_FLAG_READ, out file, out m_archive_stream.length);  //std::error_condition const err = osd_file::open(m_filename, OPEN_FLAG_READ, file, m_archive_stream.length);
+                    if (err)
+                        return err;
+
+                    m_archive_stream.file = osd_file_read(file);  //m_archive_stream.file = osd_file_read(std::move(file));
+                    //osd_printf_verbose("un7z: opened archive file %s\n", m_filename);
+                }
+                else if (m_archive_stream.length == 0)
+                {
+                    std.error_condition err = m_archive_stream.file.length(out m_archive_stream.length);  //std::error_condition const err = m_archive_stream.file->length(m_archive_stream.length);
+                    if (err)
+                    {
+                        g.osd_printf_verbose(
+                                "un7z: error getting length of archive file {0} ({1}:{2} {3})\n",
+                                m_filename, err.category().name(), err.value(), err.message());
+                        return err;
+                    }
+                }
 
 #if false
-                CrcGenerateTable(); // FIXME: doesn't belong here - it should be called once statically
+                // TODO: coordinate this with other LZMA users in the codebase?
+                struct crc_table_generator { crc_table_generator() { CrcGenerateTable(); } };
+                static crc_table_generator crc_table;
 
                 SzArEx_Init(&m_db);
                 m_inited = true;
@@ -258,36 +255,55 @@ namespace mame
                     osd_printf_error("un7z: error opening %s as 7z archive (%d)\n", m_filename, int(res));
                     switch (res)
                     {
-                    case SZ_ERROR_UNSUPPORTED:  return archive_file.error.UNSUPPORTED;
-                    case SZ_ERROR_MEM:          return archive_file.error.OUT_OF_MEMORY;
-                    case SZ_ERROR_INPUT_EOF:    return archive_file.error.FILE_TRUNCATED;
-                    default:                    return archive_file.error.FILE_ERROR;
+                    case SZ_ERROR_UNSUPPORTED:  return archive_file::error::UNSUPPORTED;
+                    case SZ_ERROR_MEM:          return std::errc::not_enough_memory;
+                    case SZ_ERROR_INPUT_EOF:    return archive_file::error::FILE_TRUNCATED;
+                    default:                    return std::errc::io_error; // TODO: better default error?
                     }
                 }
 
-                return archive_file::error::NONE;
+                return std::error_condition();
 #endif
 
                 try
                 {
-                    m_sharpCompressArchive = SevenZipArchive.Open(m_archive_stream.osdfile.stream);
+                    m_sharpCompressArchive = SevenZipArchive.Open(m_archive_stream.file.stream);
                 }
                 catch (Exception e)
                 {
                     m_sharpCompressArchive = null;
-                    return archive_file.error.FILE_ERROR;
+                    return std.errc.io_error;
                 }
 
-                return archive_file.error.NONE;
+                return new std.error_condition();
             }
 
 
-            public int first_file() { return search(0, 0, "", false, false, false); }
-            public int next_file() { throw new emu_unimplemented(); } //return (m_curr_file_idx < 0) ? -1 : search(m_curr_file_idx + 1, 0, "", false, false, false); }
+            public int first_file()
+            {
+                return search(0, 0, "", false, false, false);
+            }
 
-            public int search(uint32_t crc) { return search(0, crc, "", true, false, false); }
-            public int search(string filename, bool partialpath) { return search(0, 0, filename, false, true, partialpath); }
-            public int search(uint32_t crc, string filename, bool partialpath) { return search(0, crc, filename, true, true, partialpath); }
+            public int next_file()
+            {
+                throw new emu_unimplemented();
+                //return (m_curr_file_idx < 0) ? -1 : search(m_curr_file_idx + 1, 0, std::string_view(), false, false, false);
+            }
+
+            public int search(uint32_t crc)
+            {
+                return search(0, crc, "", true, false, false);
+            }
+
+            public int search(string filename, bool partialpath)
+            {
+                return search(0, 0, filename, false, true, partialpath);
+            }
+
+            public int search(uint32_t crc, string filename, bool partialpath)
+            {
+                return search(0, crc, filename, true, true, partialpath);
+            }
 
             public bool current_is_directory() { throw new emu_unimplemented(); }  //{ return m_curr_is_dir; }
             public string current_name() { throw new emu_unimplemented(); } //{ return m_curr_name; }
@@ -296,7 +312,7 @@ namespace mame
             public int64_t current_crc() { return m_curr_crc; }
 
 
-            public archive_file.error decompress(MemoryU8 buffer, uint32_t length)
+            public std.error_condition decompress(MemoryU8 buffer, uint32_t length)
             {
 #if false
                 // if we don't have enough buffer, error
@@ -307,15 +323,19 @@ namespace mame
                 }
 
                 // make sure the file is open..
-                if (!m_archive_stream.osdfile)
+                if (!m_archive_stream.file)
                 {
-                    m_archive_stream.currfpos = 0;
-                    osd_file::error const err = osd_file::open(m_filename, OPEN_FLAG_READ, m_archive_stream.osdfile, m_archive_stream.length);
-                    if (err != osd_file::error::NONE)
+                    m_archive_stream.currfpos = 0; // FIXME: should it really be changing the file pointer out from under LZMA?
+                    osd_file::ptr file;
+                    std::error_condition const err = osd_file::open(m_filename, OPEN_FLAG_READ, file, m_archive_stream.length);
+                    if (err)
                     {
-                        osd_printf_error("un7z: error reopening archive file %s (%d)\n", m_filename, int(err));
-                        return archive_file::error::FILE_ERROR;
+                        osd_printf_error(
+                                "un7z: error reopening archive file %s (%s:%d %s)\n",
+                                m_filename, err.category().name(), err.value(), err.message());
+                        return err;
                     }
+                    m_archive_stream.file = osd_file_read(std::move(file));
                     osd_printf_verbose("un7z: reopened archive file %s\n", m_filename);
                 }
 
@@ -332,7 +352,7 @@ namespace mame
                     switch (res)
                     {
                     case SZ_ERROR_UNSUPPORTED:  return archive_file::error::UNSUPPORTED;
-                    case SZ_ERROR_MEM:          return archive_file::error::OUT_OF_MEMORY;
+                    case SZ_ERROR_MEM:          return std::errc::not_enough_memory;
                     case SZ_ERROR_INPUT_EOF:    return archive_file::error::FILE_TRUNCATED;
                     default:                    return archive_file::error::DECOMPRESS_ERROR;
                     }
@@ -340,7 +360,7 @@ namespace mame
 
                 // copy to destination buffer
                 std::memcpy(buffer, m_out_buffer + offset, (std::min<std::size_t>)(length, out_size_processed));
-                return archive_file::error::NONE;
+                return std::error_condition();
 #endif
                 int cur = 0;
                 foreach (var entry in m_sharpCompressArchive.Entries)
@@ -354,11 +374,11 @@ namespace mame
                         while (bufferPos < stream.Length)
                             buffer[bufferPos++] = Convert.ToByte(stream.ReadByte());
 
-                        return archive_file.error.NONE;
+                        return new std.error_condition();
                     }
                 }
 
-                return archive_file.error.FILE_ERROR;
+                return std.errc.io_error;
             }
 
 
@@ -370,38 +390,54 @@ namespace mame
                 bool matchname,
                 bool partialpath)
             {
-                int cur = 0;
-
-                foreach (var entry in m_sharpCompressArchive.Entries)  //for ( ; i < m_db.NumFiles; i++)
+                try
                 {
-                    if (cur < i - 1)
-                        continue;
+                    int cur = 0;
 
-                    //make_utf8_name(i);
-                    bool is_dir = entry.IsDirectory;  //bool const is_dir(SzArEx_IsDir(&m_db, i));
-                    int64_t size = entry.Size;  //const std::uint64_t size(SzArEx_GetFileSize(&m_db, i));
-                    int64_t crc = entry.Crc;  //const std::uint32_t crc(m_db.CRCs.Vals[i]);
-                    bool crcmatch = crc == search_crc;  //const bool crcmatch(SzBitArray_Check(m_db.CRCs.Defs, i) && (crc == search_crc));
-                    //auto const partialoffset(m_utf8_buf.size() - 1 - search_filename.length());
-                    //bool const partialpossible((m_utf8_buf.size() > (search_filename.length() + 1)) && (m_utf8_buf[partialoffset - 1] == '/'));
-                    bool namematch = g.core_stricmp(search_filename, entry.Key) == 0;  //const bool namematch( !core_stricmp(search_filename.c_str(), &m_utf8_buf[0]) || (partialpath && partialpossible && !core_stricmp(search_filename.c_str(), &m_utf8_buf[partialoffset])));
-
-                    bool found = ((!matchcrc && !matchname) || !is_dir) && (!matchcrc || crcmatch) && (!matchname || namematch);
-                    if (found)
+                    foreach (var entry in m_sharpCompressArchive.Entries)  //for ( ; i < m_db.NumFiles; i++)
                     {
-                        m_curr_file_idx = cur;
-                        m_curr_is_dir = is_dir;
-                        m_curr_name = entry.Key;  //m_curr_name = &m_utf8_buf[0];
-                        m_curr_length = size;
-                        //set_curr_modified();
-                        m_curr_crc = crc;
+                        if (cur < i - 1)
+                            continue;
 
-                        return cur;
+                        //make_utf8_name(i);
+                        bool is_dir = entry.IsDirectory;  //bool const is_dir(SzArEx_IsDir(&m_db, i));
+                        int64_t size = entry.Size;  //const std::uint64_t size(SzArEx_GetFileSize(&m_db, i));
+                        int64_t crc = entry.Crc;  //const std::uint32_t crc(m_db.CRCs.Vals[i]);
+
+                        bool crcmatch = crc == search_crc;  //const bool crcmatch(SzBitArray_Check(m_db.CRCs.Defs, i) && (crc == search_crc));
+                        bool found;
+                        if (!matchname)
+                        {
+                            found = !matchcrc || (crcmatch && !is_dir);
+                        }
+                        else
+                        {
+                            //auto const partialoffset = m_utf8_buf.size() - search_filename.length();
+                            bool namematch = g.core_stricmp(search_filename, entry.Key) == 0;  //const bool namematch = (search_filename.length() == m_utf8_buf.size()) && (search_filename.empty() || !core_strnicmp(&search_filename[0], &m_utf8_buf[0], search_filename.length()));
+                            //bool const partialmatch = partialpath && ((m_utf8_buf.size() > search_filename.length()) && (m_utf8_buf[partialoffset - 1] == '/')) && (search_filename.empty() || !core_strnicmp(&search_filename[0], &m_utf8_buf[partialoffset], search_filename.length()));
+                            found = (!matchcrc || crcmatch) && (namematch);  //found = (!matchcrc || crcmatch) && (namematch || partialmatch);
+                        }
+
+                        if (found)
+                        {
+                            // set the name first - resizing it can throw an exception, and we want the state to be consistent
+                            m_curr_name = entry.Key;  //m_curr_name.assign(m_utf8_buf.begin(), m_utf8_buf.end());
+                            m_curr_file_idx = cur;  //m_curr_file_idx = i;
+                            m_curr_is_dir = is_dir;
+                            m_curr_length = size;
+                            //set_curr_modified();
+                            m_curr_crc = crc;
+
+                            return cur;  //return i;
+                        }
+
+                        cur++;
                     }
-
-                    cur++;
                 }
-
+                catch (Exception)  //catch (...)
+                {
+                    // allocation error handling name
+                }
                 return -1;
             }
 
@@ -448,7 +484,7 @@ namespace mame
             protected override int64_t current_last_modified() { return m_impl.current_last_modified(); }
             public override uint32_t current_crc() { return (uint32_t)m_impl.current_crc(); }
 
-            public override error decompress(MemoryU8 buffer, uint32_t length) { return m_impl.decompress(buffer, length); }
+            public override std.error_condition decompress(MemoryU8 buffer, uint32_t length) { return m_impl.decompress(buffer, length); }
         }
     }
 }

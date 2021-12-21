@@ -80,6 +80,8 @@ namespace mame
                 public int xoffs;                // current X offset
                 public int yoffs;                // current Y offset
                 public int zoom;                 // zoom factor
+                public bool zoom_frac;      // zoom via reciprocal fractions
+                public bool auto_zoom;      // auto-zoom toggle
                 public uint8_t rotate;              // current rotation (orientation) value
                 public uint32_t flags;                    // render flags
             }
@@ -92,7 +94,10 @@ namespace mame
             }
         }
 
+
         public const int MAX_GFX_DECODERS = 8;
+        const int MAX_ZOOM_LEVEL = 8;
+        const int MIN_ZOOM_LEVEL = 8;
 
 
         /***************************************************************************
@@ -150,7 +155,9 @@ namespace mame
             state.tilemap.which = 0;
             state.tilemap.xoffs = 0;
             state.tilemap.yoffs = 0;
-            state.tilemap.zoom = 0;
+            state.tilemap.zoom = 1;
+            state.tilemap.zoom_frac = false;
+            state.tilemap.auto_zoom = true;
             state.tilemap.rotate = rotate;
             state.tilemap.flags = g.TILEMAP_DRAW_ALL_CATEGORIES;
         }
@@ -511,21 +518,14 @@ cancel:
         static void palette_handle_keys(running_machine machine, ui_gfx_state state)
         {
             device_palette_interface palette = state.palette.interface_;
-            int rowcount;
-            int screencount;
-            int total;
 
             // handle zoom (minus,plus)
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_OUT))
-                state.palette.columns /= 2;
+                state.palette.columns = std.min((uint8_t)(state.palette.columns * 2), (uint8_t)64);
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_IN))
-                state.palette.columns *= 2;
-
-            // clamp within range
-            if (state.palette.columns <= 4)
-                state.palette.columns = 4;
-            if (state.palette.columns > 64)
-                state.palette.columns = 64;
+                state.palette.columns = std.max((uint8_t)(state.palette.columns / 2), (uint8_t)4);
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_DEFAULT))
+                state.palette.columns = 16;
 
             // handle colormap selection (open bracket,close bracket)
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_PREV_GROUP))
@@ -559,11 +559,11 @@ cancel:
             }
 
             // cache some info in locals
-            total = state.palette.which != 0 ? (int)palette.indirect_entries() : (int)palette.entries();
+            int total = state.palette.which != 0 ? (int)palette.indirect_entries() : (int)palette.entries();
 
             // determine number of entries per row and total
-            rowcount = state.palette.columns;
-            screencount = rowcount * rowcount;
+            int rowcount = state.palette.columns;
+            int screencount = rowcount * rowcount;
 
             // handle keyboard navigation
             if (machine.ui_input().pressed_repeat((int)ioport_type.IPT_UI_UP, 4))
@@ -608,14 +608,14 @@ cancel:
             float y0;
             render_bounds cellboxbounds;
             render_bounds boxbounds = new render_bounds();
-            int cellboxwidth;
-            int cellboxheight;
+            float cellboxwidth;
+            float cellboxheight;
             int targwidth = mui.machine().render().ui_target().width();
             int targheight = mui.machine().render().ui_target().height();
             int cellxpix;
             int cellypix;
             int xcells;
-            int pixelscale = 0;
+            float pixelscale = 0.0f;
             int skip;
 
             // add a half character padding for the box
@@ -659,24 +659,23 @@ cancel:
             }
             info.columns[set] = (byte)xcells;
 
-            // worst case, we need a pixel scale of 1
-            pixelscale = Math.Max(1, pixelscale);
+            if (pixelscale <= 0.0f)
+                pixelscale = 1.0f;
 
             // in the Y direction, we just display as many as we can
-            int ycells = cellboxheight / (pixelscale * cellypix);
+            int ycells = (int)(cellboxheight / (pixelscale * cellypix));
 
             // now determine the actual cellbox size
-            cellboxwidth = Math.Min(cellboxwidth, xcells * pixelscale * cellxpix);
-            cellboxheight = Math.Min(cellboxheight, ycells * pixelscale * cellypix);
+            cellboxwidth = std.min(cellboxwidth, xcells * pixelscale * cellxpix);
+            cellboxheight = std.min(cellboxheight, ycells * pixelscale * cellypix);
 
-            // compute the size of a single cell at this pixel scale factor, as well as the aspect ratio
-            float cellwidth = (cellboxwidth / (float)xcells) / (float)targwidth;
-            float cellheight = (cellboxheight / (float)ycells) / (float)targheight;
-            //cellaspect = cellwidth / cellheight;
+            // compute the size of a single cell at this pixel scale factor
+            float cellwidth = (cellboxwidth / xcells) / targwidth;
+            float cellheight = (cellboxheight / ycells) / targheight;
 
             // working from the new width/height, recompute the boxbounds
-            float fullwidth = (float)cellboxwidth / (float)targwidth + 6.5f * chwidth;
-            float fullheight = (float)cellboxheight / (float)targheight + 4.0f * chheight;
+            float fullwidth = cellboxwidth / targwidth + 6.5f * chwidth;
+            float fullheight = cellboxheight / targheight + 4.0f * chheight;
 
             // recompute boxbounds from this
             boxbounds.x0 = (1.0f - fullwidth) * 0.5f;
@@ -686,9 +685,9 @@ cancel:
 
             // recompute cellboxbounds
             cellboxbounds.x0 = boxbounds.x0 + 6.0f * chwidth;
-            cellboxbounds.x1 = cellboxbounds.x0 + (float)cellboxwidth / (float)targwidth;
+            cellboxbounds.x1 = cellboxbounds.x0 + cellboxwidth / (float)targwidth;
             cellboxbounds.y0 = boxbounds.y0 + 3.5f * chheight;
-            cellboxbounds.y1 = cellboxbounds.y0 + (float)cellboxheight / (float)targheight;
+            cellboxbounds.y1 = cellboxbounds.y0 + cellboxheight / (float)targheight;
 
             // figure out the title
             string title_buf = "";
@@ -843,17 +842,14 @@ cancel:
             gfx_element gfx = info.interface_.gfx(set);
 
             // handle cells per line (minus,plus)
-            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_OUT))
-            { info.columns[set] = (byte)(xcells - 1); state.bitmap_dirty = true; }
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_OUT) && (xcells < 128))
+            { info.columns[set] = (uint8_t)(xcells + 1); state.bitmap_dirty = true; }
 
-            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_IN))
-            { info.columns[set] = (byte)(xcells + 1); state.bitmap_dirty = true; }
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_IN) && (xcells > 2))
+            { info.columns[set] = (uint8_t)(xcells - 1); state.bitmap_dirty = true; }
 
-            // clamp within range
-            if (info.columns[set] < 2)
-            { info.columns[set] = 2; state.bitmap_dirty = true; }
-            if (info.columns[set] > 128)
-            { info.columns[set] = 128; state.bitmap_dirty = true; }
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_DEFAULT) && (xcells != 16))
+            { info.columns[set] = 16; state.bitmap_dirty = true; }
 
             // handle rotation (R)
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ROTATE))
@@ -908,14 +904,10 @@ cancel:
             int dev = state.gfxset.devindex;
             int set = state.gfxset.set;
             ui_gfx_info info = state.gfxdev[dev];
-            int cellxpix;
-            int cellypix;
-            int x;
-            int y;
 
             // compute the number of source pixels in a cell
-            cellxpix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width());
-            cellypix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
+            int cellxpix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width());
+            int cellypix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
 
             // realloc the bitmap if it is too small
             if (!state.bitmap.valid() || state.texture == null || state.bitmap.width() != cellxpix * xcells || state.bitmap.height() != cellypix * ycells)
@@ -937,37 +929,28 @@ cancel:
             if (state.bitmap_dirty)
             {
                 // loop over rows
-                for (y = 0; y < ycells; y++)
+                for (int y = 0, index = info.offset[set]; y < ycells; y++)
                 {
-                    rectangle cellbounds = default;
-
                     // make a rect that covers this row
-                    cellbounds.set(0, state.bitmap.width() - 1, y * cellypix, (y + 1) * cellypix - 1);
+                    rectangle cellbounds = new rectangle(0, state.bitmap.width() - 1, y * cellypix, (y + 1) * cellypix - 1);
 
                     // only display if there is data to show
-                    if (info.offset[set] + y * xcells < gfx.elements())
+                    if (index < gfx.elements())
                     {
                         // draw the individual cells
-                        for (x = 0; x < xcells; x++)
+                        for (int x = 0; x < xcells; x++, index++)
                         {
-                            int index = info.offset[set] + y * xcells + x;
-
                             // update the bounds for this cell
                             cellbounds.min_x = x * cellxpix;
                             cellbounds.max_x = (x + 1) * cellxpix - 1;
 
-                            // only render if there is data
-                            if (index < gfx.elements())
+                            if (index < gfx.elements()) // only render if there is data
                                 gfxset_draw_item(machine, gfx, index, state.bitmap, cellbounds.min_x, cellbounds.min_y, info.color[set], info.rotate[set], info.palette[set]);
-
-                            // otherwise, fill with transparency
-                            else
+                            else // otherwise, fill with transparency
                                 state.bitmap.fill(0, cellbounds);
                         }
                     }
-
-                    // otherwise, fill with transparency
-                    else
+                    else // otherwise, fill with transparency
                     {
                         state.bitmap.fill(0, cellbounds);
                     }
@@ -1082,26 +1065,27 @@ cancel:
             mapboxwidth = (int)((mapboxbounds.x1 - mapboxbounds.x0) * (float)targwidth);
             mapboxheight = (int)((mapboxbounds.y1 - mapboxbounds.y0) * (float)targheight);
 
-            // determine the maximum integral scaling factor
-            int pixelscale = state.tilemap.zoom;
-            if (pixelscale == 0)
+            float pixelscale;
+            if (state.tilemap.auto_zoom)
             {
-                int maxxscale;
-                int maxyscale;
-                for (maxxscale = 1; mapwidth * (maxxscale + 1) < mapboxwidth; maxxscale++) { }
-                for (maxyscale = 1; mapheight * (maxyscale + 1) < mapboxheight; maxyscale++) { }
-                pixelscale = std.min(maxxscale, maxyscale);
+                // determine the maximum integral scaling factor
+                pixelscale = std.min(std.floor(mapboxwidth / mapwidth), std.floor(mapboxheight / mapheight));
+                pixelscale = std.max(pixelscale, 1.0f);
+            }
+            else
+            {
+                pixelscale = state.tilemap.zoom_frac ? (1.0f / state.tilemap.zoom) : (float)state.tilemap.zoom;
             }
 
             // recompute the final box size
-            mapboxwidth = std.min(mapboxwidth, (int)mapwidth * pixelscale);
-            mapboxheight = std.min(mapboxheight, (int)mapheight * pixelscale);
+            mapboxwidth = std.min(mapboxwidth, std.lround(mapwidth * pixelscale));
+            mapboxheight = std.min(mapboxheight, std.lround(mapheight * pixelscale));
 
             // recompute the bounds, centered within the existing bounds
-            mapboxbounds.x0 += 0.5f * ((mapboxbounds.x1 - mapboxbounds.x0) - (float)mapboxwidth / (float)targwidth);
-            mapboxbounds.x1 = mapboxbounds.x0 + (float)mapboxwidth / (float)targwidth;
-            mapboxbounds.y0 += 0.5f * ((mapboxbounds.y1 - mapboxbounds.y0) - (float)mapboxheight / (float)targheight);
-            mapboxbounds.y1 = mapboxbounds.y0 + (float)mapboxheight / (float)targheight;
+            mapboxbounds.x0 += 0.5f * ((mapboxbounds.x1 - mapboxbounds.x0) - (float)mapboxwidth / targwidth);
+            mapboxbounds.x1 = mapboxbounds.x0 + (float)mapboxwidth / targwidth;
+            mapboxbounds.y0 += 0.5f * ((mapboxbounds.y1 - mapboxbounds.y0) - (float)mapboxheight / targheight);
+            mapboxbounds.y1 = mapboxbounds.y0 + (float)mapboxheight / targheight;
 
             // now recompute the outer box against this new info
             boxbounds.x0 = mapboxbounds.x0 - 0.5f * chwidth;
@@ -1165,7 +1149,7 @@ cancel:
             }
 
             // update the bitmap
-            tilemap_update_bitmap(mui.machine(), state, mapboxwidth / pixelscale, mapboxheight / pixelscale);
+            tilemap_update_bitmap(mui.machine(), state, std.lround(mapboxwidth / pixelscale), std.lround(mapboxheight / pixelscale));
 
             // add the final quad
             container.add_quad(mapboxbounds.x0, mapboxbounds.y0,
@@ -1174,7 +1158,7 @@ cancel:
                                g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXORIENT(state.tilemap.rotate));
 
             // handle keyboard input
-            tilemap_handle_keys(mui.machine(), state, mapboxwidth, mapboxheight);
+            tilemap_handle_keys(mui.machine(), state, pixelscale);
         }
 
 
@@ -1182,7 +1166,7 @@ cancel:
         //  tilemap_handle_keys - handle keys for the
         //  tilemap view
         //-------------------------------------------------
-        static void tilemap_handle_keys(running_machine machine, ui_gfx_state state, int viswidth, int visheight)
+        static void tilemap_handle_keys(running_machine machine, ui_gfx_state state, float pixelscale)
         {
             // handle tilemap selection (open bracket,close bracket)
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_PREV_GROUP) && state.tilemap.which > 0)
@@ -1195,22 +1179,79 @@ cancel:
             uint32_t mapwidth = tilemap.width();
             uint32_t mapheight = tilemap.height();
 
+            bool at_max_zoom = !state.tilemap.auto_zoom && !state.tilemap.zoom_frac && state.tilemap.zoom == MAX_ZOOM_LEVEL;
+            bool at_min_zoom = !state.tilemap.auto_zoom && state.tilemap.zoom_frac && state.tilemap.zoom == MIN_ZOOM_LEVEL;
+
             // handle zoom (minus,plus)
-            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_OUT) && state.tilemap.zoom > 0)
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_OUT) && !at_min_zoom)
             {
-                state.tilemap.zoom--;
-                state.bitmap_dirty = true;
-                if (state.tilemap.zoom != 0)
-                    machine.popmessage("Zoom = {0}", state.tilemap.zoom);
+                if (state.tilemap.auto_zoom)
+                {
+                    // auto zoom never uses fractional factors
+                    state.tilemap.zoom = std.lround(pixelscale) - 1;
+                    state.tilemap.zoom_frac = state.tilemap.zoom == 0;
+                    if (state.tilemap.zoom_frac)
+                        state.tilemap.zoom = 2;
+                    state.tilemap.auto_zoom = false;
+                }
+                else if (state.tilemap.zoom_frac)
+                {
+                    // remaining in fractional zoom range
+                    state.tilemap.zoom++;
+                }
+                else if (state.tilemap.zoom == 1)
+                {
+                    // entering fractional zoom range
+                    state.tilemap.zoom++;
+                    state.tilemap.zoom_frac = true;
+                }
                 else
-                    machine.popmessage("Zoom Auto");
+                {
+                    // remaining in integer zoom range
+                    state.tilemap.zoom--;
+                }
+
+                state.bitmap_dirty = true;
+
+                machine.popmessage(state.tilemap.zoom_frac ? g.__("Zoom = 1/{0}") : g.__("Zoom = {0}"), state.tilemap.zoom);
             }
 
-            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_IN) && state.tilemap.zoom < 8)
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_IN) && !at_max_zoom)
             {
-                state.tilemap.zoom++;
+                if (state.tilemap.auto_zoom)
+                {
+                    // auto zoom never uses fractional factors
+                    state.tilemap.zoom = std.min(std.lround(pixelscale) + 1, MAX_ZOOM_LEVEL);
+                    state.tilemap.zoom_frac = false;
+                    state.tilemap.auto_zoom = false;
+                }
+                else if (!state.tilemap.zoom_frac)
+                {
+                    // remaining in integer zoom range
+                    state.tilemap.zoom++;
+                }
+                else if (state.tilemap.zoom == 2)
+                {
+                    // entering integer zoom range
+                    state.tilemap.zoom--;
+                    state.tilemap.zoom_frac = false;
+                }
+                else
+                {
+                    // remaining in fractional zoom range
+                    state.tilemap.zoom--;
+                }
+
                 state.bitmap_dirty = true;
-                machine.popmessage("Zoom = {0}", state.tilemap.zoom);
+
+                machine.popmessage(state.tilemap.zoom_frac ? g.__("Zoom = 1/{0}") : g.__("Zoom = {0}"), state.tilemap.zoom);
+            }
+
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_DEFAULT) && !state.tilemap.auto_zoom)
+            {
+                state.tilemap.auto_zoom = true;
+
+                machine.popmessage(g.__("Expand to fit"));
             }
 
             // handle rotation (R)

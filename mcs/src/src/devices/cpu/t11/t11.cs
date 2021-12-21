@@ -8,6 +8,7 @@ using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -217,7 +218,7 @@ namespace mame
             IXD = new register_IXD(this);
 
 
-            m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_LITTLE, 16, 16, 0);
+            m_program_config = new address_space_config("program", g.ENDIANNESS_LITTLE, 16, 16, 0);
             c_initial_mode = 0;
             m_cp_state = 0;
             m_vec_active = false;

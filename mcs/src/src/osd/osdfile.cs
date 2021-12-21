@@ -62,48 +62,6 @@ namespace mame
     /// pseudo-terminals, and compressed archive members.
     public abstract class osd_file
     {
-        /// \brief Result of a file operation
-        ///
-        /// Returned by most members of osd_file, and also used by other
-        /// classes that access files or other file-like resources.
-        public enum error
-        {
-            /// Operation completed successfully.
-            NONE,
-
-            /// Operation failed, but there is no more specific code to
-            /// describe the failure.
-            FAILURE,
-
-            /// Operation failed due to an error allocating memory.
-            OUT_OF_MEMORY,
-
-            /// The requested file, path or resource was not found.
-            NOT_FOUND,
-
-            /// Current permissions do not allow the requested access.
-            ACCESS_DENIED,
-
-            /// Requested access is not permitted because the file or
-            /// resource is currently open for exclusive access.
-            ALREADY_OPEN,
-
-            /// Request cannot be completed due to resource exhaustion
-            /// (maximum number of open files or other objects has been
-            /// reached).
-            TOO_MANY_FILES,
-
-            /// The request cannot be completed because invalid data was
-            /// encountered (for example an inconsistent filesystem, or a
-            /// corrupt archive file).
-            INVALID_DATA,
-
-            /// The requested access mode is invalid, or not appropriate for
-            /// the file or resource.
-            INVALID_ACCESS
-        }
-
-
         /// \brief Smart pointer to a file handle
         //typedef std::unique_ptr<osd_file> ptr;
 
@@ -132,7 +90,7 @@ namespace mame
         ///   Will be zero for stream-like objects (e.g. TCP sockets or
         ///   named pipes).
         /// \return Result of the operation.
-        public abstract error open(string path, uint32_t openflags, out osd_file file, out uint64_t filesize);
+        public abstract std.error_condition open(string path, uint32_t openflags, out osd_file file, out uint64_t filesize);
 
 
         /// \brief Create a new pseudo-terminal (PTY) pair
@@ -144,7 +102,7 @@ namespace mame
         ///   pseudo-terminal if the operation succeeds.  Not valid if the
         ///   operation fails.
         /// \return Result of the operation.
-        protected abstract error openpty(out osd_file file, out string name);  //static error openpty(ptr &file, std::string &name);
+        protected abstract std.error_condition openpty(out osd_file file, out string name);  //static std::error_condition openpty(ptr &file, std::string &name);
 
 
         /// \brief Close an open file
@@ -167,7 +125,7 @@ namespace mame
         /// \param [out] actual Receives the number of bytes read if the
         ///   operation succeeds.  Not valid if the operation fails.
         /// \return Result of the operation.
-        public abstract error read(Pointer<uint8_t> buffer, uint64_t offset, uint32_t length, out uint32_t actual);  //virtual error read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
+        public abstract std.error_condition read(Pointer<uint8_t> buffer, uint64_t offset, uint32_t length, out uint32_t actual);  //virtual std::error_condition read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
 
 
         /// \brief Write to an open file
@@ -183,14 +141,14 @@ namespace mame
         /// \param [out] actual Receives the number of bytes written if the
         ///   operation succeeds.  Not valid if the operation fails.
         /// \return Result of the operation.
-        public abstract error write(Pointer<uint8_t> buffer, uint64_t offset, uint32_t length, out uint32_t actual);  //virtual error write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
+        public abstract std.error_condition write(Pointer<uint8_t> buffer, uint64_t offset, uint32_t length, out uint32_t actual);  //virtual std::error_condition write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
 
 
         /// \brief Change the size of an open file
         ///
         /// \param [in] offset Desired size of the file.
         /// \return Result of the operation.
-        //virtual error truncate(std::uint64_t offset) = 0;
+        //virtual std::error_condition truncate(std::uint64_t offset) = 0;
 
 
         /// \brief Flush file buffers
@@ -198,14 +156,14 @@ namespace mame
         /// This flushes any data cached by the application, but does not
         /// guarantee that all prior writes have reached persistent storage.
         /// \return Result of the operation.
-        //virtual error flush() = 0;
+        //virtual std::error_condition flush() = 0;
 
 
         /// \brief Delete a file
         ///
         /// \param [in] filename Path to the file to delete.
         /// \return Result of the operation.
-        public abstract error remove(string filename);  //static error remove(std::string const &filename);
+        public abstract std.error_condition remove(string filename);  //static std::error_condition remove(std::string const &filename);
 
 
         public abstract Stream stream { get; }
@@ -325,7 +283,7 @@ namespace mame
     /// \param [in] path The path in question.
     /// \param [out] dst Reference to receive new path.
     /// \return File error.
-    //osd_file::error osd_get_full_path(std::string &dst, std::string const &path);
+    //std::error_condition osd_get_full_path(std::string &dst, std::string const &path);
 
 
     /// \brief Retrieves the volume name.

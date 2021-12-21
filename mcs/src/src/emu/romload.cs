@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using size_t = System.UInt64;
 using u8 = System.Byte;
@@ -110,7 +111,7 @@ namespace mame
         //std::vector<std::string> make_software_searchpath(software_list_device &swlist, software_info const &swinfo, std::vector<software_info const *> &parents)
 
 
-        public static chd_error do_open_disk(emu_options options, std.vector<string> [] searchpath, Pointer<rom_entry> romp, chd_file chd, Func<rom_entry> next_parent)  //chd_error do_open_disk(const emu_options &options, std::initializer_list<std::reference_wrapper<const std::vector<std::string> > > searchpath, const rom_entry *romp, chd_file &chd, std::function<const rom_entry * ()> next_parent)
+        public static std.error_condition do_open_disk(emu_options options, std.vector<string> [] searchpath, Pointer<rom_entry> romp, chd_file chd, Func<rom_entry> next_parent)  //std::error_condition do_open_disk(const emu_options &options, std::initializer_list<std::reference_wrapper<const std::vector<std::string> > > searchpath, const rom_entry *romp, chd_file &chd, std::function<const rom_entry * ()> next_parent)
         {
             throw new emu_unimplemented();
         }
@@ -729,7 +730,7 @@ namespace mame
 
 
         /* set a pointer to the CHD file associated with the given region */
-        //int set_disk_handle(const char *region, const char *fullpath);
+        //std::error_condition set_disk_handle(std::string_view region, const char *fullpath);
 
 
         //void load_software_part_region(device_t &device, software_list_device &swlist, const char *swname, const rom_entry *start_region);
@@ -739,8 +740,8 @@ namespace mame
         //static std::vector<std::string> get_software_searchpath(software_list_device &swlist, const software_info &swinfo);
 
         /* open a disk image, searching up the parent and loading by checksum */
-        //static chd_error open_disk_image(const emu_options &options, const device_t &device, const rom_entry *romp, chd_file &image_chd);
-        //static chd_error open_disk_image(const emu_options &options, software_list_device &swlist, const software_info &swinfo, const rom_entry *romp, chd_file &image_chd);
+        //static std::error_condition open_disk_image(const emu_options &options, const device_t &device, const rom_entry *romp, chd_file &image_chd);
+        //static std::error_condition open_disk_image(const emu_options &options, software_list_device &swlist, const software_info &swinfo, const rom_entry *romp, chd_file &image_chd);
 
 
         /*-------------------------------------------------
@@ -835,7 +836,7 @@ namespace mame
             handle_missing_file - handles error generation
             for missing files
         -------------------------------------------------*/
-        void handle_missing_file(rom_entry romp, std.vector<string> tried_file_names, chd_error chderr)
+        void handle_missing_file(rom_entry romp, std.vector<string> tried_file_names, std.error_condition chderr)
         {
             string tried = "";
             if (!tried_file_names.empty())
@@ -849,12 +850,12 @@ namespace mame
                 tried += ')';
             }
 
-            bool is_chd = chderr != chd_error.CHDERR_NONE;
+            bool is_chd = chderr;
             string name = is_chd ? romp.name() + ".chd" : romp.name();
 
-            bool is_chd_error = is_chd && chderr != chd_error.CHDERR_FILE_NOT_FOUND;
+            bool is_chd_error = is_chd && chderr != std.errc.no_such_file_or_directory;
             if (is_chd_error)
-                m_errorstring += string.Format("{0} CHD ERROR: {1}\n", name, chd_file.error_string(chderr));
+                m_errorstring += g.string_format("{0} CHD ERROR: {1}\n", name, chderr.message());
 
             if (romload_global.ROM_ISOPTIONAL(romp))
             {
@@ -995,7 +996,7 @@ namespace mame
                 return;
 
             LOG("+ datawidth={0}bit endian={1}\n", region.bitwidth(),
-                    region.endianness() == endianness_t.ENDIANNESS_LITTLE ? "little" : "big");
+                    region.endianness() == g.ENDIANNESS_LITTLE ? "little" : "big");
 
             /* if the region is inverted, do that now */
             if (invert)
@@ -1033,7 +1034,7 @@ namespace mame
         -------------------------------------------------*/
         emu_file open_rom_file(std.vector<string> [] searchpath, Pointer<rom_entry> romp, std.vector<string> tried_file_names, bool from_list)  //std::unique_ptr<emu_file> rom_load_manager::open_rom_file(std::initializer_list<std::reference_wrapper<const std::vector<std::string> > > searchpath, const rom_entry *romp, std::vector<std::string> &tried_file_names, bool from_list)
         {
-            osd_file.error filerr = osd_file.error.NOT_FOUND;
+            std.error_condition filerr = std.errc.no_such_file_or_directory;
             u32 romsize = romload_global.rom_file_size(romp);
             tried_file_names.clear();
 
@@ -1059,14 +1060,14 @@ namespace mame
             m_romsloadedsize += romsize;
 
             // return the result
-            if (osd_file.error.NONE != filerr)
+            if (filerr)
                 return null;
             else
                 return result;
         }
 
 
-        emu_file open_rom_file(std.vector<string> paths, std.vector<string> tried, bool has_crc, u32 crc, string name, out osd_file.error filerr)
+        emu_file open_rom_file(std.vector<string> paths, std.vector<string> tried, bool has_crc, u32 crc, string name, out std.error_condition filerr)
         {
             // record the set names we search
             tried.AddRange(paths);  //tried.insert(tried.end(), paths.begin(), paths.end());
@@ -1080,7 +1081,7 @@ namespace mame
                 filerr = result.open(name);
 
             // don't return anything if unsuccessful
-            if (osd_file.error.NONE != filerr)
+            if (filerr)
                 return null;
             else
                 return result;
@@ -1367,7 +1368,7 @@ namespace mame
                     {
                         file = open_rom_file(searchpath, romp, tried_file_names, from_list);
                         if (file == null)
-                            handle_missing_file(romp[0], tried_file_names, chd_error.CHDERR_NONE);
+                            handle_missing_file(romp[0], tried_file_names, new std.error_condition());
                     }
 
                     // loop until we run out of reloads
@@ -1404,7 +1405,7 @@ namespace mame
 
                         // re-seek to the start and clear the baserom so we don't reverify
                         if (file != null)
-                            file.seek(0, emu_file.SEEK_SET);
+                            file.seek(0, g.SEEK_SET);
 
                         baserom = null;
                         explength = 0;
@@ -1430,7 +1431,7 @@ namespace mame
         /*-------------------------------------------------
             open_disk_diff - open a DISK diff file
         -------------------------------------------------*/
-        chd_error open_disk_diff(emu_options options, rom_entry romp, chd_file source, chd_file diff_chd)
+        std.error_condition open_disk_diff(emu_options options, rom_entry romp, chd_file source, chd_file diff_chd)
         {
             throw new emu_unimplemented();
         }
@@ -1455,7 +1456,7 @@ namespace mame
                 if (romload_global.ROMENTRY_ISFILE(romp[0]))
                 {
                     var chd = new open_chd(regiontag);
-                    chd_error err;
+                    std.error_condition err;
 
                     /* make the filename of the source */
                     string filename = romp[0].name() + ".chd";
@@ -1464,7 +1465,7 @@ namespace mame
                     // FIXME: we've lost the ability to search parents here
                     LOG("Opening disk image: {0}\n", filename);
                     err = romload_global.do_open_disk(machine().options(), searchpath, romp, chd.orig_chd(), next_parent);
-                    if (err != chd_error.CHDERR_NONE)
+                    if (err)
                     {
                         handle_missing_file(romp[0], new std.vector<string>(), err);
                         chd = null;
@@ -1494,9 +1495,9 @@ namespace mame
                     {
                         /* try to open or create the diff */
                         err = open_disk_diff(machine().options(), romp[0], chd.orig_chd(), chd.diff_chd());
-                        if (err != chd_error.CHDERR_NONE)
+                        if (err)
                         {
-                            m_errorstring += string.Format("{0} DIFF CHD ERROR: {1}\n", filename, chd_file.error_string(err));
+                            m_errorstring += g.string_format("{0} DIFF CHD ERROR: {1}\n", filename, err.message());
                             m_errors++;
                             chd = null;
                             continue;
@@ -1527,10 +1528,10 @@ namespace mame
                     int buswidth;
 
                     /* set the endianness */
-                    if (spaceconfig.endianness() == endianness_t.ENDIANNESS_LITTLE)
-                        endian = endianness_t.ENDIANNESS_LITTLE;
+                    if (spaceconfig.endianness() == g.ENDIANNESS_LITTLE)
+                        endian = g.ENDIANNESS_LITTLE;
                     else
-                        endian = endianness_t.ENDIANNESS_BIG;
+                        endian = g.ENDIANNESS_BIG;
 
                     /* set the width */
                     buswidth = spaceconfig.data_width();
@@ -1574,7 +1575,7 @@ namespace mame
                     {
                         // if this is a device region, override with the device width and endianness
                         u8 width = (byte)(romload_global.ROMREGION_GETWIDTH(region[0]) / 8);
-                        endianness_t endianness = romload_global.ROMREGION_ISBIGENDIAN(region[0]) ? endianness_t.ENDIANNESS_BIG : endianness_t.ENDIANNESS_LITTLE;
+                        endianness_t endianness = romload_global.ROMREGION_ISBIGENDIAN(region[0]) ? g.ENDIANNESS_BIG : g.ENDIANNESS_LITTLE;
                         normalize_flags_for_device(regiontag, ref width, ref endianness);
 
                         // remember the base and length

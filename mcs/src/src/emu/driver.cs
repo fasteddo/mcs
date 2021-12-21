@@ -31,8 +31,14 @@ namespace mame
     }
 
 
-    // ======================> driver_device
-    // base class for machine driver-specific devices
+    /// \brief Base class for system device classes
+    ///
+    /// System devices can be used as the root device of a system.
+    /// Indirection for metadata, input port definitons, initialisation
+    /// functions, ROM definitions, internal artwork and emulation status
+    /// flags is provided via the #game_driver structure.  This allows
+    /// multiple systems to be be implemented using a single
+    /// system device class.
     public class driver_device : device_t
     {
         // indexes into our generic callbacks
@@ -98,7 +104,10 @@ namespace mame
         }
 
 
-        // dummy driver_init callback
+        /// \brief Empty system initialisation function
+        ///
+        /// Provided as a convenience for systems that have no additional
+        /// initialisation tasks.
         //-------------------------------------------------
         //  empty_init - default implementation which
         //  calls driver init

@@ -349,6 +349,7 @@ namespace mame
         const string OPTION_SAMPLERATE          = "samplerate";
         const string OPTION_SAMPLES             = "samples";
         const string OPTION_VOLUME              = "volume";
+        const string OPTION_COMPRESSOR          = "compressor";
         const string OPTION_SPEAKER_REPORT      = "speaker_report";
 
         // core input options
@@ -546,7 +547,8 @@ namespace mame
             new options_entry(OPTION_SAMPLERATE + ";sr(1000-1000000)",           "48000",     g.OPTION_INTEGER,    "set sound output sample rate"),
             new options_entry(OPTION_SAMPLES,                                    "1",         g.OPTION_BOOLEAN,    "enable the use of external samples if available"),
             new options_entry(OPTION_VOLUME + ";vol",                            "0",         g.OPTION_INTEGER,    "sound volume in decibels (-32 min, 0 max)"),
-            new options_entry(OPTION_SPEAKER_REPORT,                             "0",         g.OPTION_INTEGER,    "print report of speaker ouput maxima (0=none, or 1-4 for more detail)"),
+            new options_entry(OPTION_COMPRESSOR,                                 "1",         g.OPTION_BOOLEAN,    "enable compressor for sound"),
+            new options_entry(OPTION_SPEAKER_REPORT + "(0-4)",                   "0",         g.OPTION_INTEGER,    "print report of speaker ouput maxima (0=none, or 1-4 for more detail)"),
 
             // input options
             new options_entry(null,                                              null,        g.OPTION_HEADER,     "CORE INPUT OPTIONS"),
@@ -857,6 +859,7 @@ namespace mame
         public int sample_rate() { return int_value(OPTION_SAMPLERATE); }
         public bool samples() { return bool_value(OPTION_SAMPLES); }
         public int volume() { return int_value(OPTION_VOLUME); }
+        public bool compressor() { return bool_value(OPTION_COMPRESSOR); }
         public int speaker_report() { return int_value(OPTION_SPEAKER_REPORT); }
 
 

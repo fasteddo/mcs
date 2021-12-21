@@ -95,10 +95,9 @@ namespace mame
                 // open the config file
                 emu_file file = new emu_file(machine().options().ctrlr_path(), g.OPEN_FLAG_READ);
                 g.osd_printf_verbose("Attempting to parse: {0}.cfg\n", controller);
-                osd_file.error filerr = file.open(controller + ".cfg");
-
-                if (filerr != osd_file.error.NONE)
-                    throw new emu_fatalerror("Could not open controller file {0}.cfg", controller);
+                std.error_condition filerr = file.open(controller + ".cfg");
+                if (filerr)
+                    throw new emu_fatalerror("Could not open controller file {0}.cfg ({1}:{2} {3})", controller, filerr.category().name(), filerr.value(), filerr.message());
 
                 // load the XML
                 if (!load_xml(file, config_type.CONTROLLER))
@@ -112,15 +111,15 @@ namespace mame
             {
                 // next load the defaults file
                 emu_file file = new emu_file(machine().options().cfg_directory(), g.OPEN_FLAG_READ);
-                osd_file.error filerr = file.open("default.cfg");
+                std.error_condition filerr = file.open("default.cfg");
                 g.osd_printf_verbose("Attempting to parse: default.cfg\n");
-                if (filerr == osd_file.error.NONE)
+                if (!filerr)
                     load_xml(file, config_type.DEFAULT);
 
                 // finally, load the game-specific file
                 filerr = file.open(machine().basename() + ".cfg");
                 g.osd_printf_verbose("Attempting to parse: {0}.cfg\n", machine().basename());
-                loaded = (osd_file.error.NONE == filerr) && load_xml(file, config_type.SYSTEM);
+                loaded = !filerr && load_xml(file, config_type.SYSTEM);
 
                 file.close();
             }
@@ -143,13 +142,13 @@ namespace mame
 
             // save the defaults file
             emu_file file = new emu_file(machine().options().cfg_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-            osd_file.error filerr = file.open("default.cfg");
-            if (filerr == osd_file.error.NONE)
+            std.error_condition filerr = file.open("default.cfg");
+            if (!filerr)
                 save_xml(file, config_type.DEFAULT);
 
             // finally, save the system-specific file
             filerr = file.open(machine().basename() + ".cfg");
-            if (filerr == osd_file.error.NONE)
+            if (!filerr)
                 save_xml(file, config_type.SYSTEM);
 
             file.close();

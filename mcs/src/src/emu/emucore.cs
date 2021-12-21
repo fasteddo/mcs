@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using s8 = System.SByte;
 using s16 = System.Int16;
@@ -19,41 +20,50 @@ using u32 = System.UInt32;
 
 namespace mame
 {
+    //using endianness_t = util::endianness;
+
+    //using util::BYTE_XOR_BE;
+    //using util::BYTE_XOR_LE;
+    //using util::BYTE4_XOR_BE;
+    //using util::BYTE4_XOR_LE;
+    //using util::WORD_XOR_BE;
+    //using util::WORD_XOR_LE;
+    //using util::BYTE8_XOR_BE;
+    //using util::BYTE8_XOR_LE;
+    //using util::WORD2_XOR_BE;
+    //using util::WORD2_XOR_LE;
+    //using util::DWORD_XOR_BE;
+    //using util::DWORD_XOR_LE;
+
+
     // pen_t is used to represent pixel values in bitmaps
     //typedef u32 pen_t;
 
 
-    // constants for expression endianness
-    public enum endianness_t
+    public static class emucore_global
     {
-        ENDIANNESS_LITTLE,
-        ENDIANNESS_BIG
-    }
+        //**************************************************************************
+        //  COMMON CONSTANTS
+        //**************************************************************************
+
+        public const endianness_t ENDIANNESS_LITTLE = util.endianness.little;
+        public const endianness_t ENDIANNESS_BIG    = util.endianness.big;
+        public const endianness_t ENDIANNESS_NATIVE = util.endianness.native;
 
 
-    public class emucore_global
-    {
-        //extern const char *const endianness_names[2];
-        public static readonly string [] endianness_names = { "little", "big" };
+        /// \name Image orientation flags
+        /// \{
 
-
-        // declare native endianness to be one or the other
-        //#ifdef LSB_FIRST
-        public const endianness_t ENDIANNESS_NATIVE = endianness_t.ENDIANNESS_LITTLE;
-        //#else
-        //const endianness_t ENDIANNESS_NATIVE = ENDIANNESS_BIG;
-        //#endif
-
-
-        // orientation of bitmaps
-        public const int ORIENTATION_FLIP_X     = 0x0001;  // mirror everything in the X direction
-        public const int ORIENTATION_FLIP_Y     = 0x0002;  // mirror everything in the Y direction
-        public const int ORIENTATION_SWAP_XY    = 0x0004;  // mirror along the top-left/bottom-right diagonal
+        public const int ORIENTATION_FLIP_X     = 0x0001;  ///< Mirror horizontally (in the X direction)
+        public const int ORIENTATION_FLIP_Y     = 0x0002;  ///< Mirror vertically (in the Y direction)
+        public const int ORIENTATION_SWAP_XY    = 0x0004;  ///< Mirror along the top-left/bottom-right diagonal
 
         public const int ROT0                   = 0;
-        public const int ROT90                  = ORIENTATION_SWAP_XY | ORIENTATION_FLIP_X;  // rotate clockwise 90 degrees
-        public const int ROT180                 = ORIENTATION_FLIP_X | ORIENTATION_FLIP_Y;   // rotate 180 degrees
-        public const int ROT270                 = ORIENTATION_SWAP_XY | ORIENTATION_FLIP_Y;  // rotate counter-clockwise 90 degrees
+        public const int ROT90                  = ORIENTATION_SWAP_XY | ORIENTATION_FLIP_X;  ///< Rotate 90 degrees clockwise
+        public const int ROT180                 = ORIENTATION_FLIP_X | ORIENTATION_FLIP_Y;   ///< Rotate 180 degrees
+        public const int ROT270                 = ORIENTATION_SWAP_XY | ORIENTATION_FLIP_Y;  ///< Rotate 90 degrees anti-clockwise (270 degrees clockwise)
+
+        /// \}
 
 
         // these are UTF-8 encoded strings for common characters
@@ -165,16 +175,6 @@ namespace mame
         // macros to convert radians to degrees and degrees to radians
         //template <typename T> constexpr auto RADIAN_TO_DEGREE(T const &x) { return (180.0 / M_PI) * x; }
         //template <typename T> constexpr auto DEGREE_TO_RADIAN(T const &x) { return (M_PI / 180.0) * x; }
-
-
-        // endian-based value: first value is if 'endian' is little-endian, second is if 'endian' is big-endian
-        //#define ENDIAN_VALUE_LE_BE(endian,leval,beval)  (((endian) == ENDIANNESS_LITTLE) ? (leval) : (beval))
-
-        // endian-based value: first value is if native endianness is little-endian, second is if native is big-endian
-        //#define NATIVE_ENDIAN_VALUE_LE_BE(leval,beval)  ENDIAN_VALUE_LE_BE(ENDIANNESS_NATIVE, leval, beval)
-
-        // endian-based value: first value is if 'endian' matches native, second is if 'endian' doesn't match native
-        //#define ENDIAN_VALUE_NE_NNE(endian,neval,nneval) (((endian) == ENDIANNESS_NATIVE) ? (neval) : (nneval))
 
 
         [DebuggerHidden]

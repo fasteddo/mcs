@@ -166,6 +166,12 @@ namespace mame
         }
 
 
+        public override offs_t dispatch_entry(offs_t address)
+        {
+            return (address & HIGHMASK) >> (int)LowBits;
+        }
+
+
         protected override void dump_map(std.vector<memory_entry> map)
         {
             throw new emu_unimplemented();
@@ -185,7 +191,10 @@ namespace mame
             if (LowBits <= Width + AddrShift)
             {
                 if (handler.is_view())
-                    handler.init_handlers(start_entry, end_entry, LowBits, m_u_dispatch, m_u_ranges);
+                {
+                    int delta = (int)(dispatch_entry(ostart) - handler.dispatch_entry(ostart));
+                    handler.init_handlers(start >> (int)LowBits, end >> (int)LowBits, LowBits, ostart, oend, m_u_dispatch + delta, m_u_ranges + delta);
+                }
                 handler.ref_((int)(end_entry - start_entry));
                 for (offs_t ent = start_entry; ent <= end_entry; ent++)
                 {
@@ -200,30 +209,35 @@ namespace mame
                 if ((start & LOWMASK) == 0 && (end & LOWMASK) == LOWMASK)
                 {
                     if (handler.is_view())
-                        handler.init_handlers(start_entry, end_entry, LowBits, m_u_dispatch, m_u_ranges);
+                    {
+                        int delta = (int)(dispatch_entry(ostart) - handler.dispatch_entry(ostart));
+                        handler.init_handlers(start >> (int)LowBits, end >> (int)LowBits, LowBits, ostart, oend, m_u_dispatch + delta, m_u_ranges + delta);
+                    }
                     m_u_dispatch[start_entry].unref();
                     m_u_dispatch[start_entry] = handler;
                     m_u_ranges[start_entry].set(ostart, oend);
                 }
                 else
                 {
-                    populate_nomirror_subdispatch(start_entry, start & LOWMASK, end & LOWMASK, ostart, oend, handler);
+                    populate_nomirror_subdispatch(start_entry, start, end, ostart, oend, handler);
                 }
             }
             else
             {
                 if ((start & LOWMASK) != 0)
                 {
-                    populate_nomirror_subdispatch(start_entry, start & LOWMASK, LOWMASK, ostart, oend, handler);
+                    populate_nomirror_subdispatch(start_entry, start, start | LOWMASK, ostart, oend, handler);
                     start_entry++;
+                    start = (start | LOWMASK) + 1;
                     if (start_entry <= end_entry)
                         handler.ref_();
                 }
 
                 if ((end & LOWMASK) != LOWMASK)
                 {
-                    populate_nomirror_subdispatch(end_entry, 0, end & LOWMASK, ostart, oend, handler);
+                    populate_nomirror_subdispatch(end_entry, end & ~LOWMASK, end, ostart, oend, handler);
                     end_entry--;
+                    end = (end & ~LOWMASK) - 1;
                     if (start_entry <= end_entry)
                         handler.ref_();
                 }
@@ -231,7 +245,10 @@ namespace mame
                 if (start_entry <= end_entry)
                 {
                     if (handler.is_view())
-                        handler.init_handlers(start_entry, end_entry, LowBits, m_u_dispatch, m_u_ranges);
+                    {
+                        int delta = (int)(dispatch_entry(ostart) - handler.dispatch_entry(ostart));
+                        handler.init_handlers(start >> (int)LowBits, end >> (int)LowBits, LowBits, ostart, oend, m_u_dispatch + delta, m_u_ranges + delta);
+                    }
                     handler.ref_((int)(end_entry - start_entry));
                     for (offs_t ent = start_entry; ent <= end_entry; ent++)
                     {
@@ -255,14 +272,12 @@ namespace mame
                 offs_t add = 1 + ~hmirror;
                 offs_t offset = 0;
                 offs_t base_entry = start >> (int)LowBits;
-                start &= LOWMASK;
-                end &= LOWMASK;
                 do
                 {
                     if (offset != 0)
                         handler.ref_();
 
-                    populate_mirror_subdispatch(base_entry | (offset >> (int)LowBits), start, end, ostart | offset, oend | offset, lmirror, handler);
+                    populate_mirror_subdispatch(base_entry | (offset >> (int)LowBits), start | offset, end | offset, ostart | offset, oend | offset, lmirror, handler);
                     offset = (offset + add) & hmirror;
                 } while (offset != 0);
             }
@@ -300,7 +315,7 @@ namespace mame
                     if (ent != end_entry)
                         rkey1 &= unchecked((u8)~handler_entry.END);
                     var temp = m_u_dispatch[ent];  mismatched_patch(descriptor, rkey1, mappings, ref temp);  m_u_dispatch[ent] = temp;  //mismatched_patch(descriptor, rkey1, mappings, m_u_dispatch[ent]);
-                    m_u_ranges[ent].intersect(ostart, oend);
+                    m_u_ranges[ent].set(ostart, oend);
                 }
             }
             else if (start_entry == end_entry)
@@ -309,35 +324,36 @@ namespace mame
                 {
                     if (m_u_dispatch[start_entry].is_dispatch())
                     {
-                        m_u_dispatch[start_entry].populate_mismatched_nomirror(0, LOWMASK, ostart, oend, descriptor, rkey, mappings);
+                        m_u_dispatch[start_entry].populate_mismatched_nomirror(start, end, ostart, oend, descriptor, rkey, mappings);
                     }
                     else
                     {
                         var temp = m_u_dispatch[start_entry];  mismatched_patch(descriptor, rkey, mappings, ref temp);  m_u_dispatch[start_entry] = temp;  //mismatched_patch(descriptor, rkey, mappings, m_u_dispatch[start_entry]);
-                        m_u_ranges[start_entry].intersect(ostart, oend);
+                        m_u_ranges[start_entry].set(ostart, oend);
                     }
                 }
                 else
                 {
-                    populate_mismatched_nomirror_subdispatch(start_entry, start & LOWMASK, end & LOWMASK, ostart, oend, descriptor, rkey, mappings);
+                    populate_mismatched_nomirror_subdispatch(start_entry, start, end, ostart, oend, descriptor, rkey, mappings);
                 }
             }
             else
             {
                 if ((start & LOWMASK) != 0)
                 {
-                    populate_mismatched_nomirror_subdispatch(start_entry, start & LOWMASK, LOWMASK, ostart, oend, descriptor, (u8)(rkey & unchecked((u8)~handler_entry.END)), mappings);
+                    populate_mismatched_nomirror_subdispatch(start_entry, start, start | LOWMASK, ostart, oend, descriptor, (u8)(rkey & ~handler_entry.END), mappings);
                     start_entry++;
                     rkey &= unchecked((u8)~handler_entry.START);
                 }
 
                 if ((end & LOWMASK) != LOWMASK)
                 {
-                    populate_mismatched_nomirror_subdispatch(end_entry, 0, end & LOWMASK, ostart, oend, descriptor, (u8)(rkey & unchecked((u8)~handler_entry.START)), mappings);
+                    populate_mismatched_nomirror_subdispatch(end_entry, end & ~LOWMASK, end, ostart, oend, descriptor, (u8)(rkey & ~handler_entry.START), mappings);
                     end_entry--;
                     rkey &= unchecked((u8)~handler_entry.END);
                 }
 
+                offs_t base_ = start & ~LOWMASK;
                 for (offs_t ent = start_entry; ent <= end_entry; ent++)
                 {
                     u8 rkey1 = rkey;
@@ -348,12 +364,12 @@ namespace mame
 
                     if (m_u_dispatch[ent].is_dispatch())
                     {
-                        m_u_dispatch[ent].populate_mismatched_nomirror(0, LOWMASK, ostart, oend, descriptor, rkey1, mappings);
+                        m_u_dispatch[ent].populate_mismatched_nomirror(base_ | (ent << (int)LowBits), base_ | (ent << (int)LowBits) | LOWMASK, ostart, oend, descriptor, rkey1, mappings);
                     }
                     else
                     {
                         var temp = m_u_dispatch[ent];  mismatched_patch(descriptor, rkey1, mappings, ref temp);  m_u_dispatch[ent] = temp;  //mismatched_patch(descriptor, rkey1, mappings, m_u_dispatch[ent]);
-                        m_u_ranges[ent].intersect(ostart, oend);
+                        m_u_ranges[ent].set(ostart, oend);
                     }
                 }
             }
@@ -370,8 +386,6 @@ namespace mame
                 offs_t add = 1 + ~hmirror;
                 offs_t offset = 0;
                 offs_t base_entry = start >> (int)LowBits;
-                start &= LOWMASK;
-                end &= LOWMASK;
                 do
                 {
                     populate_mismatched_mirror_subdispatch(base_entry | (offset >> (int)LowBits), start, end, ostart | offset, oend | offset, lmirror, descriptor, mappings);
@@ -503,48 +517,106 @@ namespace mame
         }
 
 
-        public override void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_write<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)  //template<int HighBits, int Width, int AddrShift> void handler_entry_write_dispatch<HighBits, Width, AddrShift>::init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, handler_entry_write<Width, AddrShift> **dispatch, handler_entry::range *ranges)
+        public override void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, offs_t ostart, offs_t oend, Pointer<handler_entry_write<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)  //template<int HighBits, int Width, int AddrShift> void handler_entry_write_dispatch<HighBits, Width, AddrShift>::init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, handler_entry_write<Width, AddrShift> **dispatch, handler_entry::range *ranges)
         {
-            if (m_view == null)
-                g.fatalerror("init_handlers called on non-view handler_entry_write_dispatch.");
-            if (!m_dispatch_array.empty())
-                g.fatalerror("init_handlers called twice on handler_entry_write_dispatch.");
-
-            m_ranges_array.resize(1);
-            m_dispatch_array.resize(1);
-            m_a_ranges = m_ranges_array[0].data();
-            m_a_dispatch = m_dispatch_array[0].data();
-            m_u_ranges = m_ranges_array[0].data();
-            m_u_dispatch = m_dispatch_array[0].data();
-
-            Func<handler_entry.range, handler_entry.range> filter = (handler_entry.range r) =>  //auto filter = [s = m_view->m_addrstart, e = m_view->m_addrend] (handler_entry::range r) {
+            if (lowbits < LowBits)
             {
-                r.intersect(m_view.m_addrstart, m_view.m_addrend);  //r.intersect(s, e);
-                return r;
-            };
+                offs_t entry = start_entry >> (int)LowBits;
+                if (entry != (end_entry >> (int)LowBits))
+                   g.fatalerror("Recursive init_handlers spanning multiple entries.\n");
 
-            if (lowbits != LowBits)
+                entry &= BITMASK;
+                handler_entry_write_dispatch<int_const_LowBits, int_Width, int_AddrShift> subdispatch = null;
+                if ((m_u_dispatch[entry].flags() & handler_entry.F_DISPATCH) != 0)
+                {
+                    subdispatch = (handler_entry_write_dispatch<int_const_LowBits, int_Width, int_AddrShift>)m_u_dispatch[entry];
+                }
+                else if ((m_u_dispatch[entry].flags() & handler_entry.F_UNMAP) == 0)
+                {
+                    g.fatalerror("Collision on multiple init_handlers calls");
+                }
+                else
+                {
+                    m_u_dispatch[entry].unref();
+                    m_u_dispatch[entry] = subdispatch = new handler_entry_write_dispatch<int_const_LowBits, int_Width, int_AddrShift>(this.m_space, m_u_ranges[entry], null);
+                }
+
+                int delta = (int)(dispatch_entry(ostart) - subdispatch.dispatch_entry(ostart));
+                subdispatch.init_handlers(start_entry, end_entry, lowbits, ostart, oend, dispatch + delta, ranges + delta);
+            }
+            else if (lowbits != LowBits)
             {
                 u32 dt = lowbits - LowBits;
                 u32 ne = 1U << (int)dt;
-                for (offs_t entry = start_entry; entry <= end_entry; entry++)
+                u32 ee = end_entry - start_entry;
+                if (m_view != null)
                 {
-                    dispatch[entry].ref_((int)ne);
-                    u32 e0 = (entry << (int)dt) & BITMASK;
-                    for (offs_t e = 0; e != ne; e++)
+                    Func<handler_entry.range, handler_entry.range> filter = (handler_entry.range r) => { var s = m_view.m_addrstart; var e = m_view.m_addrend; r.intersect(s, e); return r; };  //auto filter = [s = m_view->m_addrstart, e = m_view->m_addrend] (handler_entry::range r) { r.intersect(s, e); return r; };
+
+                    for (offs_t entry = 0; entry <= ee; entry++)
                     {
-                        m_u_dispatch[e0 | e] = dispatch[entry];
-                        m_u_ranges[e0 | e] = filter(ranges[entry]);
+                        dispatch[entry].ref_((int)ne);
+                        u32 e0 = (entry << (int)dt) & BITMASK;
+                        for (offs_t e = 0; e != ne; e++)
+                        {
+                            offs_t e1 = e0 | e;
+                            if ((m_u_dispatch[e1].flags() & handler_entry.F_UNMAP) == 0)
+                                g.fatalerror("Collision on multiple init_handlers calls");
+
+                            m_u_dispatch[e1].unref();
+                            m_u_dispatch[e1] = dispatch[entry];
+                            m_u_ranges[e1] = filter(ranges[entry]);
+                        }
+                    }
+                }
+                else
+                {
+                    for (offs_t entry = 0; entry <= ee; entry++)
+                    {
+                        dispatch[entry].ref_((int)ne);
+                        u32 e0 = (entry << (int)dt) & BITMASK;
+                        for (offs_t e = 0; e != ne; e++)
+                        {
+                            offs_t e1 = e0 | e;
+                            if ((m_u_dispatch[e1].flags() & handler_entry.F_UNMAP) == 0)
+                                g.fatalerror("Collision on multiple init_handlers calls");
+
+                            m_u_dispatch[e1].unref();
+                            m_u_dispatch[e1] = dispatch[entry];
+                            m_u_ranges[e1] = ranges[entry];
+                        }
                     }
                 }
             }
             else
             {
-                for (offs_t entry = start_entry; entry <= end_entry; entry++)
+                if (m_view != null)
                 {
-                    m_u_dispatch[entry & BITMASK] = dispatch[entry];
-                    m_u_ranges[entry & BITMASK] = filter(ranges[entry]);
-                    dispatch[entry].ref_();
+                    Func<handler_entry.range, handler_entry.range> filter = (handler_entry.range r) => { var s = m_view.m_addrstart; var e = m_view.m_addrend; r.intersect(s, e); return r; };  //auto filter = [s = m_view->m_addrstart, e = m_view->m_addrend] (handler_entry::range r) { r.intersect(s, e); return r; };
+
+                    for (offs_t entry = start_entry & BITMASK; entry <= (end_entry & BITMASK); entry++)
+                    {
+                        if ((m_u_dispatch[entry].flags() & handler_entry.F_UNMAP) == 0)
+                            g.fatalerror("Collision on multiple init_handlers calls");
+
+                        m_u_dispatch[entry].unref();
+                        m_u_dispatch[entry] = dispatch[entry];
+                        m_u_ranges[entry] = filter(ranges[entry]);
+                        dispatch[entry].ref_();
+                    }
+                }
+                else
+                {
+                    for (offs_t entry = start_entry & BITMASK; entry <= (end_entry & BITMASK); entry++)
+                    {
+                        if ((m_u_dispatch[entry].flags() & handler_entry.F_UNMAP) == 0)
+                            g.fatalerror("Collision on multiple init_handlers calls");
+
+                        m_u_dispatch[entry].unref();
+                        m_u_dispatch[entry] = dispatch[entry];
+                        m_u_ranges[entry] = ranges[entry];
+                        dispatch[entry].ref_();
+                    }
                 }
             }
         }

@@ -414,7 +414,7 @@ namespace mame
          *          -------------------------------------------------.
          *
          * @param   color       The color.
-         * @param   cliprect    The cliprect.
+         * @param   bounds      The bounds.
          */
         public void fill(uint64_t color, rectangle bounds)
         {

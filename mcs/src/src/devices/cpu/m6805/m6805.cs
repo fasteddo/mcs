@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -340,7 +341,7 @@ namespace mame
 
 
             m_params = params_;
-            m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_BIG, 8, (u8)params_.m_addr_width);
+            m_program_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, (u8)params_.m_addr_width);
         }
 
 
@@ -367,14 +368,14 @@ namespace mame
 
 
             m_params = params_;
-            m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_BIG, 8, (u8)params_.m_addr_width, 0, internal_map);
+            m_program_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, (u8)params_.m_addr_width, 0, internal_map);
         }
 
 
         // this function is needed when passing in a non-static address_map_constructor in the ctor.  'this' isn't available
         protected void m6805_base_device_after_ctor(address_map_constructor internal_map)
         {
-            m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_BIG, 8, (u8)m_params.m_addr_width, 0, internal_map);
+            m_program_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, (u8)m_params.m_addr_width, 0, internal_map);
         }
 
 

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using memory_interface_enumerator = mame.device_interface_enumerator<mame.device_memory_interface>;  //typedef device_interface_enumerator<device_memory_interface> memory_interface_enumerator;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -460,33 +461,6 @@ namespace mame
         //#define ACCESSING_BITS_0_31             ((mem_mask & 0xffffffffU) != 0)
         //#define ACCESSING_BITS_32_63            ((mem_mask & 0xffffffff00000000U) != 0)
 
-        // macros for accessing bytes and words within larger chunks
-
-        // read/write a byte to a 16-bit space
-        //#define BYTE_XOR_BE(a)                  ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(1,0))
-        //#define BYTE_XOR_LE(a)                  ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(0,1))
-
-        // read/write a byte to a 32-bit space
-        //#define BYTE4_XOR_BE(a)                 ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(3,0))
-        //#define BYTE4_XOR_LE(a)                 ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(0,3))
-
-        // read/write a word to a 32-bit space
-        //#define WORD_XOR_BE(a)                  ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(2,0))
-        //#define WORD_XOR_LE(a)                  ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(0,2))
-
-        // read/write a byte to a 64-bit space
-        //#define BYTE8_XOR_BE(a)                 ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(7,0))
-        //#define BYTE8_XOR_LE(a)                 ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(0,7))
-
-        // read/write a word to a 64-bit space
-        //#define WORD2_XOR_BE(a)                 ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(6,0))
-        //#define WORD2_XOR_LE(a)                 ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(0,6))
-
-        // read/write a dword to a 64-bit space
-        //#define DWORD_XOR_BE(a)                 ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(4,0))
-        //#define DWORD_XOR_LE(a)                 ((a) ^ NATIVE_ENDIAN_VALUE_LE_BE(0,4))
-
-
         // helpers for checking address alignment
         public static bool WORD_ALIGNED(UInt32 a) { return (a & 1) == 0; }
         public static bool DWORD_ALIGNED(UInt32 a) { return (a & 3) == 0; }
@@ -557,7 +531,7 @@ namespace mame
                 u32 offsbits2 = 8 * (memory_offset_to_byte(address, AddrShift) & (NATIVE_BYTES - (Aligned ? TARGET_BYTES : 1)));
                 if (Aligned || (offsbits2 + TARGET_BITS <= NATIVE_BITS))
                 {
-                    if (Endian != endianness_t.ENDIANNESS_LITTLE) offsbits2 = NATIVE_BITS - TARGET_BITS - offsbits2;
+                    if (Endian != g.ENDIANNESS_LITTLE) offsbits2 = NATIVE_BITS - TARGET_BITS - offsbits2;
                     return rop(address & ~NATIVE_MASK, new uX(Width, mask) << (int)offsbits2) >> (int)offsbits2;  //return rop(address & ~NATIVE_MASK, (NativeType)mask << offsbits) >> offsbits;
                 }
             }
@@ -570,7 +544,7 @@ namespace mame
             if (NATIVE_BYTES >= TARGET_BYTES)
             {
                 // little-endian case
-                if (Endian == endianness_t.ENDIANNESS_LITTLE)
+                if (Endian == g.ENDIANNESS_LITTLE)
                 {
                     // read lower bits from lower address
                     uX result = new uX(TargetWidth, 0);  //TargetType result = 0;
@@ -615,7 +589,7 @@ namespace mame
                 uX result = new uX(TargetWidth, 0);  //TargetType result = 0;
 
                 // little-endian case
-                if (Endian == endianness_t.ENDIANNESS_LITTLE)
+                if (Endian == g.ENDIANNESS_LITTLE)
                 {
                     // read lowest bits from first address
                     uX curmask = new uX(Width, mask << (int)offsbits);  //NativeType curmask = mask << offsbits;
@@ -796,7 +770,6 @@ namespace mame
     // =====================-> The root class of all handlers
 
     // Handlers the refcounting as part of the interface
-
     public abstract class handler_entry : IDisposable
     {
         //DISABLE_COPYING(handler_entry);
@@ -805,10 +778,11 @@ namespace mame
 
 
         // Typing flags
-        public const u32 F_DISPATCH       = 0x00000001; // handler that forwards the access to other handlers
-        protected const u32 F_UNITS       = 0x00000002; // handler that merges/splits an access among multiple handlers (unitmask support)
-        protected const u32 F_PASSTHROUGH = 0x00000004; // handler that passes through the request to another handler
-        const u32 F_VIEW                  = 0x00000008; // handler for a view (kinda like dispatch except not entirely)
+        protected const u32 F_UNMAP       = 0x00000001; // the unmapped memory accessed handler
+        protected const u32 F_DISPATCH    = 0x00000002; // handler that forwards the access to other handlers
+        protected const u32 F_UNITS       = 0x00000004; // handler that merges/splits an access among multiple handlers (unitmask support)
+        protected const u32 F_PASSTHROUGH = 0x00000008; // handler that passes through the request to another handler
+        const u32 F_VIEW                  = 0x00000010; // handler for a view (kinda like dispatch except not entirely)
 
 
         // Start/end of range flags
@@ -870,7 +844,7 @@ namespace mame
 
         public void ref_(int count = 1) { m_refcount += (u32)count; }
         public void unref(int count = 1) { m_refcount -= (u32)count;  if (m_refcount == 0) this.Dispose(); /*delete this;*/ }
-        //inline u32 flags() const { return m_flags; }
+        public u32 flags() { return m_flags; }
 
         public bool is_dispatch() { return (m_flags & F_DISPATCH) != 0; }
         public bool is_view() { return (m_flags & F_VIEW) != 0; }
@@ -899,6 +873,12 @@ namespace mame
         public virtual void select_u(int slot)
         {
             g.fatalerror("select_u called on non-view\n");
+        }
+
+        public virtual offs_t dispatch_entry(offs_t address)
+        {
+            g.fatalerror("dispatch_entry called on non-dispatching class\n");
+            return default;
         }
     }
 
@@ -1039,7 +1019,7 @@ namespace mame
         }
 
 
-        public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_read<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)
+        public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, offs_t ostart, offs_t oend, Pointer<handler_entry_read<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)
         {
             g.fatalerror("init_handlers called on non-view class\n");
         }
@@ -1190,7 +1170,7 @@ namespace mame
         }
 
 
-        public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_write<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)
+        public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, offs_t ostart, offs_t oend, Pointer<handler_entry_write<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)
         {
             g.fatalerror("init_handlers called on non-view class\n");
         }
@@ -2276,7 +2256,7 @@ namespace mame
                 // 2. Clearing
                 u64 smask;
                 u64 emask;
-                if (m_config.endianness() == endianness_t.ENDIANNESS_BIG)
+                if (m_config.endianness() == g.ENDIANNESS_BIG)
                 {
                     smask =  g.make_bitmask64((u32)m_config.data_width() - ((addrstart - nstart) << (3 - m_config.addr_shift())));
                     emask = ~g.make_bitmask64((u32)m_config.data_width() - ((addrend - nstart + 1) << (3 - m_config.addr_shift())));
@@ -2291,7 +2271,7 @@ namespace mame
 
                 // 3. Mirroring
                 offs_t to_mirror = nmirror & default_lowbits_mask;
-                if (m_config.endianness() == endianness_t.ENDIANNESS_BIG)
+                if (m_config.endianness() == g.ENDIANNESS_BIG)
                 {
                     for (int i = 0; to_mirror != 0; i++)
                     {
@@ -2491,7 +2471,7 @@ namespace mame
                 g.fatalerror("Requesting cache() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
             if (Endian != m_config.endianness())
                 g.fatalerror("Requesting cache() with endianness {0} while the config says {1}\n",
-                           g.endianness_names[(int)Endian], g.endianness_names[(int)m_config.endianness()]);
+                           util.endian_to_string_view(Endian), util.endian_to_string_view(m_config.endianness()));
 
             v.set(this, get_cache_info());
         }
@@ -2517,7 +2497,7 @@ namespace mame
                 g.fatalerror("Requesting specific() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
             if (Endian != m_config.endianness())
                 g.fatalerror("Requesting spefific() with endianness {0} while the config says {1}\n",
-                           g.endianness_names[(int)Endian], g.endianness_names[(int)m_config.endianness()]);
+                           util.endian_to_string_view(Endian), util.endian_to_string_view(m_config.endianness()));
 
             v.set(this, get_specific_info());
         }
@@ -2955,8 +2935,8 @@ namespace mame
                 return util.string_format("share {0} found with unexpected size (expected {1}, found {2})", m_name, bytes, m_bytes);
             if (endianness != m_endianness && m_bitwidth != 8)
                 return util.string_format("share {0} found with unexpected endianness (expected {1}, found {2})", m_name,
-                                           endianness == endianness_t.ENDIANNESS_LITTLE ? "little" : "big",
-                                           m_endianness == endianness_t.ENDIANNESS_LITTLE ? "little" : "big");
+                                           endianness == g.ENDIANNESS_LITTLE ? "little" : "big",
+                                           m_endianness == g.ENDIANNESS_LITTLE ? "little" : "big");
             return "";
         }
     }
@@ -3357,7 +3337,7 @@ namespace mame
                 {
                     int level = emumem_global.handler_entry_dispatch_level(spaceconfig.addr_width());
                     // allocate one of the appropriate type
-                    switch ((level << 8) | (spaceconfig.endianness() == endianness_t.ENDIANNESS_BIG ? 0x1000 : 0) |spaceconfig.data_width() | (spaceconfig.addr_shift() + 4))
+                    switch ((level << 8) | (spaceconfig.endianness() == g.ENDIANNESS_BIG ? 0x1000 : 0) |spaceconfig.data_width() | (spaceconfig.addr_shift() + 4))
                     {
                         case 0x0000|0x000| 8|(4+1): memory.allocate(new address_space_specific<int_const_0, int_const_0, int_const_1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
                         case 0x1000|0x000| 8|(4+1): memory.allocate(new address_space_specific<int_const_0, int_const_0, int_const_1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;

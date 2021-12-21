@@ -207,8 +207,8 @@ namespace mame
             // open the file; if we fail, that's ok
             emu_file file = new emu_file(options.ini_path(), g.OPEN_FLAG_READ);
             g.osd_printf_verbose("Attempting load of {0}.ini\n", basename);
-            osd_file.error filerr = file.open(basename + ".ini");
-            if (filerr != osd_file.error.NONE)
+            std.error_condition filerr = file.open(basename + ".ini");
+            if (filerr)
                 return;
 
             // parse the file

@@ -457,11 +457,11 @@ namespace mame
                     while (path.next(out curpath, samplename))
                     {
                         // attempt to access the file (.flac) or (.wav)
-                        osd_file.error filerr = file.open(curpath + ".flac");
-                        if (filerr != osd_file.error.NONE)
+                        std.error_condition filerr = file.open(curpath + ".flac");
+                        if (filerr)
                             filerr = file.open(curpath + ".wav");
 
-                        if (filerr == osd_file.error.NONE)
+                        if (!filerr)
                         {
                             record.set_status(audit_status.GOOD, audit_substatus.GOOD);
                             found++;
@@ -606,14 +606,14 @@ namespace mame
             file.set_restrict_to_mediapath(1);
 
             // open the file if we can
-            osd_file.error filerr;
+            std.error_condition filerr;
             if (has_crc)
                 filerr = file.open(record.name(), crc);
             else
                 filerr = file.open(record.name());
 
             // if it worked, get the actual length and hashes, then stop
-            if (filerr == osd_file.error.NONE)
+            if (!filerr)
                 record.set_actual(file.hashes(m_validation), file.size());
 
             file.close();
@@ -637,24 +637,6 @@ namespace mame
 
             throw new emu_unimplemented();
 #if false
-            chd_error err = rom_load_manager.open_disk_image(m_enumerator.options(), args, rom[0], source);
-
-            // if we succeeded, get the hashes
-            if (err == chd_error.CHDERR_NONE)
-            {
-                util.hash_collection hashes = new util.hash_collection();
-
-                // if there's a SHA1 hash, add them to the output hash
-                if (source.sha1() != null)
-                    hashes.add_sha1(source.sha1());
-
-                // update the actual values
-                record.set_actual(hashes);
-            }
-
-            // compute the final status
-            compute_status(record, rom[0], err == chd_error.CHDERR_NONE);
-            return record;
 #endif
         }
 

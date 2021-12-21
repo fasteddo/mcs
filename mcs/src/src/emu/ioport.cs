@@ -338,6 +338,7 @@ namespace mame
             IPT_UI_CLEAR,
             IPT_UI_ZOOM_IN,
             IPT_UI_ZOOM_OUT,
+            IPT_UI_ZOOM_DEFAULT,
             IPT_UI_PREV_GROUP,
             IPT_UI_NEXT_GROUP,
             IPT_UI_ROTATE,
@@ -3527,8 +3528,10 @@ namespace mame
         attoseconds_t m_last_delta_nsec;      // nanoseconds that passed since the previous callback
 
         // playback/record information
-        emu_file m_record_file;          // recording file (NULL if not recording)
-        emu_file m_playback_file;        // playback file (NULL if not recording)
+        emu_file m_record_file;          // recording file (closed if not recording)
+        emu_file m_playback_file;        // playback file (closed if not recording)
+        util.write_stream m_record_stream;  //util::write_stream::ptr m_record_stream;        // recording stream (nullptr if not recording)
+        util.read_stream m_playback_stream;  //util::read_stream::ptr  m_playback_stream;      // playback stream (nullptr if not recording)
         u64 m_playback_accumulated_speed; // accumulated speed during playback
         u32 m_playback_accumulated_frames; // accumulated frames during playback
         emu_file m_timecode_file;        // timecode/frames playback file (nullptr if not recording)
@@ -3536,7 +3539,7 @@ namespace mame
         attotime m_timecode_last_time;
 
         // storage for inactive configuration
-        util.xml.file m_deselected_card_config; // using smart pointer would pull xmlfile.h into emu.h
+        util.xml.file m_deselected_card_config;  //std::unique_ptr<util::xml::file> m_deselected_card_config;
 
 
         // construction/destruction
@@ -3560,7 +3563,8 @@ namespace mame
             m_deselected_card_config = null;
 
 
-            //memset(m_type_to_entry, 0, sizeof(m_type_to_entry));
+            //for (auto &entries : m_type_to_entry)
+            //    std::fill(std::begin(entries), std::end(entries), nullptr);
         }
 
         //-------------------------------------------------
@@ -3986,15 +3990,15 @@ namespace mame
                 return 0;
 
             // open the playback file
-            osd_file.error filerr = m_playback_file.open(filename);
+            std.error_condition filerr = m_playback_file.open(filename);
 
             // return an explicit error if file isn't found in given path
-            if (filerr == osd_file.error.NOT_FOUND)
+            if (filerr == std.errc.no_such_file_or_directory)
                 g.fatalerror("Input file {0} not found\n", filename);
 
             // TODO: bail out any other error laconically for now
-            if (filerr != osd_file.error.NONE)
-                g.fatalerror("Failed to open file {0} for playback (code error={1})\n", filename, (int)filerr);
+            if (filerr)
+                g.fatalerror("Failed to open file {0} for playback ({1}:{2} {3})\n", filename, filerr.category().name(), filerr.value(), filerr.message());
 
             // read the header and verify that it is a modern version; if not, print an error
             inp_header header = new inp_header();
@@ -4018,7 +4022,7 @@ namespace mame
                 g.osd_printf_info("Input file is for machine '{0}', not for current machine '{1}'\n", sysname, machine().system().name);
 
             // enable compression
-            m_playback_file.compress(util.FCOMPRESS_MEDIUM);
+            m_playback_stream = util.zlib_read(util.core_file_read(m_playback_file.core_file_get()), 16386);
             return basetime;
         }
 
@@ -4029,9 +4033,10 @@ namespace mame
         void playback_end(string message = null)
         {
             // only applies if we have a live file
-            if (m_playback_file.is_open())
+            if (m_playback_stream != null)
             {
                 // close the file
+                m_playback_stream = null;  //m_playback_stream.reset();
                 m_playback_file.close();
 
                 // pop a message
@@ -4060,7 +4065,7 @@ namespace mame
         void playback_frame(attotime curtime)
         {
             // if playing back, fetch the information and verify
-            if (m_playback_file.is_open())
+            if (m_playback_stream != null)
             {
                 throw new emu_unimplemented();
             }
@@ -4072,7 +4077,7 @@ namespace mame
         void playback_port(ioport_port port)
         {
             // if playing back, fetch information about this port
-            if (m_playback_file.is_open())
+            if (m_playback_stream != null)
             {
                 throw new emu_unimplemented();
             }
@@ -4086,11 +4091,23 @@ namespace mame
         void record_write(PointerU8 buffer)  //void record_write(Type value)
         {
             // protect against nullptr handles if previous reads fail
-            if (!m_record_file.is_open())
+            if (m_record_stream == null)
                 return;
 
-            // read the value; if we fail, end playback
-            if (m_record_file.write(buffer, (UInt32)buffer.Count) != buffer.Count)  //if (m_record_file.write(&value, sizeof(value)) != sizeof(value))
+            // normalize byte order
+            PointerU8 value = new PointerU8(new MemoryU8(8, true));
+            if (buffer.Count == 8)  //if (sizeof(value) == 8)
+                value.SetUInt64(0, g.little_endianize_int64(buffer.GetUInt64(0)));  //value = little_endianize_int64(value);
+            else if (buffer.Count == 4)  //else if (sizeof(value) == 4)
+                value.SetUInt32(0, g.little_endianize_int32(buffer.GetUInt32(0)));  //value = little_endianize_int32(value);
+            else if (buffer.Count == 2)  //else if (sizeof(value) == 2)
+                value.SetUInt16(0, g.little_endianize_int16(buffer.GetUInt16(0)));  //value = little_endianize_int16(value);
+            else
+                value[0] = buffer[0];
+
+            // write the value; if we fail, end recording
+            size_t written;
+            if (m_record_stream.write(value, (size_t)buffer.Count, out written) || ((size_t)buffer.Count != written))  //if (m_record_stream->write(&value, sizeof(value), written) || (sizeof(value) != written))
                 record_end("Out of space");
         }
 
@@ -4106,9 +4123,9 @@ namespace mame
                 return;
 
             // open the record file
-            osd_file.error filerr = m_record_file.open(filename);
-            if (filerr != osd_file.error.NONE)
-                throw new emu_fatalerror("ioport_manager::record_init: Failed to open file for recording");
+            std.error_condition filerr = m_record_file.open(filename);
+            if (filerr)
+                throw new emu_fatalerror("ioport_manager::record_init: Failed to open file for recording ({0}:{1} {2})", filerr.category().name(), filerr.value(), filerr.message());
 
             // get the base time
             system_time systime;
@@ -4126,7 +4143,7 @@ namespace mame
             header.write(m_record_file);
 
             // enable compression
-            m_record_file.compress(util.FCOMPRESS_MEDIUM);
+            m_record_stream = util.zlib_write(util.core_file_read_write(m_record_file.core_file_get()), 6, 16384);
         }
 
 
@@ -4136,9 +4153,10 @@ namespace mame
         void record_end(string message = null)
         {
             // only applies if we have a live file
-            if (m_record_file.is_open())
+            if (m_record_stream != null)
             {
                 // close the file
+                m_record_stream = null;  //m_record_stream.reset(); // TODO: check for errors flushing the last compressed block before doing this
                 m_record_file.close();
 
                 // pop a message
@@ -4155,7 +4173,7 @@ namespace mame
         void record_frame(attotime curtime)
         {
             // if recording, record information about the current frame
-            if (m_record_file.is_open())
+            if (m_record_stream != null)
             {
                 // first the absolute time
                 //record_write(curtime.seconds());
@@ -4278,7 +4296,7 @@ namespace mame
         void record_port(ioport_port port)
         {
             // if recording, store information about this port
-            if (m_record_file.is_open())
+            if (m_record_stream != null)
             {
                 throw new emu_unimplemented();
             }
@@ -4312,9 +4330,9 @@ namespace mame
             filename = record_filename + ".timecode";
             g.osd_printf_info("Record input timecode file: {0}\n", record_filename);
 
-            osd_file.error filerr = m_timecode_file.open(filename);
-            if (filerr != osd_file.error.NONE)
-                throw new emu_fatalerror("ioport_manager::timecode_init: Failed to open file for input timecode recording");
+            std.error_condition filerr = m_timecode_file.open(filename);
+            if (filerr)
+                throw new emu_fatalerror("ioport_manager::timecode_init: Failed to open file for input timecode recording ({0}:{1} {2})", filerr.category().name(), filerr.value(), filerr.message());
 
             m_timecode_file.puts("# ==========================================\n");
             m_timecode_file.puts("# TIMECODE FILE FOR VIDEO PREVIEW GENERATION\n");

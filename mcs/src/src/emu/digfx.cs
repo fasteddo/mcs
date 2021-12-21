@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using gfx_interface_enumerator = mame.device_interface_enumerator<mame.device_gfx_interface>;  //typedef device_interface_enumerator<device_gfx_interface> gfx_interface_enumerator;
 using u8 = System.Byte;
 using u16 = System.UInt16;

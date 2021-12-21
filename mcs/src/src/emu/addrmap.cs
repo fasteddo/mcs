@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
@@ -55,7 +56,7 @@ namespace mame
         //friend class address_map;
 
         //template <typename T, typename Ret, typename... Params>
-        //struct is_addrmap_method { static constexpr bool value = std::is_constructible<address_map_constructor, Ret (T::*)(Params...), const char *, T*>::value; };
+        //using is_addrmap_method = std::bool_constant<std::is_constructible_v<address_map_constructor, Ret (T::*)(Params...), const char *, T *> >;
 
         //template <typename T, typename Ret, typename... Params>
         //static std::enable_if_t<is_addrmap_method<T, Ret, Params...>::value, address_map_constructor> make_delegate(Ret (T::*func)(Params...), const char *name, T *obj)

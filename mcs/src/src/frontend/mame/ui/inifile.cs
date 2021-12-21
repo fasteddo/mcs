@@ -6,8 +6,10 @@ using System.Collections.Generic;
 
 using categoryindex = mame.std.vector<System.Collections.Generic.KeyValuePair<string, System.Int64>>;
 using favorites_set = mame.std.set<mame.ui_software_info>;//, favorite_compare>;
+using int64_t = System.Int64;
 using size_t = System.UInt64;
 using sorted_favorites = mame.std.vector<mame.ui_software_info>;
+using uint64_t = System.UInt64;
 
 
 namespace mame
@@ -48,7 +50,7 @@ namespace mame
                 if (g.core_filename_ends_with(name, ".ini"))
                 {
                     emu_file file = new emu_file(m_options.categoryini_path(), g.OPEN_FLAG_READ);
-                    if (file.open(name) == osd_file.error.NONE)
+                    if (!file.open(name))
                     {
                         init_category(name, file);
                         file.close();
@@ -66,14 +68,14 @@ namespace mame
         {
             string filename = m_ini_index[(int)file].first;
             emu_file fp = new emu_file(m_options.categoryini_path(), g.OPEN_FLAG_READ);
-            if (fp.open(filename) != osd_file.error.NONE)
+            if (fp.open(filename))
             {
                 g.osd_printf_error("Failed to open category file {0} for reading\n", filename);
                 return;
             }
 
-            Int64 offset = m_ini_index[(int)file].second[(int)category].Value;
-            if (fp.seek(offset, emu_file.SEEK_SET) != 0 || (fp.tell() != (UInt64)offset))
+            int64_t offset = m_ini_index[(int)file].second[(int)category].Value;
+            if (fp.seek(offset, g.SEEK_SET) != 0 || (fp.tell() != (uint64_t)offset))
             {
                 fp.close();
                 g.osd_printf_error("Failed to seek to category offset in file {0}\n", filename);
@@ -168,7 +170,7 @@ namespace mame
 
 
             emu_file file = new emu_file(m_options.ui_path(), g.OPEN_FLAG_READ);
-            if (file.open(FAVORITE_FILENAME) == osd_file.error.NONE)
+            if (!file.open(FAVORITE_FILENAME))
             {
                 string readbuf;
                 file.gets(out readbuf, 1024);

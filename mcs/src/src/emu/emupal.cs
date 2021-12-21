@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using optional_memory_region = mame.memory_region_finder<mame.bool_const_false>;  //using optional_memory_region = memory_region_finder<false>;
@@ -251,7 +252,7 @@ namespace mame
             m_enable_hilights = false;
             m_membits = 0;
             m_membits_supplied = false;
-            m_endianness = endianness_t.ENDIANNESS_BIG;
+            m_endianness = g.ENDIANNESS_BIG;
             m_endianness_supplied = false;
             m_prom_region = new optional_memory_region(this, finder_base.DUMMY_TAG);
             m_init = null;

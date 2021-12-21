@@ -9,6 +9,7 @@ using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -651,11 +652,11 @@ namespace mame
             init_s_mcs48_opcodes();
 
 
-            m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_LITTLE, 8, (feature_mask & MB_FEATURE) != 0 ? (u8)12 : (u8)11, 0
+            m_program_config = new address_space_config("program", g.ENDIANNESS_LITTLE, 8, (feature_mask & MB_FEATURE) != 0 ? (u8)12 : (u8)11, 0
                                , (rom_size == 1024) ? program_10bit : (rom_size == 2048) ? program_11bit : (rom_size == 4096) ? program_12bit : (address_map_constructor)null);
-            m_data_config = new address_space_config("data", endianness_t.ENDIANNESS_LITTLE, 8, ( ( ram_size == 64 ) ? (u8)6 : ( ( ram_size == 128 ) ? (u8)7 : (u8)8 ) ), 0
+            m_data_config = new address_space_config("data", g.ENDIANNESS_LITTLE, 8, ( ( ram_size == 64 ) ? (u8)6 : ( ( ram_size == 128 ) ? (u8)7 : (u8)8 ) ), 0
                             , (ram_size == 64) ? data_6bit : (ram_size == 128) ? data_7bit : (address_map_constructor)data_8bit);
-            m_io_config = new address_space_config("io", endianness_t.ENDIANNESS_LITTLE, 8, 8, 0);
+            m_io_config = new address_space_config("io", g.ENDIANNESS_LITTLE, 8, 8, 0);
             m_port_in_cb = new devcb_read8.array<u64_const_2>(this, () => { return new devcb_read8(this); });
             m_port_out_cb = new devcb_write8.array<u64_const_2>(this, () => { return new devcb_write8(this); });
             m_bus_in_cb = new devcb_read8(this);

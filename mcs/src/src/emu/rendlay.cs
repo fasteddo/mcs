@@ -312,7 +312,7 @@ namespace mame
             public render_bounds delta;
 
 
-            public void get(out render_bounds result) { result = bounds; }
+            public render_bounds get() { return new render_bounds(bounds); }
         }
 
         //using bounds_vector = std::vector<bounds_step>;
@@ -325,7 +325,7 @@ namespace mame
             public render_color delta;
 
 
-            public void get(out render_color result) { result = color; }
+            public render_color get() { return new render_color(color); }
         }
 
         //using color_vector = std::vector<color_step>;
@@ -334,12 +334,11 @@ namespace mame
 
     /// \brief A description of a piece of visible artwork
     ///
-    /// Most view_items (except for those in the screen layer) have exactly
+    /// Most view items (except for those referencing screens) have exactly
     /// one layout_element which describes the contents of the item.
     /// Elements are separate from items because they can be re-used
     /// multiple times within a layout.  Even though an element can contain
-    /// a number of components, they are treated as if they were a single
-    /// bitmap.
+    /// a number of components, they are drawn as a single textured quad.
     public class layout_element
     {
         //using environment = emu::render::detail::layout_environment;
@@ -347,13 +346,14 @@ namespace mame
         //typedef std::map<std::string, make_component_func> make_component_map;
 
 
-        /// \brief An image, rectangle, or disk in an element
+        /// \brief A drawing component within a layout element
         ///
-        /// Each layout_element contains one or more components. Each
+        /// Each #layout_element contains one or more components. Each
         /// component can describe either an image or a rectangle/disk
-        /// primitive. Each component also has a "state" associated with it,
-        /// which controls whether or not the component is visible (if the
-        /// owning item has the same state, it is visible).
+        /// primitive.  A component can also have a state mask and value
+        /// for controlling visibility.  If the state of the item
+        /// instantiating the element matches the component's state value
+        /// for the bits that are set in the mask, the component is visible.
         public abstract class component
         {
             //typedef std::unique_ptr<component> ptr;
@@ -1428,14 +1428,14 @@ namespace mame
     }
 
 
-    /// \brief A reusable group of elements
+    /// \brief A reusable group of items
     ///
     /// Views expand/flatten groups into their component elements applying
-    /// an optional coordinate transform.  This is mainly useful duplicating
-    /// the same sublayout in multiple views.  It would be more useful
-    /// within a view if it could be parameterised.  Groups only exist while
-    /// parsing a layout file - no information about element grouping is
-    /// preserved.
+    /// an optional coordinate transform.  This is useful for duplicating
+    /// the same sublayout in multiple views, or grouping related items to
+    /// simplify overall view arrangement.  Groups only exist while parsing
+    /// a layout file - no information about element grouping is preserved
+    /// after the views have been built.
     public class layout_group
     {
         //using environment = emu::render::detail::layout_environment;
@@ -1750,7 +1750,7 @@ namespace mame
     }
 
 
-    /// \brief A single view within a layout_file
+    /// \brief A single view within a #layout_file
     ///
     /// The view is described using arbitrary coordinates that are scaled to
     /// fit within the render target.  Pixels within a view are assumed to
@@ -1784,8 +1784,8 @@ namespace mame
             //friend class layout_view;
 
             delegate int state_delegate();  //using state_delegate = delegate<int ()>;
-            delegate void bounds_delegate(out render_bounds bounds);  //using bounds_delegate = delegate<void (render_bounds &)>;
-            delegate void color_delegate(out render_color color);  //using color_delegate = delegate<void (render_color &)>;
+            delegate render_bounds bounds_delegate();  //using bounds_delegate = delegate<render_bounds ()>;
+            delegate render_color color_delegate();  //using color_delegate = delegate<render_color ()>;
             //using bounds_vector = emu::render::detail::bounds_vector;
             //using color_vector = emu::render::detail::color_vector;
 
@@ -1895,7 +1895,7 @@ namespace mame
 
                 // this can be called before resolving tags, make it return something valid
                 m_bounds = m_rawbounds;
-                m_get_bounds = (out render_bounds bounds) => { m_bounds.front().get(out bounds); };  //m_get_bounds = bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front());
+                m_get_bounds = () => { return m_bounds.front().get(); };  //m_get_bounds = bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front());
             }
 
             //~item();
@@ -1907,8 +1907,8 @@ namespace mame
             public screen_device screen() { return m_screen; }
             //bool bounds_animated() const { return m_bounds.size() > 1U; }
             //bool color_animated() const { return m_color.size() > 1U; }
-            public render_bounds bounds() { render_bounds result; m_get_bounds(out result); return result; }
-            public render_color color() { render_color result; m_get_color(out result); return result; }
+            public render_bounds bounds() { return m_get_bounds(); }
+            public render_color color() { return m_get_color(); }
             public int blend_mode() { return m_blend_mode; }
             public u32 visibility_mask() { return m_visibility_mask; }
             public int orientation() { return m_orientation; }
@@ -2039,7 +2039,7 @@ namespace mame
             bounds_delegate default_get_bounds()
             {
                 return (m_bounds.size() == 1U)
-                        ? (out render_bounds bounds) => { m_bounds.front().get(out bounds); }  //? bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front())
+                        ? () => { return m_bounds.front().get(); }  //? bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front())
                         : (bounds_delegate)get_interpolated_bounds;  //: bounds_delegate(&item::get_interpolated_bounds, this);
             }
 
@@ -2050,7 +2050,7 @@ namespace mame
             color_delegate default_get_color()
             {
                 return (m_color.size() == 1U)
-                        ? (out render_color result) => { m_color.front().get(out result); }  //? color_delegate(&emu::render::detail::color_step::get, &const_cast<emu::render::detail::color_step &>(m_color.front()))
+                        ? () => { return m_color.front().get(); }  //? color_delegate(&emu::render::detail::color_step::get, &const_cast<emu::render::detail::color_step &>(m_color.front()))
                         : (color_delegate)get_interpolated_color;  //: color_delegate(&item::get_interpolated_color, this);
             }
 
@@ -2130,20 +2130,20 @@ namespace mame
             //-------------------------------------------------
             //  get_interpolated_bounds - animated bounds
             //-------------------------------------------------
-            void get_interpolated_bounds(out render_bounds result)
+            render_bounds get_interpolated_bounds()
             {
                 g.assert(m_bounds.size() > 1U);
-                result = rendlay_global.interpolate_bounds(m_bounds, m_get_anim_state());
+                return rendlay_global.interpolate_bounds(m_bounds, m_get_anim_state());
             }
 
 
             //-------------------------------------------------
             //  get_interpolated_color - animated color
             //-------------------------------------------------
-            void get_interpolated_color(out render_color result)
+            render_color get_interpolated_color()
             {
                 g.assert(m_color.size() > 1U);
-                result = rendlay_global.interpolate_color(m_color, m_get_anim_state());
+                return rendlay_global.interpolate_color(m_color, m_get_anim_state());
             }
 
 

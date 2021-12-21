@@ -2418,7 +2418,7 @@ namespace mame
             emu_file layoutfile = new emu_file(m_manager.machine().options().art_path(), g.OPEN_FLAG_READ);
             layoutfile.set_restrict_to_mediapath(1);
             bool result = false;
-            for (osd_file.error filerr = layoutfile.open(fname); osd_file.error.NONE == filerr; filerr = layoutfile.open_next())
+            for (std.error_condition filerr = layoutfile.open(fname); !filerr; filerr = layoutfile.open_next())
             {
                 // read the file and parse as XML
                 util.xml.file rootnode = util.xml.file.read(layoutfile.core_file_get(), parseopt);

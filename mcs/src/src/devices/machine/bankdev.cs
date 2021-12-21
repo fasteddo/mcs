@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using s8 = System.SByte;
 using u8 = System.Byte;

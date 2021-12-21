@@ -254,7 +254,7 @@ namespace mame
         }
 
 
-        //osd_file::error open_next(emu_file &file, const char *extension, uint32_t index = 0);
+        //std::error_condition open_next(emu_file &file, const char *extension, uint32_t index = 0);
         //void compute_snapshot_size(s32 &width, s32 &height);
         //void pixels(u32 *buffer);
 
@@ -978,8 +978,8 @@ namespace mame
             {
                 // create a final screenshot
                 emu_file file = new emu_file(machine().options().snapshot_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-                osd_file.error filerr = file.open(machine().basename() + g.PATH_SEPARATOR + "final.png");
-                if (filerr == osd_file.error.NONE)
+                std.error_condition filerr = file.open(machine().basename() + g.PATH_SEPARATOR + "final.png");
+                if (!filerr)
                     save_snapshot(null, file);
 
                 file.close();

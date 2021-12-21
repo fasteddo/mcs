@@ -37,21 +37,38 @@ namespace mame
     }
 
 
-    enum image_error_t
+    enum image_error_t : int
     {
-        IMAGE_ERROR_SUCCESS,
-        IMAGE_ERROR_INTERNAL,
-        IMAGE_ERROR_UNSUPPORTED,
-        IMAGE_ERROR_OUTOFMEMORY,
-        IMAGE_ERROR_FILENOTFOUND,
-        IMAGE_ERROR_INVALIDIMAGE,
-        IMAGE_ERROR_ALREADYOPEN,
-        IMAGE_ERROR_UNSPECIFIED
+        INTERNAL = 1,
+        UNSUPPORTED,
+        INVALIDIMAGE,
+        ALREADYOPEN,
+        UNSPECIFIED
     }
+
+
+    //const std::error_category &image_category() noexcept;
+    //inline std::error_condition make_error_condition(image_error e) noexcept { return std::error_condition(int(e), image_category()); }
+    //namespace std { template <> struct is_error_condition_enum<image_error> : public std::true_type { }; }
+
+    //struct image_device_type_info
+
+    //class image_device_format
 
 
     public enum image_init_result { PASS, FAIL }
     public enum image_verify_result { PASS, FAIL }
+
+
+    //**************************************************************************
+    //  MACROS
+    //**************************************************************************
+
+    //#define DEVICE_IMAGE_LOAD_MEMBER(_name)             image_init_result _name(device_image_interface &image)
+    //#define DECLARE_DEVICE_IMAGE_LOAD_MEMBER(_name)     DEVICE_IMAGE_LOAD_MEMBER(_name)
+
+    //#define DEVICE_IMAGE_UNLOAD_MEMBER(_name)           void _name(device_image_interface &image)
+    //#define DECLARE_DEVICE_IMAGE_UNLOAD_MEMBER(_name)   DEVICE_IMAGE_UNLOAD_MEMBER(_name)
 
 
     // ======================> device_image_interface
@@ -67,11 +84,11 @@ namespace mame
         //static const image_device_type_info m_device_info_array[];
 
 
-        /* error related info */
-        image_error_t m_err;
+        // error related info
+        std.error_condition m_err;
         string m_err_message;
 
-        /* variables that are only non-zero when an image is mounted */
+        // variables that are only non-zero when an image is mounted
         //core_file *m_file;
         //emu_file *m_mame_file;
         string m_image_name;
@@ -79,7 +96,7 @@ namespace mame
         string m_basename_noext;
         //astring m_filetype;
 
-        /* Software information */
+        // Software information
         string m_full_software_name;
         software_part m_software_part_ptr;
         string m_software_list_name;
@@ -192,25 +209,15 @@ namespace mame
             error - returns the error text for an image
             error
         -------------------------------------------------*/
-        static readonly string [] messages = new string[]
-        {
-            "",
-            "Internal error",
-            "Unsupported operation",
-            "Out of memory",
-            "File not found",
-            "Invalid image",
-            "File already open",
-            "Unspecified error"
-        };
-
         public string error()
         {
-            return !string.IsNullOrEmpty(m_err_message) ? m_err_message : messages[(int)m_err];
+            if (m_err && m_err_message.empty())
+                m_err_message = m_err.message();
+            return m_err_message;
         }
 
 
-        //void seterror(image_error_t err, const char *message);
+        //void seterror(std::error_condition err, const char *message);
         //void message(const char *format, ...) ATTR_PRINTF(2,3);
 
 
@@ -303,7 +310,7 @@ namespace mame
         //image_init_result create(const char *path, const image_device_format *create_format, option_resolution *create_args);
         //image_init_result create(const std::string &path);
         //bool load_software(software_list_device &swlist, const char *swname, const rom_entry *entry);
-        //int reopen_for_write(const char *path);
+        //std::error_condition reopen_for_write(std::string_view path);
 
 
         //void set_user_loadable(bool user_loadable) { m_user_loadable = user_loadable; }
@@ -332,7 +339,7 @@ namespace mame
         //virtual const bool use_software_list_file_extension_for_filetype() const { return false; }
         //image_init_result load_internal(const std::string &path, bool is_create, int create_format, util::option_resolution *create_args);
         //void determine_open_plan(int is_create, UINT32 *open_plan);
-        //image_error_t load_image_by_path(UINT32 open_flags, const char *path);
+        //std::error_condition load_image_by_path(u32 open_flags, std::string_view path);
         //void clear();
         //bool is_loaded();
 
@@ -366,7 +373,6 @@ namespace mame
         //static const image_device_type_info *find_device_type(iodevice_t type);
 
 
-        //static image_error_t image_error_from_file_error(osd_file::error filerr);
         //std::vector<u32> determine_open_plan(bool is_create);
 
         //-------------------------------------------------

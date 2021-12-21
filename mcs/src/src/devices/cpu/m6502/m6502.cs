@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -209,8 +210,8 @@ namespace mame
 
 
             sync_w = new devcb_write_line(this);
-            program_config = new address_space_config("program", endianness_t.ENDIANNESS_LITTLE, 8, 16);
-            sprogram_config = new address_space_config("decrypted_opcodes", endianness_t.ENDIANNESS_LITTLE, 8, 16);
+            program_config = new address_space_config("program", g.ENDIANNESS_LITTLE, 8, 16);
+            sprogram_config = new address_space_config("decrypted_opcodes", g.ENDIANNESS_LITTLE, 8, 16);
             PPC = 0;
             NPC = 0;
             PC = 0;

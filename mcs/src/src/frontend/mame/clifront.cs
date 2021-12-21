@@ -1185,7 +1185,7 @@ namespace mame
             {
                 // attempt to open the output file
                 emu_file file = new emu_file(g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-                if (file.open(emulator_info.get_configname() + ".ini") != osd_file.error.NONE)
+                if (file.open(emulator_info.get_configname() + ".ini"))
                     throw new emu_fatalerror("Unable to create file {0}.ini\n", emulator_info.get_configname());
 
                 // generate the updated INI
@@ -1194,7 +1194,7 @@ namespace mame
 
                 ui_options ui_opts;
                 emu_file file_ui = new emu_file(g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-                if (file_ui.open("ui.ini") != osd_file.error.NONE)
+                if (file_ui.open("ui.ini"))
                     throw new emu_fatalerror("Unable to create file ui.ini\n");
 
                 file_ui.close();

@@ -390,8 +390,8 @@ namespace mame
                 if (options().log() && !quiet)
                 {
                     m_logfile = new emu_file(g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-                    osd_file.error filerr = m_logfile.open("error.log");
-                    if (filerr != osd_file.error.NONE)
+                    std.error_condition filerr = m_logfile.open("error.log");
+                    if (filerr)
                         throw new emu_fatalerror("running_machine::run: unable to open error.log file");
 
                     //using namespace std::placeholders;
@@ -401,8 +401,8 @@ namespace mame
                 if (options().debug() && options().debuglog())
                 {
                     m_debuglogfile = new emu_file(g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-                    osd_file.error filerr = m_debuglogfile.open("debug.log");
-                    if (filerr != osd_file.error.NONE)
+                    std.error_condition filerr = m_debuglogfile.open("debug.log");
+                    if (filerr)
                         throw new emu_fatalerror("running_machine::run: unable to open debug.log file");
                 }
 
@@ -481,30 +481,35 @@ namespace mame
 #if false
             catch (emu_fatalerror fatal)
             {
-                osdcore_global.osd_printf_error(string.Format("FATALERROR: {0}\n", fatal.what()));
-                error = machine_manager.MAMERR.MAMERR_FATALERROR;
-                //if (fatal.exitcode() != 0)
-                //    error = fatal.exitcode();
+                osd_printf_error("Fatal error: %s\n", fatal.what());
+                error = EMU_ERR_FATALERROR;
+                if (fatal.exitcode() != 0)
+                    error = fatal.exitcode();
             }
             catch (emu_exception)
             {
-                osdcore_global.osd_printf_error("Caught unhandled emulator exception\n");
+                osd_printf_error("Caught unhandled emulator exception\n");
                 error = machine_manager.MAMERR.MAMERR_FATALERROR;
             }
             catch (binding_type_exception)// btex)
             {
-                osdcore_global.osd_printf_error(string.Format("Error performing a late bind of type {0} to {1}\n", "", ""));//btex.m_actual_type.name(), btex.m_target_type.name());
+                osd_printf_error("Error performing a late bind of function expecting type %s to instance of type %s\n", btex.target_type().name(), btex.actual_type().name());
                 error = machine_manager.MAMERR.MAMERR_FATALERROR;
             }
             catch (tag_add_exception &aex)
             {
-                osdcore_global.osd_printf_error(string.Format("Tag '{0}' already exists in tagged map\n", aex.tag()));
-                error = machine_manager.MAMERR.MAMERR_FATALERROR;
+                osd_printf_error("Tag '%s' already exists in tagged map\n", aex.tag());
+                error = EMU_ERR_FATALERROR;
             }
             catch (std::exception &ex)
             {
                 osd_printf_error("Caught unhandled %s exception: %s\n", typeid(ex).name(), ex.what());
-                error = MAMERR_FATALERROR;
+                error = EMU_ERR_FATALERROR;
+            }
+            catch (...)
+            {
+                osd_printf_error("Caught unhandled exception\n");
+                error = EMU_ERR_FATALERROR;
             }
 #endif
 #if false
@@ -1119,7 +1124,7 @@ namespace mame
             foreach (device_nvram_interface nvram in new nvram_interface_enumerator(root_device()))
             {
                 emu_file file = new emu_file(options().nvram_directory(), g.OPEN_FLAG_READ);
-                if (file.open(nvram_filename(nvram.device())) == osd_file.error.NONE)
+                if (!file.open(nvram_filename(nvram.device())))
                 {
                     nvram.nvram_load(file);
                     file.close();
@@ -1141,7 +1146,7 @@ namespace mame
                 if (nvram.nvram_can_save())
                 {
                     emu_file file = new emu_file(options().nvram_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-                    if (file.open(nvram_filename(nvram.device())) == osd_file.error.NONE)
+                    if (!file.open(nvram_filename(nvram.device())))
                     {
                         nvram.nvram_save(file);
                         file.close();

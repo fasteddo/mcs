@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -395,9 +396,9 @@ namespace mame
             m_daisy = new z80_daisy_chain_interface(mconfig, this);
 
 
-            m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_LITTLE, 8, 16, 0);
-            m_opcodes_config = new address_space_config("opcodes", endianness_t.ENDIANNESS_LITTLE, 8, 16, 0);
-            m_io_config = new address_space_config("io", endianness_t.ENDIANNESS_LITTLE, 8, 16, 0);
+            m_program_config = new address_space_config("program", g.ENDIANNESS_LITTLE, 8, 16, 0);
+            m_opcodes_config = new address_space_config("opcodes", g.ENDIANNESS_LITTLE, 8, 16, 0);
+            m_io_config = new address_space_config("io", g.ENDIANNESS_LITTLE, 8, 16, 0);
             m_irqack_cb = new devcb_write_line(this);
             m_refresh_cb = new devcb_write8(this);
             m_halt_cb = new devcb_write_line(this);

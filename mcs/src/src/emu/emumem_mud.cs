@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using s8 = System.SByte;
 using s32 = System.Int32;
@@ -50,11 +51,11 @@ namespace mame
         handler_entry m_handler;
         std.array<u8, u64_const_4> m_keymap = new std.array<u8, u64_const_4>();  //std::array<u8, 4> m_keymap;
         u8 m_access_width;
-        u8 m_access_endian;
+        endianness_t m_access_endian;
 
 
         //template<int Width, int AddrShift>
-        public memory_units_descriptor(u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth)  //memory_units_descriptor(u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth);
+        public memory_units_descriptor(u8 access_width, endianness_t access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth)  //memory_units_descriptor(u8 access_width, endianness_t access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth);
         {
             m_handler = handler;
             m_access_width = access_width;
@@ -74,7 +75,7 @@ namespace mame
 
             uX smask;
             uX emask;
-            if (access_endian == (u8)endianness_t.ENDIANNESS_BIG)
+            if (access_endian == g.ENDIANNESS_BIG)
             {
                 smask = g.make_bitmask_uX(Width, 8 * (u32)uX.sizeof_(Width) - ((addrstart - m_addrstart) << (3 - AddrShift)));  //smask =  make_bitmask<uX>(8 * sizeof(uX) - ((addrstart - m_addrstart) << (3 - AddrShift)));
                 emask = ~g.make_bitmask_uX(Width, 8 * (u32)uX.sizeof_(Width) - ((addrend - m_addrend + 1) << (3 - AddrShift)));  //emask = ~make_bitmask<uX>(8 * sizeof(uX) - ((addrend - m_addrend + 1) << (3 - AddrShift)));
@@ -132,12 +133,12 @@ namespace mame
         public std.vector<entry> get_entries_for_key(u8 key) { return m_entries_for_key.find(key); }
 
         public u8 get_subunit_width() { return m_access_width; }
-        public u8 get_subunit_endian() { return m_access_endian; }
+        public endianness_t get_subunit_endian() { return m_access_endian; }
 
         //void set_subunit_handler(handler_entry *handler) { m_handler = handler; }
         public handler_entry get_subunit_handler() { return m_handler; }
 
-        
+
         //template<int Width, int AddrShift>
         void generate(u8 ukey, uX gumask, uX umask, u32 cswidth, u32 bits_per_access, u8 base_shift, s8 shift, u32 active_count)
         {
@@ -158,7 +159,7 @@ namespace mame
                 if ((umask & numask) != 0)
                 {
                     uX amask = csmask << (int)(i & ~(cswidth - 1));
-                    entries.emplace_back(new entry(amask, numask, shift, (u8)i, (u8)(m_access_endian == (u8)endianness_t.ENDIANNESS_BIG ? active_count - 1 - offset : offset)));
+                    entries.emplace_back(new entry(amask, numask, shift, (u8)i, (u8)(m_access_endian == g.ENDIANNESS_BIG ? active_count - 1 - offset : offset)));
                 }
 
                 if ((gumask & numask) != 0)

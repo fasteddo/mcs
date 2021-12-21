@@ -58,7 +58,7 @@ namespace mcsForm
                 alternate path separators (specified by users and placed into the
                 options database).
         -----------------------------------------------------------------------------*/
-        public override error open(string path, UInt32 openflags, out osd_file file, out UInt64 filesize)
+        public override std.error_condition open(string path, UInt32 openflags, out osd_file file, out UInt64 filesize)
         {
             m_file = null;
             file = this;
@@ -89,7 +89,7 @@ namespace mcsForm
                         else
                         {
                             filesize = 0;
-                            return osd_file.error.NOT_FOUND;
+                            return std.errc.no_such_file_or_directory;
                         }
                     }
                 }
@@ -98,11 +98,11 @@ namespace mcsForm
             {
                 m_file = null;
                 filesize = 0;
-                return osd_file.error.NOT_FOUND;
+                return std.errc.no_such_file_or_directory;
             }
 
             filesize = (UInt64)m_file.Length;
-            return osd_file.error.NONE;
+            return new std.error_condition();
         }
 
 
@@ -122,7 +122,7 @@ namespace mcsForm
                 a file_error describing any error that occurred while creating the
                 PTY, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        protected override error openpty(out osd_file file, out string name) { throw new emu_unimplemented(); }
+        protected override std.error_condition openpty(out osd_file file, out string name) { throw new emu_unimplemented(); }
 
 
         /*-----------------------------------------------------------------------------
@@ -145,7 +145,7 @@ namespace mcsForm
                 a file_error describing any error that occurred while reading
                 from the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override error read(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)  //virtual error read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
+        public override std.error_condition read(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)  //virtual std::error_condition read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
         {
             m_file.Position = 0;
 
@@ -160,7 +160,7 @@ namespace mcsForm
             }
 
             actual = length;
-            return osd_file.error.NONE;
+            return new std.error_condition();
         }
 
 
@@ -184,7 +184,7 @@ namespace mcsForm
                 a file_error describing any error that occurred while writing to
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override error write(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual) { throw new emu_unimplemented(); }  //virtual error write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
+        public override std.error_condition write(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual) { throw new emu_unimplemented(); }  //virtual std::error_condition write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
 
 
         /*-----------------------------------------------------------------------------
@@ -199,7 +199,7 @@ namespace mcsForm
                 a file_error describing any error that occurred while deleting
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override error remove(string filename) { throw new emu_unimplemented(); }
+        public override std.error_condition remove(string filename) { throw new emu_unimplemented(); }
 
 
         public override Stream stream { get { return m_file; } }
@@ -295,7 +295,7 @@ namespace mcsForm
                 alternate path separators (specified by users and placed into the
                 options database).
         -----------------------------------------------------------------------------*/
-        public osd_file.error osd_open(string path, UInt32 openflags, out osd_file file, out UInt64 filesize)
+        public std.error_condition osd_open(string path, UInt32 openflags, out osd_file file, out UInt64 filesize)
         {
             throw new emu_fatalerror("Fix inheritence");
 
@@ -308,11 +308,11 @@ namespace mcsForm
             catch (Exception)
             {
                 filesize = 0;
-                return osd_file.error.NOT_FOUND;
+                return std.errc.no_such_file_or_directory;
             }
 
             filesize = (UInt64)fileWinForms.m_file.Length;
-            return osd_file.error.NONE;
+            return new std.error_condition();
         }
 
 
@@ -328,7 +328,7 @@ namespace mcsForm
                 a file_error describing any error that occurred while closing
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public osd_file.error osd_close(ref osd_file file)
+        public std.error_condition osd_close(ref osd_file file)
         {
             throw new emu_fatalerror("Fix inheritence");
 
@@ -338,7 +338,7 @@ namespace mcsForm
                 fileWinForms.m_file.Close();
 
             file = null;
-            return osd_file.error.NONE;
+            return new std.error_condition();
         }
 
 
@@ -364,7 +364,7 @@ namespace mcsForm
                 a file_error describing any error that occurred while reading
                 from the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public osd_file.error osd_read(osd_file file, Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)
+        public std.error_condition osd_read(osd_file file, Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)
         {
             throw new emu_fatalerror("Fix inheritence");
 
@@ -383,7 +383,7 @@ namespace mcsForm
             }
 
             actual = length;
-            return osd_file.error.NONE;
+            return new std.error_condition();
         }
 
 

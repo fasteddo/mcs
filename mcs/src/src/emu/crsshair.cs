@@ -214,7 +214,7 @@ namespace mame
             if (!m_name.empty())
             {
                 // look for user specified file
-                if (crossfile.open(m_name + ".png") == osd_file.error.NONE)
+                if (!crossfile.open(m_name + ".png"))
                 {
                     g.render_load_png(out m_bitmap, crossfile.core_file_get());
                     crossfile.close();
@@ -224,14 +224,14 @@ namespace mame
             {
                 // look for default cross?.png in crsshair/game dir
                 string filename = util.string_format("cross{0}.png", m_player + 1);
-                if (crossfile.open(m_machine.system().name + (g.PATH_SEPARATOR + filename)) == osd_file.error.NONE)
+                if (!crossfile.open(m_machine.system().name + (g.PATH_SEPARATOR + filename)))
                 {
                     g.render_load_png(out m_bitmap, crossfile.core_file_get());
                     crossfile.close();
                 }
 
                 // look for default cross?.png in crsshair dir
-                if (!m_bitmap.valid() && (crossfile.open(filename) == osd_file.error.NONE))
+                if (!m_bitmap.valid() && !crossfile.open(filename))
                 {
                     g.render_load_png(out m_bitmap, crossfile.core_file_get());
                     crossfile.close();

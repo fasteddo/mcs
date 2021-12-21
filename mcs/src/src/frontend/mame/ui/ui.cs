@@ -692,6 +692,20 @@ namespace mame
                     container.add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t((uint8_t)alpha,0x00,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
             }
 
+            // show red if overdriving sound
+            if (machine().options().speaker_report() != 0 && machine().phase() == machine_phase.RUNNING)
+            {
+                var compressor = machine().sound().compressor_scale();
+                if (compressor < 1.0)
+                {
+                    float width = 0.05f + std.min(0.15f, (1.0f - compressor) * 0.4f);
+                    container.add_rect(0.0f, 0.0f, 1.0f, width, new rgb_t(0xc0,0xff,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                    container.add_rect(0.0f, 1.0f - width, 1.0f, 1.0f, new rgb_t(0xc0,0xff,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                    container.add_rect(0.0f, width, width, 1.0f - width, new rgb_t(0xc0,0xff,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                    container.add_rect(1.0f - width, width, 1.0f, 1.0f - width, new rgb_t(0xc0,0xff,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                }
+            }
+
             // render any cheat stuff at the bottom
             if (machine().phase() >= machine_phase.RESET)
                 mame_machine_manager.instance().cheat().render_text(this, container);
@@ -929,7 +943,7 @@ namespace mame
         {
             // attempt to open the output file
             emu_file file = new emu_file(machine().options().ini_path(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-            if (file.open("ui.ini") == osd_file.error.NONE)
+            if (!file.open("ui.ini"))
             {
                 // generate the updated INI
                 file.puts(options().output_ini());
@@ -940,7 +954,6 @@ namespace mame
                 machine().popmessage("**Error saving ui.ini**");
             }
         }
-
 
 
         //void save_main_option();
@@ -1687,11 +1700,11 @@ namespace mame
             // parse the file
             // attempt to open the output file
             emu_file file = new emu_file(machine.options().ini_path(), g.OPEN_FLAG_READ);
-            if (file.open("ui.ini") == osd_file.error.NONE)
+            if (!file.open("ui.ini"))
             {
                 try
                 {
-                    options().parse_ini_file(file.core_file_get(), mame_options.OPTION_PRIORITY_MAME_INI, mame_options.OPTION_PRIORITY_MAME_INI < mame_options.OPTION_PRIORITY_DRIVER_INI, true);  //options().parse_ini_file((util::core_file &)file, OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true);
+                    options().parse_ini_file(file.core_file_get(), g.OPTION_PRIORITY_MAME_INI, g.OPTION_PRIORITY_MAME_INI < g.OPTION_PRIORITY_DRIVER_INI, true);  //options().parse_ini_file((util::core_file &)file, OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true);
                 }
                 catch (options_exception )
                 {

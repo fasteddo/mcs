@@ -414,8 +414,8 @@ namespace mame
 
             {
                 emu_file file = new emu_file(options().plugins_path(), g.OPEN_FLAG_READ);
-                osd_file.error filerr = file.open("boot.lua");
-                if (filerr == osd_file.error.NONE)
+                std.error_condition filerr = file.open("boot.lua");
+                if (!filerr)
                 {
                     string exppath;
                     osdcore_global.m_osdcore.osd_subst_env(out exppath, file.fullpath());

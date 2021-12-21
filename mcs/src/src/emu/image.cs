@@ -181,8 +181,8 @@ namespace mame
             }
 
             emu_file file = new emu_file(options.ini_path(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE);
-            osd_file.error filerr = file.open(filename);
-            if (filerr == osd_file.error.NONE)
+            std.error_condition filerr = file.open(filename);
+            if (!filerr)
             {
                 string inistring = options.output_ini();
                 file.puts(inistring);

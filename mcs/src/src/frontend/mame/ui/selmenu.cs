@@ -25,19 +25,19 @@ namespace mame.ui
         {
             bitmap = new bitmap_argb32();
 
-            if (file.open(base_ + ".png") == osd_file.error.NONE)
+            if (!file.open(base_ + ".png"))
             {
                 g.render_load_png(out bitmap, file.core_file_get());
                 file.close();
             }
 
-            if (!bitmap.valid() && (file.open(base_ + ".jpg") == osd_file.error.NONE))
+            if (!bitmap.valid() && !file.open(base_ + ".jpg"))
             {
                 g.render_load_jpeg(out bitmap, file.core_file_get());
                 file.close();
             }
 
-            if (!bitmap.valid() && (file.open(base_ + ".bmp") == osd_file.error.NONE))
+            if (!bitmap.valid() && !file.open(base_ + ".bmp"))
             {
                 g.render_load_msdib(out bitmap, file.core_file_get());
                 file.close();
@@ -49,7 +49,7 @@ namespace mame.ui
         {
             // try to load snapshot first from saved "0000.png" file
             string fullname = driver.name;
-            load_image(out bitmap, file, fullname + g.PATH_SEPARATOR + "0000");
+            load_image(out bitmap, file, util.path_concat(fullname, "0000"));
 
             // if fail, attempt to load from standard file
             if (!bitmap.valid())
@@ -70,7 +70,7 @@ namespace mame.ui
                 if (isclone)
                 {
                     fullname = driver.parent;
-                    load_image(out bitmap, file, fullname + g.PATH_SEPARATOR + "0000");
+                    load_image(out bitmap, file, util.path_concat(fullname, "0000"));
 
                     if (!bitmap.valid())
                         load_image(out bitmap, file, fullname);
@@ -1057,11 +1057,8 @@ namespace mame.ui
             {
                 // if we're doing a software list, append it to the configured path
                 if (listname != null)
-                {
-                    if (!current.empty() && !util.is_directory_separator(current.back()))
-                        current = current.append_(g.PATH_SEPARATOR);
-                    current = current.append_(listname);
-                }
+                    util.path_append(ref current, listname);
+
                 g.osd_printf_verbose("Checking for icons in directory {0}\n", current);
 
                 // open and walk the directory
@@ -2580,11 +2577,12 @@ namespace mame.ui
                     }
                     else
                     {
-                        selmenu_global.load_image(out tmp_bitmap, snapfile, software.listname + g.PATH_SEPARATOR + software.shortname);
+                        // First attempt from name list
+                        selmenu_global.load_image(out tmp_bitmap, snapfile, util.path_concat(software.listname, software.shortname));
 
                         // Second attempt from driver name + part name
                         if (!tmp_bitmap.valid())
-                            selmenu_global.load_image(out tmp_bitmap, snapfile, software.driver.name + software.part + g.PATH_SEPARATOR + software.shortname);
+                            selmenu_global.load_image(out tmp_bitmap, snapfile, util.path_concat(software.driver.name + software.part, software.shortname));
                     }
 
                     m_cache.set_snapx_software(software);
@@ -2864,11 +2862,11 @@ namespace mame.ui
                 if (swinfo.startempty == 0)
                 {
                     if (part != null)
-                        moptions.set_value(swinfo.instance, string.Format("{0}:{1}:{2}", swinfo.listname, swinfo.shortname, part), emu_options.OPTION_PRIORITY_CMDLINE);
+                        moptions.set_value(swinfo.instance, string.Format("{0}:{1}:{2}", swinfo.listname, swinfo.shortname, part), g.OPTION_PRIORITY_CMDLINE);
                     else
-                        moptions.set_value(emu_options.OPTION_SOFTWARENAME, string.Format("{0}:{1}", swinfo.listname, swinfo.shortname), emu_options.OPTION_PRIORITY_CMDLINE);
+                        moptions.set_value(g.OPTION_SOFTWARENAME, string.Format("{0}:{1}", swinfo.listname, swinfo.shortname), g.OPTION_PRIORITY_CMDLINE);
 
-                    moptions.set_value(emu_options.OPTION_SNAPNAME, string.Format("{0}{1}{2}", swinfo.listname, g.PATH_SEPARATOR, swinfo.shortname), emu_options.OPTION_PRIORITY_CMDLINE);
+                    moptions.set_value(g.OPTION_SNAPNAME, util.path_concat(swinfo.listname, swinfo.shortname), g.OPTION_PRIORITY_CMDLINE);
                 }
                 reselect_last.set_software(driver, swinfo);
             }

@@ -9,6 +9,7 @@ using char16_t = System.UInt16;
 using char32_t = System.UInt32;
 using int64_t = System.Int64;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using size_t = System.UInt64;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
@@ -25,12 +26,6 @@ namespace mame
         ***************************************************************************/
 
         //#define OPEN_FLAG_NO_BOM        0x0100      /* don't output BOM */
-
-        public const int FCOMPRESS_NONE   = 0;           /* no compression */
-        public const int FCOMPRESS_MIN    = 1;           /* minimal compression */
-        public const int FCOMPRESS_MEDIUM = 6;           /* standard compression */
-        public const int FCOMPRESS_MAX    = 9;           /* maximum compression */
-
 
         public const int FILE_BUFFER_SIZE        = 512;
 
@@ -65,21 +60,6 @@ namespace mame
         }
 
 
-        /*-------------------------------------------------
-            is_directory_separator - is a given character
-            a directory separator? The following logic
-            works for most platforms
-        -------------------------------------------------*/
-        public static bool is_directory_separator(char c)
-        {
-//#if defined(WIN32)
-            return ('\\' == c) || ('/' == c) || (':' == c);
-//#else
-//            return '/' == c;
-//#endif
-        }
-
-
         public abstract class core_file
         {
             //typedef std::unique_ptr<core_file> ptr;
@@ -88,7 +68,7 @@ namespace mame
             // ----- file open/close -----
 
             // open a file with the specified filename
-            public static osd_file.error open(string filename, uint32_t openflags, out core_file file)
+            public static std.error_condition open(string filename, uint32_t openflags, out core_file file)
             {
                 file = null;
 
@@ -96,18 +76,18 @@ namespace mame
                 {
                     // attempt to open the file
                     osd_file f;
-                    UInt64 length = 0;
-                    var filerr = osdfile_global.m_osdfile.open(filename, openflags, out f, out length);
-                    if (filerr != osd_file.error.NONE)
+                    uint64_t length = 0;
+                    var filerr = osdfile_global.m_osdfile.open(filename, openflags, out f, out length); // FIXME: allow osd_file to accept std::string_view
+                    if (filerr)
                         return filerr;
 
                     file = new core_osd_file(openflags, f, length);
-                    return osd_file.error.NONE;
+                    return new std.error_condition();
                 }
 #if false
                 catch (Exception)
                 {
-                    return osd_file.error.OUT_OF_MEMORY;
+                    return std::errc::not_enough_memory;
                 }
 #endif
             }
@@ -118,38 +98,35 @@ namespace mame
                 open_ram - open a RAM-based buffer for file-
                 like access and return an error code
             -------------------------------------------------*/
-            public static osd_file.error open_ram(MemoryU8 data, UInt32 length, uint32_t openflags, out core_file file)  //osd_file::error open_ram(void const *data, std::size_t length, std::uint32_t openflags, ptr &file)
+            public static std.error_condition open_ram(MemoryU8 data, size_t length, uint32_t openflags, out core_file file)  //std::error_condition open_ram(void const *data, std::size_t length, std::uint32_t openflags, ptr &file)
             {
                 file = null;
 
                 // can only do this for read access
                 if ((openflags & g.OPEN_FLAG_WRITE) != 0 || (openflags & g.OPEN_FLAG_CREATE) != 0)
-                    return osd_file.error.INVALID_ACCESS;
+                    return std.errc.invalid_argument;
 
                 //try
                 {
                     file = new core_in_memory_file(openflags, data, length, false);
-                    return osd_file.error.NONE;
+                    return new std.error_condition();
                 }
 #if false
                 catch (Exception)
                 {
-                    return osd_file.error.OUT_OF_MEMORY;
+                    return std::errc::not_enough_memory;
                 }
 #endif
             }
 
             // open a RAM-based "file" using the given data and length (read-only), copying the data
-            //static osd_file::error open_ram_copy(const void *data, std::size_t length, std::uint32_t openflags, ptr &file);
+            //static std::error_condition open_ram_copy(const void *data, std::size_t length, std::uint32_t openflags, ptr &file);
 
             // open a proxy "file" that forwards requests to another file object
-            //static osd_file::error open_proxy(core_file &file, ptr &proxy);
+            //static std::error_condition open_proxy(core_file &file, ptr &proxy);
 
             // close an open file
             //~core_file() { }
-
-            // enable/disable streaming file compression via zlib; level is 0 to disable compression, or up to 9 for max compression
-            public abstract osd_file.error compress(int level);
 
 
             // ----- file positioning -----
@@ -186,14 +163,12 @@ namespace mame
             public abstract MemoryU8 buffer();  //virtual const void *buffer() = 0;
 
             // open a file with the specified filename, read it into memory, and return a pointer
-            //static osd_file::error load(std::string const &filename, void **data, std::uint32_t &length);
-
             /*-------------------------------------------------
                 load - open a file with the specified
                 filename, read it into memory, and return a
                 pointer
             -------------------------------------------------*/
-            public static osd_file.error load(string filename, out MemoryU8 data)  //osd_file::error load(std::string const &filename, void **data, std::uint32_t &length)
+            public static std.error_condition load(string filename, out MemoryU8 data)  //std::error_condition load(std::string const &filename, void **data, std::uint32_t &length)
             {
                 data = new MemoryU8();
 
@@ -201,29 +176,33 @@ namespace mame
 
                 // attempt to open the file
                 var err = open(filename, g.OPEN_FLAG_READ, out file);
-                if (err != osd_file.error.NONE)
+                if (err)
                     return err;
 
                 // get the size
                 var size = file.size();
-                if ((UInt32)size != size)
-                    return osd_file.error.OUT_OF_MEMORY;
+                if ((uint32_t)size != size)
+                    return std.errc.file_too_large;
 
                 // allocate memory
                 //*data = malloc(size);
-                //length = std::uint32_t(size);
                 data.Resize((int)size);
+                //if (!*data)
+                //    return std::errc::not_enough_memory;
+                //length = std::uint32_t(size);
 
                 // read the data
                 if (file.read(new Pointer<uint8_t>(data), (UInt32)size) != size)
                 {
-                    data.Clear();
-                    return osd_file.error.FAILURE;
+                    data.Clear();  //free(*data);
+                    return std.errc.io_error; // TODO: revisit this error code
                 }
 
                 // close the file and return data
-                return osd_file.error.NONE;
+                return new std.error_condition();
             }
+
+            //static std::error_condition load(std::string_view filename, std::vector<uint8_t> &data);
 
 
             // ----- file write -----
@@ -240,72 +219,10 @@ namespace mame
             public int printf(string format, params object [] args) { return vprintf(string.Format(format, args)); }
 
             // file truncation
-            //virtual osd_file::error truncate(std::uint64_t offset) = 0;
+            //virtual std::error_condition truncate(std::uint64_t offset) = 0;
 
             // flush file buffers
-            public abstract osd_file.error flush();
-        }
-
-
-        public class zlib_data
-        {
-            //typedef std::unique_ptr<zlib_data> ptr;
-
-
-            //bool            m_compress, m_decompress;
-            //z_stream        m_stream;
-            //std::uint8_t    m_buffer[1024];
-            //std::uint64_t   m_realoffset;
-            //std::uint64_t   m_nextoffset;
-
-
-            zlib_data(uint64_t offset) { throw new emu_unimplemented(); }
-
-
-            public static int start_compression(int level, uint64_t offset, zlib_data data) { throw new emu_unimplemented(); }
-            public static int start_decompression(uint64_t offset, zlib_data data) { throw new emu_unimplemented(); }
-
-            ~zlib_data() { throw new emu_unimplemented(); }
-
-            public UInt32 buffer_size() { throw new emu_unimplemented(); }
-            public MemoryU8 buffer_data() { throw new emu_unimplemented(); }  //void *buffer_data() { return m_buffer; }
-
-
-            // general-purpose output buffer manipulation
-            public bool output_full() { throw new emu_unimplemented(); }
-            public UInt32 output_space() { throw new emu_unimplemented(); }
-
-            public void set_output(Pointer<uint8_t> data, uint32_t size) { throw new emu_unimplemented(); }  //void set_output(void *data, std::uint32_t size)
-
-
-            // working with output to the internal buffer
-            public bool has_output() { throw new emu_unimplemented(); }
-            public UInt32 output_size() { throw new emu_unimplemented(); }
-
-            public void reset_output() { throw new emu_unimplemented(); }
-
-
-            // general-purpose input buffer manipulation
-            public bool has_input() { throw new emu_unimplemented(); }
-            public UInt32 input_size() { throw new emu_unimplemented(); }
-
-            public void set_input(Pointer<uint8_t> data, uint32_t size) { throw new emu_unimplemented(); }  //void set_input(void const *data, std::uint32_t size)
-
-            // working with input from the internal buffer
-            public void reset_input(uint32_t size) { throw new emu_unimplemented(); }
-
-
-            public int compress() { throw new emu_unimplemented(); }
-            public int finalise() { throw new emu_unimplemented(); }
-            public int decompress() { throw new emu_unimplemented(); }
-
-
-            public uint64_t realoffset() { throw new emu_unimplemented(); }
-            public void add_realoffset(uint32_t increment) { throw new emu_unimplemented(); }
-
-
-            public bool is_nextoffset(uint64_t value) { throw new emu_unimplemented(); }
-            public void add_nextoffset(uint32_t increment) { throw new emu_unimplemented(); }
+            public abstract std.error_condition flush();
         }
 
 
@@ -392,7 +309,7 @@ namespace mame
                                 pos = 0;
                             }
                         }
-                        seek(pos, emu_file.SEEK_SET);
+                        seek(pos, g.SEEK_SET);
                     }
 
                     // fetch the next character
@@ -410,7 +327,7 @@ namespace mame
                                 //var charlen = osd_uchar_from_osdchar(&uchar, default_buffer, readlen / sizeof(default_buffer[0]));
                                 uchar = default_bufferBuf[0];
                                 var charlen = 1;
-                                seek((Int64)(charlen * 1) - readlen, emu_file.SEEK_CUR);  // sizeof(default_buffer[0])
+                                seek((Int64)(charlen * 1) - readlen, g.SEEK_CUR);  // sizeof(default_buffer[0])
                             }
                         }
                         break;
@@ -567,7 +484,7 @@ namespace mame
             uint64_t m_length;           // total file length
 
 
-            public core_in_memory_file(uint32_t openflags, MemoryU8 data, UInt32 length, bool copy)  //core_in_memory_file(std::uint32_t openflags, void const *data, std::size_t length, bool copy)
+            public core_in_memory_file(uint32_t openflags, MemoryU8 data, size_t length, bool copy)  //core_in_memory_file(std::uint32_t openflags, void const *data, std::size_t length, bool copy)
                 : base(openflags)
             {
                 m_data_allocated = false;
@@ -587,9 +504,6 @@ namespace mame
             //~core_in_memory_file() { purge(); }
 
 
-            public override osd_file.error compress(int level) { return osd_file.error.INVALID_ACCESS; }
-
-
             /*-------------------------------------------------
                 seek - seek within a file
             -------------------------------------------------*/
@@ -601,15 +515,15 @@ namespace mame
                 // switch off the relative location
                 switch (whence)
                 {
-                case emu_file.SEEK_SET:
+                case g.SEEK_SET:
                     m_offset = (UInt64)offset;
                     break;
 
-                case emu_file.SEEK_CUR:
+                case g.SEEK_CUR:
                     m_offset += (UInt64)offset;
                     break;
 
-                case emu_file.SEEK_END:
+                case g.SEEK_END:
                     m_offset = m_length + (UInt64)offset;
                     break;
                 }
@@ -644,10 +558,10 @@ namespace mame
             public override uint32_t write(Pointer<uint8_t> buffer, uint32_t length) { return 0; }  //virtual std::uint32_t write(void const *buffer, std::uint32_t length) override { return 0; }
 
 
-            //virtual osd_file::error truncate(std::uint64_t offset) override;
+            //virtual std::error_condition truncate(std::uint64_t offset) override;
 
 
-            public override osd_file.error flush() { clear_putback(); return osd_file.error.NONE; }
+            public override std.error_condition flush() { clear_putback(); return new std.error_condition(); }
 
 
             protected core_in_memory_file(uint32_t openflags, uint64_t length)
@@ -723,13 +637,12 @@ namespace mame
         }
 
 
-        class core_osd_file : core_in_memory_file, IDisposable
+        class core_osd_file : core_in_memory_file
         {
             const int FILE_BUFFER_SIZE = 512;
 
 
-            osd_file m_file;                     // OSD file handle
-            zlib_data m_zdata;                    // compression data
+            osd_file m_file;                     //osd_file::ptr   m_file;                     // OSD file handle
             uint64_t m_bufferbase;               // base offset of internal buffer
             uint32_t m_bufferbytes;              // bytes currently loaded into buffer
             MemoryU8 m_buffer = new MemoryU8(FILE_BUFFER_SIZE, true);  //std::uint8_t    m_buffer[FILE_BUFFER_SIZE]; // buffer data
@@ -739,105 +652,8 @@ namespace mame
                 : base(openmode, length)
             {
                 m_file = file;
-                m_zdata = null; //()
                 m_bufferbase = 0;
                 m_bufferbytes = 0;
-            }
-
-            ~core_osd_file()
-            {
-                g.assert(m_isDisposed);  // can remove
-            }
-
-            bool m_isDisposed = false;
-            public void Dispose()
-            {
-                // close files and free memory
-                if (m_zdata != null)
-                    compress(FCOMPRESS_NONE);
-
-                m_isDisposed = true;
-            }
-
-
-            /*-------------------------------------------------
-                compress - enable/disable streaming file
-                compression via zlib; level is 0 to disable
-                compression, or up to 9 for max compression
-            -------------------------------------------------*/
-            public override osd_file.error compress(int level)
-            {
-                osd_file.error result = osd_file.error.NONE;
-
-                // can only do this for read-only and write-only cases
-                if (read_access() && write_access())
-                    return osd_file.error.INVALID_ACCESS;
-
-                // if we have been compressing, flush and free the data
-                if (m_zdata != null && (level == FCOMPRESS_NONE))
-                {
-                    int zerr = zlib_global.Z_OK;
-
-                    // flush any remaining data if we are writing
-                    while (write_access() && (zerr != zlib_global.Z_STREAM_END))
-                    {
-                        // deflate some more
-                        zerr = m_zdata.finalise();
-                        if ((zerr != zlib_global.Z_STREAM_END) && (zerr != zlib_global.Z_OK))
-                        {
-                            result = osd_file.error.INVALID_DATA;
-                            break;
-                        }
-
-                        // write the data
-                        if (m_zdata.has_output())
-                        {
-                            UInt32 actualdata;
-                            var filerr = m_file.write(new Pointer<uint8_t>(m_zdata.buffer_data()), m_zdata.realoffset(), m_zdata.output_size(), out actualdata);
-                            if (filerr != osd_file.error.NONE)
-                                break;
-                            m_zdata.add_realoffset(actualdata);
-                            m_zdata.reset_output();
-                        }
-                    }
-
-                    // free memory
-                    m_zdata = null;
-                }
-
-                // if we are just starting to compress, allocate a new buffer
-                if (m_zdata == null && (level > FCOMPRESS_NONE))
-                {
-                    int zerr;
-
-                    // initialize the stream and compressor
-                    if (write_access())
-                        zerr = zlib_data.start_compression(level, offset(), m_zdata);
-                    else
-                        zerr = zlib_data.start_decompression(offset(), m_zdata);
-
-                    // on error, return an error
-                    if (zerr != zlib_global.Z_OK)
-                        return osd_file.error.OUT_OF_MEMORY;
-
-                    // flush buffers
-                    m_bufferbytes = 0;
-                }
-
-                return result;
-            }
-
-
-            /*-------------------------------------------------
-                seek - seek within a file
-            -------------------------------------------------*/
-            public override int seek(int64_t offset, int whence)
-            {
-                // error if compressing
-                if (m_zdata != null)
-                    return 1;
-                else
-                    return base.seek(offset, whence);
             }
 
 
@@ -852,11 +668,11 @@ namespace mame
                 // flush any buffered char
                 clear_putback();
 
-                UInt32 bytes_read = 0;
+                uint32_t bytes_read = 0;
 
                 // if we're within the buffer, consume that first
                 if (is_buffered())
-                    bytes_read += safe_buffer_copy(new Pointer<uint8_t>(m_buffer), (UInt32)(offset() - m_bufferbase), m_bufferbytes, buffer, bytes_read, length);
+                    bytes_read += safe_buffer_copy(new Pointer<uint8_t>(m_buffer), (uint32_t)(offset() - m_bufferbase), m_bufferbytes, buffer, bytes_read, length);
 
                 // if we've got a small amount left, read it into the buffer first
                 if (bytes_read < length)
@@ -866,7 +682,7 @@ namespace mame
                         // read as much as makes sense into the buffer
                         m_bufferbase = offset() + bytes_read;
                         m_bufferbytes = 0;
-                        osd_or_zlib_read(new Pointer<uint8_t>(m_buffer), m_bufferbase, (UInt32)m_buffer.Count, out m_bufferbytes);
+                        m_file.read(new Pointer<uint8_t>(m_buffer), m_bufferbase, (uint32_t)m_buffer.Count, out m_bufferbytes);  //m_file->read(m_buffer, m_bufferbase, sizeof(m_buffer), m_bufferbytes);
 
                         // do a bounded copy from the buffer to the destination
                         bytes_read += safe_buffer_copy(new Pointer<uint8_t>(m_buffer), 0, m_bufferbytes, buffer, bytes_read, length);
@@ -874,8 +690,8 @@ namespace mame
                     else
                     {
                         // read the remainder directly from the file
-                        UInt32 new_bytes_read = 0;
-                        osd_or_zlib_read(new Pointer<uint8_t>(buffer, (int)bytes_read), offset() + bytes_read, length - bytes_read, out new_bytes_read);  //osd_or_zlib_read(reinterpret_cast<std::uint8_t *>(buffer) + bytes_read, offset() + bytes_read, length - bytes_read, new_bytes_read);
+                        uint32_t new_bytes_read = 0;
+                        m_file.read(new Pointer<uint8_t>(buffer, (int)bytes_read), offset() + bytes_read, length - bytes_read, out new_bytes_read);  //m_file->read(reinterpret_cast<std::uint8_t *>(buffer) + bytes_read, offset() + bytes_read, length - bytes_read, new_bytes_read);
                         bytes_read += new_bytes_read;
                     }
                 }
@@ -898,20 +714,16 @@ namespace mame
                 {
                     // allocate some memory
                     MemoryU8 buf = allocate();  // void *buf = allocate();
-                    if (buf == null) return null;
+                    if (buf == null)
+                        return null;
 
                     // read the file
-                    UInt32 read_length = 0;
-                    var filerr = osd_or_zlib_read(new Pointer<uint8_t>(buf), 0, (UInt32)length(), out read_length);
-                    if ((filerr != osd_file.error.NONE) || (read_length != length()))
-                    {
+                    uint32_t read_length = 0;
+                    var filerr = m_file.read(new Pointer<uint8_t>(buf), 0, (uint32_t)length(), out read_length);
+                    if (filerr || (read_length != length()))
                         purge();
-                    }
                     else
-                    {
-                        // close the file because we don't need it anymore
-                        m_file = null;
-                    }
+                        m_file = null;  //m_file.reset(); // close the file because we don't need it anymore
                 }
 
                 return base.buffer();
@@ -934,8 +746,8 @@ namespace mame
                 m_bufferbytes = 0;
 
                 // do the write
-                UInt32 bytes_written = 0;
-                osd_or_zlib_write(buffer, offset(), length, out bytes_written);
+                uint32_t bytes_written = 0;
+                m_file.write(buffer, offset(), length, out bytes_written);
 
                 // return the number of bytes written
                 add_offset(bytes_written);
@@ -943,122 +755,11 @@ namespace mame
             }
 
 
-            //virtual osd_file::error truncate(std::uint64_t offset) override;
-            //virtual osd_file::error flush() override;
+            //virtual std::error_condition truncate(std::uint64_t offset) override;
+            //virtual std::error_condition flush() override;
 
 
             bool is_buffered() { return (offset() >= m_bufferbase) && (offset() < (m_bufferbase + m_bufferbytes)); }
-
-
-            /*-------------------------------------------------
-                osd_or_zlib_read - wrapper for osd_read that
-                handles zlib-compressed data
-            -------------------------------------------------*/
-            osd_file.error osd_or_zlib_read(Pointer<uint8_t> buffer, uint64_t offset, uint32_t length, out uint32_t actual)  //osd_file::error osd_or_zlib_read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual)
-            {
-                actual = 0;
-
-                // if no compression, just pass through
-                if (m_zdata == null)
-                    return m_file.read(buffer, offset, length, out actual);
-
-                // if the offset doesn't match the next offset, fail
-                if (!m_zdata.is_nextoffset(offset))
-                    return osd_file.error.INVALID_ACCESS;
-
-                // set up the destination
-                osd_file.error filerr = osd_file.error.NONE;
-                m_zdata.set_output(buffer, length);
-                while (!m_zdata.output_full())
-                {
-                    // if we didn't make progress, report an error or the end
-                    if (m_zdata.has_input())
-                    {
-                        var zerr = m_zdata.decompress();
-                        if (zlib_global.Z_OK != zerr)
-                        {
-                            if (zlib_global.Z_STREAM_END != zerr) filerr = osd_file.error.INVALID_DATA;
-                            break;
-                        }
-                    }
-
-                    // fetch more data if needed
-                    if (!m_zdata.has_input())
-                    {
-                        UInt32 actualdata = 0;
-                        filerr = m_file.read(new Pointer<uint8_t>(m_zdata.buffer_data()), m_zdata.realoffset(), m_zdata.buffer_size(), out actualdata);
-                        if (filerr != osd_file.error.NONE) break;
-                        m_zdata.add_realoffset(actualdata);
-                        m_zdata.reset_input(actualdata);
-                        if (!m_zdata.has_input()) break;
-                    }
-                }
-
-                // adjust everything
-                actual = length - m_zdata.output_space();
-                m_zdata.add_nextoffset(actual);
-                return filerr;
-            }
-
-
-            /*-------------------------------------------------
-                osd_or_zlib_write - wrapper for osd_write that
-                handles zlib-compressed data
-            -------------------------------------------------*/
-            /**
-             * @fn  osd_file::error osd_or_zlib_write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t actual)
-             *
-             * @brief   OSD or zlib write.
-             *
-             * @param   buffer          The buffer.
-             * @param   offset          The offset.
-             * @param   length          The length.
-             * @param [in,out]  actual  The actual.
-             *
-             * @return  A osd_file::error.
-             */
-            osd_file.error osd_or_zlib_write(Pointer<uint8_t> buffer, uint64_t offset, uint32_t length, out uint32_t actual)  //osd_file::error osd_or_zlib_write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual);
-            {
-                actual = 0;
-
-                // if no compression, just pass through
-                if (m_zdata == null)
-                    return m_file.write(buffer, offset, length, out actual);
-
-                // if the offset doesn't match the next offset, fail
-                if (!m_zdata.is_nextoffset(offset))
-                    return osd_file.error.INVALID_ACCESS;
-
-                // set up the source
-                m_zdata.set_input(buffer, length);
-                while (m_zdata.has_input())
-                {
-                    // if we didn't make progress, report an error or the end
-                    var zerr = m_zdata.compress();
-                    if (zerr != zlib_global.Z_OK)
-                    {
-                        actual = length - m_zdata.input_size();
-                        m_zdata.add_nextoffset(actual);
-                        return osd_file.error.INVALID_DATA;
-                    }
-
-                    // write more data if we are full up
-                    if (m_zdata.output_full())
-                    {
-                        UInt32 actualdata = 0;
-                        var filerr = m_file.write(new Pointer<uint8_t>(m_zdata.buffer_data()), m_zdata.realoffset(), m_zdata.output_size(), out actualdata);
-                        if (filerr != osd_file.error.NONE)
-                            return filerr;
-                        m_zdata.add_realoffset(actualdata);
-                        m_zdata.reset_output();
-                    }
-                }
-
-                // we wrote everything
-                actual = length;
-                m_zdata.add_nextoffset(actual);
-                return osd_file.error.NONE;
-            }
         }
     }
 }

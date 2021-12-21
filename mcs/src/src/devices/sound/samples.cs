@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
@@ -384,7 +385,7 @@ namespace mame
                     break;
 
                 // seek to the next block
-                file.seek(length, emu_file.SEEK_CUR);
+                file.seek(length, g.SEEK_CUR);
                 offset += length;
                 if (offset >= filesize)
                 {
@@ -438,7 +439,7 @@ namespace mame
             }
 
             // seek past any extra data
-            file.seek(length - 16, emu_file.SEEK_CUR);
+            file.seek(length - 16, g.SEEK_CUR);
             offset += length - 16;
 
             // seek until we find a data tag
@@ -452,7 +453,7 @@ namespace mame
                     break;
 
                 // seek to the next block
-                file.seek(length, emu_file.SEEK_CUR);
+                file.seek(length, g.SEEK_CUR);
                 offset += length;
                 if (offset >= filesize)
                 {
@@ -491,7 +492,7 @@ namespace mame
                 file.read(new Pointer<uint8_t>(sample_data_8bit), length);
 
                 // swap high/low on big-endian systems
-                if (g.ENDIANNESS_NATIVE != endianness_t.ENDIANNESS_LITTLE)
+                if (g.ENDIANNESS_NATIVE != g.ENDIANNESS_LITTLE)
                 {
                     for (UInt32 sindex = 0; sindex < length / 2; sindex++)
                         sample.data[sindex] = (Int16)g.little_endianize_int16(sample_data_8bit.GetUInt16((int)sindex));  //sample.data[sindex]);
@@ -508,7 +509,7 @@ namespace mame
         static bool read_flac_sample(emu_file file, sample_t sample)
         {
             // seek back to the start of the file
-            file.seek(0, emu_file.SEEK_SET);
+            file.seek(0, g.SEEK_SET);
 
             // create the FLAC decoder and fill in the sample data
             flac_decoder decoder = new flac_decoder(file.core_file_get());
@@ -558,24 +559,25 @@ namespace mame
             {
                 // attempt to open as FLAC first
                 emu_file file = new emu_file(machine().options().sample_path(), g.OPEN_FLAG_READ);
-                osd_file.error filerr = file.open(util.string_format("{0}" + g.PATH_SEPARATOR + "{1}.flac", basename, samplename));
-                if (filerr != osd_file.error.NONE && altbasename != null)
+                std.error_condition filerr = file.open(util.string_format("{0}" + g.PATH_SEPARATOR + "{1}.flac", basename, samplename));
+                if (filerr && !string.IsNullOrEmpty(altbasename))
                     filerr = file.open(util.string_format("{0}" + g.PATH_SEPARATOR + "{1}.flac", altbasename, samplename));
 
                 // if not, try as WAV
-                if (filerr != osd_file.error.NONE)
+                if (filerr)
                     filerr = file.open(util.string_format("{0}" + g.PATH_SEPARATOR + "{1}.wav", basename, samplename));
-                if (filerr != osd_file.error.NONE && altbasename != null)
+
+                if (filerr && !string.IsNullOrEmpty(altbasename))
                     filerr = file.open(util.string_format("{0}" + g.PATH_SEPARATOR + "{1}.wav", altbasename, samplename));
 
                 // if opened, read it
-                if (filerr == osd_file.error.NONE)
+                if (!filerr)
                 {
                     read_sample(file, m_sample[index]);
                 }
-                else if (filerr == osd_file.error.NOT_FOUND)
+                else
                 {
-                    logerror("{0}: Sample '{1}' NOT FOUND\n", tag(), samplename);
+                    logerror("Error opening sample '{0}' ({1}:{2} {3})\n", samplename, filerr.category().name(), filerr.value(), filerr.message());
                     ok = false;
                 }
 

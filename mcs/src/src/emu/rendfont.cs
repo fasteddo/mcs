@@ -150,8 +150,8 @@ namespace mame
 
             // load the compiled in data instead
             emu_file ramfile = new emu_file(g.OPEN_FLAG_READ);
-            osd_file.error filerr = ramfile.open_ram(new MemoryU8(uismall_global.font_uismall), (UInt32)uismall_global.font_uismall.Length);//, sizeof(font_uismall));
-            if (osd_file.error.NONE == filerr)
+            std.error_condition filerr = ramfile.open_ram(new MemoryU8(uismall_global.font_uismall), (UInt32)uismall_global.font_uismall.Length);//, sizeof(font_uismall));
+            if (!filerr)
                 load_cached(ramfile, 0, 0);
 
             ramfile.close();
@@ -518,14 +518,14 @@ namespace mame
         //-------------------------------------------------
         bool load_cached_bdf(string filename)
         {
-            osd_file.error filerr;
+            std.error_condition filerr;
             u32 chunk;
             u64 bytes;
 
             // first try to open the BDF itself
             emu_file file = new emu_file(manager().machine().options().font_path(), g.OPEN_FLAG_READ);
             filerr = file.open(filename);
-            if (filerr != osd_file.error.NONE)
+            if (filerr)
                 return false;
 
             file.close();
@@ -672,7 +672,7 @@ namespace mame
         {
             // FIXME: this is copy/pasta from the BDC loading, and it shouldn't be injected into every font
             emu_file file = new emu_file(g.OPEN_FLAG_READ);
-            if (file.open_ram(new MemoryU8(uicmd14_global.font_uicmd14), (UInt32)uicmd14_global.font_uicmd14.Length) == osd_file.error.NONE)
+            if (!file.open_ram(new MemoryU8(uicmd14_global.font_uicmd14), (u32)uicmd14_global.font_uicmd14.Length))
             {
                 // get the file size, read the header, and check that it looks good
                 u64 filesize = file.size();

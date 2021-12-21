@@ -300,7 +300,7 @@ namespace mame.ui
                 MemoryU8 temp = new MemoryU8();
                 foreach (var s in fake_ini) temp.Add(Convert.ToByte(s));
 
-                if (file.open_ram(temp, (u32)fake_ini.Length) == osd_file.error.NONE)  // fake_ini.c_str()
+                if (!file.open_ram(temp, (u32)fake_ini.size()))  //if (!file.open_ram(fake_ini.c_str(), fake_ini.size()))
                 {
                     m_persistent_data.filter_data().load_ini(file);
                     file.close();
@@ -775,7 +775,7 @@ namespace mame.ui
                             if (machine_filter.type.CUSTOM == new_type)
                             {
                                 emu_file file = new emu_file(ui().options().ui_path(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-                                if (file.open(util.string_format("custom_{0}_filter.ini", emulator_info.get_configname())) == osd_file.error.NONE)
+                                if (!file.open(util.string_format("custom_{0}_filter.ini", emulator_info.get_configname())))
                                 {
                                     filter.save_ini(file, 0);
                                     file.close();
@@ -953,7 +953,7 @@ namespace mame.ui
         {
             // try to load available drivers from file
             emu_file file = new emu_file(ui().options().ui_path(), g.OPEN_FLAG_READ);
-            if (file.open(emulator_info.get_configname() + "_avail.ini") != osd_file.error.NONE)
+            if (file.open(emulator_info.get_configname() + "_avail.ini"))
                 return false;
 
             string rbuf;  //char rbuf[MAX_CHAR_INFO];
@@ -1005,7 +1005,7 @@ namespace mame.ui
         void load_custom_filters()
         {
             emu_file file = new emu_file(ui().options().ui_path(), g.OPEN_FLAG_READ);
-            if (file.open(util.string_format("custom_{0}_filter.ini", emulator_info.get_configname())) == osd_file.error.NONE)
+            if (!file.open(util.string_format("custom_{0}_filter.ini", emulator_info.get_configname())))
             {
                 machine_filter flt = machine_filter.create(file, m_persistent_data.filter_data());
                 if (flt != null)

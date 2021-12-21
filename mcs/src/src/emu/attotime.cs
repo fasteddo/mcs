@@ -67,6 +67,7 @@ namespace mame
 
         // queries
         public bool is_zero() { return m_seconds == 0 && m_attoseconds == 0; }
+        /** Test if value is above @ref ATTOTIME_MAX_SECONDS (considered an overflow) */
         public bool is_never() { return m_seconds >= ATTOTIME_MAX_SECONDS; }
 
 
@@ -107,6 +108,7 @@ namespace mame
         u64 as_ticks(XTAL xtal) { return as_ticks(xtal.value()); }
 
 
+        /** Convert to string using at @p precision */
         //-------------------------------------------------
         //  as_string - return a temporary printable
         //  string describing an attotime
@@ -161,14 +163,16 @@ namespace mame
         //std::string to_string() const;
 
 
+        /** @return the attoseconds portion. */
         public attoseconds_t attoseconds() { return m_attoseconds; }
+        /** @return the seconds portion. */
         public seconds_t seconds() { return m_seconds; }
 
 
         //static attotime from_double(double _time);
 
 
-        /** Create an attotime from a tick count @ticks at the given frequency @frequency  */
+        /** Create an attotime from a tick count @p ticks at the given frequency @p frequency  */
         public static attotime from_ticks(u64 ticks, u32 frequency)
         {
             if (frequency > 0)
@@ -191,11 +195,16 @@ namespace mame
         public static attotime from_ticks(u64 ticks, XTAL xtal) { return from_ticks(ticks, xtal.value()); }
 
 
-        public static attotime from_seconds(int seconds) { return new attotime(seconds, 0); }
+        /** Create an attotime from an integer count of seconds @p seconds */
+        public static attotime from_seconds(s32 seconds) { return new attotime(seconds, 0); }
+        /** Create an attotime from an integer count of milliseconds @p msec */
         public static attotime from_msec(s64 msec) { return new attotime((int)(msec / 1000), (msec % 1000) * (ATTOSECONDS_PER_SECOND / 1000)); }
+        /** Create an attotime from an integer count of microseconds @p usec */
         public static attotime from_usec(s64 usec) { return new attotime((int)(usec / 1000000), (usec % 1000000) * (ATTOSECONDS_PER_SECOND / 1000000)); }
+        /** Create an attotime from an integer count of nanoseconds @p nsec */
         public static attotime from_nsec(s64 nsec) { return new attotime((int)(nsec / 1000000000), (nsec % 1000000000) * (ATTOSECONDS_PER_SECOND / 1000000000)); }
 
+        /** Create an attotime from at the given frequency @p frequency */
         public static attotime from_hz(u32 frequency) { return (frequency > 1) ? new attotime(0, HZ_TO_ATTOSECONDS(frequency)) : (frequency == 1) ? new attotime(1, 0) : never; }
         public static attotime from_hz(int frequency) { return (frequency > 0) ? from_hz((u32)frequency) : never; }
         public static attotime from_hz(XTAL xtal) { return (xtal.dvalue() > 1.0) ? new attotime(0, HZ_TO_ATTOSECONDS(xtal)) : from_hz(xtal.dvalue()); }

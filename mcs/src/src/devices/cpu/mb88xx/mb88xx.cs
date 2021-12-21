@@ -8,6 +8,7 @@ using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -222,8 +223,8 @@ namespace mame
             m_class_interfaces.Add(new device_disasm_interface_mb88(mconfig, this));
 
 
-            m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_BIG, 8, (byte)program_width, 0, (program_width == 9) ? program_9bit : (program_width == 10) ? program_10bit : (address_map_constructor)program_11bit);
-            m_data_config = new address_space_config("data", endianness_t.ENDIANNESS_BIG, 8, (byte)data_width, 0, (data_width == 4) ? data_4bit : (data_width == 5) ? data_5bit : (data_width == 6) ? data_6bit : (address_map_constructor)data_7bit);
+            m_program_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, (byte)program_width, 0, (program_width == 9) ? program_9bit : (program_width == 10) ? program_10bit : (address_map_constructor)program_11bit);
+            m_data_config = new address_space_config("data", g.ENDIANNESS_BIG, 8, (byte)data_width, 0, (data_width == 4) ? data_4bit : (data_width == 5) ? data_5bit : (data_width == 6) ? data_6bit : (address_map_constructor)data_7bit);
             m_PLA = null;
             m_read_k = new devcb_read8(this);
             m_write_o = new devcb_write8(this);

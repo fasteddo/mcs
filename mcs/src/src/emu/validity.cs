@@ -5,6 +5,14 @@ using System;
 using System.Collections.Generic;
 
 using game_driver_map = mame.std.unordered_map<string, mame.game_driver>;
+using s8 = System.SByte;
+using s16 = System.Int16;
+using s32 = System.Int32;
+using s64 = System.Int64;
+using u8 = System.Byte;
+using u16 = System.UInt16;
+using u32 = System.UInt32;
+using u64 = System.UInt64;
 using validity_checker_int_map = mame.std.unordered_map<string, object>;  //using int_map = std::unordered_map<std::string, uintptr_t>;
 using validity_checker_string_set = mame.std.unordered_set<string>;  //using string_set = std::unordered_set<std::string>;
 
@@ -133,9 +141,12 @@ namespace mame
         {
             // start by checking core stuff
             validate_begin();
-            validate_core();
+            validate_integer_semantics();
             validate_inlines();
             validate_rgb();
+            validate_delegates_mfp();
+            validate_delegates_latebind();
+            validate_delegates_functoid();
 
             // if we had warnings or errors, output
             if (m_errors > 0 || m_warnings > 0 || !string.IsNullOrEmpty(m_verbose_text))
@@ -245,16 +256,6 @@ namespace mame
 
 
         // internal helpers
-
-        //-------------------------------------------------
-        //  ioport_string_from_index - return an indexed
-        //  string from the I/O port system
-        //-------------------------------------------------
-        string ioport_string_from_index(UInt32 index)
-        {
-            return ioport_configurer.string_from_token(index.ToString());
-        }
-
 
         //int get_defstr_index(const char *string, bool suppress_error = false);
 
@@ -367,9 +368,11 @@ namespace mame
         // internal sub-checks
 
         //-------------------------------------------------
-        //  validate_core - validate core internal systems
+        //  validate_integer_semantics - validate that
+        //  integers behave as expected, particularly
+        //  with regards to overflow and shifting
         //-------------------------------------------------
-        void validate_core()
+        void validate_integer_semantics()
         {
             //throw new emu_unimplemented();
 #if false
@@ -377,31 +380,31 @@ namespace mame
             if (~0 != -1) osd_printf_error("Machine must be two's complement\n");
 #endif
 
-            byte a = 0xff;
-            byte b = (byte)(a + 1);
-            if (b > a) g.osd_printf_error("UINT8 must be 8 bits\n");
+            u8 a = 0xff;
+            u8 b = (u8)(a + 1);
+            if (b > a) g.osd_printf_error("u8 must be 8 bits\n");
 
             // check size of core integer types
-            if (sizeof(sbyte)  != 1) g.osd_printf_error("INT8 must be 8 bits\n");
-            if (sizeof(byte)   != 1) g.osd_printf_error("UINT8 must be 8 bits\n");
-            if (sizeof(Int16)  != 2) g.osd_printf_error("INT16 must be 16 bits\n");
-            if (sizeof(UInt16) != 2) g.osd_printf_error("UINT16 must be 16 bits\n");
-            if (sizeof(int)    != 4) g.osd_printf_error("INT32 must be 32 bits\n");
-            if (sizeof(UInt32) != 4) g.osd_printf_error("UINT32 must be 32 bits\n");
-            if (sizeof(Int64)  != 8) g.osd_printf_error("INT64 must be 64 bits\n");
-            if (sizeof(UInt64) != 8) g.osd_printf_error("UINT64 must be 64 bits\n");
+            if (sizeof(s8)  != 1) g.osd_printf_error("s8 must be 8 bits\n");
+            if (sizeof(u8)  != 1) g.osd_printf_error("u8 must be 8 bits\n");
+            if (sizeof(s16) != 2) g.osd_printf_error("s16 must be 16 bits\n");
+            if (sizeof(u16) != 2) g.osd_printf_error("u16 must be 16 bits\n");
+            if (sizeof(s32) != 4) g.osd_printf_error("s32 must be 32 bits\n");
+            if (sizeof(u32) != 4) g.osd_printf_error("u32 must be 32 bits\n");
+            if (sizeof(s64) != 8) g.osd_printf_error("s64 must be 64 bits\n");
+            if (sizeof(u64) != 8) g.osd_printf_error("u64 must be 64 bits\n");
 
             //throw new emu_unimplemented();
 #if false
             // check signed right shift
-            INT8  a8 = -3;
-            INT16 a16 = -3;
-            INT32 a32 = -3;
-            INT64 a64 = -3;
-            if (a8  >> 1 != -2) osd_printf_error("INT8 right shift must be arithmetic\n");
-            if (a16 >> 1 != -2) osd_printf_error("INT16 right shift must be arithmetic\n");
-            if (a32 >> 1 != -2) osd_printf_error("INT32 right shift must be arithmetic\n");
-            if (a64 >> 1 != -2) osd_printf_error("INT64 right shift must be arithmetic\n");
+            s8  a8 = -3;
+            s16 a16 = -3;
+            s32 a32 = -3;
+            s64 a64 = -3;
+            if (a8  >> 1 != -2) osd_printf_error("s8 right shift must be arithmetic\n");
+            if (a16 >> 1 != -2) osd_printf_error("s16 right shift must be arithmetic\n");
+            if (a32 >> 1 != -2) osd_printf_error("s32 right shift must be arithmetic\n");
+            if (a64 >> 1 != -2) osd_printf_error("s64 right shift must be arithmetic\n");
 #endif
 
             //throw new emu_unimplemented();
@@ -439,9 +442,43 @@ namespace mame
         }
 
 
+        //-------------------------------------------------
+        //  validate_rgb - validate optimised RGB utility
+        //  class
+        //-------------------------------------------------
         void validate_rgb()
         {
             //throw new emu_unimplemented();
+        }
+
+
+        //-------------------------------------------------
+        //  validate_delegates_mfp - test delegate member
+        //  function functionality
+        //-------------------------------------------------
+
+        void validate_delegates_mfp()
+        {
+            //throw new emu_unimplemented();
+        }
+
+
+        //-------------------------------------------------
+        //  validate_delegates_latebind - test binding a
+        //  delegate to an object after the function is
+        //  set
+        //-------------------------------------------------
+        void validate_delegates_latebind()
+        {
+        }
+
+
+        //-------------------------------------------------
+        //  validate_delegates_functoid - test delegate
+        //  functoid functionality
+        //-------------------------------------------------
+        void validate_delegates_functoid()
+        {
         }
 
 
@@ -540,10 +577,13 @@ namespace mame
         }
 
 
-        // random number generation
-        //s32 random_i32();
-        //u32 random_u32();
-        //s64 random_i64();
-        //u64 random_u64();
+        //-------------------------------------------------
+        //  ioport_string_from_index - return an indexed
+        //  string from the I/O port system
+        //-------------------------------------------------
+        string ioport_string_from_index(u32 index)
+        {
+            return ioport_configurer.string_from_token(index.ToString());
+        }
     }
 }

@@ -224,6 +224,7 @@ namespace mame
         const ioport_type UI_CLEAR = ioport_type.IPT_UI_CLEAR;
         const ioport_type UI_ZOOM_IN = ioport_type.IPT_UI_ZOOM_IN;
         const ioport_type UI_ZOOM_OUT = ioport_type.IPT_UI_ZOOM_OUT;
+        const ioport_type UI_ZOOM_DEFAULT = ioport_type.IPT_UI_ZOOM_DEFAULT;
         const ioport_type UI_PREV_GROUP = ioport_type.IPT_UI_PREV_GROUP;
         const ioport_type UI_NEXT_GROUP = ioport_type.IPT_UI_NEXT_GROUP;
         const ioport_type UI_ROTATE = ioport_type.IPT_UI_ROTATE;
@@ -1337,6 +1338,7 @@ namespace mame
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_CLEAR,            "UI Clear",               new input_seq(KEYCODE_DEL) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_ZOOM_IN,          "UI Zoom In",             new input_seq(KEYCODE_EQUALS) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_ZOOM_OUT,         "UI Zoom Out",            new input_seq(KEYCODE_MINUS) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_ZOOM_DEFAULT,     "UI Default Zoom",        new input_seq(KEYCODE_0) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_PREV_GROUP,       "UI Previous Group",      new input_seq(KEYCODE_OPENBRACE) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_NEXT_GROUP,       "UI Next Group",          new input_seq(KEYCODE_CLOSEBRACE) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_ROTATE,           "UI Rotate",              new input_seq(KEYCODE_R) );

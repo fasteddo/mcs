@@ -610,7 +610,7 @@ namespace mame
             m_soundcpu.op[0].t1_in_cb().set(m_dev_6h, () => { return m_dev_6h.op[0].bit4_q_r(); }).reg();  //FUNC(latch8_device::bit4_q_r));
 
             g.SPEAKER(config, "mono").front_center();
-            g.DISCRETE(config, "discrete", dkong2b_discrete).disound.add_route(g.ALL_OUTPUTS, "mono", 1.0);
+            g.DISCRETE(config, "discrete", dkong2b_discrete).disound.add_route(g.ALL_OUTPUTS, "mono", 0.9);
         }
     }
 }

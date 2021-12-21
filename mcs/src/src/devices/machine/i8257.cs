@@ -388,7 +388,7 @@ namespace mame
                     if (m_ready != 0)
                     {
                         m_state = STATE_S4;
-                        if (m_channel[m_current_channel].m_count == 0)
+                        if ((m_channel[m_current_channel].m_count == 0) && (MODE_TRANSFER_MASK != MODE_TRANSFER_READ))
                             set_tc(1);
                     }
                     else
@@ -401,7 +401,7 @@ namespace mame
                     if (m_ready != 0)
                     {
                         m_state = STATE_S4;
-                        if (m_channel[m_current_channel].m_count == 0)
+                        if ((m_channel[m_current_channel].m_count == 0) && (MODE_TRANSFER_MASK != MODE_TRANSFER_READ))
                             set_tc(1);
                     }
                     break;
@@ -411,6 +411,9 @@ namespace mame
                     {
                         dma_write();
                     }
+
+                    if ((m_channel[m_current_channel].m_count == 0) && (MODE_TRANSFER_MASK == MODE_TRANSFER_READ))
+                        set_tc(1);
 
                     advance();
 

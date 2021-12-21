@@ -353,7 +353,7 @@ namespace mame
           27_562_000, /* 27.562_MHz_XTAL        Visual 220 */
           27_720_000, /* 27.72_MHz_XTAL         AT&T 610 132-column display clock */
           27_956_000, /* 27.956_MHz_XTAL        CIT-101e 132-column display clock */
-          28_000_000, /* 28_MHz_XTAL            Sega System H1 SH2 clock */
+          28_000_000, /* 28_MHz_XTAL            Sega System H1 SH2 clock, Kyukyoku Tiger / Twin Cobra */
           28_000_000, /* 28_MHz_XTAL            - */
           28_224_000, /* 28.224_MHz_XTAL        Roland JD-800 */
           28_322_000, /* 28.322_MHz_XTAL        Saitek RISC 2500, Mephisto Montreux */

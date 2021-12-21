@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u8  = System.Byte;
@@ -816,7 +817,7 @@ namespace mame
                 else
                 {
                     var hand_r = new handler_entry_read_delegate<int_AccessWidth, int_nAccessWidth>(this, handler_r);
-                    memory_units_descriptor<int_Width, int_AddrShift> descriptor = new memory_units_descriptor<int_Width, int_AddrShift>((u8)AccessWidth, (u8)Endian, hand_r, nstart, nend, nmask, new uX(Width, nunitmask), ncswidth);
+                    memory_units_descriptor<int_Width, int_AddrShift> descriptor = new memory_units_descriptor<int_Width, int_AddrShift>((u8)AccessWidth, Endian, hand_r, nstart, nend, nmask, new uX(Width, nunitmask), ncswidth);
                     hand_r.set_address_info(descriptor.get_handler_start(), descriptor.get_handler_mask());
                     m_root_read.populate_mismatched(nstart, nend, nmirror, descriptor);
                     hand_r.unref();
@@ -863,7 +864,7 @@ namespace mame
                 else
                 {
                     var hand_w = new handler_entry_write_delegate<int_AccessWidth, int_nAccessWidth>(this, handler_w);
-                    memory_units_descriptor<int_Width, int_AddrShift> descriptor = new memory_units_descriptor<int_Width, int_AddrShift>((u8)AccessWidth, (u8)Endian, hand_w, nstart, nend, nmask, new uX(Width, nunitmask), ncswidth);
+                    memory_units_descriptor<int_Width, int_AddrShift> descriptor = new memory_units_descriptor<int_Width, int_AddrShift>((u8)AccessWidth, Endian, hand_w, nstart, nend, nmask, new uX(Width, nunitmask), ncswidth);
                     hand_w.set_address_info(descriptor.get_handler_start(), descriptor.get_handler_mask());
                     m_root_write.populate_mismatched(nstart, nend, nmirror, descriptor);
                     hand_w.unref();

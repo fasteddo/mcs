@@ -413,19 +413,6 @@ namespace mame
         }
 
 
-        /// \brief Extract and right-align a single bit field
-        ///
-        /// This overload is used to terminate a recursive template
-        /// implementation.  It is functionally equivalent to the BIT
-        /// function for extracting a single bit.
-        ///
-        /// \param [in] val The integer to extract the bit from.
-        /// \param [in] b The bit to extract, where zero is the least
-        ///   significant bit of the input.
-        /// \return The specified bit of the input extracted to the least
-        ///   significant position.
-        //template <typename T, typename U> constexpr T bitswap(T val, U b) noexcept { return BIT(val, b) << 0U; }
-
         /// \brief Extract bits in arbitrary order
         ///
         /// Extracts bits from an integer.  Specify the bits in the order they
@@ -443,7 +430,10 @@ namespace mame
         /// \return The extracted bits packed into a right-aligned field.
         //template <typename T, typename U, typename... V> constexpr T bitswap(T val, U b, V... c) noexcept
         //{
-        //    return (BIT(val, b) << sizeof...(c)) | bitswap(val, c...);
+        //    if constexpr (sizeof...(c) > 0U)
+        //        return (BIT(val, b) << sizeof...(c)) | bitswap(val, c...);
+        //    else
+        //        return BIT(val, b);
         //}
 
         /// \brief Extract bits in arbitrary order with explicit count

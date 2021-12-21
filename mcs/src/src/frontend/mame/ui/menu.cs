@@ -128,13 +128,13 @@ namespace mame.ui
                 {
                     m_bgrnd_bitmap = new bitmap_argb32(0, 0);
                     emu_file backgroundfile = new emu_file(".", g.OPEN_FLAG_READ);
-                    if (backgroundfile.open("background.jpg") == osd_file.error.NONE)
+                    if (!backgroundfile.open("background.jpg"))
                     {
                         g.render_load_jpeg(out m_bgrnd_bitmap, backgroundfile.core_file_get());
                         backgroundfile.close();
                     }
 
-                    if (!m_bgrnd_bitmap.valid() && (backgroundfile.open("background.png") == osd_file.error.NONE))
+                    if (!m_bgrnd_bitmap.valid() && !backgroundfile.open("background.png"))
                     {
                         g.render_load_png(out m_bgrnd_bitmap, backgroundfile.core_file_get());
                         backgroundfile.close();

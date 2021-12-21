@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using int16_t = System.Int16;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -356,8 +357,8 @@ namespace mame
         protected m6800_cpu_device(machine_config mconfig, device_type type, string tag, device_t owner, uint32_t clock, op_func [] insn, uint8_t [] cycles, address_map_constructor internal_) 
             : base(mconfig, type, tag, owner, clock)
         {
-            m_program_config = new address_space_config("program", endianness_t.ENDIANNESS_BIG, 8, 16, 0, internal_);
-            m_decrypted_opcodes_config = new address_space_config("program", endianness_t.ENDIANNESS_BIG, 8, 16, 0);
+            m_program_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, 16, 0, internal_);
+            m_decrypted_opcodes_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, 16, 0);
             m_insn = insn;
             m_cycles = cycles;
         }

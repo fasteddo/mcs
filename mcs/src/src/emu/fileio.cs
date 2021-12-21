@@ -73,14 +73,8 @@ namespace mame
                 ++m_currentIdx;
 
             // append the name if we have one
-            if (name != null)
-            {
-                // compute the full pathname
-                if (!buffer.empty() && !util.is_directory_separator(buffer.back()))
-                    buffer += g.PATH_SEPARATOR;
-
-                buffer += name;
-            }
+            if (!string.IsNullOrEmpty(name))
+                util.path_append(ref buffer, name);
 
             // bump the index and return true
             m_is_first = false;
@@ -170,12 +164,6 @@ namespace mame
 
 
         //using searchpath_vector = std::vector<std::pair<path_iterator, std::string> >;
-
-
-        // from stdio.h
-        public const int SEEK_CUR = 1;
-        public const int SEEK_END = 2;
-        public const int SEEK_SET = 0;
 
 
         const u32 OPEN_FLAG_HAS_CRC  = 0x10000;
@@ -340,7 +328,7 @@ namespace mame
         //  open - open a file by searching paths
         //-------------------------------------------------
 
-        public osd_file.error open(string name)
+        public std.error_condition open(string name)
         {
             // remember the filename and CRC info
             m_filename = name;
@@ -352,7 +340,7 @@ namespace mame
             return open_next();
         }
 
-        public osd_file.error open(string name, u32 crc)
+        public std.error_condition open(string name, u32 crc)
         {
             // remember the filename and CRC info
             m_filename = name;
@@ -369,7 +357,7 @@ namespace mame
         //  open_next - open the next file that matches
         //  the filename by iterating over paths
         //-------------------------------------------------
-        public osd_file.error open_next()
+        public std.error_condition open_next()
         {
             // if we're open from a previous attempt, close up now
             if (m_file != null)
@@ -377,9 +365,8 @@ namespace mame
 
             // loop over paths
             LOG(null, "emu_file: open next '{0}'\n", m_filename);
-            osd_file.error filerr = osd_file.error.NOT_FOUND;
-
-            while (osd_file.error.NONE != filerr)
+            std.error_condition filerr = std.errc.no_such_file_or_directory;
+            while (filerr)
             {
                 if (m_first)
                 {
@@ -445,7 +432,7 @@ namespace mame
                 filerr = util.core_file.open(m_fullpath, m_openflags, out m_file);
 
                 // if we're opening for read-only we have other options
-                if ((osd_file.error.NONE != filerr) && ((m_openflags & (g.OPEN_FLAG_READ | g.OPEN_FLAG_WRITE)) == g.OPEN_FLAG_READ))
+                if (filerr && ((m_openflags & (g.OPEN_FLAG_READ | g.OPEN_FLAG_WRITE)) == g.OPEN_FLAG_READ))
                 {
                     LOG(null, "emu_file: attempting to open '{0}' from archives\n", m_fullpath);
                     filerr = attempt_zipped();
@@ -460,7 +447,7 @@ namespace mame
         //  open_ram - open a "file" which is actually
         //  just an array of data in RAM
         //-------------------------------------------------
-        public osd_file.error open_ram(MemoryU8 data, u32 length)  //const void *data, u32 length)
+        public std.error_condition open_ram(MemoryU8 data, u32 length)  //const void *data, u32 length)
         {
             // set a fake filename and CRC
             m_filename = "RAM";
@@ -493,13 +480,6 @@ namespace mame
             // reset our hashes and path as well
             m_hashes.reset();
             m_fullpath = "";
-        }
-
-
-        // control
-        public osd_file.error compress(int level)
-        {
-            return m_file.compress(level);
         }
 
 
@@ -760,13 +740,10 @@ namespace mame
         //  compressed_file_ready - ensure our zip is ready
         //   loading if needed
         //-------------------------------------------------
-        bool compressed_file_ready()
+        std.error_condition compressed_file_ready()
         {
             // load the ZIP file now if we haven't yet
-            if (m_zipfile != null && (load_zipped_file() != osd_file.error.NONE))
-                return true;
-
-            return false;
+            return m_zipfile != null ? load_zipped_file() : new std.error_condition();
         }
 
 
@@ -775,13 +752,13 @@ namespace mame
         //-------------------------------------------------
         //  attempt_zipped - attempt to open a ZIPped file
         //-------------------------------------------------
-        delegate util.archive_file.error open_func(string filename, out util.archive_file result);  //typedef util::archive_file::error (*open_func)(const std::string &filename, util::archive_file::ptr &result);
+        delegate std.error_condition open_func(string filename, out util.archive_file result);  //typedef std::error_condition (*open_func)(std::string_view filename, util::archive_file::ptr &result);
         static readonly string [] suffixes = new string[] { ".zip", ".7z" };
         static readonly open_func [] open_funcs = new open_func[] { util.archive_file.open_zip, util.archive_file.open_7z };
 
-        osd_file.error attempt_zipped()
+        std.error_condition attempt_zipped()
         {
-            //typedef util::archive_file::error (*open_func)(const std::string &filename, util::archive_file::ptr &result);
+            //typedef std::error_condition (*open_func)(std::string_view filename, util::archive_file::ptr &result);
             //char const *const suffixes[] = { ".zip", ".7z" };
             //open_func const open_funcs[ARRAY_LENGTH(suffixes)] = { &util::archive_file::open_zip, &util::archive_file::open_7z };
 
@@ -817,13 +794,13 @@ namespace mame
 
                     // attempt to open the archive file
                     util.archive_file zip;
-                    util.archive_file.error ziperr = open_funcs[i](m_fullpath, out zip);
+                    std.error_condition ziperr = open_funcs[i](m_fullpath, out zip);
 
                     // chop the archive suffix back off the filename before continuing
                     m_fullpath = m_fullpath.substr(0, dirsep);
 
                     // if we failed to open this file, continue scanning
-                    if (ziperr != util.archive_file.error.NONE)
+                    if (ziperr)
                         continue;
 
                     int header = -1;
@@ -855,7 +832,7 @@ namespace mame
                         m_hashes.reset();
                         m_hashes.add_crc(m_zipfile.current_crc());
                         m_fullpath = savepath;
-                        return ((m_openflags & g.OPEN_FLAG_NO_PRELOAD) != 0) ? osd_file.error.NONE : load_zipped_file();
+                        return (m_openflags & g.OPEN_FLAG_NO_PRELOAD) != 0 ? new std.error_condition() : load_zipped_file();
                     }
 
                     // close up the archive file and try the next level
@@ -864,14 +841,14 @@ namespace mame
                 }
             }
 
-            return osd_file.error.NOT_FOUND;
+            return std.errc.no_such_file_or_directory;
         }
 
 
         //-------------------------------------------------
         //  load_zipped_file - load a ZIPped file
         //-------------------------------------------------
-        osd_file.error load_zipped_file()
+        std.error_condition load_zipped_file()
         {
             g.assert(m_file == null);
             g.assert(m_zipdata.empty());
@@ -882,24 +859,24 @@ namespace mame
 
             // read the data into our buffer and return
             var ziperr = m_zipfile.decompress(m_zipdata, (UInt32)m_zipdata.size());
-            if (ziperr != util.archive_file.error.NONE)
+            if (ziperr)
             {
                 m_zipdata.clear();
-                return osd_file.error.FAILURE;
+                return ziperr;
             }
 
             // convert to RAM file
-            osd_file.error filerr = util.core_file.open_ram(m_zipdata, (UInt32)m_zipdata.size(), m_openflags, out m_file);
-            if (filerr != osd_file.error.NONE)
+            std.error_condition filerr = util.core_file.open_ram(m_zipdata, m_zipdata.size(), m_openflags, out m_file);
+            if (filerr)
             {
                 m_zipdata.clear();
-                return osd_file.error.FAILURE;
+                return filerr;
             }
 
             // close out the ZIP file
             m_zipfile.Dispose();
             m_zipfile = null;
-            return osd_file.error.NONE;
+            return new std.error_condition();
         }
     }
 }

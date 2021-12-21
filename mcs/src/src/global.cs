@@ -13,6 +13,7 @@ using System.Reflection;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using char32_t = System.UInt32;
+using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
 using int64_t = System.Int64;
@@ -115,8 +116,8 @@ namespace mame
     public class u64_const_16 : u64_const { public UInt64 value { get { return 16; } } }
 
     public interface endianness_t_const { endianness_t value { get; } }
-    public class endianness_t_const_ENDIANNESS_LITTLE : endianness_t_const { public endianness_t value { get { return endianness_t.ENDIANNESS_LITTLE; } } }
-    public class endianness_t_const_ENDIANNESS_BIG : endianness_t_const { public endianness_t value { get { return endianness_t.ENDIANNESS_BIG; } } }
+    public class endianness_t_const_ENDIANNESS_LITTLE : endianness_t_const { public endianness_t value { get { return g.ENDIANNESS_LITTLE; } } }
+    public class endianness_t_const_ENDIANNESS_BIG : endianness_t_const { public endianness_t value { get { return g.ENDIANNESS_BIG; } } }
 
 
     // global functions
@@ -553,7 +554,8 @@ namespace mame
 
 
         // emucore
-        public static readonly string [] endianness_names = emucore_global.endianness_names;
+        public const endianness_t ENDIANNESS_LITTLE = emucore_global.ENDIANNESS_LITTLE;
+        public const endianness_t ENDIANNESS_BIG    = emucore_global.ENDIANNESS_BIG;
         public const endianness_t ENDIANNESS_NATIVE = emucore_global.ENDIANNESS_NATIVE;
         public const int ORIENTATION_FLIP_X = emucore_global.ORIENTATION_FLIP_X;
         public const int ORIENTATION_FLIP_Y = emucore_global.ORIENTATION_FLIP_Y;
@@ -581,6 +583,9 @@ namespace mame
 
         // emuopts
         public static void conditionally_peg_priority(core_options.entry entry, bool peg_priority) { emuopts_global.conditionally_peg_priority(entry, peg_priority); }
+        public const int OPTION_PRIORITY_CMDLINE = emu_options.OPTION_PRIORITY_CMDLINE;
+        public static string OPTION_SOFTWARENAME = emu_options.OPTION_SOFTWARENAME;
+        public const string OPTION_SNAPNAME = emu_options.OPTION_SNAPNAME;
 
 
         // emupal
@@ -797,6 +802,11 @@ namespace mame
         public const int EMU_ERR_INVALID_CONFIG = main_global.EMU_ERR_INVALID_CONFIG;
 
 
+        // mameopts
+        public const int OPTION_PRIORITY_MAME_INI = mame_options.OPTION_PRIORITY_MAME_INI;
+        public const int OPTION_PRIORITY_DRIVER_INI = mame_options.OPTION_PRIORITY_DRIVER_INI;
+
+
         // mcs48
         public static mcs48_cpu_device MB8884<bool_Required>(machine_config mconfig, device_finder<mcs48_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8884_device.MB8884, clock); }
 
@@ -886,6 +896,8 @@ namespace mame
         public static uint16_t little_endianize_int16(uint16_t x) { return osdcomm_global.little_endianize_int16(x); }
         public static int32_t little_endianize_int32(int32_t x) { return osdcomm_global.little_endianize_int32(x); }
         public static uint32_t little_endianize_int32(uint32_t x) { return osdcomm_global.little_endianize_int32(x); }
+        public static int64_t little_endianize_int64(int64_t x) { return osdcomm_global.little_endianize_int64(x); }
+        public static uint64_t little_endianize_int64(uint64_t x) { return osdcomm_global.little_endianize_int64(x); }
 
 
         // osdcore
@@ -1042,6 +1054,10 @@ namespace mame
         public static starfield_05xx_device STARFIELD_05XX<bool_Required>(machine_config mconfig, device_finder<starfield_05xx_device, bool_Required> finder, uint32_t clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, starfield_05xx_device.STARFIELD_05XX, clock); }
 
 
+        // strformat
+        public static string string_format(string format, params object [] args) { return util.string_format(format, args); }
+
+
         // t11
         public static t11_device T11<bool_Required>(machine_config mconfig, device_finder<t11_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, t11_device.T11, clock); }
 
@@ -1143,6 +1159,12 @@ namespace mame
         public const double M_PI = Math.PI;
 
 
+        // c++ stdio.h
+        public const int SEEK_CUR = 1;
+        public const int SEEK_END = 2;
+        public const int SEEK_SET = 0;
+
+
         public const size_t npos = size_t.MaxValue;
     }
 
@@ -1212,6 +1234,7 @@ namespace mame
         // std::min/max behaves differently than Math.Min/Max with respect to NaN
         // https://docs.microsoft.com/en-us/dotnet/api/system.math.min?view=net-5.0#System_Math_Min_System_Single_System_Single_
         // https://stackoverflow.com/a/39919244
+        public static u8 max(u8 a, u8 b) { return Math.Max(a, b); }
         public static int max(int a, int b) { return Math.Max(a, b); }
         public static UInt32 max(UInt32 a, UInt32 b) { return Math.Max(a, b); }
         public static Int64 max(Int64 a, Int64 b) { return Math.Max(a, b); }
@@ -1220,6 +1243,7 @@ namespace mame
         public static double max(double a, double b) { if (double.IsNaN(a) || double.IsNaN(b)) return a; else return Math.Max(a, b); }
         public static attotime max(attotime a, attotime b) { return attotime.Max(a, b); }
         public static netlist_time max(netlist_time a, netlist_time b) { return netlist_time.Max(a, b); }
+        public static u8 min(u8 a, u8 b) { return Math.Min(a, b); }
         public static int min(int a, int b) { return Math.Min(a, b); }
         public static UInt32 min(UInt32 a, UInt32 b) { return Math.Min(a, b); }
         public static Int64 min(Int64 a, Int64 b) { return Math.Min(a, b); }
@@ -1410,6 +1434,139 @@ namespace mame
             public size_t size() { return (size_t)Count; }
             public void fill(T value) { std.fill(this, value); }
             public Pointer<T> data() { return new Pointer<T>(m_data); }
+        }
+
+
+        // c++ errc
+        public enum errc
+        {
+            address_family_not_supported,
+            address_in_use,
+            address_not_available,
+            already_connected,
+            argument_list_too_long,
+            argument_out_of_domain,
+            bad_address,
+            bad_file_descriptor,
+            bad_message,
+            broken_pipe,
+            connection_aborted,
+            connection_already_in_progress,
+            connection_refused,
+            connection_reset,
+            cross_device_link,
+            destination_address_required,
+            device_or_resource_busy,
+            directory_not_empty,
+            executable_format_error,
+            file_exists,
+            file_too_large,
+            filename_too_long,
+            function_not_supported,
+            host_unreachable,
+            identifier_removed,
+            illegal_byte_sequence,
+            inappropriate_io_control_operation,
+            interrupted,
+            invalid_argument,
+            invalid_seek,
+            io_error,
+            is_a_directory,
+            message_size,
+            network_down,
+            network_reset,
+            network_unreachable,
+            no_buffer_space,
+            no_child_process,
+            no_link,
+            no_lock_available,
+            no_message_available,
+            no_message,
+            no_protocol_option,
+            no_space_on_device,
+            no_stream_resources,
+            no_such_device_or_address,
+            no_such_device,
+            no_such_file_or_directory,
+            no_such_process,
+            not_a_directory,
+            not_a_socket,
+            not_a_stream,
+            not_connected,
+            not_enough_memory,
+            not_supported,
+            operation_canceled,
+            operation_in_progress,
+            operation_not_permitted,
+            operation_not_supported,
+            operation_would_block,
+            owner_dead,
+            permission_denied,
+            protocol_error,
+            protocol_not_supported,
+            read_only_file_system,
+            resource_deadlock_would_occur,
+            resource_unavailable_try_again,
+            result_out_of_range,
+            state_not_recoverable,
+            stream_timeout,
+            text_file_busy,
+            timed_out,
+            too_many_files_open_in_system,
+            too_many_files_open,
+            too_many_links,
+            too_many_symbolic_link_levels,
+            value_too_large,
+            wrong_protocol_type,
+        }
+
+
+        // c++ error_category
+        public class error_category
+        {
+            public virtual string name() { throw new emu_unimplemented(); }
+            public virtual string message(int condition) { throw new emu_unimplemented(); }
+        }
+
+        class generic_category : error_category
+        {
+            public override string name() { return "generic"; }
+        }
+
+
+        // c++ error_condition
+        public class error_condition
+        {
+            int m_value;
+            error_category m_category;
+
+            public error_condition() { m_value = 0; m_category = new std.generic_category(); }
+            public error_condition(errc e) { m_value = (int)e; m_category = new std.generic_category(); }
+
+            public int value() { return m_value; }
+            public error_category category() { return m_category; }
+            public string message() { return category().message(value()); }
+
+            public static bool operator ==(error_condition obj1, errc obj2) { return obj1 == new error_condition(obj2); }
+            public static bool operator !=(error_condition obj1, errc obj2) { return obj1 != new error_condition(obj2); }
+
+            public static implicit operator bool(error_condition e) { return !object.ReferenceEquals(e, null) && e.value() != 0; }
+            public static implicit operator error_condition(errc d) { return new error_condition(d); }
+
+            public override bool Equals(object obj)
+            {
+                return obj is error_condition condition &&
+                       m_value == condition.m_value &&
+                       EqualityComparer<error_category>.Default.Equals(m_category, condition.m_category);
+            }
+
+            public override int GetHashCode()
+            {
+                int hashCode = 1089423243;
+                hashCode = hashCode * -1521134295 + m_value.GetHashCode();
+                hashCode = hashCode * -1521134295 + EqualityComparer<error_category>.Default.GetHashCode(m_category);
+                return hashCode;
+            }
         }
 
 

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using mixer_interface_enumerator = mame.device_interface_enumerator<mame.device_mixer_interface>;  //typedef device_interface_enumerator<device_mixer_interface> mixer_interface_enumerator;
@@ -16,7 +17,7 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 using unsigned = System.UInt32;
-using System.Diagnostics;
+
 
 namespace mame
 {
@@ -1637,6 +1638,7 @@ namespace mame
 
         stream_buffer_sample_t m_compressor_scale; // current compressor scale factor
         int m_compressor_counter;             // compressor update counter for backoff
+        bool m_compressor_enabled;            // enable compressor (it will still be calculated for detecting overdrive)
 
         u8 m_muted;                           // bitmask of muting reasons
         bool m_nosound_mode;                  // true if we're in "nosound" mode
@@ -1664,6 +1666,7 @@ namespace mame
             m_rightmix = new std.vector<stream_buffer_sample_t>(machine.sample_rate());
             m_compressor_scale = (stream_buffer_sample_t)1.0;
             m_compressor_counter = 0;
+            m_compressor_enabled = machine.options().compressor();
             m_muted = 0;
             m_nosound_mode = machine.osd().no_sound();
             m_attenuation = 0;
@@ -1714,6 +1717,7 @@ namespace mame
         //attotime last_update() const { return m_last_update; }
         //int sample_count() const { return m_samples_this_update; }
         public int unique_id() { return m_unique_id++; }
+        public stream_buffer_sample_t compressor_scale() { return m_compressor_scale; }
 
 
         // allocate a new stream with a new-style callback
@@ -2149,8 +2153,11 @@ namespace mame
                 if (lscale != m_compressor_scale && sample != m_finalmix_leftover)
                     lscale = adjust_toward_compressor_scale(lscale, lprev, lsamp);
 
+                lprev = lsamp * lscale;
+                if (m_compressor_enabled)
+                    lsamp = lprev;
+
                 // clamp the left side
-                lprev = lsamp *= lscale;
                 if (lsamp > 1.0)
                     lsamp = (stream_buffer_sample_t)1.0;
                 else if (lsamp < -1.0)
@@ -2162,8 +2169,11 @@ namespace mame
                 if (rscale != m_compressor_scale && sample != m_finalmix_leftover)
                     rscale = adjust_toward_compressor_scale(rscale, rprev, rsamp);
 
-                // clamp the left side
-                rprev = rsamp *= rscale;
+                rprev = rsamp * rscale;
+                if (m_compressor_enabled)
+                    rsamp = rprev;
+
+                // clamp the right side
                 if (rsamp > 1.0)
                     rsamp = (stream_buffer_sample_t)1.0;
                 else if (rsamp < -1.0)
