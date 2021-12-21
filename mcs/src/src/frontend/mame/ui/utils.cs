@@ -1331,7 +1331,7 @@ namespace mame
                 // try to load filters from a file
                 if (value != null && file != null)
                 {
-                    unsigned cnt = (unsigned)std.max(std.min((int)MAX, std.atoi(value)), 0);
+                    unsigned cnt = (unsigned)std.clamp(std.atoi(value), 0, (int)MAX);
                     for (unsigned i = 0; cnt > i; ++i)
                     {
                         throw new emu_unimplemented();
@@ -1608,7 +1608,7 @@ namespace mame
                 // try to load filters from a file
                 if (value != null && file != null)
                 {
-                    unsigned cnt = (unsigned)std.max(std.min((int)MAX, std.atoi(value)), 0);
+                    unsigned cnt = (unsigned)std.clamp(std.atoi(value), 0, (int)MAX);
                     for (unsigned i = 0; cnt > i; ++i)
                     {
                         throw new emu_unimplemented();

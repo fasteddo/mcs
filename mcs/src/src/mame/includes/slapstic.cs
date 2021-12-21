@@ -692,7 +692,7 @@ namespace mame
         }
 
 
-        abstract new class state
+        abstract class state
         {
             protected atari_slapstic_device m_sl;
 

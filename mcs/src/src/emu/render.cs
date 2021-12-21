@@ -1305,7 +1305,11 @@ namespace mame
             m_listindex = 0;
             m_width = 640;
             m_height = 480;
+            m_keepaspect = false;
+            m_int_overscan = false;
             m_pixel_aspect = 0.0f;
+            m_int_scale_x = 0;
+            m_int_scale_y = 0;
             m_max_refresh = 0;
             m_orientation = 0;
             m_base_view = null;
@@ -1320,20 +1324,27 @@ namespace mame
             m_base_layerconfig.set_zoom_to_screen(manager.machine().options().artwork_crop());
 
             // aspect and scale options
-            m_keepaspect = manager.machine().options().keep_aspect() && (flags & render_global.RENDER_CREATE_HIDDEN) == 0;
-            m_int_overscan = manager.machine().options().int_overscan();
-            m_int_scale_x = manager.machine().options().int_scale_x();
-            m_int_scale_y = manager.machine().options().int_scale_y();
-            if (m_manager.machine().options().auto_stretch_xy())
-                m_scale_mode = render_global.SCALE_FRACTIONAL_AUTO;
-            else if (manager.machine().options().uneven_stretch_x())
-                m_scale_mode = render_global.SCALE_FRACTIONAL_X;
-            else if (manager.machine().options().uneven_stretch_y())
-                m_scale_mode = render_global.SCALE_FRACTIONAL_Y;
-            else if (manager.machine().options().uneven_stretch())
-                m_scale_mode = render_global.SCALE_FRACTIONAL;
+            if ((flags & render_global.RENDER_CREATE_HIDDEN) == 0)
+            {
+                m_keepaspect = manager.machine().options().keep_aspect();
+                m_int_overscan = manager.machine().options().int_overscan();
+                m_int_scale_x = manager.machine().options().int_scale_x();
+                m_int_scale_y = manager.machine().options().int_scale_y();
+                if (m_manager.machine().options().auto_stretch_xy())
+                    m_scale_mode = render_global.SCALE_FRACTIONAL_AUTO;
+                else if (manager.machine().options().uneven_stretch_x())
+                    m_scale_mode = render_global.SCALE_FRACTIONAL_X;
+                else if (manager.machine().options().uneven_stretch_y())
+                    m_scale_mode = render_global.SCALE_FRACTIONAL_Y;
+                else if (manager.machine().options().uneven_stretch())
+                    m_scale_mode = render_global.SCALE_FRACTIONAL;
+                else
+                    m_scale_mode = render_global.SCALE_INTEGER;
+            }
             else
-                m_scale_mode = render_global.SCALE_INTEGER;
+            {
+                m_scale_mode = render_global.SCALE_FRACTIONAL;
+            }
 
             // determine the base orientation based on options
             if (!manager.machine().options().rotate())

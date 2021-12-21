@@ -565,6 +565,10 @@ namespace mame
     // global machine-level information about devices
     public class input_manager
     {
+        // controller alias table typedef
+        //using devicemap_table = std::map<std::string, std::string>;
+
+
         // internal state
         running_machine m_machine;
         input_code [] m_switch_memory = new input_code[64];
@@ -841,14 +845,16 @@ namespace mame
             bool first = true;
             for (int codenum = 0; ; codenum++)
             {
-                // handle NOT
                 input_code code = seq[codenum];
                 if (code == input_seq.not_code)
+                {
+                    // handle NOT
                     invert = true;
-
-                // handle OR and END
+                }
                 else if (code == input_seq.or_code || code == input_seq.end_code)
                 {
+                    // handle OR and END
+
                     // if we have a positive result from the previous set, we're done
                     if (result || code == input_seq.end_code)
                         break;
@@ -858,10 +864,10 @@ namespace mame
                     invert = false;
                     first = true;
                 }
-
-                // handle everything else as a series of ANDs
                 else
                 {
+                    // handle everything else as a series of ANDs
+
                     // if this is the first in the sequence, result is set equal
                     if (first)
                         result = code_pressed(code) ^ invert;
@@ -1043,7 +1049,7 @@ namespace mame
 
 
         // misc
-        //bool map_device_to_controller(const devicemap_table_type &devicemap_table);
+        //bool map_device_to_controller(const devicemap_table &table);
 
 
         // internal helpers

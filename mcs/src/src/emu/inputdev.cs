@@ -360,7 +360,6 @@ namespace mame
             if (machine().phase() != machine_phase.INIT)
                 throw new emu_fatalerror("Can only call input_device::add_item at init time!");
 
-            g.assert(name != null);
             g.assert(itemid > input_item_id.ITEM_ID_INVALID && itemid < input_item_id.ITEM_ID_MAXIMUM);
             g.assert(getstate != null);
 
@@ -599,38 +598,8 @@ namespace mame
             if (machine().phase() != machine_phase.INIT)
                 throw new emu_fatalerror("Can only call input_class::add_device at init time!");
 
-            g.assert(name != null);
-            g.assert(id != null);
-
             // allocate a new device and add it to the index
             return add_device(make_device(name, id, internal_object));
-        }
-
-
-        public input_device add_device(input_device new_device)
-        {
-            g.assert(new_device.devclass() == m_devclass);
-
-            // find the next empty index
-            for (int devindex = 0; devindex < input_global.DEVICE_INDEX_MAXIMUM; devindex++)
-            {
-                if (m_device[devindex] == null)
-                {
-                    // update the device and maximum index found
-                    new_device.set_devindex(devindex);
-                    m_maxindex = Math.Max(m_maxindex, devindex);
-
-                    if (new_device.id()[0] == 0)
-                        g.osd_printf_verbose("Input: Adding {0} #{1}: {2}\n", m_name, devindex, new_device.name());
-                    else
-                        g.osd_printf_verbose("Input: Adding {0} #{1}: {2} (device id: {3})\n", m_name, devindex, new_device.name(), new_device.id());
-
-                    m_device[devindex] = new_device;
-                    return m_device[devindex];
-                }
-            }
-
-            throw new emu_fatalerror("Input: Too many {0} devices\n", m_name);
         }
 
 
@@ -664,6 +633,33 @@ namespace mame
 
 
         // indexing helpers
+        public input_device add_device(input_device new_device)
+        {
+            g.assert(new_device.devclass() == m_devclass);
+
+            // find the next empty index
+            for (int devindex = 0; devindex < input_global.DEVICE_INDEX_MAXIMUM; devindex++)
+            {
+                if (m_device[devindex] == null)
+                {
+                    // update the device and maximum index found
+                    new_device.set_devindex(devindex);
+                    m_maxindex = Math.Max(m_maxindex, devindex);
+
+                    if (new_device.id()[0] == 0)
+                        g.osd_printf_verbose("Input: Adding {0} #{1}: {2}\n", m_name, devindex, new_device.name());
+                    else
+                        g.osd_printf_verbose("Input: Adding {0} #{1}: {2} (device id: {3})\n", m_name, devindex, new_device.name(), new_device.id());
+
+                    m_device[devindex] = new_device;
+                    return m_device[devindex];
+                }
+            }
+
+            throw new emu_fatalerror("Input: Too many {0} devices\n", m_name);
+        }
+
+
         //int newindex(input_device &device);
     }
 

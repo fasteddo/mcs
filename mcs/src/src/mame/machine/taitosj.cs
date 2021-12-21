@@ -74,20 +74,20 @@ namespace mame
         ***************************************************************************/
         uint8_t fake_data_r()
         {
-            LOG("{0}: protection read\n", m_maincpu.op[0].state().pc());
+            LOG("{0}: protection read\n", m_maincpu.op[0].GetClassInterface<device_state_interface>().pc());
             return 0;
         }
 
 
         void fake_data_w(uint8_t data)
         {
-            LOG("{0}: protection write {1}\n", m_maincpu.op[0].state().pc(), data);
+            LOG("{0}: protection write {1}\n", m_maincpu.op[0].GetClassInterface<device_state_interface>().pc(), data);
         }
 
 
         uint8_t fake_status_r()
         {
-            LOG("{0}: protection status read\n", m_maincpu.op[0].state().pc());
+            LOG("{0}: protection status read\n", m_maincpu.op[0].GetClassInterface<device_state_interface>().pc());
             return 0xff;
         }
 

@@ -206,11 +206,6 @@ namespace mame
         //void registerpoint_enable_all(bool enable = true );
 
 
-        // hotspots
-        //bool hotspot_tracking_enabled() const { return (m_hotspots != NULL); }
-        //void hotspot_track(int numspots, int threshhold);
-
-
         // comments
         //void comment_add(offs_t address, const char *comment, rgb_t color);
         //bool comment_remove(offs_t addr);
@@ -262,7 +257,6 @@ namespace mame
         // breakpoint and watchpoint helpers
         //void breakpoint_update_flags();
         //void breakpoint_check(offs_t pc);
-        //void hotspot_check(address_space &space, offs_t address);
         //void reinstall_all(read_or_write mode);
         //void reinstall(address_space &space, read_or_write mode);
         //void write_tracking(address_space &space, offs_t address, u64 data);

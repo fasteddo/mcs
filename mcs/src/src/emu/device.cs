@@ -620,14 +620,12 @@ namespace mame
             //friend class device_t;
             //friend class device_interface;
             //friend class device_memory_interface;
-            //friend class device_state_interface;
             //friend class device_execute_interface;
 
 
             public device_interface m_head;         // head of interface list
             public device_execute_interface m_execute;    // pre-cached pointer to execute interface
             public device_memory_interface m_memory;      // pre-cached pointer to memory interface
-            public device_state_interface m_state;        // pre-cached pointer to state interface
 
 
             class auto_iterator
@@ -654,7 +652,6 @@ namespace mame
                 m_head = null;
                 m_execute = null;
                 m_memory = null;
-                m_state = null;
             }
 
 
@@ -867,14 +864,11 @@ namespace mame
         //bool interface(device_execute_interface *&intf) const { intf = m_interfaces.m_execute; return (intf != nullptr); }
         //bool interface(device_memory_interface *&intf) { intf = m_interfaces.m_memory; return (intf != nullptr); }
         //bool interface(device_memory_interface *&intf) const { intf = m_interfaces.m_memory; return (intf != nullptr); }
-        //bool interface(device_state_interface *&intf) { intf = m_interfaces.m_state; return (intf != nullptr); }
-        //bool interface(device_state_interface *&intf) const { intf = m_interfaces.m_state; return (intf != nullptr); }
 
         public bool interface_<T>(out T intf) where T : device_interface { intf = GetClassInterface<T>(); return intf != null; }
 
         public device_execute_interface execute() { g.assert(m_interfaces.m_execute != null);  return m_interfaces.m_execute; }
         public device_memory_interface memory() { g.assert(m_interfaces.m_memory != null);  return m_interfaces.m_memory; }
-        public device_state_interface state() { g.assert(m_interfaces.m_state != null); return m_interfaces.m_state; }
 
 
         // owned object helpers

@@ -45,12 +45,6 @@ namespace mame
         // debug flags
         public const int DEBUG_FLAG_ENABLED        = 0x00000001;       // debugging is enabled
         public const int DEBUG_FLAG_CALL_HOOK      = 0x00000002;       // CPU cores must call instruction hook
-        public const int DEBUG_FLAG_WPR_PROGRAM    = 0x00000010;       // watchpoints are enabled for PROGRAM memory reads
-        public const int DEBUG_FLAG_WPR_DATA       = 0x00000020;       // watchpoints are enabled for DATA memory reads
-        public const int DEBUG_FLAG_WPR_IO         = 0x00000040;       // watchpoints are enabled for IO memory reads
-        public const int DEBUG_FLAG_WPW_PROGRAM    = 0x00000100;       // watchpoints are enabled for PROGRAM memory writes
-        public const int DEBUG_FLAG_WPW_DATA       = 0x00000200;       // watchpoints are enabled for DATA memory writes
-        public const int DEBUG_FLAG_WPW_IO         = 0x00000400;       // watchpoints are enabled for IO memory writes
         public const int DEBUG_FLAG_OSD_ENABLED    = 0x00001000;       // The OSD debugger is enabled
     }
 
@@ -905,10 +899,8 @@ namespace mame
 
                 if (cpu != null)
                 {
-                    device_memory_interface memory = cpu.memory();
-                    device_state_interface state = cpu.state();
-                    address_space prg = memory.space(g.AS_PROGRAM);
-                    return util.string_format(prg.is_octal() ? "'{0}' ({1})" :  "'{0}' ({1})", cpu.tag(), prg.logaddrchars(), state.pc());  // "'%s' (%0*o)" :  "'%s' (%0*X)"
+                    address_space prg = cpu.memory().space(g.AS_PROGRAM);
+                    return util.string_format(prg.is_octal() ? "'{0}' ({1})" :  "'{0}' ({1})", cpu.tag(), prg.logaddrchars(), cpu.GetClassInterface<device_state_interface>().pc());  // "'%s' (%0*o)" :  "'%s' (%0*X)"
                 }
             }
 

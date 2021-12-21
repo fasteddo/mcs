@@ -212,7 +212,7 @@ namespace mame
 
             new options_entry(null,                                   null,              g.OPTION_HEADER,  "BGFX POST-PROCESSING OPTIONS"),
             new options_entry(OSDOPTION_BGFX_PATH,                    "bgfx",            g.OPTION_STRING,  "path to BGFX-related files"),
-            new options_entry(OSDOPTION_BGFX_BACKEND,                 "auto",            g.OPTION_STRING,  "BGFX backend to use (d3d9, d3d11, metal, opengl, gles)"),
+            new options_entry(OSDOPTION_BGFX_BACKEND,                 "auto",            g.OPTION_STRING,  "BGFX backend to use (d3d9, d3d11, d3d12, metal, opengl, gles, vulkan)"),
             new options_entry(OSDOPTION_BGFX_DEBUG,                   "0",               g.OPTION_BOOLEAN, "enable BGFX debugging statistics"),
             new options_entry(OSDOPTION_BGFX_SCREEN_CHAINS,           "default",         g.OPTION_STRING,  "comma-delimited list of screen chain JSON names, colon-delimited per-window"),
             new options_entry(OSDOPTION_BGFX_SHADOW_MASK,             "slot-mask.png",   g.OPTION_STRING,  "shadow mask texture name"),

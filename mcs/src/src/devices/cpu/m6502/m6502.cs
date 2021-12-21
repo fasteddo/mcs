@@ -262,7 +262,6 @@ namespace mame
 
             m_distate.state_add(g.STATE_GENPC,     "GENPC",     XPC).callexport().noshow();
             m_distate.state_add(g.STATE_GENPCBASE, "CURPC",     XPC).callexport().noshow();
-            m_distate.state_add(g.STATE_GENSP,     "GENSP",     SP).noshow();
             m_distate.state_add(g.STATE_GENFLAGS,  "GENFLAGS",  P).callimport().formatstr("%6s").noshow();
             m_distate.state_add(M6502_PC,          "PC",        NPC).callimport();
             m_distate.state_add(M6502_A,           "A",         A);

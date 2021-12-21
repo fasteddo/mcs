@@ -578,7 +578,6 @@ namespace mame
             m_distate.state_add(g.STATE_GENPC,     "PC",        m_pc.w.l).callimport();
             m_distate.state_add(g.STATE_GENPCBASE, "CURPC",     m_prvpc.w.l).callimport().noshow();
             m_distate.state_add(Z80_SP,            "SP",        SP);
-            m_distate.state_add(g.STATE_GENSP,     "GENSP",     SP).noshow();
             m_distate.state_add(g.STATE_GENFLAGS,  "GENFLAGS",  F).noshow().formatstr("%8s");
             m_distate.state_add(Z80_A,             "A",         A).noshow();
             m_distate.state_add(Z80_B,             "B",         B).noshow();

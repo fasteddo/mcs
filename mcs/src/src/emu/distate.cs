@@ -20,8 +20,7 @@ namespace mame
         //{
         public const int STATE_GENPC     = -1;           // generic program counter (live)
         public const int STATE_GENPCBASE = -2;           // generic program counter (base of current instruction)
-        public const int STATE_GENSP     = -3;           // generic stack pointer
-        public const int STATE_GENFLAGS  = -4;           // generic flags
+        public const int STATE_GENFLAGS  = -3;           // generic flags
         //}
     }
 
@@ -77,8 +76,6 @@ namespace mame
             // override well-known symbols
             if (index == g.STATE_GENPCBASE)
                 m_symbol = "CURPC";
-            else if (index == g.STATE_GENSP)
-                m_symbol = "CURSP";
             else if (index == g.STATE_GENFLAGS)
                 m_symbol = "CURFLAGS";
         }
@@ -446,9 +443,6 @@ namespace mame
             : base(device, "state")
         {
             //memset(m_fast_state, 0, sizeof(m_fast_state));
-
-            // configure the fast accessor
-            device.interfaces().m_state = this;
         }
 
 
@@ -464,8 +458,7 @@ namespace mame
         //astring &state_string(int index, astring &dest);
         public offs_t pc() { return (offs_t)state_int(g.STATE_GENPC); }
         //offs_t pcbase() { return state_int(STATE_GENPCBASE); }
-        //offs_t sp() { return state_int(STATE_GENSP); }
-        //UINT64 flags() { return state_int(STATE_GENFLAGS); }
+        //u64 flags() { return state_int(STATE_GENFLAGS); }
 
 
         // state setters
@@ -494,11 +487,6 @@ namespace mame
             // handle failure by returning nullptr
             return null;
         }
-
-
-        // deliberately ambiguous functions; if you have the state interface
-        // just use it directly
-        //device_state_interface &state() { return *this; }
 
 
         // add a new state register item

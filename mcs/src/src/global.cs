@@ -509,7 +509,6 @@ namespace mame
         // distate
         public const int STATE_GENPC     = distate_global.STATE_GENPC;
         public const int STATE_GENPCBASE = distate_global.STATE_GENPCBASE;
-        public const int STATE_GENSP     = distate_global.STATE_GENSP;
         public const int STATE_GENFLAGS  = distate_global.STATE_GENFLAGS;
 
 

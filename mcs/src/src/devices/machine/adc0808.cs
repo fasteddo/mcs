@@ -34,7 +34,7 @@ namespace mame
         devcb_write_line m_eoc_ff_cb;
         devcb_read8.array<u64_const_8> m_in_cb;
 
-        new enum state : int
+        enum state : int
         {
             STATE_IDLE,
             STATE_CONVERSION_START,

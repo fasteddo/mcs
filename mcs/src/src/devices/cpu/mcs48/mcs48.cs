@@ -75,24 +75,25 @@ namespace mame
         //{
         const int MCS48_PC   = 0;
         const int MCS48_PSW  = 1;
-        const int MCS48_A    = 2;
-        const int MCS48_TC   = 3;
-        const int MCS48_TPRE = 4;
-        const int MCS48_P0   = 5;   // 8021/8022 only
-        const int MCS48_P1   = 6;
-        const int MCS48_P2   = 7;
-        const int MCS48_R0   = 8;
-        const int MCS48_R1   = 9;
-        const int MCS48_R2   = 10;
-        const int MCS48_R3   = 11;
-        const int MCS48_R4   = 12;
-        const int MCS48_R5   = 13;
-        const int MCS48_R6   = 14;
-        const int MCS48_R7   = 15;
-        const int MCS48_EA   = 16;
-        const int MCS48_STS  = 17;  // UPI-41 only
-        const int MCS48_DBBO = 18; // UPI-41 only
-        const int MCS48_DBBI = 19;  // UPI-41 only
+        const int MCS48_SP   = 2;
+        const int MCS48_A    = 3;
+        const int MCS48_TC   = 4;
+        const int MCS48_TPRE = 5;
+        const int MCS48_P0   = 6;   // 8021/8022 only
+        const int MCS48_P1   = 7;
+        const int MCS48_P2   = 8;
+        const int MCS48_R0   = 9;
+        const int MCS48_R1   = 10;
+        const int MCS48_R2   = 11;
+        const int MCS48_R3   = 12;
+        const int MCS48_R4   = 13;
+        const int MCS48_R5   = 14;
+        const int MCS48_R6   = 15;
+        const int MCS48_R7   = 16;
+        const int MCS48_EA   = 17;
+        const int MCS48_STS  = 18;  // UPI-41 only
+        const int MCS48_DBBO = 19; // UPI-41 only
+        const int MCS48_DBBI = 20;  // UPI-41 only
         //};
 
 
@@ -807,7 +808,7 @@ namespace mame
                 m_distate.state_add(MCS48_PC,          "PC",        m_pc).mask(0xfff);
                 m_distate.state_add(g.STATE_GENPC,     "GENPC",     m_pc).mask(0xfff).noshow();
                 m_distate.state_add(g.STATE_GENPCBASE, "CURPC",     m_prevpc).mask(0xfff).noshow();
-                m_distate.state_add(g.STATE_GENSP,     "GENSP",     m_psw).mask(0x7).noshow();
+                m_distate.state_add(MCS48_SP,          "SP",        m_psw).mask(0x7).noshow();
                 m_distate.state_add(g.STATE_GENFLAGS,  "GENFLAGS",  m_psw).noshow().formatstr("%11s");
                 m_distate.state_add(MCS48_A,           "A",         m_a);
                 m_distate.state_add(MCS48_TC,          "TC",        m_timer);
