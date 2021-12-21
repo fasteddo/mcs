@@ -1561,10 +1561,10 @@ namespace mame
         //-------------------------------------------------
         //  config_load - load configuration data
         //-------------------------------------------------
-        void config_load(config_type cfg_type, util.xml.data_node parentnode)
+        void config_load(config_type cfg_type, config_level cfg_level, util.xml.data_node parentnode)
         {
             // make sure it's relevant and there's data available
-            if (config_type.GAME == cfg_type)
+            if (config_type.SYSTEM == cfg_type)
             {
                 m_unemulated_features.clear();
                 m_imperfect_features.clear();
@@ -1604,7 +1604,7 @@ namespace mame
         void config_save(config_type cfg_type, util.xml.data_node parentnode)
         {
             // only save system-level configuration when times are valid
-            if ((config_type.GAME == cfg_type) && ((std_time_t)(-1) != m_last_launch_time) && ((std_time_t)(-1) != m_last_warning_time))
+            if ((config_type.SYSTEM == cfg_type) && ((std_time_t)(-1) != m_last_launch_time) && ((std_time_t)(-1) != m_last_warning_time))
             {
                 parentnode.set_attribute_int("launched", (Int64)m_last_launch_time);
                 parentnode.set_attribute_int("warned", (Int64)m_last_warning_time);

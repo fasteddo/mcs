@@ -372,8 +372,7 @@ namespace mame
 
 
         // fetch items by name
-        public device_t device(string tag) { return root_device().subdevice(tag); }  //[[deprecated("absolute tag lookup; use subdevice or finder instead")]] inline device_t *device(const char *tag) const { return root_device().subdevice(tag); }
-        //template <class DeviceClass> [[deprecated("absolute tag lookup; use subdevice or finder instead")]] inline DeviceClass *device(const char *tag) { return downcast<DeviceClass *>(device(tag)); }
+        //template <class DeviceClass> [[deprecated("absolute tag lookup; use subdevice or finder instead")]] inline DeviceClass *device(const char *tag) { return downcast<DeviceClass *>(root_device().subdevice(tag)); }
 
 
         // immediate operations

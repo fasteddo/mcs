@@ -15,11 +15,10 @@ namespace mame
 
     // Executes an access through called a delegate, usually containing a handler or a lambda
 
-    //template<int Width, int AddrShift, endianness_t Endian, typename READ>
-    class handler_entry_read_delegate<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read_address<int_Width, int_AddrShift, endianness_t_Endian>
+    //template<int Width, int AddrShift, typename READ>
+    class handler_entry_read_delegate<int_Width, int_AddrShift> : handler_entry_read_address<int_Width, int_AddrShift>
         where int_Width : int_const, new()
         where int_AddrShift : int_const, new()
-        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -146,11 +145,10 @@ namespace mame
     }
 
 
-    //template<int Width, int AddrShift, endianness_t Endian, typename WRITE>
-    class handler_entry_write_delegate<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_write_address<int_Width, int_AddrShift, endianness_t_Endian>
+    //template<int Width, int AddrShift, typename WRITE>
+    class handler_entry_write_delegate<int_Width, int_AddrShift> : handler_entry_write_address<int_Width, int_AddrShift>
         where int_Width : int_const, new()
         where int_AddrShift : int_const, new()
-        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -268,11 +266,10 @@ namespace mame
 
     // Accesses an ioport
 
-    //template<int Width, int AddrShift, endianness_t Endian>
-    class handler_entry_read_ioport<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>
+    //template<int Width, int AddrShift>
+    class handler_entry_read_ioport<int_Width, int_AddrShift> : handler_entry_read<int_Width, int_AddrShift>
         where int_Width : int_const, new()
         where int_AddrShift : int_const, new()
-        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -294,11 +291,10 @@ namespace mame
     }
 
 
-    //template<int Width, int AddrShift, endianness_t Endian>
-    class handler_entry_write_ioport<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>
+    //template<int Width, int AddrShift>
+    class handler_entry_write_ioport<int_Width, int_AddrShift> : handler_entry_write<int_Width, int_AddrShift>
         where int_Width : int_const, new()
         where int_AddrShift : int_const, new()
-        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 

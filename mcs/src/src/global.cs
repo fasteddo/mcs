@@ -942,6 +942,7 @@ namespace mame
         public static void render_load_msdib(out bitmap_argb32 bitmap, util.core_file file) { rendutil_global.render_load_msdib(out bitmap, file); }
         public static void render_load_jpeg(out bitmap_argb32 bitmap, util.core_file file) { rendutil_global.render_load_jpeg(out bitmap, file); }
         public static bool render_load_png(out bitmap_argb32 bitmap, util.core_file file, bool load_as_alpha_to_existing = false) { return rendutil_global.render_load_png(out bitmap, file, load_as_alpha_to_existing); }
+        public static float render_round_nearest(float f) { return rendutil_global.render_round_nearest(f); }
         public static int orientation_add(int orientation1, int orientation2) { return rendutil_global.orientation_add(orientation1, orientation2); }
 
 
@@ -1562,9 +1563,11 @@ namespace mame
             // std::set functions
             public void clear() { m_set.Clear(); }
             public bool emplace(T item) { return m_set.Add(item); }
+            public bool empty() { return m_set.Count == 0; }
             public bool erase(T item) { return m_set.Remove(item); }
             public bool find(T item) { return m_set.Contains(item); }
             public bool insert(T item) { return m_set.Add(item); }
+            public size_t size() { return (size_t)m_set.Count; }
         }
 
 

@@ -257,8 +257,8 @@ namespace mame.ymfm
         //void save(bool &data) { write(data ? 1 : 0); }
         //void save(int8_t &data) { write(data); }
         //void save(uint8_t &data) { write(data); }
-        //void save(int16_t &data) { write(data).write(data >> 8); }
-        //void save(uint16_t &data) { write(data).write(data >> 8); }
+        //void save(int16_t &data) { write(uint8_t(data)).write(data >> 8); }
+        //void save(uint16_t &data) { write(uint8_t(data)).write(data >> 8); }
         //void save(int32_t &data) { write(data).write(data >> 8).write(data >> 16).write(data >> 24); }
         //void save(uint32_t &data) { write(data).write(data >> 8).write(data >> 16).write(data >> 24); }
         //void save(envelope_state &data) { write(uint8_t(data)); }

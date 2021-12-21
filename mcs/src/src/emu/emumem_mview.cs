@@ -82,9 +82,8 @@ namespace mame
     //}
 
 
-    //template<int Level, int Width, int AddrShift, endianness_t Endian>
-    //class memory_view_entry_specific : public memory_view::memory_view_entry
-    class memory_view_entry_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian> : memory_view.memory_view_entry
+    //template<int Level, int Width, int AddrShift>
+    class memory_view_entry_specific<int_Level, int_Width, int_AddrShift> : memory_view.memory_view_entry  //class memory_view_entry_specific : public memory_view::memory_view_entry
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
         //using NativeType = uX;
@@ -108,8 +107,8 @@ namespace mame
         //virtual ~memory_view_entry_specific() = default;
 
 
-        //handler_entry_read <Width, AddrShift, Endian> *r() { return static_cast<handler_entry_read <Width, AddrShift, Endian> *>(m_view.m_handler_read); }
-        //handler_entry_write<Width, AddrShift, Endian> *w() { return static_cast<handler_entry_write<Width, AddrShift, Endian> *>(m_view.m_handler_write); }
+        //handler_entry_read <Width, AddrShift> *r() { return static_cast<handler_entry_read <Width, AddrShift> *>(m_view.m_handler_read); }
+        //handler_entry_write<Width, AddrShift> *w() { return static_cast<handler_entry_write<Width, AddrShift> *>(m_view.m_handler_write); }
 
         //void invalidate_caches(read_or_write readorwrite) { return m_view.m_space->invalidate_caches(readorwrite); }
 
@@ -585,30 +584,19 @@ namespace mame
     //namespace {
     public static class emumem_mview_global
     {
-        //template<int Level, int Width, int AddrShift, endianness_t Endian>
-        public static memory_view.memory_view_entry mve_make_1<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(address_space_config config, memory_manager manager, memory_view view, int id)  //template<int Level, int Width, int AddrShift, endianness_t Endian> memory_view::memory_view_entry *mve_make_1(const address_space_config &config, memory_manager &manager, memory_view &view, int id) {
+        //template<int Level, int Width, int AddrShift>
+        public static memory_view.memory_view_entry mve_make_1<int_Level, int_Width, int_AddrShift>(address_space_config config, memory_manager manager, memory_view view, int id)  //template<int Level, int Width, int AddrShift> memory_view::memory_view_entry *mve_make_1(const address_space_config &config, memory_manager &manager, memory_view &view, int id) {
         {
-            return new memory_view_entry_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(config, manager, view, id);
-        }
-
-        //template<int Width, int AddrShift, endianness_t Endian>
-        public static memory_view.memory_view_entry mve_make_2<int_Width, int_AddrShift, endianness_t_Endian>(int Level, address_space_config config, memory_manager manager, memory_view view, int id)  //template<int Width, int AddrShift, endianness_t Endian> memory_view::memory_view_entry *mve_make_2(int Level, const address_space_config &config, memory_manager &manager, memory_view &view, int id) {
-        {
-            switch (Level)
-            {
-                case 0: return mve_make_1<int_const_0, int_Width, int_AddrShift, endianness_t_Endian>(config, manager, view, id);
-                case 1: return mve_make_1<int_const_1, int_Width, int_AddrShift, endianness_t_Endian>(config, manager, view, id);
-                default: std.abort(); return null;
-            }
+            return new memory_view_entry_specific<int_Level, int_Width, int_AddrShift>(config, manager, view, id);
         }
 
         //template<int Width, int AddrShift>
-        public static memory_view.memory_view_entry mve_make_3<int_Width, int_AddrShift>(int Level, endianness_t Endian, address_space_config config, memory_manager manager, memory_view view, int id)  //template<int Width, int AddrShift> memory_view::memory_view_entry *mve_make_3(int Level, endianness_t Endian, const address_space_config &config, memory_manager &manager, memory_view &view, int id) {
+        public static memory_view.memory_view_entry mve_make_2<int_Width, int_AddrShift>(int Level, address_space_config config, memory_manager manager, memory_view view, int id)  //template<int Width, int AddrShift> memory_view::memory_view_entry *mve_make_2(int Level, const address_space_config &config, memory_manager &manager, memory_view &view, int id) {
         {
-            switch (Endian)
+            switch (Level)
             {
-                case endianness_t.ENDIANNESS_LITTLE: return mve_make_2<int_Width, int_AddrShift, endianness_t_const_ENDIANNESS_LITTLE>(Level, config, manager, view, id);
-                case endianness_t.ENDIANNESS_BIG:    return mve_make_2<int_Width, int_AddrShift, endianness_t_const_ENDIANNESS_BIG>   (Level, config, manager, view, id);
+                case 0: return mve_make_1<int_const_0, int_Width, int_AddrShift>(config, manager, view, id);
+                case 1: return mve_make_1<int_const_1, int_Width, int_AddrShift>(config, manager, view, id);
                 default: std.abort(); return null;
             }
         }
@@ -617,19 +605,19 @@ namespace mame
         {
             switch (Width | (AddrShift + 4))
             {
-                case  8|(4+1): return mve_make_3<int_const_0, int_const_1> (Level, Endian, config, manager, view, id);
-                case  8|(4-0): return mve_make_3<int_const_0, int_const_0> (Level, Endian, config, manager, view, id);
-                case 16|(4+3): return mve_make_3<int_const_1, int_const_3> (Level, Endian, config, manager, view, id);
-                case 16|(4-0): return mve_make_3<int_const_1, int_const_0> (Level, Endian, config, manager, view, id);
-                case 16|(4-1): return mve_make_3<int_const_1, int_const_n1>(Level, Endian, config, manager, view, id);
-                case 32|(4+3): return mve_make_3<int_const_2, int_const_3> (Level, Endian, config, manager, view, id);
-                case 32|(4-0): return mve_make_3<int_const_2, int_const_0> (Level, Endian, config, manager, view, id);
-                case 32|(4-1): return mve_make_3<int_const_2, int_const_n1>(Level, Endian, config, manager, view, id);
-                case 32|(4-2): return mve_make_3<int_const_2, int_const_n2>(Level, Endian, config, manager, view, id);
-                case 64|(4-0): return mve_make_3<int_const_3, int_const_0> (Level, Endian, config, manager, view, id);
-                case 64|(4-1): return mve_make_3<int_const_3, int_const_n1>(Level, Endian, config, manager, view, id);
-                case 64|(4-2): return mve_make_3<int_const_3, int_const_n2>(Level, Endian, config, manager, view, id);
-                case 64|(4-3): return mve_make_3<int_const_3, int_const_n3>(Level, Endian, config, manager, view, id);
+                case  8|(4+1): return mve_make_2<int_const_0, int_const_1> (Level, config, manager, view, id);
+                case  8|(4-0): return mve_make_2<int_const_0, int_const_0> (Level, config, manager, view, id);
+                case 16|(4+3): return mve_make_2<int_const_1, int_const_3> (Level, config, manager, view, id);
+                case 16|(4-0): return mve_make_2<int_const_1, int_const_0> (Level, config, manager, view, id);
+                case 16|(4-1): return mve_make_2<int_const_1, int_const_n1>(Level, config, manager, view, id);
+                case 32|(4+3): return mve_make_2<int_const_2, int_const_3> (Level, config, manager, view, id);
+                case 32|(4-0): return mve_make_2<int_const_2, int_const_0> (Level, config, manager, view, id);
+                case 32|(4-1): return mve_make_2<int_const_2, int_const_n1>(Level, config, manager, view, id);
+                case 32|(4-2): return mve_make_2<int_const_2, int_const_n2>(Level, config, manager, view, id);
+                case 64|(4-0): return mve_make_2<int_const_3, int_const_0> (Level, config, manager, view, id);
+                case 64|(4-1): return mve_make_2<int_const_3, int_const_n1>(Level, config, manager, view, id);
+                case 64|(4-2): return mve_make_2<int_const_3, int_const_n2>(Level, config, manager, view, id);
+                case 64|(4-3): return mve_make_2<int_const_3, int_const_n3>(Level, config, manager, view, id);
                 default: std.abort(); return null;
             }
         }

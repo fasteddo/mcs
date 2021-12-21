@@ -18,12 +18,11 @@ namespace mame
 
     // dispatches an access among multiple handlers indexed on part of the address
 
-    //template<int HighBits, int Width, int AddrShift, endianness_t Endian>
-    class handler_entry_read_dispatch<int_HighBits, int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>, IDisposable
+    //template<int HighBits, int Width, int AddrShift>
+    class handler_entry_read_dispatch<int_HighBits, int_Width, int_AddrShift> : handler_entry_read<int_Width, int_AddrShift>, IDisposable
         where int_HighBits : int_const, new()
         where int_Width : int_const, new()
         where int_AddrShift : int_const, new()
-        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
         //using mapping = typename handler_entry_read<Width, AddrShift, Endian>::mapping;
@@ -35,7 +34,7 @@ namespace mame
         class u64_const_COUNT : u64_const { public UInt64 value { get { return COUNT; } } }
 
         //using std::array<handler_entry_read<Width, AddrShift, Endian> *, COUNT>::array;
-        class handler_array : std.array<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>, u64_const_COUNT>
+        class handler_array : std.array<handler_entry_read<int_Width, int_AddrShift>, u64_const_COUNT>
         {
             public handler_array()
             {
@@ -72,14 +71,14 @@ namespace mame
         std.vector<handler_array> m_dispatch_array = new std.vector<handler_array>();
         std.vector<range_array> m_ranges_array = new std.vector<range_array>();
 
-        Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> m_a_dispatch;  //handler_entry_read<Width, AddrShift, Endian> **m_a_dispatch;
+        Pointer<handler_entry_read<int_Width, int_AddrShift>> m_a_dispatch;  //handler_entry_read<Width, AddrShift> **m_a_dispatch;
         Pointer<handler_entry.range> m_a_ranges;  //handler_entry::range *m_a_ranges;
 
-        Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> m_u_dispatch;  //handler_entry_read<Width, AddrShift, Endian> **m_u_dispatch;
+        Pointer<handler_entry_read<int_Width, int_AddrShift>> m_u_dispatch;  //handler_entry_read<Width, AddrShift> **m_u_dispatch;
         Pointer<handler_entry.range> m_u_ranges;  //handler_entry::range *m_u_ranges;
 
 
-        public handler_entry_read_dispatch(address_space space, handler_entry.range init, handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public handler_entry_read_dispatch(address_space space, handler_entry.range init, handler_entry_read<int_Width, int_AddrShift> handler)
             : base(space, handler_entry.F_DISPATCH)
         {
             m_ranges_array.resize(1);
@@ -93,7 +92,7 @@ namespace mame
 
 
             if (handler == null)
-                handler = space.get_unmap_r<int_Width, int_AddrShift, endianness_t_Endian>();
+                handler = space.get_unmap_r<int_Width, int_AddrShift>();
 
             handler.ref_((s32)COUNT);
 
@@ -108,7 +107,7 @@ namespace mame
         //handler_entry_read_dispatch(address_space *space, memory_view &view);
 
 
-        handler_entry_read_dispatch(handler_entry_read_dispatch<int_HighBits, int_Width, int_AddrShift, endianness_t_Endian> src)
+        handler_entry_read_dispatch(handler_entry_read_dispatch<int_HighBits, int_Width, int_AddrShift> src)
             : base(src.m_space, handler_entry.F_DISPATCH)
         {
             m_view = null;
@@ -152,7 +151,7 @@ namespace mame
 
         public override uX read(offs_t offset, uX mem_mask)
         {
-            return emumem_global.dispatch_read<int_const_Level, int_Width, int_AddrShift, endianness_t_Endian>(HIGHMASK, offset, mem_mask, m_a_dispatch);
+            return emumem_global.dispatch_read<int_const_Level, int_Width, int_AddrShift>(HIGHMASK, offset, mem_mask, m_a_dispatch);
         }
 
 
@@ -162,7 +161,7 @@ namespace mame
         }
 
 
-        public override void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public override void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_read<int_Width, int_AddrShift> handler)
         {
             offs_t slot = (address >> (int)LowBits) & BITMASK;
             var h = m_a_dispatch[slot];
@@ -188,7 +187,7 @@ namespace mame
         protected override string name() { throw new emu_unimplemented(); }
 
 
-        public override void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public override void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read<int_Width, int_AddrShift> handler)
         {
             offs_t start_entry = (start & HIGHMASK) >> (int)LowBits;
             offs_t end_entry = (end & HIGHMASK) >> (int)LowBits;
@@ -255,7 +254,7 @@ namespace mame
             }
         }
 
-        public override void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public override void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read<int_Width, int_AddrShift> handler)
         {
             offs_t hmirror = mirror & HIGHMASK;
             offs_t lmirror = mirror & LOWMASK;
@@ -293,7 +292,7 @@ namespace mame
         }
 
 
-        public override void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, u8 rkey, std.vector<mapping> mappings)
+        public override void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift> descriptor, u8 rkey, std.vector<mapping> mappings)
         {
             offs_t start_entry = start >> (int)LowBits;
             offs_t end_entry = end >> (int)LowBits;
@@ -370,7 +369,7 @@ namespace mame
         }
 
 
-        public override void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, std.vector<mapping> mappings)
+        public override void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift> descriptor, std.vector<mapping> mappings)
         {
             offs_t hmirror = mirror & HIGHMASK;
             offs_t lmirror = mirror & LOWMASK;
@@ -402,12 +401,12 @@ namespace mame
         }
 
 
-        protected override void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read_passthrough<int_Width, int_AddrShift, endianness_t_Endian> handler, std.vector<mapping> mappings)
+        protected override void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read_passthrough<int_Width, int_AddrShift> handler, std.vector<mapping> mappings)
         {
             throw new emu_unimplemented();
         }
 
-        protected override void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read_passthrough<int_Width, int_AddrShift, endianness_t_Endian> handler, std.vector<mapping> mappings)
+        protected override void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read_passthrough<int_Width, int_AddrShift> handler, std.vector<mapping> mappings)
         {
             throw new emu_unimplemented();
         }
@@ -426,7 +425,7 @@ namespace mame
             {
                 if ((int)LowBits > -AddrShift && m_u_dispatch[start].is_dispatch())
                 {
-                    ((handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift, endianness_t_Endian>)m_u_dispatch[start]).range_cut_before(address);  //static_cast<handler_entry_read_dispatch<LowBits, Width, AddrShift, Endian> *>(m_dispatch[start]).range_cut_before(address);
+                    ((handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift>)m_u_dispatch[start]).range_cut_before(address);  //static_cast<handler_entry_read_dispatch<LowBits, Width, AddrShift> *>(m_dispatch[start]).range_cut_before(address);
                     break;
                 }
 
@@ -443,7 +442,7 @@ namespace mame
             {
                 if ((int)LowBits > -AddrShift && m_u_dispatch[start].is_dispatch())
                 {
-                    ((handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift, endianness_t_Endian>)m_u_dispatch[start]).range_cut_after(address);  //static_cast<handler_entry_read_dispatch<LowBits, Width, AddrShift, Endian> *>(m_dispatch[start]).range_cut_after(address);
+                    ((handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift>)m_u_dispatch[start]).range_cut_after(address);  //static_cast<handler_entry_read_dispatch<LowBits, Width, AddrShift> *>(m_dispatch[start]).range_cut_after(address);
                     break;
                 }
 
@@ -462,13 +461,13 @@ namespace mame
 
 
         //template<int HighBits, int Width, int AddrShift, endianness_t Endian>
-        public override Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> get_dispatch()  //handler_entry_read<Width, AddrShift, Endian> *const *handler_entry_read_dispatch<HighBits, Width, AddrShift, Endian>::get_dispatch() const
+        public override Pointer<handler_entry_read<int_Width, int_AddrShift>> get_dispatch()  //handler_entry_read<Width, AddrShift> *const *handler_entry_read_dispatch<HighBits, Width, AddrShift>::get_dispatch() const
         {
             return m_a_dispatch;
         }
 
 
-        public override void select_a(int id)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_read_dispatch<HighBits, Width, AddrShift, Endian>::select_a(int id)
+        public override void select_a(int id)  //template<int HighBits, int Width, int AddrShift> void handler_entry_read_dispatch<HighBits, Width, AddrShift>::select_a(int id)
         {
             u32 i = (u32)id + 1;
             if (i >= m_dispatch_array.size())
@@ -479,7 +478,7 @@ namespace mame
         }
 
 
-        public override void select_u(int id)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_read_dispatch<HighBits, Width, AddrShift, Endian>::select_u(int id)
+        public override void select_u(int id)  //template<int HighBits, int Width, int AddrShift> void handler_entry_read_dispatch<HighBits, Width, AddrShift>::select_u(int id)
         {
             u32 i = (u32)id + 1;
             if (i > m_dispatch_array.size())
@@ -514,7 +513,7 @@ namespace mame
         }
 
 
-        public override void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> dispatch, Pointer<handler_entry.range> ranges)  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> void handler_entry_read_dispatch<HighBits, Width, AddrShift, Endian>::init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, handler_entry_read<Width, AddrShift, Endian> **dispatch, handler_entry::range *ranges)
+        public override void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_read<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)  //template<int HighBits, int Width, int AddrShift> void handler_entry_read_dispatch<HighBits, Width, AddrShift>::init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, handler_entry_read<Width, AddrShift> **dispatch, handler_entry::range *ranges)
         {
             if (m_view == null)
                 g.fatalerror("init_handlers called on non-view handler_entry_read_dispatch.");
@@ -561,7 +560,7 @@ namespace mame
         }
 
 
-        public override handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> dup()  //template<int HighBits, int Width, int AddrShift, endianness_t Endian> handler_entry_read<Width, AddrShift, Endian> *handler_entry_read_dispatch<HighBits, Width, AddrShift, Endian>::dup()
+        public override handler_entry_read<int_Width, int_AddrShift> dup()  //template<int HighBits, int Width, int AddrShift> handler_entry_read<Width, AddrShift, Endian> *handler_entry_read_dispatch<HighBits, Width, AddrShift>::dup()
         {
             if (m_view != null)
             {
@@ -569,11 +568,11 @@ namespace mame
                 return this;
             }
 
-            return new handler_entry_read_dispatch<int_HighBits, int_Width, int_AddrShift, endianness_t_Endian>(this);
+            return new handler_entry_read_dispatch<int_HighBits, int_Width, int_AddrShift>(this);
         }
 
 
-        void populate_nomirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        void populate_nomirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read<int_Width, int_AddrShift> handler)
         {
             var cur = m_u_dispatch[entry];
             if (cur.is_dispatch())
@@ -582,7 +581,7 @@ namespace mame
             }
             else
             {
-                var subdispatch = new handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift, endianness_t_Endian>(m_space, m_u_ranges[entry], cur);  //auto subdispatch = new handler_entry_read_dispatch<LowBits, Width, AddrShift, Endian>(handler_entry::m_space, m_ranges[entry], cur);
+                var subdispatch = new handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift>(m_space, m_u_ranges[entry], cur);  //auto subdispatch = new handler_entry_read_dispatch<LowBits, Width, AddrShift>(handler_entry::m_space, m_ranges[entry], cur);
                 cur.unref();
                 m_u_dispatch[entry] = subdispatch;
                 subdispatch.populate_nomirror(start, end, ostart, oend, handler);
@@ -590,7 +589,7 @@ namespace mame
         }
 
 
-        void populate_mirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        void populate_mirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read<int_Width, int_AddrShift> handler)
         {
             var cur = m_u_dispatch[entry];
             if (cur.is_dispatch())
@@ -599,7 +598,7 @@ namespace mame
             }
             else
             {
-                var subdispatch = new handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift, endianness_t_Endian>(m_space, m_u_ranges[entry], cur);  //auto subdispatch = new handler_entry_read_dispatch<LowBits, Width, AddrShift, Endian>(handler_entry::m_space, m_u_ranges[entry], cur);
+                var subdispatch = new handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift>(m_space, m_u_ranges[entry], cur);  //auto subdispatch = new handler_entry_read_dispatch<LowBits, Width, AddrShift>(handler_entry::m_space, m_u_ranges[entry], cur);
                 cur.unref();
                 m_u_dispatch[entry] = subdispatch;
                 subdispatch.populate_mirror(start, end, ostart, oend, mirror, handler);
@@ -607,7 +606,7 @@ namespace mame
         }
 
 
-        void populate_mismatched_nomirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, u8 rkey, std.vector<mapping> mappings)
+        void populate_mismatched_nomirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift> descriptor, u8 rkey, std.vector<mapping> mappings)
         {
             var cur = m_u_dispatch[entry];
             if (cur.is_dispatch())
@@ -616,7 +615,7 @@ namespace mame
             }
             else
             {
-                var subdispatch = new handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift, endianness_t_Endian>(m_space, m_u_ranges[entry], cur);  //auto subdispatch = new handler_entry_read_dispatch<LowBits, Width, AddrShift, Endian>(handler_entry::m_space, m_u_ranges[entry], cur);
+                var subdispatch = new handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift>(m_space, m_u_ranges[entry], cur);  //auto subdispatch = new handler_entry_read_dispatch<LowBits, Width, AddrShift>(handler_entry::m_space, m_u_ranges[entry], cur);
                 cur.unref();
                 m_u_dispatch[entry] = subdispatch;
                 subdispatch.populate_mismatched_nomirror(start, end, ostart, oend, descriptor, rkey, mappings);
@@ -624,7 +623,7 @@ namespace mame
         }
 
 
-        void populate_mismatched_mirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, std.vector<mapping> mappings)
+        void populate_mismatched_mirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift> descriptor, std.vector<mapping> mappings)
         {
             var cur = m_u_dispatch[entry];
             if (cur.is_dispatch())
@@ -633,7 +632,7 @@ namespace mame
             }
             else
             {
-                var subdispatch = new handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift, endianness_t_Endian>(m_space, m_u_ranges[entry], cur);  //auto subdispatch = new handler_entry_read_dispatch<LowBits, Width, AddrShift, Endian>(handler_entry::m_space, m_u_ranges[entry], cur);
+                var subdispatch = new handler_entry_read_dispatch<int_const_LowBits, int_Width, int_AddrShift>(m_space, m_u_ranges[entry], cur);  //auto subdispatch = new handler_entry_read_dispatch<LowBits, Width, AddrShift>(handler_entry::m_space, m_u_ranges[entry], cur);
                 cur.unref();
                 m_u_dispatch[entry] = subdispatch;
                 subdispatch.populate_mismatched_mirror(start, end, ostart, oend, mirror, descriptor, mappings);
@@ -641,11 +640,11 @@ namespace mame
         }
 
 
-        void mismatched_patch(memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, u8 rkey, std.vector<mapping> mappings, ref handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> target)
+        void mismatched_patch(memory_units_descriptor<int_Width, int_AddrShift> descriptor, u8 rkey, std.vector<mapping> mappings, ref handler_entry_read<int_Width, int_AddrShift> target)
         {
             u8 ukey = descriptor.rkey_to_ukey(rkey);
-            handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> original = target.is_units() ? target : null;
-            handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> replacement = null;
+            handler_entry_read<int_Width, int_AddrShift> original = target.is_units() ? target : null;
+            handler_entry_read<int_Width, int_AddrShift> replacement = null;
             foreach (var p in mappings)
             {
                 if (p.ukey == ukey && p.original == original)
@@ -658,9 +657,9 @@ namespace mame
             if (replacement == null)
             {
                 if (original != null)
-                    replacement = new handler_entry_read_units<int_Width, int_AddrShift, endianness_t_Endian>(descriptor, ukey, (handler_entry_read_units<int_Width, int_AddrShift, endianness_t_Endian>)original);
+                    replacement = new handler_entry_read_units<int_Width, int_AddrShift>(descriptor, ukey, (handler_entry_read_units<int_Width, int_AddrShift>)original);
                 else
-                    replacement = new handler_entry_read_units<int_Width, int_AddrShift, endianness_t_Endian>(descriptor, ukey, m_space);
+                    replacement = new handler_entry_read_units<int_Width, int_AddrShift>(descriptor, ukey, m_space);
 
                 mappings.emplace_back(new mapping() { original = original, patched = replacement, ukey = ukey });
             }
@@ -674,8 +673,8 @@ namespace mame
         }
 
 
-        //void populate_passthrough_nomirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read_passthrough<Width, AddrShift, Endian> *handler, std::vector<mapping> &mappings);
-        //void populate_passthrough_mirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read_passthrough<Width, AddrShift, Endian> *handler, std::vector<mapping> &mappings);
-        //void passthrough_patch(handler_entry_read_passthrough<Width, AddrShift, Endian> *handler, std::vector<mapping> &mappings, handler_entry_read<Width, AddrShift, Endian> *&target);
+        //void populate_passthrough_nomirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read_passthrough<Width, AddrShift> *handler, std::vector<mapping> &mappings);
+        //void populate_passthrough_mirror_subdispatch(offs_t entry, offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read_passthrough<Width, AddrShift> *handler, std::vector<mapping> &mappings);
+        //void passthrough_patch(handler_entry_read_passthrough<Width, AddrShift> *handler, std::vector<mapping> &mappings, handler_entry_read<Width, AddrShift> *&target);
     }
 }

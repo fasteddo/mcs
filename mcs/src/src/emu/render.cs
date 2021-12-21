@@ -1605,37 +1605,55 @@ namespace mame
 
                     // get target aspect
                     float target_aspect = (float)target_width / (float)target_height * target_pixel_aspect;
-                    bool target_is_portrait = (target_aspect < 1.0f);
 
                     // apply automatic axial stretching if required
                     int scale_mode = m_scale_mode;
                     if (m_scale_mode == render_global.SCALE_FRACTIONAL_AUTO)
                     {
                         bool is_rotated = (((int)m_manager.machine().system().flags & g.ORIENTATION_SWAP_XY) ^ (target_orientation & g.ORIENTATION_SWAP_XY)) != 0;
-                        scale_mode = is_rotated ^ target_is_portrait ? render_global.SCALE_FRACTIONAL_Y : render_global.SCALE_FRACTIONAL_X;
+                        scale_mode = is_rotated ? render_global.SCALE_FRACTIONAL_Y : render_global.SCALE_FRACTIONAL_X;
                     }
-
-                    // determine the scale mode for each axis
-                    bool x_is_integer = !((!target_is_portrait && scale_mode == render_global.SCALE_FRACTIONAL_X) || (target_is_portrait && scale_mode == render_global.SCALE_FRACTIONAL_Y));
-                    bool y_is_integer = !((target_is_portrait && scale_mode == render_global.SCALE_FRACTIONAL_X) || (!target_is_portrait && scale_mode == render_global.SCALE_FRACTIONAL_Y));
 
                     // first compute scale factors to fit the screen
                     float xscale = (float)target_width / src_width;
                     float yscale = (float)target_height / src_height;
-                    float maxxscale = std.max(1.0f, (float)(m_int_overscan ? rendutil_global.render_round_nearest(xscale) : Math.Floor(xscale)));
-                    float maxyscale = std.max(1.0f, (float)(m_int_overscan ? rendutil_global.render_round_nearest(yscale) : Math.Floor(yscale)));
 
-                    // now apply desired scale mode and aspect correction
-                    if (m_keepaspect && target_aspect > src_aspect) xscale *= src_aspect / target_aspect * (maxyscale / yscale);
-                    if (m_keepaspect && target_aspect < src_aspect) yscale *= target_aspect / src_aspect * (maxxscale / xscale);
-                    if (x_is_integer) xscale = std.clamp(rendutil_global.render_round_nearest(xscale), 1.0f, maxxscale);
-                    if (y_is_integer) yscale = std.clamp(rendutil_global.render_round_nearest(yscale), 1.0f, maxyscale);
+                    // apply aspect correction
+                    if (m_keepaspect)
+                    {
+                        if (target_aspect > src_aspect)
+                            xscale *= src_aspect / target_aspect;
+                        else
+                            yscale *= target_aspect / src_aspect;
+                    }
+
+                    bool x_fits = g.render_round_nearest(xscale) * src_width <= target_width;
+                    bool y_fits = g.render_round_nearest(yscale) * src_height <= target_height;
+
+                    // compute integer scale factors
+                    float integer_x = std.max(1.0f, (float)(m_int_overscan || x_fits ? g.render_round_nearest(xscale) : std.floor(xscale)));
+                    float integer_y = std.max(1.0f, (float)(m_int_overscan || y_fits ? g.render_round_nearest(yscale) : std.floor(yscale)));
 
                     // check if we have user defined scale factors, if so use them instead
-                    int user_scale_x = target_is_portrait? m_int_scale_y : m_int_scale_x;
-                    int user_scale_y = target_is_portrait? m_int_scale_x : m_int_scale_y;
-                    xscale = user_scale_x > 0 ? user_scale_x : xscale;
-                    yscale = user_scale_y > 0 ? user_scale_y : yscale;
+                    integer_x = m_int_scale_x > 0 ? m_int_scale_x : integer_x;
+                    integer_y = m_int_scale_y > 0 ? m_int_scale_y : integer_y;
+
+                    // now apply desired scale mode
+                    if (scale_mode == render_global.SCALE_FRACTIONAL_X)
+                    {
+                        if (m_keepaspect) xscale *= integer_y / yscale;
+                        yscale = integer_y;
+                    }
+                    else if (scale_mode == render_global.SCALE_FRACTIONAL_Y)
+                    {
+                        if (m_keepaspect) yscale *= integer_x / xscale;
+                        xscale = integer_x;
+                    }
+                    else
+                    {
+                        xscale = integer_x;
+                        yscale = integer_y;
+                    }
 
                     // set the final width/height
                     visible_width = (int)rendutil_global.render_round_nearest(src_width * xscale);
@@ -3420,7 +3438,7 @@ namespace mame
         //  config_load - read and apply data from the
         //  configuration file
         //-------------------------------------------------
-        void config_load(config_type cfg_type, util.xml.data_node parentnode)
+        void config_load(config_type cfg_type, config_level cfg_lvl, util.xml.data_node parentnode)
         {
             //throw new emu_unimplemented();
         }

@@ -1261,7 +1261,7 @@ namespace mame
 
     // ======================> digital_joystick
     // tracking information about a digital joystick input
-    public class digital_joystick : simple_list_item<digital_joystick>
+    public class digital_joystick
     {
         // directions
         public enum direction_t
@@ -1283,7 +1283,6 @@ namespace mame
 
 
         // internal state
-        digital_joystick m_next;                                         // next joystick in the list
         int m_player;                                       // player number represented
         int m_number;                                       // joystick number represented
         std.forward_list<ioport_field> [] m_field = new std.forward_list<ioport_field>[(int)direction_t.JOYDIR_COUNT];  //std::forward_list<std::reference_wrapper<ioport_field> > m_field[JOYDIR_COUNT];  // potential input fields for each direction
@@ -1298,7 +1297,6 @@ namespace mame
         //-------------------------------------------------
         public digital_joystick(int player, int number)
         {
-            m_next = null;
             m_player = player;
             m_number = number;
             m_current = 0;
@@ -1312,10 +1310,6 @@ namespace mame
 
 
         // getters
-        public digital_joystick next() { return m_next; }
-        public digital_joystick m_next_get() { return m_next; }
-        public void m_next_set(digital_joystick value) { m_next = value; }
-
         public int player() { return m_player; }
         public int number() { return m_number; }
         public u8 current() { return m_current; }
@@ -1502,10 +1496,9 @@ namespace mame
 
     // ======================> ioport_setting
     // a single setting for a configuration or DIP switch
-    public class ioport_setting : simple_list_item<ioport_setting>
+    public class ioport_setting
     {
         // internal state
-        ioport_setting m_next;             // pointer to next setting in sequence
         ioport_field m_field;            // pointer back to the field that owns us
         ioport_value m_value;            // value of the bits in this setting
         string m_name;             // user-friendly name to display
@@ -1518,7 +1511,6 @@ namespace mame
         //-------------------------------------------------
         public ioport_setting(ioport_field field, ioport_value _value, string _name)
         {
-            m_next = null;
             m_field = field;
             m_value = _value;
             m_name = _name;
@@ -1526,10 +1518,6 @@ namespace mame
 
 
         // getters
-        public ioport_setting next() { return m_next; }
-        public ioport_setting m_next_get() { return m_next; }
-        public void m_next_set(ioport_setting value) { m_next = value; }
-
         //ioport_field &field() const { return m_field; }
         public device_t device() { return m_field.device(); }
         //running_machine &machine() const;
@@ -1545,9 +1533,8 @@ namespace mame
 
     // ======================> ioport_diplocation
     // a mapping from a bit to a physical DIP switch description
-    class ioport_diplocation : simple_list_item<ioport_diplocation>
+    class ioport_diplocation
     {
-        ioport_diplocation m_next;         // pointer to the next bit
         string m_name;         // name of the physical DIP switch
         u8 m_number;       // physical switch number
         bool m_invert;       // is this an active-high DIP?
@@ -1559,7 +1546,6 @@ namespace mame
         //-------------------------------------------------
         public ioport_diplocation(string name, u8 swnum, bool invert)
         {
-            m_next = null;
             m_name = name;
             m_number = swnum;
             m_invert = invert;
@@ -1567,12 +1553,8 @@ namespace mame
 
 
         // getters
-        public ioport_diplocation next() { return m_next; }
-        public ioport_diplocation m_next_get() { return m_next; }
-        public void m_next_set(ioport_diplocation value) { m_next = value; }
-
         //const char *name() const { return m_name; }
-        //UINT8 number() const { return m_number; }
+        //u8 number() const { return m_number; }
         //bool inverted() const { return m_invert; }
     }
 
@@ -1582,6 +1564,7 @@ namespace mame
     public class ioport_field : simple_list_item<ioport_field>
     {
         //friend class simple_list<ioport_field>;
+        //friend class ioport_manager;
         //friend class ioport_configurer;
         //friend class dynamic_field;
 
@@ -1602,8 +1585,8 @@ namespace mame
         ioport_port m_port;             // reference to the port that owns us
         ioport_field_live m_live;         // live state of field (NULL if not live)
         int m_modcount;         // modification count
-        simple_list<ioport_setting> m_settinglist = new simple_list<ioport_setting>();      // list of input_setting_configs
-        simple_list<ioport_diplocation> m_diploclist = new simple_list<ioport_diplocation>();   // list of locations for various bits
+        public std.vector<ioport_setting> m_settinglist = new std.vector<ioport_setting>();      // list of input_setting_configs
+        std.vector<ioport_diplocation> m_diploclist = new std.vector<ioport_diplocation>();   // list of locations for various bits
 
         // generally-applicable data
         ioport_value m_mask;             // mask of bits belonging to the field
@@ -1718,8 +1701,8 @@ namespace mame
         public ioport_manager manager() { return m_port.manager(); }
         public running_machine machine() { return m_port.machine(); }
         public int modcount() { return m_modcount; }
-        public simple_list<ioport_setting> settings() { return m_settinglist; }
-        simple_list<ioport_diplocation> diplocations() { return m_diploclist; }
+        public std.vector<ioport_setting> settings() { return m_settinglist; }
+        std.vector<ioport_diplocation> diplocations() { return m_diploclist; }
 
         public ioport_value mask() { return m_mask; }
         public ioport_value defvalue() { return m_defvalue; }
@@ -1992,40 +1975,30 @@ namespace mame
             g.assert(!m_settinglist.empty());
 
             // scan the list of settings looking for a match on the current value
-            ioport_setting nextsetting = null;
-            ioport_setting setting;
-            for (setting = m_settinglist.first(); setting != null; setting = setting.next())
-            {
-                if (setting.enabled())
-                {
-                    if (setting.value() == m_live.value)
-                        break;
-                }
-            }
+            int settingIdx = 0;  //auto setting = m_settinglist.begin();
+            while ((m_settinglist.Count != settingIdx) && (!m_settinglist[settingIdx].enabled() || (m_settinglist[settingIdx].value() != m_live.value)))  //while ((m_settinglist.end() != setting) && (!setting->enabled() || (setting->value() != m_live->value)))
+                ++settingIdx;
 
             // if we found one, scan forward for the next valid one
-            if (setting != null)
+            int nextsettingIdx = settingIdx;  //auto nextsetting = setting;
+            if (m_settinglist.Count != nextsettingIdx)  //if (m_settinglist.end() != nextsetting)
             {
-                for (nextsetting = setting.next(); nextsetting != null; nextsetting = nextsetting.next())
-                {
-                    if (nextsetting.enabled())
-                        break;
-                }
+                ++nextsettingIdx;
+                while ((m_settinglist.Count != nextsettingIdx) && !m_settinglist[nextsettingIdx].enabled())  //while ((m_settinglist.end() != nextsetting) && !nextsetting->enabled())
+                    ++nextsettingIdx;
             }
 
             // if we hit the end, search from the beginning
-            if (nextsetting == null)
+            if (m_settinglist.Count == nextsettingIdx)  //if (m_settinglist.end() == nextsetting)
             {
-                for (nextsetting = m_settinglist.first(); nextsetting != null; nextsetting = nextsetting.next())
-                {
-                    if (nextsetting.enabled())
-                        break;
-                }
+                nextsettingIdx = 0;  //nextsetting = m_settinglist.begin();
+                while ((m_settinglist.Count != nextsettingIdx) && !m_settinglist[nextsettingIdx].enabled())  //while ((m_settinglist.end() != nextsetting) && !nextsetting->enabled())
+                    ++nextsettingIdx;
             }
 
             // update the value to the previous one
-            if (nextsetting != null)
-                m_live.value = nextsetting.value();
+            if (m_settinglist.Count != nextsettingIdx)  //if (m_settinglist.end() != nextsetting)
+                m_live.value = m_settinglist[nextsettingIdx].value();
         }
 
 
@@ -2135,7 +2108,7 @@ namespace mame
                 // toggle controls: flip the toggle state or advance to the next setting
                 if (m_live.toggle)
                 {
-                    if (m_settinglist.count() == 0)
+                    if (m_settinglist.empty())
                         m_live.value ^= m_mask;
                     else
                         select_next_setting();
@@ -2220,17 +2193,14 @@ namespace mame
             if (string.IsNullOrEmpty(location))
                 return;
 
-            m_diploclist.reset();
+            m_diploclist.clear();
 
             // parse the string
             string name = ""; // Don't move this variable inside the loop, lastname's lifetime depends on it being outside
-            //const char *lastname = NULL;
-            string lastname = "";
-            //const char *curentry = location;
-            int curentryIdx = 0;
+            string lastname = "";  //const char *lastname = NULL;
+            int curentryIdx = 0;  //const char *curentry = location;
             int entries = 0;
-            //while (*curentry != 0)
-            while (curentryIdx < location.Length)
+            while (curentryIdx < location.Length)  //while (*curentry != 0)
             {
                 // find the end of this entry
                 //const char *comma = strchr(curentry, ',');
@@ -2241,27 +2211,23 @@ namespace mame
                     commaIdx += curentryIdx;
 
                 // extract it to tempbuf
-                string tempstr;
-                //tempstr.cpy(curentry, comma - curentry);
-                tempstr = location.Substring(curentryIdx, commaIdx - curentryIdx);
+                string tempstr = location.Substring(curentryIdx, commaIdx - curentryIdx);  //std::string tempstr(curentry, comma - curentry);
 
                 // first extract the switch name if present
-                //const char *number = tempstr;
-                int numberIdx = 0;
-                //const char *colon = strchr(tempstr, ':');
-                int colonIdx = tempstr.IndexOf(':');
+                int numberIdx = 0;  //const char *number = tempstr;
+                int colonIdx = tempstr.IndexOf(':');  //const char *colon = strchr(tempstr, ':');
 
-                // allocate and copy the name if it is present
                 if (colonIdx != -1)
                 {
+                    // allocate and copy the name if it is present
                     //lastname = name.cpy(number, colon - number);
                     name = tempstr.Substring(numberIdx, colonIdx - numberIdx);
                     lastname = name;
                     numberIdx = colonIdx + 1;
                 }
-                // otherwise, just copy the last name
                 else
                 {
+                    // otherwise, just copy the last name
                     if (string.IsNullOrEmpty(lastname))
                     {
                         errorbuf += string.Format("Switch location '{0}' missing switch name!\n", location);
@@ -2280,12 +2246,11 @@ namespace mame
 
                 // now scan the switch number
                 int swnum = -1;
-                //if (sscanf(number, "%d", &swnum) != 1)
-                if (!int.TryParse(tempstr.Substring(numberIdx).Split()[0], out swnum))
+                if (!int.TryParse(tempstr.Substring(numberIdx).Split()[0], out swnum))  //if (sscanf(number, "%d", &swnum) != 1)
                     errorbuf += string.Format("Switch location '{0}' has invalid format!\n", location);
 
                 // allocate a new entry
-                m_diploclist.append(new ioport_diplocation(name, (byte)swnum, invert));
+                m_diploclist.emplace_back(new ioport_diplocation(name, (u8)swnum, invert));
                 entries++;
 
                 // advance to the next item
@@ -2563,7 +2528,7 @@ namespace mame
             m_live.digital = 0;
 
             // now loop back and modify based on the inputs
-            foreach (ioport_field field in fields())
+            foreach (ioport_field field in m_fieldlist)
                 field.frame_update(ref m_live.digital);
         }
 
@@ -2644,10 +2609,12 @@ namespace mame
 
     // ======================> analog_field
     // live analog field information
-    public class analog_field : simple_list_item<analog_field>
+    public class analog_field
     {
+        //friend class ioport_manager;
+        //friend void ioport_field::set_user_settings(const ioport_field::user_settings &settings) noexcept;
+
         // internal state
-        analog_field m_next;                 // link to the next analog state for this port
         ioport_field m_field;                // pointer to the input field referenced
 
         // adjusted values (right-justified and tweaked)
@@ -2697,7 +2664,6 @@ namespace mame
         //-------------------------------------------------
         public analog_field(ioport_field field)
         {
-            m_next = null;
             m_field = field;
             m_shift = 0;
             m_adjdefvalue = (s32)(field.defvalue() & field.mask());
@@ -2880,10 +2846,6 @@ namespace mame
 
 
         // getters
-        public analog_field next() { return m_next; }
-        public analog_field m_next_get() { return m_next; }
-        public void m_next_set(analog_field value) { m_next = value; }
-
         ioport_manager manager() { return m_field.manager(); }
         //ioport_field &field() const { return m_field; }
         //INT32 sensitivity() const { return m_sensitivity; }
@@ -3200,10 +3162,9 @@ namespace mame
 
     // ======================> dynamic_field
     // live device field information
-    public class dynamic_field : simple_list_item<dynamic_field>
+    public class dynamic_field
     {
         // internal state
-        dynamic_field m_next;             // linked list of info for this port
         ioport_field m_field;            // reference to the input field
         u8 m_shift;            // shift to apply to the final result
         ioport_value m_oldval;           // last value
@@ -3215,7 +3176,6 @@ namespace mame
         //-------------------------------------------------
         public dynamic_field(ioport_field field)
         {
-            m_next = null;
             m_field = field;
             m_shift = 0;
             m_oldval = field.defvalue();
@@ -3230,10 +3190,6 @@ namespace mame
 
 
         // getters
-        public dynamic_field next() { return m_next; }
-        public dynamic_field m_next_get() { return m_next; }
-        public void m_next_set(dynamic_field value) { m_next = value; }
-
         public ioport_field field() { return m_field; }
 
 
@@ -3246,15 +3202,15 @@ namespace mame
         public void read(ref ioport_value result)
         {
             // skip if not enabled
-            if (!m_field.enabled())
-                return;
+            if (m_field.enabled())
+            {
+                // call the callback to read a new value
+                ioport_value newval = m_field.m_read();
+                m_oldval = newval;
 
-            // call the callback to read a new value
-            ioport_value newval = m_field.m_read();
-            m_oldval = newval;
-
-            // merge in the bits (don't invert yet, as all digitals are inverted together)
-            result = (result & ~m_field.mask()) | ((newval << m_shift) & m_field.mask());
+                // merge in the bits (don't invert yet, as all digitals are inverted together)
+                result = (result & ~m_field.mask()) | ((newval << m_shift) & m_field.mask());
+            }
         }
 
         //-------------------------------------------------
@@ -3264,15 +3220,15 @@ namespace mame
         public void write(ioport_value newval)
         {
             // skip if not enabled
-            if (!m_field.enabled())
-                return;
-
-            // if the bits have changed, call the handler
-            newval = (newval & m_field.mask()) >> m_shift;
-            if (m_oldval != newval)
+            if (m_field.enabled())
             {
-                m_field.m_write(m_field, m_field.m_write_param, m_oldval, newval);
-                m_oldval = newval;
+                // if the bits have changed, call the handler
+                newval = (newval & m_field.mask()) >> m_shift;
+                if (m_oldval != newval)
+                {
+                    m_field.m_write(m_field, m_field.m_write_param, m_oldval, newval);
+                    m_oldval = newval;
+                }
             }
         }
     }
@@ -3283,9 +3239,9 @@ namespace mame
     public class ioport_port_live
     {
         // public state
-        public simple_list<analog_field> analoglist = new simple_list<analog_field>();       // list of analog port info
-        public simple_list<dynamic_field> readlist = new simple_list<dynamic_field>();        // list of dynamic read fields
-        public simple_list<dynamic_field> writelist = new simple_list<dynamic_field>();       // list of dynamic write fields
+        public std.list<analog_field> analoglist = new std.list<analog_field>();       // list of analog port info
+        public std.vector<dynamic_field> readlist = new std.vector<dynamic_field>();        // list of dynamic read fields
+        public std.vector<dynamic_field> writelist = new std.vector<dynamic_field>();       // list of dynamic write fields
         public ioport_value defvalue;           // combined default value across the port
         public ioport_value digital;            // current value from all digital inputs
         public ioport_value outputvalue;        // current value for outputs
@@ -3308,15 +3264,15 @@ namespace mame
                 // allocate analog state if it's analog
                 analog_field analog = null;
                 if (field.is_analog())
-                    analog = analoglist.append(new analog_field(field));
+                    analog = analoglist.emplace_back(new analog_field(field)).Value;
 
                 // allocate a dynamic field for reading
                 if (field.has_dynamic_read())
-                    readlist.append(new dynamic_field(field));
+                    readlist.emplace_back(new dynamic_field(field));
 
                 // allocate a dynamic field for writing
                 if (field.has_dynamic_write())
-                    writelist.append(new dynamic_field(field));
+                    writelist.emplace_back(new dynamic_field(field));
 
                 // let the field initialize its live state
                 field.init_live_state(analog);
@@ -3503,9 +3459,9 @@ namespace mame
             if (m_curfield == null)
                 throw new emu_fatalerror("alloc_setting called with no active field (value={0} name={1})\n", value, name);
 
-            m_cursetting = new ioport_setting(m_curfield, value & m_curfield.mask(), string_from_token(name));
             // append a new setting
-            m_curfield.settings().append(m_cursetting);
+            m_cursetting = new ioport_setting(m_curfield, value & m_curfield.mask(), string_from_token(name));
+            m_curfield.m_settinglist.emplace_back(m_cursetting);
             return this;
         }
 
@@ -3564,7 +3520,7 @@ namespace mame
         input_type_entry [,] m_type_to_entry = new input_type_entry[(int)ioport_type.IPT_COUNT, ioport_global.MAX_PLAYERS]; // map from type/player to type state
 
         // specific special global input states
-        simple_list<digital_joystick> m_joystick_list = new simple_list<digital_joystick>();  // list of digital joysticks
+        std.list<digital_joystick> m_joystick_list = new std.list<digital_joystick>();  // list of digital joysticks
 
         // frame time tracking
         attotime m_last_frame_time;      // time of the last frame callback
@@ -3780,7 +3736,7 @@ namespace mame
             }
 
             // create a new one
-            return m_joystick_list.append(new digital_joystick(player, number));
+            return m_joystick_list.emplace_back(new digital_joystick(player, number)).Value;
         }
 
 
@@ -3967,7 +3923,7 @@ namespace mame
         //  load_config - callback to extract configuration
         //  data from the XML nodes
         //-------------------------------------------------
-        void load_config(config_type cfg_type, util.xml.data_node parentnode)
+        void load_config(config_type cfg_type, config_level cfg_level, util.xml.data_node parentnode)
         {
             // in the completion phase, we finish the initialization with the final ports
             if (cfg_type == config_type.FINAL)
@@ -3994,8 +3950,9 @@ namespace mame
             throw new emu_unimplemented();
         }
 
-        //bool load_default_config(xml_data_node *portnode, int type, int player, const input_seq *newseq);
-        //void load_game_config(xml_data_node *portnode, int type, int player, const input_seq *newseq);
+        //bool load_default_config(int type, int player, const input_seq (&newseq)[SEQ_TYPE_TOTAL]);
+        //bool load_controller_config(util::xml::data_node const &portnode, int type, int player, const input_seq (&newseq)[SEQ_TYPE_TOTAL]);
+        //void load_system_config(util::xml::data_node const &portnode, int type, int player, const input_seq (&newseq)[SEQ_TYPE_TOTAL]);
 
         //-------------------------------------------------
         //  save_config - config callback for saving input

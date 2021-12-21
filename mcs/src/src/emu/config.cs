@@ -7,17 +7,23 @@ using System.Collections.Generic;
 
 namespace mame
 {
-    //typedef delegate<void (config_type, xml_data_node *)> config_saveload_delegate;
-    public delegate void config_saveload_delegate(config_type param1, util.xml.data_node param2);
-
-
-    public enum config_type
+    public enum config_type : int
     {
-        INIT = 0,       // opportunity to initialize things first
+        INIT,           // opportunity to initialize things first
         CONTROLLER,     // loading from controller file
         DEFAULT,        // loading from default.cfg
-        GAME,           // loading from game.cfg
+        SYSTEM,         // loading from system.cfg
         FINAL           // opportunity to finish initialization
+    }
+
+
+    public enum config_level : int
+    {
+        DEFAULT,
+        SOURCE,
+        BIOS,
+        PARENT,
+        SYSTEM
     }
 
 
@@ -26,10 +32,17 @@ namespace mame
     {
         class config_element
         {
-            public string name;              /* node name */
-            public config_saveload_delegate load;              /* load callback */
-            public config_saveload_delegate save;              /* save callback */
+            public string name;              // node name
+            public load_delegate load;              // load callback
+            public save_delegate save;              // save callback
         }
+
+
+        public delegate void load_delegate(config_type param1, config_level param2, util.xml.data_node param3);  //typedef delegate<void (config_type, config_level, util::xml::data_node const *)> load_delegate;
+        public delegate void save_delegate(config_type param1, util.xml.data_node param2);  //typedef delegate<void (config_type, util::xml::data_node *)> save_delegate;
+
+
+        //static inline constexpr int CONFIG_VERSION = 10;
 
 
         // internal state
@@ -53,14 +66,14 @@ namespace mame
          *  save/load
          *
          *************************************/
-        public void config_register(string nodename, config_saveload_delegate load, config_saveload_delegate save)
+        public void config_register(string nodename, load_delegate load, save_delegate save)
         {
             config_element element = new config_element();
             element.name = nodename;
             element.load = load;
             element.save = save;
 
-            m_typelist.Add(element);
+            m_typelist.emplace_back(element);
         }
 
 
@@ -69,80 +82,79 @@ namespace mame
          *  Settings save/load frontend
          *
          *************************************/
-        public int load_settings()
+        public bool load_settings()
         {
-            string controller = machine().options().ctrlr();
-            int loaded = 0;
-
-            /* loop over all registrants and call their init function */
+            // loop over all registrants and call their init function
             foreach (var type in m_typelist)
-                type.load(config_type.INIT, null);
+                type.load(config_type.INIT, config_level.DEFAULT, null);
 
-            /* now load the controller file */
+            // now load the controller file
+            string controller = machine().options().ctrlr();
             if (!string.IsNullOrEmpty(controller))
             {
-                /* open the config file */
+                // open the config file
                 emu_file file = new emu_file(machine().options().ctrlr_path(), g.OPEN_FLAG_READ);
                 g.osd_printf_verbose("Attempting to parse: {0}.cfg\n", controller);
                 osd_file.error filerr = file.open(controller + ".cfg");
 
                 if (filerr != osd_file.error.NONE)
-                    throw new emu_fatalerror("Could not load controller file {0}.cfg", controller);
+                    throw new emu_fatalerror("Could not open controller file {0}.cfg", controller);
 
-                /* load the XML */
-                if (load_xml(file, config_type.CONTROLLER) == 0)
+                // load the XML
+                if (!load_xml(file, config_type.CONTROLLER))
                     throw new emu_fatalerror("Could not load controller file {0}.cfg", controller);
 
                 file.close();
             }
 
+            bool loaded;
+
             {
-                /* next load the defaults file */
+                // next load the defaults file
                 emu_file file = new emu_file(machine().options().cfg_directory(), g.OPEN_FLAG_READ);
                 osd_file.error filerr = file.open("default.cfg");
                 g.osd_printf_verbose("Attempting to parse: default.cfg\n");
                 if (filerr == osd_file.error.NONE)
                     load_xml(file, config_type.DEFAULT);
 
-                /* finally, load the game-specific file */
+                // finally, load the game-specific file
                 filerr = file.open(machine().basename() + ".cfg");
                 g.osd_printf_verbose("Attempting to parse: {0}.cfg\n", machine().basename());
-                if (filerr == osd_file.error.NONE)
-                    loaded = load_xml(file, config_type.GAME);
+                loaded = (osd_file.error.NONE == filerr) && load_xml(file, config_type.SYSTEM);
 
                 file.close();
             }
 
-            /* loop over all registrants and call their final function */
+            // loop over all registrants and call their final function
             foreach (var type in m_typelist)
-                type.load(config_type.FINAL, null);
+                type.load(config_type.FINAL, config_level.DEFAULT, null);
 
-            /* if we didn't find a saved config, return 0 so the main core knows that it */
-            /* is the first time the game is run and it should display the disclaimer. */
+            // if we didn't find a saved config, return false so the main core knows that it
+            // is the first time the game is run and it should display the disclaimer.
             return loaded;
         }
 
 
         public void save_settings()
         {
-            /* loop over all registrants and call their init function */
+            // loop over all registrants and call their init function
             foreach (var type in m_typelist)
                 type.save(config_type.INIT, null);
 
-            /* save the defaults file */
+            // save the defaults file
             emu_file file = new emu_file(machine().options().cfg_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
             osd_file.error filerr = file.open("default.cfg");
             if (filerr == osd_file.error.NONE)
                 save_xml(file, config_type.DEFAULT);
 
-            /* finally, save the game-specific file */
+            // finally, save the system-specific file
             filerr = file.open(machine().basename() + ".cfg");
             if (filerr == osd_file.error.NONE)
-                save_xml(file, config_type.GAME);
+                save_xml(file, config_type.SYSTEM);
 
             file.close();
 
-            /* loop over all registrants and call their final function */
+            // loop over all registrants and call their final function
             foreach (var type in m_typelist)
                 type.save(config_type.FINAL, null);
         }
@@ -157,7 +169,7 @@ namespace mame
          *  XML file load
          *
          *************************************/
-        int load_xml(emu_file file, config_type which_type)
+        bool load_xml(emu_file file, config_type which_type)
         {
             throw new emu_unimplemented();
         }
@@ -168,7 +180,7 @@ namespace mame
          *  XML file save
          *
          *************************************/
-        int save_xml(emu_file file, config_type which_type)
+        bool save_xml(emu_file file, config_type which_type)
         {
             throw new emu_unimplemented();
         }

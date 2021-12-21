@@ -11,6 +11,8 @@ using size_t = System.UInt64;
 using slot_interface_enumerator = mame.device_interface_enumerator<mame.device_slot_interface>;  //typedef device_interface_enumerator<device_slot_interface> slot_interface_enumerator;
 using u64 = System.UInt64;
 using uint32_t = System.UInt32;
+using uint64_t = System.UInt64;
+using unsigned = System.UInt32;
 
 
 namespace mame
@@ -359,65 +361,94 @@ namespace mame
         void listroms(std.vector<string> args)
         {
             apply_device_action(
-                    args,
-                    (root, type, first) =>
+                args,
+                (root, type, first) =>
+                {
+                    // space between items
+                    if (!first)
+                        g.osd_printf_info("\n");
+
+                    // iterate through ROMs
+                    std.list<Tuple<string, int64_t, string>> entries = new std.list<Tuple<string, int64_t, string>>();
+                    std.set<string> devnames = new std.set<string>();
+                    foreach (device_t device in new device_enumerator(root))
                     {
-                        // space between items
-                        if (!first)
-                            g.osd_printf_info("\n");
-
-                        // iterate through ROMs
                         bool hasroms = false;
-                        foreach (device_t device in new device_enumerator(root))
+                        for (var region = g.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
                         {
-                            for (var region = g.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+                            for (var rom = g.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
                             {
-                                for (var rom = g.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
+                                if (!hasroms)
                                 {
-                                    // print a header
-                                    if (!hasroms)
-                                        g.osd_printf_info(
-                                            "ROMs required for {0} \"{1}\".\n" +
-                                            "{2} {3} {4}\n",
-                                            type, root.shortname(), "Name", "Size", "Checksum");
                                     hasroms = true;
-
-                                    // accumulate the total length of all chunks
-                                    int64_t length = -1;
-                                    if (g.ROMREGION_ISROMDATA(region[0]))
-                                        length = g.rom_file_size(rom);
-
-                                    // start with the name
-                                    g.osd_printf_info("{0} ", rom[0].name());
-
-                                    // output the length next
-                                    if (length >= 0)
-                                        g.osd_printf_info("{0}", length);
-                                    else
-                                        g.osd_printf_info("{0}", "");
-
-                                    // output the hash data
-                                    util.hash_collection hashes = new util.hash_collection(rom[0].hashdata());
-                                    if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP))
-                                    {
-                                        if (hashes.flag(util.hash_collection.FLAG_BAD_DUMP))
-                                            g.osd_printf_info(" BAD");
-                                        g.osd_printf_info(" {0}", hashes.macro_string());
-                                    }
-                                    else
-                                    {
-                                        g.osd_printf_info(" NO GOOD DUMP KNOWN");
-                                    }
-
-                                    // end with a CR
-                                    g.osd_printf_info("\n");
+                                    if (device != root)
+                                        devnames.insert(device.shortname());
                                 }
+
+                                // accumulate the total length of all chunks
+                                int64_t length = -1;
+                                if (g.ROMREGION_ISROMDATA(region[0]))
+                                    length = g.rom_file_size(rom);
+
+                                entries.emplace_back(new Tuple<string, int64_t, string>(rom[0].name(), length, rom[0].hashdata()));
                             }
                         }
+                    }
 
-                        if (!hasroms)
-                            g.osd_printf_info("No ROMs required for {0} \"{1}\".\n", type, root.shortname());
-                    });
+                    // print results
+                    if (entries.empty())
+                    {
+                        g.osd_printf_info("No ROMs required for {0} \"{1}\".\n", type, root.shortname());
+                    }
+                    else
+                    {
+                        // print a header
+                        g.osd_printf_info("ROMs required for {0} \"{1}\"", type, root.shortname());
+                        if (!devnames.empty())
+                        {
+                            g.osd_printf_info(" (including device{0}", devnames.size() > 1 ? "s" : "");
+                            bool first2 = true;
+                            foreach (string devname in devnames)
+                            {
+                                if (first2)
+                                    first2 = false;
+                                else
+                                    g.osd_printf_info(",");
+
+                                g.osd_printf_info(" \"{0}\"", devname);
+                            }
+                            g.osd_printf_info(")");
+                        }
+                        g.osd_printf_info(".\n{0} {1} {2}\n", "Name", "Size", "Checksum");  //osd_printf_info(".\n%-32s %10s %s\n", "Name", "Size", "Checksum");
+
+                        foreach (var entry in entries)
+                        {
+                            // start with the name
+                            g.osd_printf_info("{0} ", entry.Item1);  //osd_printf_info("%-32s ", std::get<0>(entry));
+
+                            // output the length next
+                            int64_t length = entry.Item2;
+                            if (length >= 0)
+                                g.osd_printf_info("{0}", (unsigned)(uint64_t)length);  //osd_printf_info("%10u", unsigned(uint64_t(length)));
+                            else
+                                g.osd_printf_info("{0}", "");  //osd_printf_info("%10s", "");
+
+                            // output the hash data
+                            util.hash_collection hashes = new util.hash_collection(entry.Item3);
+                            if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP))
+                            {
+                                if (hashes.flag(util.hash_collection.FLAG_BAD_DUMP))
+                                    g.osd_printf_info(" BAD");
+                                g.osd_printf_info(" {0}", hashes.macro_string());
+                            }
+                            else
+                                g.osd_printf_info(" NO GOOD DUMP KNOWN");
+
+                            // end with a CR
+                            g.osd_printf_info("\n");
+                        }
+                    }
+                });
         }
 
 

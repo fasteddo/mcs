@@ -617,5 +617,8 @@ namespace mame
         {
             return new rgb_t(palexpand<int__RBits>((uint8_t)(data >> rshift)), palexpand<int__GBits>((uint8_t)(data >> gshift)), palexpand<int__BBits>((uint8_t)(data >> bshift)));
         }
+
+        //template<int _ABits, int _RBits, int _GBits, int _BBits>
+        //constexpr rgb_t argbexpand(uint32_t data, uint8_t ashift, uint8_t rshift, uint8_t gshift, uint8_t bshift)
     }
 }

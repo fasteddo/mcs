@@ -128,7 +128,7 @@ namespace mame
             config_load - load the state of the counters
             and tickets
         -------------------------------------------------*/
-        void config_load(config_type cfg_type, util.xml.data_node parentnode)
+        void config_load(config_type cfg_type, config_level cfg_level, util.xml.data_node parentnode)
         {
             //throw new emu_unimplemented();
         }

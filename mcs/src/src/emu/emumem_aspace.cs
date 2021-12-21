@@ -173,12 +173,12 @@ namespace mame
         //static constexpr offs_t offset_to_byte(offs_t offset) { return AddrShift < 0 ? offset << iabs(AddrShift) : offset >> iabs(AddrShift); }
 
 
-        Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> m_dispatch_read;
-        Pointer<handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>> m_dispatch_write;
+        Pointer<handler_entry_read<int_Width, int_AddrShift>> m_dispatch_read;
+        Pointer<handler_entry_write<int_Width, int_AddrShift>> m_dispatch_write;
 
 
-        handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> m_root_read;
-        handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> m_root_write;
+        handler_entry_read<int_Width, int_AddrShift> m_root_read;
+        handler_entry_write<int_Width, int_AddrShift> m_root_write;
 
         std.unordered_set<handler_entry> m_delayed_unrefs;
 
@@ -191,47 +191,47 @@ namespace mame
         public address_space_specific(memory_manager manager, device_memory_interface memory, int spacenum, int address_width)
             : base(manager, memory, spacenum)
         {
-            m_unmap_r = new handler_entry_read_unmapped<int_Width, int_AddrShift, endianness_t_Endian>(this);
-            m_unmap_w = new handler_entry_write_unmapped<int_Width, int_AddrShift, endianness_t_Endian>(this);
-            m_nop_r = new handler_entry_read_nop<int_Width, int_AddrShift, endianness_t_Endian>(this);
-            m_nop_w = new handler_entry_write_nop<int_Width, int_AddrShift, endianness_t_Endian>(this);
+            m_unmap_r = new handler_entry_read_unmapped<int_Width, int_AddrShift>(this);
+            m_unmap_w = new handler_entry_write_unmapped<int_Width, int_AddrShift>(this);
+            m_nop_r = new handler_entry_read_nop<int_Width, int_AddrShift>(this);
+            m_nop_w = new handler_entry_write_nop<int_Width, int_AddrShift>(this);
 
             handler_entry.range r = new handler_entry.range() { start = 0, end = 0xffffffff >> (32 - address_width) };
 
             switch (address_width)
             {
-                case  1: m_root_read = new handler_entry_read_dispatch<int_const_std_max_1_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_const_std_max_1_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  2: m_root_read = new handler_entry_read_dispatch<int_const_std_max_2_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_const_std_max_2_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  3: m_root_read = new handler_entry_read_dispatch<int_const_std_max_3_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_const_std_max_3_Width, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  4: m_root_read = new handler_entry_read_dispatch<int_const_4, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_4, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  5: m_root_read = new handler_entry_read_dispatch<int_const_5, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_5, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  6: m_root_read = new handler_entry_read_dispatch<int_const_6, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_6, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  7: m_root_read = new handler_entry_read_dispatch<int_const_7, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_7, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  8: m_root_read = new handler_entry_read_dispatch<int_const_8, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_8, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case  9: m_root_read = new handler_entry_read_dispatch<int_const_9, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_9, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 10: m_root_read = new handler_entry_read_dispatch<int_const_10, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_10, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 11: m_root_read = new handler_entry_read_dispatch<int_const_11, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_11, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 12: m_root_read = new handler_entry_read_dispatch<int_const_12, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_12, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 13: m_root_read = new handler_entry_read_dispatch<int_const_13, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_13, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 14: m_root_read = new handler_entry_read_dispatch<int_const_14, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_14, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 15: m_root_read = new handler_entry_read_dispatch<int_const_15, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_15, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 16: m_root_read = new handler_entry_read_dispatch<int_const_16, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_16, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 17: m_root_read = new handler_entry_read_dispatch<int_const_17, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_17, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 18: m_root_read = new handler_entry_read_dispatch<int_const_18, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_18, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 19: m_root_read = new handler_entry_read_dispatch<int_const_19, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_19, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 20: m_root_read = new handler_entry_read_dispatch<int_const_20, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_20, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 21: m_root_read = new handler_entry_read_dispatch<int_const_21, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_21, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 22: m_root_read = new handler_entry_read_dispatch<int_const_22, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_22, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 23: m_root_read = new handler_entry_read_dispatch<int_const_23, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_23, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 24: m_root_read = new handler_entry_read_dispatch<int_const_24, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_24, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 25: m_root_read = new handler_entry_read_dispatch<int_const_25, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_25, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 26: m_root_read = new handler_entry_read_dispatch<int_const_26, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_26, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 27: m_root_read = new handler_entry_read_dispatch<int_const_27, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_27, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 28: m_root_read = new handler_entry_read_dispatch<int_const_28, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_28, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 29: m_root_read = new handler_entry_read_dispatch<int_const_29, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_29, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 30: m_root_read = new handler_entry_read_dispatch<int_const_30, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_30, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 31: m_root_read = new handler_entry_read_dispatch<int_const_31, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_31, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
-                case 32: m_root_read = new handler_entry_read_dispatch<int_const_32, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_32, int_Width, int_AddrShift, endianness_t_Endian>(this, r, null); break;
+                case  1: m_root_read = new handler_entry_read_dispatch<int_const_std_max_1_Width, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_const_std_max_1_Width, int_Width, int_AddrShift>(this, r, null); break;
+                case  2: m_root_read = new handler_entry_read_dispatch<int_const_std_max_2_Width, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_const_std_max_2_Width, int_Width, int_AddrShift>(this, r, null); break;
+                case  3: m_root_read = new handler_entry_read_dispatch<int_const_std_max_3_Width, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch< int_const_std_max_3_Width, int_Width, int_AddrShift>(this, r, null); break;
+                case  4: m_root_read = new handler_entry_read_dispatch<int_const_4, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_4, int_Width, int_AddrShift>(this, r, null); break;
+                case  5: m_root_read = new handler_entry_read_dispatch<int_const_5, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_5, int_Width, int_AddrShift>(this, r, null); break;
+                case  6: m_root_read = new handler_entry_read_dispatch<int_const_6, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_6, int_Width, int_AddrShift>(this, r, null); break;
+                case  7: m_root_read = new handler_entry_read_dispatch<int_const_7, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_7, int_Width, int_AddrShift>(this, r, null); break;
+                case  8: m_root_read = new handler_entry_read_dispatch<int_const_8, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_8, int_Width, int_AddrShift>(this, r, null); break;
+                case  9: m_root_read = new handler_entry_read_dispatch<int_const_9, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_9, int_Width, int_AddrShift>(this, r, null); break;
+                case 10: m_root_read = new handler_entry_read_dispatch<int_const_10, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_10, int_Width, int_AddrShift>(this, r, null); break;
+                case 11: m_root_read = new handler_entry_read_dispatch<int_const_11, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_11, int_Width, int_AddrShift>(this, r, null); break;
+                case 12: m_root_read = new handler_entry_read_dispatch<int_const_12, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_12, int_Width, int_AddrShift>(this, r, null); break;
+                case 13: m_root_read = new handler_entry_read_dispatch<int_const_13, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_13, int_Width, int_AddrShift>(this, r, null); break;
+                case 14: m_root_read = new handler_entry_read_dispatch<int_const_14, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_14, int_Width, int_AddrShift>(this, r, null); break;
+                case 15: m_root_read = new handler_entry_read_dispatch<int_const_15, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_15, int_Width, int_AddrShift>(this, r, null); break;
+                case 16: m_root_read = new handler_entry_read_dispatch<int_const_16, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_16, int_Width, int_AddrShift>(this, r, null); break;
+                case 17: m_root_read = new handler_entry_read_dispatch<int_const_17, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_17, int_Width, int_AddrShift>(this, r, null); break;
+                case 18: m_root_read = new handler_entry_read_dispatch<int_const_18, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_18, int_Width, int_AddrShift>(this, r, null); break;
+                case 19: m_root_read = new handler_entry_read_dispatch<int_const_19, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_19, int_Width, int_AddrShift>(this, r, null); break;
+                case 20: m_root_read = new handler_entry_read_dispatch<int_const_20, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_20, int_Width, int_AddrShift>(this, r, null); break;
+                case 21: m_root_read = new handler_entry_read_dispatch<int_const_21, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_21, int_Width, int_AddrShift>(this, r, null); break;
+                case 22: m_root_read = new handler_entry_read_dispatch<int_const_22, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_22, int_Width, int_AddrShift>(this, r, null); break;
+                case 23: m_root_read = new handler_entry_read_dispatch<int_const_23, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_23, int_Width, int_AddrShift>(this, r, null); break;
+                case 24: m_root_read = new handler_entry_read_dispatch<int_const_24, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_24, int_Width, int_AddrShift>(this, r, null); break;
+                case 25: m_root_read = new handler_entry_read_dispatch<int_const_25, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_25, int_Width, int_AddrShift>(this, r, null); break;
+                case 26: m_root_read = new handler_entry_read_dispatch<int_const_26, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_26, int_Width, int_AddrShift>(this, r, null); break;
+                case 27: m_root_read = new handler_entry_read_dispatch<int_const_27, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_27, int_Width, int_AddrShift>(this, r, null); break;
+                case 28: m_root_read = new handler_entry_read_dispatch<int_const_28, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_28, int_Width, int_AddrShift>(this, r, null); break;
+                case 29: m_root_read = new handler_entry_read_dispatch<int_const_29, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_29, int_Width, int_AddrShift>(this, r, null); break;
+                case 30: m_root_read = new handler_entry_read_dispatch<int_const_30, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_30, int_Width, int_AddrShift>(this, r, null); break;
+                case 31: m_root_read = new handler_entry_read_dispatch<int_const_31, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_31, int_Width, int_AddrShift>(this, r, null); break;
+                case 32: m_root_read = new handler_entry_read_dispatch<int_const_32, int_Width, int_AddrShift>(this, r, null); m_root_write = new handler_entry_write_dispatch<int_const_32, int_Width, int_AddrShift>(this, r, null); break;
                 default: g.fatalerror("Unhandled address bus width {0}\n", address_width); break;
             }
 
@@ -263,7 +263,7 @@ namespace mame
             // read space
             if (readorwrite == read_or_write.READ || readorwrite == read_or_write.READWRITE)
             {
-                var handler = (handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>)(quiet ? m_nop_r : m_unmap_r);
+                var handler = (handler_entry_read<int_Width, int_AddrShift>)(quiet ? m_nop_r : m_unmap_r);
                 handler.ref_();
                 m_root_read.populate(nstart, nend, nmirror, handler);
             }
@@ -271,7 +271,7 @@ namespace mame
             // write space
             if (readorwrite == read_or_write.WRITE || readorwrite == read_or_write.READWRITE)
             {
-                var handler = (handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>)(quiet ? m_nop_w : m_unmap_w);
+                var handler = (handler_entry_write<int_Width, int_AddrShift>)(quiet ? m_nop_w : m_unmap_w);
                 handler.ref_();
                 m_root_write.populate(nstart, nend, nmirror, handler);
             }
@@ -301,7 +301,7 @@ namespace mame
             // map for read
             if (readorwrite == read_or_write.READ || readorwrite == read_or_write.READWRITE)
             {
-                var hand_r = new handler_entry_read_memory<int_Width, int_AddrShift, endianness_t_Endian>(this, baseptr);
+                var hand_r = new handler_entry_read_memory<int_Width, int_AddrShift>(this, baseptr);
                 hand_r.set_address_info(nstart, nmask);
                 m_root_read.populate(nstart, nend, nmirror, hand_r);
             }
@@ -309,7 +309,7 @@ namespace mame
             // map for write
             if (readorwrite == read_or_write.WRITE || readorwrite == read_or_write.READWRITE)
             {
-                var hand_w = new handler_entry_write_memory<int_Width, int_AddrShift, endianness_t_Endian>(this, baseptr);
+                var hand_w = new handler_entry_write_memory<int_Width, int_AddrShift>(this, baseptr);
                 hand_w.set_address_info(nstart, nmask);
                 m_root_write.populate(nstart, nend, nmirror, hand_w);
             }
@@ -338,7 +338,7 @@ namespace mame
             // map the read bank
             if (rbank != null)
             {
-                var hand_r = new handler_entry_read_memory_bank<int_Width, int_AddrShift, endianness_t_Endian>(this, rbank);
+                var hand_r = new handler_entry_read_memory_bank<int_Width, int_AddrShift>(this, rbank);
                 hand_r.set_address_info(nstart, nmask);
                 m_root_read.populate(nstart, nend, nmirror, hand_r);
             }
@@ -346,7 +346,7 @@ namespace mame
             // map the write bank
             if (wbank != null)
             {
-                var hand_w = new handler_entry_write_memory_bank<int_Width, int_AddrShift, endianness_t_Endian>(this, wbank);
+                var hand_w = new handler_entry_write_memory_bank<int_Width, int_AddrShift>(this, wbank);
                 hand_w.set_address_info(nstart, nmask);
                 m_root_write.populate(nstart, nend, nmirror, hand_w);
             }
@@ -381,7 +381,7 @@ namespace mame
                     throw new emu_fatalerror("Attempted to map non-existent port '{0}' for read in space {1} of device '{2}'\n", rtag, m_name, m_device.tag());
 
                 // map the range and set the ioport
-                var hand_r = new handler_entry_read_ioport<int_Width, int_AddrShift, endianness_t_Endian>(this, port);
+                var hand_r = new handler_entry_read_ioport<int_Width, int_AddrShift>(this, port);
                 m_root_read.populate(nstart, nend, nmirror, hand_r);
             }
 
@@ -393,7 +393,7 @@ namespace mame
                     g.fatalerror("Attempted to map non-existent port '{0}' for write in space {1} of device '{2}'\n", wtag, m_name, m_device.tag());
 
                 // map the range and set the ioport
-                var hand_w = new handler_entry_write_ioport<int_Width, int_AddrShift, endianness_t_Endian>(this, port);
+                var hand_w = new handler_entry_write_ioport<int_Width, int_AddrShift>(this, port);
                 m_root_write.populate(nstart, nend, nmirror, hand_w);
             }
 
@@ -662,25 +662,25 @@ namespace mame
         // native read
         uX read_native(offs_t offset, uX mask)  //NativeType read_native(offs_t offset, NativeType mask)
         {
-            return emumem_global.dispatch_read<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(offs_t.MaxValue, offset & m_addrmask, mask, m_dispatch_read);  //    return dispatch_read<Level, Width, AddrShift, Endian>(offs_t(-1), offset & m_addrmask, mask, m_dispatch_read);
+            return emumem_global.dispatch_read<int_Level, int_Width, int_AddrShift>(offs_t.MaxValue, offset & m_addrmask, mask, m_dispatch_read);  //    return dispatch_read<Level, Width, AddrShift>(offs_t(-1), offset & m_addrmask, mask, m_dispatch_read);
         }
 
         // mask-less native read
         uX read_native(offs_t offset)  //NativeType read_native(offs_t offset)
         {
-            return emumem_global.dispatch_read<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(offs_t.MaxValue, offset & m_addrmask, new uX(Width, 0xffffffffffffffffU), m_dispatch_read);  //return dispatch_read<Level, Width, AddrShift, Endian>(offs_t(-1), offset & m_addrmask, uX(0xffffffffffffffffU), m_dispatch_read);
+            return emumem_global.dispatch_read<int_Level, int_Width, int_AddrShift>(offs_t.MaxValue, offset & m_addrmask, new uX(Width, 0xffffffffffffffffU), m_dispatch_read);  //return dispatch_read<Level, Width, AddrShift>(offs_t(-1), offset & m_addrmask, uX(0xffffffffffffffffU), m_dispatch_read);
         }
 
         // native write
         void write_native(offs_t offset, uX data, uX mask)  //void write_native(offs_t offset, NativeType data, NativeType mask)
         {
-            emumem_global.dispatch_write<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(offs_t.MaxValue, offset & m_addrmask, data, mask, m_dispatch_write);  //    dispatch_write<Level, Width, AddrShift, Endian>(offs_t(-1), offset & m_addrmask, data, mask, m_dispatch_write);
+            emumem_global.dispatch_write<int_Level, int_Width, int_AddrShift>(offs_t.MaxValue, offset & m_addrmask, data, mask, m_dispatch_write);  //    dispatch_write<Level, Width, AddrShift>(offs_t(-1), offset & m_addrmask, data, mask, m_dispatch_write);
         }
 
         // mask-less native write
         void write_native(offs_t offset, uX data)  //void write_native(offs_t offset, NativeType data)
         {
-            emumem_global.dispatch_write<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(offs_t.MaxValue, offset & m_addrmask, data, new uX(Width, 0xffffffffffffffffU), m_dispatch_write);  //    dispatch_write<Level, Width, AddrShift, Endian>(offs_t(-1), offset & m_addrmask, data, uX(0xffffffffffffffffU), m_dispatch_write);
+            emumem_global.dispatch_write<int_Level, int_Width, int_AddrShift>(offs_t.MaxValue, offset & m_addrmask, data, new uX(Width, 0xffffffffffffffffU), m_dispatch_write);  //    dispatch_write<Level, Width, AddrShift>(offs_t(-1), offset & m_addrmask, data, uX(0xffffffffffffffffU), m_dispatch_write);
         }
 
 
@@ -809,14 +809,14 @@ namespace mame
 
                 if (Width == AccessWidth)
                 {
-                    var hand_r = new handler_entry_read_delegate<int_Width, int_AddrShift, endianness_t_Endian>(this, handler_r);
+                    var hand_r = new handler_entry_read_delegate<int_Width, int_AddrShift>(this, handler_r);
                     hand_r.set_address_info(nstart, nmask);
                     m_root_read.populate(nstart, nend, nmirror, hand_r);
                 }
                 else
                 {
-                    var hand_r = new handler_entry_read_delegate<int_AccessWidth, int_nAccessWidth, endianness_t_Endian>(this, handler_r);
-                    memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor = new memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian>((u8)AccessWidth, (u8)Endian, hand_r, nstart, nend, nmask, new uX(Width, nunitmask), ncswidth);
+                    var hand_r = new handler_entry_read_delegate<int_AccessWidth, int_nAccessWidth>(this, handler_r);
+                    memory_units_descriptor<int_Width, int_AddrShift> descriptor = new memory_units_descriptor<int_Width, int_AddrShift>((u8)AccessWidth, (u8)Endian, hand_r, nstart, nend, nmask, new uX(Width, nunitmask), ncswidth);
                     hand_r.set_address_info(descriptor.get_handler_start(), descriptor.get_handler_mask());
                     m_root_read.populate_mismatched(nstart, nend, nmirror, descriptor);
                     hand_r.unref();
@@ -856,14 +856,14 @@ namespace mame
 
                 if (Width == AccessWidth)
                 {
-                    var hand_w = new handler_entry_write_delegate<int_Width, int_AddrShift, endianness_t_Endian>(this, handler_w);
+                    var hand_w = new handler_entry_write_delegate<int_Width, int_AddrShift>(this, handler_w);
                     hand_w.set_address_info(nstart, nmask);
                     m_root_write.populate(nstart, nend, nmirror, hand_w);
                 }
                 else
                 {
-                    var hand_w = new handler_entry_write_delegate<int_AccessWidth, int_nAccessWidth, endianness_t_Endian>(this, handler_w);
-                    memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor = new memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian>((u8)AccessWidth, (u8)Endian, hand_w, nstart, nend, nmask, new uX(Width, nunitmask), ncswidth);
+                    var hand_w = new handler_entry_write_delegate<int_AccessWidth, int_nAccessWidth>(this, handler_w);
+                    memory_units_descriptor<int_Width, int_AddrShift> descriptor = new memory_units_descriptor<int_Width, int_AddrShift>((u8)AccessWidth, (u8)Endian, hand_w, nstart, nend, nmask, new uX(Width, nunitmask), ncswidth);
                     hand_w.set_address_info(descriptor.get_handler_start(), descriptor.get_handler_mask());
                     m_root_write.populate_mismatched(nstart, nend, nmirror, descriptor);
                     hand_w.unref();
@@ -877,44 +877,5 @@ namespace mame
         //void install_readwrite_handler_helper(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth,
         //                                 const READ  &handler_r,
         //                                 const WRITE &handler_w)
-        //{
-        //    if constexpr (Width < AccessWidth) {
-        //        fatalerror("install_readwrite_handler: cannot install a %d-wide handler in a %d-wide bus", 8 << AccessWidth, 8 << Width);
-        //    } else {
-        //        VPRINTF("address_space::install_readwrite_handler(%*x-%*x mask=%*x mirror=%*x, space width=%d, handler width=%d, %s, %s, %*x)\n",
-        //                m_addrchars, addrstart, m_addrchars, addrend,
-        //                m_addrchars, addrmask, m_addrchars, addrmirror,
-        //                8 << Width, 8 << AccessWidth,
-        //                handler_r.name(), handler_w.name(), data_width() / 4, unitmask);
-        //
-        //        offs_t nstart, nend, nmask, nmirror;
-        //        u64 nunitmask;
-        //        int ncswidth;
-        //        check_optimize_all("install_readwrite_handler", 8 << AccessWidth, addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, nstart, nend, nmask, nmirror, nunitmask, ncswidth);
-        //
-        //        if constexpr (Width == AccessWidth) {
-        //            auto hand_r = new handler_entry_read_delegate <Width, AddrShift, Endian, READ>(this, handler_r);
-        //            hand_r->set_address_info(nstart, nmask);
-        //            m_root_read ->populate(nstart, nend, nmirror, hand_r);
-        //
-        //            auto hand_w = new handler_entry_write_delegate<Width, AddrShift, Endian, WRITE>(this, handler_w);
-        //            hand_w->set_address_info(nstart, nmask);
-        //            m_root_write->populate(nstart, nend, nmirror, hand_w);
-        //        } else {
-        //            auto hand_r = new handler_entry_read_delegate <AccessWidth, -AccessWidth, Endian, READ>(this, handler_r);
-        //            memory_units_descriptor<Width, AddrShift, Endian> descriptor(AccessWidth, Endian, hand_r, nstart, nend, nmask, nunitmask, ncswidth);
-        //            hand_r->set_address_info(descriptor.get_handler_start(), descriptor.get_handler_mask());
-        //            m_root_read ->populate_mismatched(nstart, nend, nmirror, descriptor);
-        //            hand_r->unref();
-        //
-        //            auto hand_w = new handler_entry_write_delegate<AccessWidth, -AccessWidth, Endian, WRITE>(this, handler_w);
-        //            descriptor.set_subunit_handler(hand_w);
-        //            hand_w->set_address_info(descriptor.get_handler_start(), descriptor.get_handler_mask());
-        //            m_root_write->populate_mismatched(nstart, nend, nmirror, descriptor);
-        //            hand_w->unref();
-        //        }
-        //        invalidate_caches(read_or_write::READWRITE);
-        //    }
-        //}
     }
 }

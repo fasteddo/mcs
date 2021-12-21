@@ -17,10 +17,6 @@ using mame.ymfm;
 
 namespace mame
 {
-    // set this to 1 to use ymfm's built-in SSG implementation
-    // set it to 0 to use MAME's ay8910 as the SSG implementation
-    //#define USE_BUILTIN_SSG (1)
-
     // set this to control the output sample rate for SSG-based chips
     //#define SSG_FIDELITY (ymfm::OPN_FIDELITY_MED)
 
@@ -198,6 +194,9 @@ namespace mame
             m_io_read[1].resolve();
             m_io_write[0].resolve();
             m_io_write[1].resolve();
+
+            // remember the busy end time
+            save_item(g.NAME(new { m_busy_end }));
         }
 
 
@@ -228,42 +227,23 @@ namespace mame
 
     // ======================> ymfm_device_base
     // this template provides most of the basics used by device objects in MAME
-    // that wrap ymfm chips; it provides basic read/write functions; however, this
-    // class is not intended to be used directly -- rather, devices should inherit
-    // from either ymfm_device_base or ymfm_ssg_device_base, depending on whether
-    // they include an SSG or not
+    // that wrap ymfm chips; it provides basic read/write functions
 
-    //template<typename ChipClass, bool FMOnly = false>
-    public class ymfm_device_base<ChipClass, ChipClass_Registers, ChipClass_Registers_OPS> : ymfm_device_base<ChipClass, ChipClass_Registers, ChipClass_Registers_OPS, bool_const_false>
+    //template<typename ChipClass>
+    public class ymfm_device_base<ChipClass, ChipClass_Registers, ChipClass_Registers_OPS> : ym_generic_device
         where ChipClass : ChipClass_operators<ChipClass_Registers, ChipClass_Registers_OPS>
         where ChipClass_Registers : opm_registers, new()
         where ChipClass_Registers_OPS : fm_engine_base_operators, new()
-    {
-        protected ymfm_device_base(machine_config mconfig, string tag, device_t owner, uint32_t clock, device_type type, Func<ymfm_interface, ChipClass> chip_class_creator) : base(mconfig, tag, owner, clock, type, chip_class_creator) { }
-    }
-
-    //template<typename ChipClass, bool FMOnly = false>
-    public class ymfm_device_base<ChipClass, ChipClass_Registers, ChipClass_Registers_OPS, bool_FMOnly> : ym_generic_device
-        where ChipClass : ChipClass_operators<ChipClass_Registers, ChipClass_Registers_OPS>
-        where ChipClass_Registers : opm_registers, new()
-        where ChipClass_Registers_OPS : fm_engine_base_operators, new()
-        where bool_FMOnly : bool_const, new()
     {
         public class device_sound_interface_ymfm_device_base : device_sound_interface
         {
             public device_sound_interface_ymfm_device_base(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
-            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((ymfm_device_base<ChipClass, ChipClass_Registers, ChipClass_Registers_OPS, bool_FMOnly>)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }
+            public override void sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { ((ymfm_device_base<ChipClass, ChipClass_Registers, ChipClass_Registers_OPS>)device()).device_sound_interface_sound_stream_update(stream, inputs, outputs); }
         }
 
 
-        static readonly bool FMOnly = new bool_FMOnly().value;
-
-
-        // for SSG chips, we only create a subset of outputs here:
-        // YM2203 is 4 outputs: 1 mono FM + 3 SSG
-        // YM2608/2610 is 3 outputs: 2 stereo FM + 1 SSG
-        int OUTPUTS;  //static constexpr int OUTPUTS = FMOnly ? ((ChipClass::OUTPUTS == 4) ? 1 : 2) : ChipClass::OUTPUTS;
+        int OUTPUTS;  //static constexpr int OUTPUTS = ChipClass.OUTPUTS;
 
 
         device_sound_interface_ymfm_device_base m_disound;
@@ -286,7 +266,7 @@ namespace mame
             m_stream = null;
             m_chip = chip_class_creator(m_ymfm_interface);  //eg, m_chip = new ym2151(this);
 
-            OUTPUTS = FMOnly ? ((m_chip.OUTPUTS == 4) ? 1 : 2) : (int)m_chip.OUTPUTS;  //static constexpr int OUTPUTS = FMOnly ? ((ChipClass::OUTPUTS == 4) ? 1 : 2) : ChipClass::OUTPUTS;
+            OUTPUTS = (int)m_chip.OUTPUTS;  //static constexpr int OUTPUTS = ChipClass.OUTPUTS;
         }
 
 
@@ -403,27 +383,9 @@ namespace mame
     }
 
 
-    // ======================> ymfm_ssg_internal_device_base
+    // ======================> ymfm_ssg_device_base
     // this template adds SSG support to the base template, using ymfm's internal
     // SSG implementation
     //template<typename ChipClass>
-    //class ymfm_ssg_internal_device_base : public ymfm_device_base<ChipClass>
-
-
-    // ======================> ymfm_ssg_external_device_base
-    // this template adds SSG support to the base template, using MAME's YM2149
-    // implementation in ay8910.cpp; this is the "classic" way to do it in MAME
-    // and is more flexible in terms of output handling
-    //template<typename ChipClass>
-    //class ymfm_ssg_external_device_base : public ymfm_device_base<ChipClass, true>, public ymfm::ssg_override
-
-
-    // now pick the right one
-    //#if USE_BUILTIN_SSG
-    //template<typename ChipClass>
-    //using ymfm_ssg_device_base = ymfm_ssg_internal_device_base<ChipClass>;
-    //#else
-    //template<typename ChipClass>
-    //using ymfm_ssg_device_base = ymfm_ssg_external_device_base<ChipClass>;
-    //#endif
+    //class ymfm_ssg_device_base : public ymfm_device_base<ChipClass>
 }

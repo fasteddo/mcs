@@ -331,6 +331,9 @@ namespace mame
 
         uint32_t m_last_xpos;          // (during processing) the previous X position
         uint32_t m_next_xpos;          // (during processing) the next X position
+
+        int m_xoffset;            // global xoffset for sprites
+
         required_device<gfxdecode_device> m_gfxdecode;
 
 
@@ -381,6 +384,7 @@ namespace mame
             m_activelast = null;
             m_last_xpos = 0;
             m_next_xpos = 0;
+            m_xoffset = 0;
             m_gfxdecode = new required_device<gfxdecode_device>(this, finder_base.DUMMY_TAG);
         }
 
@@ -408,6 +412,7 @@ namespace mame
         { m_gfxdecode.set_tag(tag); }
 
         void set_config(atari_motion_objects_config config) { m_atari_motion_objects_config = config; }  //void set_config(const atari_motion_objects_config &config) { static_cast<atari_motion_objects_config &>(*this) = config; }
+        //void set_xoffset(int xoffset) { m_xoffset = xoffset; }
 
 
         // getters
@@ -739,7 +744,7 @@ namespace mame
             // extract data from the various words
             int code = (int)m_codelookup[rawcode];
             int color = m_colorlookup[m_colormask.extract(entry)];
-            int xpos = m_xposmask.extract(entry);
+            int xpos = m_xposmask.extract(entry) + m_xoffset;
             int ypos = -m_yposmask.extract(entry);
             int hflip = m_hflipmask.extract(entry);
             int vflip = m_vflipmask.extract(entry);

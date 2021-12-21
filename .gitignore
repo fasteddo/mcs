@@ -7,9 +7,12 @@ mcsForm/obj
 mcsForm/roms
 mcsForm/mcsForm.csproj.user
 mcsUnity/.vs
+mcsUnity/.vsconfig
 mcsUnity/build
 mcsUnity/Library
+mcsUnity/Logs
 mcsUnity/obj
+mcsUnity/Temp
+mcsUnity/UserSettings
 mcsUnity/Assembly-CSharp.csproj
 mcsUnity/mcsUnity.sln
-mcsUnity/runUnity.bat

@@ -14,11 +14,10 @@ namespace mame
 
     // parent class for final handlers which want an address base and a mask
 
-    //template<int Width, int AddrShift, endianness_t Endian>
-    abstract class handler_entry_read_address<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>
+    //template<int Width, int AddrShift>
+    abstract class handler_entry_read_address<int_Width, int_AddrShift> : handler_entry_read<int_Width, int_AddrShift>
         where int_Width : int_const, new()
         where int_AddrShift : int_const, new()
-        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -32,17 +31,16 @@ namespace mame
 
         public void set_address_info(offs_t base_, offs_t mask)
         {
-            m_address_base = base_ & ~NATIVE_MASK;  //m_address_base = base & ~handler_entry_read<Width, AddrShift, Endian>::NATIVE_MASK;
+            m_address_base = base_ & ~NATIVE_MASK;  //m_address_base = base & ~handler_entry_read<Width, AddrShift>::NATIVE_MASK;
             m_address_mask = mask;
         }
     }
 
 
-    //template<int Width, int AddrShift, endianness_t Endian>
-    abstract class handler_entry_write_address<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>
+    //template<int Width, int AddrShift>
+    abstract class handler_entry_write_address<int_Width, int_AddrShift> : handler_entry_write<int_Width, int_AddrShift>
         where int_Width : int_const, new()
         where int_AddrShift : int_const, new()
-        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -61,7 +59,7 @@ namespace mame
 
         public void set_address_info(offs_t base_, offs_t mask)
         {
-            m_address_base = base_ & ~handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>.NATIVE_MASK;  //m_address_base = base & ~handler_entry_write<Width, AddrShift, Endian>::NATIVE_MASK;
+            m_address_base = base_ & ~handler_entry_write<int_Width, int_AddrShift>.NATIVE_MASK;  //m_address_base = base & ~handler_entry_write<Width, AddrShift>::NATIVE_MASK;
             m_address_mask = mask;
         }
     }

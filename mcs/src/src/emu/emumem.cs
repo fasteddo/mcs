@@ -679,11 +679,10 @@ namespace mame
 
         // ======================> Direct dispatching
 
-        public static uX dispatch_read<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(offs_t mask, offs_t offset, uX mem_mask, Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> dispatch)  //template<int Level, int Width, int AddrShift, endianness_t Endian> typename emu::detail::handler_entry_size<Width>::uX dispatch_read(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_read<Width, AddrShift, Endian> *const *dispatch)
+        public static uX dispatch_read<int_Level, int_Width, int_AddrShift>(offs_t mask, offs_t offset, uX mem_mask, Pointer<handler_entry_read<int_Width, int_AddrShift>> dispatch)  //template<int Level, int Width, int AddrShift> typename emu::detail::handler_entry_size<Width>::uX dispatch_read(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_read<Width, AddrShift> *const *dispatch)
             where int_Level : int_const, new()
             where int_Width : int_const, new()
             where int_AddrShift : int_const, new()
-            where endianness_t_Endian : endianness_t_const, new()
         {
             int Level = new int_Level().value;
             int Width = new int_Width().value;
@@ -694,11 +693,10 @@ namespace mame
         }
 
 
-        public static void dispatch_write<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(offs_t mask, offs_t offset, uX data, uX mem_mask, Pointer<handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>> dispatch)  //template<int Level, int Width, int AddrShift, endianness_t Endian> void dispatch_write(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX data, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_write<Width, AddrShift, Endian> *const *dispatch)
+        public static void dispatch_write<int_Level, int_Width, int_AddrShift>(offs_t mask, offs_t offset, uX data, uX mem_mask, Pointer<handler_entry_write<int_Width, int_AddrShift>> dispatch)  //template<int Level, int Width, int AddrShift> void dispatch_write(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX data, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_write<Width, AddrShift> *const *dispatch)
             where int_Level : int_const, new()
             where int_Width : int_const, new()
             where int_AddrShift : int_const, new()
-            where endianness_t_Endian : endianness_t_const, new()
         {
             int Level = new int_Level().value;
             int Width = new int_Width().value;
@@ -909,14 +907,13 @@ namespace mame
 
     // Provides the populate/read/get_ptr/lookup API
 
-    //template<int Width, int AddrShift, endianness_t Endian> class handler_entry_read_passthrough;
+    //template<int Width, int AddrShift> class handler_entry_read_passthrough;
 
 
-    //template<int Width, int AddrShift, endianness_t Endian>
-    public abstract class handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry
+    //template<int Width, int AddrShift>
+    public abstract class handler_entry_read<int_Width, int_AddrShift> : handler_entry
         where int_Width : int_const, new()
         where int_AddrShift : int_const, new()
-        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
@@ -930,8 +927,8 @@ namespace mame
 
         public class mapping
         {
-            public handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> original;
-            public handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> patched;
+            public handler_entry_read<int_Width, int_AddrShift> original;
+            public handler_entry_read<int_Width, int_AddrShift> patched;
             public u8 ukey;
         }
 
@@ -950,13 +947,13 @@ namespace mame
         }
 
 
-        public virtual void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public virtual void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_read<int_Width, int_AddrShift> handler)
         {
             g.fatalerror("lookup called on non-dispatching class\n");
         }
 
 
-        public void populate(offs_t start, offs_t end, offs_t mirror, handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public void populate(offs_t start, offs_t end, offs_t mirror, handler_entry_read<int_Width, int_AddrShift> handler)
         {
             start &= ~NATIVE_MASK;
             end |= NATIVE_MASK;
@@ -967,19 +964,19 @@ namespace mame
         }
 
 
-        public virtual void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public virtual void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read<int_Width, int_AddrShift> handler)
         {
             g.fatalerror("populate called on non-dispatching class\n");
         }
 
 
-        public virtual void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public virtual void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read<int_Width, int_AddrShift> handler)
         {
             g.fatalerror("populate called on non-dispatching class\n");
         }
 
 
-        public void populate_mismatched(offs_t start, offs_t end, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor)
+        public void populate_mismatched(offs_t start, offs_t end, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift> descriptor)
         {
             start &= ~NATIVE_MASK;
             end |= NATIVE_MASK;
@@ -991,19 +988,19 @@ namespace mame
         }
 
 
-        public virtual void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, u8 rkey, std.vector<mapping> mappings)
+        public virtual void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift> descriptor, u8 rkey, std.vector<mapping> mappings)
         {
             g.fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
-        public virtual void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, std.vector<mapping> mappings)
+        public virtual void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift> descriptor, std.vector<mapping> mappings)
         {
             g.fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
-        //void populate_passthrough(offs_t start, offs_t end, offs_t mirror, handler_entry_read_passthrough<Width, AddrShift, Endian> *handler)
+        //void populate_passthrough(offs_t start, offs_t end, offs_t mirror, handler_entry_read_passthrough<Width, AddrShift> *handler)
         //{
         //    start &= ~NATIVE_MASK;
         //    end |= NATIVE_MASK;
@@ -1015,13 +1012,13 @@ namespace mame
         //}
 
 
-        protected virtual void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read_passthrough<int_Width, int_AddrShift, endianness_t_Endian> handler, std.vector<mapping> mappings)
+        protected virtual void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read_passthrough<int_Width, int_AddrShift> handler, std.vector<mapping> mappings)
         {
             g.fatalerror("populate_passthrough called on non-dispatching class\n");
         }
 
 
-        protected virtual void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read_passthrough<int_Width, int_AddrShift, endianness_t_Endian> handler, std.vector<mapping> mappings)
+        protected virtual void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read_passthrough<int_Width, int_AddrShift> handler, std.vector<mapping> mappings)
         {
             g.fatalerror("populate_passthrough called on non-dispatching class\n");
         }
@@ -1035,20 +1032,20 @@ namespace mame
 
 
         // Return the internal structures of the root dispatch
-        public virtual Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> get_dispatch()
+        public virtual Pointer<handler_entry_read<int_Width, int_AddrShift>> get_dispatch()
         {
             g.fatalerror("get_dispatch called on non-dispatching class\n");
             return null;
         }
 
 
-        public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> dispatch, Pointer<handler_entry.range> ranges)
+        public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_read<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)
         {
             g.fatalerror("init_handlers called on non-view class\n");
         }
 
 
-        public virtual handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> dup()
+        public virtual handler_entry_read<int_Width, int_AddrShift> dup()
         {
             ref_();
             return this;
@@ -1060,21 +1057,19 @@ namespace mame
 
     // Provides the populate/write/get_ptr/lookup API
 
-    //template<int Width, int AddrShift, endianness_t Endian> class handler_entry_write_passthrough;
+    //template<int Width, int AddrShift> class handler_entry_write_passthrough;
 
 
-    //template<int Width, int AddrShift, endianness_t Endian>
-    public abstract class handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> : handler_entry
+    //template<int Width, int AddrShift>
+    public abstract class handler_entry_write<int_Width, int_AddrShift> : handler_entry
         where int_Width : int_const, new()
         where int_AddrShift : int_const, new()
-        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
         protected static readonly int Width = new int_Width().value;
         protected static readonly int AddrShift = new int_AddrShift().value;
-        protected static readonly endianness_t Endian = new endianness_t_Endian().value;
 
 
         protected static readonly u32 NATIVE_MASK = Width + AddrShift >= 0 ? g.make_bitmask32(Width + AddrShift) : 0;  //static constexpr u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask<u32>(Width + AddrShift) : 0;
@@ -1082,8 +1077,8 @@ namespace mame
 
         public class mapping
         {
-            public handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> original;
-            public handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> patched;
+            public handler_entry_write<int_Width, int_AddrShift> original;
+            public handler_entry_write<int_Width, int_AddrShift> patched;
             public u8 ukey;
         }
 
@@ -1102,13 +1097,13 @@ namespace mame
         }
 
 
-        protected virtual void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        protected virtual void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_write<int_Width, int_AddrShift> handler)
         {
             g.fatalerror("lookup called on non-dispatching class\n");
         }
 
 
-        public void populate(offs_t start, offs_t end, offs_t mirror, handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public void populate(offs_t start, offs_t end, offs_t mirror, handler_entry_write<int_Width, int_AddrShift> handler)
         {
             start &= ~NATIVE_MASK;
             end |= NATIVE_MASK;
@@ -1119,19 +1114,19 @@ namespace mame
         }
 
 
-        public virtual void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public virtual void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write<int_Width, int_AddrShift> handler)
         {
             g.fatalerror("populate called on non-dispatching class\n");
         }
 
 
-        public virtual void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> handler)
+        public virtual void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write<int_Width, int_AddrShift> handler)
         {
             g.fatalerror("populate called on non-dispatching class\n");
         }
 
 
-        public void populate_mismatched(offs_t start, offs_t end, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor)
+        public void populate_mismatched(offs_t start, offs_t end, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift> descriptor)
         {
             start &= ~NATIVE_MASK;
             end |= NATIVE_MASK;
@@ -1144,19 +1139,19 @@ namespace mame
         }
 
 
-        public virtual void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, u8 rkey, std.vector<mapping> mappings)
+        public virtual void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift> descriptor, u8 rkey, std.vector<mapping> mappings)
         {
             g.fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
-        public virtual void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian> descriptor, std.vector<mapping> mappings)
+        public virtual void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift> descriptor, std.vector<mapping> mappings)
         {
             g.fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
-        //void populate_passthrough(offs_t start, offs_t end, offs_t mirror, handler_entry_write_passthrough<Width, AddrShift, Endian> *handler)
+        //void populate_passthrough(offs_t start, offs_t end, offs_t mirror, handler_entry_write_passthrough<Width, AddrShift> *handler)
         //{
         //    start &= ~NATIVE_MASK;
         //    end |= NATIVE_MASK;
@@ -1168,13 +1163,13 @@ namespace mame
         //}
 
 
-        protected virtual void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write_passthrough<int_Width, int_AddrShift, endianness_t_Endian> handler, std.vector<mapping> mappings)
+        protected virtual void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write_passthrough<int_Width, int_AddrShift> handler, std.vector<mapping> mappings)
         {
             g.fatalerror("populate_passthrough called on non-dispatching class\n");
         }
 
 
-        protected virtual void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write_passthrough<int_Width, int_AddrShift, endianness_t_Endian> handler, std.vector<mapping> mappings)
+        protected virtual void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write_passthrough<int_Width, int_AddrShift> handler, std.vector<mapping> mappings)
         {
             g.fatalerror("populate_passthrough called on non-dispatching class\n");
         }
@@ -1188,20 +1183,20 @@ namespace mame
 
 
         // Return the internal structures of the root dispatch
-        public virtual Pointer<handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>> get_dispatch()
+        public virtual Pointer<handler_entry_write<int_Width, int_AddrShift>> get_dispatch()
         {
             g.fatalerror("get_dispatch called on non-dispatching class\n");
             return null;
         }
 
 
-        public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>> dispatch, Pointer<handler_entry.range> ranges)
+        public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, Pointer<handler_entry_write<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)
         {
             g.fatalerror("init_handlers called on non-view class\n");
         }
 
 
-        public virtual handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> dup()
+        public virtual handler_entry_write<int_Width, int_AddrShift> dup()
         {
             ref_();
             return this;
@@ -1212,8 +1207,8 @@ namespace mame
     // =====================-> Passthrough handler management structure
     public class memory_passthrough_handler
     {
-        //template<int Width, int AddrShift, endianness_t Endian> friend class handler_entry_read_passthrough;
-        //template<int Width, int AddrShift, endianness_t Endian> friend class handler_entry_write_passthrough;
+        //template<int Width, int AddrShift> friend class handler_entry_read_passthrough;
+        //template<int Width, int AddrShift> friend class handler_entry_write_passthrough;
 
 
         address_space m_space;
@@ -1233,8 +1228,8 @@ namespace mame
 
     // =====================-> Forward declaration for address_space
 
-    //template<int Width, int AddrShift, endianness_t Endian> class handler_entry_read_unmapped;
-    //template<int Width, int AddrShift, endianness_t Endian> class handler_entry_write_unmapped;
+    //template<int Width, int AddrShift> class handler_entry_read_unmapped;
+    //template<int Width, int AddrShift> class handler_entry_write_unmapped;
 
 
     // ======================> memory_access_specific
@@ -1267,8 +1262,8 @@ namespace mame
 
         offs_t m_addrmask;                // address mask
 
-        Pointer<handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian>> m_dispatch_read;  //const handler_entry_read<Width, AddrShift, Endian> *const *m_dispatch_read;
-        Pointer<handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>> m_dispatch_write;  //const handler_entry_write<Width, AddrShift, Endian> *const *m_dispatch_write;
+        Pointer<handler_entry_read<int_Width, int_AddrShift>> m_dispatch_read;  //const handler_entry_read<Width, AddrShift, Endian> *const *m_dispatch_read;
+        Pointer<handler_entry_write<int_Width, int_AddrShift>> m_dispatch_write;  //const handler_entry_write<Width, AddrShift, Endian> *const *m_dispatch_write;
 
 
         // construction/destruction
@@ -1318,14 +1313,14 @@ namespace mame
         uX read_native(offs_t address) { return read_native(address, ~new uX(Width, 0)); }
         uX read_native(offs_t address, uX mask)  //NativeType read_native(offs_t address, NativeType mask = ~NativeType(0)) {
         {
-            return emumem_global.dispatch_read<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(offs_t.MaxValue, address & m_addrmask, mask, m_dispatch_read);  //return dispatch_read<Level, Width, AddrShift, Endian>(offs_t(-1), address & m_addrmask, mask, m_dispatch_read);;
+            return emumem_global.dispatch_read<int_Level, int_Width, int_AddrShift>(offs_t.MaxValue, address & m_addrmask, mask, m_dispatch_read);  //return dispatch_read<Level, Width, AddrShift, Endian>(offs_t(-1), address & m_addrmask, mask, m_dispatch_read);;
         }
 
 
         void write_native(offs_t address, uX data) { write_native(address, data, ~new uX(Width, 0)); }
         void write_native(offs_t address, uX data, uX mask)  //void write_native(offs_t address, NativeType data, NativeType mask = ~NativeType(0)) {
         {
-            emumem_global.dispatch_write<int_Level, int_Width, int_AddrShift, endianness_t_Endian>(offs_t.MaxValue, address & m_addrmask, data, mask, m_dispatch_write);  //dispatch_write<Level, Width, AddrShift, Endian>(offs_t(-1), address & m_addrmask, data, mask, m_dispatch_write);;
+            emumem_global.dispatch_write<int_Level, int_Width, int_AddrShift>(offs_t.MaxValue, address & m_addrmask, data, mask, m_dispatch_write);  //dispatch_write<Level, Width, AddrShift, Endian>(offs_t(-1), address & m_addrmask, data, mask, m_dispatch_write);;
         }
 
 
@@ -1333,8 +1328,8 @@ namespace mame
         {
             m_space = space;
             m_addrmask = space.addrmask();
-            m_dispatch_read  = (Pointer<handler_entry_read <int_Width, int_AddrShift, endianness_t_Endian>>)rw.first;
-            m_dispatch_write = (Pointer<handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>>)rw.second;
+            m_dispatch_read  = (Pointer<handler_entry_read <int_Width, int_AddrShift>>)rw.first;
+            m_dispatch_write = (Pointer<handler_entry_write<int_Width, int_AddrShift>>)rw.second;
         }
     }
 
@@ -1367,11 +1362,11 @@ namespace mame
         offs_t m_addrend_r;               // maximum valid address for reading
         offs_t m_addrstart_w;             // minimum valid address for writing
         offs_t m_addrend_w;               // maximum valid address for writing
-        handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> m_cache_r;  // read cache
-        handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> m_cache_w;  // write cache
+        handler_entry_read<int_Width, int_AddrShift> m_cache_r;  // read cache
+        handler_entry_write<int_Width, int_AddrShift> m_cache_w;  // write cache
 
-        handler_entry_read<int_Width, int_AddrShift, endianness_t_Endian> m_root_read;  // decode tree roots
-        handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian> m_root_write;
+        handler_entry_read<int_Width, int_AddrShift> m_root_read;  // decode tree roots
+        handler_entry_write<int_Width, int_AddrShift> m_root_write;
 
 
         // construction/destruction
@@ -1481,8 +1476,8 @@ namespace mame
                     m_cache_w = null;
                 }
             });
-            m_root_read  = (handler_entry_read <int_Width, int_AddrShift, endianness_t_Endian>)rw.first;
-            m_root_write = (handler_entry_write<int_Width, int_AddrShift, endianness_t_Endian>)rw.second;
+            m_root_read  = (handler_entry_read <int_Width, int_AddrShift>)rw.first;
+            m_root_write = (handler_entry_write<int_Width, int_AddrShift>)rw.second;
 
             // Protect against a wandering memset
             m_addrstart_r = 1;
@@ -2406,8 +2401,8 @@ namespace mame
     {
         //friend class memory_bank;
         //friend class memory_block;
-        //template<int Width, int AddrShift, endianness_t Endian> friend class handler_entry_read_unmapped;
-        //template<int Width, int AddrShift, endianness_t Endian> friend class handler_entry_write_unmapped;
+        //template<int Width, int AddrShift> friend class handler_entry_read_unmapped;
+        //template<int Width, int AddrShift> friend class handler_entry_write_unmapped;
 
 
         class notifier_t
@@ -2761,22 +2756,20 @@ namespace mame
         }
 
 
-        //template<int Width, int AddrShift, endianness_t Endian>
-        public handler_entry_read_unmapped<int_Width, int_AddrShift, endianness_t_Endian> get_unmap_r<int_Width, int_AddrShift, endianness_t_Endian>()  //template<int Width, int AddrShift, endianness_t Endian> handler_entry_read_unmapped <Width, AddrShift, Endian> *get_unmap_r() const { return static_cast<handler_entry_read_unmapped <Width, AddrShift, Endian> *>(m_unmap_r); }
+        //template<int Width, int AddrShift>
+        public handler_entry_read_unmapped<int_Width, int_AddrShift> get_unmap_r<int_Width, int_AddrShift>()  //template<int Width, int AddrShift> handler_entry_read_unmapped <Width, AddrShift> *get_unmap_r() const { return static_cast<handler_entry_read_unmapped <Width, AddrShift> *>(m_unmap_r); }
             where int_Width : int_const, new()
             where int_AddrShift : int_const, new()
-            where endianness_t_Endian : endianness_t_const, new()
         {
-            return (handler_entry_read_unmapped<int_Width, int_AddrShift, endianness_t_Endian>)m_unmap_r;
+            return (handler_entry_read_unmapped<int_Width, int_AddrShift>)m_unmap_r;
         }
 
-        //template<int Width, int AddrShift, endianness_t Endian>
-        public handler_entry_write_unmapped<int_Width, int_AddrShift, endianness_t_Endian> get_unmap_w<int_Width, int_AddrShift, endianness_t_Endian>()  //template<int Width, int AddrShift, endianness_t Endian> handler_entry_write_unmapped<Width, AddrShift, Endian> *get_unmap_w() const { return static_cast<handler_entry_write_unmapped<Width, AddrShift, Endian> *>(m_unmap_w); }
+        //template<int Width, int AddrShift>
+        public handler_entry_write_unmapped<int_Width, int_AddrShift> get_unmap_w<int_Width, int_AddrShift>()  //template<int Width, int AddrShift> handler_entry_write_unmapped<Width, AddrShift> *get_unmap_w() const { return static_cast<handler_entry_write_unmapped<Width, AddrShift> *>(m_unmap_w); }
             where int_Width : int_const, new()
             where int_AddrShift : int_const, new()
-            where endianness_t_Endian : endianness_t_const, new()
         {
-            return (handler_entry_write_unmapped<int_Width, int_AddrShift, endianness_t_Endian>)m_unmap_w;
+            return (handler_entry_write_unmapped<int_Width, int_AddrShift>)m_unmap_w;
         }
 
 
@@ -3025,9 +3018,9 @@ namespace mame
     public class memory_view
     {
         //template<int Level, int Width, int AddrShift, endianness_t Endian> friend class address_space_specific;
-        //template<int Level, int Width, int AddrShift, endianness_t Endian> friend class memory_view_entry_specific;
-        //template<int HighBits, int Width, int AddrShift, endianness_t Endian> friend class handler_entry_write_dispatch;
-        //template<int HighBits, int Width, int AddrShift, endianness_t Endian> friend class handler_entry_read_dispatch;
+        //template<int Level, int Width, int AddrShift> friend class memory_view_entry_specific;
+        //template<int HighBits, int Width, int AddrShift> friend class handler_entry_write_dispatch;
+        //template<int HighBits, int Width, int AddrShift> friend class handler_entry_read_dispatch;
         //friend class memory_view_entry;
         //friend class address_map_entry;
         //friend class address_map;

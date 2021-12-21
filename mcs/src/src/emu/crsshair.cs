@@ -326,7 +326,9 @@ namespace mame
 
             /* register callbacks for when we load/save configurations */
             if (m_usage)
+            {
                 machine.configuration().config_register("crosshairs", config_load, config_save);
+            }
 
             /* register the animation callback */
             screen_device first_screen = new screen_device_enumerator(machine.root_device()).first();
@@ -373,7 +375,7 @@ namespace mame
         }
 
 
-        void config_load(config_type cfg_type, util.xml.data_node parentnode) { throw new emu_unimplemented(); }
+        void config_load(config_type cfg_type, config_level cfg_lvl, util.xml.data_node parentnode) { throw new emu_unimplemented(); }
         void config_save(config_type cfg_type, util.xml.data_node parentnode) { throw new emu_unimplemented(); }
     }
 }

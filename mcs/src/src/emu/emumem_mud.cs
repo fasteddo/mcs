@@ -18,18 +18,16 @@ namespace mame
 {
     // Descriptors for subunit support
 
-    //template<int Width, int AddrShift, endianness_t Endian>
-    public class memory_units_descriptor<int_Width, int_AddrShift, endianness_t_Endian>
+    //template<int Width, int AddrShift>
+    public class memory_units_descriptor<int_Width, int_AddrShift>
         where int_Width : int_const, new()
         where int_AddrShift : int_const, new()
-        where endianness_t_Endian : endianness_t_const, new()
     {
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
         protected static readonly int Width = new int_Width().value;
         protected static readonly int AddrShift = new int_AddrShift().value;
-        protected static readonly endianness_t Endian = new endianness_t_Endian().value;
 
 
         public struct entry
@@ -55,7 +53,7 @@ namespace mame
         u8 m_access_endian;
 
 
-        //template<int Width, int AddrShift, int Endian>
+        //template<int Width, int AddrShift>
         public memory_units_descriptor(u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth)  //memory_units_descriptor(u8 access_width, u8 access_endian, handler_entry handler, offs_t addrstart, offs_t addrend, offs_t mask, uX unitmask, int cswidth);
         {
             m_handler = handler;
@@ -76,7 +74,7 @@ namespace mame
 
             uX smask;
             uX emask;
-            if (Endian == endianness_t.ENDIANNESS_BIG)
+            if (access_endian == (u8)endianness_t.ENDIANNESS_BIG)
             {
                 smask = g.make_bitmask_uX(Width, 8 * (u32)uX.sizeof_(Width) - ((addrstart - m_addrstart) << (3 - AddrShift)));  //smask =  make_bitmask<uX>(8 * sizeof(uX) - ((addrstart - m_addrstart) << (3 - AddrShift)));
                 emask = ~g.make_bitmask_uX(Width, 8 * (u32)uX.sizeof_(Width) - ((addrend - m_addrend + 1) << (3 - AddrShift)));  //emask = ~make_bitmask<uX>(8 * sizeof(uX) - ((addrend - m_addrend + 1) << (3 - AddrShift)));
@@ -140,7 +138,7 @@ namespace mame
         public handler_entry get_subunit_handler() { return m_handler; }
 
         
-        //template<int Width, int AddrShift, int Endian>
+        //template<int Width, int AddrShift>
         void generate(u8 ukey, uX gumask, uX umask, u32 cswidth, u32 bits_per_access, u8 base_shift, s8 shift, u32 active_count)
         {
             var entries = m_entries_for_key[ukey];
@@ -160,7 +158,7 @@ namespace mame
                 if ((umask & numask) != 0)
                 {
                     uX amask = csmask << (int)(i & ~(cswidth - 1));
-                    entries.emplace_back(new entry(amask, numask, shift, (u8)i, (u8)(Endian == endianness_t.ENDIANNESS_BIG ? active_count - 1 - offset : offset)));
+                    entries.emplace_back(new entry(amask, numask, shift, (u8)i, (u8)(m_access_endian == (u8)endianness_t.ENDIANNESS_BIG ? active_count - 1 - offset : offset)));
                 }
 
                 if ((gumask & numask) != 0)

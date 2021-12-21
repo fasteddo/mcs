@@ -97,9 +97,8 @@ namespace mame
         //  normalize_unicode - uses utf8proc to normalize
         //  unicode
         //-------------------------------------------------
-        public static string normalize_unicode(string s, unicode_normalization_form normalization_form, bool fold_case = false) { return s; }
         //std::string normalize_unicode(const char *s, unicode_normalization_form normalization_form, bool fold_case = false);
-        //std::string normalize_unicode(std::string_view s, unicode_normalization_form normalization_form, bool fold_case = false);
+        public static string normalize_unicode(string s, unicode_normalization_form normalization_form, bool fold_case = false) { return s; }  //std::string normalize_unicode(std::string_view s, unicode_normalization_form normalization_form, bool fold_case = false);
 
 
         /* converting 32-bit Unicode chars to strings */

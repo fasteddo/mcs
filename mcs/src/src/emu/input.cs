@@ -1043,7 +1043,7 @@ namespace mame
 
 
         // misc
-        //bool map_device_to_controller(const devicemap_table_type *devicemap_table = nullptr);
+        //bool map_device_to_controller(const devicemap_table_type &devicemap_table);
 
 
         // internal helpers

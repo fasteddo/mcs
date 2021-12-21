@@ -1963,14 +1963,10 @@ namespace mame
         //  config_load - read and apply data from the
         //  configuration file
         //-------------------------------------------------
-        void config_load(config_type cfg_type, util.xml.data_node parentnode)
+        void config_load(config_type cfg_type, config_level cfg_lvl, util.xml.data_node parentnode)
         {
-            // we only care about game files
-            if (cfg_type != config_type.GAME)
-                return;
-
-            // might not have any data
-            if (parentnode == null)
+            // we only care system-specific configuration
+            if ((cfg_type != config_type.SYSTEM) || parentnode == null)
                 return;
 
             // iterate over channel nodes
@@ -1994,29 +1990,26 @@ namespace mame
         //-------------------------------------------------
         void config_save(config_type cfg_type, util.xml.data_node parentnode)
         {
-            // we only care about game files
-            if (cfg_type != config_type.GAME)
+            // we only save system-specific configuration
+            if (cfg_type != config_type.SYSTEM)
                 return;
 
             // iterate over mixer channels
-            if (parentnode != null)
+            for (int mixernum = 0; ; mixernum++)
             {
-                for (int mixernum = 0; ; mixernum++)
+                mixer_input info;
+                if (!indexed_mixer_input(mixernum, out info))
+                    break;
+
+                float newvol = info.stream.input(info.inputnum).user_gain();
+
+                if (newvol != 1.0f)
                 {
-                    mixer_input info;
-                    if (!indexed_mixer_input(mixernum, out info))
-                        break;
-
-                    float newvol = info.stream.input(info.inputnum).user_gain();
-
-                    if (newvol != 1.0f)
+                    util.xml.data_node channelnode = parentnode.add_child("channel", null);
+                    if (channelnode != null)
                     {
-                        util.xml.data_node channelnode = parentnode.add_child("channel", null);
-                        if (channelnode != null)
-                        {
-                            channelnode.set_attribute_int("index", mixernum);
-                            channelnode.set_attribute_float("newvol", newvol);
-                        }
+                        channelnode.set_attribute_int("index", mixernum);
+                        channelnode.set_attribute_float("newvol", newvol);
                     }
                 }
             }

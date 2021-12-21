@@ -91,9 +91,9 @@ namespace mame
         //std::string setup_working_directory();
 
 
-        void config_load(config_type cfg_type, util.xml.data_node parentnode)
+        void config_load(config_type cfg_type, config_level cfg_level, util.xml.data_node parentnode)
         {
-            if ((cfg_type == config_type.GAME) && (parentnode != null))
+            if ((cfg_type == config_type.SYSTEM) && (parentnode != null))
             {
                 throw new emu_unimplemented();
             }
@@ -106,8 +106,8 @@ namespace mame
         -------------------------------------------------*/
         void config_save(config_type cfg_type, util.xml.data_node parentnode)
         {
-            /* only care about game-specific data */
-            if (cfg_type == config_type.GAME)
+            // only save system-specific data
+            if (cfg_type == config_type.SYSTEM)
             {
                 foreach (device_image_interface image in new image_interface_enumerator(machine().root_device()))
                 {
