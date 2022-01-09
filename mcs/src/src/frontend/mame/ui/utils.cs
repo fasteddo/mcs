@@ -1120,6 +1120,9 @@ namespace mame
                     m_parent = parent;
                     m_handler = handler;
                     m_added = false;
+
+
+                    set_process_flags(PROCESS_LR_REPEAT);
                 }
 
                 ~menu_configure()
@@ -1182,16 +1185,9 @@ namespace mame
                 }
 
 
-                protected override void handle()
+                protected override void handle(event_ ev)
                 {
-                    menu_event menu_event = process(PROCESS_LR_REPEAT);
-                    if (menu_event != null && menu_event.itemref != null)
-                    {
-                        m_added = false;
-                        bool changed = false;
-
-                        throw new emu_unimplemented();
-                    }
+                    throw new emu_unimplemented();
                 }
 
 
@@ -1472,16 +1468,9 @@ namespace mame
                 }
 
 
-                protected override void handle()
+                protected override void handle(event_ ev)
                 {
-                    menu_event menu_event = process(PROCESS_LR_REPEAT);
-                    if (menu_event != null && menu_event.itemref != null)
-                    {
-                        m_added = false;
-                        bool changed = false;
-
-                        throw new emu_unimplemented();
-                    }
+                    throw new emu_unimplemented();
                 }
 
 
@@ -1910,6 +1899,7 @@ namespace mame
                     m_ini = parent.m_ini;
 
 
+                    set_process_flags(PROCESS_LR_REPEAT);
                     inifile_manager mgr = mame_machine_manager.instance().inifile();
                     for (size_t i = 0; mgr.get_file_count() > i; ++i)
                     {
@@ -1961,15 +1951,9 @@ namespace mame
                 }
 
 
-                protected override void handle()
+                protected override void handle(event_ ev)
                 {
-                    menu_event menu_event = process(PROCESS_LR_REPEAT);
-                    if (menu_event != null && menu_event.itemref != null)
-                    {
-                        bool changed = false;
-
-                        throw new emu_unimplemented();
-                    }
+                    throw new emu_unimplemented();
                 }
             }
 

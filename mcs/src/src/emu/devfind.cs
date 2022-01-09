@@ -702,6 +702,13 @@ namespace mame
         public Pointer<generic_latch_8_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_gunfight_audio_device : object_finder_operations<gunfight_audio_device>
+    {
+        public gunfight_audio_device cast(device_t device) { return (gunfight_audio_device)device; }
+        public gunfight_audio_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<gunfight_audio_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_gfxdecode_device : object_finder_operations<gfxdecode_device>
     {
         public gfxdecode_device cast(device_t device) { return (gfxdecode_device)device; }
@@ -932,6 +939,7 @@ namespace mame
             else if (typeof(ObjectClass) == typeof(er2055_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_er2055_device();
             else if (typeof(ObjectClass) == typeof(fixedfreq_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_fixedfreq_device();
             else if (typeof(ObjectClass) == typeof(generic_latch_8_device))     return (object_finder_operations<ObjectClass>)new object_finder_operations_generic_latch_8_device();
+            else if (typeof(ObjectClass) == typeof(gunfight_audio_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_gunfight_audio_device();
             else if (typeof(ObjectClass) == typeof(gfxdecode_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_gfxdecode_device();
             else if (typeof(ObjectClass) == typeof(i8080_cpu_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_i8080_cpu_device();
             else if (typeof(ObjectClass) == typeof(i8255_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_i8255_device();

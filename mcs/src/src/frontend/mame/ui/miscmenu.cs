@@ -25,14 +25,14 @@ namespace mame.ui
         /*-------------------------------------------------
             ui_menu_network_devices - menu that
         -------------------------------------------------*/
-        protected override void handle()
+        protected override void handle(event_ ev)
         {
             throw new emu_unimplemented();
         }
     }
 
 
-    class menu_bookkeeping : menu
+    class menu_bookkeeping : menu_textbox
     {
         attotime prevtime;
 
@@ -45,41 +45,16 @@ namespace mame.ui
         //~menu_bookkeeping() { }
 
 
-        protected override void populate(ref float customtop, ref float custombottom)
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        protected override void handle()
-        {
-            throw new emu_unimplemented();
-        }
+        protected override void menu_activated() { throw new emu_unimplemented(); }
+        protected override void populate_text(text_layout layout, float width, int lines) { throw new emu_unimplemented(); }
+        protected override void populate(ref float customtop, ref float custombottom) { throw new emu_unimplemented(); }
+        protected override void handle(event_ ev) { throw new emu_unimplemented(); }
     }
 
 
     class menu_crosshair : menu
     {
-#if false
-        enum
-        {
-            CROSSHAIR_ITEM_VIS = 0,
-            CROSSHAIR_ITEM_PIC,
-            CROSSHAIR_ITEM_AUTO_TIME
-        }
-#endif
-
-
-        class crosshair_item_data
-        {
-            //UINT8               type;
-            //UINT8               player;
-            //UINT8               min, max;
-            //UINT8               cur;
-            //UINT8               defvalue;
-            //char                last_name[CROSSHAIR_PIC_NAME_LENGTH + 1];
-            //char                next_name[CROSSHAIR_PIC_NAME_LENGTH + 1];
-        }
+        //class crosshair_item_data
 
 
         /*-------------------------------------------------
@@ -90,46 +65,8 @@ namespace mame.ui
         //~menu_crosshair() { }
 
 
-        /*-------------------------------------------------
-            menu_crosshair_populate - populate the
-            crosshair settings menu
-        -------------------------------------------------*/
-        protected override void populate(ref float customtop, ref float custombottom)
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        protected override void handle()
-        {
-            throw new emu_unimplemented();
-        }
-    }
-
-
-    class menu_quit_game : menu
-    {
-        /*-------------------------------------------------
-            menu_quit_game - handle the "menu" for
-            quitting the game
-        -------------------------------------------------*/
-        public menu_quit_game(mame_ui_manager mui, render_container container) : base(mui, container) { }
-        //~menu_quit_game() { }
-
-
-        protected override void populate(ref float customtop, ref float custombottom)
-        {
-        }
-
-
-        protected override void handle()
-        {
-            /* request a reset */
-            machine().schedule_exit();
-
-            /* reset the menu stack */
-            stack_reset();
-        }
+        protected override void populate(ref float customtop, ref float custombottom) { throw new emu_unimplemented(); }
+        protected override void handle(event_ ev) { throw new emu_unimplemented(); }
     }
 
 
@@ -143,18 +80,14 @@ namespace mame.ui
         //~menu_bios_selection() { }
 
 
-        protected override void populate(ref float customtop, ref float custombottom)
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        /*-------------------------------------------------
-            ui_menu_bios_selection - menu that
-        -------------------------------------------------*/
-        protected override void handle()
-        {
-            throw new emu_unimplemented();
-        }
+        protected override void populate(ref float customtop, ref float custombottom) { throw new emu_unimplemented(); }
+        protected override void handle(event_ ev) { throw new emu_unimplemented(); }
     }
+
+
+    //class menu_export : public menu
+
+    //class menu_machine_configure : public menu
+
+    //class menu_plugins_configure : public menu
 }

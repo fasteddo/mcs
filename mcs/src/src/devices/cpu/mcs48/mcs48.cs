@@ -810,35 +810,34 @@ namespace mame
             update_regptr();
 
             // set up the state table
+            m_distate.state_add(MCS48_PC,          "PC",        m_pc).mask(0xfff);
+            m_distate.state_add(STATE_GENPC,     "GENPC",     m_pc).mask(0xfff).noshow();
+            m_distate.state_add(STATE_GENPCBASE, "CURPC",     m_prevpc).mask(0xfff).noshow();
+            m_distate.state_add(MCS48_SP,          "SP",        m_psw).mask(0x7).noshow();
+            m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  m_psw).noshow().formatstr("%11s");
+            m_distate.state_add(MCS48_A,           "A",         m_a);
+            m_distate.state_add(MCS48_TC,          "TC",        m_timer);
+            m_distate.state_add(MCS48_TPRE,        "TPRE",      m_prescaler).mask(0x1f);
+
+            if ((m_feature_mask & I802X_FEATURE) != 0)
+                m_distate.state_add(MCS48_P0,    "P0",        m_dbbo);
+
+            m_distate.state_add(MCS48_P1,        "P1",        m_p1);
+            m_distate.state_add(MCS48_P2,        "P2",        m_p2);
+
+            for (int regnum = 0; regnum < 8; regnum++)
             {
-                m_distate.state_add(MCS48_PC,          "PC",        m_pc).mask(0xfff);
-                m_distate.state_add(STATE_GENPC,     "GENPC",     m_pc).mask(0xfff).noshow();
-                m_distate.state_add(STATE_GENPCBASE, "CURPC",     m_prevpc).mask(0xfff).noshow();
-                m_distate.state_add(MCS48_SP,          "SP",        m_psw).mask(0x7).noshow();
-                m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  m_psw).noshow().formatstr("%11s");
-                m_distate.state_add(MCS48_A,           "A",         m_a);
-                m_distate.state_add(MCS48_TC,          "TC",        m_timer);
-                m_distate.state_add(MCS48_TPRE,        "TPRE",      m_prescaler).mask(0x1f);
+                m_distate.state_add(MCS48_R0 + regnum, util.string_format("R{0}", regnum), m_rtemp).callimport().callexport();
+            }
 
-                if ((m_feature_mask & I802X_FEATURE) != 0)
-                    m_distate.state_add(MCS48_P0,    "P0",        m_dbbo);
-                m_distate.state_add(MCS48_P1,        "P1",        m_p1);
-                m_distate.state_add(MCS48_P2,        "P2",        m_p2);
+            if ((m_feature_mask & EXT_BUS_FEATURE) != 0)
+                m_distate.state_add(MCS48_EA,    "EA",        m_ea).mask(0x1);
 
-                for (int regnum = 0; regnum < 8; regnum++)
-                {
-                    m_distate.state_add(MCS48_R0 + regnum, util.string_format("R{0}", regnum), m_rtemp).callimport().callexport();
-                }
-
-                if ((m_feature_mask & EXT_BUS_FEATURE) != 0)
-                    m_distate.state_add(MCS48_EA,    "EA",        m_ea).mask(0x1);
-
-                if ((m_feature_mask & UPI41_FEATURE) != 0)
-                {
-                    m_distate.state_add(MCS48_STS,   "STS",       m_sts).mask(0xf3);
-                    m_distate.state_add(MCS48_DBBI,  "DBBI",      m_dbbi);
-                    m_distate.state_add(MCS48_DBBO,  "DBBO",      m_dbbo);
-                }
+            if ((m_feature_mask & UPI41_FEATURE) != 0)
+            {
+                m_distate.state_add(MCS48_STS,   "STS",       m_sts).mask(0xf3);
+                m_distate.state_add(MCS48_DBBI,  "DBBI",      m_dbbi);
+                m_distate.state_add(MCS48_DBBO,  "DBBO",      m_dbbo);
             }
 
             // register for savestates

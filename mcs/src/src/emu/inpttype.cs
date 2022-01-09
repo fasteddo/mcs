@@ -4,6 +4,7 @@
 using System;
 
 using static mame.input_global;
+using static mame.language_global;
 
 
 namespace mame
@@ -205,7 +206,6 @@ namespace mame
         const ioport_type UI_FAST_FORWARD = ioport_type.IPT_UI_FAST_FORWARD;
         const ioport_type UI_SHOW_FPS = ioport_type.IPT_UI_SHOW_FPS;
         const ioport_type UI_SNAPSHOT = ioport_type.IPT_UI_SNAPSHOT;
-        const ioport_type UI_TIMECODE = ioport_type.IPT_UI_TIMECODE;
         const ioport_type UI_RECORD_MNG = ioport_type.IPT_UI_RECORD_MNG;
         const ioport_type UI_RECORD_AVI = ioport_type.IPT_UI_RECORD_AVI;
         const ioport_type UI_TOGGLE_CHEAT = ioport_type.IPT_UI_TOGGLE_CHEAT;
@@ -265,12 +265,6 @@ namespace mame
         /***************************************************************************
             BUILT-IN CORE MAPPINGS
         ***************************************************************************/
-
-
-        // can't get frontend/mame/language.h from here
-        //#ifndef N_p
-        static string N_p(string ctx, string msg) { return msg; }  //#define N_p(ctx, msg) (msg)
-        //#endif
 
         static void emplace_core_types_p1(std.vector<input_type_entry> typelist)  //CORE_INPUT_TYPES_BEGIN(p1)
         {
@@ -1116,7 +1110,6 @@ namespace mame
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_FAST_FORWARD,      N_p("input-name", "Fast Forward"),           new input_seq(KEYCODE_INSERT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SHOW_FPS,          N_p("input-name", "Show FPS"),               new input_seq(KEYCODE_F11, input_seq.not_code, KEYCODE_LSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SNAPSHOT,          N_p("input-name", "Save Snapshot"),          new input_seq(KEYCODE_F12, input_seq.not_code, KEYCODE_LSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TIMECODE,          N_p("input-name", "Write current timecode"), new input_seq(KEYCODE_F12, input_seq.not_code, KEYCODE_LSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_RECORD_MNG,        N_p("input-name", "Record MNG"),             new input_seq(KEYCODE_F12, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_LCONTROL) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_RECORD_AVI,        N_p("input-name", "Record AVI"),             new input_seq(KEYCODE_F12, KEYCODE_LSHIFT, KEYCODE_LCONTROL) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TOGGLE_CHEAT,      N_p("input-name", "Toggle Cheat"),           new input_seq(KEYCODE_F6) );
@@ -1144,14 +1137,14 @@ namespace mame
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TOGGLE_UI,         N_p("input-name", "UI Toggle"),              new input_seq(KEYCODE_SCRLOCK, input_seq.not_code, KEYCODE_LSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_RELEASE_POINTER,   N_p("input-name", "UI Release Pointer"),     new input_seq(KEYCODE_RCONTROL, KEYCODE_RALT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_PASTE,             N_p("input-name", "UI Paste Text"),          new input_seq(KEYCODE_SCRLOCK, KEYCODE_LSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SAVE_STATE,        N_p("input-name", "Save State"),             new input_seq(KEYCODE_F7, KEYCODE_LSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_LOAD_STATE,        N_p("input-name", "Load State"),             new input_seq(KEYCODE_F7, input_seq.not_code, KEYCODE_LSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TAPE_START,        N_p("input-name", "UI (First) Tape Start"),  new input_seq(KEYCODE_F2, input_seq.not_code, KEYCODE_LSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SAVE_STATE,        N_p("input-name", "Save State"),             new input_seq(KEYCODE_F7, KEYCODE_LSHIFT, input_seq.or_code, KEYCODE_F7, KEYCODE_RSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_LOAD_STATE,        N_p("input-name", "Load State"),             new input_seq(KEYCODE_F7, input_seq.not_code, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TAPE_START,        N_p("input-name", "UI (First) Tape Start"),  new input_seq(KEYCODE_F2, input_seq.not_code, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TAPE_STOP,         N_p("input-name", "UI (First) Tape Stop"),   new input_seq(KEYCODE_F2, KEYCODE_LSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_DATS,              N_p("input-name", "UI External DAT View"),   new input_seq(KEYCODE_LALT, KEYCODE_D) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_FAVORITES,         N_p("input-name", "UI Add/Remove favorite"), new input_seq(KEYCODE_LALT, KEYCODE_F) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_EXPORT,            N_p("input-name", "UI Export List"),         new input_seq(KEYCODE_LALT, KEYCODE_E) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_AUDIT,             N_p("input-name", "UI Audit Media"),         new input_seq(KEYCODE_F1, KEYCODE_LSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_AUDIT,             N_p("input-name", "UI Audit Media"),         new input_seq(KEYCODE_F1, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );
         }  //CORE_INPUT_TYPES_END()
 
 

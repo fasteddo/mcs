@@ -575,7 +575,7 @@ namespace mame
         {
             // remove trailing newline
             if (text[text.Length - 1] == '\n')
-                text = text.Remove(text.Length);
+                text = text.Remove(text.Length - 1);
 
             text = text.Replace("\n", "\n   ");
             output_via_delegate(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, "{0}:\n   {1}\n", header, text);

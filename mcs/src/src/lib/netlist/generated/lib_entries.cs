@@ -103,7 +103,7 @@ namespace mame.netlist.devices
             LIB_ENTRY("NE555", nld_NE555.decl_NE555);
             LIB_ENTRY("POT", analog.nld_POT.decl_POT);
             //LIB_ENTRY(POT2)
-            //LIB_ENTRY(QBJT_EB)
+            LIB_ENTRY("QBJT_EB", analog.nld_QBJT_EB.decl_QBJT_EB);
             LIB_ENTRY("QBJT_switch", analog.nld_QBJT_switch.decl_QBJT_switch);
             LIB_ENTRY("R", analog.nld_R.decl_R);
             //LIB_ENTRY(SN74LS629)
@@ -111,16 +111,16 @@ namespace mame.netlist.devices
             //LIB_ENTRY(VCCS)
             //LIB_ENTRY(VCVS)
             //LIB_ENTRY(VS)
-            //LIB_ENTRY(Z)
+            LIB_ENTRY("Z", analog.nld_Z.decl_Z);
             LIB_ENTRY("analog_input", nld_analog_input.decl_analog_input);
-            //LIB_ENTRY(clock)
+            LIB_ENTRY("clock", nld_clock.decl_clock);
             //LIB_ENTRY(extclock)
-            //LIB_ENTRY(frontier)
+            LIB_ENTRY("frontier", nld_frontier.decl_frontier);
             //LIB_ENTRY(function)
             LIB_ENTRY("gnd", nld_gnd.decl_gnd);
             //LIB_ENTRY(log)
             //LIB_ENTRY(logD)
-            //LIB_ENTRY(logic_input)
+            LIB_ENTRY("logic_input", nld_logic_input.decl_logic_input);
             //LIB_ENTRY(logic_input8)
             LIB_ENTRY("logic_input_ttl", nld_logic_input.decl_logic_input_ttl);
             LIB_ENTRY("mainclock", nld_mainclock.decl_mainclock);
@@ -135,9 +135,9 @@ namespace mame.netlist.devices
             //LIB_ENTRY(switch1)
             LIB_ENTRY("switch2", analog.nld_switch2.decl_switch2);
             //LIB_ENTRY(sys_compd)
-            //LIB_ENTRY(sys_dsw1)
+            LIB_ENTRY("sys_dsw1", nld_sys_dsw1.decl_sys_dsw1);
             //LIB_ENTRY(sys_dsw2)
-            //LIB_ENTRY(sys_noise_mt_n)
+            LIB_ENTRY("sys_noise_mt_n", nld_system_global.decl_sys_noise_mt_n);
             //LIB_ENTRY(sys_noise_mt_u)
             //LIB_ENTRY(tristate)
             //LIB_ENTRY(tristate3)

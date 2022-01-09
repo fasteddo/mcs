@@ -124,6 +124,20 @@ namespace mame
     public class u64_const_7 : u64_const { public UInt64 value { get { return 7; } } }
     public class u64_const_8 : u64_const { public UInt64 value { get { return 8; } } }
     public class u64_const_16 : u64_const { public UInt64 value { get { return 16; } } }
+    public class u64_const_17 : u64_const { public UInt64 value { get { return 17; } } }
+    public class u64_const_29 : u64_const { public UInt64 value { get { return 29; } } }
+    public class u64_const_31 : u64_const { public UInt64 value { get { return 31; } } }
+    public class u64_const_37 : u64_const { public UInt64 value { get { return 37; } } }
+    public class u64_const_43 : u64_const { public UInt64 value { get { return 43; } } }
+    public class u64_const_64 : u64_const { public UInt64 value { get { return 64; } } }
+    public class u64_const_156 : u64_const { public UInt64 value { get { return 156; } } }
+    public class u64_const_256 : u64_const { public UInt64 value { get { return 256; } } }
+    public class u64_const_312 : u64_const { public UInt64 value { get { return 312; } } }
+    public class u64_const_6364136223846793005 : u64_const { public UInt64 value { get { return 6364136223846793005; } } }
+    public class u64_const_0x5555555555555555 : u64_const { public UInt64 value { get { return 0x5555555555555555; } } }
+    public class u64_const_0x71d67fffeda60000 : u64_const { public UInt64 value { get { return 0x71d67fffeda60000; } } }
+    public class u64_const_0xb5026f5aa96619e9 : u64_const { public UInt64 value { get { return 0xb5026f5aa96619e9; } } }
+    public class u64_const_0xfff7eee000000000 : u64_const { public UInt64 value { get { return 0xfff7eee000000000; } } }
 
     public interface endianness_t_const { endianness_t value { get; } }
     public class endianness_t_const_ENDIANNESS_LITTLE : endianness_t_const { public endianness_t value { get { return ENDIANNESS_LITTLE; } } }
@@ -132,6 +146,9 @@ namespace mame
 
     public static class device_creator_helper_global
     {
+        // _6821pia
+        public static pia6821_device PIA6821<bool_Required>(machine_config mconfig, device_finder<pia6821_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, pia6821_device.PIA6821, clock); }
+
         // _74153
         public static ttl153_device TTL153<bool_Required>(machine_config mconfig, device_finder<ttl153_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ttl153_device.TTL153, 0); }
 
@@ -158,7 +175,11 @@ namespace mame
         public static ay8910_device AY8910(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
         public static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
 
+        // bankdev
+        public static address_map_bank_device ADDRESS_MAP_BANK<bool_Required>(machine_config mconfig, device_finder<address_map_bank_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, address_map_bank_device.ADDRESS_MAP_BANK, 0); }
+
         // dac
+        public static dac_mc1408_device MC1408(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<dac_mc1408_device>(mconfig, tag, dac_mc1408_device.MC1408, clock); }
         public static dac_8bit_r2r_device DAC_8BIT_R2R<bool_Required>(machine_config mconfig, device_finder<dac_8bit_r2r_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
         public static dac_16bit_r2r_twos_complement_device DAC_16BIT_R2R_TWOS_COMPLEMENT<bool_Required>(machine_config mconfig, device_finder<dac_16bit_r2r_twos_complement_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_16bit_r2r_twos_complement_device.DAC_16BIT_R2R_TWOS_COMPLEMENT, clock); }
 
@@ -230,6 +251,7 @@ namespace mame
         public static i8257_device I8257<bool_Required>(machine_config mconfig, device_finder<i8257_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8257_device.I8257, clock); }
 
         // input_merger
+        public static input_merger_device INPUT_MERGER_ANY_HIGH(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<input_merger_device>(mconfig, tag, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, clock); }
         public static input_merger_device INPUT_MERGER_ANY_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, clock); }
         public static input_merger_device INPUT_MERGER_ALL_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_all_high_device.INPUT_MERGER_ALL_HIGH, clock); }
 
@@ -243,8 +265,14 @@ namespace mame
         public static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
         public static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
 
+        // m6800
+        public static m6808_cpu_device M6808<bool_Required>(machine_config mconfig, device_finder<m6808_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6808_cpu_device.M6808, clock); }
+
         // m6801
         public static m6803_cpu_device M6803<bool_Required>(machine_config mconfig, device_finder<m6803_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
+
+        // m6809
+        public static mc6809e_device MC6809E<bool_Required>(machine_config mconfig, device_finder<mc6809e_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mc6809e_device.MC6809E, clock); }
 
         // m68705
         public static m68705p_device M68705P5<bool_Required>(machine_config mconfig, device_finder<m68705p_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m68705p5_device.M68705P5, clock); }
@@ -264,6 +292,7 @@ namespace mame
         public static msm5205_device MSM5205<bool_Required>(machine_config mconfig, device_finder<msm5205_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, msm5205_device.MSM5205, clock); }
 
         // mw8080bw
+        public static gunfight_audio_device GUNFIGHT_AUDIO<bool_Required>(machine_config mconfig, device_finder<gunfight_audio_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, gunfight_audio_device.GUNFIGHT_AUDIO, 0); }
         public static invaders_audio_device INVADERS_AUDIO(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<invaders_audio_device>(mconfig, tag, invaders_audio_device.INVADERS_AUDIO, 0); }
 
         // namco
@@ -312,6 +341,14 @@ namespace mame
         {
             var device = emu.detail.device_type_impl.op<netlist_mame_stream_output_device>(mconfig, tag, netlist_mame_stream_output_device.NETLIST_STREAM_OUTPUT, 0);
             device.set_params(channel, out_name);
+            return device;
+        }
+
+        // nvram
+        public static nvram_device NVRAM(machine_config mconfig, string tag, nvram_device.default_value value)
+        {
+            var device = emu.detail.device_type_impl.op<nvram_device>(mconfig, tag, nvram_device.NVRAM, 0);
+            device.set_default_value(value);
             return device;
         }
 
@@ -1201,6 +1238,7 @@ namespace mame
             public void push_back(T item) { Add(item); }
             public void push_front(T item) { Insert(0, item); }
             public void resize(size_t count, T data = default) { Resize((int)count, data); }
+            public void resize(size_t count, Func<T> creator) { Resize((int)count, creator); }
             public void reserve(size_t value) { Capacity = (int)value; }
             public size_t size() { return (size_t)Count; }
         }
@@ -1385,11 +1423,15 @@ namespace mame
         }
 
 
-        public virtual void Resize(int count) { ResizeInternal(count, default); }
+        public virtual void Resize(int count) { ResizeInternal(count, (T)default); }
         public virtual void Resize(int count, T data)
         {
             assert(typeof(T).GetTypeInfo().IsValueType ? true : (data == null || data.Equals(default)) ? true : false);  // this function doesn't do what you'd expect for ref classes since it doesn't new() for each item.  Manually Add() in this case.
             ResizeInternal(count, data);
+        }
+        public virtual void Resize(int count, Func<T> creator)
+        {
+            ResizeInternal(count, creator);
         }
 
 
@@ -1407,6 +1449,23 @@ namespace mame
 
                 for (int i = 0; i < count - current; i++)
                     Add(data);
+            }
+        }
+
+        protected virtual void ResizeInternal(int count, Func<T> creator)
+        {
+            int current = Count;
+            if (count < current)
+            {
+                RemoveRange(count, current - count);
+            }
+            else if (count > current)
+            {
+                if (count > Capacity)
+                    Capacity = count;
+
+                for (int i = 0; i < count - current; i++)
+                    Add(creator());
             }
         }
 
@@ -1544,6 +1603,8 @@ namespace mame
         public static PointerU16 operator -(PointerU16 left, UInt32 right) { return new PointerU16(left, -(int)right); }
         public static PointerU16 operator --(PointerU16 left) { left.m_offset -= 2; return left; }
 
+        public virtual UInt16 op16 { get { return this[0]; } set { this[0] = value; } }
+
         public void Fill(UInt16 value, int count) { Fill(value, 0, count); }
         public void Fill(UInt16 value, int start, int count) { for (int i = start; i < start + count; i++) this[i] = value; }
     }
@@ -1564,6 +1625,8 @@ namespace mame
         public static PointerU32 operator -(PointerU32 left, UInt32 right) { return new PointerU32(left, -(int)right); }
         public static PointerU32 operator --(PointerU32 left) { left.m_offset -= 4; return left; }
 
+        public virtual UInt32 op32 { get { return this[0]; } set { this[0] = value; } }
+
         public void Fill(UInt32 value, int count) { Fill(value, 0, count); }
         public void Fill(UInt32 value, int start, int count) { for (int i = start; i < start + count; i++) this[i] = value; }
     }
@@ -1583,6 +1646,8 @@ namespace mame
         public static PointerU64 operator -(PointerU64 left, int right) { return new PointerU64(left, -right); }
         public static PointerU64 operator -(PointerU64 left, UInt32 right) { return new PointerU64(left, -(int)right); }
         public static PointerU64 operator --(PointerU64 left) { left.m_offset -= 8; return left; }
+
+        public virtual UInt64 op64 { get { return this[0]; } set { this[0] = value; } }
 
         public void Fill(UInt64 value, int count) { Fill(value, 0, count); }
         public void Fill(UInt64 value, int start, int count) { for (int i = start; i < start + count; i++) this[i] = value; }

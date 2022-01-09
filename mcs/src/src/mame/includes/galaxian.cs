@@ -85,10 +85,10 @@ namespace mame
         uint8_t m_konami_sound_control;
         uint8_t m_irq_enabled;
         int m_irq_line = INPUT_LINE_NMI;
-        uint8_t m_frogger_adjust = 0;  //false;
+        bool m_frogger_adjust = false;
         uint8_t m_x_scale = GALAXIAN_XSCALE;
         uint8_t m_h0_start = GALAXIAN_H0START;
-        uint8_t m_sfx_tilemap = 0;  //false;
+        bool m_sfx_adjust = false;
 
         /* video extension callbacks */
         //typedef void (galaxian_state::*extend_tile_info_func)(uint16_t *code, uint8_t *color, uint8_t attrib, uint8_t x, uint8_t y);

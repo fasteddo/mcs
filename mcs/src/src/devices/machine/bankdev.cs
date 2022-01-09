@@ -92,7 +92,8 @@ namespace mame
         //address_map_bank_device& stride(u32 stride) { m_stride = stride; return *this; }
         //address_map_bank_device& shift(u32 shift) { m_shift = shift; return *this; }
 
-        //void amap8(address_map &map);
+
+        public void amap8(address_map map) { throw new emu_unimplemented(); }
 
 
         public void amap16(address_map map) { map.op(0x00000000, 0xffffffff).rw((offset, mem_mask) => { return read16(offset, mem_mask); }, (offset, data, mem_mask) => { write16(offset, data, mem_mask); }); }

@@ -12,7 +12,7 @@ namespace mame
     {
         // extern const game_driver driver_pacman
  
-        public static readonly game_driver [] s_drivers_sorted = new game_driver []
+        public static readonly game_driver [] s_drivers_sorted = 
         {
             ___empty.driver____empty,
             _1942.driver_1942,
@@ -21,12 +21,14 @@ namespace mame
             atarisy2.driver_paperboy,
             centiped.driver_centipede,
             dkong.driver_dkong,
+            williams.driver_defender,
             galaga.driver_digdug,
             galaga.driver_galaga,
             galaga.driver_xevious,
             galaxian.driver_frogger,
             galaxian.driver_galaxian,
             m52.driver_mpatrol,
+            mw8080bw.driver_gunfight,
             mw8080bw.driver_invaders,
             pacman.driver_mspacman,
             pacman.driver_pacman,

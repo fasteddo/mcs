@@ -470,7 +470,7 @@ namespace mame
 
         public static void push(osd_output callback)
         {
-            if (m_ptr < MAXSTACK)
+            if (m_ptr < MAXSTACK - 1)
             {
                 callback.m_chain = (m_ptr >= 0 ? m_stack[m_ptr] : null);
                 m_ptr++;
@@ -481,7 +481,7 @@ namespace mame
         public static void pop(osd_output callback)
         {
             int f = -1;
-            for (int i=0; i<=m_ptr; i++)
+            for (int i = 0; i <= m_ptr; i++)
             {
                 if (m_stack[i] == callback)
                 {

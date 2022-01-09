@@ -308,7 +308,7 @@ namespace mame.ui
 
         // accessors
         render_font font() { return m_font; }
-        float xscale() { return m_xscale;  }
+        float xscale() { return m_xscale; }
         float yscale() { return m_yscale; }
         public float width() { return m_width; }
         text_justify justify() { return m_justify; }

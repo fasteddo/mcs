@@ -28,7 +28,7 @@ namespace mame.ui
             menu_input_groups - handle the input groups
             menu
         -------------------------------------------------*/
-        protected override void handle()
+        protected override void handle(event_ ev)
         {
             throw new emu_unimplemented();
         }
@@ -87,7 +87,12 @@ namespace mame.ui
         //~menu_input() { }
 
 
-        protected override void handle()
+        protected override void menu_activated()
+        {
+            throw new emu_unimplemented();
+        }
+
+        protected override void handle(event_ ev)
         {
             throw new emu_unimplemented();
         }

@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Svg;
 
 using bitmap_vector = mame.std.vector<mame.bitmap_argb32>;
 using cache_ptr_map = mame.std.map<mame.running_machine, mame.ui.menu_select_launch.cache>;
@@ -169,7 +170,7 @@ namespace mame.ui
 
             public system_flags(machine_static_info info)
             {
-                m_machine_flags = info.machine_flags_get();
+                m_machine_flags = info.machine_flags_();
                 m_unemulated_features = info.unemulated_features();
                 m_imperfect_features = info.imperfect_features();
                 m_has_keyboard = info.has_keyboard();
@@ -261,7 +262,7 @@ namespace mame.ui
                 for (int i = 0; i < 256 * 256; i++)
                     m_no_avail_bitmapBuf[i] = no_avail_bmp[i];
 
-                m_toolbar_bitmaps.resize(UI_TOOLBAR_BUTTONS);
+                m_toolbar_bitmaps.resize(UI_TOOLBAR_BUTTONS, () => { return new bitmap_argb32(); });
                 m_toolbar_textures.reserve(UI_TOOLBAR_BUTTONS);
             }
 
@@ -286,49 +287,57 @@ namespace mame.ui
                 int32_t pix_size = (int32_t)std.ceil(std.max(width * target.width(), height * target.height()));
                 if (m_toolbar_textures.empty() || (m_toolbar_bitmaps[0].width() != pix_size) || (m_toolbar_bitmaps[0].height() != pix_size))
                 {
-                    throw new emu_unimplemented();
-#if false
                     m_toolbar_textures.clear();
-                    util.nsvg_rasterizer_ptr rasterizer = nsvgCreateRasterizer();
+
+                    //util.nsvg_rasterizer_ptr rasterizer = nsvgCreateRasterizer();
                     string xml;
                     for (unsigned i = 0; UI_TOOLBAR_BUTTONS > i; ++i)
                     {
                         // parse SVG and calculate scale
                         xml = toolbar_icons_svg[i];
-                        util.nsvg_image_ptr svg = nsvgParse(xml.data(), "px", 72);
-                        float xscale = (float)pix_size / svg->width;
-                        float yscale = (float)pix_size / svg->height;
+                        //util.nsvg_image_ptr svg = nsvgParse(xml.data(), "px", 72);
+                        SvgDocument svg = SvgDocument.FromSvg<SvgDocument>(xml);
+                        float xscale = (float)pix_size / svg.Width.Value;  //float xscale = (float)pix_size / svg->width;
+                        float yscale = (float)pix_size / svg.Height.Value;  //float yscale = (float)pix_size / svg->height;
                         float drawscale = std.max(xscale, yscale);
 
                         // rasterise the SVG and clear it out of memory
                         bitmap_argb32 bitmap = m_toolbar_bitmaps[i];
                         bitmap.resize(pix_size, pix_size);
-                        nsvgRasterize(
-                                rasterizer.get(),
-                                svg.get(),
-                                0, 0, drawscale,
-                                reinterpret_cast<char *>(bitmap.pix(0)),  //reinterpret_cast<unsigned char *>(&bitmap.pix(0)),
-                                pix_size, pix_size,
-                                bitmap.rowbytes());
-                        svg.reset();
-
-                        // correct colour format
-                        for (int32_t y = 0; bitmap.height() > y; ++y)
+                        //nsvgRasterize(
+                        //        rasterizer.get(),
+                        //        svg.get(),
+                        //        0, 0, drawscale,
+                        //        reinterpret_cast<char *>(bitmap.pix(0)),  //reinterpret_cast<unsigned char *>(&bitmap.pix(0)),
+                        //        pix_size, pix_size,
+                        //        bitmap.rowbytes());
+                        //svg.reset();
+                        byte [] bytes = svg.DrawToByteArray(pix_size, pix_size);
+                        for (int32_t y = 0; pix_size > y; ++y)
                         {
-                            PointerU32 dst = bitmap.pix(y);  //uint32_t *dst(&bitmap.pix(y));
-                            for (int32_t x = 0; bitmap.width() > x; ++x, ++dst)
+                            for (int32_t x = 0; pix_size > x; ++x)
                             {
-                                PointerU8 src = new PointerU8(dst);  //u8 const *const src(reinterpret_cast<u8 const *>(dst));
-                                rgb_t d = new rgb_t(src[3], src[0], src[1], src[2]);
-                                *dst = d;
+                                bitmap.pix(y, x).op32 = BitConverter.ToUInt32(bytes, ((y * pix_size) + x) * 4);
                             }
                         }
 
+                        // correct colour format
+                        //for (int32_t y = 0; bitmap.height() > y; ++y)
+                        //{
+                        //    PointerU32 dst = bitmap.pix(y);  //uint32_t *dst(&bitmap.pix(y));
+                        //    for (int32_t x = 0; bitmap.width() > x; ++x, ++dst)
+                        //    {
+                        //        PointerU8 src = new PointerU8(dst);  //u8 const *const src(reinterpret_cast<u8 const *>(dst));
+                        //        rgb_t d = new rgb_t(src[3], src[0], src[1], src[2]);
+                        //        dst.op32 = d;  //*dst = d;
+                        //    }
+                        //}
+
                         // make a texture
-                        render_texture texture = m_toolbar_textures.emplace_back(render.texture_alloc(), render);  //render_texture &texture(*m_toolbar_textures.emplace_back(render.texture_alloc(), render));
+                        render_texture texture = render.texture_alloc();  //render_texture &texture(*m_toolbar_textures.emplace_back(render.texture_alloc(), render));
+                        m_toolbar_textures.emplace_back(texture);
                         texture.set_bitmap(bitmap, bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
                     }
-#endif
                 }
             }
         }
@@ -380,11 +389,10 @@ namespace mame.ui
             //-------------------------------------------------
             //  handle
             //-------------------------------------------------
-            protected override void handle()
+            protected override void handle(event_ ev)
             {
                 // process the menu
-                menu_event menu_event = process(0);
-                if (menu_event != null && menu_event.iptkey == (int)ioport_type.IPT_UI_SELECT && menu_event.itemref != null)
+                if (ev != null && (ev.iptkey == (int)ioport_type.IPT_UI_SELECT) && ev.itemref != null)
                 {
                     foreach (var elem in m_parts)
                     {
@@ -448,11 +456,10 @@ namespace mame.ui
             //-------------------------------------------------
             //  handle
             //-------------------------------------------------
-            protected override void handle()
+            protected override void handle(event_ ev)
             {
                 // process the menu
-                menu_event menu_event = process(0);
-                if (menu_event != null && menu_event.iptkey == (int)ioport_type.IPT_UI_SELECT && menu_event.itemref != null)
+                if (ev != null && (ev.iptkey == (int)ioport_type.IPT_UI_SELECT) && ev.itemref != null)
                 {
                     foreach (var elem in m_bios)
                     {
@@ -555,7 +562,7 @@ namespace mame.ui
             m_items_list = new std.vector<string>();
             m_info_buffer = "";
             m_info_layout = null;
-            m_cache = mui.get_session_data(typeof(menu_select_launch), new cache_wrapper(machine()));
+            m_cache = mui.get_session_data(typeof(menu_select_launch), () => { return new cache_wrapper(machine()); });  //, m_cache(mui.get_session_data<menu_select_launch, cache_wrapper>(machine()))
             m_is_swlist = is_swlist;
             m_focus = focused_menu.MAIN;
             m_pressed = false;
@@ -569,6 +576,7 @@ namespace mame.ui
 
 
             set_needs_prev_menu_item(false);
+            set_process_flags(PROCESS_LR_REPEAT);
         }
 
 
@@ -663,11 +671,11 @@ namespace mame.ui
                 tempbuf[0] = make_software_description(swinfo, system);
 
                 // next line is year, publisher
-                tempbuf[1] = string_format(__("{0}, {1}"), swinfo.year, swinfo.publisher);  // "%1$s, %2$-.100s"
+                tempbuf[1] = string_format(__("{0}, {1}"), swinfo.year, swinfo.publisher);  // "%1$s, %2$s"
 
                 // next line is parent/clone
                 if (!swinfo.parentname.empty())
-                    tempbuf[2] = string_format(__("Software is clone of: {0}"), !swinfo.parentlongname.empty() ? swinfo.parentlongname : swinfo.parentname);  // %1$-.100s
+                    tempbuf[2] = string_format(__("Software is clone of: {0}"), !swinfo.parentlongname.empty() ? swinfo.parentlongname : swinfo.parentname);  // %1$s
                 else
                     tempbuf[2] = __("Software is parent");
 
@@ -694,7 +702,7 @@ namespace mame.ui
                 isstar = mame_machine_manager.instance().favorite().is_favorite_system(driver);
 
                 // first line is year, manufacturer
-                tempbuf[0] = string_format(__("{0}, {1}"), driver.year, driver.manufacturer);  //tempbuf[0] = string_format(_("%1$s, %2$-.100s"), driver.year, driver.manufacturer);
+                tempbuf[0] = string_format(__("{0}, {1}"), driver.year, driver.manufacturer);  //tempbuf[0] = string_format(_("%1$s, %2$s"), driver.year, driver.manufacturer);
 
                 // next line is clone/parent status
                 int cloneof = driver_list.non_bios_clone(driver);
@@ -702,9 +710,9 @@ namespace mame.ui
                 if (0 > cloneof)
                     tempbuf[1] = __("Driver is parent");
                 else if (system != null)
-                    tempbuf[1] = string_format(__("Driver is clone of: {0}"), system.parent);  //tempbuf[1] = string_format(_("Driver is clone of: %1$-.100s"), system->parent);
+                    tempbuf[1] = string_format(__("Driver is clone of: {0}"), system.parent);  //tempbuf[1] = string_format(_("Driver is clone of: %1$s"), system->parent);
                 else
-                    tempbuf[1] = string_format(__("Driver is clone of: {0}"), driver_list.driver((size_t)cloneof).type.fullname());  //tempbuf[1] = string_format(_("Driver is clone of: %1$-.100s"), driver_list::driver(cloneof).type.fullname());
+                    tempbuf[1] = string_format(__("Driver is clone of: {0}"), driver_list.driver((size_t)cloneof).type.fullname());  //tempbuf[1] = string_format(_("Driver is clone of: %1$s"), driver_list::driver(cloneof).type.fullname());
 
                 // next line is overall driver status
                 system_flags flags = get_system_flags(driver);
@@ -737,12 +745,13 @@ namespace mame.ui
             else
             {
                 string copyright = emulator_info.get_copyright();
-                size_t found = copyright.find('\n');
+                size_t found1 = copyright.find_first_of('\n');
+                size_t found2 = copyright.find_last_of('\n');
 
-                tempbuf[0] = tempbuf[0].clear_();
-                tempbuf[1] = string_format(__("{0} {1}"), emulator_info.get_appname(), build_version);  // %1$s %2$s
-                tempbuf[2] = copyright.substr(0, found);
-                tempbuf[3] = copyright.substr(found + 1);
+                tempbuf[0] = string_format(__("{0} {1}"), emulator_info.get_appname(), build_version);  //%1$s %2$s
+                tempbuf[1] = copyright.substr(0, found1);
+                tempbuf[2] = copyright.substr(found1 + 1, found2 - (found1 + 1));
+                tempbuf[3] = copyright.substr(found2 + 1);
             }
 
             // draw the footer
@@ -1678,7 +1687,7 @@ namespace mame.ui
             {
                 for (int x = 0; x < item_count(); ++x)
                 {
-                    if (item(x).ref_ == m_prev_selected)
+                    if (item(x).ref_() == m_prev_selected)
                     {
                         set_selected_index(x);
                         break;
@@ -1727,7 +1736,7 @@ namespace mame.ui
                 float ypos = y2 + ui().get_line_height() + 2.0f * ui().box_tb_border();
                 ui().draw_text_box(
                         container(),
-                        have_parent ? __("Return to previous menu") : __("Exit"),
+                        have_parent ? __("Return to Previous Menu") : __("Exit"),
                         text_layout.text_justify.RIGHT, 1.0f - lr_border, ypos,
                         ui().colors().background_color());
             }
@@ -1852,8 +1861,6 @@ namespace mame.ui
         //-------------------------------------------------
         protected override void handle_keys(uint32_t flags, ref int iptkey)
         {
-            bool ignorepause = stack_has_special_main_menu();
-
             // bail if no items
             if (item_count() == 0)
                 return;
@@ -1867,7 +1874,6 @@ namespace mame.ui
                 }
                 else if (m_focus == focused_menu.LEFT)
                 {
-                    m_prev_selected = null;
                     filter_selected();
                 }
 
@@ -1890,6 +1896,8 @@ namespace mame.ui
                 {
                     // otherwise pop the stack
                     stack_pop();
+                    if (is_special_main_menu())
+                        machine().schedule_exit();
                 }
                 return;
             }
@@ -1898,26 +1906,36 @@ namespace mame.ui
             validate_selection(1);
 
             // swallow left/right keys if they are not appropriate
-            bool ignoreleft = ((selected_item().flags & FLAG_LEFT_ARROW) == 0);
-            bool ignoreright = ((selected_item().flags & FLAG_RIGHT_ARROW) == 0);
             bool leftclose = (ui_globals.panels_status == HIDE_BOTH || ui_globals.panels_status == HIDE_LEFT_PANEL);
             bool rightclose = (ui_globals.panels_status == HIDE_BOTH || ui_globals.panels_status == HIDE_RIGHT_PANEL);
 
             // accept left/right keys as-is with repeat
-            if (!ignoreleft && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_LEFT, (flags & PROCESS_LR_REPEAT) != 0 ? 6 : 0))
+            if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_LEFT, (flags & PROCESS_LR_REPEAT) != 0 ? 6 : 0))
             {
-                // Swap the right panel
                 if (m_focus == focused_menu.RIGHTTOP)
+                {
+                    // Swap the right panel and swallow it
                     ui_globals.rpanel = RP_IMAGES;
-                return;
+                    iptkey = (int)ioport_type.IPT_INVALID;
+                }
+                else
+                {
+                    return;
+                }
             }
 
-            if (!ignoreright && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_RIGHT, (flags & PROCESS_LR_REPEAT) != 0 ? 6 : 0))
+            if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_RIGHT, (flags & PROCESS_LR_REPEAT) != 0 ? 6 : 0))
             {
-                // Swap the right panel
                 if (m_focus == focused_menu.RIGHTTOP)
+                {
+                    // Swap the right panel and swallow it
                     ui_globals.rpanel = RP_INFOS;
-                return;
+                    iptkey = (int)ioport_type.IPT_INVALID;
+                }
+                else
+                {
+                    return;
+                }
             }
 
             // up backs up by one item
@@ -1927,7 +1945,7 @@ namespace mame.ui
                 {
                     return;
                 }
-                else if (!rightclose && m_focus == focused_menu.RIGHTBOTTOM)
+                else if (!rightclose && ((m_focus == focused_menu.RIGHTTOP) || (m_focus == focused_menu.RIGHTBOTTOM)))
                 {
                     m_topline_datsview--;
                     return;
@@ -1950,7 +1968,7 @@ namespace mame.ui
                 {
                     return;
                 }
-                else if (!rightclose && m_focus == focused_menu.RIGHTBOTTOM)
+                else if (!rightclose && ((m_focus == focused_menu.RIGHTTOP) || (m_focus == focused_menu.RIGHTBOTTOM)))
                 {
                     m_topline_datsview++;
                     return;
@@ -1970,7 +1988,7 @@ namespace mame.ui
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_PAGE_UP, 6))
             {
                 // Infos
-                if (!rightclose && m_focus == focused_menu.RIGHTBOTTOM)
+                if (!rightclose && ((m_focus == focused_menu.RIGHTTOP) || (m_focus == focused_menu.RIGHTBOTTOM)))
                 {
                     m_topline_datsview -= m_right_visible_lines - 3;
                     return;
@@ -1988,7 +2006,7 @@ namespace mame.ui
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_PAGE_DOWN, 6))
             {
                 // Infos
-                if (!rightclose && m_focus == focused_menu.RIGHTBOTTOM)
+                if (!rightclose && ((m_focus == focused_menu.RIGHTTOP) || (m_focus == focused_menu.RIGHTBOTTOM)))
                 {
                     m_topline_datsview += m_right_visible_lines - 3;
                     return;
@@ -2009,7 +2027,7 @@ namespace mame.ui
                 {
                     return;
                 }
-                else if (!rightclose && m_focus == focused_menu.RIGHTBOTTOM)
+                else if (!rightclose && ((m_focus == focused_menu.RIGHTTOP) || (m_focus == focused_menu.RIGHTBOTTOM)))
                 {
                     m_topline_datsview = 0;
                     return;
@@ -2026,7 +2044,7 @@ namespace mame.ui
                 {
                     return;
                 }
-                else if (!rightclose && m_focus == focused_menu.RIGHTBOTTOM)
+                else if (!rightclose && ((m_focus == focused_menu.RIGHTTOP) || (m_focus == focused_menu.RIGHTBOTTOM)))
                 {
                     m_topline_datsview = m_total_lines;
                     return;
@@ -2050,15 +2068,6 @@ namespace mame.ui
                     rotate_focus(-1);
             }
 
-            // pause enables/disables pause
-            if (!m_ui_error && !ignorepause && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_PAUSE, 0))
-            {
-                if (machine().paused())
-                    machine().resume();
-                else
-                    machine().pause();
-            }
-
             // handle a toggle cheats request
             if (!m_ui_error && machine().ui_input().pressed_repeat((int)ioport_type.IPT_UI_TOGGLE_CHEAT, 0))
                 mame_machine_manager.instance().cheat().set_enable(!mame_machine_manager.instance().cheat().enabled());
@@ -2075,19 +2084,8 @@ namespace mame.ui
                     {
                     case (int)ioport_type.IPT_UI_FOCUS_NEXT:
                     case (int)ioport_type.IPT_UI_FOCUS_PREV:
-                        continue;
-                    case (int)ioport_type.IPT_UI_LEFT:
-                        if (ignoreleft)
-                            continue;
-                        break;
-                    case (int)ioport_type.IPT_UI_RIGHT:
-                        if (ignoreright)
-                            continue;
-                        break;
                     case (int)ioport_type.IPT_UI_PAUSE:
-                        if (ignorepause)
-                            continue;
-                        break;
+                        continue;
                     }
 
                     if (exclusive_input_pressed(ref iptkey, code, 0))
@@ -2100,7 +2098,7 @@ namespace mame.ui
         //-------------------------------------------------
         //  handle input events for main menu
         //-------------------------------------------------
-        protected override void handle_events(uint32_t flags, menu_event ev)
+        protected override void handle_events(uint32_t flags, event_ ev)
         {
             if (m_pressed)
             {
@@ -2240,6 +2238,8 @@ namespace mame.ui
                             {
                                 ev.iptkey = (int)ioport_type.IPT_UI_CANCEL;
                                 stack_pop();
+                                if (is_special_main_menu())
+                                    machine().schedule_exit();
                                 stop = true;
                             }
                             else if (hover() >= HOVER_RP_FIRST && hover() <= HOVER_RP_LAST)
@@ -2249,7 +2249,6 @@ namespace mame.ui
                             }
                             else if (hover() >= HOVER_FILTER_FIRST && hover() <= HOVER_FILTER_LAST)
                             {
-                                m_prev_selected = null;
                                 m_filter_highlight = hover() - HOVER_FILTER_FIRST;
                                 filter_selected();
                                 stop = true;
@@ -2424,18 +2423,31 @@ namespace mame.ui
             // make sure the selection
             if (m_available_items < m_visible_lines)
                 m_visible_lines = m_available_items;
-            if (top_line < 0 || is_first_selected())
+
+            int selection;
+            if (selected_index() < m_available_items)
+            {
+                selection = selected_index();
+            }
+            else
+            {
+                selection = 0;
+                while ((m_available_items > selection) && (item(selection).ref_() != m_prev_selected))
+                    ++selection;
+            }
+
+            if (top_line < 0 || selection == 0)
             {
                 top_line = 0;
             }
-            else if (selected_index() < m_available_items)
+            else if (selection < m_available_items)
             {
-                if (selected_index() >= (top_line + m_visible_lines))
-                    top_line = selected_index() - (m_visible_lines / 2);
+                if ((selection >= (top_line + m_visible_lines)) || (selection <= top_line))
+                    top_line = std.max(selection - (m_visible_lines / 2), 0);
                 if ((top_line + m_visible_lines) >= m_available_items)
                     top_line = m_available_items - m_visible_lines;
-                else if (selected_index() >= (top_line + m_visible_lines - 2))
-                    top_line = selected_index() - m_visible_lines + ((selected_index() == (m_available_items - 1)) ? 1: 2);
+                else if (selection >= (top_line + m_visible_lines - 2))
+                    top_line = selection - m_visible_lines + ((selection == (m_available_items - 1)) ? 1: 2);
             }
 
             // determine effective positions taking into account the hilighting arrows
@@ -2451,7 +2463,7 @@ namespace mame.ui
                 float line_y = visible_top + ((float)linenum * line_height);
                 int itemnum = top_line + linenum;
                 menu_item pitem = item(itemnum);
-                string itemtext = pitem.text;
+                string itemtext = pitem.text();
                 rgb_t fgcolor = ui().colors().text_color();
                 rgb_t bgcolor = ui().colors().text_bg_color();
                 rgb_t fgcolor3 = ui().colors().clone_color();
@@ -2483,7 +2495,7 @@ namespace mame.ui
                     bgcolor = ui().colors().mouseover_bg_color();
                     highlight(line_x0, line_y0, line_x1, line_y1, bgcolor);
                 }
-                else if (pitem.ref_ == m_prev_selected)
+                else if (pitem.ref_() == m_prev_selected)
                 {
                     fgcolor = fgcolor3 = ui().options().mouseover_color();
                     bgcolor = ui().colors().mouseover_bg_color();
@@ -2509,18 +2521,18 @@ namespace mame.ui
                     if (hover() == itemnum)
                         set_hover(HOVER_ARROW_DOWN);
                 }
-                else if (pitem.type == menu_item_type.SEPARATOR)
+                else if (pitem.type() == menu_item_type.SEPARATOR)
                 {
                     // if we're just a divider, draw a line
                     container().add_line(visible_left, line_y + 0.5f * line_height, visible_left + visible_width, line_y + 0.5f * line_height,
                             UI_LINE_WIDTH, ui().colors().text_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                 }
-                else if (pitem.subtext.empty())
+                else if (pitem.subtext().empty())
                 {
                     // draw the item centered
-                    int item_invert = (int)(pitem.flags & FLAG_INVERT);
+                    int item_invert = (int)(pitem.flags() & FLAG_INVERT);
                     if (m_has_icons)
-                        draw_icon(linenum, item(itemnum).ref_, effective_left, line_y);
+                        draw_icon(linenum, item(itemnum).ref_(), effective_left, line_y);
 
                     ui().draw_text_full(
                             container(),
@@ -2532,8 +2544,8 @@ namespace mame.ui
                 }
                 else
                 {
-                    int item_invert = (int)(pitem.flags & FLAG_INVERT);
-                    string subitem_text = pitem.subtext;
+                    int item_invert = (int)(pitem.flags() & FLAG_INVERT);
+                    string subitem_text = pitem.subtext();
                     float item_width;
                     float subitem_width;
 
@@ -2541,7 +2553,7 @@ namespace mame.ui
                     ui().draw_text_full(
                             container(),
                             subitem_text,
-                            effective_left + icon_offset, line_y, ui().get_string_width(pitem.subtext),
+                            effective_left + icon_offset, line_y, ui().get_string_width(pitem.subtext()),
                             text_layout.text_justify.RIGHT, text_layout.word_wrapping.NEVER,
                             mame_ui_manager.draw_mode.NONE, item_invert != 0 ? fgcolor3 : fgcolor, bgcolor, 
                             out subitem_width, out _);
@@ -2549,7 +2561,7 @@ namespace mame.ui
 
                     // draw the item left-justified
                     if (m_has_icons)
-                        draw_icon(linenum, item(itemnum).ref_, effective_left, line_y);
+                        draw_icon(linenum, item(itemnum).ref_(), effective_left, line_y);
 
                     ui().draw_text_full(
                             container(),
@@ -2573,7 +2585,7 @@ namespace mame.ui
             for (size_t count = (size_t)m_available_items; count < (size_t)item_count(); count++)
             {
                 menu_item pitem = item((int)count);
-                string itemtext = pitem.text;
+                string itemtext = pitem.text();
                 float line_x0 = x1 + 0.5f * UI_LINE_WIDTH;
                 float line_y0 = line;
                 float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
@@ -2600,7 +2612,7 @@ namespace mame.ui
                     highlight(line_x0, line_y0, line_x1, line_y1, bgcolor);
                 }
 
-                if (pitem.type == menu_item_type.SEPARATOR)
+                if (pitem.type() == menu_item_type.SEPARATOR)
                 {
                     container().add_line(
                             visible_left, line + 0.5f * line_height,
@@ -3103,7 +3115,7 @@ namespace mame.ui
 
             mame_machine_manager.instance().schedule_new_driver(driver);
             mui.machine().schedule_hard_reset();
-            stack_reset(mui.machine());
+            stack_reset(mui);
         }
 
 

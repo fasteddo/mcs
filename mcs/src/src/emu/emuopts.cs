@@ -59,7 +59,6 @@ namespace mame
         public const string OPTION_REWIND_CAPACITY      = "rewind_capacity";
         public const string OPTION_PLAYBACK             = "playback";
         public const string OPTION_RECORD               = "record";
-        public const string OPTION_RECORD_TIMECODE      = "record_timecode";
         public const string OPTION_EXIT_AFTER_PLAYBACK  = "exit_after_playback";
         public const string OPTION_MNGWRITE             = "mngwrite";
         public const string OPTION_AVIWRITE             = "aviwrite";
@@ -462,7 +461,6 @@ namespace mame
             new options_entry(OPTION_REWIND_CAPACITY + "(1-2048)",               "100",       OPTION_INTEGER,    "rewind buffer size in megabytes"),
             new options_entry(OPTION_PLAYBACK + ";pb",                           null,        OPTION_STRING,     "playback an input file"),
             new options_entry(OPTION_RECORD + ";rec",                            null,        OPTION_STRING,     "record an input file"),
-            new options_entry(OPTION_RECORD_TIMECODE,                            "0",         OPTION_BOOLEAN,    "record an input timecode file (requires -record option)"),
             new options_entry(OPTION_EXIT_AFTER_PLAYBACK,                        "0",         OPTION_BOOLEAN,    "close the program at the end of playback"),
 
             new options_entry(OPTION_MNGWRITE,                                   null,        OPTION_STRING,     "optional filename to write a MNG movie of the current session"),
@@ -599,7 +597,7 @@ namespace mame
             new options_entry(OPTION_RAMSIZE + ";ram",                           null,        OPTION_STRING,     "size of RAM (if supported by driver)"),
             new options_entry(OPTION_CONFIRM_QUIT,                               "0",         OPTION_BOOLEAN,    "ask for confirmation before exiting"),
             new options_entry(OPTION_UI_MOUSE,                                   "1",         OPTION_BOOLEAN,    "display UI mouse cursor"),
-            new options_entry(OPTION_LANGUAGE + ";lang",                         "English",   OPTION_STRING,     "set UI display language"),
+            new options_entry(OPTION_LANGUAGE + ";lang",                         "",          OPTION_STRING,     "set UI display language"),
             new options_entry(OPTION_NVRAM_SAVE + ";nvwrite",                    "1",         OPTION_BOOLEAN,    "save NVRAM data on exit"),
 
             new options_entry(null,                                              null,        OPTION_HEADER,     "SCRIPTING OPTIONS"),
@@ -775,7 +773,6 @@ namespace mame
         int rewind_capacity() { return int_value(OPTION_REWIND_CAPACITY); }
         public string playback() { return value(OPTION_PLAYBACK); }
         public string record() { return value(OPTION_RECORD); }
-        public bool record_timecode() { return bool_value(OPTION_RECORD_TIMECODE); }
         public bool exit_after_playback() { return bool_value(OPTION_EXIT_AFTER_PLAYBACK); }
         public string mng_write() { return value(OPTION_MNGWRITE); }
         public string avi_write() { return value(OPTION_AVIWRITE); }

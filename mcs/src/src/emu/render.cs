@@ -21,6 +21,7 @@ using static mame.corestr_global;
 using static mame.cpp_global;
 using static mame.emucore_global;
 using static mame.gamedrv_global;
+using static mame.language_global;
 using static mame.noscreens_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;
@@ -68,7 +69,7 @@ namespace mame
         //const u32 PRIMFLAG_SCREENTEX_MASK = 1 << PRIMFLAG_SCREENTEX_SHIFT;
 
         const int PRIMFLAG_TEXWRAP_SHIFT = 14;
-        //const u32 PRIMFLAG_TEXWRAP_MASK = 1 << PRIMFLAG_TEXWRAP_SHIFT;
+        const u32 PRIMFLAG_TEXWRAP_MASK = 1 << PRIMFLAG_TEXWRAP_SHIFT;
 
         const int PRIMFLAG_TEXSHADE_SHIFT = 15;
         //const u32 PRIMFLAG_TEXSHADE_MASK = 3 << PRIMFLAG_TEXSHADE_SHIFT;
@@ -108,7 +109,7 @@ namespace mame
         //#define PRIMFLAG_GET_SCREENTEX(x)   (((x) & PRIMFLAG_SCREENTEX_MASK) >> PRIMFLAG_SCREENTEX_SHIFT)
 
         public static u32 PRIMFLAG_TEXWRAP(u32 x) { return x << PRIMFLAG_TEXWRAP_SHIFT; }
-        //#define PRIMFLAG_GET_TEXWRAP(x)     (((x) & PRIMFLAG_TEXWRAP_MASK) >> PRIMFLAG_TEXWRAP_SHIFT)
+        public static bool PRIMFLAG_GET_TEXWRAP(u32 x) { return ((x & PRIMFLAG_TEXWRAP_MASK) >> PRIMFLAG_TEXWRAP_SHIFT) != 0; }
 
         public static u32 PRIMFLAG_TEXSHADE(u32 x) { return x << PRIMFLAG_TEXSHADE_SHIFT; }
         //#define PRIMFLAG_GET_TEXSHADE(x)    (((x) & PRIMFLAG_TEXSHADE_MASK) >> PRIMFLAG_TEXSHADE_SHIFT)
@@ -1445,7 +1446,7 @@ namespace mame
                     screen_device screen = screens[index() % (int)screens.size()];
                     for (unsigned i = 0; (view == null) && (m_views.size() > i); ++i)
                     {
-                        foreach (layout_view.item viewitem in m_views[i].first.items())
+                        foreach (layout_view_item viewitem in m_views[i].first.items())
                         {
                             screen_device viewscreen = viewitem.screen();
                             if (viewscreen == screen)
@@ -1632,7 +1633,7 @@ namespace mame
                 throw new emu_fatalerror("Mandatory artwork is missing");
 
             // scan the current view for all screens
-            foreach (layout_view.item curitem in current_view().items())
+            foreach (layout_view_item curitem in current_view().items())
             {
                 // iterate over items in the layer
                 screen_device screen = curitem.screen();
@@ -1719,7 +1720,7 @@ namespace mame
             {
                 // we're running - iterate over items in the view
                 current_view().prepare_items();
-                foreach (layout_view.item curitem in current_view().visible_items())
+                foreach (layout_view_item curitem in current_view().visible_items())
                 {
                     // first apply orientation to the bounds
                     render_bounds bounds = curitem.bounds();
@@ -1741,7 +1742,7 @@ namespace mame
                     if (curitem.screen() != null)
                         add_container_primitives(list, root_xform, item_xform, curitem.screen().container(), curitem.blend_mode());
                     else
-                        add_element_primitives(list, item_xform, curitem.element(), curitem.element_state(), curitem.blend_mode());
+                        add_element_primitives(list, item_xform, curitem);
                 }
             }
             else
@@ -1845,10 +1846,10 @@ namespace mame
                 var items = current_view().visible_screen_items();
                 var found = std.find_if(
                            items,
-                           (layout_view.item item) => { return item.screen().container() == container; });
+                           (layout_view_item item) => { return item.screen().container() == container; });
                 if (default != found)
                 {
-                    layout_view.item item = found;
+                    layout_view_item item = found;
                     render_bounds bounds = item.bounds();
                     if (bounds.includes(target_f.first, target_f.second))
                     {
@@ -1905,7 +1906,7 @@ namespace mame
             {
                 if (m_hit_test[i] && m_hit_test[items.size() + i])
                 {
-                    layout_view.item item = items[i];
+                    layout_view_item item = items[i];
                     render_bounds bounds = item.bounds();
                     if (bounds.includes(target_f.first, target_f.second))
                     {
@@ -2083,6 +2084,8 @@ namespace mame
 
         void load_additional_layout_files(string basename, bool have_artwork)
         {
+            //using util::lang_translate;
+
             m_external_artwork = false;
 
             // if override_artwork defined, load that and skip artwork other than default
@@ -2197,7 +2200,7 @@ namespace mame
                     viewnode.set_attribute(
                             "name",
                             util.string_format(
-                                "Screen {0} Standard ({1}:{2})",
+                                __("view-name", "Screen {0} Standard ({1}:{2})"),
                                 i, screens[i].physical_x(), screens[i].physical_y()));
                     util.xml.data_node screennode = viewnode.add_child("screen", null);
                     if (screennode == null)
@@ -2227,7 +2230,7 @@ namespace mame
                         viewnode.set_attribute(
                                 "name",
                                 util.string_format(
-                                    "Screen {0} Pixel Aspect ({1}:{2})",
+                                    __("view-name", "Screen {0} Pixel Aspect ({1}:{2})"),
                                     i, screens[i].native_x(), screens[i].native_y()));
 
                         util.xml.data_node screennode = viewnode.add_child("screen", null);
@@ -2253,7 +2256,7 @@ namespace mame
                     if (viewnode == null)
                         throw new emu_fatalerror("Couldn't create XML node??");
 
-                    viewnode.set_attribute("name", "Cocktail");
+                    viewnode.set_attribute("name", __("view-name", "Cocktail"));
 
                     util.xml.data_node mirrornode = viewnode.add_child("screen", null);
                     if (mirrornode == null)
@@ -2689,11 +2692,13 @@ namespace mame
         //  add_element_primitives - add the primitive
         //  for an element in the current state
         //-------------------------------------------------
-        void add_element_primitives(render_primitive_list list, object_transform xform, layout_element element, int state, int blendmode)
+        void add_element_primitives(render_primitive_list list, object_transform xform, layout_view_item item)
         {
+            layout_element element = item.element();
+            int blendmode = item.blend_mode();
+
             // limit state range to non-negative values
-            if (state < 0)
-                state = 0;
+            int state = std.max(item.element_state(), 0);
 
             // get a pointer to the relevant texture
             render_texture texture = element.state_texture(state);
@@ -2703,29 +2708,71 @@ namespace mame
 
                 // configure the basics
                 prim.color = xform.color;
-                prim.flags = PRIMFLAG_TEXORIENT((u32)xform.orientation) | PRIMFLAG_BLENDMODE((u32)blendmode) | PRIMFLAG_TEXFORMAT((u32)texture.format());
+                prim.flags =
+                        PRIMFLAG_TEXORIENT((u32)xform.orientation) |
+                        PRIMFLAG_TEXFORMAT((u32)texture.format()) |
+                        PRIMFLAG_BLENDMODE((u32)blendmode) |
+                        PRIMFLAG_TEXWRAP((item.scroll_wrap_x() || item.scroll_wrap_y()) ? 1U : 0U);
 
                 // compute the bounds
-                int width = (int)render_round_nearest(xform.xscale);
-                int height = (int)render_round_nearest(xform.yscale);
-                prim.bounds.set_wh(render_round_nearest(xform.xoffs), render_round_nearest(xform.yoffs), (float)width, (float)height);
+                float primwidth = render_round_nearest(xform.xscale);
+                float primheight = render_round_nearest(xform.yscale);
+                prim.bounds.set_wh(render_round_nearest(xform.xoffs), render_round_nearest(xform.yoffs), primwidth, primheight);
                 prim.full_bounds = prim.bounds;
-                if ((xform.orientation & ORIENTATION_SWAP_XY) != 0)
-                    std.swap(ref width, ref height);
-                width = std.min(width, m_maxtexwidth);
-                height = std.min(height, m_maxtexheight);
 
                 // get the scaled texture and append it
-                texture.get_scaled((u32)width, (u32)height, ref prim.texture, list, prim.flags);
+                float xsize = item.scroll_size_x();
+                float ysize = item.scroll_size_y();
+                s32 texwidth = (s32)render_round_nearest(((xform.orientation & ORIENTATION_SWAP_XY) != 0 ? primheight : primwidth) / xsize);
+                s32 texheight = (s32)render_round_nearest(((xform.orientation & ORIENTATION_SWAP_XY) != 0 ? primwidth : primheight) / ysize);
+                texwidth = std.min(texwidth, m_maxtexwidth);
+                texheight = std.min(texheight, m_maxtexheight);
+                texture.get_scaled((u32)texwidth, (u32)texheight, ref prim.texture, list, prim.flags);
 
                 // compute the clip rect
                 render_bounds cliprect = prim.bounds & m_bounds;
 
                 // determine UV coordinates and apply clipping
-                prim.texcoords = oriented_texcoords[xform.orientation];
-                bool clipped = render_clip_quad(ref prim.bounds, cliprect, ref prim.texcoords, true);
+                float xwindow = (xform.orientation & ORIENTATION_SWAP_XY) != 0 ? primheight : primwidth;
+                float ywindow = (xform.orientation & ORIENTATION_SWAP_XY) != 0 ? primwidth : primheight;
+                float xrange = (float)texwidth - (item.scroll_wrap_x() ? 0.0f : xwindow);
+                float yrange = (float)texheight - (item.scroll_wrap_y() ? 0.0f : ywindow);
+                float xoffset = render_round_nearest(item.scroll_pos_x() * xrange) / (float)texwidth;
+                float yoffset = render_round_nearest(item.scroll_pos_y() * yrange) / (float)texheight;
+                float xend = xoffset + (xwindow / (float)texwidth);
+                float yend = yoffset + (ywindow / (float)texheight);
+
+                switch (xform.orientation)
+                {
+                default:
+                case 0:
+                    prim.texcoords = new render_quad_texuv() { tl = { u = xoffset, v = yoffset }, tr = { u = xend, v = yoffset }, bl = { u = xoffset, v = yend }, br = { u = xend, v = yend } };
+                    break;
+                case ORIENTATION_FLIP_X:
+                    prim.texcoords = new render_quad_texuv{ tl = { u = xend, v = yoffset }, tr = { u = xoffset, v = yoffset }, bl = { u = xend, v = yend }, br = { u = xoffset, v = yend } };
+                    break;
+                case ORIENTATION_FLIP_Y:
+                    prim.texcoords = new render_quad_texuv{ tl = { u = xoffset, v = yend }, tr = { u = xend, v = yend }, bl = { u = xoffset, v = yoffset }, br = { u = xend, v = yoffset } };
+                    break;
+                case ORIENTATION_FLIP_X | ORIENTATION_FLIP_Y:
+                    prim.texcoords = new render_quad_texuv{ tl = { u = xend, v = yend }, tr = { u = xoffset, v = yend }, bl = { u = xend, v = yoffset }, br = { u = xoffset, v = yoffset } };
+                    break;
+                case ORIENTATION_SWAP_XY:
+                    prim.texcoords = new render_quad_texuv{ tl = { u = xoffset, v = yoffset }, tr = { u = xoffset, v = yend }, bl = { u = xend, v = yoffset }, br = { u = xend, v = yend } };
+                    break;
+                case ORIENTATION_SWAP_XY | ORIENTATION_FLIP_X:
+                    prim.texcoords = new render_quad_texuv{ tl = { u = xoffset, v = yend }, tr = { u = xoffset, v = yoffset }, bl = { u = xend, v = yend }, br = { u = xend, v = yoffset } };
+                    break;
+                case ORIENTATION_SWAP_XY | ORIENTATION_FLIP_Y:
+                    prim.texcoords = new render_quad_texuv{ tl = { u = xend, v = yoffset }, tr = { u = xend, v = yend }, bl = { u = xoffset, v = yoffset }, br = { u = xoffset, v = yend } };
+                    break;
+                case ORIENTATION_SWAP_XY | ORIENTATION_FLIP_X | ORIENTATION_FLIP_Y:
+                    prim.texcoords = new render_quad_texuv{ tl = { u = xend, v = yend }, tr = { u = xend, v = yoffset }, bl = { u = xoffset, v = yend }, br = { u = xoffset, v = yoffset } };
+                    break;
+                }
 
                 // add to the list or free if we're clipped out
+                bool clipped = render_clip_quad(ref prim.bounds, cliprect, ref prim.texcoords, true);
                 list.append_or_return(prim, clipped);
             }
         }

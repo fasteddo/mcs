@@ -155,6 +155,7 @@ namespace mame
             public item_proxy op { get { return m_proxies[0]; } }
 
 
+            //auto size() const { return std::size(m_proxies); }
             //auto begin() { return std::begin(m_proxies); }
             //auto end() { return std::end(m_proxies); }
             //auto begin() const { return std::begin(m_proxies); }

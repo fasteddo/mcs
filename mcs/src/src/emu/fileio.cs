@@ -347,7 +347,7 @@ namespace mame
 
             // compute the hash
             uint64_t length;
-            if (m_file.length(out length) == 0)
+            if (!m_file.length(out length))
                 m_hashes.compute(new PointerU8(filedata), (uint32_t)length, needed);
 
             return m_hashes;
@@ -556,7 +556,7 @@ namespace mame
 
             // tell if we can
             u64 result;
-            if (m_file != null && m_file.tell(out result) == 0)
+            if (m_file != null && !m_file.tell(out result))
                 return result;
 
             return 0;
@@ -577,7 +577,7 @@ namespace mame
 
             // return length if we can
             u64 result;
-            if (m_file != null && m_file.length(out result) == 0)
+            if (m_file != null && !m_file.length(out result))
                 return result;
 
             return 0;

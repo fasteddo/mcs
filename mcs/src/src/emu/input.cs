@@ -9,6 +9,7 @@ using u32 = System.UInt32;
 using static mame.cpp_global;
 using static mame.input_global;
 using static mame.input_internal;
+using static mame.inputdev_global;
 using static mame.profiler_global;
 using static mame.util;
 
@@ -65,6 +66,7 @@ namespace mame
     public enum input_item_modifier
     {
         ITEM_MODIFIER_NONE,
+        ITEM_MODIFIER_REVERSE,
         ITEM_MODIFIER_POS,
         ITEM_MODIFIER_NEG,
         ITEM_MODIFIER_LEFT,
@@ -920,38 +922,44 @@ namespace mame
             bool enable = true;
             for (int codenum = 0; ; codenum++)
             {
-                // handle NOT
                 input_code code = seq[codenum];
                 if (code == input_seq.not_code)
-                    invert = true;
-
-                // handle OR and END
-                else if (code == input_seq.or_code || code == input_seq.end_code)
                 {
-                    // if we have a positive result from the previous set, we're done
-                    if (itemclass != input_item_class.ITEM_CLASS_INVALID || code == input_seq.end_code)
-                        break;
+                    // handle NOT
+                    invert = true;
+                }
+                else if (code == input_seq.end_code)
+                {
+                    // handle OR and END
+                    break;
+                }
+                else if (code == input_seq.or_code)
+                {
+                    // handle OR
 
-                    // otherwise, reset our state
-                    result = 0;
+                    // reset invert and enable for the next group
                     invert = false;
                     enable = true;
                 }
-
-                // handle everything else only if we're still enabled
                 else if (enable)
                 {
+                    // handle everything else only if we're still enabled
+
                     // switch codes serve as enables
                     if (code.item_class() == input_item_class.ITEM_CLASS_SWITCH)
                     {
                         // AND against previous digital codes
                         if (enable)
                             enable &= code_pressed(code) ^ invert;
-                    }
 
-                    // non-switch codes are analog values
+                        // FIXME: need to clear current group value if enable became false
+                        // you can't create a sequence where this matters using the internal UI,
+                        // but you can by editing a CFG file (or controller config file)
+                    }
                     else
                     {
+                        // non-switch codes are analog values
+
                         int value = code_value(code);
 
                         // if we got a 0 value, don't do anything except remember the first type
@@ -960,19 +968,24 @@ namespace mame
                             if (itemclasszero == input_item_class.ITEM_CLASS_INVALID)
                                 itemclasszero = code.item_class();
                         }
-
-                        // non-zero absolute values stick
                         else if (code.item_class() == input_item_class.ITEM_CLASS_ABSOLUTE)
                         {
-                            itemclass = input_item_class.ITEM_CLASS_ABSOLUTE;
-                            result = value;
-                        }
+                            // non-zero absolute values stick
+                            if (itemclass == input_item_class.ITEM_CLASS_ABSOLUTE)
+                                result += value;
+                            else
+                                result = value;
 
-                        // non-zero relative values accumulate
+                            itemclass = input_item_class.ITEM_CLASS_ABSOLUTE;
+                        }
                         else if (code.item_class() == input_item_class.ITEM_CLASS_RELATIVE)
                         {
-                            itemclass = input_item_class.ITEM_CLASS_RELATIVE;
-                            result += value;
+                            // non-zero relative values accumulate in the absence of absolute values
+                            if (itemclass != input_item_class.ITEM_CLASS_ABSOLUTE)
+                            {
+                                result += value;
+                                itemclass = input_item_class.ITEM_CLASS_RELATIVE;
+                            }
                         }
                     }
 
@@ -980,6 +993,10 @@ namespace mame
                     invert = false;
                 }
             }
+
+            // saturate mixed absolute values
+            if (itemclass == input_item_class.ITEM_CLASS_ABSOLUTE)
+                result = std.clamp(result, INPUT_ABSOLUTE_MIN, INPUT_ABSOLUTE_MAX);
 
             // if the caller wants to know the type, provide it
             if (result == 0)
@@ -1092,6 +1109,8 @@ namespace mame
     {
         public u32 m_code;
         public string m_string;
+
+        public code_string_table(u32 code, string string_) { m_code = code; m_string = string_; }
 
 #if false
         u32 operator[](const char *string) const
@@ -1579,294 +1598,296 @@ namespace mame
     static class input_internal
     {
         // token strings for device classes
-        public static readonly code_string_table [] devclass_token_table = new code_string_table[]
+        public static readonly code_string_table [] devclass_token_table = 
         {
-            new code_string_table() { m_code = (u32)input_device_class.DEVICE_CLASS_KEYBOARD, m_string = "KEYCODE" },
-            new code_string_table() { m_code = (u32)input_device_class.DEVICE_CLASS_MOUSE,    m_string = "MOUSECODE" },
-            new code_string_table() { m_code = (u32)input_device_class.DEVICE_CLASS_LIGHTGUN, m_string = "GUNCODE" },
-            new code_string_table() { m_code = (u32)input_device_class.DEVICE_CLASS_JOYSTICK, m_string = "JOYCODE" },
-            new code_string_table() { m_code = u32.MaxValue,                                  m_string = "UNKCODE" }
+            new code_string_table((u32)input_device_class.DEVICE_CLASS_KEYBOARD, "KEYCODE"),
+            new code_string_table((u32)input_device_class.DEVICE_CLASS_MOUSE,    "MOUSECODE"),
+            new code_string_table((u32)input_device_class.DEVICE_CLASS_LIGHTGUN, "GUNCODE"),
+            new code_string_table((u32)input_device_class.DEVICE_CLASS_JOYSTICK, "JOYCODE"),
+            new code_string_table(u32.MaxValue,                                  "UNKCODE")
         };
 
         // friendly strings for device classes
-        public static readonly code_string_table [] devclass_string_table = new code_string_table[]
+        public static readonly code_string_table [] devclass_string_table = 
         {
-            new code_string_table() { m_code = (u32)input_device_class.DEVICE_CLASS_KEYBOARD, m_string = "Kbd" },
-            new code_string_table() { m_code = (u32)input_device_class.DEVICE_CLASS_MOUSE,    m_string = "Mouse" },
-            new code_string_table() { m_code = (u32)input_device_class.DEVICE_CLASS_LIGHTGUN, m_string = "Gun" },
-            new code_string_table() { m_code = (u32)input_device_class.DEVICE_CLASS_JOYSTICK, m_string = "Joy" },
-            new code_string_table() { m_code = u32.MaxValue,                                  m_string = "Unk" }
+            new code_string_table((u32)input_device_class.DEVICE_CLASS_KEYBOARD, "Kbd"),
+            new code_string_table((u32)input_device_class.DEVICE_CLASS_MOUSE,    "Mouse"),
+            new code_string_table((u32)input_device_class.DEVICE_CLASS_LIGHTGUN, "Gun"),
+            new code_string_table((u32)input_device_class.DEVICE_CLASS_JOYSTICK, "Joy"),
+            new code_string_table(u32.MaxValue,                                  "Unk")
         };
 
         // token strings for item modifiers
-        public static readonly code_string_table [] modifier_token_table = new code_string_table[]
+        public static readonly code_string_table [] modifier_token_table = 
         {
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_POS,     m_string = "POS" },
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_NEG,     m_string = "NEG" },
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_LEFT,    m_string = "LEFT" },
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_RIGHT,   m_string = "RIGHT" },
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_UP,      m_string = "UP" },
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_DOWN,    m_string = "DOWN" },
-            new code_string_table() { m_code = u32.MaxValue,                                   m_string = "" }
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_REVERSE, "REVERSE"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_POS,     "POS"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_NEG,     "NEG"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_LEFT,    "LEFT"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_RIGHT,   "RIGHT"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_UP,      "UP"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_DOWN,    "DOWN"),
+            new code_string_table(u32.MaxValue,                                   "")
         };
 
         // friendly strings for item modifiers
-        public static readonly code_string_table [] modifier_string_table = new code_string_table[]
+        public static readonly code_string_table [] modifier_string_table = 
         {
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_POS,     m_string = "+" },
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_NEG,     m_string = "-" },
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_LEFT,    m_string = "Left" },
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_RIGHT,   m_string = "Right" },
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_UP,      m_string = "Up" },
-            new code_string_table() { m_code = (u32)input_item_modifier.ITEM_MODIFIER_DOWN,    m_string = "Down" },
-            new code_string_table() { m_code = u32.MaxValue,                                   m_string = "" }
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_REVERSE, "Reverse"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_POS,     "+"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_NEG,     "-"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_LEFT,    "Left"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_RIGHT,   "Right"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_UP,      "Up"),
+            new code_string_table((u32)input_item_modifier.ITEM_MODIFIER_DOWN,    "Down"),
+            new code_string_table(u32.MaxValue,                                   "")
         };
 
         // token strings for item classes
-        public static readonly code_string_table [] itemclass_token_table = new code_string_table[]
+        public static readonly code_string_table [] itemclass_token_table = 
         {
-            new code_string_table() { m_code = (u32)input_item_class.ITEM_CLASS_SWITCH,     m_string = "SWITCH" },
-            new code_string_table() { m_code = (u32)input_item_class.ITEM_CLASS_ABSOLUTE,   m_string = "ABSOLUTE" },
-            new code_string_table() { m_code = (u32)input_item_class.ITEM_CLASS_RELATIVE,   m_string = "RELATIVE" },
-            new code_string_table() { m_code = u32.MaxValue,                                m_string = "" }
+            new code_string_table((u32)input_item_class.ITEM_CLASS_SWITCH,   "SWITCH"),
+            new code_string_table((u32)input_item_class.ITEM_CLASS_ABSOLUTE, "ABSOLUTE"),
+            new code_string_table((u32)input_item_class.ITEM_CLASS_RELATIVE, "RELATIVE"),
+            new code_string_table(u32.MaxValue,                              "")
         };
 
         // token strings for standard item ids
-        public static readonly code_string_table [] itemid_token_table = new code_string_table[]
+        public static readonly code_string_table [] itemid_token_table = 
         {
             // standard keyboard codes
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_A,             m_string = "A" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_B,             m_string = "B" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_C,             m_string = "C" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_D,             m_string = "D" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_E,             m_string = "E" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F,             m_string = "F" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_G,             m_string = "G" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_H,             m_string = "H" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_I,             m_string = "I" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_J,             m_string = "J" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_K,             m_string = "K" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_L,             m_string = "L" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_M,             m_string = "M" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_N,             m_string = "N" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_O,             m_string = "O" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_P,             m_string = "P" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_Q,             m_string = "Q" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_R,             m_string = "R" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_S,             m_string = "S" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_T,             m_string = "T" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_U,             m_string = "U" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_V,             m_string = "V" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_W,             m_string = "W" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_X,             m_string = "X" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_Y,             m_string = "Y" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_Z,             m_string = "Z" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_0,             m_string = "0" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_1,             m_string = "1" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_2,             m_string = "2" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_3,             m_string = "3" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_4,             m_string = "4" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_5,             m_string = "5" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_6,             m_string = "6" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_7,             m_string = "7" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_8,             m_string = "8" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_9,             m_string = "9" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F1,            m_string = "F1" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F2,            m_string = "F2" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F3,            m_string = "F3" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F4,            m_string = "F4" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F5,            m_string = "F5" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F6,            m_string = "F6" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F7,            m_string = "F7" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F8,            m_string = "F8" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F9,            m_string = "F9" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F10,           m_string = "F10" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F11,           m_string = "F11" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F12,           m_string = "F12" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F13,           m_string = "F13" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F14,           m_string = "F14" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F15,           m_string = "F15" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F16,           m_string = "F16" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F17,           m_string = "F17" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F18,           m_string = "F18" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F19,           m_string = "F19" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_F20,           m_string = "F20" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ESC,           m_string = "ESC" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_TILDE,         m_string = "TILDE" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_MINUS,         m_string = "MINUS" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_EQUALS,        m_string = "EQUALS" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BACKSPACE,     m_string = "BACKSPACE" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_TAB,           m_string = "TAB" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_OPENBRACE,     m_string = "OPENBRACE" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_CLOSEBRACE,    m_string = "CLOSEBRACE" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ENTER,         m_string = "ENTER" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_COLON,         m_string = "COLON" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_QUOTE,         m_string = "QUOTE" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BACKSLASH,     m_string = "BACKSLASH" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BACKSLASH2,    m_string = "BACKSLASH2" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_COMMA,         m_string = "COMMA" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_STOP,          m_string = "STOP" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_SLASH,         m_string = "SLASH" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_SPACE,         m_string = "SPACE" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_INSERT,        m_string = "INSERT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_DEL,           m_string = "DEL" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HOME,          m_string = "HOME" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_END,           m_string = "END" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_PGUP,          m_string = "PGUP" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_PGDN,          m_string = "PGDN" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_LEFT,          m_string = "LEFT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_RIGHT,         m_string = "RIGHT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_UP,            m_string = "UP" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_DOWN,          m_string = "DOWN" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_0_PAD,         m_string = "0PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_1_PAD,         m_string = "1PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_2_PAD,         m_string = "2PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_3_PAD,         m_string = "3PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_4_PAD,         m_string = "4PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_5_PAD,         m_string = "5PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_6_PAD,         m_string = "6PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_7_PAD,         m_string = "7PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_8_PAD,         m_string = "8PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_9_PAD,         m_string = "9PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_SLASH_PAD,     m_string = "SLASHPAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ASTERISK,      m_string = "ASTERISK" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_MINUS_PAD,     m_string = "MINUSPAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_PLUS_PAD,      m_string = "PLUSPAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_DEL_PAD,       m_string = "DELPAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ENTER_PAD,     m_string = "ENTERPAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BS_PAD,        m_string = "BSPAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_TAB_PAD,       m_string = "TABPAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_00_PAD,        m_string = "00PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_000_PAD,       m_string = "000PAD" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_PRTSCR,        m_string = "PRTSCR" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_PAUSE,         m_string = "PAUSE" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_LSHIFT,        m_string = "LSHIFT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_RSHIFT,        m_string = "RSHIFT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_LCONTROL,      m_string = "LCONTROL" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_RCONTROL,      m_string = "RCONTROL" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_LALT,          m_string = "LALT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_RALT,          m_string = "RALT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_SCRLOCK,       m_string = "SCRLOCK" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_NUMLOCK,       m_string = "NUMLOCK" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_CAPSLOCK,      m_string = "CAPSLOCK" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_LWIN,          m_string = "LWIN" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_RWIN,          m_string = "RWIN" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_MENU,          m_string = "MENU" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_CANCEL,        m_string = "CANCEL" },
+            new code_string_table((u32)input_item_id.ITEM_ID_A,              "A"),
+            new code_string_table((u32)input_item_id.ITEM_ID_B,              "B"),
+            new code_string_table((u32)input_item_id.ITEM_ID_C,              "C"),
+            new code_string_table((u32)input_item_id.ITEM_ID_D,              "D"),
+            new code_string_table((u32)input_item_id.ITEM_ID_E,              "E"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F,              "F"),
+            new code_string_table((u32)input_item_id.ITEM_ID_G,              "G"),
+            new code_string_table((u32)input_item_id.ITEM_ID_H,              "H"),
+            new code_string_table((u32)input_item_id.ITEM_ID_I,              "I"),
+            new code_string_table((u32)input_item_id.ITEM_ID_J,              "J"),
+            new code_string_table((u32)input_item_id.ITEM_ID_K,              "K"),
+            new code_string_table((u32)input_item_id.ITEM_ID_L,              "L"),
+            new code_string_table((u32)input_item_id.ITEM_ID_M,              "M"),
+            new code_string_table((u32)input_item_id.ITEM_ID_N,              "N"),
+            new code_string_table((u32)input_item_id.ITEM_ID_O,              "O"),
+            new code_string_table((u32)input_item_id.ITEM_ID_P,              "P"),
+            new code_string_table((u32)input_item_id.ITEM_ID_Q,              "Q"),
+            new code_string_table((u32)input_item_id.ITEM_ID_R,              "R"),
+            new code_string_table((u32)input_item_id.ITEM_ID_S,              "S"),
+            new code_string_table((u32)input_item_id.ITEM_ID_T,              "T"),
+            new code_string_table((u32)input_item_id.ITEM_ID_U,              "U"),
+            new code_string_table((u32)input_item_id.ITEM_ID_V,              "V"),
+            new code_string_table((u32)input_item_id.ITEM_ID_W,              "W"),
+            new code_string_table((u32)input_item_id.ITEM_ID_X,              "X"),
+            new code_string_table((u32)input_item_id.ITEM_ID_Y,              "Y"),
+            new code_string_table((u32)input_item_id.ITEM_ID_Z,              "Z"),
+            new code_string_table((u32)input_item_id.ITEM_ID_0,              "0"),
+            new code_string_table((u32)input_item_id.ITEM_ID_1,              "1"),
+            new code_string_table((u32)input_item_id.ITEM_ID_2,              "2"),
+            new code_string_table((u32)input_item_id.ITEM_ID_3,              "3"),
+            new code_string_table((u32)input_item_id.ITEM_ID_4,              "4"),
+            new code_string_table((u32)input_item_id.ITEM_ID_5,              "5"),
+            new code_string_table((u32)input_item_id.ITEM_ID_6,              "6"),
+            new code_string_table((u32)input_item_id.ITEM_ID_7,              "7"),
+            new code_string_table((u32)input_item_id.ITEM_ID_8,              "8"),
+            new code_string_table((u32)input_item_id.ITEM_ID_9,              "9"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F1,             "F1"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F2,             "F2"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F3,             "F3"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F4,             "F4"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F5,             "F5"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F6,             "F6"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F7,             "F7"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F8,             "F8"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F9,             "F9"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F10,            "F10"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F11,            "F11"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F12,            "F12"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F13,            "F13"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F14,            "F14"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F15,            "F15"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F16,            "F16"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F17,            "F17"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F18,            "F18"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F19,            "F19"),
+            new code_string_table((u32)input_item_id.ITEM_ID_F20,            "F20"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ESC,            "ESC"),
+            new code_string_table((u32)input_item_id.ITEM_ID_TILDE,          "TILDE"),
+            new code_string_table((u32)input_item_id.ITEM_ID_MINUS,          "MINUS"),
+            new code_string_table((u32)input_item_id.ITEM_ID_EQUALS,         "EQUALS"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BACKSPACE,      "BACKSPACE"),
+            new code_string_table((u32)input_item_id.ITEM_ID_TAB,            "TAB"),
+            new code_string_table((u32)input_item_id.ITEM_ID_OPENBRACE,      "OPENBRACE"),
+            new code_string_table((u32)input_item_id.ITEM_ID_CLOSEBRACE,     "CLOSEBRACE"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ENTER,          "ENTER"),
+            new code_string_table((u32)input_item_id.ITEM_ID_COLON,          "COLON"),
+            new code_string_table((u32)input_item_id.ITEM_ID_QUOTE,          "QUOTE"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BACKSLASH,      "BACKSLASH"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BACKSLASH2,     "BACKSLASH2"),
+            new code_string_table((u32)input_item_id.ITEM_ID_COMMA,          "COMMA"),
+            new code_string_table((u32)input_item_id.ITEM_ID_STOP,           "STOP"),
+            new code_string_table((u32)input_item_id.ITEM_ID_SLASH,          "SLASH"),
+            new code_string_table((u32)input_item_id.ITEM_ID_SPACE,          "SPACE"),
+            new code_string_table((u32)input_item_id.ITEM_ID_INSERT,         "INSERT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_DEL,            "DEL"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HOME,           "HOME"),
+            new code_string_table((u32)input_item_id.ITEM_ID_END,            "END"),
+            new code_string_table((u32)input_item_id.ITEM_ID_PGUP,           "PGUP"),
+            new code_string_table((u32)input_item_id.ITEM_ID_PGDN,           "PGDN"),
+            new code_string_table((u32)input_item_id.ITEM_ID_LEFT,           "LEFT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_RIGHT,          "RIGHT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_UP,             "UP"),
+            new code_string_table((u32)input_item_id.ITEM_ID_DOWN,           "DOWN"),
+            new code_string_table((u32)input_item_id.ITEM_ID_0_PAD,          "0PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_1_PAD,          "1PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_2_PAD,          "2PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_3_PAD,          "3PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_4_PAD,          "4PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_5_PAD,          "5PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_6_PAD,          "6PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_7_PAD,          "7PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_8_PAD,          "8PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_9_PAD,          "9PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_SLASH_PAD,      "SLASHPAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ASTERISK,       "ASTERISK"),
+            new code_string_table((u32)input_item_id.ITEM_ID_MINUS_PAD,      "MINUSPAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_PLUS_PAD,       "PLUSPAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_DEL_PAD,        "DELPAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ENTER_PAD,      "ENTERPAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BS_PAD,         "BSPAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_TAB_PAD,        "TABPAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_00_PAD,         "00PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_000_PAD,        "000PAD"),
+            new code_string_table((u32)input_item_id.ITEM_ID_PRTSCR,         "PRTSCR"),
+            new code_string_table((u32)input_item_id.ITEM_ID_PAUSE,          "PAUSE"),
+            new code_string_table((u32)input_item_id.ITEM_ID_LSHIFT,         "LSHIFT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_RSHIFT,         "RSHIFT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_LCONTROL,       "LCONTROL"),
+            new code_string_table((u32)input_item_id.ITEM_ID_RCONTROL,       "RCONTROL"),
+            new code_string_table((u32)input_item_id.ITEM_ID_LALT,           "LALT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_RALT,           "RALT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_SCRLOCK,        "SCRLOCK"),
+            new code_string_table((u32)input_item_id.ITEM_ID_NUMLOCK,        "NUMLOCK"),
+            new code_string_table((u32)input_item_id.ITEM_ID_CAPSLOCK,       "CAPSLOCK"),
+            new code_string_table((u32)input_item_id.ITEM_ID_LWIN,           "LWIN"),
+            new code_string_table((u32)input_item_id.ITEM_ID_RWIN,           "RWIN"),
+            new code_string_table((u32)input_item_id.ITEM_ID_MENU,           "MENU"),
+            new code_string_table((u32)input_item_id.ITEM_ID_CANCEL,         "CANCEL"),
 
             // standard mouse/joystick/gun codes
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_XAXIS,         m_string = "XAXIS" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_YAXIS,         m_string = "YAXIS" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ZAXIS,         m_string = "ZAXIS" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_RXAXIS,        m_string = "RXAXIS" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_RYAXIS,        m_string = "RYAXIS" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_RZAXIS,        m_string = "RZAXIS" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_SLIDER1,       m_string = "SLIDER1" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_SLIDER2,       m_string = "SLIDER2" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON1,       m_string = "BUTTON1" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON2,       m_string = "BUTTON2" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON3,       m_string = "BUTTON3" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON4,       m_string = "BUTTON4" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON5,       m_string = "BUTTON5" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON6,       m_string = "BUTTON6" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON7,       m_string = "BUTTON7" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON8,       m_string = "BUTTON8" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON9,       m_string = "BUTTON9" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON10,      m_string = "BUTTON10" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON11,      m_string = "BUTTON11" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON12,      m_string = "BUTTON12" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON13,      m_string = "BUTTON13" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON14,      m_string = "BUTTON14" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON15,      m_string = "BUTTON15" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON16,      m_string = "BUTTON16" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON17,      m_string = "BUTTON17" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON18,      m_string = "BUTTON18" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON19,      m_string = "BUTTON19" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON20,      m_string = "BUTTON20" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON21,      m_string = "BUTTON21" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON22,      m_string = "BUTTON22" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON23,      m_string = "BUTTON23" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON24,      m_string = "BUTTON24" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON25,      m_string = "BUTTON25" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON26,      m_string = "BUTTON26" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON27,      m_string = "BUTTON27" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON28,      m_string = "BUTTON28" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON29,      m_string = "BUTTON29" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON30,      m_string = "BUTTON30" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON31,      m_string = "BUTTON31" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_BUTTON32,      m_string = "BUTTON32" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_START,         m_string = "START" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_SELECT,        m_string = "SELECT" },
+            new code_string_table((u32)input_item_id.ITEM_ID_XAXIS,          "XAXIS"),
+            new code_string_table((u32)input_item_id.ITEM_ID_YAXIS,          "YAXIS"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ZAXIS,          "ZAXIS"),
+            new code_string_table((u32)input_item_id.ITEM_ID_RXAXIS,         "RXAXIS"),
+            new code_string_table((u32)input_item_id.ITEM_ID_RYAXIS,         "RYAXIS"),
+            new code_string_table((u32)input_item_id.ITEM_ID_RZAXIS,         "RZAXIS"),
+            new code_string_table((u32)input_item_id.ITEM_ID_SLIDER1,        "SLIDER1"),
+            new code_string_table((u32)input_item_id.ITEM_ID_SLIDER2,        "SLIDER2"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON1,        "BUTTON1"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON2,        "BUTTON2"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON3,        "BUTTON3"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON4,        "BUTTON4"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON5,        "BUTTON5"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON6,        "BUTTON6"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON7,        "BUTTON7"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON8,        "BUTTON8"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON9,        "BUTTON9"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON10,       "BUTTON10"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON11,       "BUTTON11"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON12,       "BUTTON12"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON13,       "BUTTON13"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON14,       "BUTTON14"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON15,       "BUTTON15"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON16,       "BUTTON16"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON17,       "BUTTON17"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON18,       "BUTTON18"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON19,       "BUTTON19"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON20,       "BUTTON20"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON21,       "BUTTON21"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON22,       "BUTTON22"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON23,       "BUTTON23"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON24,       "BUTTON24"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON25,       "BUTTON25"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON26,       "BUTTON26"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON27,       "BUTTON27"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON28,       "BUTTON28"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON29,       "BUTTON29"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON30,       "BUTTON30"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON31,       "BUTTON31"),
+            new code_string_table((u32)input_item_id.ITEM_ID_BUTTON32,       "BUTTON32"),
+            new code_string_table((u32)input_item_id.ITEM_ID_START,          "START"),
+            new code_string_table((u32)input_item_id.ITEM_ID_SELECT,         "SELECT"),
 
             // Hats
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT1UP,        m_string = "HAT1UP" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT1DOWN,      m_string = "HAT1DOWN" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT1LEFT,      m_string = "HAT1LEFT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT1RIGHT,     m_string = "HAT1RIGHT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT2UP,        m_string = "HAT2UP" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT2DOWN,      m_string = "HAT2DOWN" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT2LEFT,      m_string = "HAT2LEFT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT2RIGHT,     m_string = "HAT2RIGHT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT3UP,        m_string = "HAT3UP" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT3DOWN,      m_string = "HAT3DOWN" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT3LEFT,      m_string = "HAT3LEFT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT3RIGHT,     m_string = "HAT3RIGHT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT4UP,        m_string = "HAT4UP" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT4DOWN,      m_string = "HAT4DOWN" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT4LEFT,      m_string = "HAT4LEFT" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_HAT4RIGHT,     m_string = "HAT4RIGHT" },
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT1UP,         "HAT1UP"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT1DOWN,       "HAT1DOWN"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT1LEFT,       "HAT1LEFT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT1RIGHT,      "HAT1RIGHT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT2UP,         "HAT2UP"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT2DOWN,       "HAT2DOWN"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT2LEFT,       "HAT2LEFT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT2RIGHT,      "HAT2RIGHT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT3UP,         "HAT3UP"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT3DOWN,       "HAT3DOWN"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT3LEFT,       "HAT3LEFT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT3RIGHT,      "HAT3RIGHT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT4UP,         "HAT4UP"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT4DOWN,       "HAT4DOWN"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT4LEFT,       "HAT4LEFT"),
+            new code_string_table((u32)input_item_id.ITEM_ID_HAT4RIGHT,      "HAT4RIGHT"),
 
             // Additional IDs
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH1,   m_string = "ADDSW1" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH2,   m_string = "ADDSW2" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH3,   m_string = "ADDSW3" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH4,   m_string = "ADDSW4" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH5,   m_string = "ADDSW5" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH6,   m_string = "ADDSW6" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH7,   m_string = "ADDSW7" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH8,   m_string = "ADDSW8" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH9,   m_string = "ADDSW9" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH10,  m_string = "ADDSW10" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH11,  m_string = "ADDSW11" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH12,  m_string = "ADDSW12" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH13,  m_string = "ADDSW13" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH14,  m_string = "ADDSW14" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH15,  m_string = "ADDSW15" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_SWITCH16,  m_string = "ADDSW16" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE1, m_string = "ADDAXIS1" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE2, m_string = "ADDAXIS2" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE3, m_string = "ADDAXIS3" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE4, m_string = "ADDAXIS4" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE5, m_string = "ADDAXIS5" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE6, m_string = "ADDAXIS6" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE7, m_string = "ADDAXIS7" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE8, m_string = "ADDAXIS8" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE9, m_string = "ADDAXIS9" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE10,m_string = "ADDAXIS10" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE11,m_string = "ADDAXIS11" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE12,m_string = "ADDAXIS12" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE13,m_string = "ADDAXIS13" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE14,m_string = "ADDAXIS14" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE15,m_string = "ADDAXIS15" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_ABSOLUTE16,m_string = "ADDAXIS16" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE1, m_string = "ADDREL1" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE2, m_string = "ADDREL2" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE3, m_string = "ADDREL3" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE4, m_string = "ADDREL4" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE5, m_string = "ADDREL5" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE6, m_string = "ADDREL6" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE7, m_string = "ADDREL7" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE8, m_string = "ADDREL8" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE9, m_string = "ADDREL9" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE10,m_string = "ADDREL10" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE11,m_string = "ADDREL11" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE12,m_string = "ADDREL12" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE13,m_string = "ADDREL13" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE14,m_string = "ADDREL14" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE15,m_string = "ADDREL15" },
-            new code_string_table() { m_code = (u32)input_item_id.ITEM_ID_ADD_RELATIVE16,m_string = "ADDREL16" },
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH1,    "ADDSW1"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH2,    "ADDSW2"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH3,    "ADDSW3"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH4,    "ADDSW4"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH5,    "ADDSW5"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH6,    "ADDSW6"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH7,    "ADDSW7"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH8,    "ADDSW8"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH9,    "ADDSW9"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH10,   "ADDSW10"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH11,   "ADDSW11"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH12,   "ADDSW12"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH13,   "ADDSW13"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH14,   "ADDSW14"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH15,   "ADDSW15"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_SWITCH16,   "ADDSW16"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE1,  "ADDAXIS1"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE2,  "ADDAXIS2"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE3,  "ADDAXIS3"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE4,  "ADDAXIS4"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE5,  "ADDAXIS5"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE6,  "ADDAXIS6"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE7,  "ADDAXIS7"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE8,  "ADDAXIS8"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE9,  "ADDAXIS9"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE10, "ADDAXIS10"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE11, "ADDAXIS11"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE12, "ADDAXIS12"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE13, "ADDAXIS13"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE14, "ADDAXIS14"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE15, "ADDAXIS15"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_ABSOLUTE16, "ADDAXIS16"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE1,  "ADDREL1"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE2,  "ADDREL2"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE3,  "ADDREL3"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE4,  "ADDREL4"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE5,  "ADDREL5"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE6,  "ADDREL6"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE7,  "ADDREL7"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE8,  "ADDREL8"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE9,  "ADDREL9"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE10, "ADDREL10"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE11, "ADDREL11"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE12, "ADDREL12"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE13, "ADDREL13"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE14, "ADDREL14"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE15, "ADDREL15"),
+            new code_string_table((u32)input_item_id.ITEM_ID_ADD_RELATIVE16, "ADDREL16"),
 
-            new code_string_table() { m_code = u32.MaxValue,                             m_string = null }
+            new code_string_table(u32.MaxValue,                              null)
         };
     }
 }

@@ -451,7 +451,21 @@ namespace mame.netlist
         }
 
 
-        //class zdiode_model_t : public diode_model_t
+        class zdiode_model_t : diode_model_t
+        {
+            param_model_t_value_t m_NBV;    //!< reverse emission coefficient.
+            param_model_t_value_t m_BV;     //!< reverse breakdown voltage.
+            param_model_t_value_t m_IBV;    //!< current at breakdown voltage.
+
+
+            public zdiode_model_t(param_model_t model)
+                : base(model)
+            {
+                m_NBV = new param_model_t_value_t(model, "NBV");
+                m_BV = new param_model_t_value_t(model, "BV");
+                m_IBV = new param_model_t_value_t(model, "IBV");
+            }
+        }
 
 
         //NETLIB_OBJECT_DERIVED(D, twoterm)
@@ -528,6 +542,61 @@ namespace mame.netlist
         // nld_Z - Zener Diode
         // -----------------------------------------------------------------------------
         //NETLIB_OBJECT_DERIVED(Z, twoterm)
+        public class nld_Z : nld_twoterm
+        {
+            //NETLIB_DEVICE_IMPL_NS(analog, Z,    "ZDIODE", "MODEL")
+            public static readonly factory.constructor_ptr_t decl_Z = NETLIB_DEVICE_IMPL_NS<nld_Z>("analog", "ZDIODE", "MODEL");
+
+
+            param_model_t m_model;
+            zdiode_model_t m_modacc;
+            generic_diode m_D;  //generic_diode<diode_e::BIPOLAR> m_D;
+            // REVERSE diode
+            generic_diode m_R;  //generic_diode<diode_e::BIPOLAR> m_R;
+
+
+            //NETLIB_CONSTRUCTOR_EX(Z, const pstring &model = "D")
+            public nld_Z(object owner, string name, string model = "D")
+                : base(owner, name)
+            {
+                m_model = new param_model_t(this, "MODEL", model);
+                m_modacc = new zdiode_model_t(m_model);
+                m_D = new generic_diode(diode_e.BIPOLAR, this, "m_D");
+                m_R = new generic_diode(diode_e.BIPOLAR, this, "m_R");
+
+
+                register_subalias("A", P());
+                register_subalias("K", N());
+            }
+
+
+            //NETLIB_IS_DYNAMIC(true)
+            public override bool is_dynamic() { return true; }
+
+
+            //NETLIB_UPDATE_TERMINALSI();
+            public override void update_terminals()
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            //NETLIB_RESETI();
+            public override void reset()
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            //NETLIB_UPDATEI();
+
+
+            //NETLIB_UPDATE_PARAMI();
+            public override void update_param()
+            {
+                throw new emu_unimplemented();
+            }
+        }
 
 
         // -----------------------------------------------------------------------------

@@ -11,12 +11,11 @@ namespace mame.ui
     //-------------------------------------------------
     //  class dats menu
     //-------------------------------------------------
-    class menu_dats_view : menu
+    class menu_dats_view : menu_textbox
     {
         //ui_system_info const *const m_system;
         //ui_software_info const *const m_swinfo;
         //bool const m_issoft;
-        //std::optional<text_layout> m_layout;
         //int m_actual;
         //std::string m_list, m_short, m_long, m_parent;
         //std::vector<list_items> m_items_list;
@@ -44,6 +43,8 @@ namespace mame.ui
         protected override void custom_render(object selectedref, float top, float bottom, float x, float y, float x2, float y2) { throw new emu_unimplemented(); }
         protected override bool custom_mouse_down() { throw new emu_unimplemented(); }
 
+        protected override void populate_text(text_layout layout, float width, int lines) { throw new emu_unimplemented(); }
+
 
         //struct list_items
         //{
@@ -55,11 +56,9 @@ namespace mame.ui
         //};
 
 
-        // draw dats menu
-        protected override void draw(uint32_t flags) { throw new emu_unimplemented(); }
 
         protected override void populate(ref float customtop, ref float custombottom) { throw new emu_unimplemented(); }
-        protected override void handle() { throw new emu_unimplemented(); }
+        protected override void handle(event_ ev) { throw new emu_unimplemented(); }
 
 
         //void get_data(std::string &buffer);

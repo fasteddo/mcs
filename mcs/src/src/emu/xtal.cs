@@ -461,6 +461,7 @@ namespace mame
           80_000_000, /* 80_MHz_XTAL            ARM710 */
           87_183_360, /* 87.18336_MHz_XTAL      AT&T 630 MTG */
           92_940_500, /* 92.9405_MHz_XTAL       Sun cgthree */
+          96_000_000, /* 96_MHz_XTAL            Acorn A680 */
           99_522_000, /* 99.522_MHz_XTAL        Radius Two Page Display */
          100_000_000, /* 100_MHz_XTAL           PSX-based Namco System 12, Vegas, Sony ZN1-2-based */
          101_491_200, /* 101.4912_MHz_XTAL      PSX-based Namco System 10 */

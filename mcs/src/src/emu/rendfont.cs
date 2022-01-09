@@ -589,7 +589,7 @@ namespace mame
             m_yoffs = header.get_y_offset();
             m_defchar = header.get_default_character();
             u32 numchars = header.get_glyph_count();
-            if ((file.tell() + ((u64)(numchars) * bdc_table_entry.size())) > filesize)
+            if (file.tell() + ((u64)numchars * bdc_table_entry.size()) > filesize)
             {
                 LOG("render_font::load_cached: BDC file is too small to hold glyph table\n");
                 return false;

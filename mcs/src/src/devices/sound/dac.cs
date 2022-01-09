@@ -292,6 +292,20 @@ namespace mame
     //DAC_GENERATOR_EPILOG(_dac_type, _dac_class, _dac_description, _dac_shortname)
 
 
+    // DAC chips
+    //DAC_GENERATOR(MC1408,    mc1408_device,    dac_byte_device_base, dac_mapper_unsigned,  8, dac_gain_r2r, "MC1408 DAC",    "mc1408")
+    public class dac_mc1408_device : dac_byte_device_base
+    {
+        //DEFINE_DEVICE_TYPE(_dac_type, _dac_class, _dac_shortname, _dac_description)
+        static device_t device_creator_dac_mc1408_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dac_mc1408_device(mconfig, tag, owner, clock); }
+        public static readonly device_type MC1408 = DEFINE_DEVICE_TYPE(device_creator_dac_mc1408_device, "mc1408", "MC1408 DAC");
+
+        dac_mc1408_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
+            : base(mconfig, MC1408, tag, owner, clock, 8, dac_mapper_unsigned, dac_gain_r2r)
+        { }
+    }
+
+
     // DAC circuits/unidentified chips
     //DAC_GENERATOR(DAC_8BIT_R2R,                  dac_8bit_r2r_device,                  dac_byte_device_base, dac_mapper_unsigned,  8, dac_gain_r2r, "8-Bit R-2R DAC",                  "dac_8bit_r2r")
     public class dac_8bit_r2r_device : dac_byte_device_base

@@ -22,9 +22,11 @@ using layout_view_element_map = mame.std.unordered_map<string, mame.layout_eleme
 using layout_view_group_map = mame.std.unordered_map<string, mame.layout_group>;  //using group_map = std::unordered_map<std::string, layout_group>;
 using layout_view_item_bounds_vector = mame.std.vector<mame.emu.render.detail.bounds_step>;  //using bounds_vector = emu::render::detail::bounds_vector;
 using layout_view_item_color_vector = mame.std.vector<mame.emu.render.detail.color_step>;  //using color_vector = emu::render::detail::color_vector;
-using layout_view_item_id_map = mame.std.unordered_map<string, mame.layout_view.item>;  //using item_id_map = std::unordered_map<std::reference_wrapper<std::string const>, item &, std::hash<std::string>, std::equal_to<std::string> >;
-using layout_view_item_list = mame.std.list<mame.layout_view.item>;  //using item_list = std::list<item>;
-using layout_view_item_ref_vector = mame.std.vector<mame.layout_view.item>;  //using item_ref_vector = std::vector<std::reference_wrapper<item> >;
+using layout_view_item_element_map = mame.std.unordered_map<string, mame.layout_element>;  //using element_map = std::unordered_map<std::string, layout_element>;
+using layout_view_item_id_map = mame.std.unordered_map<string, mame.layout_view_item>;  //using item_id_map = std::unordered_map<std::reference_wrapper<std::string const>, item &, std::hash<std::string>, std::equal_to<std::string> >;
+using layout_view_item_list = mame.std.list<mame.layout_view_item>;  //using item_list = std::list<item>;
+using layout_view_item_ref_vector = mame.std.vector<mame.layout_view_item>;  //using item_ref_vector = std::vector<std::reference_wrapper<item> >;
+using layout_view_item_view_environment = mame.emu.render.detail.view_environment;  //using view_environment = emu::render::detail::view_environment;
 using layout_view_screen_ref_vector = mame.std.vector<mame.screen_device>;  //using screen_ref_vector = std::vector<std::reference_wrapper<screen_device> >;
 using layout_view_view_environment = mame.emu.render.detail.view_environment;  //using view_environment = emu::render::detail::view_environment;
 using layout_view_visibility_toggle_vector = mame.std.vector<mame.layout_view.visibility_toggle>;  //using visibility_toggle_vector = std::vector<visibility_toggle>;
@@ -41,6 +43,7 @@ using static mame.emucore_global;
 using static mame.osdcore_global;
 using static mame.rendertypes_global;
 using static mame.rendlay_global;
+using static mame.rendlay_internal;
 using static mame.rendutil_global;
 using static mame.unicode_global;
 using static mame.util;
@@ -59,256 +62,7 @@ namespace mame
         public const int VERBOSE = 0;
         //#define LOG_OUTPUT_FUNC osd_printf_verbose
         public static void LOGMASKED(int mask, string format, params object [] args) { if ((VERBOSE & mask) != 0) osd_printf_verbose(format, args); }
-
-
-        public const int LAYOUT_VERSION = 2;
-
-
-        //enum
-        //{
-        public const int LINE_CAP_NONE  = 0;
-        public const int LINE_CAP_START = 1;
-        public const int LINE_CAP_END   = 2;
-        //}
-
-
-        public static readonly layout_group_transform identity_transform = new layout_group_transform(new std.array<float, u64_const_3>(1.0F, 0.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 1.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 0.0F, 1.0F));  //layout_group.transform identity_transform {{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
-
-
-        public static void render_bounds_transform(ref render_bounds bounds, layout_group_transform trans)  //inline void render_bounds_transform(render_bounds &bounds, layout_group::transform const &trans)
-        {
-            bounds = new render_bounds()
-            {
-                x0 = (bounds.x0 * trans[0][0]) + (bounds.y0 * trans[0][1]) + trans[0][2],
-                y0 = (bounds.x0 * trans[1][0]) + (bounds.y0 * trans[1][1]) + trans[1][2],
-                x1 = (bounds.x1 * trans[0][0]) + (bounds.y1 * trans[0][1]) + trans[0][2],
-                y1 = (bounds.x1 * trans[1][0]) + (bounds.y1 * trans[1][1]) + trans[1][2]
-            };
-        }
-
-
-        static void alpha_blend(ref u32 dest, u32 a, u32 r, u32 g, u32 b, u32 inva)  //inline void alpha_blend(u32 &dest, u32 a, u32 r, u32 g, u32 b, u32 inva)
-        {
-            rgb_t dpix = new rgb_t(dest);
-            u32 da = dpix.a();
-            u32 finala = (a * 255) + (da * inva);
-            u32 finalr = r + ((u32)dpix.r() * da * inva);
-            u32 finalg = g + ((u32)dpix.g() * da * inva);
-            u32 finalb = b + ((u32)dpix.b() * da * inva);
-            dest = new rgb_t((u8)(finala / 255), (u8)(finalr / finala), (u8)(finalg / finala), (u8)(finalb / finala));
-        }
-
-        static void alpha_blend(ref u32 dest, render_color c, float fill)  //inline void alpha_blend(u32 &dest, render_color const &c, float fill)
-        {
-            u32 a = (u32)(c.a * fill * 255.0F);
-            if (a != 0)
-            {
-                u32 r = (u32)(c.r * (255.0F * 255.0F)) * a;
-                u32 g = (u32)(c.g * (255.0F * 255.0F)) * a;
-                u32 b = (u32)(c.b * (255.0F * 255.0F)) * a;
-                alpha_blend(ref dest, a, r, g, b, 255 - a);
-            }
-        }
-
-
-        public static bool add_bounds_step(emu.render.detail.layout_environment env, emu_render_detail_bounds_vector steps, util.xml.data_node node)
-        {
-            int state = env.get_attribute_int(node, "state", 0);
-            var posIdx = std.lower_bound(
-                        steps,
-                        state,
-                        (emu.render.detail.bounds_step lhs, int rhs) => { return lhs.state < rhs; });
-
-            if ((-1 != posIdx) && (state == steps[posIdx].state))  //if ((steps.end() != pos) && (state == pos->state))
-                return false;
-
-            //auto &ins(*steps.emplace(pos, emu::render::detail::bounds_step{ state, { 0.0F, 0.0F, 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F, 0.0F } }));
-            var ins = new emu.render.detail.bounds_step() { state = state, bounds = { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F }, delta = { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F } };
-            if (posIdx == -1) steps.push_back(ins); else steps.emplace(posIdx, ins);  //steps.emplace(posIdx, ins);
-
-            env.parse_bounds(node, out ins.bounds);
-            return true;
-        }
-
-
-        public static void set_bounds_deltas(emu_render_detail_bounds_vector steps)
-        {
-            if (steps.empty())
-            {
-                steps.emplace_back(new emu.render.detail.bounds_step() { state = 0, bounds = { x0 = 0.0F, y0 = 0.0F, x1 = 1.0F, y1 = 1.0F }, delta = { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F } });
-            }
-            else
-            {
-                var iIdx = 0;  //auto i(steps.begin());
-                var jIdx = iIdx;  //auto j(i);
-                while (steps.Count != ++jIdx)  //while (steps.end() != ++j)
-                {
-                    var i = steps[iIdx];
-                    var j = steps[jIdx];
-
-                    //throw new emu_unimplemented();
-#if false
-                    assert(j->state > i->state);
-#endif
-
-                    i.delta.x0 = (j.bounds.x0 - i.bounds.x0) / (j.state - i.state);
-                    i.delta.x1 = (j.bounds.x1 - i.bounds.x1) / (j.state - i.state);
-                    i.delta.y0 = (j.bounds.y0 - i.bounds.y0) / (j.state - i.state);
-                    i.delta.y1 = (j.bounds.y1 - i.bounds.y1) / (j.state - i.state);
-
-                    iIdx = jIdx;  //i = j;
-                }
-            }
-        }
-
-
-        public static void normalize_bounds(emu_render_detail_bounds_vector steps, float x0, float y0, float xoffs, float yoffs, float xscale, float yscale)
-        {
-            var iIdx = 0;  //auto i(steps.begin());
-            var i = steps[iIdx];
-            i.bounds.x0 = x0 + (i.bounds.x0 - xoffs) * xscale;
-            i.bounds.x1 = x0 + (i.bounds.x1 - xoffs) * xscale;
-            i.bounds.y0 = y0 + (i.bounds.y0 - yoffs) * yscale;
-            i.bounds.y1 = y0 + (i.bounds.y1 - yoffs) * yscale;
-
-            var jIdx = iIdx;  //auto j(i);
-            while (steps.Count != ++jIdx)  //while (steps.end() != ++j)
-            {
-                var j = steps[jIdx];
-                j.bounds.x0 = x0 + (j.bounds.x0 - xoffs) * xscale;
-                j.bounds.x1 = x0 + (j.bounds.x1 - xoffs) * xscale;
-                j.bounds.y0 = y0 + (j.bounds.y0 - yoffs) * yscale;
-                j.bounds.y1 = y0 + (j.bounds.y1 - yoffs) * yscale;
-
-                i.delta.x0 = (j.bounds.x0 - i.bounds.x0) / (j.state - i.state);
-                i.delta.x1 = (j.bounds.x1 - i.bounds.x1) / (j.state - i.state);
-                i.delta.y0 = (j.bounds.y0 - i.bounds.y0) / (j.state - i.state);
-                i.delta.y1 = (j.bounds.y1 - i.bounds.y1) / (j.state - i.state);
-
-                iIdx = jIdx;  //i = j;
-                i = steps[iIdx];
-            }
-        }
-
-
-        public static render_bounds accumulate_bounds(emu_render_detail_bounds_vector steps)
-        {
-            var iIdx = 0;  //auto i(steps.begin());
-            var i = steps[iIdx];
-            render_bounds result = i.bounds;
-            while (steps.Count != ++iIdx)  //while (steps.end() != ++i)
-                result |= i.bounds;
-
-            return result;
-        }
-
-
-        public static render_bounds interpolate_bounds(emu_render_detail_bounds_vector steps, int state)
-        {
-            var posIdx = std.lower_bound(
-                        steps,
-                        state,
-                        (emu.render.detail.bounds_step lhs, int rhs) => { return lhs.state < rhs; });
-
-            if (0 == posIdx)  //if (steps.begin() == pos)
-            {
-                var pos = steps[posIdx];
-                return pos.bounds;
-            }
-            else
-            {
-                //--pos;
-                --posIdx;
-                var pos = steps[posIdx];
-                render_bounds result = pos.bounds;
-                result.x0 += pos.delta.x0 * (state - pos.state);
-                result.x1 += pos.delta.x1 * (state - pos.state);
-                result.y0 += pos.delta.y0 * (state - pos.state);
-                result.y1 += pos.delta.y1 * (state - pos.state);
-
-                return result;
-            }
-        }
-
-
-        public static bool add_color_step(emu.render.detail.layout_environment env, emu_render_detail_color_vector steps, util.xml.data_node node)
-        {
-            int state = env.get_attribute_int(node, "state", 0);
-            var posIdx = std.lower_bound(
-                        steps,
-                        state,
-                        (emu.render.detail.color_step lhs, int rhs) => { return lhs.state < rhs; });
-
-            if ((-1 != posIdx) && (state == steps[posIdx].state))  //if ((steps.end() != pos) && (state == pos->state))
-                return false;
-
-            steps.emplace(posIdx, new emu.render.detail.color_step() { state = state, color = env.parse_color(node), delta = { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
-            return true;
-        }
-
-
-        public static void set_color_deltas(emu_render_detail_color_vector steps)
-        {
-            if (steps.empty())
-            {
-                steps.emplace_back(new emu.render.detail.color_step() { state = 0, color = { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, delta = { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
-            }
-            else
-            {
-                var iIdx = 0;  //auto i(steps.begin());
-                var jIdx = iIdx;  //auto j(i);
-                while (steps.Count != ++jIdx)  //while (steps.end() != ++j)
-                {
-                    var i = steps[iIdx];
-                    var j = steps[jIdx];
-
-                    //throw new emu_unimplemented();
-#if false
-                    assert(j->state > i->state);
-#endif
-
-                    i.delta.a = (j.color.a - i.color.a) / (j.state - i.state);
-                    i.delta.r = (j.color.r - i.color.r) / (j.state - i.state);
-                    i.delta.g = (j.color.g - i.color.g) / (j.state - i.state);
-                    i.delta.b = (j.color.b - i.color.b) / (j.state - i.state);
-
-                    iIdx = jIdx;  //i = j;
-                }
-            }
-        }
-
-
-        public static render_color interpolate_color(emu_render_detail_color_vector steps, int state)
-        {
-            var posIdx = std.lower_bound(
-                        steps,
-                        state,
-                        (emu.render.detail.color_step lhs, int rhs) => { return lhs.state < rhs; });
-
-            if (0 == posIdx)  //if (steps.begin() == pos)
-            {
-                var pos = steps[posIdx];
-                return pos.color;
-            }
-            else
-            {
-                //--pos;
-                --posIdx;
-                var pos = steps[posIdx];
-
-                render_color result = pos.color;
-                result.a += pos.delta.a * (state - pos.state);
-                result.r += pos.delta.r * (state - pos.state);
-                result.g += pos.delta.g * (state - pos.state);
-                result.b += pos.delta.b * (state - pos.state);
-                return result;
-            }
-        }
     }
-
-
-    class layout_syntax_error : ArgumentException { public layout_syntax_error(string format, params object [] args) : base(string.Format(format, args)) { } }
-    class layout_reference_error : ArgumentOutOfRangeException { public layout_reference_error(string format, params object [] args) : base(string.Format(format, args)) { } }
 
 
     namespace emu.render.detail
@@ -403,7 +157,7 @@ namespace mame
             //-------------------------------------------------
             public void normalize_bounds(float xoffs, float yoffs, float xscale, float yscale)
             {
-                rendlay_global.normalize_bounds(m_bounds, 0.0F, 0.0F, xoffs, yoffs, xscale, yscale);
+                rendlay_internal.normalize_bounds(m_bounds, 0.0F, 0.0F, xoffs, yoffs, xscale, yscale);
             }
 
 
@@ -1764,6 +1518,666 @@ namespace mame
     }
 
 
+    /// \brief A single item in a view
+    ///
+    /// Each view has a list of item structures describing the visual
+    /// elements to draw, where they are located, additional blending modes,
+    /// and bindings for inputs and outputs.
+    public class layout_view_item
+    {
+        //friend class layout_view;
+
+        //using view_environment = emu::render::detail::view_environment;
+        //using element_map = std::unordered_map<std::string, layout_element>;
+        delegate int state_delegate();  //using state_delegate = delegate<int ()>;
+        delegate render_bounds bounds_delegate();  //using bounds_delegate = delegate<render_bounds ()>;
+        delegate render_color color_delegate();  //using color_delegate = delegate<render_color ()>;
+        delegate float scroll_size_delegate();  //using scroll_size_delegate = delegate<float ()>;
+        delegate float scroll_pos_delegate();  //using scroll_pos_delegate = delegate<float ()>;
+
+
+        // internal state
+        layout_element m_element;              // pointer to the associated element (non-screens only)
+        state_delegate m_get_elem_state;       // resolved element state function
+        state_delegate m_get_anim_state;       // resolved animation state function
+        bounds_delegate m_get_bounds;           // resolved bounds function
+        color_delegate m_get_color;            // resolved color function
+        scroll_size_delegate m_get_scroll_size_x;    // resolved horizontal scroll window size function
+        scroll_size_delegate m_get_scroll_size_y;    // resolved vertical scroll window size function
+        scroll_pos_delegate m_get_scroll_pos_x;     // resolved horizontal scroll position function
+        scroll_pos_delegate m_get_scroll_pos_y;     // resolved vertical scroll position function
+        output_finder<u32_const_1> m_output;  //output_finder<>         m_output;               // associated output
+        output_finder<u32_const_1> m_animoutput;  //output_finder<>         m_animoutput;           // associated output for animation if different
+        output_finder<u32_const_1> m_scrollxoutput;  //output_finder<>         m_scrollxoutput;        // associated output for horizontal scroll position
+        output_finder<u32_const_1> m_scrollyoutput;  //output_finder<>         m_scrollyoutput;        // associated output for vertical scroll position
+        ioport_port m_animinput_port;       // input port used for animation
+        ioport_port m_scrollxinput_port;    // input port used for horizontal scrolling
+        ioport_port m_scrollyinput_port;    // input port used for vertical scrolling
+        bool m_scrollwrapx;          // whether horizontal scrolling works like a loop
+        bool m_scrollwrapy;          // whether vertical scrolling works like a loop
+        int m_elem_state;           // element state used in absence of bindings
+        float m_scrollsizex;          // horizontal scroll window size used in absence of bindings
+        float m_scrollsizey;          // vertical scroll window size used in absence of bindings
+        float m_scrollposx;           // horizontal scroll position used in absence of bindings
+        float m_scrollposy;           // vertical scroll position used in absence of bindings
+        ioport_value m_animmask;             // mask for animation state
+        ioport_value m_scrollxmask;          // mask for horizontal scroll position
+        ioport_value m_scrollymask;          // mask for vertical scroll position
+        ioport_value m_scrollxmin;           // minimum value for horizontal scroll position
+        ioport_value m_scrollymin;           // minimum value for vertical scroll position
+        ioport_value m_scrollxmax;           // maximum value for horizontal scroll position
+        ioport_value m_scrollymax;           // maximum value for vertical scroll position
+        u8 m_animshift;            // shift for animation state
+        u8 m_scrollxshift;         // shift for horizontal scroll position
+        u8 m_scrollyshift;         // shift for vertical scroll position
+        ioport_port m_input_port;           // input port of this item
+        ioport_field m_input_field;          // input port field of this item
+        ioport_value m_input_mask;           // input mask of this item
+        u8 m_input_shift;          // input mask rightshift for raw (trailing 0s)
+        bool m_clickthrough;         // should click pass through to lower elements
+        screen_device m_screen;               // pointer to screen
+        int m_orientation;          // orientation of this item
+        public layout_view_item_bounds_vector m_bounds;               // bounds of the item
+        layout_view_item_color_vector m_color;                // color of the item
+        public int m_blend_mode;           // blending mode to use when drawing
+        public u32 m_visibility_mask;      // combined mask of parent visibility groups
+
+        // cold items
+        string m_id;                   // optional unique item identifier
+        string m_input_tag;            // input tag of this item
+        string m_animinput_tag;        // tag of input port for animation state
+        string m_scrollxinput_tag;     // tag of input port for horizontal scroll position
+        string m_scrollyinput_tag;     // tag of input port for vertical scroll position
+        public layout_view_item_bounds_vector m_rawbounds;            // raw (original) bounds of the item
+        bool m_have_output;          // whether we actually have an output
+        bool m_input_raw;            // get raw data from input port
+        bool m_have_animoutput;      // whether we actually have an output for animation
+        bool m_have_scrollxoutput;   // whether we actually have an output for horizontal scroll
+        bool m_have_scrollyoutput;   // whether we actually have an output for vertical scroll
+        bool m_has_clickthrough;     // whether clickthrough was explicitly configured
+
+
+        // construction/destruction
+        public layout_view_item(
+                layout_view_item_view_environment env,
+                util.xml.data_node itemnode,
+                layout_view_item_element_map elemmap,
+                int orientation,
+                layout_group_transform trans,
+                render_color color)
+        {
+            m_element = find_element(env, itemnode, elemmap);
+            m_output = new output_finder<u32_const_1>(env.device(), env.get_attribute_string(itemnode, "name"), 0);
+            m_animoutput = new output_finder<u32_const_1>(env.device(), make_child_output_tag(env, itemnode, "animate"), 0);
+            m_scrollxoutput = new output_finder<u32_const_1>(env.device(), make_child_output_tag(env, itemnode, "xscroll"), 0);
+            m_scrollyoutput = new output_finder<u32_const_1>(env.device(), make_child_output_tag(env, itemnode, "yscroll"), 0);
+            m_animinput_port = null;
+            m_scrollxinput_port = null;
+            m_scrollyinput_port = null;
+            m_scrollwrapx = make_child_wrap(env, itemnode, "xscroll");
+            m_scrollwrapy = make_child_wrap(env, itemnode, "yscroll");
+            m_elem_state = m_element != null ? m_element.default_state() : 0;
+            m_scrollsizex = make_child_size(env, itemnode, "xscroll");
+            m_scrollsizey = make_child_size(env, itemnode, "yscroll");
+            m_scrollposx = 0.0f;
+            m_scrollposy = 0.0f;
+            m_animmask = make_child_mask(env, itemnode, "animate");
+            m_scrollxmask = make_child_mask(env, itemnode, "xscroll");
+            m_scrollymask = make_child_mask(env, itemnode, "yscroll");
+            m_scrollxmin = make_child_min(env, itemnode, "xscroll");
+            m_scrollymin = make_child_min(env, itemnode, "yscroll");
+            m_scrollxmax = make_child_max(env, itemnode, "xscroll", m_scrollxmask);
+            m_scrollymax = make_child_max(env, itemnode, "yscroll", m_scrollymask);
+            m_animshift = (u8)get_state_shift(m_animmask);
+            m_scrollxshift = (u8)get_state_shift(m_scrollxmask);
+            m_scrollyshift = (u8)get_state_shift(m_scrollymask);
+            m_input_port = null;
+            m_input_field = null;
+            m_input_mask = (ioport_value)env.get_attribute_int(itemnode, "inputmask", 0);
+            m_input_shift = (u8)get_state_shift(m_input_mask);
+            m_clickthrough = env.get_attribute_bool(itemnode, "clickthrough", true);
+            m_screen = null;
+            m_orientation = orientation_add(env.parse_orientation(itemnode.get_child("orientation")), orientation);
+            m_color = make_color(env, itemnode, color);
+            m_blend_mode = get_blend_mode(env, itemnode);
+            m_visibility_mask = env.visibility_mask();
+            m_id = env.get_attribute_string(itemnode, "id");
+            m_input_tag = make_input_tag(env, itemnode);
+            m_animinput_tag = make_child_input_tag(env, itemnode, "animate");
+            m_scrollxinput_tag = make_child_input_tag(env, itemnode, "xscroll");
+            m_scrollyinput_tag = make_child_input_tag(env, itemnode, "yscroll");
+            m_rawbounds = make_bounds(env, itemnode, trans);
+            m_have_output = !env.get_attribute_string(itemnode, "name").empty();
+            m_input_raw = env.get_attribute_bool(itemnode, "inputraw", false);
+            m_have_animoutput = !make_child_output_tag(env, itemnode, "animate").empty();
+            m_have_scrollxoutput = !make_child_output_tag(env, itemnode, "xscroll").empty();
+            m_have_scrollyoutput = !make_child_output_tag(env, itemnode, "yscroll").empty();
+            m_has_clickthrough = !env.get_attribute_string(itemnode, "clickthrough").empty();
+
+
+            // fetch common data
+            int index = env.get_attribute_int(itemnode, "index", -1);
+            if (index != -1)
+                m_screen = new screen_device_enumerator(env.machine().root_device()).byindex(index);
+
+            // sanity checks
+            if (std.strcmp(itemnode.get_name(), "screen") == 0)
+            {
+                if (itemnode.has_attribute("tag"))
+                {
+                    string tag = env.get_attribute_string(itemnode, "tag");
+                    var subdevice = env.device().subdevice(tag);
+                    m_screen = subdevice is screen_device ? (screen_device)subdevice : null;  //m_screen = dynamic_cast<screen_device *>(env.device().subdevice(tag));
+                    if (m_screen == null)
+                        throw new layout_reference_error(util.string_format("invalid screen tag '{0}'", tag));
+                }
+                else if (m_screen == null)
+                {
+                    throw new layout_reference_error(util.string_format("invalid screen index {0}", index));
+                }
+            }
+            else if (m_element == null)
+            {
+                throw new layout_syntax_error(util.string_format("item of type {0} requires an element tag", itemnode.get_name()));
+            }
+            else if (m_scrollxmin == m_scrollxmax)
+            {
+                throw new layout_syntax_error(util.string_format("item X scroll minimum and maximum both equal to {0}", m_scrollxmin));
+            }
+            else if (m_scrollymin == m_scrollymax)
+            {
+                throw new layout_syntax_error(util.string_format("item Y scroll minimum and maximum both equal to {0}", m_scrollymin));
+            }
+
+            // this can be called before resolving tags, make it return something valid
+            m_bounds = m_rawbounds;
+            m_get_bounds = () => { return m_bounds.front().get(); };  //m_get_bounds = bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front());
+        }
+
+        //~layout_view_item();
+
+
+        // getters
+        public string id() { return m_id; }
+        public layout_element element() { return m_element; }
+        public screen_device screen() { return m_screen; }
+        //bool bounds_animated() const { return m_bounds.size() > 1U; }
+        //bool color_animated() const { return m_color.size() > 1U; }
+        public render_bounds bounds() { return m_get_bounds(); }
+        public render_color color() { return m_get_color(); }
+        public bool scroll_wrap_x() { return m_scrollwrapx; }
+        public bool scroll_wrap_y() { return m_scrollwrapy; }
+        public float scroll_size_x() { return m_get_scroll_size_x(); }
+        public float scroll_size_y() { return m_get_scroll_size_y(); }
+        public float scroll_pos_x() { return m_get_scroll_pos_x(); }
+        public float scroll_pos_y() { return m_get_scroll_pos_y(); }
+        public int blend_mode() { return m_blend_mode; }
+        public u32 visibility_mask() { return m_visibility_mask; }
+        public int orientation() { return m_orientation; }
+        //render_container *screen_container() const { return m_screen ? &m_screen->container() : nullptr; }
+
+        // interactivity
+        public bool has_input() { return m_input_port != null; }  //{ return bool(m_input_port); }
+        public std.pair<ioport_port, ioport_value> input_tag_and_mask() { return std.make_pair(m_input_port, m_input_mask); }
+        public bool clickthrough() { return m_clickthrough; }
+
+        // fetch state based on configured source
+        public int element_state() { return m_get_elem_state(); }
+        //int animation_state() const { return m_get_anim_state(); }
+
+        // set state
+        //void set_state(int state) { m_elem_state = state; }
+        //void set_scroll_size_x(float size) { m_scrollsizex = std::clamp(size, 0.01f, 1.0f); }
+        //void set_scroll_size_y(float size) { m_scrollsizey = std::clamp(size, 0.01f, 1.0f); }
+        //void set_scroll_pos_x(float pos) { m_scrollposx = pos; }
+        //void set_scroll_pos_y(float pos) { m_scrollposy = pos; }
+
+        // set handlers
+        //void set_element_state_callback(state_delegate &&handler);
+        //void set_animation_state_callback(state_delegate &&handler);
+        //void set_bounds_callback(bounds_delegate &&handler);
+        //void set_color_callback(color_delegate &&handler);
+        //void set_scroll_size_x_callback(scroll_size_delegate &&handler);
+        //void set_scroll_size_y_callback(scroll_size_delegate &&handler);
+        //void set_scroll_pos_x_callback(scroll_pos_delegate &&handler);
+        //void set_scroll_pos_y_callback(scroll_pos_delegate &&handler);
+
+
+        // resolve tags, if any
+        public void resolve_tags()
+        {
+            // resolve element state output and set default value
+            if (m_have_output)
+            {
+                throw new emu_unimplemented();
+#if false
+                m_output.resolve();
+                if (m_element != null)
+                    m_output = m_element.default_state();
+#endif
+            }
+
+            // resolve animation state and scroll outputs
+            if (m_have_animoutput)
+                m_animoutput.resolve();
+            if (m_have_scrollxoutput)
+                m_scrollxoutput.resolve();
+            if (m_have_scrollyoutput)
+                m_scrollyoutput.resolve();
+
+            // resolve animation state and scroll inputs
+            if (!m_animinput_tag.empty())
+                m_animinput_port = m_element.machine().root_device().ioport(m_animinput_tag);
+            if (!m_scrollxinput_tag.empty())
+                m_scrollxinput_port = m_element.machine().root_device().ioport(m_scrollxinput_tag);
+            if (!m_scrollyinput_tag.empty())
+                m_scrollyinput_port = m_element.machine().root_device().ioport(m_scrollyinput_tag);
+
+            // resolve element state input
+            if (!m_input_tag.empty())
+            {
+                m_input_port = m_element.machine().root_device().ioport(m_input_tag);
+                if (m_input_port != null)
+                {
+                    // if there's a matching unconditional field, cache it
+                    foreach (ioport_field field in m_input_port.fields())
+                    {
+                        if ((field.mask() & m_input_mask) != 0)
+                        {
+                            if (field.condition().condition() == ioport_condition.condition_t.ALWAYS)
+                                m_input_field = field;
+
+                            break;
+                        }
+                    }
+
+                    // if clickthrough isn't explicitly configured, having an I/O port implies false
+                    if (!m_has_clickthrough)
+                        m_clickthrough = false;
+                }
+            }
+
+            // choose optimal handlers
+            m_get_elem_state = default_get_elem_state();
+            m_get_anim_state = default_get_anim_state();
+            m_get_bounds = default_get_bounds();
+            m_get_color = default_get_color();
+            m_get_scroll_size_x = default_get_scroll_size_x();
+            m_get_scroll_size_y = default_get_scroll_size_y();
+            m_get_scroll_pos_x = default_get_scroll_pos_x();
+            m_get_scroll_pos_y = default_get_scroll_pos_y();
+        }
+
+
+        //using bounds_vector = emu::render::detail::bounds_vector;
+        //using color_vector = emu::render::detail::color_vector;
+
+
+        //-------------------------------------------------
+        //  default_get_elem_state - get default element
+        //  state handler
+        //-------------------------------------------------
+        state_delegate default_get_elem_state()
+        {
+            if (m_have_output)
+                return get_output;  //return state_delegate(&layout_view_item::get_output, this);
+            else if (m_input_port == null)
+                return get_state;  //return state_delegate(&layout_view_item::get_state, this);
+            else if (m_input_raw)
+                return get_input_raw;  //return state_delegate(&layout_view_item::get_input_raw, this);
+            else if (m_input_field != null)
+                return get_input_field_cached;  //return state_delegate(&layout_view_item::get_input_field_cached, this);
+            else
+                return get_input_field_conditional;  //return state_delegate(&layout_view_item::get_input_field_conditional, this);
+        }
+
+
+        //-------------------------------------------------
+        //  default_get_anim_state - get default animation
+        //  state handler
+        //-------------------------------------------------
+        state_delegate default_get_anim_state()
+        {
+            if (m_have_animoutput)
+                return get_anim_output;  //return state_delegate(&layout_view_item::get_anim_output, this);
+            else if (m_animinput_port != null)
+                return get_anim_input;  //return state_delegate(&layout_view_item::get_anim_input, this);
+            else
+                return default_get_elem_state();
+        }
+
+
+        //-------------------------------------------------
+        //  default_get_bounds - get default bounds handler
+        //-------------------------------------------------
+        bounds_delegate default_get_bounds()
+        {
+            return (m_bounds.size() == 1U)
+                    ? () => { return m_bounds.front().get(); }  //? bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front())
+                    : (bounds_delegate)get_interpolated_bounds;  //: bounds_delegate(&layout_view_item::get_interpolated_bounds, this);
+        }
+
+        //-------------------------------------------------
+        //  default_get_color - get default color handler
+        //-------------------------------------------------
+        color_delegate default_get_color()
+        {
+            return (m_color.size() == 1U)
+                    ? () => { return m_color.front().get(); }  //? color_delegate(&emu::render::detail::color_step::get, &const_cast<emu::render::detail::color_step &>(m_color.front()))
+                    : (color_delegate)get_interpolated_color;  //: color_delegate(&layout_view_item::get_interpolated_color, this);
+        }
+
+        //-------------------------------------------------
+        //  default_get_scroll_size_x - get default
+        //  horizontal scroll window size handler
+        //-------------------------------------------------
+        scroll_size_delegate default_get_scroll_size_x()
+        {
+            return get_scrollsizex;  //return scroll_size_delegate(&layout_view_item::get_scrollsizex, this);
+        }
+
+        //-------------------------------------------------
+        //  default_get_scroll_size_y - get default
+        //  vertical scroll window size handler
+        //-------------------------------------------------
+        scroll_size_delegate default_get_scroll_size_y()
+        {
+            return get_scrollsizey;  //return scroll_size_delegate(&layout_view_item::get_scrollsizey, this);
+        }
+
+        //-------------------------------------------------
+        //  default_get_scroll_pos_x - get default
+        //  horizontal scroll position handler
+        //-------------------------------------------------
+        scroll_pos_delegate default_get_scroll_pos_x()
+        {
+            if (m_have_scrollxoutput)
+                return m_scrollwrapx ? (scroll_pos_delegate)get_scrollx_output<bool_const_true> : (scroll_pos_delegate)get_scrollx_output<bool_const_false>;  //return scroll_pos_delegate(m_scrollwrapx ? &layout_view_item::get_scrollx_output<true> : &layout_view_item::get_scrollx_output<false>, this);
+            else if (m_scrollxinput_port != null)
+                return m_scrollwrapx ? (scroll_pos_delegate)get_scrollx_input<bool_const_true> : (scroll_pos_delegate)get_scrollx_input<bool_const_false>;
+            else
+                return get_scrollposx;
+        }
+
+        //-------------------------------------------------
+        //  default_get_scroll_pos_y - get default
+        //  vertical scroll position handler
+        //-------------------------------------------------
+        scroll_pos_delegate default_get_scroll_pos_y()
+        {
+            if (m_have_scrollyoutput)
+                return m_scrollwrapy ? (scroll_pos_delegate)get_scrolly_output<bool_const_true> : (scroll_pos_delegate)get_scrolly_output<bool_const_false>;
+            else if (m_scrollyinput_port != null)
+                return m_scrollwrapy ? (scroll_pos_delegate)get_scrolly_input<bool_const_true> : (scroll_pos_delegate)get_scrolly_input<bool_const_false>;
+            else
+                return get_scrollposy;
+        }
+
+
+        //-------------------------------------------------
+        //  get_state - get state when no bindings
+        //-------------------------------------------------
+        int get_state()
+        {
+            return m_elem_state;
+        }
+
+        //-------------------------------------------------
+        //  get_output - get element state output
+        //-------------------------------------------------
+        int get_output()
+        {
+            assert(m_have_output);
+            return (int)(s32)m_output.op.op;
+        }
+
+        //-------------------------------------------------
+        //  get_input_raw - get element state input
+        //-------------------------------------------------
+        int get_input_raw()
+        {
+            assert(m_input_port != null);
+            return (int)(s32)((m_input_port.read() & m_input_mask) >> m_input_shift);  //return int(std::make_signed_t<ioport_value>((m_input_port->read() & m_input_mask) >> m_input_shift));
+        }
+
+        //-------------------------------------------------
+        //  get_input_field_cached - element state
+        //-------------------------------------------------
+        int get_input_field_cached()
+        {
+            assert(m_input_port != null);
+            assert(m_input_field != null);
+            return ((m_input_port.read() ^ m_input_field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
+        }
+
+        //-------------------------------------------------
+        //  get_input_field_conditional - element state
+        //-------------------------------------------------
+        int get_input_field_conditional()
+        {
+            assert(m_input_port != null);
+            assert(m_input_field == null);
+            ioport_field field = m_input_port.field(m_input_mask);
+            return (field != null && ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0) ? 1 : 0;
+        }
+
+        //-------------------------------------------------
+        //  get_anim_output - get animation output
+        //-------------------------------------------------
+        int get_anim_output()
+        {
+            assert(m_have_animoutput);
+            return (int)((unsigned)((u32)((s32)m_animoutput.op.op & m_animmask) >> m_animshift));
+        }
+
+        //-------------------------------------------------
+        //  get_anim_input - get animation input
+        //-------------------------------------------------
+        int get_anim_input()
+        {
+            assert(m_animinput_port != null);
+            return (int)(s32)((m_animinput_port.read() & m_animmask) >> m_animshift);  //return int(std::make_signed_t<ioport_value>((m_animinput_port->read() & m_animmask) >> m_animshift));
+        }
+
+        //-------------------------------------------------
+        //  get_scrollsizex - get horizontal scroll window
+        //  size
+        //-------------------------------------------------
+        float get_scrollsizex()
+        {
+            return m_scrollsizex;
+        }
+
+        //-------------------------------------------------
+        //  get_scrollsizey - get vertical scroll window
+        //  size
+        //-------------------------------------------------
+        float get_scrollsizey()
+        {
+            return m_scrollsizey;
+        }
+
+        //-------------------------------------------------
+        //  get_scrollposx - get horizontal scroll
+        //  position
+        //-------------------------------------------------
+        float get_scrollposx()
+        {
+            return m_scrollposx;
+        }
+
+        //-------------------------------------------------
+        //  get_scrollposy - get vertical scroll position
+        //-------------------------------------------------
+        float get_scrollposy()
+        {
+            return m_scrollposy;
+        }
+
+        //-------------------------------------------------
+        //  get_scrollx_output - get scaled horizontal
+        //  scroll output
+        //-------------------------------------------------
+        //template <bool Wrap>
+        float get_scrollx_output<bool_Wrap>()  //template <bool Wrap> float get_scrollx_output() const;
+            where bool_Wrap : bool_const, new()
+        {
+            bool Wrap = new bool_Wrap().value;
+
+            assert(m_have_scrollxoutput);
+            u32 unscaled = ((((u32)((s32)m_scrollxoutput.op.op) & m_scrollxmask) >> m_scrollxshift) - m_scrollxmin);
+            float range = ((s32)(m_scrollxmax - m_scrollxmin) + (!Wrap ? 0 : (m_scrollxmin < m_scrollxmax) ? 1 : -1));  //float const range(std::make_signed_t<ioport_value>(m_scrollxmax - m_scrollxmin) + (!Wrap ? 0 : (m_scrollxmin < m_scrollxmax) ? 1 : -1));
+            return (float)(s32)unscaled / range;
+        }
+
+        //-------------------------------------------------
+        //  get_scrolly_output - get scaled vertical
+        //  scroll output
+        //-------------------------------------------------
+        //template <bool Wrap>
+        float get_scrolly_output<bool_Wrap>()  //template <bool Wrap> float get_scrolly_output() const;
+            where bool_Wrap : bool_const, new()
+        {
+            bool Wrap = new bool_Wrap().value;
+
+            assert(m_have_scrollyoutput);
+            u32 unscaled = (((u32)((s32)m_scrollyoutput.op.op) & m_scrollymask) >> m_scrollyshift) - m_scrollymin;
+            float range = (s32)(m_scrollymax - m_scrollymin) + (!Wrap ? 0 : (m_scrollymin < m_scrollymax) ? 1 : -1);  //float const range(std::make_signed_t<ioport_value>(m_scrollymax - m_scrollymin) + (!Wrap ? 0 : (m_scrollymin < m_scrollymax) ? 1 : -1));
+            return (float)(s32)unscaled / range;
+        }
+
+        //-------------------------------------------------
+        //  get_scrollx_input - get scaled horizontal
+        //  scroll input
+        //-------------------------------------------------
+        //template <bool Wrap>
+        float get_scrollx_input<bool_Wrap>()  //template <bool Wrap> float get_scrollx_input() const;
+            where bool_Wrap : bool_const, new()
+        {
+            bool Wrap = new bool_Wrap().value;
+
+            assert(m_scrollxinput_port != null);
+            ioport_value unscaled = ((m_scrollxinput_port.read() & m_scrollxmask) >> m_scrollxshift) - m_scrollxmin;
+            float range = (s32)(m_scrollxmax - m_scrollxmin) + (!Wrap ? 0 : (m_scrollxmin < m_scrollxmax) ? 1 : -1);  //float const range(std::make_signed_t<ioport_value>(m_scrollxmax - m_scrollxmin) + (!Wrap ? 0 : (m_scrollxmin < m_scrollxmax) ? 1 : -1));
+            return (float)(s32)unscaled / range;  //return float(std::make_signed_t<ioport_value>(unscaled)) / range;
+        }
+
+        //-------------------------------------------------
+        //  get_scrolly_input - get scaled vertical scroll
+        //  input
+        //-------------------------------------------------
+        //template <bool Wrap>
+        float get_scrolly_input<bool_Wrap>()  //template <bool Wrap> float get_scrolly_input() const;
+            where bool_Wrap : bool_const, new()
+        {
+            bool Wrap = new bool_Wrap().value;
+
+            assert(m_scrollyinput_port != null);
+            ioport_value unscaled = ((m_scrollyinput_port.read() & m_scrollymask) >> m_scrollyshift) - m_scrollymin;
+            float range = (s32)(m_scrollymax - m_scrollymin) + (!Wrap ? 0 : (m_scrollymin < m_scrollymax) ? 1 : -1);  //float const range(std::make_signed_t<ioport_value>(m_scrollymax - m_scrollymin) + (!Wrap ? 0 : (m_scrollymin < m_scrollymax) ? 1 : -1));
+            return (float)(s32)unscaled / range;  //return float(std::make_signed_t<ioport_value>(unscaled)) / range;
+        }
+
+
+        //-------------------------------------------------
+        //  get_interpolated_bounds - animated bounds
+        //-------------------------------------------------
+        render_bounds get_interpolated_bounds()
+        {
+            assert(m_bounds.size() > 1U);
+            return interpolate_bounds(m_bounds, m_get_anim_state());
+        }
+
+        //-------------------------------------------------
+        //  get_interpolated_color - animated color
+        //-------------------------------------------------
+        render_color get_interpolated_color()
+        {
+            assert(m_color.size() > 1U);
+            return interpolate_color(m_color, m_get_anim_state());
+        }
+
+
+        static layout_element find_element(layout_view_item_view_environment env, util.xml.data_node itemnode, layout_view_item_element_map elemmap)  //static layout_element *find_element(view_environment &env, util::xml::data_node const &itemnode, element_map &elemmap);
+        {
+            string name = env.get_attribute_string(itemnode, std.strcmp(itemnode.get_name(), "element") == 0 ? "ref" : "element");
+            if (name.empty())
+                return null;
+
+            // search the list of elements for a match, error if not found
+            var found = elemmap.find(name);
+            if (default != found)
+                return found;
+            else
+                throw new layout_syntax_error(util.string_format("unable to find element {0}", name));
+        }
+
+
+        static layout_view_item_bounds_vector make_bounds(layout_view_item_view_environment env, util.xml.data_node itemnode, layout_group_transform trans)
+        {
+            layout_view_item_bounds_vector result = new emu_render_detail_bounds_vector();
+            for (util.xml.data_node bounds = itemnode.get_child("bounds"); bounds != null; bounds = bounds.get_next_sibling("bounds"))
+            {
+                if (!add_bounds_step(env, result, bounds))
+                {
+                    throw new layout_syntax_error(
+                            util.string_format(
+                                "{0} item has duplicate bounds for state",
+                                itemnode.get_name()));
+                }
+            }
+
+            foreach (emu.render.detail.bounds_step step in result)
+            {
+                render_bounds_transform(ref step.bounds, trans);
+                if (step.bounds.x0 > step.bounds.x1)
+                    std.swap(ref step.bounds.x0, ref step.bounds.x1);
+                if (step.bounds.y0 > step.bounds.y1)
+                    std.swap(ref step.bounds.y0, ref step.bounds.y1);
+            }
+
+            set_bounds_deltas(result);
+            return result;
+        }
+
+
+        static layout_view_item_color_vector make_color(layout_view_item_view_environment env, util.xml.data_node itemnode, render_color mult)
+        {
+            layout_view_item_color_vector result = new emu_render_detail_color_vector();
+            for (util.xml.data_node color = itemnode.get_child("color"); color != null; color = color.get_next_sibling("color"))
+            {
+                if (!add_color_step(env, result, color))
+                {
+                    throw new layout_syntax_error(
+                            util.string_format(
+                                "{0} item has duplicate color for state",
+                                itemnode.get_name()));
+                }
+            }
+
+            if (result.empty())
+            {
+                result.emplace_back(new emu.render.detail.color_step() { state = 0, color = mult, delta = { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
+            }
+            else
+            {
+                for (int i = 0; i < result.Count; i++)  //for (emu::render::detail::color_step &step : result)
+                {
+                    var step = result[i];
+
+                    step.color *= mult;
+
+                    result[i] = new emu.render.detail.color_step(step);
+                }
+
+                set_color_deltas(result);
+            }
+
+            return result;
+        }
+    }
+
+
     /// \brief A single view within a #layout_file
     ///
     /// The view is described using arbitrary coordinates that are scaled to
@@ -1773,602 +2187,16 @@ namespace mame
     {
         //using layout_environment = emu::render::detail::layout_environment;
         //using view_environment = emu::render::detail::view_environment;
-        //using element_map = std::unordered_map<std::string, layout_element>;
+        //using element_map = layout_view_item::element_map;
         //using group_map = std::unordered_map<std::string, layout_group>;
         //using screen_ref_vector = std::vector<std::reference_wrapper<screen_device const>>;
         delegate void prepare_items_delegate();  //using prepare_items_delegate = delegate<void ()>;
         delegate void preload_delegate();  //using preload_delegate = delegate<void ()>;
         delegate void recomputed_delegate();  //using recomputed_delegate = delegate<void ()>;
-        //using item_id_map = std::unordered_map<
-        //        std::reference_wrapper<std::string const>,
-        //        item &,
-        //        std::hash<std::string>,
-        //        std::equal_to<std::string> >;
+
+        //using item = layout_view_item;
         //using item_list = std::list<item>;
         //using item_ref_vector = std::vector<std::reference_wrapper<item> >;
-
-
-        /// \brief A single item in a view
-        ///
-        /// Each view has a list of item structures describing the visual
-        /// elements to draw, where they are located, additional blending
-        /// modes, and bindings for inputs and outputs.
-        public class item
-        {
-            //friend class layout_view;
-
-            delegate int state_delegate();  //using state_delegate = delegate<int ()>;
-            delegate render_bounds bounds_delegate();  //using bounds_delegate = delegate<render_bounds ()>;
-            delegate render_color color_delegate();  //using color_delegate = delegate<render_color ()>;
-            //using bounds_vector = emu::render::detail::bounds_vector;
-            //using color_vector = emu::render::detail::color_vector;
-
-
-            // internal state
-            layout_element m_element;          // pointer to the associated element (non-screens only)
-            state_delegate m_get_elem_state;   // resolved element state function
-            state_delegate m_get_anim_state;   // resolved animation state function
-            bounds_delegate m_get_bounds;       // resolved bounds function
-            color_delegate m_get_color;        // resolved color function
-            output_finder<u32_const_1> m_output;           // associated output  //output_finder<>         m_output;           // associated output
-            output_finder<u32_const_1> m_animoutput;       // associated output for animation if different  //output_finder<>         m_animoutput;       // associated output for animation if different
-            ioport_port m_animinput_port;   // input port used for animation
-            int m_elem_state;       // element state used in absence of bindings
-            ioport_value m_animmask;         // mask for animation state
-            u8 m_animshift;        // shift for animation state
-            ioport_port m_input_port;       // input port of this item
-            ioport_field m_input_field;      // input port field of this item
-            ioport_value m_input_mask;       // input mask of this item
-            u8 m_input_shift;      // input mask rightshift for raw (trailing 0s)
-            bool m_clickthrough;     // should click pass through to lower elements
-            screen_device m_screen;           // pointer to screen
-            int m_orientation;      // orientation of this item
-            public emu_render_detail_bounds_vector m_bounds;           // bounds of the item
-            emu_render_detail_color_vector m_color;            // color of the item
-            public int m_blend_mode;       // blending mode to use when drawing
-            public u32 m_visibility_mask;  // combined mask of parent visibility groups
-
-            // cold items
-            string m_id;               // optional unique item identifier
-            string m_input_tag;        // input tag of this item
-            string m_animinput_tag;    // tag of input port for animation state
-            public emu_render_detail_bounds_vector m_rawbounds;        // raw (original) bounds of the item
-            bool m_have_output;      // whether we actually have an output
-            bool m_input_raw;        // get raw data from input port
-            bool m_have_animoutput;  // whether we actually have an output for animation
-            bool m_has_clickthrough; // whether clickthrough was explicitly configured
-
-
-            // construction/destruction
-            //-------------------------------------------------
-            //  item - constructor
-            //-------------------------------------------------
-            public item(
-                    layout_view_view_environment env,
-                    util.xml.data_node itemnode,
-                    layout_view_element_map elemmap,
-                    int orientation,
-                    layout_group_transform trans,
-                    render_color color)
-            {
-                m_element = find_element(env, itemnode, elemmap);
-
-                //throw new emu_unimplemented();
-#if false
-                m_output(env.device(), std::string(env.get_attribute_string(itemnode, "name")))
-                m_animoutput(env.device(), make_animoutput_tag(env, itemnode));
-#endif
-
-                m_animinput_port = null;
-                m_elem_state = m_element != null ? m_element.default_state() : 0;
-                m_animmask = make_animmask(env, itemnode);
-                m_animshift = (u8)get_state_shift(m_animmask);
-                m_input_port = null;
-                m_input_field = null;
-                m_input_mask = (ioport_value)env.get_attribute_int(itemnode, "inputmask", 0);
-                m_input_shift = (u8)get_state_shift(m_input_mask);
-                m_clickthrough = env.get_attribute_bool(itemnode, "clickthrough", true);  //m_clickthrough(env.get_attribute_bool(itemnode, "clickthrough", "yes"))
-                m_screen = null;
-                m_color = make_color(env, itemnode, color);
-                m_blend_mode = get_blend_mode(env, itemnode);
-                m_visibility_mask = env.visibility_mask();
-                m_id = env.get_attribute_string(itemnode, "id");
-                m_input_tag = make_input_tag(env, itemnode);
-                m_animinput_tag = make_animinput_tag(env, itemnode);
-                m_rawbounds = make_bounds(env, itemnode, trans);
-                m_have_output = !env.get_attribute_string(itemnode, "name").empty();  //m_have_output(env.get_attribute_string(itemnode, "name", "")[0])
-                m_input_raw = env.get_attribute_bool(itemnode, "inputraw", false);
-                m_have_animoutput = !make_animoutput_tag(env, itemnode).empty();
-                m_has_clickthrough = !env.get_attribute_string(itemnode, "clickthrough").empty();  //m_has_clickthrough(env.get_attribute_string(itemnode, "clickthrough", "")[0])
-
-
-                // fetch common data
-                int index = env.get_attribute_int(itemnode, "index", -1);
-                if (index != -1)
-                    m_screen = new screen_device_enumerator(env.machine().root_device()).byindex(index);
-
-                // sanity checks
-                if (std.strcmp(itemnode.get_name(), "screen") == 0)
-                {
-                    if (itemnode.has_attribute("tag"))
-                    {
-                        string tag = env.get_attribute_string(itemnode, "tag");
-                        m_screen = (screen_device)env.device().subdevice(tag);
-                        if (m_screen == null)
-                            throw new layout_reference_error(util.string_format("invalid screen tag '{0}'", tag));
-                    }
-                    else if (m_screen == null)
-                    {
-                        throw new layout_reference_error(util.string_format("invalid screen index {0}", index));
-                    }
-                }
-                else if (m_element == null)
-                {
-                    throw new layout_syntax_error(util.string_format("item of type {0} requires an element tag", itemnode.get_name()));
-                }
-
-                // this can be called before resolving tags, make it return something valid
-                m_bounds = m_rawbounds;
-                m_get_bounds = () => { return m_bounds.front().get(); };  //m_get_bounds = bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front());
-            }
-
-            //~item();
-
-
-            // getters
-            public string id() { return m_id; }
-            public layout_element element() { return m_element; }
-            public screen_device screen() { return m_screen; }
-            //bool bounds_animated() const { return m_bounds.size() > 1U; }
-            //bool color_animated() const { return m_color.size() > 1U; }
-            public render_bounds bounds() { return m_get_bounds(); }
-            public render_color color() { return m_get_color(); }
-            public int blend_mode() { return m_blend_mode; }
-            public u32 visibility_mask() { return m_visibility_mask; }
-            public int orientation() { return m_orientation; }
-            //render_container *screen_container() const { return m_screen ? &m_screen->container() : nullptr; }
-
-
-            // interactivity
-            public bool has_input() { return m_input_port != null; }  //bool has_input() const { return bool(m_input_port); }
-            public std.pair<ioport_port, ioport_value> input_tag_and_mask() { return std.make_pair(m_input_port, m_input_mask); }
-            public bool clickthrough() { return m_clickthrough; }
-
-
-            // fetch state based on configured source
-            public int element_state() { return m_get_elem_state(); }
-            //int animation_state() const { return m_get_anim_state(); }
-
-
-            // set state
-            //void set_state(int state) { m_elem_state = state; }
-
-
-            // set handlers
-            //void set_element_state_callback(state_delegate &&handler);
-            //void set_animation_state_callback(state_delegate &&handler);
-            //void set_bounds_callback(bounds_delegate &&handler);
-            //void set_color_callback(color_delegate &&handler);
-
-
-            // resolve tags, if any
-            //---------------------------------------------
-            //  resolve_tags - resolve tags, if any are set
-            //---------------------------------------------
-            public void resolve_tags()
-            {
-                // resolve element state output and set default value
-                if (m_have_output)
-                {
-                    throw new emu_unimplemented();
-#if false
-                    m_output.resolve();
-                    if (m_element)
-                        m_output = m_element->default_state();
-#endif
-                }
-
-                // resolve animation state output
-                if (m_have_animoutput)
-                {
-                    throw new emu_unimplemented();
-#if false
-                    m_animoutput.resolve();
-#endif
-                }
-
-                // resolve animation state input
-                if (!m_animinput_tag.empty())
-                    m_animinput_port = m_element.machine().root_device().ioport(m_animinput_tag);
-
-                // resolve element state input
-                if (!m_input_tag.empty())
-                {
-                    m_input_port = m_element.machine().root_device().ioport(m_input_tag);
-                    if (m_input_port != null)
-                    {
-                        // if there's a matching unconditional field, cache it
-                        foreach (ioport_field field in m_input_port.fields())
-                        {
-                            if ((field.mask() & m_input_mask) != 0)
-                            {
-                                if (field.condition().condition() == ioport_condition.condition_t.ALWAYS)
-                                    m_input_field = field;
-
-                                break;
-                            }
-                        }
-
-                        // if clickthrough isn't explicitly configured, having an I/O port implies false
-                        if (!m_has_clickthrough)
-                            m_clickthrough = false;
-                    }
-                }
-
-                // choose optimal handlers
-                m_get_elem_state = default_get_elem_state();
-                m_get_anim_state = default_get_anim_state();
-                m_get_bounds = default_get_bounds();
-                m_get_color = default_get_color();
-            }
-
-
-            //-------------------------------------------------
-            //  default_get_elem_state - get default element
-            //  state handler
-            //-------------------------------------------------
-            state_delegate default_get_elem_state()
-            {
-                if (m_have_output)
-                    return get_output;  //return state_delegate(&item::get_output, this);
-                else if (m_input_port == null)
-                    return get_state;  //return state_delegate(&item::get_state, this);
-                else if (m_input_raw)
-                    return get_input_raw;  //return state_delegate(&item::get_input_raw, this);
-                else if (m_input_field != null)
-                    return get_input_field_cached;  //return state_delegate(&item::get_input_field_cached, this);
-                else
-                    return get_input_field_conditional;  //return state_delegate(&item::get_input_field_conditional, this);
-            }
-
-
-            //-------------------------------------------------
-            //  default_get_anim_state - get default animation
-            //  state handler
-            //-------------------------------------------------
-            state_delegate default_get_anim_state()
-            {
-                if (m_have_animoutput)
-                    return get_anim_output;  //return state_delegate(&item::get_anim_output, this);
-                else if (m_animinput_port != null)
-                    return get_anim_input;  //return state_delegate(&item::get_anim_input, this);
-                else
-                    return default_get_elem_state();
-            }
-
-
-            //-------------------------------------------------
-            //  default_get_bounds - get default bounds handler
-            //-------------------------------------------------
-            bounds_delegate default_get_bounds()
-            {
-                return (m_bounds.size() == 1U)
-                        ? () => { return m_bounds.front().get(); }  //? bounds_delegate(&emu::render::detail::bounds_step::get, &m_bounds.front())
-                        : (bounds_delegate)get_interpolated_bounds;  //: bounds_delegate(&item::get_interpolated_bounds, this);
-            }
-
-
-            //-------------------------------------------------
-            //  default_get_color - get default color handler
-            //-------------------------------------------------
-            color_delegate default_get_color()
-            {
-                return (m_color.size() == 1U)
-                        ? () => { return m_color.front().get(); }  //? color_delegate(&emu::render::detail::color_step::get, &const_cast<emu::render::detail::color_step &>(m_color.front()))
-                        : (color_delegate)get_interpolated_color;  //: color_delegate(&item::get_interpolated_color, this);
-            }
-
-
-            //-------------------------------------------------
-            //  get_state - get state when no bindings
-            //-------------------------------------------------
-            int get_state()
-            {
-                return m_elem_state;
-            }
-
-
-            //-------------------------------------------------
-            //  get_output - get element state output
-            //-------------------------------------------------
-            int get_output()
-            {
-                assert(m_have_output);
-                return (int)(s32)m_output.op.op;
-            }
-
-
-            //-------------------------------------------------
-            //  get_input_raw - get element state input
-            //-------------------------------------------------
-            int get_input_raw()
-            {
-                assert(m_input_port != null);
-                return (int)(s32)((m_input_port.read() & m_input_mask) >> m_input_shift);  //return int(std::make_signed_t<ioport_value>((m_input_port->read() & m_input_mask) >> m_input_shift));
-            }
-
-
-            //-------------------------------------------------
-            //  get_input_field_cached - element state
-            //-------------------------------------------------
-            int get_input_field_cached()
-            {
-                assert(m_input_port != null);
-                assert(m_input_field != null);
-                return ((m_input_port.read() ^ m_input_field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
-            }
-
-
-            //-------------------------------------------------
-            //  get_input_field_conditional - element state
-            //-------------------------------------------------
-            int get_input_field_conditional()
-            {
-                assert(m_input_port != null);
-                assert(m_input_field == null);
-                ioport_field field = m_input_port.field(m_input_mask);
-                return (field != null && ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0) ? 1 : 0;
-            }
-
-
-            //-------------------------------------------------
-            //  get_anim_output - get animation output
-            //-------------------------------------------------
-            int get_anim_output()
-            {
-                assert(m_have_animoutput);
-                return (int)(unsigned)((u32)((s32)m_animoutput.op.op & m_animmask) >> m_animshift);
-            }
-
-
-            //-------------------------------------------------
-            //  get_anim_input - get animation input
-            //-------------------------------------------------
-            int get_anim_input()
-            {
-                assert(m_animinput_port != null);
-                return (int)(s32)((m_animinput_port.read() & m_animmask) >> m_animshift);  //return int(std::make_signed_t<ioport_value>((m_animinput_port->read() & m_animmask) >> m_animshift));
-            }
-
-
-            //-------------------------------------------------
-            //  get_interpolated_bounds - animated bounds
-            //-------------------------------------------------
-            render_bounds get_interpolated_bounds()
-            {
-                assert(m_bounds.size() > 1U);
-                return interpolate_bounds(m_bounds, m_get_anim_state());
-            }
-
-
-            //-------------------------------------------------
-            //  get_interpolated_color - animated color
-            //-------------------------------------------------
-            render_color get_interpolated_color()
-            {
-                assert(m_color.size() > 1U);
-                return interpolate_color(m_color, m_get_anim_state());
-            }
-
-
-            //---------------------------------------------
-            //  find_element - find element definition
-            //---------------------------------------------
-            static layout_element find_element(layout_view_view_environment env, util.xml.data_node itemnode, layout_view_element_map elemmap)
-            {
-                string name = env.get_attribute_string(itemnode, std.strcmp(itemnode.get_name(), "element") == 0 ? "ref" : "element");
-                if (name.empty())
-                    return null;
-
-                // search the list of elements for a match, error if not found
-                var found = elemmap.find(name);
-                if (null != found)
-                    return found;
-                else
-                    throw new layout_syntax_error("unable to find element {0}", name);
-            }
-
-
-            //---------------------------------------------
-            //  make_bounds - get transformed bounds
-            //---------------------------------------------
-            static layout_view_item_bounds_vector make_bounds(
-                    layout_view_view_environment env,
-                    util.xml.data_node itemnode,
-                    layout_group_transform trans)
-            {
-                layout_view_item_bounds_vector result = new emu_render_detail_bounds_vector();
-                for (util.xml.data_node bounds = itemnode.get_child("bounds"); bounds != null; bounds = bounds.get_next_sibling("bounds"))
-                {
-                    if (!add_bounds_step(env, result, bounds))
-                    {
-                        throw new layout_syntax_error(
-                                util.string_format(
-                                    "{0} item has duplicate bounds for state",
-                                    itemnode.get_name()));
-                    }
-                }
-
-                foreach (emu.render.detail.bounds_step step in result)  //for (emu::render::detail::bounds_step &step : result)
-                {
-                    render_bounds_transform(ref step.bounds, trans);
-                    if (step.bounds.x0 > step.bounds.x1)
-                        std.swap(ref step.bounds.x0, ref step.bounds.x1);
-                    if (step.bounds.y0 > step.bounds.y1)
-                        std.swap(ref step.bounds.y0, ref step.bounds.y1);
-                }
-
-                set_bounds_deltas(result);
-                return result;
-            }
-
-
-            //---------------------------------------------
-            //  make_color - get color inflection points
-            //---------------------------------------------
-            static layout_view_item_color_vector make_color(
-                    layout_view_view_environment env,
-                    util.xml.data_node itemnode,
-                    render_color mult)
-            {
-                layout_view_item_color_vector result = new emu_render_detail_color_vector();
-                for (util.xml.data_node color = itemnode.get_child("color"); color != null; color = color.get_next_sibling("color"))
-                {
-                    if (!add_color_step(env, result, color))
-                    {
-                        throw new layout_syntax_error(
-                                util.string_format(
-                                    "{0} item has duplicate color for state",
-                                    itemnode.get_name()));
-                    }
-                }
-
-                if (result.empty())
-                {
-                    result.emplace_back(new emu.render.detail.color_step() { state = 0, color = mult, delta = { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
-                }
-                else
-                {
-                    for (int i = 0; i < result.Count; i++)  //for (emu::render::detail::color_step &step : result)
-                    {
-                        var step = result[i];
-
-                        step.color *= mult;
-
-                        result[i] = new emu.render.detail.color_step(step);
-                    }
-
-                    set_color_deltas(result);
-                }
-
-                return result;
-            }
-
-
-            //---------------------------------------------
-            //  make_animoutput_tag - get animation output
-            //  tag
-            //---------------------------------------------
-            string make_animoutput_tag(layout_view_view_environment env, util.xml.data_node itemnode)
-            {
-                util.xml.data_node animate = itemnode.get_child("animate");
-                if (animate != null)
-                    return env.get_attribute_string(animate, "name");
-                else
-                    return null;
-            }
-
-
-            //---------------------------------------------
-            //  make_animinput_tag - get absolute tag for
-            //  animation input
-            //---------------------------------------------
-            static string make_animinput_tag(layout_view_view_environment env, util.xml.data_node itemnode)
-            {
-                util.xml.data_node animate = itemnode.get_child("animate");
-                return animate != null ? env.get_attribute_subtag(animate, "inputtag") : "";
-            }
-
-
-            //---------------------------------------------
-            //  make_animmask - get animation state mask
-            //---------------------------------------------
-            static ioport_value make_animmask(layout_view_view_environment env, util.xml.data_node itemnode)
-            {
-                util.xml.data_node animate = itemnode.get_child("animate");
-
-                //return animate ? env.get_attribute_int(*animate, "mask", ~ioport_value(0)) : ~ioport_value(0);
-                if (animate != null)
-                {
-                    var ret = env.get_attribute_int(animate, "mask", s32.MaxValue);
-                    return ret == s32.MaxValue ? ~(ioport_value)0 : (ioport_value)ret;
-                }
-                else
-                {
-                    return ~(ioport_value)0;
-                }
-            }
-
-
-            //---------------------------------------------
-            //  make_input_tag - get absolute input tag
-            //---------------------------------------------
-            static string make_input_tag(layout_view_view_environment env, util.xml.data_node itemnode)
-            {
-                return env.get_attribute_subtag(itemnode, "inputtag");
-            }
-
-
-            //---------------------------------------------
-            //  get_blend_mode - explicit or implicit blend
-            //---------------------------------------------
-            static int get_blend_mode(layout_view_view_environment env, util.xml.data_node itemnode)
-            {
-                // see if there's a blend mode attribute
-                string mode = itemnode.get_attribute_string_ptr("blend");
-                if (mode != null)
-                {
-                    if (mode == "none")
-                        return BLENDMODE_NONE;
-                    else if (mode == "alpha")
-                        return BLENDMODE_ALPHA;
-                    else if (mode == "multiply")
-                        return BLENDMODE_RGB_MULTIPLY;
-                    else if (mode == "add")
-                        return BLENDMODE_ADD;
-                    else
-                        throw new layout_syntax_error(util.string_format("unknown blend mode {0}", mode));
-                }
-
-                // fall back to implicit blend mode based on element type
-                if (std.strcmp(itemnode.get_name(), "screen") == 0)
-                    return -1; // magic number recognised by render.cpp to allow per-element blend mode
-                else if (std.strcmp(itemnode.get_name(), "overlay") == 0)
-                    return BLENDMODE_RGB_MULTIPLY;
-                else
-                    return BLENDMODE_ALPHA;
-            }
-
-
-            //---------------------------------------------
-            //  get_state_shift - shift to right-align LSB
-            //---------------------------------------------
-            static unsigned get_state_shift(ioport_value mask)
-            {
-                unsigned result = 0;
-                while (mask != 0 && BIT(mask, 0) == 0)
-                {
-                    ++result;
-                    mask >>= 1;
-                }
-
-                return result;
-            }
-        }
-
-
-        //**************************************************************************
-        //  LAYOUT VIEW
-        //**************************************************************************
-        class layer_lists
-        {
-            public layout_view_item_list backdrops = new layout_view_item_list();
-            public layout_view_item_list screens = new layout_view_item_list();
-            public layout_view_item_list overlays = new layout_view_item_list();
-            public layout_view_item_list bezels = new layout_view_item_list();
-            public layout_view_item_list cpanels = new layout_view_item_list();
-            public layout_view_item_list marquees = new layout_view_item_list();
-        }
 
 
         /// \brief A subset of items in a view that can be hidden or shown
@@ -2441,6 +2269,17 @@ namespace mame
         //using edge_vector = std::vector<edge>;
 
 
+        class layer_lists
+        {
+            public layout_view_item_list backdrops = new layout_view_item_list();
+            public layout_view_item_list screens = new layout_view_item_list();
+            public layout_view_item_list overlays = new layout_view_item_list();
+            public layout_view_item_list bezels = new layout_view_item_list();
+            public layout_view_item_list cpanels = new layout_view_item_list();
+            public layout_view_item_list marquees = new layout_view_item_list();
+        }
+
+
         // internal state
         float m_effaspect;        // X/Y of the layout in current configuration
         render_bounds m_bounds;           // computed bounds of the view in current configuration
@@ -2500,7 +2339,7 @@ namespace mame
             if (!layers.backdrops.empty())
             {
                 m_vistoggles.emplace_back(new visibility_toggle("Backdrops", mask));
-                foreach (item backdrop in layers.backdrops)
+                foreach (layout_view_item backdrop in layers.backdrops)
                     backdrop.m_visibility_mask = mask;
                 m_defvismask |= mask;
                 mask <<= 1;
@@ -2509,7 +2348,7 @@ namespace mame
             if (!layers.overlays.empty())
             {
                 m_vistoggles.emplace_back(new visibility_toggle("Overlays", mask));
-                foreach (item overlay in layers.overlays)
+                foreach (layout_view_item overlay in layers.overlays)
                     overlay.m_visibility_mask = mask;
                 m_defvismask |= mask;
                 mask <<= 1;
@@ -2518,7 +2357,7 @@ namespace mame
             if (!layers.bezels.empty())
             {
                 m_vistoggles.emplace_back(new visibility_toggle("Bezels", mask));
-                foreach (item bezel in layers.bezels)
+                foreach (layout_view_item bezel in layers.bezels)
                     bezel.m_visibility_mask = mask;
                 m_defvismask |= mask;
                 mask <<= 1;
@@ -2527,7 +2366,7 @@ namespace mame
             if (!layers.cpanels.empty())
             {
                 m_vistoggles.emplace_back(new visibility_toggle("Control Panels", mask));
-                foreach (item cpanel in layers.cpanels)
+                foreach (layout_view_item cpanel in layers.cpanels)
                     cpanel.m_visibility_mask = mask;
                 m_defvismask |= mask;
                 mask <<= 1;
@@ -2536,7 +2375,7 @@ namespace mame
             if (!layers.marquees.empty())
             {
                 m_vistoggles.emplace_back(new visibility_toggle("Backdrops", mask));
-                foreach (item marquee in layers.marquees)
+                foreach (layout_view_item marquee in layers.marquees)
                     marquee.m_visibility_mask = mask;
                 m_defvismask |= mask;
                 mask <<= 1;
@@ -2546,7 +2385,7 @@ namespace mame
             if (!layers.overlays.empty() || (layers.backdrops.size() <= 1))
             {
                 // screens (-1) + overlays (RGB multiply) + backdrop (add) + bezels (alpha) + cpanels (alpha) + marquees (alpha)
-                foreach (item backdrop in layers.backdrops)
+                foreach (layout_view_item backdrop in layers.backdrops)
                     backdrop.m_blend_mode = BLENDMODE_ADD;
 
                 foreach (var item in layers.screens) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.screens);
@@ -2560,7 +2399,7 @@ namespace mame
             {
                 // multiple backdrop pieces and no overlays (Golly! Ghost! mode):
                 // backdrop (alpha) + screens (add) + bezels (alpha) + cpanels (alpha) + marquees (alpha)
-                foreach (item screen in layers.screens)
+                foreach (layout_view_item screen in layers.screens)
                 {
                     if (screen.blend_mode() == -1)
                         screen.m_blend_mode = BLENDMODE_ADD;
@@ -2574,7 +2413,7 @@ namespace mame
             }
 
             // index items with keys supplied
-            foreach (item curitem in m_items)
+            foreach (layout_view_item curitem in m_items)
             {
                 if (!curitem.id().empty())
                 {
@@ -2665,7 +2504,7 @@ namespace mame
             // loop over items and filter by visibility mask
             bool first = true;
             bool scrfirst = true;
-            foreach (item curitem in m_items)
+            foreach (layout_view_item curitem in m_items)
             {
                 if ((visibility_mask & curitem.visibility_mask()) == curitem.visibility_mask())
                 {
@@ -2730,7 +2569,7 @@ namespace mame
             float yscale = target_bounds.height() / m_bounds.height();
 
             // normalize all the item bounds
-            foreach (item curitem in items())
+            foreach (layout_view_item curitem in items())
             {
                 assert(curitem.m_rawbounds.size() == curitem.m_bounds.size());
 
@@ -2748,7 +2587,7 @@ namespace mame
             m_interactive_edges_y.reserve(m_interactive_items.size() * 2);
             for (unsigned i = 0; m_interactive_items.size() > i; ++i)
             {
-                item curitem = m_interactive_items[i];
+                layout_view_item curitem = m_interactive_items[i];
                 render_bounds curbounds = accumulate_bounds(curitem.m_bounds);
                 LOGMASKED(LOG_INTERACTIVE_ITEMS, "{0}: ({1} {2} {3} {4}) hasinput={5} clickthrough={6}\n",
                         i, curbounds.x0, curbounds.y0, curbounds.x1, curbounds.y1, curitem.has_input(), curitem.clickthrough());
@@ -2781,7 +2620,7 @@ namespace mame
         //-------------------------------------------------
         public void preload()
         {
-            foreach (item curitem in m_visible_items)
+            foreach (layout_view_item curitem in m_visible_items)
             {
                 if (curitem.element() != null)
                     curitem.element().preload();
@@ -2798,7 +2637,7 @@ namespace mame
         //-----------------------------
         public void resolve_tags()
         {
-            foreach (item curitem in items())
+            foreach (layout_view_item curitem in items())
                 curitem.resolve_tags();
         }
 
@@ -2847,25 +2686,25 @@ namespace mame
                 }
                 else if (std.strcmp(itemnode.get_name(), "screen") == 0)
                 {
-                    layers.screens.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.screens.emplace_back(new layout_view_item(env, itemnode, elemmap, orientation, trans, color));
                 }
                 else if (std.strcmp(itemnode.get_name(), "element") == 0)
                 {
-                    layers.screens.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.screens.emplace_back(new layout_view_item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (std.strcmp(itemnode.get_name(), "backdrop") == 0)
                 {
                     if (layers.backdrops.empty())
                         osd_printf_warning("Warning: layout view '{0}' contains deprecated backdrop element\n", name());
-                    layers.backdrops.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.backdrops.emplace_back(new layout_view_item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (std.strcmp(itemnode.get_name(), "overlay") == 0)
                 {
                     if (layers.overlays.empty())
                         osd_printf_warning("Warning: layout view '{0}' contains deprecated overlay element\n", name());
-                    layers.overlays.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.overlays.emplace_back(new layout_view_item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (std.strcmp(itemnode.get_name(), "bezel") == 0)
@@ -2873,7 +2712,7 @@ namespace mame
                     if (layers.bezels.empty())
                         osd_printf_warning("Warning: layout view '{0}' contains deprecated bezel element\n", name());
 
-                    layers.bezels.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.bezels.emplace_back(new layout_view_item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (std.strcmp(itemnode.get_name(), "cpanel") == 0)
@@ -2881,7 +2720,7 @@ namespace mame
                     if (layers.cpanels.empty())
                         osd_printf_warning("Warning: layout view '{0}' contains deprecated cpanel element\n", name());
 
-                    layers.cpanels.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.cpanels.emplace_back(new layout_view_item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (std.strcmp(itemnode.get_name(), "marquee") == 0)
@@ -2889,7 +2728,7 @@ namespace mame
                     if (layers.marquees.empty())
                         osd_printf_warning("Warning: layout view '{0}' contains deprecated marquee element\n", name());
 
-                    layers.marquees.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
+                    layers.marquees.emplace_back(new layout_view_item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (std.strcmp(itemnode.get_name(), "group") == 0)
@@ -3718,7 +3557,7 @@ namespace mame
             }
 
 
-            float get_attribute_float(util.xml.data_node node, string name, float defvalue)
+            public float get_attribute_float(util.xml.data_node node, string name, float defvalue)
             {
                 string attrib = node.get_attribute_string_ptr(name);
                 if (attrib == null)
@@ -3895,4 +3734,380 @@ namespace mame
             public u32 visibility_mask() { return m_visibility_mask; }
         }
     } // namespace emu::render::detail
+
+
+    public static class rendlay_internal
+    {
+        public const int LAYOUT_VERSION = 2;
+
+
+        //enum
+        //{
+        public const int LINE_CAP_NONE  = 0;
+        public const int LINE_CAP_START = 1;
+        public const int LINE_CAP_END   = 2;
+        //}
+
+
+        public static readonly layout_group_transform identity_transform = new layout_group_transform(new std.array<float, u64_const_3>(1.0F, 0.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 1.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 0.0F, 1.0F));  //layout_group.transform identity_transform {{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
+
+
+        public class layout_syntax_error : ArgumentException { public layout_syntax_error(string format, params object [] args) : base(string.Format(format, args)) { } }
+        public class layout_reference_error : ArgumentOutOfRangeException { public layout_reference_error(string format, params object [] args) : base(string.Format(format, args)) { } }
+
+
+        public static void render_bounds_transform(ref render_bounds bounds, layout_group_transform trans)  //inline void render_bounds_transform(render_bounds &bounds, layout_group::transform const &trans)
+        {
+            bounds = new render_bounds()
+            {
+                x0 = (bounds.x0 * trans[0][0]) + (bounds.y0 * trans[0][1]) + trans[0][2],
+                y0 = (bounds.x0 * trans[1][0]) + (bounds.y0 * trans[1][1]) + trans[1][2],
+                x1 = (bounds.x1 * trans[0][0]) + (bounds.y1 * trans[0][1]) + trans[0][2],
+                y1 = (bounds.x1 * trans[1][0]) + (bounds.y1 * trans[1][1]) + trans[1][2]
+            };
+        }
+
+
+        static void alpha_blend(ref u32 dest, u32 a, u32 r, u32 g, u32 b, u32 inva)  //inline void alpha_blend(u32 &dest, u32 a, u32 r, u32 g, u32 b, u32 inva)
+        {
+            rgb_t dpix = new rgb_t(dest);
+            u32 da = dpix.a();
+            u32 finala = (a * 255) + (da * inva);
+            u32 finalr = r + ((u32)dpix.r() * da * inva);
+            u32 finalg = g + ((u32)dpix.g() * da * inva);
+            u32 finalb = b + ((u32)dpix.b() * da * inva);
+            dest = new rgb_t((u8)(finala / 255), (u8)(finalr / finala), (u8)(finalg / finala), (u8)(finalb / finala));
+        }
+
+        static void alpha_blend(ref u32 dest, render_color c, float fill)  //inline void alpha_blend(u32 &dest, render_color const &c, float fill)
+        {
+            u32 a = (u32)(c.a * fill * 255.0F);
+            if (a != 0)
+            {
+                u32 r = (u32)(c.r * (255.0F * 255.0F)) * a;
+                u32 g = (u32)(c.g * (255.0F * 255.0F)) * a;
+                u32 b = (u32)(c.b * (255.0F * 255.0F)) * a;
+                alpha_blend(ref dest, a, r, g, b, 255 - a);
+            }
+        }
+
+
+        public static bool add_bounds_step(emu.render.detail.layout_environment env, emu_render_detail_bounds_vector steps, util.xml.data_node node)
+        {
+            int state = env.get_attribute_int(node, "state", 0);
+            var posIdx = std.lower_bound(
+                        steps,
+                        state,
+                        (emu.render.detail.bounds_step lhs, int rhs) => { return lhs.state < rhs; });
+
+            if ((-1 != posIdx) && (state == steps[posIdx].state))  //if ((steps.end() != pos) && (state == pos->state))
+                return false;
+
+            //auto &ins(*steps.emplace(pos, emu::render::detail::bounds_step{ state, { 0.0F, 0.0F, 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F, 0.0F } }));
+            var ins = new emu.render.detail.bounds_step() { state = state, bounds = { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F }, delta = { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F } };
+            if (posIdx == -1) steps.push_back(ins); else steps.emplace(posIdx, ins);  //steps.emplace(posIdx, ins);
+
+            env.parse_bounds(node, out ins.bounds);
+            return true;
+        }
+
+
+        public static void set_bounds_deltas(emu_render_detail_bounds_vector steps)
+        {
+            if (steps.empty())
+            {
+                steps.emplace_back(new emu.render.detail.bounds_step() { state = 0, bounds = { x0 = 0.0F, y0 = 0.0F, x1 = 1.0F, y1 = 1.0F }, delta = { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F } });
+            }
+            else
+            {
+                var iIdx = 0;  //auto i(steps.begin());
+                var jIdx = iIdx;  //auto j(i);
+                while (steps.Count != ++jIdx)  //while (steps.end() != ++j)
+                {
+                    var i = steps[iIdx];
+                    var j = steps[jIdx];
+
+                    //throw new emu_unimplemented();
+#if false
+                    assert(j->state > i->state);
+#endif
+
+                    i.delta.x0 = (j.bounds.x0 - i.bounds.x0) / (j.state - i.state);
+                    i.delta.x1 = (j.bounds.x1 - i.bounds.x1) / (j.state - i.state);
+                    i.delta.y0 = (j.bounds.y0 - i.bounds.y0) / (j.state - i.state);
+                    i.delta.y1 = (j.bounds.y1 - i.bounds.y1) / (j.state - i.state);
+
+                    iIdx = jIdx;  //i = j;
+                }
+            }
+        }
+
+
+        public static void normalize_bounds(emu_render_detail_bounds_vector steps, float x0, float y0, float xoffs, float yoffs, float xscale, float yscale)
+        {
+            var iIdx = 0;  //auto i(steps.begin());
+            var i = steps[iIdx];
+            i.bounds.x0 = x0 + (i.bounds.x0 - xoffs) * xscale;
+            i.bounds.x1 = x0 + (i.bounds.x1 - xoffs) * xscale;
+            i.bounds.y0 = y0 + (i.bounds.y0 - yoffs) * yscale;
+            i.bounds.y1 = y0 + (i.bounds.y1 - yoffs) * yscale;
+
+            var jIdx = iIdx;  //auto j(i);
+            while (steps.Count != ++jIdx)  //while (steps.end() != ++j)
+            {
+                var j = steps[jIdx];
+                j.bounds.x0 = x0 + (j.bounds.x0 - xoffs) * xscale;
+                j.bounds.x1 = x0 + (j.bounds.x1 - xoffs) * xscale;
+                j.bounds.y0 = y0 + (j.bounds.y0 - yoffs) * yscale;
+                j.bounds.y1 = y0 + (j.bounds.y1 - yoffs) * yscale;
+
+                i.delta.x0 = (j.bounds.x0 - i.bounds.x0) / (j.state - i.state);
+                i.delta.x1 = (j.bounds.x1 - i.bounds.x1) / (j.state - i.state);
+                i.delta.y0 = (j.bounds.y0 - i.bounds.y0) / (j.state - i.state);
+                i.delta.y1 = (j.bounds.y1 - i.bounds.y1) / (j.state - i.state);
+
+                iIdx = jIdx;  //i = j;
+                i = steps[iIdx];
+            }
+        }
+
+
+        public static render_bounds accumulate_bounds(emu_render_detail_bounds_vector steps)
+        {
+            var iIdx = 0;  //auto i(steps.begin());
+            var i = steps[iIdx];
+            render_bounds result = i.bounds;
+            while (steps.Count != ++iIdx)  //while (steps.end() != ++i)
+                result |= i.bounds;
+
+            return result;
+        }
+
+
+        public static render_bounds interpolate_bounds(emu_render_detail_bounds_vector steps, int state)
+        {
+            var posIdx = std.lower_bound(
+                        steps,
+                        state,
+                        (emu.render.detail.bounds_step lhs, int rhs) => { return lhs.state < rhs; });
+
+            if (0 == posIdx)  //if (steps.begin() == pos)
+            {
+                var pos = steps[posIdx];
+                return pos.bounds;
+            }
+            else
+            {
+                //--pos;
+                --posIdx;
+                var pos = steps[posIdx];
+                render_bounds result = pos.bounds;
+                result.x0 += pos.delta.x0 * (state - pos.state);
+                result.x1 += pos.delta.x1 * (state - pos.state);
+                result.y0 += pos.delta.y0 * (state - pos.state);
+                result.y1 += pos.delta.y1 * (state - pos.state);
+
+                return result;
+            }
+        }
+
+
+        public static bool add_color_step(emu.render.detail.layout_environment env, emu_render_detail_color_vector steps, util.xml.data_node node)
+        {
+            int state = env.get_attribute_int(node, "state", 0);
+            var posIdx = std.lower_bound(
+                        steps,
+                        state,
+                        (emu.render.detail.color_step lhs, int rhs) => { return lhs.state < rhs; });
+
+            if ((-1 != posIdx) && (state == steps[posIdx].state))  //if ((steps.end() != pos) && (state == pos->state))
+                return false;
+
+            steps.emplace(posIdx, new emu.render.detail.color_step() { state = state, color = env.parse_color(node), delta = { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
+            return true;
+        }
+
+
+        public static void set_color_deltas(emu_render_detail_color_vector steps)
+        {
+            if (steps.empty())
+            {
+                steps.emplace_back(new emu.render.detail.color_step() { state = 0, color = { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, delta = { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
+            }
+            else
+            {
+                var iIdx = 0;  //auto i(steps.begin());
+                var jIdx = iIdx;  //auto j(i);
+                while (steps.Count != ++jIdx)  //while (steps.end() != ++j)
+                {
+                    var i = steps[iIdx];
+                    var j = steps[jIdx];
+
+                    //throw new emu_unimplemented();
+#if false
+                    assert(j->state > i->state);
+#endif
+
+                    i.delta.a = (j.color.a - i.color.a) / (j.state - i.state);
+                    i.delta.r = (j.color.r - i.color.r) / (j.state - i.state);
+                    i.delta.g = (j.color.g - i.color.g) / (j.state - i.state);
+                    i.delta.b = (j.color.b - i.color.b) / (j.state - i.state);
+
+                    iIdx = jIdx;  //i = j;
+                }
+            }
+        }
+
+
+        public static render_color interpolate_color(emu_render_detail_color_vector steps, int state)
+        {
+            var posIdx = std.lower_bound(
+                        steps,
+                        state,
+                        (emu.render.detail.color_step lhs, int rhs) => { return lhs.state < rhs; });
+
+            if (0 == posIdx)  //if (steps.begin() == pos)
+            {
+                var pos = steps[posIdx];
+                return pos.color;
+            }
+            else
+            {
+                //--pos;
+                --posIdx;
+                var pos = steps[posIdx];
+
+                render_color result = pos.color;
+                result.a += pos.delta.a * (state - pos.state);
+                result.r += pos.delta.r * (state - pos.state);
+                result.g += pos.delta.g * (state - pos.state);
+                result.b += pos.delta.b * (state - pos.state);
+                return result;
+            }
+        }
+
+
+        public static unsigned get_state_shift(ioport_value mask)
+        {
+            // get shift to right-align LSB
+            unsigned result = 0U;
+            while (mask != 0 && BIT(mask, 0) == 0)
+            {
+                ++result;
+                mask >>= 1;
+            }
+            return result;
+        }
+
+
+        public static string make_child_output_tag(
+                emu.render.detail.view_environment env,
+                util.xml.data_node itemnode,
+                string child)
+        {
+            util.xml.data_node childnode = itemnode.get_child(child);
+            if (childnode != null)
+                return env.get_attribute_string(childnode, "name");
+            else
+                return "";
+        }
+
+
+        public static string make_child_input_tag(
+                emu.render.detail.view_environment env,
+                util.xml.data_node itemnode,
+                string child)
+        {
+            util.xml.data_node childnode = itemnode.get_child(child);
+            return childnode != null ? env.get_attribute_subtag(childnode, "inputtag") : "";
+        }
+
+
+        public static ioport_value make_child_mask(
+                emu.render.detail.view_environment env,
+                util.xml.data_node itemnode,
+                string child)
+        {
+            util.xml.data_node childnode = itemnode.get_child(child);
+            return childnode != null ? (ioport_value)env.get_attribute_int(childnode, "mask", unchecked((int)ioport_value.MaxValue)) : ioport_value.MaxValue;
+        }
+
+
+        public static bool make_child_wrap(
+                emu.render.detail.view_environment env,
+                util.xml.data_node itemnode,
+                string child)
+        {
+            util.xml.data_node childnode = itemnode.get_child(child);
+            return childnode != null ? env.get_attribute_bool(childnode, "wrap", false) : false;
+        }
+
+
+        public static float make_child_size(
+                emu.render.detail.view_environment env,
+                util.xml.data_node itemnode,
+                string child)
+        {
+            util.xml.data_node childnode = itemnode.get_child(child);
+            return std.clamp(childnode != null ? env.get_attribute_float(childnode, "size", 1.0f) : 1.0f, 0.01f, 1.0f);
+        }
+
+
+        public static ioport_value make_child_min(
+                emu.render.detail.view_environment env,
+                util.xml.data_node itemnode,
+                string child)
+        {
+            util.xml.data_node childnode = itemnode.get_child(child);
+            return childnode != null ? (ioport_value)env.get_attribute_int(childnode, "min", 0) : 0;
+        }
+
+
+        public static ioport_value make_child_max(
+                emu.render.detail.view_environment env,
+                util.xml.data_node itemnode,
+                string child,
+                ioport_value mask)
+        {
+            util.xml.data_node childnode = itemnode.get_child(child);
+            ioport_value dflt = mask >> (int)get_state_shift(mask);
+            return childnode != null ? (ioport_value)env.get_attribute_int(childnode, "max", (int)dflt) : dflt;
+        }
+
+
+        public static string make_input_tag(
+                emu.render.detail.view_environment env,
+                util.xml.data_node itemnode)
+        {
+            return env.get_attribute_subtag(itemnode, "inputtag");
+        }
+
+
+        public static int get_blend_mode(emu.render.detail.view_environment env, util.xml.data_node itemnode)
+        {
+            // see if there's a blend mode attribute
+            string mode = itemnode.get_attribute_string_ptr("blend");
+            if (mode != null)
+            {
+                if (mode == "none")
+                    return BLENDMODE_NONE;
+                else if (mode == "alpha")
+                    return BLENDMODE_ALPHA;
+                else if (mode == "multiply")
+                    return BLENDMODE_RGB_MULTIPLY;
+                else if (mode == "add")
+                    return BLENDMODE_ADD;
+                else
+                    throw new layout_syntax_error(util.string_format("unknown blend mode {0}", mode));
+            }
+
+            // fall back to implicit blend mode based on element type
+            if (std.strcmp(itemnode.get_name(), "screen") == 0)
+                return -1; // magic number recognised by render.cpp to allow per-element blend mode
+            else if (std.strcmp(itemnode.get_name(), "overlay") == 0)
+                return BLENDMODE_RGB_MULTIPLY;
+            else
+                return BLENDMODE_ALPHA;
+        }
+    }
 }

@@ -33,28 +33,26 @@ namespace mame.ui
         // flags for menu items
         //enum : uint32_t
         //{
-        public const uint32_t FLAG_LEFT_ARROW     = 1 << 0;
-        public const uint32_t FLAG_RIGHT_ARROW    = 1 << 1;
-        protected const uint32_t FLAG_INVERT         = 1 << 2;
-        const uint32_t FLAG_MULTILINE      = 1 << 3;
-        const uint32_t FLAG_REDTEXT        = 1 << 4;
-        protected const uint32_t FLAG_DISABLE        = 1 << 5;
-        const uint32_t FLAG_UI_HEADING     = 1 << 7;
-        const uint32_t FLAG_COLOR_BOX      = 1 << 8;
+        public const uint32_t FLAG_LEFT_ARROW   = 1 << 0;
+        public const uint32_t FLAG_RIGHT_ARROW  = 1 << 1;
+        protected const uint32_t FLAG_INVERT    = 1 << 2;
+        protected const uint32_t FLAG_DISABLE   = 1 << 4;
+        const uint32_t FLAG_UI_HEADING          = 1 << 5;
+        const uint32_t FLAG_COLOR_BOX           = 1 << 6;
         //}
 
 
-        // flags to pass to process
+        // flags to pass to set_process_flags
         //enum
         //{
-        const uint32_t PROCESS_NOKEYS      = 1 << 0;
-        const uint32_t PROCESS_LR_ALWAYS   = 1 << 1;
+        const uint32_t PROCESS_NOKEYS                = 1 << 0;
+        const uint32_t PROCESS_LR_ALWAYS             = 1 << 1;
         protected const uint32_t PROCESS_LR_REPEAT   = 1 << 2;
-        const uint32_t PROCESS_CUSTOM_NAV  = 1 << 3;
+        const uint32_t PROCESS_CUSTOM_NAV            = 1 << 3;
         protected const uint32_t PROCESS_CUSTOM_ONLY = 1 << 4;
-        const uint32_t PROCESS_ONLYCHAR    = 1 << 5;
+        const uint32_t PROCESS_ONLYCHAR              = 1 << 5;
         protected const uint32_t PROCESS_NOINPUT     = 1 << 6;
-        const uint32_t PROCESS_NOIMAGE     = 1 << 7;
+        const uint32_t PROCESS_IGNOREPAUSE           = 1 << 7;
         //}
 
 
@@ -73,29 +71,32 @@ namespace mame.ui
             //using texture_ptr = widgets_manager::texture_ptr;
 
 
-            running_machine m_machine;
+            mame_ui_manager m_ui;
             bitmap_argb32 m_bgrnd_bitmap;
             render_texture m_bgrnd_texture;
 
             menu m_stack;
             menu m_free;
 
+            bool m_hide;
 
-            public global_state(running_machine machine, ui_options options)
-                : base(machine)
+
+            public global_state(mame_ui_manager ui)
+                : base(ui.machine())
             {
-                m_machine = machine;
+                m_ui = ui;
                 m_bgrnd_bitmap = null;
-                m_bgrnd_texture = null;  //, m_bgrnd_texture(nullptr, machine.render())
+                m_bgrnd_texture = null;  //, m_bgrnd_texture(nullptr, ui.machine().render())
                 m_stack = null;
                 m_free = null;
+                m_hide = false;
 
 
-                render_manager render = machine.render();
+                render_manager render = ui.machine().render();
 
                 // create a texture for main menu background
                 m_bgrnd_texture = render.texture_alloc(render_texture.hq_scale);  //m_bgrnd_texture.reset(render.texture_alloc(render_texture::hq_scale));
-                if (options.use_background_image() && (machine.system() == ___empty.driver____empty))
+                if (ui.options().use_background_image() && (ui.machine().system() == ___empty.driver____empty))
                 {
                     m_bgrnd_bitmap = new bitmap_argb32(0, 0);
                     emu_file backgroundfile = new emu_file(".", OPEN_FLAG_READ);
@@ -126,13 +127,6 @@ namespace mame.ui
             bool m_isDisposed = false;
             public void Dispose()
             {
-                //throw new emu_unimplemented();
-#if false
-                // it shouldn't really be possible to get here with active menus because of reference loops
-                assert(!m_stack);
-                assert(!m_free);
-#endif
-
                 stack_reset();
                 clear_free_list();
 
@@ -150,6 +144,12 @@ namespace mame.ui
 
             public void stack_push(menu menu)
             {
+                if (m_stack != null && m_stack.is_active())
+                {
+                    m_stack.m_active = false;
+                    m_stack.menu_deactivated();
+                }
+
                 menu.m_parent = m_stack;
                 m_stack = menu;
                 m_stack.machine().ui_input().reset();
@@ -160,12 +160,23 @@ namespace mame.ui
             {
                 if (m_stack != null)
                 {
+                    if (m_stack.is_one_shot())
+                        m_hide = true;
+
+                    if (m_stack.is_active())
+                    {
+                        m_stack.m_active = false;
+                        m_stack.menu_deactivated();
+                    }
+
+                    m_stack.menu_dismissed();
+
                     menu menu = m_stack;
                     m_stack = menu.m_parent;
                     menu.m_parent = m_free;
                     m_free = menu;
                     m_free.Dispose();
-                    m_machine.ui_input().reset();
+                    m_ui.machine().ui_input().reset();
                 }
             }
 
@@ -190,7 +201,11 @@ namespace mame.ui
                 }
 
                 while (reversed != null)
-                    reversed = reversed.m_parent;  //reversed = std::move(reversed->m_parent);
+                {
+                    var parent = reversed.m_parent;
+                    reversed.Dispose();
+                    reversed = parent;  //reversed = std::move(reversed->m_parent);
+                }
             }
 
 
@@ -204,42 +219,97 @@ namespace mame.ui
 
                 return false;
             }
+
+
+            public void hide_menu() { m_hide = true; }
+
+
+            public uint32_t ui_handler(render_container container, mame_ui_manager mui)
+            {
+                // if we have no menus stacked up, start with the main menu
+                if (m_stack == null)
+                    stack_push(new menu_main(m_ui, container));
+
+                // ensure topmost menu is active - need a loop because it could push another menu
+                while (m_stack != null && m_stack.is_active())
+                {
+                    m_stack.m_active = true;
+                    m_stack.menu_activated();
+                }
+
+                // update the menu state
+                m_hide = false;
+                if (m_stack != null)
+                    m_stack.do_handle();
+
+                // clear up anything pending being released
+                clear_free_list();
+
+                // if the menus are to be hidden, return a cancel here
+                if (m_ui.is_menu_active() && (m_hide || m_stack == null))
+                {
+                    if (m_stack != null)
+                    {
+                        if (m_stack.is_one_shot())
+                        {
+                            stack_pop();
+                        }
+                        else if (m_stack.is_active())
+                        {
+                            m_stack.m_active = false;
+                            m_stack.menu_deactivated();
+                        }
+                    }
+
+                    return UI_HANDLER_CANCEL;
+                }
+
+                return 0;
+            }
         }
+
+        // this is to satisfy the std::any requirement that objects be copyable
+        //class global_state_wrapper : public global_state
 
 
         // menu-related events
-        protected class menu_event
+        protected class event_
         {
-            public object itemref;  //void                *itemref;   // reference for the selected item
-            public menu_item_type type;       // item type (eventually will go away when itemref is proper ui_menu_item class rather than void*)
+            public object itemref;  //void                *itemref;   // reference for the selected item or nullptr
+            public menu_item item;      // selected item or nullptr
             public int iptkey;     // one of the IPT_* values from inptport.h
             public char32_t unichar;    // unicode character if iptkey == IPT_SPECIAL
             public render_bounds mouse;      // mouse position if iptkey == IPT_CUSTOM
         }
 
 
-        int m_selected;   // which item is selected
-        int m_hover;      // which item is being hovered over
-        std.vector<menu_item> m_items = new std.vector<menu_item>();      // array of items
-
         protected int top_line;           // main box top line
         protected int m_visible_lines;    // main box visible lines
         protected int m_visible_items;    // number of visible items
 
 
-        global_state m_global_state;  //global_state_ptr m_global_state;
-        bool m_special_main_menu;
-        bool m_needs_prev_menu_item;
+        global_state m_global_state;  //global_state            &m_global_state;        // reference to global state for session
         mame_ui_manager m_ui;              // UI we are attached to
         render_container m_container;       // render_container we render to
-        menu m_parent;           // pointer to parent menu
-        menu_event m_event;            // the UI event that occurred
+        menu m_parent;  //std::unique_ptr<menu>   m_parent;               // pointer to parent menu in the stack
 
-        float m_customtop;        // amount of extra height to add at the top
-        float m_custombottom;     // amount of extra height to add at the bottom
+        std.vector<menu_item> m_items;                // array of items
 
-        int m_resetpos;         // reset position
-        object m_resetref;  //void                    *m_resetref;        // reset reference
+        uint32_t m_process_flags;        // event processing options
+        int m_selected;             // which item is selected
+        int m_hover;                // which item is being hovered over
+        bool m_special_main_menu;    // true if no real emulation running under the menu
+        bool m_one_shot;             // true for menus outside the normal stack
+        bool m_needs_prev_menu_item; // true to automatically create item to dismiss menu
+        bool m_active;               // whether the menu is currently visible and topmost
+
+        event_ m_event;                // the UI event that occurred
+
+        float m_customtop;            // amount of extra height to add at the top
+        float m_custombottom;         // amount of extra height to add at the bottom
+
+        int m_resetpos;             // item index to select after repopulating
+        object m_resetref;  //void                    *m_resetref;            // item reference value to select after repopulating
 
         bool m_mouse_hit;
         bool m_mouse_button;
@@ -247,26 +317,24 @@ namespace mame.ui
         float m_mouse_y;
 
 
-        //static std::mutex       s_global_state_guard;
-        static global_state_map s_global_states = new global_state_map();
-
-
         //-------------------------------------------------
         //  ui_menu - menu constructor
         //-------------------------------------------------
         protected menu(mame_ui_manager mui, render_container container)
         {
-            m_selected = 0;
-            m_items = new std.vector<menu_item>();
-            m_visible_lines = 0;
-            m_visible_items = 0;
-            m_global_state = get_global_state(mui.machine());
-            m_special_main_menu = false;
-            m_needs_prev_menu_item = true;
+            m_global_state = get_global_state(mui);
             m_ui = mui;
             m_container = container;
             m_parent = null;
-            m_event = new menu_event();
+            m_items = new std.vector<menu_item>();
+            m_process_flags = 0;
+            m_selected = 0;
+            m_hover = 1;
+            m_special_main_menu = false;
+            m_one_shot = false;
+            m_needs_prev_menu_item = true;
+            m_active = false;
+            m_event = new event_();
             m_customtop = 0.0f;
             m_custombottom = 0.0f;
             m_resetpos = 0;
@@ -276,12 +344,12 @@ namespace mame.ui
             m_mouse_x = -1.0f;
             m_mouse_y = -1.0f;
 
-            assert(m_global_state != null); // not calling init is bad
-
 
             reset(reset_options.SELECT_FIRST);
 
             top_line = 0;
+            m_visible_lines = 0;
+            m_visible_items = 0;
         }
 
         ~menu()
@@ -292,6 +360,8 @@ namespace mame.ui
         protected bool m_isDisposed = false;
         public virtual void Dispose()
         {
+            m_global_state.Dispose();
+
             m_isDisposed = true;
         }
 
@@ -306,18 +376,10 @@ namespace mame.ui
         //void item_append(std::string &&text, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN) { item_append(text, std::string(), flags, ref, type); }
         protected void item_append(string text, string subtext, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN)  //void item_append(std::string &&text, std::string &&subtext, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN);
         {
-            if ((flags & FLAG_MULTILINE) != 0) // only allow multiline as the first item
-                assert(m_items.size() == 1);
-            else if (m_items.size() >= 2) // only allow a single multi-line item
-                assert((m_items[0].flags & FLAG_MULTILINE) == 0);
-
             // allocate a new item and populate it
-            menu_item pitem = new menu_item();
-            pitem.text = text;
-            pitem.subtext = subtext;
-            pitem.flags = flags;
-            pitem.ref_ = ref_;
-            pitem.type = type;
+            menu_item pitem = new menu_item(type, ref_, flags);
+            pitem.set_text(text);
+            pitem.set_subtext(subtext);
 
             // append to array
             var index = m_items.size();
@@ -332,7 +394,7 @@ namespace mame.ui
             }
 
             // update the selection if we need to
-            if (m_resetpos == (int)index || (m_resetref != null && m_resetref == ref_))
+            if ((m_resetpos == (int)index) || (m_resetref != null && (m_resetref == ref_)))
                 m_selected = (int)index;
             if (m_resetpos == (int)m_items.size() - 1)
                 m_selected = (int)m_items.size() - 1;
@@ -343,7 +405,7 @@ namespace mame.ui
         //  item_append - append a new item to the
         //  end of the menu
         //-------------------------------------------------
-        protected void item_append(menu_item item) { item_append(item.text, item.subtext, item.flags, item.ref_, item.type); }
+        protected void item_append(menu_item item) { item_append(item.text(), item.subtext(), item.flags(), item.ref_(), item.type()); }
 
 
         //-------------------------------------------------
@@ -360,82 +422,35 @@ namespace mame.ui
         //void item_append_on_off(const std::string &text, bool state, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN);
 
 
-        // Global initialization
-        //-------------------------------------------------
-        //  init - initialize the menu system
-        //-------------------------------------------------
-        public static void init(running_machine machine, ui_options mopt)
-        {
-            // initialize the menu stack
-            {
-                //throw new emu_unimplemented();
-#if false
-                lock_guard<mutex> guard(s_global_state_guard);
-#endif
-                var state = new global_state(machine, mopt);
-                var ins = s_global_states.emplace(machine, state);
-                assert(ins); // calling init twice is bad
-
-                if (ins)
-                    machine.add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit); // add an exit callback to free memory
-                    //machine_notify_delegate(&menu::exit, &machine)
-                else
-                    state.stack_reset();  //ins.first.second.stack_reset();
-            }
-        }
-
-
         // reset the menus, clearing everything
-        public static void stack_reset(running_machine machine) { get_global_state(machine).stack_reset(); }
+        public static void stack_reset(mame_ui_manager ui) { get_global_state(ui).stack_reset(); }
 
         // push a new menu onto the stack
         //template <typename T, typename... Params>
-        public static void stack_push(menu menu)  // Params &&... args)
+        public static void stack_push(menu menu)  //static void stack_push(Params &&... args)
         {
-            stack_push_internal(menu);  //stack_push(std::unique_ptr<menu>(global_alloc_clear<T>(std::forward<Params>(args)...)));
+            stack_push_internal(menu);  //stack_push(std::make_unique<T>(std::forward<Params>(args)...));
         }
 
         //template <typename T, typename... Params>
-        public static void stack_push_special_main(menu menu)  // Params &&... args)
+        public static void stack_push_special_main(menu menu)  //static void stack_push_special_main(Params &&... args)
         {
-            //std::unique_ptr<menu> ptr(global_alloc_clear<T>(std::forward<Params>(args)...));
+            //std::unique_ptr<menu> ptr(std::make_unique<T>(std::forward<Params>(args)...));
             menu.set_special_main_menu(true);
             stack_push(menu);
         }
 
         // pop a menu from the stack
-        public static void stack_pop(running_machine machine) { get_global_state(machine).stack_pop(); }
+        public static void stack_pop(mame_ui_manager ui) { get_global_state(ui).stack_pop(); }
 
         // test if one of the menus in the stack requires hide disable
-        public static bool stack_has_special_main_menu(running_machine machine) { return get_global_state(machine).stack_has_special_main_menu(); }
+        public static bool stack_has_special_main_menu(mame_ui_manager ui) { return get_global_state(ui).stack_has_special_main_menu(); }
 
 
-        // master handler
-
-        //-------------------------------------------------
-        //  ui_menu_ui_handler - displays the current menu
-        //  and calls the menu handler
-        //-------------------------------------------------
-        public static uint32_t ui_handler(render_container container, mame_ui_manager mui)
+        public static Func<render_container, mame_ui_manager, uint32_t> get_ui_handler(mame_ui_manager mui)  //static delegate<uint32_t (render_container &)> get_ui_handler(mame_ui_manager &mui);
         {
-            global_state state = get_global_state(mui.machine());
-
-            // if we have no menus stacked up, start with the main menu
-            if (state.topmost_menu<menu>() == null)
-                state.stack_push(new menu_main(mui, container));
-
-            // update the menu state
-            if (state.topmost_menu<menu>() != null)
-                state.topmost_menu<menu>().do_handle();
-
-            // clear up anything pending to be released
-            state.clear_free_list();
-
-            // if the menus are to be hidden, return a cancel here
-            if (mui.is_menu_active() && ((mui.machine().ui_input().pressed((int)ioport_type.IPT_UI_CONFIGURE) && !state.stack_has_special_main_menu()) || state.topmost_menu<menu>() == null))
-                return UI_HANDLER_CANCEL;
-
-            return 0;
+            global_state state = get_global_state(mui);
+            return state.ui_handler;  //return delegate<uint32_t (render_container &)>(&global_state::ui_handler, &state);
         }
 
 
@@ -475,430 +490,7 @@ namespace mame.ui
                 populate(ref m_customtop, ref m_custombottom);
             }
 
-            handle();
-        }
-
-
-        //-------------------------------------------------
-        //  draw - draw a menu
-        //-------------------------------------------------
-        protected virtual void draw(uint32_t flags)
-        {
-            // first draw the FPS counter
-            if (ui().show_fps_counter())
-            {
-                ui().draw_text_full(
-                        container(),
-                        machine().video().speed_text(),
-                        0.0f, 0.0f, 1.0f,
-                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD,
-                        mame_ui_manager.draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(),
-                        out _, out _);
-            }
-
-            bool customonly = (flags & PROCESS_CUSTOM_ONLY) != 0;
-            bool noimage = (flags & PROCESS_NOIMAGE) != 0;
-            bool noinput = (flags & PROCESS_NOINPUT) != 0;
-            float aspect = machine().render().ui_aspect(container());
-            float line_height = ui().get_line_height();
-            float lr_arrow_width = 0.4f * line_height * aspect;
-            float ud_arrow_width = line_height * aspect;
-            float gutter_width = lr_arrow_width * 1.3f;
-            float lr_border = ui().box_lr_border() * aspect;
-
-            if (machine().system() == ___empty.driver____empty && !noimage)
-                draw_background();
-
-            // compute the width and height of the full menu
-            float visible_width = 0;
-            float visible_main_menu_height = 0;
-            foreach (var pitem in m_items)
-            {
-                // compute width of left hand side
-                float total_width = gutter_width + ui().get_string_width(pitem.text) + gutter_width;
-
-                // add in width of right hand side
-                if (!pitem.subtext.empty())
-                    total_width += 2.0f * gutter_width + ui().get_string_width(pitem.subtext);
-
-                // track the maximum
-                if (total_width > visible_width)
-                    visible_width = total_width;
-
-                // track the height as well
-                visible_main_menu_height += line_height;
-            }
-
-            // account for extra space at the top and bottom
-            float visible_extra_menu_height = m_customtop + m_custombottom;
-
-            // add a little bit of slop for rounding
-            visible_width += 0.01f;
-            visible_main_menu_height += 0.01f;
-
-            // if we are too wide or too tall, clamp it down
-            if (visible_width + 2.0f * lr_border > 1.0f)
-                visible_width = 1.0f - 2.0f * lr_border;
-
-            // if the menu and extra menu won't fit, take away part of the regular menu, it will scroll
-            if (visible_main_menu_height + visible_extra_menu_height + 2.0f * ui().box_tb_border() > 1.0f)
-                visible_main_menu_height = 1.0f - 2.0f * ui().box_tb_border() - visible_extra_menu_height;
-
-            m_visible_lines = std.min((int)(std.floor(visible_main_menu_height / line_height)), (int)m_items.size());
-            visible_main_menu_height = (float)m_visible_lines * line_height;
-
-            // compute top/left of inner menu area by centering
-            float visible_left = (1.0f - visible_width) * 0.5f;
-            float visible_top = ((1.0f - visible_main_menu_height - visible_extra_menu_height) * 0.5f) + m_customtop;
-
-            // first add us a box
-            float x1 = visible_left - lr_border;
-            float y1 = visible_top - ui().box_tb_border();
-            float x2 = visible_left + visible_width + lr_border;
-            float y2 = visible_top + visible_main_menu_height + ui().box_tb_border();
-            if (!customonly)
-                ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
-
-            if ((m_selected >= (top_line + m_visible_lines)) || (m_selected < (top_line + 1)))
-                top_line = m_selected - (m_visible_lines / 2);
-            if (top_line < 0 || is_first_selected())
-                top_line = 0;
-            else if ((top_line > ((int)m_items.size() - m_visible_lines)) || is_last_selected())
-                top_line = (int)m_items.size() - m_visible_lines;
-            else if (m_selected >= (top_line + m_visible_lines - 2))
-                top_line = m_selected - m_visible_lines + ((m_selected == ((int)m_items.size() - 1)) ? 1 : 2);
-
-            // if scrolling, show arrows
-            bool show_top_arrow = (((int)m_items.size() > m_visible_lines) && !first_item_visible());
-            bool show_bottom_arrow = (((int)m_items.size() > m_visible_lines) && !last_item_visible());
-
-            // set the number of visible lines, minus 1 for top arrow and 1 for bottom arrow
-            m_visible_items = m_visible_lines - (show_top_arrow ? 1 : 0) - (show_bottom_arrow ? 1 : 0);
-
-            // determine effective positions taking into account the hilighting arrows
-            float effective_width = visible_width - 2.0f * gutter_width;
-            float effective_left = visible_left + gutter_width;
-
-            // locate mouse
-            if (!customonly && !noinput)
-                map_mouse();
-            else
-                ignore_mouse();
-
-            // loop over visible lines
-            m_hover = (int)m_items.size() + 1;
-            bool selected_subitem_too_big = false;
-            float line_x0 = x1 + 0.5f * UI_LINE_WIDTH;
-            float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
-            if (!customonly)
-            {
-                for (int linenum = 0; linenum < m_visible_lines; linenum++)
-                {
-                    var itemnum = top_line + linenum;
-                    menu_item pitem = m_items[itemnum];
-                    string itemtext = pitem.text;
-                    rgb_t fgcolor = ui().colors().text_color();
-                    rgb_t bgcolor = ui().colors().text_bg_color();
-                    rgb_t fgcolor2 = ui().colors().subitem_color();
-                    rgb_t fgcolor3 = ui().colors().clone_color();
-                    float line_y0 = visible_top + (float)linenum * line_height;
-                    float line_y1 = line_y0 + line_height;
-
-                    // work out what we're dealing with
-                    bool uparrow = linenum == 0 && show_top_arrow;
-                    bool downarrow = (linenum == (m_visible_lines - 1)) && show_bottom_arrow;
-
-                    // set the hover if this is our item
-                    bool hovered = mouse_in_rect(line_x0, line_y0, line_x1, line_y1);
-                    if (hovered)
-                    {
-                        if (uparrow)
-                            m_hover = HOVER_ARROW_UP;
-                        else if (downarrow)
-                            m_hover = HOVER_ARROW_DOWN;
-                        else if (is_selectable(pitem))
-                            m_hover = itemnum;
-                    }
-
-                    if (is_selected(itemnum))
-                    {
-                        // if we're selected, draw with a different background
-                        fgcolor = fgcolor2 = fgcolor3 = ui().colors().selected_color();
-                        bgcolor = ui().colors().selected_bg_color();
-                    }
-                    else if (hovered && (uparrow || downarrow || is_selectable(pitem)))
-                    {
-                        // else if the mouse is over this item, draw with a different background
-                        fgcolor = fgcolor2 = fgcolor3 = ui().colors().mouseover_color();
-                        bgcolor = ui().colors().mouseover_bg_color();
-                    }
-
-                    // if we have some background hilighting to do, add a quad behind everything else
-                    if (bgcolor != ui().colors().text_bg_color())
-                        highlight(line_x0, line_y0, line_x1, line_y1, bgcolor);
-
-                    if (uparrow)
-                    {
-                        // if we're on the top line, display the up arrow
-                        draw_arrow(
-                                    0.5f * (x1 + x2) - 0.5f * ud_arrow_width,
-                                    line_y0 + 0.25f * line_height,
-                                    0.5f * (x1 + x2) + 0.5f * ud_arrow_width,
-                                    line_y0 + 0.75f * line_height,
-                                    fgcolor,
-                                    ROT0);
-                    }
-                    else if (downarrow)
-                    {
-                        // if we're on the bottom line, display the down arrow
-                        draw_arrow(
-                                    0.5f * (x1 + x2) - 0.5f * ud_arrow_width,
-                                    line_y0 + 0.25f * line_height,
-                                    0.5f * (x1 + x2) + 0.5f * ud_arrow_width,
-                                    line_y0 + 0.75f * line_height,
-                                    fgcolor,
-                                    ROT0 ^ ORIENTATION_FLIP_Y);
-                    }
-                    else if (pitem.type == menu_item_type.SEPARATOR)
-                    {
-                        // if we're just a divider, draw a line
-                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                    }
-                    else if (pitem.subtext.empty())
-                    {
-                        // if we don't have a subitem, just draw the string centered
-                        if ((pitem.flags & FLAG_UI_HEADING) != 0)
-                        {
-                            float heading_width = ui().get_string_width(itemtext);
-                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - lr_border, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + lr_border, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-                        }
-
-                        ui().draw_text_full(
-                                container(),
-                                itemtext,
-                                effective_left, line_y0, effective_width,
-                                text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE,
-                                mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor,
-                                out _, out _);
-                    }
-                    else
-                    {
-                        // otherwise, draw the item on the left and the subitem text on the right
-                        bool subitem_invert = (pitem.flags & FLAG_INVERT) != 0;
-                        float item_width;
-                        float subitem_width;
-
-                        // draw the left-side text
-                        ui().draw_text_full(
-                                container(),
-                                itemtext,
-                                effective_left, line_y0, effective_width,
-                                text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE,
-                                mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor,
-                                out item_width, out _);
-
-                        if ((pitem.flags & FLAG_COLOR_BOX) != 0)
-                        {
-                            rgb_t color = new rgb_t((uint32_t)std.strtoul(pitem.subtext, null, 16));
-
-                            // give 2 spaces worth of padding
-                            subitem_width = ui().get_string_width("FF00FF00");
-
-                            ui().draw_outlined_box(
-                                    container(),
-                                    effective_left + effective_width - subitem_width, line_y0 + (UI_LINE_WIDTH * 2.0f),
-                                    effective_left + effective_width, line_y1 - (UI_LINE_WIDTH * 2.0f),
-                                    color);
-                        }
-                        else
-                        {
-                            string subitem_text = pitem.subtext;
-
-                            // give 2 spaces worth of padding
-                            item_width += 2.0f * gutter_width;
-
-                            // if the subitem doesn't fit here, display dots
-                            if (ui().get_string_width(subitem_text) > effective_width - item_width)
-                            {
-                                subitem_text = "...";
-                                if (is_selected(itemnum))
-                                    selected_subitem_too_big = true;
-                            }
-
-                            // customize subitem text color
-                            if (core_stricmp(pitem.subtext, "On") == 0)
-                                fgcolor2 = new rgb_t(0x00,0xff,0x00);
-
-                            if (core_stricmp(pitem.subtext, "Off") == 0)
-                                fgcolor2 = new rgb_t(0xff,0x00,0x00);
-
-                            if (core_stricmp(pitem.subtext, "Auto") == 0)
-                                fgcolor2 = new rgb_t(0xff,0xff,0x00);
-
-                            // draw the subitem right-justified
-                            ui().draw_text_full(
-                                    container(),
-                                    subitem_text,
-                                    effective_left + item_width, line_y0, effective_width - item_width,
-                                    text_layout.text_justify.RIGHT, text_layout.word_wrapping.TRUNCATE,
-                                    mame_ui_manager.draw_mode.NORMAL, subitem_invert ? fgcolor3 : fgcolor2, bgcolor,
-                                    out subitem_width, out _);
-                        }
-
-                        // apply arrows
-                        if (is_selected(itemnum) && (pitem.flags & FLAG_LEFT_ARROW) != 0)
-                        {
-                            float l = effective_left + effective_width - subitem_width - gutter_width;
-                            float r = l + lr_arrow_width;
-                            draw_arrow(
-                                        l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height,
-                                        fgcolor,
-                                        ROT90 ^ ORIENTATION_FLIP_X);
-                            if (mouse_in_rect(l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height))
-                                m_hover = HOVER_UI_LEFT;
-                        }
-                        if (is_selected(itemnum) && (pitem.flags & FLAG_RIGHT_ARROW) != 0)
-                        {
-                            float r = effective_left + effective_width + gutter_width;
-                            float l = r - lr_arrow_width;
-                            draw_arrow(
-                                        l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height,
-                                        fgcolor,
-                                        ROT90);
-                            if (mouse_in_rect(l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height))
-                                m_hover = HOVER_UI_RIGHT;
-                        }
-                    }
-                }
-            }
-
-            // if the selected subitem is too big, display it in a separate offset box
-            if (selected_subitem_too_big)
-            {
-                menu_item pitem = selected_item();
-                bool subitem_invert = (pitem.flags & FLAG_INVERT) != 0;
-                var linenum = m_selected - top_line;
-                float line_y = visible_top + (float)linenum * line_height;
-                float target_width, target_height;
-
-                // compute the multi-line target width/height
-                ui().draw_text_full(
-                        container(),
-                        pitem.subtext,
-                        0, 0, visible_width * 0.75f,
-                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD,
-                        mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(),
-                        out target_width, out target_height);
-
-                // determine the target location
-                float target_x = visible_left + visible_width - target_width - lr_border;
-                float target_y = line_y + line_height + ui().box_tb_border();
-                if (target_y + target_height + ui().box_tb_border() > visible_main_menu_height)
-                    target_y = line_y - target_height - ui().box_tb_border();
-
-                // add a box around that
-                ui().draw_outlined_box(
-                        container(),
-                        target_x - lr_border, target_y - ui().box_tb_border(),
-                        target_x + target_width + lr_border, target_y + target_height + ui().box_tb_border(),
-                        subitem_invert ? ui().colors().selected_bg_color() : ui().colors().background_color());
-
-                ui().draw_text_full(
-                        container(),
-                        pitem.subtext,
-                        target_x, target_y, target_width,
-                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD,
-                        mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(),
-                        out _, out _);
-            }
-
-            // if there is something special to add, do it by calling the virtual method
-            custom_render(get_selection_ref(), m_customtop, m_custombottom, x1, y1, x2, y2);
-        }
-
-
-        //-------------------------------------------------
-        //  draw_text_box - draw a multiline
-        //  word-wrapped text box with a menu item at the
-        //  bottom
-        //-------------------------------------------------
-        void draw_text_box()
-        {
-            string text = m_items[0].text;
-            string backtext = m_items[1].text;
-            float aspect = machine().render().ui_aspect(container());
-            float line_height = mame_machine_manager.instance().ui().get_line_height();
-            float lr_arrow_width = 0.4f * line_height * aspect;
-            float gutter_width = lr_arrow_width;
-            float lr_border = ui().box_lr_border() * aspect;
-            float target_width;
-            float target_height;
-            float prior_width;
-            float target_x;
-            float target_y;
-
-            // compute the multi-line target width/height
-            ui().draw_text_full(
-                    container(),
-                    text,
-                    0, 0, 1.0f - 2.0f * lr_border - 2.0f * gutter_width,
-                    text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD,
-                    mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(),
-                    out target_width, out target_height);
-            target_height += 2.0f * line_height;
-            if (target_height > 1.0f - 2.0f * ui().box_tb_border())
-                target_height = floorf((1.0f - 2.0f * ui().box_tb_border()) / line_height) * line_height;
-
-            // maximum against "return to prior menu" text
-            prior_width = ui().get_string_width(backtext) + 2.0f * gutter_width;
-            target_width = std.max(target_width, prior_width);
-
-            // determine the target location
-            target_x = 0.5f - 0.5f * target_width;
-            target_y = 0.5f - 0.5f * target_height;
-
-            // make sure we stay on-screen
-            if (target_x < lr_border + gutter_width)
-                target_x = lr_border + gutter_width;
-            if (target_x + target_width + gutter_width + lr_border > 1.0f)
-                target_x = 1.0f - lr_border - gutter_width - target_width;
-            if (target_y < ui().box_tb_border())
-                target_y = ui().box_tb_border();
-            if (target_y + target_height + ui().box_tb_border() > 1.0f)
-                target_y = 1.0f - ui().box_tb_border() - target_height;
-
-            // add a box around that
-            ui().draw_outlined_box(
-                    container(),
-                    target_x - lr_border - gutter_width, target_y - ui().box_tb_border(),
-                    target_x + target_width + gutter_width + lr_border, target_y + target_height + ui().box_tb_border(),
-                    (m_items[0].flags & FLAG_REDTEXT) != 0 ? UI_RED_COLOR : ui().colors().background_color());
-            ui().draw_text_full(
-                    container(),
-                    text,
-                    target_x, target_y, target_width,
-                    text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD,
-                    mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(),
-                    out _, out _);
-
-            // draw the "return to prior menu" text with a hilight behind it
-            highlight(
-                    target_x + 0.5f * UI_LINE_WIDTH,
-                    target_y + target_height - line_height,
-                    target_x + target_width - 0.5f * UI_LINE_WIDTH,
-                    target_y + target_height,
-                    ui().colors().selected_bg_color());
-            ui().draw_text_full(
-                    container(),
-                    backtext,
-                    target_x, target_y + target_height - line_height, target_width,
-                    text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE,
-                    mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(),
-                    out _, out _);
-
-            // artificially set the hover to the last item so a double-click exits
-            m_hover = (int)m_items.size() - 1;
+            handle(process());
         }
 
 
@@ -906,7 +498,11 @@ namespace mame.ui
         protected running_machine machine() { return m_ui.machine(); }
         protected render_container container() { return m_container; }
 
+        protected bool is_special_main_menu() { return m_special_main_menu; }
+        bool is_one_shot() { return m_one_shot; }
+        bool is_active() { return m_active; }
 
+        protected void set_one_shot(bool oneshot) { m_one_shot = oneshot; }
         protected void set_needs_prev_menu_item(bool needs) { m_needs_prev_menu_item = needs; }
 
 
@@ -934,59 +530,12 @@ namespace mame.ui
         //void reset_parent(reset_options options) { m_parent->reset(options); }
 
 
-        //template <typename T> T *topmost_menu() const { return m_global_state->topmost_menu<T>(); }
-        //template <typename T> static T *topmost_menu(running_machine &machine) { return get_global_state(machine)->topmost_menu<T>(); }
+        //template <typename T> T *topmost_menu() const { return m_global_state.topmost_menu<T>(); }
+        //template <typename T> static T *topmost_menu(mame_ui_manager &ui) { return get_global_state(ui).topmost_menu<T>(); }
 
         protected void stack_pop() { m_global_state.stack_pop(); }
         protected void stack_reset() { m_global_state.stack_reset(); }
         protected bool stack_has_special_main_menu() { return m_global_state.stack_has_special_main_menu(); }
-
-
-        // process a menu, drawing it and returning any interesting events
-        //-------------------------------------------------
-        //  process - process a menu, drawing it
-        //  and returning any interesting events
-        //-------------------------------------------------
-        protected menu_event process(uint32_t flags, float x0 = 0.0f, float y0 = 0.0f)
-        {
-            // reset the menu_event
-            m_event.iptkey = (int)ioport_type.IPT_INVALID;
-
-            // first make sure our selection is valid
-            validate_selection(1);
-
-            // draw the menu
-            if (m_items.size() > 1 && (m_items[0].flags & FLAG_MULTILINE) != 0)
-                draw_text_box();
-            else
-                draw(flags);
-
-            // process input
-            if ((flags & PROCESS_NOKEYS) == 0 && (flags & PROCESS_NOINPUT) == 0)
-            {
-                // read events
-                handle_events(flags, m_event);
-
-                // handle the keys if we don't already have an menu_event
-                if (m_event.iptkey == (int)ioport_type.IPT_INVALID)
-                    handle_keys(flags, ref m_event.iptkey);
-            }
-
-            // update the selected item in the menu_event
-            if (m_event.iptkey != (int)ioport_type.IPT_INVALID && selection_valid())
-            {
-                m_event.itemref = get_selection_ref();
-                m_event.type = m_items[m_selected].type;
-                return m_event;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-
-        //void process_parent() { m_parent->process(PROCESS_NOINPUT); }
 
 
         protected menu_item item(int index) { return m_items[index]; }
@@ -994,7 +543,7 @@ namespace mame.ui
 
 
         // retrieves the ref of the currently selected menu item or nullptr
-        protected object get_selection_ref() { return selection_valid() ? m_items[m_selected].ref_ : null; }
+        protected object get_selection_ref() { return selection_valid() ? m_items[m_selected].ref_() : null; }
 
 
         protected menu_item selected_item() { return m_items[m_selected]; }
@@ -1007,7 +556,19 @@ namespace mame.ui
 
 
         // changes the index of the currently selected menu item
-        //void set_selection(void *selected_itemref);
+        protected void set_selection(object selected_itemref)  //void set_selection(void *selected_itemref);
+        {
+            m_selected = -1;
+            for (int itemnum = 0; itemnum < (int)m_items.size(); itemnum++)
+            {
+                if (m_items[itemnum].ref_() == selected_itemref)
+                {
+                    m_selected = itemnum;
+                    break;
+                }
+            }
+        }
+
         protected void set_selected_index(int index) { m_selected = index; }
 
 
@@ -1039,6 +600,7 @@ namespace mame.ui
 
 
         // scroll position control
+        //void set_top_line(int index) { top_line = (0 < index) ? (index - 1) : index; }
         //void centre_selection() { top_line = m_selected - (m_visible_lines / 2); }
 
 
@@ -1104,40 +666,38 @@ namespace mame.ui
         {
             // size up the text
             float lrborder = ui().box_lr_border() * machine().render().ui_aspect(container());
-            float maxwidth = origx2 - origx1;
+            float origwidth = origx2 - origx1 - (2.0f * lrborder);
+            float maxwidth = origwidth;
             foreach (var it in iter)  //for (Iter it = begin; it != end; ++it)
             {
-                float width;
-                ui().draw_text_full(
-                        container(), it,
-                        0.0f, 0.0f, 1.0f, justify, wrap,
-                        mame_ui_manager.draw_mode.NONE, rgb_t.black(), rgb_t.white(),
-                        out width, out _, text_size);
-                width += 2.0f * lrborder;
-                maxwidth = std.max(maxwidth, width);
+                string line = it;
+                if (!line.empty())
+                {
+                    var layout = ui().create_layout(container(), 1.0f, justify, wrap);
+                    layout.add_text(it, rgb_t.white(), rgb_t.black(), text_size);
+                    maxwidth = std.max(layout.actual_width(), maxwidth);
+                }
             }
 
-            if (scale && ((origx2 - origx1) < maxwidth))
+            if (scale && (origwidth < maxwidth))
             {
-                text_size *= ((origx2 - origx1) / maxwidth);
-                maxwidth = origx2 - origx1;
+                text_size *= origwidth / maxwidth;
+                maxwidth = origwidth;
             }
 
             // draw containing box
-            float x1 = 0.5f * (1.0f - maxwidth);
-            float x2 = x1 + maxwidth;
-            ui().draw_outlined_box(container(), x1, y1, x2, y2, bgcolor);
+            float boxleft = 0.5f - (maxwidth * 0.5f) - lrborder;
+            float boxright = 0.5f + (maxwidth * 0.5f) + lrborder;
+            ui().draw_outlined_box(container(), boxleft, y1, boxright, y2, bgcolor);
 
             // inset box and draw content
-            x1 += lrborder;
-            x2 -= lrborder;
+            float textleft = 0.5f - (maxwidth * 0.5f);
             y1 += ui().box_tb_border();
-            y2 -= ui().box_tb_border();
             foreach (var it in iter)  //for (Iter it = begin; it != end; ++it)
             {
                 ui().draw_text_full(
                         container(), it,
-                        x1, y1, x2 - x1, justify, wrap,
+                        textleft, y1, maxwidth, justify, wrap,
                         mame_ui_manager.draw_mode.NORMAL, fgcolor, ui().colors().text_bg_color(),
                         out _, out _, text_size);
                 y1 += ui().get_line_height();
@@ -1205,11 +765,16 @@ namespace mame.ui
         }
 
 
+        // overridable event handling
+
+        protected void set_process_flags(uint32_t flags) { m_process_flags = flags; }
+
+
         //-------------------------------------------------
         //  handle_events - generically handle
         //  input events for a menu
         //-------------------------------------------------
-        protected virtual void handle_events(uint32_t flags, menu_event ev)
+        protected virtual void handle_events(uint32_t flags, event_ ev)
         {
             bool stop = false;
             ui_event local_menu_event;
@@ -1283,6 +848,8 @@ namespace mame.ui
                             {
                                 ev.iptkey = (int)ioport_type.IPT_UI_CANCEL;
                                 stack_pop();
+                                if (is_special_main_menu())
+                                    machine().schedule_exit();
                             }
                             stop = true;
                         }
@@ -1290,16 +857,11 @@ namespace mame.ui
 
                     // caught scroll event
                     case ui_event.type.MOUSE_WHEEL:
-                        if ((flags & PROCESS_ONLYCHAR) == 0)
+                        if (!custom_mouse_scroll((0 < local_menu_event.zdelta) ? -local_menu_event.num_lines : local_menu_event.num_lines) && (flags & (PROCESS_ONLYCHAR | PROCESS_CUSTOM_NAV)) == 0)
                         {
                             if (local_menu_event.zdelta > 0)
                             {
-                                if ((flags & PROCESS_CUSTOM_NAV) != 0) // FIXME: DAT menu logic - let the derived class handle this
-                                {
-                                    top_line -= local_menu_event.num_lines;
-                                    return;
-                                }
-                                else if (is_first_selected())
+                                if (is_first_selected())
                                 {
                                     select_last_item();
                                 }
@@ -1315,12 +877,7 @@ namespace mame.ui
                             }
                             else
                             {
-                                if ((flags & PROCESS_CUSTOM_NAV) != 0) // FIXME: DAT menu logic - let the derived class handle this
-                                {
-                                    top_line += local_menu_event.num_lines;
-                                    return;
-                                }
-                                else if (is_last_selected())
+                                if (is_last_selected())
                                 {
                                     select_first_item();
                                 }
@@ -1358,8 +915,7 @@ namespace mame.ui
         //-------------------------------------------------
         protected virtual void handle_keys(uint32_t flags, ref int iptkey)
         {
-            bool ignorepause = stack_has_special_main_menu();
-            int code;
+            bool ignorepause = (flags & PROCESS_IGNOREPAUSE) != 0 || stack_has_special_main_menu();
 
             // bail if no items
             if (m_items.size() == 0)
@@ -1371,8 +927,20 @@ namespace mame.ui
                 if (is_last_selected() && m_needs_prev_menu_item)
                 {
                     iptkey = (int)ioport_type.IPT_UI_CANCEL;
-                    stack_pop(machine());
+                    stack_pop();
+                    if (is_special_main_menu())
+                        machine().schedule_exit();
                 }
+                return;
+            }
+
+            // UI configure hides the menus
+            if ((flags & PROCESS_NOKEYS) == 0 && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_CONFIGURE, 0) && !m_global_state.stack_has_special_main_menu())
+            {
+                if (is_one_shot())
+                    stack_pop();
+                else
+                    m_global_state.hide_menu();
                 return;
             }
 
@@ -1384,7 +952,11 @@ namespace mame.ui
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_CANCEL, 0))
             {
                 if (!custom_ui_cancel())
+                {
                     stack_pop();
+                    if (is_special_main_menu())
+                        machine().schedule_exit();
+                }
                 return;
             }
 
@@ -1392,10 +964,10 @@ namespace mame.ui
             validate_selection(1);
 
             // swallow left/right keys if they are not appropriate
-            bool ignoreleft = (flags & PROCESS_LR_ALWAYS) == 0 && (selected_item().flags & FLAG_LEFT_ARROW) == 0;
-            bool ignoreright = (flags & PROCESS_LR_ALWAYS) == 0 && (selected_item().flags & FLAG_RIGHT_ARROW) == 0;
+            bool ignoreleft = (flags & PROCESS_LR_ALWAYS) == 0 && (selected_item().flags() & FLAG_LEFT_ARROW) == 0;
+            bool ignoreright = (flags & PROCESS_LR_ALWAYS) == 0 && (selected_item().flags() & FLAG_RIGHT_ARROW) == 0;
 
-            // accept left/right keys as-is with repeat
+            // accept left/right/prev/next keys as-is with repeat if appropriate
             if (ignoreleft && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_LEFT, (flags & PROCESS_LR_REPEAT) != 0 ? 6 : 0))
                 return;
             if (ignoreright && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_RIGHT, (flags & PROCESS_LR_REPEAT) != 0 ? 6 : 0))
@@ -1506,10 +1078,23 @@ namespace mame.ui
             // see if any other UI keys are pressed
             if (iptkey == (int)ioport_type.IPT_INVALID)
             {
-                for (code = (int)ioport_type.IPT_UI_FIRST + 1; code < (int)ioport_type.IPT_UI_LAST; code++)
+                for (int code = (int)ioport_type.IPT_UI_FIRST + 1; code < (int)ioport_type.IPT_UI_LAST; code++)
                 {
-                    if (code == (int)ioport_type.IPT_UI_CONFIGURE || (code == (int)ioport_type.IPT_UI_LEFT && ignoreleft) || (code == (int)ioport_type.IPT_UI_RIGHT && ignoreright) || (code == (int)ioport_type.IPT_UI_PAUSE && ignorepause))
-                        continue;
+                    switch (code)
+                    {
+                    case (int)ioport_type.IPT_UI_LEFT:
+                        if (ignoreleft)
+                            continue;
+                        break;
+                    case (int)ioport_type.IPT_UI_RIGHT:
+                        if (ignoreright)
+                            continue;
+                        break;
+                    case (int)ioport_type.IPT_UI_PAUSE:
+                        if (ignorepause)
+                            continue;
+                        break;
+                    }
 
                     if (exclusive_input_pressed(ref iptkey, code, 0))
                         break;
@@ -1519,32 +1104,418 @@ namespace mame.ui
 
 
         protected virtual bool custom_ui_cancel() { return false; }
-
-
-        // overridable event handling
         protected virtual bool custom_mouse_down() { return false; }
+        protected virtual bool custom_mouse_scroll(int lines) { return false; }
+
+        // event notifications
+        protected virtual void menu_activated() { }
+        protected virtual void menu_deactivated() { }
+        protected virtual void menu_dismissed() { }
 
 
-        protected static bool is_selectable(menu_item item) { return (item.flags & (FLAG_MULTILINE | FLAG_DISABLE)) == 0 && item.type != menu_item_type.SEPARATOR; }
+        protected static bool is_selectable(menu_item item)
+        {
+            return ((item.flags() & menu.FLAG_DISABLE) == 0 && (item.type() != menu_item_type.SEPARATOR));
+        }
 
 
         // get arrows status
-        //template <typename _T1, typename _T2, typename _T3>
-        //UINT32 get_arrow_flags(_T1 min, _T2 max, _T3 actual)
-        //{
-        //    if (max == 0)
-        //        return 0;
-        //    else
-        //        return ((actual <= min) ? MENU_FLAG_RIGHT_ARROW : (actual >= max ? MENU_FLAG_LEFT_ARROW : (MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW)));
-        //}
+        //template <typename T>
+        //static uint32_t get_arrow_flags(T min, T max, T actual)
 
 
-        // request the specific handling of the game selection main menu
+        // process a menu, drawing it and returning any interesting events
         //-------------------------------------------------
-        //  is_special_main_menu - returns whether the
-        //  menu has special needs
+        //  process - process a menu, drawing it
+        //  and returning any interesting events
         //-------------------------------------------------
-        bool is_special_main_menu() { return m_special_main_menu; }
+        protected event_ process()
+        {
+            // reset the event
+            m_event.iptkey = (int)ioport_type.IPT_INVALID;
+
+            // first make sure our selection is valid
+            validate_selection(1);
+
+            // if we're not running the emulation, draw parent menus in the background
+            Func<menu, bool> draw_parent = null;
+            draw_parent = (menu parent) =>  //[] (auto &self, menu *parent) -> bool
+                    {
+                        if (parent == null || !(parent.is_special_main_menu() || draw_parent(parent.m_parent)))  //if (!parent || !(parent->is_special_main_menu() || self(self, parent->m_parent.get())))
+                            return false;
+                        else
+                            parent.draw(PROCESS_NOINPUT);
+
+                        return true;
+                    };
+
+            if (draw_parent(m_parent))
+                container().add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t(114, 0, 0, 0), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+
+            // draw the menu proper
+            draw(m_process_flags);
+
+            // process input
+            if ((m_process_flags & (PROCESS_NOKEYS | PROCESS_NOINPUT)) == 0)
+            {
+                // read events
+                handle_events(m_process_flags, m_event);
+
+                // handle the keys if we don't already have an event
+                if (m_event.iptkey == (int)ioport_type.IPT_INVALID)
+                    handle_keys(m_process_flags, ref m_event.iptkey);
+            }
+
+            // update the selected item in the event
+            if ((m_event.iptkey != (int)ioport_type.IPT_INVALID) && selection_valid())
+            {
+                m_event.itemref = get_selection_ref();
+                m_event.item = m_items[m_selected];
+                return m_event;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+
+        //-------------------------------------------------
+        //  draw - draw a menu
+        //-------------------------------------------------
+        protected virtual void draw(uint32_t flags)
+        {
+            // first draw the FPS counter
+            if (ui().show_fps_counter())
+            {
+                ui().draw_text_full(
+                        container(),
+                        machine().video().speed_text(),
+                        0.0f, 0.0f, 1.0f,
+                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD,
+                        mame_ui_manager.draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(),
+                        out _, out _);
+            }
+
+            bool customonly = (flags & PROCESS_CUSTOM_ONLY) != 0;
+            bool noinput = (flags & PROCESS_NOINPUT) != 0;
+            float aspect = machine().render().ui_aspect(container());
+            float line_height = ui().get_line_height();
+            float lr_arrow_width = 0.4f * line_height * aspect;
+            float ud_arrow_width = line_height * aspect;
+            float gutter_width = lr_arrow_width * 1.3f;
+            float lr_border = ui().box_lr_border() * aspect;
+
+            if (is_special_main_menu())
+                draw_background();
+
+            // compute the width and height of the full menu
+            float visible_width = 0;
+            float visible_main_menu_height = 0;
+            foreach (var pitem in m_items)
+            {
+                // compute width of left hand side
+                float total_width = gutter_width + ui().get_string_width(pitem.text()) + gutter_width;
+
+                // add in width of right hand side
+                if (!pitem.subtext().empty())
+                    total_width += 2.0f * gutter_width + ui().get_string_width(pitem.subtext());
+
+                // track the maximum
+                if (total_width > visible_width)
+                    visible_width = total_width;
+
+                // track the height as well
+                visible_main_menu_height += line_height;
+            }
+
+            // account for extra space at the top and bottom
+            float visible_extra_menu_height = m_customtop + m_custombottom;
+
+            // add a little bit of slop for rounding
+            visible_width += 0.01f;
+            visible_main_menu_height += 0.01f;
+
+            // if we are too wide or too tall, clamp it down
+            visible_width = std.min(visible_width, 1.0f - ((lr_border + (aspect * UI_LINE_WIDTH)) * 2.0f));
+
+            // if the menu and extra menu won't fit, take away part of the regular menu, it will scroll
+            if (visible_main_menu_height + visible_extra_menu_height + 2.0f * ui().box_tb_border() > 1.0f)
+                visible_main_menu_height = 1.0f - 2.0f * ui().box_tb_border() - visible_extra_menu_height;
+
+            m_visible_lines = std.min((int)(std.floor(visible_main_menu_height / line_height)), (int)m_items.size());
+            visible_main_menu_height = (float)m_visible_lines * line_height;
+
+            // compute top/left of inner menu area by centering
+            float visible_left = (1.0f - visible_width) * 0.5f;
+            float visible_top = ((1.0f - visible_main_menu_height - visible_extra_menu_height) * 0.5f) + m_customtop;
+
+            // first add us a box
+            float x1 = visible_left - lr_border;
+            float y1 = visible_top - ui().box_tb_border();
+            float x2 = visible_left + visible_width + lr_border;
+            float y2 = visible_top + visible_main_menu_height + ui().box_tb_border();
+            if (!customonly)
+                ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
+
+            if ((m_selected >= (top_line + m_visible_lines)) || (m_selected < (top_line + 1)))
+                top_line = m_selected - (m_visible_lines / 2);
+            if (top_line < 0 || is_first_selected())
+                top_line = 0;
+            else if ((top_line > ((int)m_items.size() - m_visible_lines)) || is_last_selected())
+                top_line = (int)m_items.size() - m_visible_lines;
+            else if (m_selected >= (top_line + m_visible_lines - 2))
+                top_line = m_selected - m_visible_lines + ((m_selected == ((int)m_items.size() - 1)) ? 1 : 2);
+
+            // if scrolling, show arrows
+            bool show_top_arrow = (((int)m_items.size() > m_visible_lines) && !first_item_visible());
+            bool show_bottom_arrow = (((int)m_items.size() > m_visible_lines) && !last_item_visible());
+
+            // set the number of visible lines, minus 1 for top arrow and 1 for bottom arrow
+            m_visible_items = m_visible_lines - (show_top_arrow ? 1 : 0) - (show_bottom_arrow ? 1 : 0);
+
+            // determine effective positions taking into account the hilighting arrows
+            float effective_width = visible_width - 2.0f * gutter_width;
+            float effective_left = visible_left + gutter_width;
+
+            // locate mouse
+            if (!customonly && !noinput)
+                map_mouse();
+            else
+                ignore_mouse();
+
+            // loop over visible lines
+            m_hover = (int)m_items.size() + 1;
+            bool selected_subitem_too_big = false;
+            float line_x0 = x1 + 0.5f * UI_LINE_WIDTH;
+            float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
+            if (!customonly)
+            {
+                for (int linenum = 0; linenum < m_visible_lines; linenum++)
+                {
+                    var itemnum = top_line + linenum;
+                    menu_item pitem = m_items[itemnum];
+                    string itemtext = pitem.text();
+                    rgb_t fgcolor = ui().colors().text_color();
+                    rgb_t bgcolor = ui().colors().text_bg_color();
+                    rgb_t fgcolor2 = ui().colors().subitem_color();
+                    rgb_t fgcolor3 = ui().colors().clone_color();
+                    float line_y0 = visible_top + (float)linenum * line_height;
+                    float line_y1 = line_y0 + line_height;
+
+                    // work out what we're dealing with
+                    bool uparrow = linenum == 0 && show_top_arrow;
+                    bool downarrow = (linenum == (m_visible_lines - 1)) && show_bottom_arrow;
+
+                    // set the hover if this is our item
+                    bool hovered = mouse_in_rect(line_x0, line_y0, line_x1, line_y1);
+                    if (hovered)
+                    {
+                        if (uparrow)
+                            m_hover = HOVER_ARROW_UP;
+                        else if (downarrow)
+                            m_hover = HOVER_ARROW_DOWN;
+                        else if (is_selectable(pitem))
+                            m_hover = itemnum;
+                    }
+
+                    if (is_selected(itemnum))
+                    {
+                        // if we're selected, draw with a different background
+                        fgcolor = fgcolor2 = fgcolor3 = ui().colors().selected_color();
+                        bgcolor = ui().colors().selected_bg_color();
+                    }
+                    else if (hovered && (uparrow || downarrow || is_selectable(pitem)))
+                    {
+                        // else if the mouse is over this item, draw with a different background
+                        fgcolor = fgcolor2 = fgcolor3 = ui().colors().mouseover_color();
+                        bgcolor = ui().colors().mouseover_bg_color();
+                    }
+
+                    // if we have some background hilighting to do, add a quad behind everything else
+                    if (bgcolor != ui().colors().text_bg_color())
+                        highlight(line_x0, line_y0, line_x1, line_y1, bgcolor);
+
+                    if (uparrow)
+                    {
+                        // if we're on the top line, display the up arrow
+                        draw_arrow(
+                                    0.5f * (x1 + x2) - 0.5f * ud_arrow_width,
+                                    line_y0 + 0.25f * line_height,
+                                    0.5f * (x1 + x2) + 0.5f * ud_arrow_width,
+                                    line_y0 + 0.75f * line_height,
+                                    fgcolor,
+                                    ROT0);
+                    }
+                    else if (downarrow)
+                    {
+                        // if we're on the bottom line, display the down arrow
+                        draw_arrow(
+                                    0.5f * (x1 + x2) - 0.5f * ud_arrow_width,
+                                    line_y0 + 0.25f * line_height,
+                                    0.5f * (x1 + x2) + 0.5f * ud_arrow_width,
+                                    line_y0 + 0.75f * line_height,
+                                    fgcolor,
+                                    ROT0 ^ ORIENTATION_FLIP_Y);
+                    }
+                    else if (pitem.type() == menu_item_type.SEPARATOR)
+                    {
+                        // if we're just a divider, draw a line
+                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                    }
+                    else if (pitem.subtext().empty())
+                    {
+                        // if we don't have a subitem, just draw the string centered
+                        if ((pitem.flags() & FLAG_UI_HEADING) != 0)
+                        {
+                            float heading_width = ui().get_string_width(itemtext);
+                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - lr_border, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + lr_border, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                        }
+
+                        ui().draw_text_full(
+                                container(),
+                                itemtext,
+                                effective_left, line_y0, effective_width,
+                                text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE,
+                                mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor,
+                                out _, out _);
+                    }
+                    else
+                    {
+                        // otherwise, draw the item on the left and the subitem text on the right
+                        bool subitem_invert = (pitem.flags() & FLAG_INVERT) != 0;
+                        float item_width;
+                        float subitem_width;
+
+                        // draw the left-side text
+                        ui().draw_text_full(
+                                container(),
+                                itemtext,
+                                effective_left, line_y0, effective_width,
+                                text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE,
+                                mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor,
+                                out item_width, out _);
+
+                        if ((pitem.flags() & FLAG_COLOR_BOX) != 0)
+                        {
+                            rgb_t color = new rgb_t((uint32_t)std.strtoul(pitem.subtext(), null, 16));
+
+                            // give 2 spaces worth of padding
+                            subitem_width = ui().get_string_width("FF00FF00");
+
+                            ui().draw_outlined_box(
+                                    container(),
+                                    effective_left + effective_width - subitem_width, line_y0 + (UI_LINE_WIDTH * 2.0f),
+                                    effective_left + effective_width, line_y1 - (UI_LINE_WIDTH * 2.0f),
+                                    color);
+                        }
+                        else
+                        {
+                            string subitem_text = pitem.subtext();
+
+                            // give 2 spaces worth of padding
+                            item_width += 2.0f * gutter_width;
+
+                            // if the subitem doesn't fit here, display dots
+                            if (ui().get_string_width(subitem_text) > effective_width - item_width)
+                            {
+                                subitem_text = "...";
+                                if (is_selected(itemnum))
+                                    selected_subitem_too_big = true;
+                            }
+
+                            // customize subitem text color
+                            if (core_stricmp(pitem.subtext(), "On") == 0)
+                                fgcolor2 = new rgb_t(0x00,0xff,0x00);
+
+                            if (core_stricmp(pitem.subtext(), "Off") == 0)
+                                fgcolor2 = new rgb_t(0xff,0x00,0x00);
+
+                            if (core_stricmp(pitem.subtext(), "Auto") == 0)
+                                fgcolor2 = new rgb_t(0xff,0xff,0x00);
+
+                            // draw the subitem right-justified
+                            ui().draw_text_full(
+                                    container(),
+                                    subitem_text,
+                                    effective_left + item_width, line_y0, effective_width - item_width,
+                                    text_layout.text_justify.RIGHT, text_layout.word_wrapping.TRUNCATE,
+                                    mame_ui_manager.draw_mode.NORMAL, subitem_invert ? fgcolor3 : fgcolor2, bgcolor,
+                                    out subitem_width, out _);
+                        }
+
+                        // apply arrows
+                        if (is_selected(itemnum) && (pitem.flags() & FLAG_LEFT_ARROW) != 0)
+                        {
+                            float l = effective_left + effective_width - subitem_width - gutter_width;
+                            float r = l + lr_arrow_width;
+                            draw_arrow(
+                                        l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height,
+                                        fgcolor,
+                                        ROT90 ^ ORIENTATION_FLIP_X);
+                            if (mouse_in_rect(l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height))
+                                m_hover = HOVER_UI_LEFT;
+                        }
+                        if (is_selected(itemnum) && (pitem.flags() & FLAG_RIGHT_ARROW) != 0)
+                        {
+                            float r = effective_left + effective_width + gutter_width;
+                            float l = r - lr_arrow_width;
+                            draw_arrow(
+                                        l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height,
+                                        fgcolor,
+                                        ROT90);
+                            if (mouse_in_rect(l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height))
+                                m_hover = HOVER_UI_RIGHT;
+                        }
+                    }
+                }
+            }
+
+            // if the selected subitem is too big, display it in a separate offset box
+            if (selected_subitem_too_big)
+            {
+                menu_item pitem = selected_item();
+                bool subitem_invert = (pitem.flags() & FLAG_INVERT) != 0;
+                var linenum = m_selected - top_line;
+                float line_y = visible_top + (float)linenum * line_height;
+                float target_width, target_height;
+
+                // compute the multi-line target width/height
+                ui().draw_text_full(
+                        container(),
+                        pitem.subtext(),
+                        0, 0, visible_width * 0.75f,
+                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD,
+                        mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(),
+                        out target_width, out target_height);
+
+                // determine the target location
+                float target_x = visible_left + visible_width - target_width - lr_border;
+                float target_y = line_y + line_height + ui().box_tb_border();
+                if (target_y + target_height + ui().box_tb_border() > visible_main_menu_height)
+                    target_y = line_y - target_height - ui().box_tb_border();
+
+                // add a box around that
+                ui().draw_outlined_box(
+                        container(),
+                        target_x - lr_border, target_y - ui().box_tb_border(),
+                        target_x + target_width + lr_border, target_y + target_height + ui().box_tb_border(),
+                        subitem_invert ? ui().colors().selected_bg_color() : ui().colors().background_color());
+
+                ui().draw_text_full(
+                        container(),
+                        pitem.subtext(),
+                        target_x, target_y, target_width,
+                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD,
+                        mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(),
+                        out _, out _);
+            }
+
+            // if there is something special to add, do it by calling the virtual method
+            custom_render(get_selection_ref(), m_customtop, m_custombottom, x1, y1, x2, y2);
+        }
+
 
         //-------------------------------------------------
         //  set_special_main_menu - set whether the
@@ -1553,16 +1524,16 @@ namespace mame.ui
         public void set_special_main_menu(bool special) { m_special_main_menu = special; }
 
 
-        // To be reimplemented in the menu subclass
+        // to be implemented in derived classes
         protected abstract void populate(ref float customtop, ref float custombottom);
 
 
-        // To be reimplemented in the menu subclass
-        protected abstract void handle();
+        // to be implemented in derived classes
+        protected abstract void handle(event_ ev);
 
 
         // push a new menu onto the stack
-        static void stack_push_internal(menu menu) { get_global_state(menu.machine()).stack_push(menu); }
+        static void stack_push_internal(menu menu) { menu.m_global_state.stack_push(menu); }  //void stack_push(std::unique_ptr<menu> &&menu);
 
 
         //void extra_text_draw_box(float origx1, float origx2, float origy, float yspan, std::string_view text, int direction);
@@ -1572,33 +1543,44 @@ namespace mame.ui
         bool last_item_visible() { return (top_line + m_visible_lines) >= (int)m_items.size(); }
 
 
-        //-------------------------------------------------
-        //  exit - clean up after ourselves
-        //-------------------------------------------------
-        static void exit(running_machine machine)
+        static global_state get_global_state(mame_ui_manager ui)
         {
-            // free menus
-            global_state state = get_global_state(machine);
-            state.stack_reset();
-            state.clear_free_list();
-            state.Dispose();
+            return ui.get_session_data(typeof(menu), () => { return new global_state(ui); });  //return ui.get_session_data<menu, global_state_wrapper>(ui);
+        }
+    }
 
-            //throw new emu_unimplemented();
-#if false
-            lock_guard<std::mutex> guard(s_global_state_guard);
-#endif
-            s_global_states.erase(machine);
+
+    //template <typename Base = menu>
+    abstract class autopause_menu : menu  //class autopause_menu : public Base
+    {
+        //using Base::Base;
+
+
+        bool m_was_paused = false;
+        bool m_unpaused = false;
+
+
+        protected autopause_menu(mame_ui_manager mui, render_container container) : base(mui, container) { }
+
+
+        protected override void menu_activated()
+        {
+            m_was_paused = this.machine().paused();
+            if (m_was_paused)
+                m_unpaused = false;
+            else if (!m_unpaused)
+                this.machine().pause();
+
+            base.menu_activated();
         }
 
-
-        static global_state get_global_state(running_machine machine)
+        protected override void menu_deactivated()
         {
-            //throw new emu_unimplemented();
-#if false
-            std::lock_guard<std::mutex> guard(s_global_state_guard);
-#endif
-            var it = s_global_states.find(machine);
-            return it;  //return (it != null) ? it : new global_state();
+            m_unpaused = !this.machine().paused();
+            if (!m_was_paused && !m_unpaused)
+                this.machine().resume();
+
+            base.menu_deactivated();
         }
     }
 }

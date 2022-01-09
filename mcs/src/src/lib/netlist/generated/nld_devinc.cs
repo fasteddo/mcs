@@ -18,6 +18,7 @@ namespace mame
         // usage       : QBJT_EB(name, MODEL)
         //#define QBJT_EB(...)                                                   \
         //    NET_REGISTER_DEVEXT(QBJT_EB, __VA_ARGS__)
+        public static void QBJT_EB(nlparse_t setup, string name, string MODEL) { NET_REGISTER_DEVEXT(setup, "QBJT_EB", name, MODEL); }
 
         // usage       : QBJT_SW(name, MODEL)
         //#define QBJT_SW(...)                                                   \
@@ -38,7 +39,7 @@ namespace mame
         // usage       : OPAMP(name, MODEL)
         //#define OPAMP(...)                                                   \
         //    NET_REGISTER_DEVEXT(OPAMP, __VA_ARGS__)
-        public static void OPAMP(nlparse_t setup, string name, string val) { NET_REGISTER_DEVEXT(setup, "OPAMP", name, val); }
+        public static void OPAMP(nlparse_t setup, string name, string MODEL) { NET_REGISTER_DEVEXT(setup, "OPAMP", name, MODEL); }
 
         // ---------------------------------------------------------------------
         // Source: ../analog/nld_switches.cpp
@@ -83,12 +84,12 @@ namespace mame
         // usage       : RES(name, R)
         //#define RES(...)                                                   \
         //    NET_REGISTER_DEVEXT(RES, __VA_ARGS__)
-        public static void RES(nlparse_t setup, string name, double val) { NET_REGISTER_DEVEXT(setup, "RES", name, val.ToString()); }
+        public static void RES(nlparse_t setup, string name, double R) { NET_REGISTER_DEVEXT(setup, "RES", name, R.ToString()); }
 
         // usage       : POT(name, R)
         //#define POT(...)                                                   \
         //    NET_REGISTER_DEVEXT(POT, __VA_ARGS__)
-        public static void POT(nlparse_t setup, string name, double val) { NET_REGISTER_DEVEXT(setup, "POT", name, val.ToString()); }
+        public static void POT(nlparse_t setup, string name, double R) { NET_REGISTER_DEVEXT(setup, "POT", name, R.ToString()); }
 
         // usage       : POT2(name, R)
         //#define POT2(...)                                                   \
@@ -97,7 +98,7 @@ namespace mame
         // usage       : CAP(name, C)
         //#define CAP(...)                                                   \
         //    NET_REGISTER_DEVEXT(CAP, __VA_ARGS__)
-        public static void CAP(nlparse_t setup, string name, double val) { NET_REGISTER_DEVEXT(setup, "CAP", name, val.ToString()); }
+        public static void CAP(nlparse_t setup, string name, double C) { NET_REGISTER_DEVEXT(setup, "CAP", name, C.ToString()); }
 
         // usage       : IND(name, L)
         //#define IND(...)                                                   \
@@ -110,6 +111,7 @@ namespace mame
         // usage       : ZDIODE(name, MODEL)
         //#define ZDIODE(...)                                                   \
         //    NET_REGISTER_DEVEXT(ZDIODE, __VA_ARGS__)
+        public static void ZDIODE(nlparse_t setup, string name, string MODEL) { NET_REGISTER_DEVEXT(setup, "ZDIODE", name, MODEL); }
 
         // usage       : VS(name, V)
         //#define VS(...)                                                   \
@@ -733,11 +735,12 @@ namespace mame
         // usage       : ANALOG_INPUT(name, IN)
         //#define ANALOG_INPUT(...)                                                   \
         //    NET_REGISTER_DEVEXT(ANALOG_INPUT, __VA_ARGS__)
-        public static void ANALOG_INPUT(nlparse_t setup, string name, double val) { NET_REGISTER_DEVEXT(setup, "ANALOG_INPUT", name, val.ToString()); }
+        public static void ANALOG_INPUT(nlparse_t setup, string name, double IN) { NET_REGISTER_DEVEXT(setup, "ANALOG_INPUT", name, IN.ToString()); }
 
         // usage       : CLOCK(name, FREQ)
         //#define CLOCK(...)                                                   \
         //    NET_REGISTER_DEVEXT(CLOCK, __VA_ARGS__)
+        public static void CLOCK(nlparse_t setup, string name, double FREQ) { NET_REGISTER_DEVEXT(setup, "CLOCK", name, FREQ.ToString()); }
 
         // usage       : VARCLOCK(name, N, FUNC)
         //#define VARCLOCK(...)                                                   \
@@ -750,6 +753,7 @@ namespace mame
         // usage       : SYS_DSW(name, I, 1, 2)
         //#define SYS_DSW(...)                                                   \
         //    NET_REGISTER_DEVEXT(SYS_DSW, __VA_ARGS__)
+        public static void SYS_DSW(nlparse_t setup, string name, string I, string _1, string _2) { NET_REGISTER_DEVEXT(setup, "SYS_DSW", name, I, _1, _2); }
 
         // usage       : SYS_DSW2(name, )
         //#define SYS_DSW2(...)                                                   \
@@ -766,6 +770,7 @@ namespace mame
         // usage       : SYS_NOISE_MT_N(name, SIGMA)
         //#define SYS_NOISE_MT_N(...)                                                   \
         //    NET_REGISTER_DEVEXT(SYS_NOISE_MT_N, __VA_ARGS__)
+        public static void SYS_NOISE_MT_N(nlparse_t setup, string name, double SIGMA) { NET_REGISTER_DEVEXT(setup, "SYS_NOISE_MT_N", name, SIGMA.ToString()); }
 
         // usage       : MAINCLOCK(name, FREQ)
         //#define MAINCLOCK(...)                                                   \
@@ -782,11 +787,12 @@ namespace mame
         // usage       : LOGIC_INPUT(name, IN, MODEL)
         //#define LOGIC_INPUT(...)                                                   \
         //    NET_REGISTER_DEVEXT(LOGIC_INPUT, __VA_ARGS__)
+        public static void LOGIC_INPUT(nlparse_t setup, string name, double IN, string MODEL) { NET_REGISTER_DEVEXT(setup, "LOGIC_INPUT", name, IN.ToString(), MODEL); }
 
         // usage       : TTL_INPUT(name, IN)
         //#define TTL_INPUT(...)                                                   \
         //    NET_REGISTER_DEVEXT(TTL_INPUT, __VA_ARGS__)
-        public static void TTL_INPUT(nlparse_t setup, string name, double val) { NET_REGISTER_DEVEXT(setup, "TTL_INPUT", name, val.ToString()); }
+        public static void TTL_INPUT(nlparse_t setup, string name, double IN) { NET_REGISTER_DEVEXT(setup, "TTL_INPUT", name, IN.ToString()); }
 
         // ---------------------------------------------------------------------
         // Source: ../devices/nld_tms4800.cpp

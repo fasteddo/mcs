@@ -111,12 +111,6 @@ namespace mame
         // movie recordings
         std.vector<movie_recording> m_movie_recordings = new std.vector<movie_recording>();
 
-        bool m_timecode_enabled;     // inp.timecode record enabled
-        bool m_timecode_write;       // Show/hide timer at right (partial time)
-        string m_timecode_text;        // Message for that video part (intro, gameplay, extra)
-        attotime m_timecode_start;       // Starting timer for that video part (intro, gameplay, extra)
-        attotime m_timecode_total;       // Show/hide timer at left (total elapsed on resulting video preview)
-
 
         // construction/destruction
 
@@ -157,11 +151,6 @@ namespace mame
             m_snap_native = true;
             m_snap_width = 0;
             m_snap_height = 0;
-            m_timecode_enabled = false;
-            m_timecode_write = false;
-            m_timecode_text = "";
-            m_timecode_start = attotime.zero;
-            m_timecode_total = attotime.zero;
 
 
             // request a callback upon exiting
@@ -422,20 +411,6 @@ namespace mame
         }
 
 
-        //-------------------------------------------------
-        //  save_input_timecode - add a line of current
-        //  timestamp to inp.timecode file
-        //-------------------------------------------------
-        public void save_input_timecode()
-        {
-            // if record timecode input is not active, do nothing
-            if (!m_timecode_enabled)
-                return;
-
-            m_timecode_write = true;
-        }
-
-
         // movies
 
         //-------------------------------------------------
@@ -465,40 +440,6 @@ namespace mame
 
 
         public bool is_recording() { return !m_movie_recordings.empty(); }
-
-
-        public void set_timecode_enabled(bool value) { m_timecode_enabled = value; }
-        //bool get_timecode_enabled() { return m_timecode_enabled; }
-        public bool get_timecode_write() { return m_timecode_write; }
-        public void set_timecode_write(bool value) { m_timecode_write = value; }
-        public void set_timecode_text(string str) { m_timecode_text = str; }
-        public void set_timecode_start(attotime time) { m_timecode_start = time; }
-        public void add_to_total_time(attotime time) { m_timecode_total += time; }
-
-        public string timecode_text(out string str)
-        {
-            attotime elapsed_time = machine().time() - m_timecode_start;
-            str = string_format(" {0}{1}{2}:{3} {4}",  //" %s%s%02d:%02d %s",
-                    m_timecode_text,
-                    m_timecode_text.empty() ? "" : " ",
-                    (elapsed_time.m_seconds / 60) % 60,
-                    elapsed_time.m_seconds % 60,
-                    machine().paused() ? "[paused] " : "");
-            return str;
-        }
-
-
-        public string timecode_total_text(out string str)
-        {
-            attotime elapsed_time = m_timecode_total;
-            if (machine().ui().show_timecode_counter())
-                elapsed_time += machine().time() - m_timecode_start;
-
-            str = string_format("TOTAL {0}:{1} ",  // "TOTAL %02d:%02d "
-                    (elapsed_time.m_seconds / 60) % 60,
-                    elapsed_time.m_seconds % 60);
-            return str;
-        }
 
 
         // internal helpers

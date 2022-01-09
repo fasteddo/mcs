@@ -16,13 +16,6 @@ namespace mame.ui
 {
     class menu_sliders : menu
     {
-        //enum
-        //{
-        //const unknown INPUT_GROUPS   = 0;
-        //const unknown INPUT_SPECIFIC = 1;
-        //}
-
-
         bool m_menuless_mode;
         bool m_hidden;
 
@@ -30,190 +23,13 @@ namespace mame.ui
         public menu_sliders(mame_ui_manager mui, render_container container, bool menuless_mode = false)
             : base(mui, container)
         {
-            m_hidden = menuless_mode;
             m_menuless_mode = menuless_mode;
-        }
+            m_hidden = menuless_mode;
 
 
-        /*-------------------------------------------------
-            menu_sliders_populate - populate the sliders
-            menu
-        -------------------------------------------------*/
-        protected override void populate(ref float customtop, ref float custombottom)
-        {
-            string tempstring;
-
-            /* add UI sliders */
-            std.vector<menu_item> ui_sliders = ui().get_slider_list();
-            foreach (menu_item item in ui_sliders)
-            {
-                if (item.type == menu_item_type.SLIDER)
-                {
-                    slider_state slider = (slider_state)item.ref_;
-                    bool display = true;
-#if false
-                    // FIXME: this test should be reimplemented in a dedicated menu
-                    if (slider.id >= SLIDER_ID_ADJUSTER && slider.id <= SLIDER_ID_ADJUSTER_LAST)
-                        display = ((ioport_field)slider.arg).enabled();  //display = reinterpret_cast<ioport_field *>(slider->arg)->enabled();
-#endif
-                    if (display)
-                    {
-                        int32_t curval = slider.update(out tempstring, slider_state.SLIDER_NOCHANGE);
-                        uint32_t flags = 0;
-                        if (curval > slider.minval)
-                            flags |= FLAG_LEFT_ARROW;
-                        if (curval < slider.maxval)
-                            flags |= FLAG_RIGHT_ARROW;
-                        item_append(slider.description, tempstring, flags, slider, menu_item_type.SLIDER);
-                    }
-                }
-                else
-                {
-                    item_append(item);
-                }
-            }
-
-            item_append(menu_item_type.SEPARATOR);
-
-            /* add OSD sliders */
-            std.vector<menu_item> osd_sliders = machine().osd().get_slider_list();
-            foreach (menu_item item in osd_sliders)
-            {
-                if (item.type == menu_item_type.SLIDER)
-                {
-                    slider_state slider = (slider_state)item.ref_;
-                    int32_t curval = slider.update(out tempstring, slider_state.SLIDER_NOCHANGE);
-                    uint32_t flags = 0;
-                    if (curval > slider.minval)
-                        flags |= FLAG_LEFT_ARROW;
-                    if (curval < slider.maxval)
-                        flags |= FLAG_RIGHT_ARROW;
-                    item_append(slider.description, tempstring, flags, slider);
-                }
-                else
-                {
-                    item_append(item);
-                }
-            }
-
-            custombottom = 2.0f * ui().get_line_height() + 2.0f * ui().box_tb_border();
-        }
-
-
-        /*-------------------------------------------------
-            menu_sliders - handle the sliders menu
-        -------------------------------------------------*/
-        protected override void handle()
-        {
-            menu_event menu_event;
-
-            /* process the menu */
-            menu_event = process(PROCESS_LR_REPEAT | (m_hidden ? PROCESS_CUSTOM_ONLY : 0));
-            if (menu_event != null)
-            {
-                /* handle keys if there is a valid item selected */
-                if (menu_event.itemref != null && menu_event.type == menu_item_type.SLIDER)
-                {
-                    slider_state slider = (slider_state)menu_event.itemref;
-                    int curvalue = slider.update(out _, slider_state.SLIDER_NOCHANGE);
-                    int increment = 0;
-                    bool alt_pressed = machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(KEYCODE_RALT);
-                    bool ctrl_pressed = machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(KEYCODE_RCONTROL);
-                    bool shift_pressed = machine().input().code_pressed(KEYCODE_LSHIFT) || machine().input().code_pressed(KEYCODE_RSHIFT);
-
-                    switch (menu_event.iptkey)
-                    {
-                        /* toggle visibility */
-                        case (int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY:
-                            if (m_menuless_mode)
-                                stack_pop();
-                            else
-                                m_hidden = !m_hidden;
-                            break;
-
-                        /* decrease value */
-                        case (int)ioport_type.IPT_UI_LEFT:
-                            if (alt_pressed && shift_pressed)
-                                increment = -1;
-                            if (alt_pressed)
-                                increment = -(curvalue - slider.minval);
-                            else if (shift_pressed)
-                                increment = (slider.incval > 10) ? -(slider.incval / 10) : -1;
-                            else if (ctrl_pressed)
-                                increment = -slider.incval * 10;
-                            else
-                                increment = -slider.incval;
-                            break;
-
-                        /* increase value */
-                        case (int)ioport_type.IPT_UI_RIGHT:
-                            if (alt_pressed && shift_pressed)
-                                increment = 1;
-                            if (alt_pressed)
-                                increment = slider.maxval - curvalue;
-                            else if (shift_pressed)
-                                increment = (slider.incval > 10) ? (slider.incval / 10) : 1;
-                            else if (ctrl_pressed)
-                                increment = slider.incval * 10;
-                            else
-                                increment = slider.incval;
-                            break;
-
-                        /* restore default */
-                        case (int)ioport_type.IPT_UI_SELECT:
-                            increment = slider.defval - curvalue;
-                            break;
-                    }
-
-                    /* handle any changes */
-                    if (increment != 0)
-                    {
-                        int newvalue = curvalue + increment;
-
-                        /* clamp within bounds */
-                        if (newvalue < slider.minval)
-                            newvalue = slider.minval;
-                        if (newvalue > slider.maxval)
-                            newvalue = slider.maxval;
-
-                        /* update the slider and recompute the menu */
-                        slider.update(out _, newvalue);
-                        reset(reset_options.REMEMBER_REF);
-                    }
-                }
-
-                // if we are selecting an invalid item and we are hidden, skip to the next one
-                else if (m_hidden)
-                {
-                    // if we got here via up or page up, select the previous item
-                    if (menu_event.iptkey == (int)ioport_type.IPT_UI_UP || menu_event.iptkey == (int)ioport_type.IPT_UI_PAGE_UP)
-                    {
-                        if (is_first_selected())
-                        {
-                            select_last_item();
-                        }
-                        else
-                        {
-                            set_selected_index(selected_index() - 1);
-                            validate_selection(-1);
-                        }
-                    }
-
-                    // otherwise select the next item
-                    else if (menu_event.iptkey == (int)ioport_type.IPT_UI_DOWN || menu_event.iptkey == (int)ioport_type.IPT_UI_PAGE_DOWN)
-                    {
-                        if (is_last_selected())
-                        {
-                            select_first_item();
-                        }
-                        else
-                        {
-                            set_selected_index(selected_index() + 1);
-                            validate_selection(1);
-                        }
-                    }
-                }
-            }
+            set_one_shot(menuless_mode);
+            set_needs_prev_menu_item(!menuless_mode);
+            set_process_flags(PROCESS_LR_REPEAT | (m_hidden ? PROCESS_CUSTOM_ONLY : 0));
         }
 
 
@@ -304,16 +120,200 @@ namespace mame.ui
         }
 
 
-        /*-------------------------------------------------
-         ui_slider_ui_handler - pushes the slider
-         menu on the stack and hands off to the
-         standard menu handler
-         -------------------------------------------------*/
-        public static new uint32_t ui_handler(render_container container, mame_ui_manager mui)
-        {
-            uint32_t result;
+        protected override void menu_activated() { throw new emu_unimplemented(); }
+        protected override void menu_deactivated() { throw new emu_unimplemented(); }
 
-            throw new emu_unimplemented();
+
+        /*-------------------------------------------------
+            menu_sliders_populate - populate the sliders
+            menu
+        -------------------------------------------------*/
+        protected override void populate(ref float customtop, ref float custombottom)
+        {
+            string tempstring;
+
+            /* add UI sliders */
+            std.vector<menu_item> ui_sliders = ui().get_slider_list();
+            foreach (menu_item item in ui_sliders)
+            {
+                if (item.type() == menu_item_type.SLIDER)
+                {
+                    slider_state slider = (slider_state)item.ref_();
+                    bool display = true;
+#if false
+                    // FIXME: this test should be reimplemented in a dedicated menu
+                    if (slider.id >= SLIDER_ID_ADJUSTER && slider.id <= SLIDER_ID_ADJUSTER_LAST)
+                        display = ((ioport_field)slider.arg).enabled();  //display = reinterpret_cast<ioport_field *>(slider->arg)->enabled();
+#endif
+                    if (display)
+                    {
+                        int32_t curval = slider.update(out tempstring, slider_state.SLIDER_NOCHANGE);
+                        uint32_t flags = 0;
+                        if (curval > slider.minval)
+                            flags |= FLAG_LEFT_ARROW;
+                        if (curval < slider.maxval)
+                            flags |= FLAG_RIGHT_ARROW;
+                        item_append(slider.description, tempstring, flags, slider, menu_item_type.SLIDER);
+                    }
+                }
+                else
+                {
+                    item_append(item);
+                }
+            }
+
+            item_append(menu_item_type.SEPARATOR);
+
+            /* add OSD sliders */
+            std.vector<menu_item> osd_sliders = machine().osd().get_slider_list();
+            foreach (menu_item item in osd_sliders)
+            {
+                if (item.type() == menu_item_type.SLIDER)
+                {
+                    slider_state slider = (slider_state)item.ref_();
+                    int32_t curval = slider.update(out tempstring, slider_state.SLIDER_NOCHANGE);
+                    uint32_t flags = 0;
+                    if (curval > slider.minval)
+                        flags |= FLAG_LEFT_ARROW;
+                    if (curval < slider.maxval)
+                        flags |= FLAG_RIGHT_ARROW;
+                    item_append(slider.description, tempstring, flags, slider);
+                }
+                else
+                {
+                    item_append(item);
+                }
+            }
+
+            // reselect last slider used in menuless mode
+            if (m_menuless_mode)
+            {
+                var ref_ = ui().get_session_data(typeof(menu_sliders), () => { return (object)null; });  //auto const ref = ui().get_session_data<menu_sliders, void *>(nullptr);
+                if (ref_ != null)
+                    set_selection(ref_);
+            }
+
+            custombottom = 2.0f * ui().get_line_height() + 2.0f * ui().box_tb_border();
+        }
+
+
+        /*-------------------------------------------------
+            menu_sliders - handle the sliders menu
+        -------------------------------------------------*/
+        protected override void handle(event_ ev)
+        {
+            // process the menu
+            if (ev != null)
+            {
+                if (ev.iptkey == (int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY)
+                {
+                    // toggle visibility
+                    if (m_menuless_mode)
+                    {
+                        stack_pop();
+                    }
+                    else
+                    {
+                        m_hidden = !m_hidden;
+                        set_process_flags(PROCESS_LR_REPEAT | (m_hidden ? PROCESS_CUSTOM_ONLY : 0));
+                    }
+                }
+                else if (ev.itemref != null && (ev.item.type() == menu_item_type.SLIDER))
+                {
+                    // handle keys if there is a valid item selected
+                    slider_state slider = (slider_state)ev.itemref;
+                    int curvalue = slider.update(out _, slider_state.SLIDER_NOCHANGE);
+                    int increment = 0;
+                    bool alt_pressed = machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(KEYCODE_RALT);
+                    bool ctrl_pressed = machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(KEYCODE_RCONTROL);
+                    bool shift_pressed = machine().input().code_pressed(KEYCODE_LSHIFT) || machine().input().code_pressed(KEYCODE_RSHIFT);
+
+                    switch (ev.iptkey)
+                    {
+                        // decrease value
+                        case (int)ioport_type.IPT_UI_LEFT:
+                            if (alt_pressed && shift_pressed)
+                                increment = -1;
+                            else if (alt_pressed)
+                                increment = -(curvalue - slider.minval);
+                            else if (shift_pressed)
+                                increment = (slider.incval > 10) ? -(slider.incval / 10) : -1;
+                            else if (ctrl_pressed)
+                                increment = -slider.incval * 10;
+                            else
+                                increment = -slider.incval;
+                            break;
+
+                        // increase value
+                        case (int)ioport_type.IPT_UI_RIGHT:
+                            if (alt_pressed && shift_pressed)
+                                increment = 1;
+                            else if (alt_pressed)
+                                increment = slider.maxval - curvalue;
+                            else if (shift_pressed)
+                                increment = (slider.incval > 10) ? (slider.incval / 10) : 1;
+                            else if (ctrl_pressed)
+                                increment = slider.incval * 10;
+                            else
+                                increment = slider.incval;
+                            break;
+
+                        // restore default
+                        case (int)ioport_type.IPT_UI_SELECT:
+                        case (int)ioport_type.IPT_UI_CLEAR:
+                            increment = slider.defval - curvalue;
+                            break;
+                    }
+
+                    // handle any changes
+                    if (increment != 0)
+                    {
+                        int32_t newvalue = curvalue + increment;
+
+                        // clamp within bounds
+                        if (newvalue < slider.minval)
+                            newvalue = slider.minval;
+                        if (newvalue > slider.maxval)
+                            newvalue = slider.maxval;
+
+                        /* update the slider and recompute the menu */
+                        slider.update(out _, newvalue);
+                        if (m_menuless_mode)
+                            ui().get_session_data(typeof(menu_sliders), () => { return ev.itemref; });  //ui().get_session_data<menu_sliders, void *>(nullptr) = ev->itemref;
+                        reset(reset_options.REMEMBER_REF);
+                    }
+                }
+                else if (m_hidden)
+                {
+                    // if we are selecting an invalid item and we are hidden, skip to the next one
+                    if (ev.iptkey == (int)ioport_type.IPT_UI_UP || ev.iptkey == (int)ioport_type.IPT_UI_PAGE_UP)
+                    {
+                        // if we got here via up or page up, select the previous item
+                        if (is_first_selected())
+                        {
+                            select_last_item();
+                        }
+                        else
+                        {
+                            set_selected_index(selected_index() - 1);
+                            validate_selection(-1);
+                        }
+                    }
+                    else if (ev.iptkey == (int)ioport_type.IPT_UI_DOWN || ev.iptkey == (int)ioport_type.IPT_UI_PAGE_DOWN)
+                    {
+                        // otherwise select the next item
+                        if (is_last_selected())
+                        {
+                            select_first_item();
+                        }
+                        else
+                        {
+                            set_selected_index(selected_index() + 1);
+                            validate_selection(1);
+                        }
+                    }
+                }
+            }
         }
     }
 }

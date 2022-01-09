@@ -179,7 +179,7 @@ namespace mame
         protected override void video_start()
         {
             /* create a tilemap for the background */
-            if (m_sfx_tilemap == 0)
+            if (!m_sfx_adjust)
             {
                 /* normal galaxian hardware is row-based and individually scrolling columns */
                 m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op0, bg_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, GALAXIAN_XSCALE*8,8, 32,32);
@@ -258,9 +258,9 @@ namespace mame
                 if ((offset & 0x01) == 0)
                 {
                     /* Frogger: top and bottom 4 bits swapped entering the adder */
-                    if (m_frogger_adjust != 0)
+                    if (m_frogger_adjust)
                         data = (uint8_t)((data >> 4) | (data << 4));
-                    if (m_sfx_tilemap == 0)
+                    if (!m_sfx_adjust)
                         m_bg_tilemap.set_scrolly((int)(offset >> 1), data);
                     else
                         m_bg_tilemap.set_scrollx((int)(offset >> 1), GALAXIAN_XSCALE*data);
@@ -351,10 +351,13 @@ namespace mame
             for (sprnum = 7; sprnum >= 0; sprnum--)
             {
                 Pointer<uint8_t> base_ = new Pointer<uint8_t>(spritebase, sprnum * 4);  //const uint8_t *base = &spritebase[sprnum * 4];
+
                 /* Frogger: top and bottom 4 bits swapped entering the adder */
-                uint8_t base0 = m_frogger_adjust != 0 ? (uint8_t)((base_[0] >> 4) | (base_[0] << 4)) : base_[0];
-                /* the first three sprites match against y-1 */
-                uint8_t sy = (uint8_t)(240 - (base0 - ((sprnum < 3) ? 1 : 0)));
+                uint8_t base0 = m_frogger_adjust ? (uint8_t)((base_[0] >> 4) | (base_[0] << 4)) : base_[0];
+
+                /* the first three sprites match against y-1 (seems other way around for sfx/monsterz) */
+                uint8_t sy = (uint8_t)(240 - (base0 - (m_sfx_adjust ? ((sprnum >= 3) ? 1 : 0) : ((sprnum < 3) ? 1 : 0))));
+
                 uint16_t code = (uint16_t)(base_[1] & 0x3f);
                 uint8_t flipx = (uint8_t)(base_[1] & 0x40);
                 uint8_t flipy = (uint8_t)(base_[1] & 0x80);
@@ -634,11 +637,8 @@ namespace mame
          *
          *************************************/
 
-        void galaxian_draw_background(bitmap_rgb32 bitmap, rectangle cliprect)
+        void galaxian_draw_stars(bitmap_rgb32 bitmap, rectangle cliprect, int maxx)
         {
-            /* erase the background to black first */
-            bitmap.fill(rgb_t.black(), cliprect);
-
             /* update the star origin to the current frame */
             stars_update_origin();
 
@@ -651,9 +651,18 @@ namespace mame
                 for (y = cliprect.min_y; y <= cliprect.max_y; y++)
                 {
                     uint32_t star_offs = m_star_rng_origin + (uint32_t)y * 512;
-                    stars_draw_row(bitmap, 256, y, star_offs, 0xff);
+                    stars_draw_row(bitmap, maxx, y, star_offs, 0xff);
                 }
             }
+        }
+
+
+        void galaxian_draw_background(bitmap_rgb32 bitmap, rectangle cliprect)
+        {
+            /* erase the background to black first */
+            bitmap.fill(rgb_t.black(), cliprect);
+
+            galaxian_draw_stars(bitmap, cliprect, 256);
         }
 
 

@@ -16,6 +16,7 @@ using uint64_t = System.UInt64;
 using static mame.device_global;
 using static mame.diexec_global;
 using static mame.emucore_global;
+using static mame.m6800_global;
 
 
 namespace mame

@@ -12,16 +12,12 @@ namespace mame
     {
         // instance variables
         protected running_machine m_machine;
-        bool m_show_timecode_counter;
-        bool m_show_timecode_total;
 
 
         // construction/destruction
         public ui_manager(running_machine machine)
         {
             m_machine = machine;
-            m_show_timecode_counter = false;
-            m_show_timecode_total = false;
         }
 
 
@@ -29,11 +25,6 @@ namespace mame
 
         // is a menuing system active?  we want to disable certain keyboard/mouse inputs under such context
         public virtual bool is_menu_active() { return false; }
-
-        public void set_show_timecode_counter(bool value) { m_show_timecode_counter = value; m_show_timecode_total = true; }
-
-        public bool show_timecode_counter() { return m_show_timecode_counter; }
-        public bool show_timecode_total() { return m_show_timecode_total; }
 
         protected virtual void popup_time_string(int seconds, string message) { }
 

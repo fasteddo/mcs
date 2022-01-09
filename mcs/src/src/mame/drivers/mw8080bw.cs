@@ -4,6 +4,8 @@
 using System;
 
 using ioport_value = System.UInt32;  //typedef u32 ioport_value;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
@@ -14,6 +16,7 @@ using static mame.emucore_global;
 using static mame.emumem_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
+using static mame.input_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
@@ -59,7 +62,7 @@ namespace mame
          *  Root driver structure
          *
          *************************************/
-        void mw8080bw_root(machine_config config)
+        protected void mw8080bw_root(machine_config config)
         {
             /* basic machine hardware */
             I8080(config, m_maincpu, MW8080BW_CPU_CLOCK);
@@ -99,20 +102,112 @@ namespace mame
         //void seawolf_state::seawolf(machine_config &config)
 
 
+    partial class gunfight_state : mw8080bw_state
+    {
         /*************************************
          *
          *  Gun Fight (PCB #597)
          *
          *************************************/
-        //void gunfight_state::io_w(offs_t offset, u8 data)
+        void io_w(offs_t offset, u8 data)
+        {
+            throw new emu_unimplemented();
+        }
 
-        //void gunfight_state::io_map(address_map &map)
 
-        //static const ioport_value gunfight_controller_table[7] =
+        void io_map(address_map map, device_t device)
+        {
+            map.global_mask(0x7);
+            map.op(0x00, 0x00).mirror(0x04).portr("IN0");
+            map.op(0x01, 0x01).mirror(0x04).portr("IN1");
+            map.op(0x02, 0x02).mirror(0x04).portr("IN2");
+            map.op(0x03, 0x03).mirror(0x04).r(m_mb14241, () => { return m_mb14241.op0.shift_result_r(); });
+
+            map.op(0x00, 0x07).w(io_w); // no decoder, just 3 AND gates
+        }
+    }
+
+
+    partial class mw8080bw : construct_ioport_helper
+    {
+        static readonly ioport_value [] gunfight_controller_table =
+        {
+            0x06, 0x02, 0x00, 0x04, 0x05, 0x01, 0x03
+        };
+
 
         //static INPUT_PORTS_START( gunfight )
+        void construct_ioport_gunfight(device_t owner, ioport_list portlist, ref string errorbuf)
+        {
+            INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
-        //void gunfight_state::gunfight(machine_config &config)
+            gunfight_state gunfight_state = (gunfight_state)owner;
+
+            PORT_START("IN0");
+            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ); PORT_8WAY(); PORT_PLAYER(1);
+            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ); PORT_8WAY(); PORT_PLAYER(1);
+            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ); PORT_8WAY(); PORT_PLAYER(1);
+            PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ); PORT_8WAY(); PORT_PLAYER(1);
+            PORT_BIT( 0x70, 0x30, IPT_POSITIONAL_V ); PORT_POSITIONS(7); PORT_REMAP_TABLE(gunfight_controller_table); PORT_INVERT(); PORT_SENSITIVITY(5); PORT_KEYDELTA(10); PORT_CENTERDELTA(0); PORT_CODE_DEC(KEYCODE_N); PORT_CODE_INC(KEYCODE_H); PORT_PLAYER(1);
+            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 ); PORT_PLAYER(1);
+
+            PORT_START("IN1");
+            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ); PORT_8WAY(); PORT_PLAYER(2);
+            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ); PORT_8WAY(); PORT_PLAYER(2);
+            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ); PORT_8WAY(); PORT_PLAYER(2);
+            PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ); PORT_8WAY(); PORT_PLAYER(2);
+            PORT_BIT( 0x70, 0x30, IPT_POSITIONAL_V ); PORT_POSITIONS(7); PORT_REMAP_TABLE(gunfight_controller_table); PORT_INVERT(); PORT_SENSITIVITY(5); PORT_KEYDELTA(10); PORT_CENTERDELTA(0); PORT_CODE_DEC(KEYCODE_M); PORT_CODE_INC(KEYCODE_J); PORT_PLAYER(2);
+            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 ); PORT_PLAYER(2);
+
+            PORT_START("IN2");
+            PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coinage ) ); PORT_DIPLOCATION("C1:1,2,3,4");
+            PORT_DIPSETTING(    0x03, DEF_STR( _4C_1C ) );
+            PORT_DIPSETTING(    0x02, DEF_STR( _3C_1C ) );
+            PORT_DIPSETTING(    0x07, DEF_STR( _4C_2C ) );
+            PORT_DIPSETTING(    0x01, DEF_STR( _2C_1C ) );
+            PORT_DIPSETTING(    0x06, DEF_STR( _3C_2C ) );
+            PORT_DIPSETTING(    0x0b, DEF_STR( _4C_3C ) );
+            PORT_DIPSETTING(    0x0f, DEF_STR( _4C_4C ) );
+            PORT_DIPSETTING(    0x0a, DEF_STR( _3C_3C ) );
+            PORT_DIPSETTING(    0x05, DEF_STR( _2C_2C ) );
+            PORT_DIPSETTING(    0x00, DEF_STR( _1C_1C ) );
+            PORT_DIPSETTING(    0x0e, DEF_STR( _3C_4C ) );
+            PORT_DIPSETTING(    0x09, DEF_STR( _2C_3C ) );
+            PORT_DIPSETTING(    0x0d, DEF_STR( _2C_4C ) );
+            PORT_DIPSETTING(    0x04, DEF_STR( _1C_2C ) );
+            PORT_DIPSETTING(    0x08, DEF_STR( _1C_3C ) );
+            PORT_DIPSETTING(    0x0c, DEF_STR( _1C_4C ) );
+            PORT_DIPNAME( 0x30, 0x10, DEF_STR( Game_Time ) ); PORT_DIPLOCATION("C1:5,6");
+            PORT_DIPSETTING(    0x00, "60 seconds" );
+            PORT_DIPSETTING(    0x10, "70 seconds" );
+            PORT_DIPSETTING(    0x20, "80 seconds" );
+            PORT_DIPSETTING(    0x30, "90 seconds" );
+            PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 );
+            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 );
+
+            INPUT_PORTS_END();
+        }
+    }
+
+
+    partial class gunfight_state : mw8080bw_state
+    {
+        public void gunfight(machine_config config)
+        {
+            mw8080bw_root(config);
+
+            // basic machine hardware
+            m_maincpu.op0.memory().set_addrmap(AS_IO, io_map);
+
+            // there is no watchdog
+
+            // add shifter
+            MB14241(config, m_mb14241);
+
+            // audio hardware
+            GUNFIGHT_AUDIO(config, m_soundboard);
+        }
+    }
 
 
         /*************************************
@@ -677,7 +772,18 @@ namespace mame
 
         //ROM_START( seawolfo )
 
+
         //ROM_START( gunfight )
+        static readonly MemoryContainer<tiny_rom_entry> rom_gunfight = new MemoryContainer<tiny_rom_entry>()
+        {
+            ROM_REGION( 0x10000, "maincpu", 0 ),
+            ROM_LOAD( "7609h.bin",  0x0000, 0x0400, CRC("0b117d73") + SHA1("99d01313e251818d336281700e206d9003c71dae") ),
+            ROM_LOAD( "7609g.bin",  0x0400, 0x0400, CRC("57bc3159") + SHA1("c177e3f72db9af17ab99b2481448ca26318184b9") ),
+            ROM_LOAD( "7609f.bin",  0x0800, 0x0400, CRC("8049a6bd") + SHA1("215b068663e431582591001cbe028929fa96d49f") ),
+            ROM_LOAD( "7609e.bin",  0x0c00, 0x0400, CRC("773264e2") + SHA1("de3f2e6841122bbe6e2fda5b87d37842c072289a") ),
+            ROM_END,
+        };
+
 
         //ROM_START( gunfighto )
 
@@ -750,14 +856,17 @@ namespace mame
          *
          *************************************/
 
+        static void gunfight_state_gunfight(machine_config config, device_t device) { gunfight_state gunfight_state = (gunfight_state)device; gunfight_state.gunfight(config); }
         static void mw8080bw_state_invaders(machine_config config, device_t device) { mw8080bw_state mw8080bw_state = (mw8080bw_state)device; mw8080bw_state.invaders(config); }
 
         static mw8080bw m_mw8080bw = new mw8080bw();
 
         static device_t device_creator_mw8080bw(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mw8080bw_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_gunfight(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gunfight_state(mconfig, (device_type)type, tag); }
 
 
-        // PCB #                                                             creator                  rom           year    name        parent machine                  inp                                   init                      monitor company,          fullname,                            flags                    layout
-        /* 739 */ public static readonly game_driver driver_invaders = GAMEL(device_creator_mw8080bw, rom_invaders, "1978", "invaders", "0",   mw8080bw_state_invaders, m_mw8080bw.construct_ioport_invaders, driver_device.empty_init, ROT270, "Taito / Midway", "Space Invaders / Space Invaders M", MACHINE_SUPPORTS_SAVE, null /*layout_invaders*/);
+        // PCB #                                                             creator                  rom           year    name        parent machine                  inp                                   init                      monitor company,                            fullname,                            flags                  layout
+        /* 597 */ public static readonly game_driver driver_gunfight = GAMEL(device_creator_gunfight, rom_gunfight, "1975", "gunfight", "0",   gunfight_state_gunfight, m_mw8080bw.construct_ioport_gunfight, driver_device.empty_init, ROT0,   "Dave Nutting Associates / Midway", "Gun Fight (set 1)",                 MACHINE_SUPPORTS_SAVE, null /*layout_gunfight*/);
+        /* 739 */ public static readonly game_driver driver_invaders = GAMEL(device_creator_mw8080bw, rom_invaders, "1978", "invaders", "0",   mw8080bw_state_invaders, m_mw8080bw.construct_ioport_invaders, driver_device.empty_init, ROT270, "Taito / Midway",                   "Space Invaders / Space Invaders M", MACHINE_SUPPORTS_SAVE, null /*layout_invaders*/);
     }
 }

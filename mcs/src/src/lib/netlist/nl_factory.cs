@@ -4,10 +4,20 @@
 using System;
 
 using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
+using mt19937_64 = mame.plib.mersenne_twister_t_uint64<  //using mt19937_64 = mersenne_twister_t<
+    //uint_fast64_t,
+    mame.u64_const_64, mame.u64_const_312, mame.u64_const_156, mame.u64_const_31,  //64, 312, 156, 31,
+    mame.u64_const_0xb5026f5aa96619e9, //0xb5026f5aa96619e9ULL,
+    mame.u64_const_29, mame.u64_const_0x5555555555555555,  //29, 0x5555555555555555ULL,
+    mame.u64_const_17, mame.u64_const_0x71d67fffeda60000,  //17, 0x71d67fffeda60000ULL,
+    mame.u64_const_37, mame.u64_const_0xfff7eee000000000,  //37, 0xfff7eee000000000ULL,
+    mame.u64_const_43,  //43,
+    mame.u64_const_6364136223846793005>;  //6364136223846793005ULL>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 
 using static mame.cpp_global;
 using static mame.netlist.nl_errstr_global;
+using static mame.nl_factory_global;
 
 
 namespace mame
@@ -191,9 +201,11 @@ namespace mame
                 else if (typeof(C) == typeof(analog.nld_D))                   return new analog.nld_D(anetlist, name);
                 else if (typeof(C) == typeof(analog.nld_opamp))               return new analog.nld_opamp(anetlist, name);
                 else if (typeof(C) == typeof(analog.nld_POT))                 return new analog.nld_POT(anetlist, name);
+                else if (typeof(C) == typeof(analog.nld_QBJT_EB))             return new analog.nld_QBJT_EB(anetlist, name);
                 else if (typeof(C) == typeof(analog.nld_QBJT_switch))         return new analog.nld_QBJT_switch(anetlist, name);
                 else if (typeof(C) == typeof(analog.nld_R))                   return new analog.nld_R(anetlist, name);
                 else if (typeof(C) == typeof(analog.nld_switch2))             return new analog.nld_switch2(anetlist, name);
+                else if (typeof(C) == typeof(analog.nld_Z))                   return new analog.nld_Z(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_74107))              return new devices.nld_74107(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_74153))              return new devices.nld_74153(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_7448))               return new devices.nld_7448(anetlist, name);
@@ -205,12 +217,16 @@ namespace mame
                 else if (typeof(C) == typeof(devices.nld_9316))               return new devices.nld_9316(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_analog_input))       return new devices.nld_analog_input(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_CD4066_GATE))        return new devices.nld_CD4066_GATE(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_clock))              return new devices.nld_clock(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_frontier))           return new devices.nld_frontier(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_gnd))                return new devices.nld_gnd(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_logic_input))        return new devices.nld_logic_input(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_mainclock))          return new devices.nld_mainclock(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_NE555))              return new devices.nld_NE555(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_netlistparams))      return new devices.nld_netlistparams(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_solver))             return new devices.nld_solver(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_sys_dsw1))           return new devices.nld_sys_dsw1(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_sys_noise<mt19937_64, plib.normal_distribution_t, plib.distribution_ops_normal>)) return new devices.nld_sys_noise<mt19937_64, plib.normal_distribution_t, plib.distribution_ops_normal>(anetlist, name);
                 else if (typeof(C) == typeof(interface_.nld_analog_callback)) { assert(args.Length == 2);  return new interface_.nld_analog_callback(anetlist, name, (nl_fptype)args[0], (interface_.nld_analog_callback.FUNC)args[1]); }
                 else if (typeof(C) == typeof(interface_.nld_logic_callback))  { assert(args.Length == 1);  return new interface_.nld_logic_callback(anetlist, name, (interface_.nld_logic_callback.FUNC)args[0]); }
                 else if (typeof(C) == typeof(nld_sound_in))                   return new nld_sound_in(anetlist, name);

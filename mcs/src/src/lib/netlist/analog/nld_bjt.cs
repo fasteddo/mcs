@@ -71,8 +71,8 @@ namespace mame.netlist
             public param_model_t_value_t m_NF;  //!< forward current emission coefficient
             param_model_t_value_t m_BR;  //!< ideal maximum reverse beta
             param_model_t_value_t m_NR;  //!< reverse current emission coefficient
-            param_model_t_value_t m_CJE; //!< B-E zero-bias depletion capacitance
-            param_model_t_value_t m_CJC; //!< B-C zero-bias depletion capacitance
+            public param_model_t_value_t m_CJE; //!< B-E zero-bias depletion capacitance
+            public param_model_t_value_t m_CJC; //!< B-C zero-bias depletion capacitance
 
 
             public bjt_model_t(param_model_t model)
@@ -259,5 +259,96 @@ namespace mame.netlist
         // nld_QBJT_EB
         // -----------------------------------------------------------------------------
         //NETLIB_OBJECT_DERIVED(QBJT_EB, QBJT)
+        public class nld_QBJT_EB : nld_QBJT
+        {
+            //NETLIB_DEVICE_IMPL_NS(analog, QBJT_EB, "QBJT_EB", "MODEL")
+            public static readonly factory.constructor_ptr_t decl_QBJT_EB = NETLIB_DEVICE_IMPL_NS<nld_QBJT_EB>("analog", "QBJT_EB", "MODEL");
+
+
+            bjt_model_t m_modacc;
+            generic_diode m_gD_BC;  //generic_diode<diode_e::BIPOLAR> m_gD_BC;
+            generic_diode m_gD_BE;  //generic_diode<diode_e::BIPOLAR> m_gD_BE;
+
+            nld_twoterm m_D_CB;  // gcc, gce - gcc, gec - gcc, gcc - gce | Ic
+            nld_twoterm m_D_EB;  // gee, gec - gee, gce - gee, gee - gec | Ie
+            nld_twoterm m_D_EC;  // 0, -gec, -gcc, 0 | 0
+
+            nl_fptype m_alpha_f;
+            nl_fptype m_alpha_r;
+
+            analog.nld_C m_CJE;  //NETLIB_SUB_UPTR(analog, C) m_CJE;
+            analog.nld_C m_CJC;  //NETLIB_SUB_UPTR(analog, C) m_CJC;
+
+
+            //NETLIB_CONSTRUCTOR(QBJT_EB)
+            public nld_QBJT_EB(object owner, string name)
+                : base(owner, name)
+            {
+                m_modacc = new bjt_model_t(m_model);
+                m_gD_BC = new generic_diode(diode_e.BIPOLAR, this, "m_D_BC");
+                m_gD_BE = new generic_diode(diode_e.BIPOLAR, this, "m_D_BE");
+                m_D_CB = new nld_twoterm(this, "m_D_CB", termhandler);
+                m_D_EB = new nld_twoterm(this, "m_D_EB", termhandler);
+                m_D_EC = new nld_twoterm(this, "m_D_EC", termhandler);
+                m_alpha_f = 0;
+                m_alpha_r = 0;
+
+
+                register_subalias("E", m_D_EB.P());   // Cathode
+                register_subalias("B", m_D_EB.N());   // Anode
+
+                register_subalias("C", m_D_CB.P());   // Cathode
+
+                connect(m_D_EB.P(), m_D_EC.P());
+                connect(m_D_EB.N(), m_D_CB.N());
+                connect(m_D_CB.P(), m_D_EC.N());
+
+                if (m_modacc.m_CJE.op() > nlconst.zero())
+                {
+                    create_and_register_subdevice(this, "m_CJE", out m_CJE);
+                    connect("B", "m_CJE.1");
+                    connect("E", "m_CJE.2");
+                }
+                if (m_modacc.m_CJC.op() > nlconst.zero())
+                {
+                    create_and_register_subdevice(this, "m_CJC", out m_CJC);
+                    connect("B", "m_CJC.1");
+                    connect("C", "m_CJC.2");
+                }
+            }
+
+
+            //NETLIB_RESETI();
+            public override void reset()
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            //NETLIB_HANDLERI(termhandler)
+            void termhandler()
+            {
+                throw new emu_unimplemented();
+                //auto *solv(m_D_EB.solver());
+                //if (solv != nullptr)
+                //    solv->solve_now();
+                //else
+                //    m_D_CB.solver()->solve_now();
+            }
+
+
+            //NETLIB_UPDATE_PARAMI();
+            public override void update_param()
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            //NETLIB_UPDATE_TERMINALSI();
+            public override void update_terminals()
+            {
+                throw new emu_unimplemented();
+            }
+        }
     }
 }

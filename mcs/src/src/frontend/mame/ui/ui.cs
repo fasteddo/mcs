@@ -54,9 +54,6 @@ namespace mame
     }
 
 
-    //typedef uint32_t (*ui_callback)(mame_ui_manager &, render_container &, uint32_t);
-
-
     enum ui_callback_type
     {
         GENERAL,
@@ -130,7 +127,7 @@ namespace mame
     // ======================> mame_ui_manager
     public class mame_ui_manager : ui_manager
     {
-        delegate uint32_t handler_callback_func(render_container container, mame_ui_manager mui);  //using handler_callback_func = std::function<uint32_t (render_container &)>;
+        delegate uint32_t handler_callback_func(render_container container, mame_ui_manager mui);  //using handler_callback_func = delegate<uint32_t (render_container &)>;
 
         //using device_feature_set = std::set<std::pair<std::string, std::string> >;
         //using session_data_map = std::map<std::type_index, std::any>;
@@ -172,12 +169,12 @@ namespace mame
 
         mame_ui_manager_session_data_map m_session_data = new mame_ui_manager_session_data_map();
 
+
         // static variables
         static string messagebox_text;
         static string messagebox_poptext;
 
         static std.vector<ui.menu_item> slider_list;
-        static slider_state slider_current;  //static slider_state     *slider_current;
 
 
         std.vector<slider_state> m_sliders;  //std::vector<std::unique_ptr<slider_state>> m_sliders;
@@ -222,7 +219,6 @@ namespace mame
             ui.system_list.instance().cache_data(options());
 
             // initialize the other UI bits
-            ui.menu.init(machine(), options());
             ui_gfx_init(machine());
 
             m_ui_colors.refresh(options());
@@ -282,14 +278,6 @@ namespace mame
 
             // initialize the on-screen display system
             slider_list = slider_init(machine);
-            if (slider_list.Count > 0)
-            {
-                slider_current = (slider_state)slider_list[0].ref_;
-            }
-            else
-            {
-                slider_current = null;
-            }
 
             // if no test switch found, assign its input sequence to a service mode DIP
             if (!m_machine_info.has_test_switch() && m_machine_info.has_dips())
@@ -325,17 +313,6 @@ namespace mame
 #endif
 
             return new std.vector<ui.menu_item>();
-        }
-
-
-        //-------------------------------------------------
-        //  set_handler - set a callback/parameter
-        //  pair for the current UI handler
-        //-------------------------------------------------
-        void set_handler(ui_callback_type callback_type, handler_callback_func callback)  //void mame_ui_manager::set_handler(ui_callback_type callback_type, const std::function<uint32_t (render_container &)> &&callback)
-        {
-            m_handler_callback = callback;
-            m_handler_callback_type = callback_type;
         }
 
 
@@ -390,7 +367,6 @@ namespace mame
 
 
             // set up event handlers
-            //using namespace std::placeholders;
             switch_code_poller poller = new switch_code_poller(machine().input());
             string warning_text = "";
             rgb_t warning_color = new rgb_t();
@@ -424,7 +400,7 @@ namespace mame
             set_handler(ui_callback_type.GENERAL, handler_ingame);
 
             // loop over states
-            for (int state = 0; state < maxstate && !machine().scheduled_event_pending() && !ui.menu.stack_has_special_main_menu(machine()); state++)
+            for (int state = 0; state < maxstate && !machine().scheduled_event_pending() && !ui.menu.stack_has_special_main_menu(this); state++)
             {
                 // default to standard colors
                 warning_color = colors().background_color();
@@ -501,7 +477,7 @@ namespace mame
                                 }
 
                                 // machine flags can cause warnings, too
-                                if ((machine_info().machine_flags_get() & machine_flags.type.NO_COCKTAIL) != 0)
+                                if ((machine_info().machine_flags_() & machine_flags.type.NO_COCKTAIL) != 0)
                                     unemulated_features.emplace(new std.pair<string, string>(machine().root_device().type().shortname(), "cocktail"));
 
                                 // if the warnings match what was shown sufficiently recently, it's skippable
@@ -557,7 +533,7 @@ namespace mame
                     config_menu = false;
 
                     // loop while we have a handler
-                    while (m_handler_callback_type == ui_callback_type.MODAL && !machine().scheduled_event_pending() && !ui.menu.stack_has_special_main_menu(machine()))
+                    while (m_handler_callback_type == ui_callback_type.MODAL && !machine().scheduled_event_pending() && !ui.menu.stack_has_special_main_menu(this))
                         machine().video().frame_update();
                 }
 
@@ -571,7 +547,7 @@ namespace mame
                 m_last_launch_time = std.chrono.system_clock.to_time_t(std.chrono.system_clock.now());  //m_last_launch_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
             // if we're the empty driver, force the menus on
-            if (ui.menu.stack_has_special_main_menu(machine()))
+            if (ui.menu.stack_has_special_main_menu(this))
             {
                 show_menu();
             }
@@ -621,7 +597,7 @@ namespace mame
             if (machine().phase() >= machine_phase.RESET && (single_step() || machine().paused()))
             {
                 int alpha = (int)((1.0f - machine().options().pause_brightness()) * 255.0f);
-                if (ui.menu.stack_has_special_main_menu(machine()))
+                if (ui.menu.stack_has_special_main_menu(this))
                     alpha = 255;
                 if (alpha > 255)
                     alpha = 255;
@@ -679,7 +655,6 @@ namespace mame
             // cancel takes us back to the ingame handler
             if (m_handler_param == UI_HANDLER_CANCEL)
             {
-                //using namespace std::placeholders;
                 set_handler(ui_callback_type.GENERAL, handler_ingame);
             }
         }
@@ -799,7 +774,14 @@ namespace mame
         //  renderer with word wrapping, justification,
         //  and full size computation
         //-------------------------------------------------
-        public void draw_text_full(render_container container, string origs, float x, float y, float origwrapwidth, ui.text_layout.text_justify justify, ui.text_layout.word_wrapping wrap, draw_mode draw, rgb_t fgcolor, rgb_t bgcolor, out float totalwidth, out float totalheight, float text_size = 1.0f)
+        public void draw_text_full(
+            render_container container,
+            string origs,
+            float x, float y, float origwrapwidth,
+            ui.text_layout.text_justify justify, ui.text_layout.word_wrapping wrap,
+            draw_mode draw, rgb_t fgcolor, rgb_t bgcolor,
+            out float totalwidth, out float totalheight,
+            float text_size = 1.0f)
         {
             // create the layout
             var layout = create_layout(container, origwrapwidth, justify, wrap);
@@ -808,7 +790,7 @@ namespace mame
             layout.add_text(
                     origs,
                     fgcolor,
-                    draw == draw_mode.OPAQUE_ ? bgcolor : rgb_t.transparent(),
+                    (draw == draw_mode.OPAQUE_) ? bgcolor : rgb_t.transparent(),
                     text_size);
 
             // and emit it (if we are asked to do so)
@@ -830,7 +812,7 @@ namespace mame
         public void draw_text_box(render_container container, string text, ui.text_layout.text_justify justify, float xpos, float ypos, rgb_t backcolor)
         {
             // cap the maximum width
-            float maximum_width = 1.0f - box_lr_border() * 2;
+            float maximum_width = 1.0f - (box_lr_border() * machine().render().ui_aspect(container) * 2.0f);
 
             // create a layout
             ui.text_layout layout = create_layout(container, maximum_width, justify);
@@ -850,17 +832,18 @@ namespace mame
         void draw_text_box(render_container container, ui.text_layout layout, float xpos, float ypos, rgb_t backcolor)
         {
             // xpos and ypos are where we want to "pin" the layout, but we need to adjust for the actual size of the payload
+            var lrborder = box_lr_border() * machine().render().ui_aspect(container);
             var actual_left = layout.actual_left();
             var actual_width = layout.actual_width();
             var actual_height = layout.actual_height();
-            var x = std.clamp(xpos - actual_width / 2, box_lr_border(), 1.0f - actual_width - box_lr_border());
+            var x = std.clamp(xpos - actual_width / 2, lrborder, 1.0f - actual_width - lrborder);
             var y = std.clamp(ypos - actual_height / 2, box_tb_border(), 1.0f - actual_height - box_tb_border());
 
             // add a box around that
             draw_outlined_box(
                     container,
-                    x - box_lr_border(), y - box_tb_border(),
-                    x + actual_width + box_lr_border(), y + actual_height + box_tb_border(),
+                    x - lrborder, y - box_tb_border(),
+                    x + actual_width + lrborder, y + actual_height + box_tb_border(),
                     backcolor);
 
             // emit the text
@@ -970,8 +953,8 @@ namespace mame
         //-------------------------------------------------
         public void show_menu()
         {
-            //using namespace std::placeholders;
-            set_handler(ui_callback_type.MENU, ui.menu.ui_handler);  //, _1, std::ref_(this)));
+            var handler = ui.menu.get_ui_handler(this);
+            set_handler(ui_callback_type.MENU, (x, y) => { return handler(x, y); });
         }
 
 
@@ -1068,11 +1051,15 @@ namespace mame
         //-------------------------------------------------
         public void request_quit()
         {
-            //using namespace std::placeholders;
             if (!machine().options().confirm_quit())
+            {
                 machine().schedule_exit();
+            }
             else
-                set_handler(ui_callback_type.GENERAL, handler_confirm_quit);
+            {
+                show_menu();
+                ui.menu.stack_push(new ui.menu_confirm_quit(this, machine().render().ui_container()));
+            }
         }
 
 
@@ -1087,36 +1074,6 @@ namespace mame
                     0.0f, 0.0f, 1.0f,
                     ui.text_layout.text_justify.RIGHT, ui.text_layout.word_wrapping.WORD,
                     draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(), out _, out _);
-        }
-
-
-        //-------------------------------------------------
-        //  draw_timecode_counter
-        //-------------------------------------------------
-        void draw_timecode_counter(render_container container)
-        {
-            string tempstring;
-            draw_text_full(
-                    container,
-                    machine().video().timecode_text(out tempstring),
-                    0.0f, 0.0f, 1.0f,
-                    ui.text_layout.text_justify.RIGHT, ui.text_layout.word_wrapping.WORD,
-                    draw_mode.OPAQUE_, new rgb_t(0xf0, 0xf0, 0x10, 0x10), rgb_t.black(), out _, out _);
-        }
-
-
-        //-------------------------------------------------
-        //  draw_timecode_total
-        //-------------------------------------------------
-        void draw_timecode_total(render_container container)
-        {
-            string tempstring;
-            draw_text_full(
-                    container,
-                    machine().video().timecode_total_text(out tempstring),
-                    0.0f, 0.0f, 1.0f,
-                    ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD,
-                    draw_mode.OPAQUE_, new rgb_t(0xf0, 0x10, 0xf0, 0x10), rgb_t.black(), out _, out _);
         }
 
 
@@ -1211,7 +1168,7 @@ namespace mame
 
         protected override void menu_reset()
         {
-            ui.menu.stack_reset(machine());
+            ui.menu.stack_reset(this);
         }
 
 
@@ -1226,9 +1183,14 @@ namespace mame
         //    assert(result);
         //    return *result;
         //}
-        public Data get_session_data<Data>(Type owner, Data data)
+        public Data get_session_data<Data>(Type owner, Func<Data> dataFunc)
         {
-            var ins = m_session_data.try_emplace(owner, data);
+            var found = m_session_data.find(owner);
+            if (found != default)
+                return (Data)found;
+
+            var data = dataFunc();
+            m_session_data.emplace(owner, data);
             return data;
         }
 
@@ -1252,14 +1214,6 @@ namespace mame
 
             if (show_fps_counter())
                 draw_fps_counter(container);
-
-            // Show the duration of current part (intro or gameplay or extra)
-            if (show_timecode_counter())
-                draw_timecode_counter(container);
-
-            // Show the total time elapsed for the video preview (all parts intro, gameplay, extras)
-            if (show_timecode_total())
-                draw_timecode_total(container);
 
             // draw the profiler if visible
             if (show_profiler())
@@ -1307,10 +1261,6 @@ namespace mame
 
             image_handler_ingame();
 
-            // handle a save input timecode request
-            if (machine().ui_input().pressed((int)ioport_type.IPT_UI_TIMECODE))
-                machine().video().save_input_timecode();
-
             if (ui_disabled)
                 return ui_disabled ? 1U : 0U;
 
@@ -1330,8 +1280,9 @@ namespace mame
             // if the on-screen display isn't up and the user has toggled it, turn it on
             if ((machine().debug_flags & DEBUG_FLAG_ENABLED) == 0 && machine().ui_input().pressed((int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY))
             {
-                //using namespace std::placeholders;
-                set_handler(ui_callback_type.MENU, ui.menu_sliders.ui_handler);  //, _1, std::ref_(*this)));
+                ui.menu.stack_push(new ui.menu_sliders(this, machine().render().ui_container(), true));
+                var handler = ui.menu.get_ui_handler(this);
+                set_handler(ui_callback_type.MENU, (x, y) => { return handler(x, y); });
                 return 1;
             }
 
@@ -1348,7 +1299,14 @@ namespace mame
                     machine().pause();
 
                 //using namespace std::placeholders;
-                set_handler(ui_callback_type.VIEWER, ui_gfx_ui_handler);  //, _1, std::ref_(*this), is_paused));
+                set_handler(
+                        ui_callback_type.VIEWER,
+                        //handler_callback_func(
+                            (render_container container2, mame_ui_manager mui2) =>  //[this, is_paused] (render_container &container) -> uint32_t
+                            {
+                                return ui_gfx_ui_handler(container2, this, is_paused);
+                            });
+
                 return is_paused ? 1U : 0U;
             }
 
@@ -1462,46 +1420,6 @@ namespace mame
         }
 
 
-        //-------------------------------------------------
-        //  handler_confirm_quit - leads the user through
-        //  confirming quit emulation
-        //-------------------------------------------------
-        uint32_t handler_confirm_quit(render_container container, mame_ui_manager mui)
-        {
-            uint32_t state = 0;
-
-            // get the text for 'UI Select'
-            string ui_select_text = get_general_input_setting(ioport_type.IPT_UI_SELECT);
-
-            // get the text for 'UI Cancel'
-            string ui_cancel_text = get_general_input_setting(ioport_type.IPT_UI_CANCEL);
-
-            // assemble the quit message
-            string quit_message = string_format(
-                    __("Are you sure you want to quit?\n\n" +
-                    "Press ''{0}'' to quit,\n" +  //"Press ''%1$s'' to quit,\n" +
-                    "Press ''{1}'' to return to emulation."),  //"Press ''%2$s'' to return to emulation."),
-                    ui_select_text,
-                    ui_cancel_text);
-
-            draw_text_box(container, quit_message, ui.text_layout.text_justify.CENTER, 0.5f, 0.5f, UI_RED_COLOR);
-            machine().pause();
-
-            // if the user press ENTER, quit the game
-            if (machine().ui_input().pressed((int)ioport_type.IPT_UI_SELECT))
-                machine().schedule_exit();
-
-            // if the user press ESC, just continue
-            else if (machine().ui_input().pressed((int)ioport_type.IPT_UI_CANCEL))
-            {
-                machine().resume();
-                state = UI_HANDLER_CANCEL;
-            }
-
-            return state;
-        }
-
-
         // private methods
 
         //-------------------------------------------------
@@ -1510,6 +1428,17 @@ namespace mame
         void update_target_font_height()
         {
             m_target_font_height = 1.0f / options().font_rows();
+        }
+
+
+        //-------------------------------------------------
+        //  set_handler - set a callback/parameter
+        //  pair for the current UI handler
+        //-------------------------------------------------
+        void set_handler(ui_callback_type callback_type, handler_callback_func callback)  //void set_handler(ui_callback_type callback_type, handler_callback_func &&callback);
+        {
+            m_handler_callback = callback;
+            m_handler_callback_type = callback_type;
         }
 
 

@@ -13,7 +13,6 @@ namespace mame.ui
         device_image_interface selected_device;
 
         string m_warnings;
-        bool m_curr_selected;
 
 
         //-------------------------------------------------
@@ -23,15 +22,10 @@ namespace mame.ui
             : base(mui, container)
         {
             selected_device = null;
+            m_warnings = warnings != null ? warnings : "";
 
-            // This warning string is used when accessing from the force_file_manager call, i.e.
+            // The warning string is used when accessing from the force_file_manager call, i.e.
             // when the file manager is loaded top front in the case of mandatory image devices
-            if (!string.IsNullOrEmpty(warnings))
-                m_warnings = warnings;
-            else
-                m_warnings = "";
-
-            m_curr_selected = false;
         }
 
         //~menu_file_manager() { }
@@ -40,14 +34,9 @@ namespace mame.ui
         // force file manager menu
         public static void force_file_manager(mame_ui_manager mui, render_container container, string warnings)
         {
-            // reset the menu stack
-            stack_reset(mui.machine());
-
-            // add the quit entry followed by the game select entry
-            stack_push_special_main(new menu_quit_game(mui, container));
-            stack_push(new menu_file_manager(mui, container, warnings));
-
-            // force the menus on
+            // drop any existing menus and start the file manager
+            menu.stack_reset(mui);
+            menu.stack_push_special_main(new menu_file_manager(mui, container, warnings));
             mui.show_menu();
 
             // make sure MAME is paused
@@ -67,7 +56,7 @@ namespace mame.ui
         //-------------------------------------------------
         //  handle
         //-------------------------------------------------
-        protected override void handle()
+        protected override void handle(event_ ev)
         {
             throw new emu_unimplemented();
         }

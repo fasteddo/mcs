@@ -145,6 +145,10 @@ namespace mame.netlist
 
         //#define OPTIMIZE_FRONTIER(attach, r_in, r_out)                                  \
         //        setup.register_frontier(# attach, PSTRINGIFY_VA(r_in), PSTRINGIFY_VA(r_out));
+        public static void OPTIMIZE_FRONTIER(nlparse_t setup, string attach, double r_in, double r_out)
+        {
+            setup.register_frontier(attach, r_in.ToString(), r_out.ToString());
+        }
 
 
         // -----------------------------------------------------------------------------
@@ -250,6 +254,7 @@ namespace mame.netlist
         public void EXTERNAL_LIB_ENTRY(string name, nlsetup_func netlist_name) { nl_setup_global.EXTERNAL_LIB_ENTRY(helper_setup, name, netlist_name); }
         public void INCLUDE(string name) { nl_setup_global.INCLUDE(helper_setup, name); }
         public void SUBMODEL(string model, string name) { nl_setup_global.SUBMODEL(helper_setup, model, name); }
+        public void OPTIMIZE_FRONTIER(string attach, double r_in, double r_out) { nl_setup_global.OPTIMIZE_FRONTIER(helper_setup, attach, r_in, r_out); }
         public void TRUTHTABLE_START(netlist.nlparse_t setup, string cname, unsigned in_, unsigned out_, string pdef_params) { helper_setup_push(setup);  nl_setup_global.TRUTHTABLE_START(cname, in_, out_, pdef_params, out m_helper_desc, out m_helper_sloc, out m_helper_def_params); }
         public void TT_HEAD(string x) { nl_setup_global.TT_HEAD(m_helper_desc, x); }
         public void TT_LINE(string x) { nl_setup_global.TT_LINE(m_helper_desc, x); }
@@ -259,13 +264,19 @@ namespace mame.netlist
 
 
         // nld_devinc
-        public void OPAMP(string name, string val) { nld_devinc_global.OPAMP(helper_setup, name, val); }
-        public void RES(string name, double val) { nld_devinc_global.RES(helper_setup, name, val); }
-        public void POT(string name, double val) { nld_devinc_global.POT(helper_setup, name, val); }
-        public void CAP(string name, double val) { nld_devinc_global.CAP(helper_setup, name, val); }
+        public void QBJT_EB(string name, string MODEL) { nld_devinc_global.QBJT_EB(helper_setup, name, MODEL); }
+        public void OPAMP(string name, string MODEL) { nld_devinc_global.OPAMP(helper_setup, name, MODEL); }
+        public void RES(string name, double R) { nld_devinc_global.RES(helper_setup, name, R); }
+        public void POT(string name, double R) { nld_devinc_global.POT(helper_setup, name, R); }
+        public void CAP(string name, double C) { nld_devinc_global.CAP(helper_setup, name, C); }
+        public void ZDIODE(string name, string MODEL) { nld_devinc_global.ZDIODE(helper_setup, name, MODEL); }
         public void CD4066_GATE(string name) { nld_devinc_global.CD4066_GATE(helper_setup, name); }
-        public void ANALOG_INPUT(string name, double val) { nld_devinc_global.ANALOG_INPUT(helper_setup, name, val); }
-        public void TTL_INPUT(string name, double val) { nld_devinc_global.TTL_INPUT(helper_setup, name, val); }
+        public void ANALOG_INPUT(string name, double IN) { nld_devinc_global.ANALOG_INPUT(helper_setup, name, IN); }
+        public void CLOCK(string name, double FREQ) { nld_devinc_global.CLOCK(helper_setup, name, FREQ); }
+        public void SYS_DSW(string name, string I, string _1, string _2) { nld_devinc_global.SYS_DSW(helper_setup, name, I, _1, _2); }
+        public void SYS_NOISE_MT_N(string name, double SIGMA) { nld_devinc_global.SYS_NOISE_MT_N(helper_setup, name, SIGMA); }
+        public void LOGIC_INPUT(string name, double IN, string MODEL) { nld_devinc_global.LOGIC_INPUT(helper_setup, name, IN, MODEL); }
+        public void TTL_INPUT(string name, double IN) { nld_devinc_global.TTL_INPUT(helper_setup, name, IN); }
         public void UA741_DIP8(string name) { nld_devinc_global.UA741_DIP8(helper_setup, name); }
     }
 
@@ -588,7 +599,41 @@ namespace mame.netlist
         }
 
 
-        //void register_frontier(const pstring &attach, const pstring &r_IN, const pstring &r_OUT);
+        public void register_frontier(string attach, string r_IN, string r_OUT)
+        {
+            string frontier_name = new plib.pfmt("frontier_{0}").op(m_frontier_cnt);
+            m_frontier_cnt++;
+            register_dev("FRONTIER_DEV", frontier_name);
+            register_param(frontier_name + ".RIN", r_IN);
+            register_param(frontier_name + ".ROUT", r_OUT);
+            register_link(frontier_name + ".G", "GND");
+            string attfn = build_fqn(attach);
+            string front_fqn = build_fqn(frontier_name);
+            bool found = false;
+            for (int i = 0; i < m_abstract.m_links.Count; i++)  //for (auto & link  : m_abstract.m_links)
+            {
+                var link = m_abstract.m_links[i];
+
+                if (link.first == attfn)
+                {
+                    m_abstract.m_links[i] = new abstract_t_link_t(front_fqn + ".I", link.second);  //link.first = front_fqn + ".I";
+                    found = true;
+                }
+                else if (link.second == attfn)
+                {
+                    m_abstract.m_links[i] = new abstract_t_link_t(link.first, front_fqn + ".I");  //link.second = front_fqn + ".I";
+                    found = true;
+                }
+            }
+
+            if (!found)
+            {
+                log().fatal.op(MF_FOUND_NO_OCCURRENCE_OF_1(attach));
+                throw new nl_exception(MF_FOUND_NO_OCCURRENCE_OF_1(attach));
+            }
+
+            register_link(attach, frontier_name + ".Q");
+        }
 
 
         // register a source

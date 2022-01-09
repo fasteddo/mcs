@@ -867,7 +867,7 @@ namespace mame
         {
             /* video extensions */
             common_init(null, frogger_draw_background, frogger_extend_tile_info, frogger_extend_sprite_info);
-            m_frogger_adjust = 1; //true;
+            m_frogger_adjust = true;
 
             /* decrypt */
             decode_frogger_sound();

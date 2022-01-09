@@ -144,6 +144,8 @@ namespace mame.ui
 
         public override void Dispose()
         {
+            base.Dispose();
+
             //string error_string;
             string last_driver = "";
             ui_system_info system;
@@ -174,18 +176,19 @@ namespace mame.ui
         //-------------------------------------------------
         public static void force_game_select(mame_ui_manager mui, render_container container)
         {
-            // reset the menu stack
-            stack_reset(mui.machine());
-
-            // add the quit entry followed by the game select entry
-            stack_push_special_main(new menu_quit_game(mui, container));
-            stack_push(new menu_select_game(mui, container, null));
-
-            // force the menus on
+            // drop any existing menus and start the system selection menu
+            menu.stack_reset(mui);
+            menu.stack_push_special_main(new menu_select_game(mui, container, null));
             mui.show_menu();
 
             // make sure MAME is paused
             mui.machine().pause();
+        }
+
+
+        protected override void menu_activated()
+        {
+            throw new emu_unimplemented();
         }
 
 
@@ -195,10 +198,14 @@ namespace mame.ui
                 icon.second().texture = null;  //icon.second().texture.reset();
 
             set_switch_image();
+            bool have_prev_selected = false;
             int old_item_selected = -1;
 
             if (!isfavorite())
             {
+                if (m_populated_favorites)
+                    m_prev_selected = null;
+
                 m_populated_favorites = false;
                 m_displaylist.clear();
                 machine_filter flt = m_persistent_data.filter_data().get_current_filter();
@@ -251,22 +258,27 @@ namespace mame.ui
                 int curitem = 0;
                 foreach (ui_system_info elem in m_displaylist)
                 {
-                    if (old_item_selected == -1 && elem.driver.name == reselect_last.driver())
+                    have_prev_selected = have_prev_selected || (elem == m_prev_selected);
+                    if ((old_item_selected == -1) && (elem.driver.name == reselect_last.driver()))
                         old_item_selected = curitem;
 
-                    item_append(elem.description, elem.is_clone ? (FLAGS_UI | FLAG_INVERT) : FLAGS_UI, elem);
+                    item_append(elem.description, elem.is_clone ? FLAG_INVERT : 0, elem);
                     curitem++;
                 }
             }
             else
             {
                 // populate favorites list
+                if (!m_populated_favorites)
+                    m_prev_selected = null;
                 m_populated_favorites = true;
                 m_search = "";  //m_search.clear();
                 int curitem = 0;
 
-                mame_machine_manager.instance().favorite().apply_sorted((info) =>
+                mame_machine_manager.instance().favorite().apply_sorted(
+                (info) =>  //[this, &have_prev_selected, &old_item_selected, curitem = 0] (ui_software_info const &info) mutable
                 {
+                    have_prev_selected = have_prev_selected || (info == (ui_software_info)m_prev_selected);
                     if (info.startempty != 0)
                     {
                         if (old_item_selected == -1 && info.shortname == reselect_last.driver())
@@ -276,19 +288,20 @@ namespace mame.ui
                         if (cloneof)
                         {
                             int cx = driver_list.find(info.driver.parent);
-                            if (cx != -1 && ((driver_list.driver((size_t)cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0))
+                            if ((0 <= cx) && ((driver_list.driver((size_t)cx).flags & machine_flags.type.IS_BIOS_ROOT) != 0))
                                 cloneof = false;
                         }
 
-                        item_append(info.longname, cloneof ? (FLAGS_UI | FLAG_INVERT) : FLAGS_UI, info);
+                        item_append(info.longname, cloneof ? FLAG_INVERT : 0, info);
                     }
                     else
                     {
                         if (old_item_selected == -1 && info.shortname == reselect_last.driver())
                             old_item_selected = curitem;
 
-                        item_append(info.longname, info.devicetype, info.parentname.empty() ? FLAGS_UI : (FLAG_INVERT | FLAGS_UI), info);
+                        item_append(info.longname, info.devicetype, info.parentname.empty() ? 0 : FLAG_INVERT, info);
                     }
+
                     curitem++;
                 });
             }
@@ -296,10 +309,13 @@ namespace mame.ui
             // add special items
             if (stack_has_special_main_menu())
             {
-                item_append(menu_item_type.SEPARATOR, FLAGS_UI);
-                item_append("Configure Options", FLAGS_UI, CONF_OPTS);
-                item_append("Configure Machine", FLAGS_UI, CONF_MACHINE);
+                item_append(menu_item_type.SEPARATOR, 0);
+                item_append(__("Configure Options"), 0, CONF_OPTS);
+                item_append(__("Configure Machine"), 0, CONF_MACHINE);
                 skip_main_items = 3;
+
+                if (m_prev_selected != null && !have_prev_selected)
+                    m_prev_selected = item(0).ref_();
             }
             else
             {
@@ -349,27 +365,16 @@ namespace mame.ui
         //-------------------------------------------------
         //  handle
         //-------------------------------------------------
-        protected override void handle()
+        protected override void handle(event_ ev)
         {
-            if (m_prev_selected == null)
-                m_prev_selected = item(0).ref_;
-
-            // if I have to load datfile, perform a hard reset
-            if (ui_globals.reset)
-            {
-                // dumb workaround for not being able to add an exit notifier
-                //struct cache_reset { ~cache_reset() { system_list::instance().reset_cache(); } };
-                ui().get_session_data(typeof(cache_reset), new cache_reset());  //ui().get_session_data<cache_reset, cache_reset>();
-
-                ui_globals.reset = false;
-                machine().schedule_hard_reset();
-                stack_reset();
-                return;
-            }
+            if (m_prev_selected != null)
+                m_prev_selected = item(0).ref_();
 
             // if I have to reselect a software, force software list submenu
             if (reselect_last.get())
             {
+                // FIXME: this is never hit, need a better way to return to software selection if necessary
+
                 ui_system_info system;
                 ui_software_info software;
                 get_selection(out software, out system);
@@ -381,20 +386,18 @@ namespace mame.ui
                 return;
             }
 
-            // ignore pause keys by swallowing them before we process the menu
-            machine().ui_input().pressed((int)ioport_type.IPT_UI_PAUSE);
+            // FIXME: everything above here used to run before events were processed
 
             // process the menu
-            menu_event menu_event = process(PROCESS_LR_REPEAT);
-            if (menu_event != null)
+            if (ev != null)
             {
                 if (dismiss_error())
                 {
-                    // reset the error on any future menu_event
+                    // reset the error on any subsequent menu event
                 }
                 else
                 {
-                switch (menu_event.iptkey)
+                switch (ev.iptkey)
                 {
                 case (int)ioport_type.IPT_UI_UP:
                     if ((get_focus() == focused_menu.LEFT) && ((int)machine_filter.type.FIRST < m_filter_highlight))
@@ -425,17 +428,17 @@ namespace mame.ui
                     break;
 
                 default:
-                    if (menu_event.itemref != null)
+                    if (ev.itemref != null)
                     {
-                        switch (menu_event.iptkey)
+                        switch (ev.iptkey)
                         {
                         case (int)ioport_type.IPT_UI_SELECT:
                             if (get_focus() == focused_menu.MAIN)
                             {
                                 if (m_populated_favorites)
-                                    inkey_select_favorite(menu_event);
+                                    inkey_select_favorite(ev);
                                 else
-                                    inkey_select(menu_event);
+                                    inkey_select(ev);
                             }
                             break;
 
@@ -527,7 +530,7 @@ namespace mame.ui
             if (m_populated_favorites)
             {
                 software = (ui_software_info)get_selection_ptr();
-                system = m_persistent_data.systems()[driver_list.find(software.driver.name)];
+                system = software != null ? m_persistent_data.systems()[driver_list.find(software.driver.name)] : null;
             }
             else
             {
@@ -601,7 +604,7 @@ namespace mame.ui
                                 }
                             }
                             m_persistent_data.filter_data().set_current_filter_type(new_type);
-                            reset(reset_options.SELECT_FIRST);
+                            reset(reset_options.REMEMBER_REF);
                         });
             }
         }
@@ -856,7 +859,7 @@ namespace mame.ui
         //-------------------------------------------------
         //  handle select key event
         //-------------------------------------------------
-        void inkey_select(menu_event menu_event)
+        void inkey_select(event_ menu_event)
         {
             var system = (ui_system_info)menu_event.itemref;
             int driverint = menu_event.itemref is int ? (int)menu_event.itemref : -1;
@@ -900,7 +903,7 @@ namespace mame.ui
                 media_auditor.summary summary = auditor.audit_media(media_auditor.AUDIT_VALIDATE_FAST);
 
 
-                // EDF - always pass audit
+                // MCS - always pass audit
                 //throw new emu_unimplemented();
                 summary = media_auditor.summary.CORRECT;
 
@@ -923,7 +926,7 @@ namespace mame.ui
         //-------------------------------------------------
         //  handle select key event for favorites menu
         //-------------------------------------------------
-        void inkey_select_favorite(menu_event menu_event)
+        void inkey_select_favorite(event_ menu_event)
         {
             ui_software_info ui_swinfo = (ui_software_info)menu_event.itemref;
             int ui_swinfoint = (int)menu_event.itemref;

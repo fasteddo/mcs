@@ -28,7 +28,9 @@ using static mame.emuopts_global;
 using static mame.inpttype_global;
 using static mame.inputdev_global;
 using static mame.ioport_global;
+using static mame.ioport_input_string_helper;
 using static mame.ioport_internal;
+using static mame.ioport_ioport_type_helper;
 using static mame.osdcomm_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;
@@ -349,7 +351,6 @@ namespace mame
             IPT_UI_FAST_FORWARD,
             IPT_UI_SHOW_FPS,
             IPT_UI_SNAPSHOT,
-            IPT_UI_TIMECODE,
             IPT_UI_RECORD_MNG,
             IPT_UI_RECORD_AVI,
             IPT_UI_TOGGLE_CHEAT,
@@ -782,6 +783,7 @@ namespace mame
         string m_name;             // user-friendly name
         std.array<input_seq, size_t_const_SEQ_TYPE_TOTAL> m_defseq = new std.array<input_seq, size_t_const_SEQ_TYPE_TOTAL>(); // default input sequence
         std.array<input_seq, size_t_const_SEQ_TYPE_TOTAL> m_seq = new std.array<input_seq, size_t_const_SEQ_TYPE_TOTAL>(); // currently configured sequences
+        //std::array<std::string, SEQ_TYPE_TOTAL> m_cfg;      // configuration strings
 
 
         // construction/destruction
@@ -828,6 +830,7 @@ namespace mame
         public string name() { return m_name; }
         input_seq defseq(input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD) { return m_defseq[(int)seqtype]; }
         public input_seq seq(input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD) { return m_seq[(int)seqtype]; }
+        //const std::string &cfg(input_seq_type seqtype = SEQ_TYPE_STANDARD) const noexcept { return m_cfg[seqtype]; }
 
 
         // setters
@@ -835,6 +838,7 @@ namespace mame
         public void restore_default_seq() { m_seq = m_defseq; }
 
         //void set_seq(input_seq_type seqtype, const input_seq &seq) noexcept { m_seq[seqtype] = seq; }
+        //template <typename... T> void set_cfg(input_seq_type seqtype, T &&... cfg) { m_cfg[seqtype].assign(std::forward<T>(cfg)...); }
         //void replace_code(input_code oldcode, input_code newcode) noexcept;
         //void configure_osd(const char *token, const char *name);
 
@@ -1168,7 +1172,7 @@ namespace mame
         public const int ANALOG_FLAG_REVERSE = 0x0010;    // analog only: reverse the sense of the axis
         const int ANALOG_FLAG_RESET =   0x0020;    // analog only: always preload in->default for relative axes, returning only deltas
         const int ANALOG_FLAG_WRAPS =   0x0040;    // analog only: positional count wraps around
-        const int ANALOG_FLAG_INVERT =  0x0080;    // analog only: bitwise invert bits
+        public const int ANALOG_FLAG_INVERT =  0x0080;    // analog only: bitwise invert bits
 
 
         // internal state
@@ -1208,7 +1212,7 @@ namespace mame
         float m_crosshair_altaxis;// crosshair alternate axis value
         ioport_field_crossmap_delegate m_crosshair_mapper; // crosshair mapping function
         public u16 m_full_turn_count;  // number of optical counts for 1 full turn of the original control
-        ioport_value [] m_remap_table;  //const ioport_value *        m_remap_table;      // pointer to an array that remaps the port value
+        public ioport_value [] m_remap_table;  //const ioport_value *        m_remap_table;      // pointer to an array that remaps the port value
 
         // data relevant to other specific types
         public u8 m_way;              // digital joystick 2/4/8-way descriptions
@@ -1347,16 +1351,12 @@ namespace mame
         //-------------------------------------------------
         public input_seq seq(input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD)
         {
-            // if no live state, return default
-            if (m_live == null)
-                return defseq(seqtype);
+            // if the sequence is not the special default code, return it
+            if (m_live != null && !m_live.seq[(int)seqtype].is_default())
+                return m_live.seq[(int)seqtype];
 
-            // if the sequence is the special default code, return the expanded default value
-            if (m_live.seq[(int)seqtype].is_default())
-                return manager().type_seq(m_type, m_player, seqtype);
-
-            // otherwise, return the sequence as-is
-            return m_live.seq[(int)seqtype];
+            // otherwise return the default sequence
+            return defseq(seqtype);
         }
 
         //-------------------------------------------------
@@ -1382,14 +1382,8 @@ namespace mame
         //-------------------------------------------------
         void set_defseq(input_seq_type seqtype, input_seq newseq)
         {
-            bool was_changed = seq(seqtype) != defseq(seqtype);
-
             // set the new sequence
             m_seq[(int)seqtype] = newseq;
-
-            // also update live state unless previously customized
-            if (m_live != null && !was_changed)
-                m_live.seq[(int)seqtype] = newseq;
         }
 
         public bool has_dynamic_read() { return m_read != null; }
@@ -1761,6 +1755,7 @@ namespace mame
         {
             ioport_value    value = 0;              // for DIP switches
             input_seq       seq[SEQ_TYPE_TOTAL];    // sequences of all types
+            std::string     cfg[SEQ_TYPE_TOTAL];    // configuration strings of all types
             s32             sensitivity = 0;        // for analog controls
             s32             delta = 0;              // for analog controls
             s32             centerdelta = 0;        // for analog controls
@@ -1876,6 +1871,7 @@ namespace mame
         public digital_joystick.direction_t joydir;       // digital joystick direction index
         public bool lockout;            // user lockout
         public string name;               // overridden name
+        //std::string             cfg[SEQ_TYPE_TOTAL];// configuration strings
 
 
         // construction/destruction
@@ -2508,7 +2504,7 @@ namespace mame
             input_item_class itemclass;
             s32 rawvalue = machine.input().seq_axis_value(m_field.seq(input_seq_type.SEQ_TYPE_STANDARD), out itemclass);
 
-            // use programmatically set value if avaiable
+            // use programmatically set value if available
             if (m_was_written)
             {
                 m_was_written = false;
@@ -2518,7 +2514,23 @@ namespace mame
             // if we got an absolute input, it overrides everything else
             if (itemclass == input_item_class.ITEM_CLASS_ABSOLUTE)
             {
-                if (m_previousanalog != rawvalue)
+                if (!m_absolute && m_positionalscale == 0)
+                {
+                    // if port is relative, we use the value to simulate the speed of relative movement
+                    // sensitivity adjustment is allowed for this mode
+                    if (rawvalue != 0)
+                    {
+                        if (m_field.analog_reset())
+                            m_accum = rawvalue / 8;
+                        else
+                            m_accum += rawvalue / 8;
+
+                        // do not bother with other control types if the analog data is changing
+                        m_lastdigital = false;
+                        return;
+                    }
+                }
+                else if (m_previousanalog != rawvalue)
                 {
                     // only update if analog value changed
                     m_previousanalog = rawvalue;
@@ -2531,8 +2543,10 @@ namespace mame
                         // if port is absolute, then just return the absolute data supplied
                         m_accum = apply_inverse_sensitivity(rawvalue);
                     }
-                    else if (m_positionalscale != 0)
+                    else
                     {
+                        assert(m_positionalscale != 0); // only way to get here due to previous if
+
                         // if port is positional, we will take the full analog control and divide it
                         // into positions, that way as the control is moved full scale,
                         // it moves through all the positions
@@ -2542,22 +2556,10 @@ namespace mame
                         rawvalue = std.min(rawvalue, m_maximum);
                         m_accum = apply_inverse_sensitivity(rawvalue);
                     }
-                    else
-                    {
-                        // if port is relative, we use the value to simulate the speed of relative movement
-                        // sensitivity adjustment is allowed for this mode
-                        m_accum += rawvalue;
-                    }
 
-                    m_lastdigital = false;
                     // do not bother with other control types if the analog data is changing
+                    m_lastdigital = false;
                     return;
-                }
-                else
-                {
-                    // we still have to update fake relative from joystick control
-                    if (!m_absolute && m_positionalscale == 0)
-                        m_accum += rawvalue;
                 }
             }
 
@@ -2626,9 +2628,9 @@ namespace mame
                 s32 center = apply_inverse_sensitivity(m_center);
                 if (m_lastdigital && !keypressed)
                 {
-                    // autocenter from positive values
                     if (m_accum >= center)
                     {
+                        // autocenter from positive values
                         m_accum -= apply_scale(m_centerdelta, m_keyscalepos);
                         if (m_accum < center)
                         {
@@ -2636,10 +2638,9 @@ namespace mame
                             m_lastdigital = false;
                         }
                     }
-
-                    // autocenter from negative values
                     else
                     {
+                        // autocenter from negative values
                         m_accum += apply_scale(m_centerdelta, m_keyscaleneg);
                         if (m_accum > center)
                         {
@@ -2899,9 +2900,6 @@ namespace mame
         util.read_stream m_playback_stream;  //util::read_stream::ptr  m_playback_stream;      // playback stream (nullptr if not recording)
         u64 m_playback_accumulated_speed; // accumulated speed during playback
         u32 m_playback_accumulated_frames; // accumulated frames during playback
-        emu_file m_timecode_file;        // timecode/frames playback file (nullptr if not recording)
-        int m_timecode_count;
-        attotime m_timecode_last_time;
 
         // storage for inactive configuration
         util.xml.file m_deselected_card_config;  //std::unique_ptr<util::xml::file> m_deselected_card_config;
@@ -2922,9 +2920,6 @@ namespace mame
             m_playback_file = new emu_file(machine.options().input_directory(), OPEN_FLAG_READ);
             m_playback_accumulated_speed = 0;
             m_playback_accumulated_frames = 0;
-            m_timecode_file = new emu_file(machine.options().input_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-            m_timecode_count = 0;
-            m_timecode_last_time = attotime.zero;
             m_deselected_card_config = null;
 
 
@@ -3017,7 +3012,6 @@ namespace mame
             // open playback and record files if specified
             time_t basetime = playback_init();
             record_init();
-            timecode_init();
 
             return basetime;
         }
@@ -3280,7 +3274,6 @@ namespace mame
             // close any playback or recording files
             playback_end();
             record_end();
-            timecode_end();
         }
 
 
@@ -3319,9 +3312,9 @@ namespace mame
             throw new emu_unimplemented();
         }
 
-        //bool load_default_config(int type, int player, const input_seq (&newseq)[SEQ_TYPE_TOTAL]);
-        //bool load_controller_config(util::xml::data_node const &portnode, int type, int player, const input_seq (&newseq)[SEQ_TYPE_TOTAL]);
-        //void load_system_config(util::xml::data_node const &portnode, int type, int player, const input_seq (&newseq)[SEQ_TYPE_TOTAL]);
+        //bool load_default_config(int type, int player, const std::pair<input_seq, char const *> (&newseq)[SEQ_TYPE_TOTAL]);
+        //bool load_controller_config(util::xml::data_node const &portnode, int type, int player, const std::pair<input_seq, char const *> (&newseq)[SEQ_TYPE_TOTAL]);
+        //void load_system_config(util::xml::data_node const &portnode, int type, int player, const std::pair<input_seq, char const *> (&newseq)[SEQ_TYPE_TOTAL]);
 
         //-------------------------------------------------
         //  save_config - config callback for saving input
@@ -3336,7 +3329,6 @@ namespace mame
             throw new emu_unimplemented();
         }
 
-        //void save_sequence(xml_data_node *parentnode, input_seq_type type, ioport_type porttype, const input_seq &seq);
         //bool save_this_input_field_type(ioport_type type);
         //void save_default_inputs(xml_data_node *parentnode);
         //void save_game_inputs(xml_data_node *parentnode);
@@ -3556,102 +3548,6 @@ namespace mame
                 speedBuf.SetUInt32(0, (UInt32)(machine().video().speed_percent() * (double)(1 << 20)));
                 record_write(speedBuf);
             }
-
-            if (m_timecode_file.is_open() && machine().video().get_timecode_write())
-            {
-                // Display the timecode
-                m_timecode_count++;
-                string current_time_str = string_format("{0}:{1}:{2}.{3}",  //"%02d:%02d:%02d.%03d",
-                        (int)curtime.seconds() / (60 * 60),
-                        (curtime.seconds() / 60) % 60,
-                        curtime.seconds() % 60,
-                        (int)(curtime.attoseconds() / ATTOSECONDS_PER_MILLISECOND));
-
-                // Elapsed from previous timecode
-                attotime elapsed_time = curtime - m_timecode_last_time;
-                m_timecode_last_time = curtime;
-                string elapsed_time_str = string_format("{0}:{1}:{2}.{3}",  //"%02d:%02d:%02d.%03d",
-                        elapsed_time.seconds() / (60 * 60),
-                        (elapsed_time.seconds() / 60) % 60,
-                        elapsed_time.seconds() % 60,
-                        (int)(elapsed_time.attoseconds() / ATTOSECONDS_PER_MILLISECOND));
-
-                // Number of ms from beginning of playback
-                int mseconds_start = (int)(curtime.seconds()*1000 + curtime.attoseconds() / ATTOSECONDS_PER_MILLISECOND);
-                string mseconds_start_str = string_format("{0}", mseconds_start);  // %015d
-
-                // Number of ms from previous timecode
-                int mseconds_elapsed = (int)(elapsed_time.seconds()*1000 + elapsed_time.attoseconds() / ATTOSECONDS_PER_MILLISECOND);
-                string mseconds_elapsed_str = string_format("{0}", mseconds_elapsed);  // "%015d"
-
-                // Number of frames from beginning of playback
-                int frame_start = mseconds_start * 60 / 1000;
-                string frame_start_str = string_format("{0}", frame_start);  // "%015d"
-
-                // Number of frames from previous timecode
-                int frame_elapsed = mseconds_elapsed * 60 / 1000;
-                string frame_elapsed_str = string_format("{0}", frame_elapsed);  // "%015d"
-
-                string message;
-                string timecode_text = "";
-                string timecode_key;
-                bool show_timecode_counter = false;
-                if (m_timecode_count==1)
-                {
-                    message = string_format("TIMECODE: Intro started at {0}", current_time_str);
-                    timecode_key = "INTRO_START";
-                    timecode_text = "INTRO";
-                    show_timecode_counter = true;
-                }
-                else if (m_timecode_count==2)
-                {
-                    machine().video().add_to_total_time(elapsed_time);
-                    message = string_format("TIMECODE: Intro duration {0}", elapsed_time_str);
-                    timecode_key = "INTRO_STOP";
-                    //timecode_text = "INTRO";
-                }
-                else if (m_timecode_count==3)
-                {
-                    message = string_format("TIMECODE: Gameplay started at {0}", current_time_str);
-                    timecode_key = "GAMEPLAY_START";
-                    timecode_text = "GAMEPLAY";
-                    show_timecode_counter = true;
-                }
-                else if (m_timecode_count==4) {
-                    machine().video().add_to_total_time(elapsed_time);
-                    message = string_format("TIMECODE: Gameplay duration {0}", elapsed_time_str);
-                    timecode_key = "GAMEPLAY_STOP";
-                    //timecode_text = "GAMEPLAY";
-                }
-                else if (m_timecode_count % 2 == 1)
-                {
-                    message = string_format("TIMECODE: Extra {0} started at {1}", (m_timecode_count-3)/2, current_time_str);
-                    timecode_key = string_format("EXTRA_START_{0}", (m_timecode_count-3)/2);  // %03d
-                    timecode_text = string_format("EXTRA {0}", (m_timecode_count-3)/2);
-                    show_timecode_counter = true;
-                }
-                else
-                {
-                    machine().video().add_to_total_time(elapsed_time);
-                    message = string_format("TIMECODE: Extra {0} duration {1}", (m_timecode_count-4)/2, elapsed_time_str);
-                    timecode_key = string_format("EXTRA_STOP_{0}", (m_timecode_count-4)/2);  //%03d
-                }
-
-                osd_printf_info("{0} \n", message);
-                machine().popmessage("{0} \n", message);
-
-                m_timecode_file.printf(
-                        "{0} {1} {2} {3} {4} {5} {6}\n",  //"%-19s %s %s %s %s %s %s\n",
-                        timecode_key,
-                        current_time_str, elapsed_time_str,
-                        mseconds_start_str, mseconds_elapsed_str,
-                        frame_start_str, frame_elapsed_str);
-
-                machine().video().set_timecode_write(false);
-                machine().video().set_timecode_text(timecode_text);
-                machine().video().set_timecode_start(m_timecode_last_time);
-                machine().ui().set_show_timecode_counter(show_timecode_counter);
-            }
         }
 
 
@@ -3664,68 +3560,6 @@ namespace mame
             if (m_record_stream != null)
             {
                 throw new emu_unimplemented();
-            }
-        }
-
-
-        //template<typename Type> void timecode_write(Type value);
-
-
-        void timecode_init()
-        {
-            // check if option -record_timecode is enabled
-            if (!machine().options().record_timecode())
-            {
-                machine().video().set_timecode_enabled(false);
-                return;
-            }
-
-            // if no file, nothing to do
-            string record_filename = machine().options().record();
-            if (string.IsNullOrEmpty(record_filename))  //if (record_filename[0] == 0)
-            {
-                machine().video().set_timecode_enabled(false);
-                return;
-            }
-
-            machine().video().set_timecode_enabled(true);
-
-            // open the record file
-            string filename;
-            filename = record_filename + ".timecode";
-            osd_printf_info("Record input timecode file: {0}\n", record_filename);
-
-            std.error_condition filerr = m_timecode_file.open(filename);
-            if (filerr)
-                throw new emu_fatalerror("ioport_manager::timecode_init: Failed to open file for input timecode recording ({0}:{1} {2})", filerr.category().name(), filerr.value(), filerr.message());
-
-            m_timecode_file.puts("# ==========================================\n");
-            m_timecode_file.puts("# TIMECODE FILE FOR VIDEO PREVIEW GENERATION\n");
-            m_timecode_file.puts("# ==========================================\n");
-            m_timecode_file.puts("#\n");
-            m_timecode_file.puts("# VIDEO_PART:     code of video timecode\n");
-            m_timecode_file.puts("# START:          start time (hh:mm:ss.mmm)\n");
-            m_timecode_file.puts("# ELAPSED:        elapsed time (hh:mm:ss.mmm)\n");
-            m_timecode_file.puts("# MSEC_START:     start time (milliseconds)\n");
-            m_timecode_file.puts("# MSEC_ELAPSED:   elapsed time (milliseconds)\n");
-            m_timecode_file.puts("# FRAME_START:    start time (frames)\n");
-            m_timecode_file.puts("# FRAME_ELAPSED:  elapsed time (frames)\n");
-            m_timecode_file.puts("#\n");
-            m_timecode_file.puts("# VIDEO_PART======= START======= ELAPSED===== MSEC_START===== MSEC_ELAPSED=== FRAME_START==== FRAME_ELAPSED==\n");
-        }
-
-
-        void timecode_end(string message = null)
-        {
-            // only applies if we have a live file
-            if (m_timecode_file.is_open())
-            {
-                // close the file
-                m_timecode_file.close();
-
-                // pop a message
-                if (message != null)
-                    machine().popmessage("Recording Timecode Ended\nReason: {0}", message);
             }
         }
     }
@@ -3877,7 +3711,7 @@ namespace mame
         public ioport_configurer field_set_name(string name) { assert(m_curfield != null); m_curfield.m_name = string_from_token(name); return this; }
         public ioport_configurer field_set_player(int player) { m_curfield.set_player((u8)(player - 1)); return this; }
         public ioport_configurer field_set_cocktail() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL;  field_set_player(2); return this; }  //  m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL; field_set_player(2); }
-        ioport_configurer field_set_toggle() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_TOGGLE; return this; }  //{ m_curfield.m_flags |= ioport_field::FIELD_FLAG_TOGGLE; }
+        public ioport_configurer field_set_toggle() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_TOGGLE; return this; }  //{ m_curfield.m_flags |= ioport_field::FIELD_FLAG_TOGGLE; }
         public ioport_configurer field_set_impulse(u8 impulse) { m_curfield.m_impulse = impulse; return this; }
         public ioport_configurer field_set_analog_reverse() { m_curfield.m_flags |= ioport_field.ANALOG_FLAG_REVERSE; return this; }
         //ioport_configurer field_set_analog_reset() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_RESET; }
@@ -3890,8 +3724,8 @@ namespace mame
         //ioport_configurer field_set_crossmapper(ioport_field_crossmap_delegate callback) const { m_curfield->m_crosshair_mapper = callback; }
         public ioport_configurer field_set_full_turn_count(u16 count) { m_curfield.m_full_turn_count = count; return this; }
         //ioport_configurer field_set_analog_wraps() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_WRAPS; }
-        //ioport_configurer field_set_remap_table(const ioport_value *table) { m_curfield->m_remap_table = table; }
-        //ioport_configurer field_set_analog_invert() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_INVERT; }
+        public ioport_configurer field_set_remap_table(ioport_value [] table) { m_curfield.m_remap_table = table; return this; }
+        public ioport_configurer field_set_analog_invert() { m_curfield.m_flags |= ioport_field.ANALOG_FLAG_INVERT; return this; }
         public ioport_configurer field_set_dynamic_read(ioport_field_read_delegate delegate_) { m_curfield.m_read = delegate_; return this; }
         public ioport_configurer field_set_dynamic_write(ioport_field_write_delegate delegate_, u32 param = 0) { m_curfield.m_write = delegate_; m_curfield.m_write_param = param; return this; }
         public ioport_configurer field_set_diplocation(string location) { m_curfield.expand_diplocation(location, ref m_errorbuf); return this; }
@@ -4001,9 +3835,9 @@ namespace mame
 
         static void PORT_SPECIAL_ONOFF_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value defval, INPUT_STRING strindex, string diploc) { configurer.onoff_alloc(DEF_STR(strindex), defval, mask, diploc); }
         // append a code
-        public static void PORT_CODE(ioport_configurer configurer, input_code code) { configurer.field_add_code(input_seq_type.SEQ_TYPE_STANDARD, code); }
-        //define PORT_CODE_DEC(_code)             configurer.field_add_code(SEQ_TYPE_DECREMENT, _code);
-        //define PORT_CODE_INC(_code)             configurer.field_add_code(SEQ_TYPE_INCREMENT, _code);
+        public static void PORT_CODE(ioport_configurer configurer, input_code _code) { configurer.field_add_code(input_seq_type.SEQ_TYPE_STANDARD, _code); }
+        public static void PORT_CODE_DEC(ioport_configurer configurer, input_code _code) { configurer.field_add_code(input_seq_type.SEQ_TYPE_DECREMENT, _code); }
+        public static void PORT_CODE_INC(ioport_configurer configurer, input_code _code) { configurer.field_add_code(input_seq_type.SEQ_TYPE_INCREMENT, _code); }
 
         // joystick flags
         public static void PORT_2WAY(ioport_configurer configurer) { configurer.field_set_way(2); }
@@ -4016,7 +3850,7 @@ namespace mame
         public static void PORT_NAME(ioport_configurer configurer, string _name) { configurer.field_set_name(_name); }
         public static void PORT_PLAYER(ioport_configurer configurer, int player) { configurer.field_set_player(player); }
         public static void PORT_COCKTAIL(ioport_configurer configurer) { configurer.field_set_cocktail(); }
-        //define PORT_TOGGLE             configurer.field_set_toggle();
+        public static void PORT_TOGGLE(ioport_configurer configurer) { configurer.field_set_toggle(); }
         public static void PORT_IMPULSE(ioport_configurer configurer, u8 duration) { configurer.field_set_impulse(duration); }
         public static void PORT_REVERSE(ioport_configurer configurer) { configurer.field_set_analog_reverse(); }
         //define PORT_RESET             configurer.field_set_analog_reset();
@@ -4040,16 +3874,16 @@ namespace mame
         // 1 of X not completed yet
         // if it is specified as PORT_REMAP_TABLE then it is binary, but remapped
         // otherwise it is binary
-        //define PORT_POSITIONS(_positions)             configurer.field_set_min_max(0, _positions);
+        public static void PORT_POSITIONS(ioport_configurer configurer, ioport_value _positions) { configurer.field_set_min_max(0, _positions); }
 
         // positional control wraps at min/max
         //define PORT_WRAPS             configurer.field_set_analog_wraps();
 
         // positional control uses this remap table
-        //define PORT_REMAP_TABLE(_table)             configurer.field_set_remap_table(_table);
+        public static void PORT_REMAP_TABLE(ioport_configurer configurer, ioport_value [] _table) { configurer.field_set_remap_table(_table); }
 
         // positional control bits are active low
-        //define PORT_INVERT             configurer.field_set_analog_invert();
+        public static void PORT_INVERT(ioport_configurer configurer) { configurer.field_set_analog_invert(); }
 
         // read callbacks
         public static void PORT_CUSTOM_MEMBER(ioport_configurer configurer, string device, ioport_field_read_delegate delegate_) { configurer.field_set_dynamic_read(delegate_); }  //#define PORT_CUSTOM_MEMBER(_class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate(&_class::_member, #_class "::" #_member, DEVICE_SELF, (_class *)nullptr));
@@ -4351,9 +4185,17 @@ namespace mame
         public const INPUT_STRING _5C_1C = INPUT_STRING.INPUT_STRING_5C_1C;
         public const INPUT_STRING _4C_1C = INPUT_STRING.INPUT_STRING_4C_1C;
         public const INPUT_STRING _3C_1C = INPUT_STRING.INPUT_STRING_3C_1C;
+        public const INPUT_STRING _4C_2C = INPUT_STRING.INPUT_STRING_4C_2C;
         public const INPUT_STRING _2C_1C = INPUT_STRING.INPUT_STRING_2C_1C;
+        public const INPUT_STRING _3C_2C = INPUT_STRING.INPUT_STRING_3C_2C;
+        public const INPUT_STRING _4C_3C = INPUT_STRING.INPUT_STRING_4C_3C;
+        public const INPUT_STRING _4C_4C = INPUT_STRING.INPUT_STRING_4C_4C;
+        public const INPUT_STRING _3C_3C = INPUT_STRING.INPUT_STRING_3C_3C;
+        public const INPUT_STRING _2C_2C = INPUT_STRING.INPUT_STRING_2C_2C;
         public const INPUT_STRING _1C_1C = INPUT_STRING.INPUT_STRING_1C_1C;
+        public const INPUT_STRING _3C_4C = INPUT_STRING.INPUT_STRING_3C_4C;
         public const INPUT_STRING _2C_3C = INPUT_STRING.INPUT_STRING_2C_3C;
+        public const INPUT_STRING _2C_4C = INPUT_STRING.INPUT_STRING_2C_4C;
         public const INPUT_STRING _1C_2C = INPUT_STRING.INPUT_STRING_1C_2C;
         public const INPUT_STRING _1C_3C = INPUT_STRING.INPUT_STRING_1C_3C;
         public const INPUT_STRING _1C_4C = INPUT_STRING.INPUT_STRING_1C_4C;
@@ -4384,9 +4226,11 @@ namespace mame
         public const INPUT_STRING Hardest = INPUT_STRING.INPUT_STRING_Hardest;
         public const INPUT_STRING Difficult = INPUT_STRING.INPUT_STRING_Difficult;
         public const INPUT_STRING Very_Difficult = INPUT_STRING.INPUT_STRING_Very_Difficult;
+        public const INPUT_STRING Game_Time = INPUT_STRING.INPUT_STRING_Game_Time;
         public const INPUT_STRING Allow_Continue = INPUT_STRING.INPUT_STRING_Allow_Continue;
         public const INPUT_STRING Unused = INPUT_STRING.INPUT_STRING_Unused;
         public const INPUT_STRING Unknown = INPUT_STRING.INPUT_STRING_Unknown;
+        public const INPUT_STRING Reverse = INPUT_STRING.INPUT_STRING_Reverse;
         public const INPUT_STRING Alternate = INPUT_STRING.INPUT_STRING_Alternate;
         public const INPUT_STRING None = INPUT_STRING.INPUT_STRING_None;
     }
@@ -4404,6 +4248,7 @@ namespace mame
         public const ioport_type IPT_SERVICE1 = ioport_type.IPT_SERVICE1;
         public const ioport_type IPT_SERVICE = ioport_type.IPT_SERVICE;
         public const ioport_type IPT_TILT = ioport_type.IPT_TILT;
+        public const ioport_type IPT_MEMORY_RESET = ioport_type.IPT_MEMORY_RESET;
         public const ioport_type IPT_JOYSTICK_UP = ioport_type.IPT_JOYSTICK_UP;
         public const ioport_type IPT_JOYSTICK_DOWN = ioport_type.IPT_JOYSTICK_DOWN;
         public const ioport_type IPT_JOYSTICK_LEFT = ioport_type.IPT_JOYSTICK_LEFT;
@@ -4416,6 +4261,7 @@ namespace mame
         public const ioport_type IPT_AD_STICK_X = ioport_type.IPT_AD_STICK_X;
         public const ioport_type IPT_AD_STICK_Y = ioport_type.IPT_AD_STICK_Y;
         public const ioport_type IPT_PADDLE = ioport_type.IPT_PADDLE;
+        public const ioport_type IPT_POSITIONAL_V = ioport_type.IPT_POSITIONAL_V;
         public const ioport_type IPT_DIAL = ioport_type.IPT_DIAL;
         public const ioport_type IPT_DIAL_V = ioport_type.IPT_DIAL_V;
         public const ioport_type IPT_TRACKBALL_X = ioport_type.IPT_TRACKBALL_X;
@@ -4469,13 +4315,16 @@ namespace mame
         protected void PORT_START(string tag) { ioport_global.PORT_START(configurer, tag); }
         protected void PORT_MODIFY(string tag) { ioport_global.PORT_MODIFY(configurer, tag); }
         protected void PORT_BIT(ioport_value mask, ioport_value default_, ioport_type type) { ioport_global.PORT_BIT(configurer, mask, default_, type); }
-        protected void PORT_CODE(input_code code) { ioport_global.PORT_CODE(configurer, code); }
+        protected void PORT_CODE(input_code _code) { ioport_global.PORT_CODE(configurer, _code); }
+        protected void PORT_CODE_DEC(input_code _code) { ioport_global.PORT_CODE_DEC(configurer, _code); }
+        protected void PORT_CODE_INC(input_code _code) { ioport_global.PORT_CODE_INC(configurer, _code); }
         protected void PORT_2WAY() { ioport_global.PORT_2WAY(configurer); }
         protected void PORT_4WAY() { ioport_global.PORT_4WAY(configurer); }
         protected void PORT_8WAY() { ioport_global.PORT_8WAY(configurer); }
         protected void PORT_NAME(string _name) { ioport_global.PORT_NAME(configurer, _name); }
         protected void PORT_PLAYER(int player) { ioport_global.PORT_PLAYER(configurer, player); }
         protected void PORT_COCKTAIL() { ioport_global.PORT_COCKTAIL(configurer); }
+        protected void PORT_TOGGLE() { ioport_global.PORT_TOGGLE(configurer); }
         protected void PORT_IMPULSE(u8 duration) { ioport_global.PORT_IMPULSE(configurer, duration); }
         protected void PORT_REVERSE() { ioport_global.PORT_REVERSE(configurer); }
         protected void PORT_MINMAX(ioport_value _min, ioport_value _max) { ioport_global.PORT_MINMAX(configurer, _min, _max); }
@@ -4483,6 +4332,9 @@ namespace mame
         protected void PORT_KEYDELTA(int delta) { ioport_global.PORT_KEYDELTA(configurer, delta); }
         protected void PORT_CENTERDELTA(int delta) { ioport_global.PORT_CENTERDELTA(configurer, delta); }
         protected void PORT_FULL_TURN_COUNT(u16 _count) { ioport_global.PORT_FULL_TURN_COUNT(configurer, _count); }
+        protected void PORT_POSITIONS(ioport_value _positions) { ioport_global.PORT_POSITIONS(configurer, _positions); }
+        protected void PORT_REMAP_TABLE(ioport_value [] _table) { ioport_global.PORT_REMAP_TABLE(configurer, _table); }
+        protected void PORT_INVERT() { ioport_global.PORT_INVERT(configurer); }
         protected void PORT_CUSTOM_MEMBER(string device, ioport_field_read_delegate delegate_) { ioport_global.PORT_CUSTOM_MEMBER(configurer, device, delegate_); }
         protected void PORT_CHANGED_MEMBER(string device, ioport_field_write_delegate delegate_, u32 param = 0) { ioport_global.PORT_CHANGED_MEMBER(configurer, device, delegate_, param); }
         protected void PORT_READ_LINE_MEMBER(Func<int> _member) { ioport_global.PORT_READ_LINE_MEMBER(configurer, _member); }

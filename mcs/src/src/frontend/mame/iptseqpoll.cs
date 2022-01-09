@@ -12,12 +12,14 @@ namespace mame
     {
         protected input_manager m_manager;
         protected std.vector<std.pair<input_device_item, s32>> m_axis_memory;
+        std.vector<input_code> m_switch_memory;
 
 
         protected input_code_poller(input_manager manager)
         {
             m_manager = manager;
             m_axis_memory = new std.vector<std.pair<input_device_item, s32>>();
+            m_switch_memory = new std.vector<input_code>();
         }
 
         //virtual ~input_code_poller();
@@ -27,6 +29,7 @@ namespace mame
         {
             // iterate over device classes and devices
             m_axis_memory.clear();
+            m_switch_memory.clear();
             for (input_device_class classno = input_device_class.DEVICE_CLASS_FIRST_VALID; input_device_class.DEVICE_CLASS_LAST_VALID >= classno; ++classno)
             {
                 input_class devclass = m_manager.device_class(classno);
@@ -56,26 +59,6 @@ namespace mame
 
 
         public abstract input_code poll();
-    }
-
-
-    abstract class switch_code_poller_base : input_code_poller
-    {
-        std.vector<input_code> m_switch_memory;
-
-
-        protected switch_code_poller_base(input_manager manager)
-            : base(manager)
-        {
-            m_switch_memory = new std.vector<input_code>();
-        }
-
-
-        public override void reset()
-        {
-            m_switch_memory.clear();
-            base.reset();
-        }
 
 
         protected bool code_pressed_once(input_code code, bool moved)
@@ -107,7 +90,7 @@ namespace mame
     //class axis_code_poller : public input_code_poller
 
 
-    class switch_code_poller : switch_code_poller_base
+    class switch_code_poller : input_code_poller
     {
         public switch_code_poller(input_manager manager)
             : base(manager)
@@ -202,7 +185,7 @@ namespace mame
 
 
 
-    //class keyboard_code_poller : public switch_code_poller_base
+    //class keyboard_code_poller : public input_code_poller
 
 
     //class input_sequence_poller

@@ -24,7 +24,124 @@ namespace mame
 
     //class seawolf_audio_device : public device_t
 
-    //class gunfight_audio_device : public device_t
+
+    public class gunfight_audio_device : device_t
+    {
+        //DEFINE_DEVICE_TYPE(GUNFIGHT_AUDIO, gunfight_audio_device, "gunfight_audio", "Midway Gun Fight Audio")
+        static device_t device_creator_gunfight_audio_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gunfight_audio_device(mconfig, tag, owner, clock); }
+        public static readonly device_type GUNFIGHT_AUDIO = DEFINE_DEVICE_TYPE(device_creator_gunfight_audio_device, "gunfight_audio", "Midway Gun Fight Audio");
+
+
+        required_device<netlist_mame_logic_input_device> m_left_shot;
+        required_device<netlist_mame_logic_input_device> m_right_shot;
+        required_device<netlist_mame_logic_input_device> m_left_hit;
+        required_device<netlist_mame_logic_input_device> m_right_hit;
+
+
+        gunfight_audio_device(machine_config mconfig, string tag, device_t owner, u32 clock = 0) :
+            base(mconfig, GUNFIGHT_AUDIO, tag, owner, clock)
+        {
+            m_left_shot = new required_device<netlist_mame_logic_input_device>(this, "sound_nl:left_shot");
+            m_right_shot = new required_device<netlist_mame_logic_input_device>(this, "sound_nl:right_shot");
+            m_left_hit = new required_device<netlist_mame_logic_input_device>(this, "sound_nl:left_hit");
+            m_right_hit = new required_device<netlist_mame_logic_input_device>(this, "sound_nl:right_hit");
+        }
+
+
+        class construct_ioport_gunfight_audio_device : construct_ioport_helper
+        {
+            gunfight_audio_device m_owner;
+
+
+            public construct_ioport_gunfight_audio_device(gunfight_audio_device owner)
+            {
+                m_owner = owner;
+            }
+
+
+            /*************************************
+             *
+             *  Gun Fight
+             *
+             *************************************/
+
+            // Sound board volume potentiometers. By default, these are all set to their
+            // midpoint values.
+
+            //static INPUT_PORTS_START(gunfight_audio)
+            public void construct_ioport_gunfight_audio(device_t owner, ioport_list portlist, ref string errorbuf)
+            {
+                INPUT_PORTS_START(owner, portlist, ref errorbuf);
+
+                PORT_START("POT_1_LEFT_MASTER_VOL");
+                PORT_ADJUSTER( 50, "Pot: Left Master Volume" );  NETLIST_ANALOG_PORT_CHANGED("sound_nl", "pot_left_master_vol", (field, param, oldval, newval) => { ((netlist_mame_analog_input_device)m_owner.subdevice("sound_nl:pot_left_master_vol")).input_changed(field, param, oldval, newval); });
+                PORT_START("POT_2_RIGHT_MASTER_VOL");
+                PORT_ADJUSTER( 50, "Pot: Right Master Volume" );  NETLIST_ANALOG_PORT_CHANGED("sound_nl", "pot_right_master_vol", (field, param, oldval, newval) => { ((netlist_mame_analog_input_device)m_owner.subdevice("sound_nl:pot_right_master_vol")).input_changed(field, param, oldval, newval); });
+                PORT_START("POT_3_LEFT_SHOT_VOL");
+                PORT_ADJUSTER( 50, "Pot: Left Shot Volume" );  NETLIST_ANALOG_PORT_CHANGED("sound_nl", "pot_left_shot_vol", (field, param, oldval, newval) => { ((netlist_mame_analog_input_device)m_owner.subdevice("sound_nl:pot_left_shot_vol")).input_changed(field, param, oldval, newval); });
+                PORT_START("POT_4_RIGHT_SHOT_VOL");
+                PORT_ADJUSTER( 50, "Pot: Right Shot Volume" );  NETLIST_ANALOG_PORT_CHANGED("sound_nl", "pot_right_shot_vol", (field, param, oldval, newval) => { ((netlist_mame_analog_input_device)m_owner.subdevice("sound_nl:pot_right_shot_vol")).input_changed(field, param, oldval, newval); });
+                PORT_START("POT_5_LEFT_HIT_VOL");
+                PORT_ADJUSTER( 50, "Pot: Left Hit Volume" );  NETLIST_ANALOG_PORT_CHANGED("sound_nl", "pot_left_hit_vol", (field, param, oldval, newval) => { ((netlist_mame_analog_input_device)m_owner.subdevice("sound_nl:pot_left_hit_vol")).input_changed(field, param, oldval, newval); });
+                PORT_START("POT_6_RIGHT_HIT_VOL");
+                PORT_ADJUSTER( 50, "Pot: Right Hit Volume" );  NETLIST_ANALOG_PORT_CHANGED("sound_nl", "pot_right_hit_vol", (field, param, oldval, newval) => { ((netlist_mame_analog_input_device)m_owner.subdevice("sound_nl:pot_right_hit_vol")).input_changed(field, param, oldval, newval); });
+
+                INPUT_PORTS_END();
+            }
+        }
+
+
+        //void write(u8 data);
+
+
+        protected override void device_add_mconfig(machine_config config)
+        {
+            SPEAKER(config, "lspeaker").front_left();
+            SPEAKER(config, "rspeaker").front_right();
+
+            netlist_mame_sound_device nl_sound =
+                NETLIST_SOUND(config, "sound_nl", 48000)
+                    .set_source(gunfight_state.netlist_gunfight);  //.set_source(NETLIST_NAME(gunfight));
+            nl_sound.disound.add_route(0, "lspeaker", 0.5);
+            nl_sound.disound.add_route(1, "rspeaker", 0.5);
+
+            NETLIST_LOGIC_INPUT(config, "sound_nl:left_shot",  "I_LEFT_SHOT.IN",  0);
+            NETLIST_LOGIC_INPUT(config, "sound_nl:right_shot", "I_RIGHT_SHOT.IN",  0);
+            NETLIST_LOGIC_INPUT(config, "sound_nl:left_hit",   "I_LEFT_HIT.IN",  0);
+            NETLIST_LOGIC_INPUT(config, "sound_nl:right_hit",  "I_RIGHT_HIT.IN",  0);
+
+            // With all the volume potentiometers at their default midpoint
+            // settings, the highest output spikes are around +/- 3 volts, for an
+            // extreme output swing of 6 volts. Gun Fight's audio power amplifiers
+            // are configured with a voltage gain of 15 and have a single power
+            // supply of about 22 volts, so they will definitely clip the highest
+            // output peaks, but we don't model them. Instead, be cautious: scale
+            // the outputs before the power amps so that the highest output spikes
+            // of +/- 3 volts just reach the clipping limits for signed 16-bit
+            // samples.
+            NETLIST_STREAM_OUTPUT(config, "sound_nl:cout0", 0, "OUT_L").set_mult_offset(1.0 / 3.0, 0.0);
+            NETLIST_STREAM_OUTPUT(config, "sound_nl:cout1", 1, "OUT_R").set_mult_offset(1.0 / 3.0, 0.0);
+
+            // Netlist volume-potentiometer interfaces
+            NETLIST_ANALOG_INPUT(config, "sound_nl:pot_left_master_vol", "R103.DIAL");
+            NETLIST_ANALOG_INPUT(config, "sound_nl:pot_right_master_vol", "R203.DIAL");
+            NETLIST_ANALOG_INPUT(config, "sound_nl:pot_left_shot_vol", "R123.DIAL");
+            NETLIST_ANALOG_INPUT(config, "sound_nl:pot_right_shot_vol", "R223.DIAL");
+            NETLIST_ANALOG_INPUT(config, "sound_nl:pot_left_hit_vol", "R110.DIAL");
+            NETLIST_ANALOG_INPUT(config, "sound_nl:pot_right_hit_vol", "R210.DIAL");
+        }
+
+
+        protected override ioport_constructor device_input_ports()
+        {
+            return new construct_ioport_gunfight_audio_device(this).construct_ioport_gunfight_audio;  //return INPUT_PORTS_NAME(gunfight_audio);
+        }
+
+        protected override void device_start()
+        {
+        }
+    }
+
 
     //class boothill_audio_device : public midway_tone_generator_device_base
 

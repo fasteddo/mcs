@@ -34,8 +34,8 @@ namespace mame
 
 
         // device/memory pointers
-        required_device<i8080_cpu_device> m_maincpu;
-        optional_device<mb14241_device> m_mb14241;
+        protected required_device<i8080_cpu_device> m_maincpu;
+        protected optional_device<mb14241_device> m_mb14241;
         optional_device<watchdog_timer_device> m_watchdog;
         required_shared_ptr<uint8_t> m_main_ram;
         optional_device<discrete_sound_device> m_discrete;
@@ -73,7 +73,19 @@ namespace mame
 
     //class seawolf_state : public mw8080bw_state
 
-    //class gunfight_state : public mw8080bw_state
+
+    partial class gunfight_state : mw8080bw_state
+    {
+        required_device<gunfight_audio_device> m_soundboard;
+
+
+        public gunfight_state(machine_config mconfig, device_type type, string tag) :
+            base(mconfig, type, tag)
+        {
+            m_soundboard = new required_device<gunfight_audio_device>(this, "soundboard");
+        }
+    }
+
 
     //class boothill_state : public mw8080bw_state
 
