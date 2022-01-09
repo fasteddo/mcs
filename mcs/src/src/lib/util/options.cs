@@ -2,30 +2,31 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using size_t = System.UInt64;
 
+using static mame.corestr_global;
+using static mame.cpp_global;
+using static mame.options_global;
+using static mame.options_internal;
+
 
 namespace mame
 {
-    public static class options_global
+    public static partial class options_global
     {
+        //**************************************************************************
+        //  CONSTANTS
+        //**************************************************************************
+
         // option priorities
         public const int OPTION_PRIORITY_DEFAULT   = 0;            // defaults are at 0 priority
         public const int OPTION_PRIORITY_LOW       = 50;           // low priority
         public const int OPTION_PRIORITY_NORMAL    = 100;          // normal priority
         public const int OPTION_PRIORITY_HIGH      = 150;          // high priority
         public const int OPTION_PRIORITY_MAXIMUM   = 255;          // maximum priority
-
-        // legacy option types
-        public const core_options.option_type OPTION_INVALID = core_options.option_type.INVALID;
-        public const core_options.option_type OPTION_HEADER = core_options.option_type.HEADER;
-        public const core_options.option_type OPTION_COMMAND = core_options.option_type.COMMAND;
-        public const core_options.option_type OPTION_BOOLEAN = core_options.option_type.BOOLEAN;
-        public const core_options.option_type OPTION_INTEGER = core_options.option_type.INTEGER;
-        public const core_options.option_type OPTION_FLOAT = core_options.option_type.FLOAT;
-        public const core_options.option_type OPTION_STRING = core_options.option_type.STRING;
     }
 
 
@@ -112,12 +113,12 @@ namespace mame
             protected entry(std.vector<string> names, option_type type = option_type.STRING, string description = null)
             {
                 m_names = names;
-                m_priority = g.OPTION_PRIORITY_DEFAULT;
+                m_priority = OPTION_PRIORITY_DEFAULT;
                 m_type = type;
                 m_description = description;
 
 
-                g.assert(m_names.empty() == (m_type == option_type.HEADER));
+                assert(m_names.empty() == (m_type == option_type.HEADER));
             }
 
             protected entry(string name, option_type type = option_type.STRING, string description = null)
@@ -168,7 +169,7 @@ namespace mame
             public void set_value(string newvalue, int priority_value, bool always_override = false)
             {
                 // it is invalid to set the value on a header
-                g.assert(type() != option_type.HEADER);
+                assert(type() != option_type.HEADER);
 
                 validate(newvalue);
 
@@ -305,7 +306,7 @@ namespace mame
                 if (priority() <= priority_hi && priority() >= priority_lo)
                 {
                     set_value(default_value(), priority(), true);
-                    set_priority(g.OPTION_PRIORITY_DEFAULT);
+                    set_priority(OPTION_PRIORITY_DEFAULT);
                 }
             }
 
@@ -372,7 +373,7 @@ namespace mame
 
         // getters
         public string command() { return m_command; }
-        public std.vector<string> command_arguments() { g.assert(!m_command.empty()); return m_command_arguments; }
+        public std.vector<string> command_arguments() { assert(!m_command.empty()); return m_command_arguments; }
 
         public entry get_entry(string name)
         {
@@ -421,13 +422,13 @@ namespace mame
                 // first extract any range
                 string namestr = opt.name;
                 size_t lparen = namestr.find_first_of('(', 0);
-                if (lparen != g.npos)
+                if (lparen != npos)
                 {
                     size_t dash = namestr.find_first_of('-', lparen + 1);
-                    if (dash != g.npos)
+                    if (dash != npos)
                     {
                         size_t rparen = namestr.find_first_of(')', dash + 1);
-                        if (rparen != g.npos)
+                        if (rparen != npos)
                         {
                             minimum = namestr.Substring((int)lparen + 1, (int)(dash - (lparen + 1))).Trim();  //minimum.assign(strtrimspace(std::string_view(&namestr[lparen + 1], dash - (lparen + 1))));
                             maximum = namestr.Substring((int)dash + 1, (int)(rparen - (dash + 1))).Trim();  //maximum.assign(strtrimspace(std::string_view(&namestr[dash + 1], rparen - (dash + 1))));
@@ -438,7 +439,7 @@ namespace mame
 
                 // then chop up any semicolon-separated names
                 size_t semi;
-                while ((semi = namestr.find_first_of(';')) != g.npos)
+                while ((semi = namestr.find_first_of(';')) != npos)
                 {
                     names.push_back(namestr.substr(0, semi));
 
@@ -541,7 +542,7 @@ namespace mame
         {
             // update the data and default data
             var entry = get_entry(name);
-            g.assert(entry != null);
+            assert(entry != null);
             entry.set_default_value(defvalue);
         }
 
@@ -554,7 +555,7 @@ namespace mame
         {
             // update the data and default data
             var entry = get_entry(name);
-            g.assert(entry != null);
+            assert(entry != null);
             entry.set_description(description);
         }
 
@@ -572,7 +573,7 @@ namespace mame
         protected void set_value_changed_handler(string name, Action<string> handler)  //void core_options::set_value_changed_handler(std::string_view name, std::function<void(const char *)> &&handler)
         {
             var entry = get_entry(name);
-            g.assert(entry != null);
+            assert(entry != null);
             entry.set_value_changed_handler(handler);
         }
 
@@ -581,7 +582,7 @@ namespace mame
         //  revert - revert options at or below a certain
         //  priority back to their defaults
         //-------------------------------------------------
-        public void revert(int priority_hi = g.OPTION_PRIORITY_MAXIMUM, int priority_lo = g.OPTION_PRIORITY_DEFAULT)
+        public void revert(int priority_hi = OPTION_PRIORITY_MAXIMUM, int priority_lo = OPTION_PRIORITY_DEFAULT)
         {
             foreach (entry curentry in m_entries)
             {
@@ -610,7 +611,7 @@ namespace mame
                 if (!args[(int)arg].empty() && args[(int)arg][0] == '-')
                 {
                     var curentry = get_entry(args[arg].Substring(1));
-                    if (curentry != null && curentry.type() == g.OPTION_COMMAND)
+                    if (curentry != null && curentry.type() == OPTION_COMMAND)
                     {
                         // can only have one command
                         if (!m_command.empty())
@@ -648,12 +649,12 @@ namespace mame
                 }
 
                 // at this point, we've already processed commands
-                if (curentry.type() == g.OPTION_COMMAND)
+                if (curentry.type() == OPTION_COMMAND)
                     continue;
 
                 // get the data for this argument, special casing booleans
                 string newdata;
-                if (curentry.type() == g.OPTION_BOOLEAN)
+                if (curentry.type() == OPTION_BOOLEAN)
                 {
                     newdata = string.Compare(curarg.Remove(0, 1), 0, "no", 0, 2) == 0 ? "0" : "1";  //(strncmp(&curarg[1], "no", 2) == 0) ? "0" : "1";
                 }
@@ -685,7 +686,79 @@ namespace mame
         //-------------------------------------------------
         public void parse_ini_file(util.core_file inifile, int priority, bool ignore_unknown_options, bool always_override)
         {
-            throw new emu_unimplemented();
+            string error_stream = "";  //std::ostringstream error_stream;
+            condition_type condition = condition_type.NONE;
+
+            // loop over lines in the file
+            string buffer;  //char buffer[4096];
+            while (inifile.gets(out buffer, 4096) != null)  //while (inifile.gets(buffer, std::size(buffer)) != nullptr)
+            {
+                // find the extent of the name
+                int optionnameIdx = 0;  //char *optionname;
+                for (optionnameIdx = 0; optionnameIdx < buffer.Length; optionnameIdx++)  //for (optionname = buffer; *optionname != 0; optionname++)
+                {
+                    if (isspace(buffer[optionnameIdx]) == 0)  //if (!isspace((uint8_t)*optionname))
+                        break;
+                }
+
+                // skip comments
+                if (optionnameIdx >= buffer.Length || buffer[optionnameIdx] == 0 || buffer[optionnameIdx] == '#')  //if (*optionname == 0 || *optionname == '#')
+                    continue;
+
+                // scan forward to find the first space
+                int tempIdx;  //char *temp;
+                for (tempIdx = optionnameIdx; tempIdx < buffer.Length; tempIdx++)  //for (temp = optionname; *temp != 0; temp++)
+                {
+                    if (isspace(buffer[tempIdx]) != 0)  //if (isspace((uint8_t)*temp))
+                        break;
+                }
+
+                // if we hit the end early, print a warning and continue
+                if (tempIdx >= buffer.Length || buffer[tempIdx] == 0)  //if (*temp == 0)
+                {
+                    condition = (condition_type)std.max((UInt32)condition, (UInt32)condition_type.WARN);
+                    util.stream_format(ref error_stream, "Warning: invalid line in INI: {0}", buffer);
+                    continue;
+                }
+
+                // NULL-terminate
+                tempIdx++;  //*temp++ = 0;
+                int optiondataIdx = tempIdx;  //char *optiondata = temp;
+
+                // scan the data, stopping when we hit a comment
+                bool inquotes = false;
+                for (tempIdx = optiondataIdx; tempIdx < buffer.Length; tempIdx++)  //for (temp = optiondata; *temp != 0; temp++)
+                {
+                    if (buffer[tempIdx] == '"')
+                        inquotes = !inquotes;
+
+                    if (buffer[tempIdx] == '#' && !inquotes)
+                        break;
+                }
+
+                //*temp = 0;
+
+                string optionname = buffer.Substring(optionnameIdx, optiondataIdx - optionnameIdx - 1);
+                string optiondata = buffer.Substring(optiondataIdx);
+
+                // find our entry
+                entry curentry = get_entry(optionname);  //entry::shared_ptr curentry = get_entry(optionname);
+                if (curentry == null)
+                {
+                    if (!ignore_unknown_options)
+                    {
+                        condition = (condition_type)std.max((UInt32)condition, (UInt32)condition_type.WARN);
+                        util.stream_format(ref error_stream, "Warning: unknown option in INI: {0}\n", optionname);
+                    }
+                    continue;
+                }
+
+                // set the new data
+                do_set_value(curentry, trim_spaces_and_quotes(optiondata), priority, ref error_stream, condition);
+            }
+
+            // did we have any errors that may need to be aggregated?
+            throw_options_exception_if_appropriate(condition, error_stream);
         }
 
 
@@ -742,7 +815,7 @@ namespace mame
                             {
                                 if (num_valid_headers++ != 0)
                                     buffer += "\n";
-                                buffer += string.Format("#\n# {0}\n#\n", last_header);
+                                util.stream_format(ref buffer, "#\n# {0}\n#\n", last_header);
                                 last_header = null;
                             }
 
@@ -750,9 +823,9 @@ namespace mame
                             if (!is_unadorned)
                             {
                                 if (value.IndexOf(' ') != -1)
-                                    buffer += string.Format("{0} \"{1}\"\n", name, value);  // %-25s \"%s\"\n
+                                    util.stream_format(ref buffer, "{0,-25} \"{1}\"\n", name, value);  // %-25s \"%s\"\n
                                 else
-                                    buffer += string.Format("{0} {1}\n", name, value);  // %-25s %s\n
+                                    util.stream_format(ref buffer, "{0,-25} {1}\n", name, value);  // %-25s %s\n
                             }
                         }
                     }
@@ -776,11 +849,11 @@ namespace mame
             {
                 // header: just print
                 if (curentry.type() == option_type.HEADER)
-                    buffer += string.Format("\n#\n# {0}\n#\n", curentry.description());
+                    util.stream_format(ref buffer, "\n#\n# {0}\n#\n", curentry.description());
 
                 // otherwise, output entries for all non-deprecated items
                 else if (!string.IsNullOrEmpty(curentry.description()))
-                    buffer += string.Format("-{0}{1}\n", curentry.name(), curentry.description());  // -%-20s%s
+                    util.stream_format(ref buffer, "-{0}{1}\n", curentry.name(), curentry.description());  // -%-20s%s
             }
 
             return buffer;
@@ -849,7 +922,7 @@ namespace mame
         public void set_value(string name, string value, int priority)
         {
             var entry = get_entry(name);
-            g.assert(entry != null);
+            assert(entry != null);
             entry.set_value(value, priority);
         }
 
@@ -867,7 +940,7 @@ namespace mame
 
 
         // misc
-        public static string unadorned(int x = 0) { return s_option_unadorned[Math.Min(x, MAX_UNADORNED_OPTIONS - 1)]; }
+        public static string unadorned(int x = 0) { return s_option_unadorned[std.min(x, MAX_UNADORNED_OPTIONS - 1)]; }
 
 
         protected virtual void command_argument_processed() { }
@@ -882,7 +955,7 @@ namespace mame
         void add_to_entry_map(string name, entry entry)
         {
             // it is illegal to call this method for something that already exists
-            g.assert(m_entrymap.find(name) == null);
+            assert(m_entrymap.find(name) == null);
 
             // append the entry
             m_entrymap.emplace(name, entry);
@@ -904,13 +977,13 @@ namespace mame
             {
                 // we want to aggregate option exceptions
                 error_stream += ex.message();
-                condition = (condition_type)Math.Max((int)condition, (int)condition_type.WARN);
+                condition = (condition_type)std.max((int)condition, (int)condition_type.WARN);
             }
             catch (options_error_exception ex)
             {
                 // we want to aggregate option exceptions
                 error_stream += ex.message();
-                condition = (condition_type)Math.Max((int)condition, (int)condition_type.ERR);
+                condition = (condition_type)std.max((int)condition, (int)condition_type.ERR);
             }
         }
 
@@ -951,5 +1024,37 @@ namespace mame
         public options_entry(string name) : this(name, null, 0, null) { }
         public options_entry(string name, string defvalue, core_options.option_type type, string description)
         { this.name = name; this.defvalue = defvalue; this.type = type; this.description = description; }
+    }
+
+
+    public static partial class options_global
+    {
+        // legacy option types
+        public const core_options.option_type OPTION_INVALID = core_options.option_type.INVALID;
+        public const core_options.option_type OPTION_HEADER = core_options.option_type.HEADER;
+        public const core_options.option_type OPTION_COMMAND = core_options.option_type.COMMAND;
+        public const core_options.option_type OPTION_BOOLEAN = core_options.option_type.BOOLEAN;
+        public const core_options.option_type OPTION_INTEGER = core_options.option_type.INTEGER;
+        public const core_options.option_type OPTION_FLOAT = core_options.option_type.FLOAT;
+        public const core_options.option_type OPTION_STRING = core_options.option_type.STRING;
+    }
+
+
+    public static class options_internal
+    {
+        public static string trim_spaces_and_quotes(string data)
+        {
+            // trim any whitespace
+            data = strtrimspace(data);
+
+            // trim quotes
+            if (data.length() >= 2 && data[0] == '"' && data[data.Length - 1] == '"')  //if (data.length() >= 2 && data.front() == '"' && data.back() == '"')
+            {
+                data = data.Substring(1);  //data.remove_prefix(1);
+                data = data.Remove(data.Length - 1);  //data.remove_suffix(1);
+            }
+
+            return data;
+        }
     }
 }

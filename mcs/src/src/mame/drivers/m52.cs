@@ -2,10 +2,22 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
+
+using static mame.device_creator_helper_global;
+using static mame.digfx_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
+using static mame.gamedrv_global;
+using static mame.hash_global;
+using static mame.ioport_global;
+using static mame.ioport_input_string_helper;
+using static mame.ioport_ioport_type_helper;
+using static mame.iremipt_global;
+using static mame.romentry_global;
+using static mame.screen_global;
 
 
 namespace mame
@@ -69,52 +81,52 @@ namespace mame
             PORT_START("IN0");
             /* Start 1 & 2 also restarts and freezes the game with stop mode on
                and are used in test mode to enter and esc the various tests */
-            PORT_BIT( 0x01, g.IP_ACTIVE_LOW, g.IPT_START1 );
-            PORT_BIT( 0x02, g.IP_ACTIVE_LOW, g.IPT_START2 );
+            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 );
+            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 );
             /* coin input must be active for 19 frames to be consistently recognized */
-            PORT_BIT( 0x04, g.IP_ACTIVE_LOW, g.IPT_SERVICE1 ); PORT_IMPULSE(19);
-            PORT_BIT( 0x08, g.IP_ACTIVE_LOW, g.IPT_COIN1 );
-            PORT_BIT( 0xf0, g.IP_ACTIVE_LOW, g.IPT_UNUSED );
+            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 ); PORT_IMPULSE(19);
+            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 );
+            PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED );
 
             PORT_START("IN1");
-            PORT_BIT( 0x01, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_RIGHT ); PORT_8WAY();
-            PORT_BIT( 0x02, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_LEFT );  PORT_8WAY();
-            PORT_BIT( 0x04, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_DOWN );  PORT_8WAY();
-            PORT_BIT( 0x08, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_UP );    PORT_8WAY();
-            PORT_BIT( 0x10, g.IP_ACTIVE_LOW, g.IPT_UNUSED );
-            PORT_BIT( 0x20, g.IP_ACTIVE_LOW, g.IPT_BUTTON2 );
-            PORT_BIT( 0x40, g.IP_ACTIVE_LOW, g.IPT_UNUSED );
-            PORT_BIT( 0x80, g.IP_ACTIVE_LOW, g.IPT_BUTTON1 );
+            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_8WAY();
+            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT );  PORT_8WAY();
+            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN );  PORT_8WAY();
+            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP );    PORT_8WAY();
+            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED );
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 );
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED );
+            PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 );
 
             PORT_START("IN2");
-            PORT_BIT( 0x01, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_RIGHT ); PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x02, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_LEFT );  PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x04, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_DOWN );  PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x08, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_UP );    PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x10, g.IP_ACTIVE_LOW, g.IPT_COIN2 );
-            PORT_BIT( 0x20, g.IP_ACTIVE_LOW, g.IPT_BUTTON2 ); PORT_COCKTAIL();
-            PORT_BIT( 0x40, g.IP_ACTIVE_LOW, g.IPT_UNUSED );
-            PORT_BIT( 0x80, g.IP_ACTIVE_LOW, g.IPT_BUTTON1 ); PORT_COCKTAIL();
+            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT );  PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN );  PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP );    PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 );
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ); PORT_COCKTAIL();
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED );
+            PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ); PORT_COCKTAIL();
 
             /* DSW1 is so different from game to game that it isn't included here */
 
             PORT_START("DSW2");
-            PORT_DIPNAME( 0x01, 0x01, g.DEF_STR( g.Flip_Screen ) ); PORT_DIPLOCATION("SW2:1");
-            PORT_DIPSETTING(    0x01, g.DEF_STR( g.Off ) );
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.On ) );
-            PORT_DIPNAME( 0x02, 0x00, g.DEF_STR( g.Cabinet ) ); PORT_DIPLOCATION("SW2:2");
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.Upright ) );
-            PORT_DIPSETTING(    0x02, g.DEF_STR( g.Cocktail ) );
+            PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) ); PORT_DIPLOCATION("SW2:1");
+            PORT_DIPSETTING(    0x01, DEF_STR( Off ) );
+            PORT_DIPSETTING(    0x00, DEF_STR( On ) );
+            PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) ); PORT_DIPLOCATION("SW2:2");
+            PORT_DIPSETTING(    0x00, DEF_STR( Upright ) );
+            PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) );
             PORT_DIPNAME( 0x04, 0x04, "Coin Mode" ); PORT_DIPLOCATION("SW2:3");
             PORT_DIPSETTING(    0x04, "Mode 1" );
             PORT_DIPSETTING(    0x00, "Mode 2" );
-            PORT_DIPUNKNOWN_DIPLOC( 0x08, g.IP_ACTIVE_LOW, "SW2:4" );
-            PORT_DIPUNKNOWN_DIPLOC( 0x10, g.IP_ACTIVE_LOW, "SW2:5" );
-            PORT_DIPUNKNOWN_DIPLOC( 0x20, g.IP_ACTIVE_LOW, "SW2:6" );
+            PORT_DIPUNKNOWN_DIPLOC( 0x08, IP_ACTIVE_LOW, "SW2:4" );
+            PORT_DIPUNKNOWN_DIPLOC( 0x10, IP_ACTIVE_LOW, "SW2:5" );
+            PORT_DIPUNKNOWN_DIPLOC( 0x20, IP_ACTIVE_LOW, "SW2:6" );
             PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)"); PORT_DIPLOCATION("SW2:7");
-            PORT_DIPSETTING(    0x40, g.DEF_STR( g.Off ) );
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.On ) );
-            PORT_SERVICE_DIPLOC( 0x80, g.IP_ACTIVE_LOW, "SW2:8" );
+            PORT_DIPSETTING(    0x40, DEF_STR( Off ) );
+            PORT_DIPSETTING(    0x00, DEF_STR( On ) );
+            PORT_SERVICE_DIPLOC( 0x80, IP_ACTIVE_LOW, "SW2:8" );
 
             INPUT_PORTS_END();
         }
@@ -128,39 +140,39 @@ namespace mame
             PORT_INCLUDE(construct_ioport_m52, ref errorbuf);
 
             PORT_MODIFY("IN1");
-            PORT_BIT( 0x01, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_RIGHT ); PORT_2WAY();
-            PORT_BIT( 0x02, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_LEFT );  PORT_2WAY();
-            PORT_BIT( 0x04, g.IP_ACTIVE_LOW, g.IPT_UNUSED );             /* IPT_JOYSTICK_DOWN */
-            PORT_BIT( 0x08, g.IP_ACTIVE_LOW, g.IPT_UNUSED );             /* IPT_JOYSTICK_UP */
+            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_2WAY();
+            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT );  PORT_2WAY();
+            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED );             /* IPT_JOYSTICK_DOWN */
+            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED );             /* IPT_JOYSTICK_UP */
 
             PORT_MODIFY("IN2");
-            PORT_BIT( 0x01, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_RIGHT ); PORT_2WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x02, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_LEFT );  PORT_2WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x04, g.IP_ACTIVE_LOW, g.IPT_UNUSED );             /* IPT_JOYSTICK_DOWN PORT_COCKTAIL */
-            PORT_BIT( 0x08, g.IP_ACTIVE_LOW, g.IPT_UNUSED );             /* IPT_JOYSTICK_UP   PORT_COCKTAIL */
+            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_2WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT );  PORT_2WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED );             /* IPT_JOYSTICK_DOWN PORT_COCKTAIL */
+            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED );             /* IPT_JOYSTICK_UP   PORT_COCKTAIL */
 
             PORT_MODIFY("DSW2");
-            PORT_DIPUNUSED_DIPLOC( 0x08, g.IP_ACTIVE_LOW, "SW2:4" );   /* should have been "slow motion" but no conditional jump at 0x00c3 */
+            PORT_DIPUNUSED_DIPLOC( 0x08, IP_ACTIVE_LOW, "SW2:4" );   /* should have been "slow motion" but no conditional jump at 0x00c3 */
             /* In stop mode, press 2 to stop and 1 to restart */
             PORT_DIPNAME( 0x10, 0x10, "Stop Mode (Cheat)"); PORT_DIPLOCATION("SW2:5");
-            PORT_DIPSETTING(    0x10, g.DEF_STR( g.Off ) );
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.On ) );
+            PORT_DIPSETTING(    0x10, DEF_STR( Off ) );
+            PORT_DIPSETTING(    0x00, DEF_STR( On ) );
             PORT_DIPNAME( 0x20, 0x20, "Sector Selection (Cheat)"); PORT_DIPLOCATION("SW2:6");
-            PORT_DIPSETTING(    0x20, g.DEF_STR( g.Off ) );
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.On ) );
+            PORT_DIPSETTING(    0x20, DEF_STR( Off ) );
+            PORT_DIPSETTING(    0x00, DEF_STR( On ) );
 
             PORT_START("DSW1");
-            PORT_DIPNAME( 0x03, 0x02, g.DEF_STR( g.Lives ) ); PORT_DIPLOCATION("SW1:1,2");
+            PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) ); PORT_DIPLOCATION("SW1:1,2");
             PORT_DIPSETTING(    0x00, "1" );
             PORT_DIPSETTING(    0x01, "2" );
             PORT_DIPSETTING(    0x02, "3" );
             PORT_DIPSETTING(    0x03, "5" );
-            PORT_DIPNAME( 0x0c, 0x0c, g.DEF_STR( g.Bonus_Life ) ); PORT_DIPLOCATION("SW1:3,4");
+            PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) ); PORT_DIPLOCATION("SW1:3,4");
             PORT_DIPSETTING(    0x0c, "10000 30000 50000" );
             PORT_DIPSETTING(    0x08, "20000 40000 60000" );
             PORT_DIPSETTING(    0x04, "10000" );
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.None ) );
-            iremipt_global.IREM_Z80_COINAGE_TYPE_1_LOC(this, "SW1");
+            PORT_DIPSETTING(    0x00, DEF_STR( None ) );
+            IREM_Z80_COINAGE_TYPE_1_LOC(this, "SW1");
 
             INPUT_PORTS_END();
         }
@@ -177,47 +189,47 @@ namespace mame
 
         static readonly gfx_layout charlayout = new gfx_layout(
             8,8,
-            g.RGN_FRAC(1,2),
+            RGN_FRAC(1,2),
             2,
-            new u32[] { g.RGN_FRAC(0,2), g.RGN_FRAC(1,2) },
-            g.STEP8(0,1),
-            g.STEP8(0,8),
+            new u32[] { RGN_FRAC(0,2), RGN_FRAC(1,2) },
+            STEP8(0,1),
+            STEP8(0,8),
             8 * 8
         );
 
 
         static readonly gfx_layout spritelayout = new gfx_layout(
             16,16,
-            g.RGN_FRAC(1,3),
+            RGN_FRAC(1,3),
             3,
-            new u32[] { g.RGN_FRAC(2,3), g.RGN_FRAC(0,3), g.RGN_FRAC(1,3) },
-            g.ArrayCombineUInt32(g.STEP8(0,1), g.STEP8(16 * 8,1)),
-            g.STEP16(0,8),
+            new u32[] { RGN_FRAC(2,3), RGN_FRAC(0,3), RGN_FRAC(1,3) },
+            ArrayCombineUInt32(STEP8(0,1), STEP8(16 * 8,1)),
+            STEP16(0,8),
             32 * 8
         );
 
 
-        static readonly uint32_t [] bgcharlayout_xoffset = g.ArrayCombineUInt32(
-            g.STEP4(0x000,1), g.STEP4(0x008,1), g.STEP4(0x010,1), g.STEP4(0x018,1),
-            g.STEP4(0x020,1), g.STEP4(0x028,1), g.STEP4(0x030,1), g.STEP4(0x038,1),
-            g.STEP4(0x040,1), g.STEP4(0x048,1), g.STEP4(0x050,1), g.STEP4(0x058,1),
-            g.STEP4(0x060,1), g.STEP4(0x068,1), g.STEP4(0x070,1), g.STEP4(0x078,1),
-            g.STEP4(0x080,1), g.STEP4(0x088,1), g.STEP4(0x090,1), g.STEP4(0x098,1),
-            g.STEP4(0x0a0,1), g.STEP4(0x0a8,1), g.STEP4(0x0b0,1), g.STEP4(0x0b8,1),
-            g.STEP4(0x0c0,1), g.STEP4(0x0c8,1), g.STEP4(0x0d0,1), g.STEP4(0x0d8,1),
-            g.STEP4(0x0e0,1), g.STEP4(0x0e8,1), g.STEP4(0x0f0,1), g.STEP4(0x0f8,1),
-            g.STEP4(0x100,1), g.STEP4(0x108,1), g.STEP4(0x110,1), g.STEP4(0x118,1),
-            g.STEP4(0x120,1), g.STEP4(0x128,1), g.STEP4(0x130,1), g.STEP4(0x138,1),
-            g.STEP4(0x140,1), g.STEP4(0x148,1), g.STEP4(0x150,1), g.STEP4(0x158,1),
-            g.STEP4(0x160,1), g.STEP4(0x168,1), g.STEP4(0x170,1), g.STEP4(0x178,1),
-            g.STEP4(0x180,1), g.STEP4(0x188,1), g.STEP4(0x190,1), g.STEP4(0x198,1),
-            g.STEP4(0x1a0,1), g.STEP4(0x1a8,1), g.STEP4(0x1b0,1), g.STEP4(0x1b8,1),
-            g.STEP4(0x1c0,1), g.STEP4(0x1c8,1), g.STEP4(0x1d0,1), g.STEP4(0x1d8,1),
-            g.STEP4(0x1e0,1), g.STEP4(0x1e8,1), g.STEP4(0x1f0,1), g.STEP4(0x1f8,1));
+        static readonly MemoryContainer<uint32_t> bgcharlayout_xoffset = new MemoryContainer<uint32_t>(ArrayCombineUInt32(
+            STEP4(0x000,1), STEP4(0x008,1), STEP4(0x010,1), STEP4(0x018,1),
+            STEP4(0x020,1), STEP4(0x028,1), STEP4(0x030,1), STEP4(0x038,1),
+            STEP4(0x040,1), STEP4(0x048,1), STEP4(0x050,1), STEP4(0x058,1),
+            STEP4(0x060,1), STEP4(0x068,1), STEP4(0x070,1), STEP4(0x078,1),
+            STEP4(0x080,1), STEP4(0x088,1), STEP4(0x090,1), STEP4(0x098,1),
+            STEP4(0x0a0,1), STEP4(0x0a8,1), STEP4(0x0b0,1), STEP4(0x0b8,1),
+            STEP4(0x0c0,1), STEP4(0x0c8,1), STEP4(0x0d0,1), STEP4(0x0d8,1),
+            STEP4(0x0e0,1), STEP4(0x0e8,1), STEP4(0x0f0,1), STEP4(0x0f8,1),
+            STEP4(0x100,1), STEP4(0x108,1), STEP4(0x110,1), STEP4(0x118,1),
+            STEP4(0x120,1), STEP4(0x128,1), STEP4(0x130,1), STEP4(0x138,1),
+            STEP4(0x140,1), STEP4(0x148,1), STEP4(0x150,1), STEP4(0x158,1),
+            STEP4(0x160,1), STEP4(0x168,1), STEP4(0x170,1), STEP4(0x178,1),
+            STEP4(0x180,1), STEP4(0x188,1), STEP4(0x190,1), STEP4(0x198,1),
+            STEP4(0x1a0,1), STEP4(0x1a8,1), STEP4(0x1b0,1), STEP4(0x1b8,1),
+            STEP4(0x1c0,1), STEP4(0x1c8,1), STEP4(0x1d0,1), STEP4(0x1d8,1),
+            STEP4(0x1e0,1), STEP4(0x1e8,1), STEP4(0x1f0,1), STEP4(0x1f8,1)));
 
 
-        static readonly uint32_t [] bgcharlayout_yoffset = g.ArrayCombineUInt32(
-            g.STEP32(0x0000,0x200), g.STEP32(0x4000,0x200), g.STEP32(0x8000,0x200), g.STEP32(0xc000,0x200));
+        static readonly MemoryContainer<uint32_t> bgcharlayout_yoffset = new MemoryContainer<uint32_t>(ArrayCombineUInt32(
+            STEP32(0x0000,0x200), STEP32(0x4000,0x200), STEP32(0x8000,0x200), STEP32(0xc000,0x200)));
 
 
         static readonly gfx_layout bgcharlayout = new gfx_layout(
@@ -225,36 +237,36 @@ namespace mame
             1,       /* 1 image */
             2,       /* 2 bits per pixel */
             new u32[] { 4, 0 },       /* the two bitplanes for 4 pixels are packed into one byte */
-            g.EXTENDED_XOFFS,
-            g.EXTENDED_YOFFS,
+            EXTENDED_XOFFS,
+            EXTENDED_YOFFS,
             0x8000,
-            new MemoryContainer<u32>(bgcharlayout_xoffset),
-            new MemoryContainer<u32>(bgcharlayout_yoffset)
+            new Pointer<uint32_t>(bgcharlayout_xoffset),
+            new Pointer<uint32_t>(bgcharlayout_yoffset)
         );
 
 
         //static GFXDECODE_START(gfx_m52_sp)
-        static readonly gfx_decode_entry [] gfx_m52_sp = new gfx_decode_entry[]
+        static readonly gfx_decode_entry [] gfx_m52_sp =
         {
-            g.GFXDECODE_ENTRY("sp", 0x0000, spritelayout, 0, 16),
+            GFXDECODE_ENTRY("sp", 0x0000, spritelayout, 0, 16),
 
             //GFXDECODE_END
         };
 
         //static GFXDECODE_START(gfx_m52_tx)
-        static readonly gfx_decode_entry [] gfx_m52_tx = new gfx_decode_entry[]
+        static readonly gfx_decode_entry [] gfx_m52_tx =
         {
-            g.GFXDECODE_ENTRY("tx", 0x0000, charlayout, 0, 128),
+            GFXDECODE_ENTRY("tx", 0x0000, charlayout, 0, 128),
 
             //GFXDECODE_END
         };
 
         //static GFXDECODE_START(gfx_m52_bg)
-        static readonly gfx_decode_entry [] gfx_m52_bg = new gfx_decode_entry[]
+        static readonly gfx_decode_entry [] gfx_m52_bg =
         {
-            g.GFXDECODE_ENTRY("bg0", 0x0000, bgcharlayout, 0 * 4, 1),
-            g.GFXDECODE_ENTRY("bg1", 0x0000, bgcharlayout, 1 * 4, 1),
-            g.GFXDECODE_ENTRY("bg2", 0x0000, bgcharlayout, 2 * 4, 1),
+            GFXDECODE_ENTRY("bg0", 0x0000, bgcharlayout, 0 * 4, 1),
+            GFXDECODE_ENTRY("bg1", 0x0000, bgcharlayout, 1 * 4, 1),
+            GFXDECODE_ENTRY("bg2", 0x0000, bgcharlayout, 2 * 4, 1),
 
             //GFXDECODE_END
         };
@@ -279,28 +291,28 @@ namespace mame
         public void m52(machine_config config)
         {
             /* basic machine hardware */
-            g.Z80(config, m_maincpu, MASTER_CLOCK / 6);
-            m_maincpu.op[0].memory().set_addrmap(g.AS_PROGRAM, main_map);
-            m_maincpu.op[0].memory().set_addrmap(g.AS_IO, main_portmap);
-            m_maincpu.op[0].execute().set_vblank_int("screen", irq0_line_hold);
+            Z80(config, m_maincpu, MASTER_CLOCK / 6);
+            m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, main_map);
+            m_maincpu.op0.memory().set_addrmap(AS_IO, main_portmap);
+            m_maincpu.op0.execute().set_vblank_int("screen", irq0_line_hold);
 
             /* video hardware */
-            g.PALETTE(config, m_sp_palette).set_entries(256, 32);
-            g.GFXDECODE(config, m_sp_gfxdecode, m_sp_palette, gfx_m52_sp);
+            PALETTE(config, m_sp_palette).set_entries(256, 32);
+            GFXDECODE(config, m_sp_gfxdecode, m_sp_palette, gfx_m52_sp);
 
-            g.PALETTE(config, m_tx_palette).set_entries(512);
-            g.GFXDECODE(config, m_tx_gfxdecode, m_tx_palette, gfx_m52_tx);
+            PALETTE(config, m_tx_palette).set_entries(512);
+            GFXDECODE(config, m_tx_gfxdecode, m_tx_palette, gfx_m52_tx);
 
-            g.PALETTE(config, m_bg_palette).set_entries(3 * 4, 32);
-            g.GFXDECODE(config, m_bg_gfxdecode, m_bg_palette, gfx_m52_bg);
+            PALETTE(config, m_bg_palette).set_entries(3 * 4, 32);
+            GFXDECODE(config, m_bg_gfxdecode, m_bg_palette, gfx_m52_bg);
 
-            g.SCREEN(config, m_screen, g.SCREEN_TYPE_RASTER);
-            m_screen.op[0].set_raw(MASTER_CLOCK / 3, 384, 136, 376, 282, 22, 274);
-            m_screen.op[0].set_screen_update(screen_update_m52);
+            SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+            m_screen.op0.set_raw(MASTER_CLOCK / 3, 384, 136, 376, 282, 22, 274);
+            m_screen.op0.set_screen_update(screen_update_m52);
 
             /* sound hardware */
             //m52_sound_c_audio(config);
-            g.IREM_M52_SOUNDC_AUDIO(config, "irem_audio", 0);
+            IREM_M52_SOUNDC_AUDIO(config, "irem_audio", 0);
         }
     }
 
@@ -316,50 +328,50 @@ namespace mame
         //ROM_START(mpatrol)
         static readonly MemoryContainer<tiny_rom_entry> rom_mpatrol = new MemoryContainer<tiny_rom_entry>()
         {
-            g.ROM_REGION(0x10000, "maincpu", 0),
-            g.ROM_LOAD("mpa-1.3m", 0x0000, 0x1000, g.CRC("5873a860") + g.SHA1("8c03726d6e049c3edbc277440184e31679f78258")),
-            g.ROM_LOAD("mpa-2.3l", 0x1000, 0x1000, g.CRC("f4b85974") + g.SHA1("dfb2efb57378a20af6f20569f4360cde95596f93")),
-            g.ROM_LOAD("mpa-3.3k", 0x2000, 0x1000, g.CRC("2e1a598c") + g.SHA1("112c3c9678db8a8540a8df3708020c87fd10c91b")),
-            g.ROM_LOAD("mpa-4.3j", 0x3000, 0x1000, g.CRC("dd05b587") + g.SHA1("727961b0dafa4a96b580d51013336db2a18aff1e")),
+            ROM_REGION(0x10000, "maincpu", 0),
+            ROM_LOAD("mpa-1.3m", 0x0000, 0x1000, CRC("5873a860") + SHA1("8c03726d6e049c3edbc277440184e31679f78258")),
+            ROM_LOAD("mpa-2.3l", 0x1000, 0x1000, CRC("f4b85974") + SHA1("dfb2efb57378a20af6f20569f4360cde95596f93")),
+            ROM_LOAD("mpa-3.3k", 0x2000, 0x1000, CRC("2e1a598c") + SHA1("112c3c9678db8a8540a8df3708020c87fd10c91b")),
+            ROM_LOAD("mpa-4.3j", 0x3000, 0x1000, CRC("dd05b587") + SHA1("727961b0dafa4a96b580d51013336db2a18aff1e")),
 
-            g.ROM_REGION(0x8000, "irem_audio:iremsound", 0),
-            g.ROM_LOAD("mp-s1.1a", 0x7000, 0x1000, g.CRC("561d3108") + g.SHA1("4998c68a9e9a8002251fa8f07aa1082444a9dc80")),
+            ROM_REGION(0x8000, "irem_audio:iremsound", 0),
+            ROM_LOAD("mp-s1.1a", 0x7000, 0x1000, CRC("561d3108") + SHA1("4998c68a9e9a8002251fa8f07aa1082444a9dc80")),
 
-            g.ROM_REGION(0x2000, "tx", 0),
-            g.ROM_LOAD("mpe-5.3e", 0x0000, 0x1000, g.CRC("e3ee7f75") + g.SHA1("b03d0d56150d3e9da4a4c871338097b4f450b649")),
-            g.ROM_LOAD("mpe-4.3f", 0x1000, 0x1000, g.CRC("cca6d023") + g.SHA1("fecb3059fb09897a096add9452b50aec55c07545")),
+            ROM_REGION(0x2000, "tx", 0),
+            ROM_LOAD("mpe-5.3e", 0x0000, 0x1000, CRC("e3ee7f75") + SHA1("b03d0d56150d3e9da4a4c871338097b4f450b649")),
+            ROM_LOAD("mpe-4.3f", 0x1000, 0x1000, CRC("cca6d023") + SHA1("fecb3059fb09897a096add9452b50aec55c07545")),
 
             /* 0x2000-0x2fff is intentionally left as 0x00 fill, unused bitplane */
-            g.ROM_REGION(0x3000, "sp", g.ROMREGION_ERASE00),
-            g.ROM_LOAD("mpb-2.3m", 0x0000, 0x1000, g.CRC("707ace5e") + g.SHA1("93c682e13e74bce29ced3a87bffb29569c114c3b")),
-            g.ROM_LOAD("mpb-1.3n", 0x1000, 0x1000, g.CRC("9b72133a") + g.SHA1("1393ef92ae1ad58a4b62ca1660c0793d30a8b5e2")),
+            ROM_REGION(0x3000, "sp", ROMREGION_ERASE00),
+            ROM_LOAD("mpb-2.3m", 0x0000, 0x1000, CRC("707ace5e") + SHA1("93c682e13e74bce29ced3a87bffb29569c114c3b")),
+            ROM_LOAD("mpb-1.3n", 0x1000, 0x1000, CRC("9b72133a") + SHA1("1393ef92ae1ad58a4b62ca1660c0793d30a8b5e2")),
 
             /* 0x1000-01fff is intentionally left as 0xff fill for the bg regions */
-            g.ROM_REGION(0x2000, "bg0", g.ROMREGION_ERASEFF),
-            g.ROM_LOAD("mpe-1.3l", 0x0000, 0x1000, g.CRC("c46a7f72") + g.SHA1("8bb7c9acaf6833fb6c0575b015991b873a305a84")),
+            ROM_REGION(0x2000, "bg0", ROMREGION_ERASEFF),
+            ROM_LOAD("mpe-1.3l", 0x0000, 0x1000, CRC("c46a7f72") + SHA1("8bb7c9acaf6833fb6c0575b015991b873a305a84")),
 
-            g.ROM_REGION(0x2000, "bg1", g.ROMREGION_ERASEFF),
-            g.ROM_LOAD("mpe-2.3k", 0x0000, 0x1000, g.CRC("c7aa1fb0") + g.SHA1("14c6c76e1d0db2c0745e5d6d33ea6945fac8e9ee")),
+            ROM_REGION(0x2000, "bg1", ROMREGION_ERASEFF),
+            ROM_LOAD("mpe-2.3k", 0x0000, 0x1000, CRC("c7aa1fb0") + SHA1("14c6c76e1d0db2c0745e5d6d33ea6945fac8e9ee")),
 
-            g.ROM_REGION(0x2000, "bg2", g.ROMREGION_ERASEFF),
-            g.ROM_LOAD("mpe-3.3h", 0x0000, 0x1000, g.CRC("a0919392") + g.SHA1("8a090cb8d483a3d67c7360058e3fdd70e151cd62")),
+            ROM_REGION(0x2000, "bg2", ROMREGION_ERASEFF),
+            ROM_LOAD("mpe-3.3h", 0x0000, 0x1000, CRC("a0919392") + SHA1("8a090cb8d483a3d67c7360058e3fdd70e151cd62")),
 
-            g.ROM_REGION(0x0200, "tx_pal", 0),
-            g.ROM_LOAD("mpc-4.2a", 0x0000, 0x0200, g.CRC("07f99284") + g.SHA1("dfc52958f2520e1ce4446dd4c84c91413bbacf76")),
+            ROM_REGION(0x0200, "tx_pal", 0),
+            ROM_LOAD("mpc-4.2a", 0x0000, 0x0200, CRC("07f99284") + SHA1("dfc52958f2520e1ce4446dd4c84c91413bbacf76")),
 
-            g.ROM_REGION(0x0020, "bg_pal", 0),
-            g.ROM_LOAD("mpc-3.1m", 0x0000, 0x0020, g.CRC("6a57eff2") + g.SHA1("2d1c12dab5915da2ccd466e39436c88be434d634")),
+            ROM_REGION(0x0020, "bg_pal", 0),
+            ROM_LOAD("mpc-3.1m", 0x0000, 0x0020, CRC("6a57eff2") + SHA1("2d1c12dab5915da2ccd466e39436c88be434d634")),
 
-            g.ROM_REGION(0x0020, "spr_pal", 0),
-            g.ROM_LOAD("mpc-1.1f", 0x0000, 0x0020, g.CRC("26979b13") + g.SHA1("8c41a8cce4f3384c392a9f7a223a50d7be0e14a5")),
+            ROM_REGION(0x0020, "spr_pal", 0),
+            ROM_LOAD("mpc-1.1f", 0x0000, 0x0020, CRC("26979b13") + SHA1("8c41a8cce4f3384c392a9f7a223a50d7be0e14a5")),
 
-            g.ROM_REGION(0x0100, "spr_clut", 0),
-            g.ROM_LOAD("mpc-2.2h", 0x0000, 0x0100, g.CRC("7ae4cd97") + g.SHA1("bc0662fac82ffe65f02092d912b2c2b0c7a8ac2b")),
+            ROM_REGION(0x0100, "spr_clut", 0),
+            ROM_LOAD("mpc-2.2h", 0x0000, 0x0100, CRC("7ae4cd97") + SHA1("bc0662fac82ffe65f02092d912b2c2b0c7a8ac2b")),
 
-            g.ROM_REGION(0x0200, "unkprom", 0), // PROM is on bottom board of 4-board stack
-            g.ROM_LOAD("mp_7621-5.7h", 0x0000, 0x0200, g.CRC("cf1fd9d0") + g.SHA1("f9575bc59bf21dfecd10133264835e02890562f8")),
+            ROM_REGION(0x0200, "unkprom", 0), // PROM is on bottom board of 4-board stack
+            ROM_LOAD("mp_7621-5.7h", 0x0000, 0x0200, CRC("cf1fd9d0") + SHA1("f9575bc59bf21dfecd10133264835e02890562f8")),
 
-            g.ROM_END,
+            ROM_END,
         };
 
 
@@ -379,7 +391,7 @@ namespace mame
         static device_t device_creator_m52(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m52_state(mconfig, (device_type)type, tag); }
 
 
-        //                                                         creator,            rom          YEAR,   NAME,       PARENT,  MACHINE,        INPUT,                           INIT,                     MONITOR, COMPANY, FULLNAME,      FLAGS
-        public static readonly game_driver driver_mpatrol = g.GAME(device_creator_m52, rom_mpatrol, "1982", "mpatrol",  "0",     m52_state_m52,  m_m52.construct_ioport_mpatrol,  driver_device.empty_init, g.ROT0,  "Irem",  "Moon Patrol", g.MACHINE_SUPPORTS_SAVE);
+        //                                                       creator,            rom          YEAR,   NAME,       PARENT,  MACHINE,        INPUT,                           INIT,                     MONITOR, COMPANY, FULLNAME,      FLAGS
+        public static readonly game_driver driver_mpatrol = GAME(device_creator_m52, rom_mpatrol, "1982", "mpatrol",  "0",     m52_state_m52,  m_m52.construct_ioport_mpatrol,  driver_device.empty_init, ROT0,    "Irem",  "Moon Patrol", MACHINE_SUPPORTS_SAVE);
     }
 }

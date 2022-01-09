@@ -8,10 +8,34 @@ using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
+using unsigned = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.device_global;
+using static mame.digfx_global;
+using static mame.drawgfx_global;
+using static mame.drawgfx_internal;
+using static mame.drawgfxt_global;
 
 
 namespace mame
 {
+    //enum
+    //{
+    //    DRAWMODE_NONE,
+    //    DRAWMODE_SOURCE,
+    //    DRAWMODE_SHADOW
+    //};
+
+    //enum
+    //{
+    //    GFX_PMASK_1  = 0xaaaa,
+    //    GFX_PMASK_2  = 0xcccc,
+    //    GFX_PMASK_4  = 0xf0f0,
+    //    GFX_PMASK_8  = 0xff00
+    //};
+
+
     public partial class gfx_element
     {
         // internal state
@@ -65,8 +89,8 @@ namespace mame
             m_origheight = height;
             m_total_elements = 1;
             m_color_base = color_base;
-            m_color_depth = (UInt16)color_granularity;
-            m_color_granularity = (UInt16)color_granularity;
+            m_color_depth = (u16)color_granularity;
+            m_color_granularity = (u16)color_granularity;
             m_total_colors = (total_colors - color_base) / color_granularity;
             m_line_modulo = rowbytes;
             m_char_modulo = 0;
@@ -141,12 +165,12 @@ namespace mame
             m_height = m_origheight = gl.height;
             m_startx = m_starty = 0;
             m_total_elements = gl.total;
-            m_color_granularity = (UInt16)(1 << gl.planes);
+            m_color_granularity = (u16)(1U << gl.planes);
             m_color_depth = m_color_granularity;
 
             // copy data from the layout
-            m_layout_is_raw = gl.planeoffset[0] == g.GFX_RAW;
-            m_layout_planes = (byte)gl.planes;
+            m_layout_is_raw = gl.planeoffset[0] == GFX_RAW;
+            m_layout_planes = (u8)gl.planes;
             m_layout_charincrement = gl.charincrement;
 
             // raw graphics case
@@ -267,7 +291,7 @@ namespace mame
         {
             color = colorbase() + granularity() * (color % colors());
             code %= elements();
-            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_OPAQUE(color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_OPAQUE(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { PIXEL_OP_REBASE_OPAQUE(color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_OPAQUE(destp, srcp); });
         }
 
 
@@ -318,7 +342,7 @@ namespace mame
 
             // render
             color = colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(trans_pen, color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { PIXEL_OP_REBASE_TRANSPEN(trans_pen, color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
         }
 
 
@@ -352,7 +376,7 @@ namespace mame
 
             // render
             Pointer<rgb_t> paldata = new Pointer<rgb_t>(m_palette.pens(), (int)(colorbase() + granularity() * (color % colors())));  //const pen_t *paldata = m_palette.pens() + colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_rgb32, u32, PixelType_operators_u32, PointerU32>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u32 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REMAP_TRANSPEN(trans_pen, paldata, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSPEN(destp, srcp); });
+            drawgfx_core<bitmap_rgb32, u32, PixelType_operators_u32, PointerU32>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u32 destp, u8 srcp) => { PIXEL_OP_REMAP_TRANSPEN(trans_pen, paldata, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSPEN(destp, srcp); });
         }
 
 
@@ -371,7 +395,7 @@ namespace mame
                 return;
 
             // render
-            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSPEN(trans_pen, color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { PIXEL_OP_REBASE_TRANSPEN(trans_pen, color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_pen, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSPEN(destp, srcp); });
         }
 
         public void transpen_raw(bitmap_rgb32 dest, rectangle cliprect,
@@ -417,7 +441,7 @@ namespace mame
 
             // render
             color = colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REBASE_TRANSMASK(trans_mask, color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSMASK(destp, srcp); });
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { PIXEL_OP_REBASE_TRANSMASK(trans_mask, color, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, color](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSMASK(destp, srcp); });
         }
 
         public void transmask(bitmap_rgb32 dest, rectangle cliprect,
@@ -450,7 +474,7 @@ namespace mame
 
             // render
             Pointer<rgb_t> paldata = new Pointer<rgb_t>(m_palette.pens(), (int)(colorbase() + granularity() * (color % colors())));  //const pen_t *paldata = m_palette->pens() + colorbase() + granularity() * (color % colors());
-            drawgfx_core<bitmap_rgb32, u32, PixelType_operators_u32, PointerU32>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u32 destp, u8 srcp) => { drawgfxt_global.PIXEL_OP_REMAP_TRANSMASK(trans_mask, paldata, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSMASK(destp, srcp); });
+            drawgfx_core<bitmap_rgb32, u32, PixelType_operators_u32, PointerU32>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u32 destp, u8 srcp) => { PIXEL_OP_REMAP_TRANSMASK(trans_mask, paldata, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [trans_mask, paldata](u32 &destp, const u8 &srcp) { PIXEL_OP_REMAP_TRANSMASK(destp, srcp); });
         }
 
 
@@ -550,8 +574,8 @@ namespace mame
                         // iterate over columns
                         for (int x = 0; x < m_origwidth; x++)
                         {
-                            if (drawgfx_global.readbit(m_srcdata, (UInt32)((yoffs + m_layout_xoffset[x]) ^ m_layout_xormask)) != 0)
-                                dp[x] |= (byte)planebit;
+                            if (readbit(m_srcdata, (unsigned)((yoffs + m_layout_xoffset[x]) ^ m_layout_xormask)) != 0)
+                                dp[x] |= (u8)planebit;
                         }
                     }
                 }
@@ -581,13 +605,207 @@ namespace mame
     }
 
 
+    static class drawgfx_global
+    {
+        // ----- scanline copying -----
+
+        // copy pixels from an 8bpp buffer to a single scanline of a bitmap
+        //void draw_scanline8(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u8 *srcptr, const pen_t *paldata);
+        //void draw_scanline8(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u8 *srcptr, const pen_t *paldata);
+
+        //void prio_draw_scanline8(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u8 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u32 pmask);
+        //void prio_draw_scanline8(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u8 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u32 pmask);
+
+        //void primask_draw_scanline8(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u8 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+        //void primask_draw_scanline8(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u8 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
+        // copy pixels from a 16bpp buffer to a single scanline of a bitmap
+        //void draw_scanline16(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata);
+        //void draw_scanline16(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata);
+
+        //void prio_draw_scanline16(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u32 pmask);
+        //void prio_draw_scanline16(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u32 pmask);
+
+        //void primask_draw_scanline16(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+        //void primask_draw_scanline16(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
+        // copy pixels from a 32bpp buffer to a single scanline of a bitmap
+        //void draw_scanline32(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u32 *srcptr, const pen_t *paldata);
+        //void draw_scanline32(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u32 *srcptr, const pen_t *paldata);
+
+        //void prio_draw_scanline32(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u32 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u32 pmask);
+        //void prio_draw_scanline32(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u32 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u32 pmask);
+
+        //void primask_draw_scanline32(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u32 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+        //void primask_draw_scanline32(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u32 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
+
+        // ----- bitmap copying -----
+
+        /***************************************************************************
+            COPYBITMAP IMPLEMENTATIONS
+        ***************************************************************************/
+
+        /*-------------------------------------------------
+            copybitmap - copy from one bitmap to another,
+            copying all unclipped pixels
+        -------------------------------------------------*/
+        // copy from one bitmap to another, copying all unclipped pixels
+        static void copybitmap(bitmap_ind16 dest, bitmap_ind16 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
+        {
+            copybitmap_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { PIXEL_OP_COPY_OPAQUE(ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_OPAQUE(destp, srcp); });
+        }
+
+        static void copybitmap(bitmap_rgb32 dest, bitmap_rgb32 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        //void prio_copybitmap(bitmap_ind16 &dest, const bitmap_ind16 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, bitmap_ind8 &priority, u32 pmask);
+        //void prio_copybitmap(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, bitmap_ind8 &priority, u32 pmask);
+
+        //void primask_copybitmap(bitmap_ind16 &dest, const bitmap_ind16 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+        //void primask_copybitmap(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
+
+        /*-------------------------------------------------
+            copybitmap_trans - copy from one bitmap to
+            another, copying all unclipped pixels except
+            those that match transpen
+        -------------------------------------------------*/
+        // copy from one bitmap to another, copying all unclipped pixels except those that match transpen
+        public static void copybitmap_trans(bitmap_ind16 dest, bitmap_ind16 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect, u32 trans_pen)
+        {
+            if (trans_pen > 0xffff)
+                copybitmap(dest, src, flipx, flipy, destx, desty, cliprect);
+            else
+                copybitmap_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { PIXEL_OP_COPY_TRANSPEN(trans_pen, ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [trans_pen](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_TRANSPEN(destp, srcp); });
+        }
+
+        public static void copybitmap_trans(bitmap_rgb32 dest, bitmap_rgb32 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect, u32 transpen)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        //void prio_copybitmap_trans(bitmap_ind16 &dest, const bitmap_ind16 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+        //void prio_copybitmap_trans(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+
+        //void primask_copybitmap_trans(bitmap_ind16 &dest, const bitmap_ind16 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, u32 transpen, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+        //void primask_copybitmap_trans(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, u32 transpen, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
+        //void copybitmap_transalpha(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect);
+
+        //void prio_copybitmap_transalpha(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, bitmap_ind8 &priority, u32 pmask);
+
+        //void primask_copybitmap_transalpha(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
+
+        /*
+          Copy a bitmap onto another with scroll and wraparound.
+          These functions support multiple independently scrolling rows/columns.
+          "rows" is the number of independently scrolling rows. "rowscroll" is an
+          array of integers telling how much to scroll each row. Same thing for
+          "numcols" and "colscroll".
+          If the bitmap cannot scroll in one direction, set numrows or columns to 0.
+          If the bitmap scrolls as a whole, set numrows and/or numcols to 1.
+          Bidirectional scrolling is, of course, supported only if the bitmap
+          scrolls as a whole in at least one direction.
+        */
+
+        /***************************************************************************
+            COPYSCROLLBITMAP IMPLEMENTATIONS
+        ***************************************************************************/
+
+        /*-------------------------------------------------
+            copyscrollbitmap - copy from one bitmap to
+            another, copying all unclipped pixels, and
+            applying scrolling to one or more rows/columns
+        -------------------------------------------------*/
+        // copy from one bitmap to another, copying all unclipped pixels, and applying scrolling to one or more rows/columns
+        public static void copyscrollbitmap(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect)  //void copyscrollbitmap(bitmap_ind16 &dest, const bitmap_ind16 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect)
+        {
+            // just call through to the transparent case as the underlying copybitmap will
+            // optimize for pen == 0xffffffff
+            copyscrollbitmap_trans(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, 0xffffffff);
+        }
+
+        //void copyscrollbitmap(bitmap_rgb32 &dest, const bitmap_rgb32 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect);
+
+        //void prio_copyscrollbitmap(bitmap_ind16 &dest, const bitmap_ind16 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, bitmap_ind8 &priority, u32 pmask);
+        //void prio_copyscrollbitmap(bitmap_rgb32 &dest, const bitmap_rgb32 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, bitmap_ind8 &priority, u32 pmask);
+
+        //void primask_copyscrollbitmap(bitmap_ind16 &dest, const bitmap_ind16 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+        //void primask_copyscrollbitmap(bitmap_rgb32 &dest, const bitmap_rgb32 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
+
+        // copy from one bitmap to another, copying all unclipped pixels except those that match transpen, and applying scrolling to one or more rows/columns
+
+        public static void copyscrollbitmap_trans(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen)  //void copyscrollbitmap_trans(bitmap_ind16 &dest, const bitmap_ind16 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen);
+        { copyscrollbitmap_trans_common(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, trans_pen); }
+
+        //void copyscrollbitmap_trans(bitmap_rgb32 &dest, const bitmap_rgb32 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen)
+        //{ copyscrollbitmap_trans_common(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, trans_pen); }
+
+        //void prio_copyscrollbitmap_trans(bitmap_ind16 &dest, const bitmap_ind16 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+        //void prio_copyscrollbitmap_trans(bitmap_rgb32 &dest, const bitmap_rgb32 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+
+        //void primask_copyscrollbitmap_trans(bitmap_ind16 &dest, const bitmap_ind16 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 transpen, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+        //void primask_copyscrollbitmap_trans(bitmap_rgb32 &dest, const bitmap_rgb32 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 transpen, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
+        // copy from one bitmap to another, with zoom and rotation, copying all unclipped pixels
+        //void copyrozbitmap(bitmap_ind16 &dest, const rectangle &cliprect, const bitmap_ind16 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound);
+        //void copyrozbitmap(bitmap_rgb32 &dest, const rectangle &cliprect, const bitmap_rgb32 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound);
+
+        //void prio_copyrozbitmap(bitmap_ind16 &dest, const rectangle &cliprect, const bitmap_ind16 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, bitmap_ind8 &priority, u32 pmask);
+        //void prio_copyrozbitmap(bitmap_rgb32 &dest, const rectangle &cliprect, const bitmap_rgb32 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, bitmap_ind8 &priority, u32 pmask);
+
+        //void primask_copyrozbitmap(bitmap_ind16 &dest, const rectangle &cliprect, const bitmap_ind16 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+        //void primask_copyrozbitmap(bitmap_rgb32 &dest, const rectangle &cliprect, const bitmap_rgb32 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
+        // copy from one bitmap to another, with zoom and rotation, copying all unclipped pixels whose values do not match transpen
+        //void copyrozbitmap_trans(bitmap_ind16 &dest, const rectangle &cliprect, const bitmap_ind16 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, u32 transparent_color);
+        //void copyrozbitmap_trans(bitmap_rgb32 &dest, const rectangle &cliprect, const bitmap_rgb32 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, u32 transparent_color);
+
+        //void prio_copyrozbitmap_trans(bitmap_ind16 &dest, const rectangle &cliprect, const bitmap_ind16 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, bitmap_ind8 &priority, u32 pmask, u32 transparent_color);
+        //void prio_copyrozbitmap_trans(bitmap_rgb32 &dest, const rectangle &cliprect, const bitmap_rgb32 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, bitmap_ind8 &priority, u32 pmask, u32 transparent_color);
+
+        //void primask_copyrozbitmap_trans(bitmap_ind16 &dest, const rectangle &cliprect, const bitmap_ind16 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, u32 transparent_color, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+        //void primask_copyrozbitmap_trans(bitmap_rgb32 &dest, const rectangle &cliprect, const bitmap_rgb32 &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, u32 transparent_color, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
+
+        //-------------------------------------------------
+        //  alpha_blend_r16 - alpha blend two 16-bit
+        //  5-5-5 RGB pixels
+        //-------------------------------------------------
+        public static u32 alpha_blend_r16(u32 d, u32 s, u8 level)
+        {
+            return (u32)(((((s & 0x001f) * level + (d & 0x001f) * (256 - level)) >> 8)) |
+                    ((((s & 0x03e0) * level + (d & 0x03e0) * (256 - level)) >> 8) & 0x03e0) |
+                    ((((s & 0x7c00) * level + (d & 0x7c00) * (256 - level)) >> 8) & 0x7c00));
+        }
+
+        //-------------------------------------------------
+        //  alpha_blend_r32 - alpha blend two 32-bit
+        //  8-8-8 RGB pixels
+        //-------------------------------------------------
+        public static u32 alpha_blend_r32(u32 d, u32 s, u8 level)
+        {
+            return (u32)(((((s & 0x0000ff) * level + (d & 0x0000ff) * (256 - level)) >> 8)) |
+                    ((((s & 0x00ff00) * level + (d & 0x00ff00) * (256 - level)) >> 8) & 0x00ff00) |
+                    ((((s & 0xff0000) * level + (d & 0xff0000) * (256 - level)) >> 8) & 0xff0000));
+        }
+    }
+
+
     // ======================> gfxdecode_device
     public class gfxdecode_device : device_t
                                     //device_gfx_interface
     {
         //DEFINE_DEVICE_TYPE(GFXDECODE, gfxdecode_device, "gfxdecode", "gfxdecode")
         static device_t device_creator_gfxdecode_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gfxdecode_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GFXDECODE = g.DEFINE_DEVICE_TYPE(device_creator_gfxdecode_device, "gfxdecode", "gfxdecode");
+        public static readonly device_type GFXDECODE = DEFINE_DEVICE_TYPE(device_creator_gfxdecode_device, "gfxdecode", "gfxdecode");
 
 
         device_gfx_interface m_digfx;
@@ -626,89 +844,37 @@ namespace mame
 
 
         public device_gfx_interface digfx { get { return m_digfx; } }
+        public static implicit operator device_gfx_interface(gfxdecode_device d) { return d.digfx; }
+        public gfx_element gfx(int index) { return digfx.gfx(index); }
 
 
         protected override void device_start() { }
     }
 
 
-    static class drawgfx_global
+    static class drawgfx_internal
     {
-        // ----- bitmap copying -----
-
-        /***************************************************************************
-            COPYBITMAP IMPLEMENTATIONS
-        ***************************************************************************/
-
         /*-------------------------------------------------
-            copybitmap - copy from one bitmap to another,
-            copying all unclipped pixels
+            readbit - read a single bit from a base
+            offset
         -------------------------------------------------*/
-        // copy from one bitmap to another, copying all unclipped pixels
-        static void copybitmap(bitmap_ind16 dest, bitmap_ind16 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
-        {
-            drawgfxt_global.copybitmap_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_OPAQUE(ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_OPAQUE(destp, srcp); });
-        }
-
-        static void copybitmap(bitmap_rgb32 dest, bitmap_rgb32 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect)
-        {
-            throw new emu_unimplemented();
-        }
+        public static int readbit(Pointer<u8> src, unsigned bitnum) { return src[bitnum / 8] & (0x80 >> (int)(bitnum % 8)); }  //static inline int readbit(const u8 *src, unsigned int bitnum)
 
 
         /*-------------------------------------------------
-            copybitmap_trans - copy from one bitmap to
-            another, copying all unclipped pixels except
-            those that match transpen
+            normalize_xscroll - normalize an X scroll
+            value for a bitmap to be positive and less
+            than the width
         -------------------------------------------------*/
-        // copy from one bitmap to another, copying all unclipped pixels except those that match transpen
-        static void copybitmap_trans(bitmap_ind16 dest, bitmap_ind16 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect, u32 trans_pen)
-        {
-            if (trans_pen > 0xffff)
-                copybitmap(dest, src, flipx, flipy, destx, desty, cliprect);
-            else
-                drawgfxt_global.copybitmap_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, src, flipx, flipy, destx, desty, cliprect, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { drawgfxt_global.PIXEL_OP_COPY_TRANSPEN(trans_pen, ref destp, srcp); }));  //copybitmap_core(dest, src, flipx, flipy, destx, desty, cliprect, [trans_pen](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_TRANSPEN(destp, srcp); });
-        }
+        static s32 normalize_xscroll(bitmap_t bitmap, s32 xscroll) { return xscroll >= 0 ? xscroll % bitmap.width() : (bitmap.width() - (-xscroll) % bitmap.width()); }
 
-        static void copybitmap_trans(bitmap_rgb32 dest, bitmap_rgb32 src, int flipx, int flipy, s32 destx, s32 desty, rectangle cliprect, u32 transpen)
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        //void copybitmap_transalpha(bitmap_rgb32 &dest, const bitmap_rgb32 &src, int flipx, int flipy, s32 destx, s32 desty, const rectangle &cliprect);
-
-
-        /*
-          Copy a bitmap onto another with scroll and wraparound.
-          These functions support multiple independently scrolling rows/columns.
-          "rows" is the number of independently scrolling rows. "rowscroll" is an
-          array of integers telling how much to scroll each row. Same thing for
-          "numcols" and "colscroll".
-          If the bitmap cannot scroll in one direction, set numrows or columns to 0.
-          If the bitmap scrolls as a whole, set numrows and/or numcols to 1.
-          Bidirectional scrolling is, of course, supported only if the bitmap
-          scrolls as a whole in at least one direction.
-        */
-
-        /***************************************************************************
-            COPYSCROLLBITMAP IMPLEMENTATIONS
-        ***************************************************************************/
 
         /*-------------------------------------------------
-            copyscrollbitmap - copy from one bitmap to
-            another, copying all unclipped pixels, and
-            applying scrolling to one or more rows/columns
+            normalize_yscroll - normalize a Y scroll
+            value for a bitmap to be positive and less
+            than the height
         -------------------------------------------------*/
-        // copy from one bitmap to another, copying all unclipped pixels, and applying scrolling to one or more rows/columns
-        public static void copyscrollbitmap(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect)  //void copyscrollbitmap(bitmap_ind16 &dest, const bitmap_ind16 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect)
-        {
-            // just call through to the transparent case as the underlying copybitmap will
-            // optimize for pen == 0xffffffff
-            copyscrollbitmap_trans(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, 0xffffffff);
-        }
-
-        //void copyscrollbitmap(bitmap_rgb32 &dest, const bitmap_rgb32 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect);
+        static s32 normalize_yscroll(bitmap_t bitmap, s32 yscroll) { return yscroll >= 0 ? yscroll % bitmap.height() : (bitmap.height() - (-yscroll) % bitmap.height()); }
 
 
         /*-------------------------------------------------
@@ -718,7 +884,7 @@ namespace mame
             scrolling to one or more rows/columns
         -------------------------------------------------*/
         //template<class BitmapClass>
-        static void copyscrollbitmap_trans_common(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen)  //static inline void copyscrollbitmap_trans_common(BitmapClass &dest, const BitmapClass &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen)
+        public static void copyscrollbitmap_trans_common(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen)  //static inline void copyscrollbitmap_trans_common(BitmapClass &dest, const BitmapClass &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen)
         {
             // no rowscroll and no colscroll means no scroll
             if (numrows == 0 && numcols == 0)
@@ -727,10 +893,10 @@ namespace mame
                 return;
             }
 
-            g.assert(numrows != 0 || rowscroll == null);
-            g.assert(numrows == 0 || rowscroll != null);
-            g.assert(numcols != 0 || colscroll == null);
-            g.assert(numcols == 0 || colscroll != null);
+            assert(numrows != 0 || rowscroll == null);
+            assert(numrows == 0 || rowscroll != null);
+            assert(numcols != 0 || colscroll == null);
+            assert(numcols == 0 || colscroll != null);
 
             // fully scrolling X,Y playfield
             if (numrows <= 1 && numcols <= 1)
@@ -752,7 +918,7 @@ namespace mame
 
                 // determine width of each column
                 int colwidth = (int)(src.width() / numcols);
-                g.assert(src.width() % colwidth == 0);
+                assert(src.width() % colwidth == 0);
 
                 // iterate over each column
                 int groupcols;
@@ -788,7 +954,7 @@ namespace mame
 
                 // determine width of each rows
                 int rowheight = (int)(src.height() / numrows);
-                g.assert(src.height() % rowheight == 0);
+                assert(src.height() % rowheight == 0);
 
                 // iterate over each row
                 int grouprows;
@@ -816,60 +982,5 @@ namespace mame
                 }
             }
         }
-
-
-        // copy from one bitmap to another, copying all unclipped pixels except those that match transpen, and applying scrolling to one or more rows/columns
-
-        public static void copyscrollbitmap_trans(bitmap_ind16 dest, bitmap_ind16 src, u32 numrows, s32 [] rowscroll, u32 numcols, s32 [] colscroll, rectangle cliprect, u32 trans_pen)  //void copyscrollbitmap_trans(bitmap_ind16 &dest, const bitmap_ind16 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen);
-        { copyscrollbitmap_trans_common(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, trans_pen); }
-
-        //void copyscrollbitmap_trans(bitmap_rgb32 &dest, const bitmap_rgb32 &src, u32 numrows, const s32 *rowscroll, u32 numcols, const s32 *colscroll, const rectangle &cliprect, u32 trans_pen)
-        //{ copyscrollbitmap_trans_common(dest, src, numrows, rowscroll, numcols, colscroll, cliprect, trans_pen); }
-
-
-        //-------------------------------------------------
-        //  alpha_blend_r16 - alpha blend two 16-bit
-        //  5-5-5 RGB pixels
-        //-------------------------------------------------
-        public static u32 alpha_blend_r16(u32 d, u32 s, u8 level)
-        {
-            return (u32)(((((s & 0x001f) * level + (d & 0x001f) * (256 - level)) >> 8)) |
-                    ((((s & 0x03e0) * level + (d & 0x03e0) * (256 - level)) >> 8) & 0x03e0) |
-                    ((((s & 0x7c00) * level + (d & 0x7c00) * (256 - level)) >> 8) & 0x7c00));
-        }
-
-        //-------------------------------------------------
-        //  alpha_blend_r32 - alpha blend two 32-bit
-        //  8-8-8 RGB pixels
-        //-------------------------------------------------
-        public static u32 alpha_blend_r32(u32 d, u32 s, u8 level)
-        {
-            return (u32)(((((s & 0x0000ff) * level + (d & 0x0000ff) * (256 - level)) >> 8)) |
-                    ((((s & 0x00ff00) * level + (d & 0x00ff00) * (256 - level)) >> 8) & 0x00ff00) |
-                    ((((s & 0xff0000) * level + (d & 0xff0000) * (256 - level)) >> 8) & 0xff0000));
-        }
-
-
-        /*-------------------------------------------------
-            readbit - read a single bit from a base
-            offset
-        -------------------------------------------------*/
-        public static int readbit(Pointer<u8> src, UInt32 bitnum) { return src[bitnum / 8] & (0x80 >> (int)(bitnum % 8)); }  //static inline int readbit(const u8 *src, unsigned int bitnum)
-
-
-        /*-------------------------------------------------
-            normalize_xscroll - normalize an X scroll
-            value for a bitmap to be positive and less
-            than the width
-        -------------------------------------------------*/
-        static s32 normalize_xscroll(bitmap_t bitmap, s32 xscroll) { return xscroll >= 0 ? xscroll % bitmap.width() : (bitmap.width() - (-xscroll) % bitmap.width()); }
-
-
-        /*-------------------------------------------------
-            normalize_yscroll - normalize a Y scroll
-            value for a bitmap to be positive and less
-            than the height
-        -------------------------------------------------*/
-        static s32 normalize_yscroll(bitmap_t bitmap, s32 yscroll) { return yscroll >= 0 ? yscroll % bitmap.height() : (bitmap.height() - (-yscroll) % bitmap.height()); }
     }
 }

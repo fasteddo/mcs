@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using s32 = System.Int32;

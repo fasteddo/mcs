@@ -3,6 +3,8 @@
 
 using System;
 
+using static mame.osdfile_global;
+
 
 namespace mame
 {
@@ -41,7 +43,7 @@ namespace mame
         public static string path_append(ref string path, string next)  //inline std::string &path_append(std::string &path, T &&next, U &&... more)
         {
             if (!path.empty() && !is_directory_separator(path.back()))
-                path += g.PATH_SEPARATOR;  //path.append(PATH_SEPARATOR);
+                path += PATH_SEPARATOR;  //path.append(PATH_SEPARATOR);
             path += next;  //path.append(std::forward<T>(next));
             //if constexpr (sizeof...(U))
             //    return path_append(std::forward<U>(more)...);

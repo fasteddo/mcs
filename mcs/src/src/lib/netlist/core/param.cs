@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
@@ -11,6 +10,8 @@ using param_int_t = mame.netlist.param_num_t<int, mame.netlist.param_num_t_opera
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
 using param_model_t_value_str_t = mame.netlist.param_model_t.value_base_t<string, mame.netlist.param_model_t.value_base_t_operators_string>;  //using value_str_t = value_base_t<pstring>;
 using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
+
+using static mame.netlist.nl_errstr_global;
 
 
 namespace mame.netlist
@@ -145,7 +146,7 @@ namespace mame.netlist
                 var valx = func.evaluate();
                 if (ops.is_integral())  //if (plib::is_integral<T>::value)
                     if (plib.pg.abs(valx - plib.pg.trunc(valx)) > nlconst.magic(1e-6))
-                        throw new nl_exception(nl_errstr_global.MF_INVALID_NUMBER_CONVERSION_1_2(device.name() + "." + name, p));
+                        throw new nl_exception(MF_INVALID_NUMBER_CONVERSION_1_2(device.name() + "." + name, p));
                 m_param = ops.cast(valx);  //m_param = plib::narrow_cast<T>(valx);
             }
 
@@ -219,8 +220,8 @@ namespace mame.netlist
                 bool ok = ops.set_from_string(p, out temp);  //bool ok = temp.set_from_string(p);
                 if (!ok)
                 {
-                    device.state().log().fatal.op(nl_errstr_global.MF_INVALID_ENUM_CONVERSION_1_2(name, p));
-                    throw new nl_exception(nl_errstr_global.MF_INVALID_ENUM_CONVERSION_1_2(name, p));
+                    device.state().log().fatal.op(MF_INVALID_ENUM_CONVERSION_1_2(name, p));
+                    throw new nl_exception(MF_INVALID_ENUM_CONVERSION_1_2(name, p));
                 }
 
                 m_param = temp;
@@ -259,7 +260,7 @@ namespace mame.netlist
     // -----------------------------------------------------------------------------
     // string parameter
     // -----------------------------------------------------------------------------
-    class param_str_t : param_t
+    public class param_str_t : param_t
     {
         string m_param;  //host_arena::unique_ptr<pstring> m_param;
 
@@ -308,7 +309,7 @@ namespace mame.netlist
     // -----------------------------------------------------------------------------
     // model parameter
     // -----------------------------------------------------------------------------
-    class param_model_t : param_str_t, param_value_interface
+    public class param_model_t : param_str_t, param_value_interface
     {
         public interface value_base_t_operators<T>
         {
@@ -388,7 +389,13 @@ namespace mame.netlist
         }
 
 
-        //pstring type();
+        public string type()
+        {
+            var mod = state().setup().models().get_model(str());
+            return mod.type();
+        }
+
+
         // hide this
         //void set(const pstring &param) = delete;
 

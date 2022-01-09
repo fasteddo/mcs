@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -10,6 +9,8 @@ using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
 using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
+
+using static mame.nl_factory_global;
 
 
 // -----------------------------------------------------------------------------
@@ -233,7 +234,7 @@ namespace mame.netlist
         class nld_R : nld_R_base
         {
             //NETLIB_DEVICE_IMPL_NS(analog, R,    "RES",   "R")
-            public static readonly factory.constructor_ptr_t decl_R = g.NETLIB_DEVICE_IMPL_NS<nld_R>("analog", "RES", "R");
+            public static readonly factory.constructor_ptr_t decl_R = NETLIB_DEVICE_IMPL_NS<nld_R>("analog", "RES", "R");
 
 
             // protect set_R ... it's a recipe to desaster when used to bypass the parameter
@@ -285,7 +286,7 @@ namespace mame.netlist
         class nld_POT : base_device_t
         {
             //NETLIB_DEVICE_IMPL_NS(analog, POT,  "POT",   "R")
-            public static readonly factory.constructor_ptr_t decl_POT = g.NETLIB_DEVICE_IMPL_NS<nld_POT>("analog", "POT", "R");
+            public static readonly factory.constructor_ptr_t decl_POT = NETLIB_DEVICE_IMPL_NS<nld_POT>("analog", "POT", "R");
 
 
             nld_R_base m_R1;  //NETLIB_SUB(R_base) m_R1;
@@ -365,7 +366,7 @@ namespace mame.netlist
         public class nld_C : nld_twoterm
         {
             //NETLIB_DEVICE_IMPL_NS(analog, C,    "CAP",   "C")
-            public static readonly factory.constructor_ptr_t decl_C = g.NETLIB_DEVICE_IMPL_NS<nld_C>("analog", "CAP", "C");
+            public static readonly factory.constructor_ptr_t decl_C = NETLIB_DEVICE_IMPL_NS<nld_C>("analog", "CAP", "C");
 
 
             param_fp_t m_C;
@@ -456,13 +457,17 @@ namespace mame.netlist
         //NETLIB_OBJECT_DERIVED(D, twoterm)
         public class nld_D : nld_twoterm
         {
+            //NETLIB_DEVICE_IMPL_NS(analog, D,    "DIODE", "MODEL")
+            public static readonly factory.constructor_ptr_t decl_D = NETLIB_DEVICE_IMPL_NS<nld_D>("analog", "DIODE", "MODEL");
+
+
             param_model_t m_model;
             diode_model_t m_modacc;
             generic_diode m_D;  //generic_diode<diode_e::BIPOLAR> m_D;
 
 
             //NETLIB_CONSTRUCTOR_EX(D, const pstring &model = "D")
-            public nld_D(base_device_t owner, string name, string model = "D")
+            public nld_D(object owner, string name, string model = "D")
                 : base(owner, name)
             {
                 m_model = new param_model_t(this, "MODEL", model);

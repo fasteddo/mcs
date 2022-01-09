@@ -2,12 +2,18 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
+
+using static mame.device_creator_helper_global;
+using static mame.device_global;
+using static mame.diexec_global;
+using static mame.emucore_global;
+using static mame.hash_global;
+using static mame.romentry_global;
 
 
 namespace mame
@@ -17,15 +23,15 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NAMCO_50XX, namco_50xx_device, "namco50", "Namco 50xx")
         static device_t device_creator_namco_50xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_50xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NAMCO_50XX = g.DEFINE_DEVICE_TYPE(device_creator_namco_50xx_device, "namco50", "Namco 50xx");
+        public static readonly device_type NAMCO_50XX = DEFINE_DEVICE_TYPE(device_creator_namco_50xx_device, "namco50", "Namco 50xx");
 
 
         //ROM_START( namco_50xx )
         static readonly MemoryContainer<tiny_rom_entry> rom_namco_50xx = new MemoryContainer<tiny_rom_entry>()
         {
-            g.ROM_REGION( 0x800, "mcu", 0 ),
-            g.ROM_LOAD( "50xx.bin",     0x0000, 0x0800, g.CRC("a0acbaf7") + g.SHA1("f03c79451e73b3a93c1591cdb27fedc9f130508d") ),
-            g.ROM_END,
+            ROM_REGION( 0x800, "mcu", 0 ),
+            ROM_LOAD( "50xx.bin",     0x0000, 0x0800, CRC("a0acbaf7") + SHA1("f03c79451e73b3a93c1591cdb27fedc9f130508d") ),
+            ROM_END,
         };
 
 
@@ -51,14 +57,14 @@ namespace mame
         public void reset(int state)
         {
             // The incoming signal is active low
-            m_cpu.op[0].set_input_line(g.INPUT_LINE_RESET, state == 0 ? 1 : 0);
+            m_cpu.op0.set_input_line(INPUT_LINE_RESET, state == 0 ? 1 : 0);
         }
 
 
         //WRITE_LINE_MEMBER( namco_50xx_device::chip_select )
         public void chip_select(int state)
         {
-            m_cpu.op[0].set_input_line(0, state);
+            m_cpu.op0.set_input_line(0, state);
         }
 
 
@@ -113,9 +119,9 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            save_item(g.NAME(new { m_rw }));
-            save_item(g.NAME(new { m_cmd }));
-            save_item(g.NAME(new { m_portO }));
+            save_item(NAME(new { m_rw }));
+            save_item(NAME(new { m_cmd }));
+            save_item(NAME(new { m_portO }));
         }
 
         //-------------------------------------------------
@@ -132,11 +138,11 @@ namespace mame
         //-------------------------------------------------
         protected override void device_add_mconfig(machine_config config)
         {
-            g.MB8842(config, m_cpu, g.DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
-            m_cpu.op[0].read_k().set(K_r).reg();
-            m_cpu.op[0].read_r(0).set(R0_r).reg();
-            m_cpu.op[0].read_r(2).set(R2_r).reg();
-            m_cpu.op[0].write_o().set(O_w).reg();
+            MB8842(config, m_cpu, DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
+            m_cpu.op0.read_k().set(K_r).reg();
+            m_cpu.op0.read_r(0).set(R0_r).reg();
+            m_cpu.op0.read_r(2).set(R2_r).reg();
+            m_cpu.op0.write_o().set(O_w).reg();
         }
 
 

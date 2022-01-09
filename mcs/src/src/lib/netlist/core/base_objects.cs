@@ -2,13 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using object_t_props = mame.netlist.detail.property_store_t<mame.netlist.detail.object_t, string>;  //using props = property_store_t<object_t, pstring>;
 using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s32 = state_var<std::int32_t>;
 using unsigned = System.UInt32;
+
+using static mame.netlist.nl_errstr_global;
 
 
 namespace mame.netlist
@@ -243,8 +244,8 @@ namespace mame.netlist
                     || this is analog_output_t)  //|| dynamic_cast<const analog_output_t *>(this) != nullptr)
                     return terminal_type.OUTPUT;
 
-                state().log().fatal.op(nl_errstr_global.MF_UNKNOWN_TYPE_FOR_OBJECT(name()));
-                throw new nl_exception(nl_errstr_global.MF_UNKNOWN_TYPE_FOR_OBJECT(name()));
+                state().log().fatal.op(MF_UNKNOWN_TYPE_FOR_OBJECT(name()));
+                throw new nl_exception(MF_UNKNOWN_TYPE_FOR_OBJECT(name()));
                 //return terminal_type::TERMINAL; // please compiler
             }
 
@@ -272,9 +273,9 @@ namespace mame.netlist
             public bool is_analog_output() { return this is analog_output_t; }  //return dynamic_cast<const analog_output_t *>(this) != nullptr;
 
 
-            //bool is_state(state_e astate) const noexcept { return (m_state == astate); }
+            protected bool is_state(state_e astate) { return m_state.op == astate; }
             public state_e terminal_state() { return m_state.op; }
-            void set_state(state_e astate) { m_state.op = astate; }
+            public void set_state(state_e astate) { m_state.op = astate; }
 
 
             public void reset() { set_state(is_type(terminal_type.OUTPUT) ? state_e.STATE_OUT : state_e.STATE_INP_ACTIVE); }

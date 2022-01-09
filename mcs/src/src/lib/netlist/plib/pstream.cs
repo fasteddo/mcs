@@ -2,7 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+using System.IO;
 
 
 namespace mame.plib
@@ -15,13 +15,13 @@ namespace mame.plib
     ///
     public class istream_uptr
     {
-        std.istream m_strm;  //std::unique_ptr<std::istream> m_strm;
+        Stream m_strm;  //std::unique_ptr<std::istream> m_strm;
         string m_filename;
 
 
         public istream_uptr() { }
 
-        public istream_uptr(std.istream strm, string filename)  //istream_uptr(std::unique_ptr<std::istream> &&strm, const pstring &filename)
+        public istream_uptr(Stream strm, string filename)  //istream_uptr(std::unique_ptr<std::istream> &&strm, const pstring &filename)
         {
             m_strm = strm;
             m_filename = filename;
@@ -40,12 +40,12 @@ namespace mame.plib
 
         //std::istream * operator ->() noexcept { return m_strm.get(); }
         //std::istream & operator *() noexcept { return *m_strm; }
-        //pstring filename() { return m_filename; }
+        public string filename() { return m_filename; }
 
-        //bool empty() { return m_strm == nullptr; }
+        public bool empty() { return m_strm == null || m_strm.Length == 0; }
 
         // FIXME: workaround input context should accept stream_ptr
 
-        //std::unique_ptr<std::istream> release_stream() { return std::move(m_strm); }
+        public Stream release_stream() { return m_strm; }  //std::unique_ptr<std::istream> release_stream() { return std::move(m_strm); }
     }
 }

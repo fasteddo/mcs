@@ -2,8 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using size_t = System.UInt64;
@@ -124,11 +124,11 @@ namespace mame.plib
         //using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 
-        std.array<C, size_t_N> m_buf;
+        std.array<C, size_t_N> m_buf = new std.array<C, size_t_N>();
         static_vector_size_type m_pos;
 
 
-        protected static_vector()
+        public static_vector()
         {
             m_pos = 0;
         }
@@ -137,18 +137,25 @@ namespace mame.plib
         //PCOPYASSIGNMOVE(static_vector, delete)
         //~static_vector() noexcept
 
-        //constexpr size_t size() const noexcept { return m_pos; }
+        public size_t size() { return m_pos; }
 
         //constexpr bool empty() const noexcept { return size() == 0; }
 
         //void clear()
 
         //template<typename... Args>
-        //void emplace_back(Args&&... args)
+        public void emplace_back(C args)  //void emplace_back(Args&&... args)
+        {
+            // placement new on buffer
+            m_buf[m_pos] = args;  //new (&m_buf[m_pos]) C(std::forward<Args>(args)...);
+            m_pos++;
+        }
+
 
         //reference operator[](size_type index) noexcept
-
         //constexpr const_reference operator[](size_type index) const noexcept
+        public C op(size_t index) { return m_buf[index]; }
+
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         //iterator begin() const noexcept { return reinterpret_cast<iterator>(&m_buf[0]); }
@@ -189,7 +196,11 @@ namespace mame.plib
         //constexpr iter_t begin() const noexcept { return iter_t(m_head); }
         //constexpr iter_t end() const noexcept { return iter_t(nullptr); }
 
-        //void push_front(LC *elem) noexcept
+
+        public void push_front(LC elem)
+        {
+            m_list.AddFirst(elem);
+        }
 
 
         public void push_back(LC elem)
@@ -198,7 +209,10 @@ namespace mame.plib
         }
 
 
-        //void remove(const LC *elem) noexcept
+        public void remove(LC elem)
+        {
+            m_list.Remove(elem);
+        }
 
         //constexpr LC *front() const noexcept { return m_head; }
 

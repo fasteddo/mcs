@@ -2,37 +2,39 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int32_t = System.Int32;
 using rgb15_t = System.UInt16;  //typedef uint16_t rgb15_t;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
+using static mame.cpp_global;
+using static mame.palette_global;
+
 
 namespace mame
 {
+    // an rgb15_t is a single combined 15-bit R,G,B value
+    //typedef uint16_t rgb15_t;
+
+
     // ======================> rgb_t
     // an rgb_t is a single combined R,G,B (and optionally alpha) value
     public class rgb_t
     {
-        // an rgb15_t is a single combined 15-bit R,G,B value
-        //typedef uint16_t rgb15_t;
-
-
         // constant factories
-        public static readonly rgb_t _black = new rgb_t(0,     0,   0);
-        public static readonly rgb_t _white = new rgb_t(255, 255, 255);
-        public static readonly rgb_t _green = new rgb_t(  0, 255,   0);
-        public static readonly rgb_t _amber = new rgb_t(247, 170,   0);
-        public static readonly rgb_t _transparent = new rgb_t(0, 0, 0, 0);
+        static readonly rgb_t _black = new rgb_t(0,     0,   0);
+        static readonly rgb_t _white = new rgb_t(255, 255, 255);
+        static readonly rgb_t _green = new rgb_t(  0, 255,   0);
+        static readonly rgb_t _amber = new rgb_t(247, 170,   0);
+        static readonly rgb_t _transparent = new rgb_t(0, 0, 0, 0);
 
-        public static readonly rgb_t _red   = new rgb_t(255,   0,   0);
-        public static readonly rgb_t _blue  = new rgb_t(  0,   0, 255);
+        static readonly rgb_t _red   = new rgb_t(255,   0,   0);
+        static readonly rgb_t _blue  = new rgb_t(  0,   0, 255);
 
         // https://msdn.microsoft.com/en-us/library/aa358802.aspx
-        public static readonly rgb_t _pink        = new rgb_t(0xff, 0xc0, 0xcb);
-        public static readonly rgb_t _greenyellow = new rgb_t(0xad, 0xff, 0x2f);
+        static readonly rgb_t _pink        = new rgb_t(0xff, 0xc0, 0xcb);
+        static readonly rgb_t _greenyellow = new rgb_t(0xad, 0xff, 0x2f);
 
         public static rgb_t black() { return _black; }
         public static rgb_t white() { return _white; }
@@ -98,9 +100,9 @@ namespace mame
 
 
         // static helpers
-        public static uint8_t clamp(int32_t value) { return (value < 0) ? (byte)0 : (value > 255) ? (byte)255 : (byte)value; }
-        static uint8_t clamphi(int32_t value) { return (value > 255) ? (byte)255 : (byte)value; }
-        static uint8_t clamplo(int32_t value) { return (value < 0) ? (byte)0 : (byte)value; }
+        public static uint8_t clamp(int32_t value) { return (value < 0) ? (uint8_t)0 : (value > 255) ? (uint8_t)255 : (uint8_t)value; }
+        static uint8_t clamphi(int32_t value) { return (value > 255) ? (uint8_t)255 : (uint8_t)value; }
+        static uint8_t clamplo(int32_t value) { return (value < 0) ? (uint8_t)0 : (uint8_t)value; }
     }
 
 
@@ -155,7 +157,7 @@ namespace mame
                 std.fill(m_dirty, uint32_t.MaxValue);  //std::fill(m_dirty.begin(), m_dirty.end(), ~uint32_t(0));
 
                 // mark all entries dirty
-                m_dirty[dirty_dwords - 1] &= (UInt32)((1 << ((int)colors % 32)) - 1);
+                m_dirty[dirty_dwords - 1] &= (1U << ((int)colors % 32)) - 1;
 
                 // set min/max
                 m_mindirty = 0;
@@ -183,7 +185,7 @@ namespace mame
                 if (m_mindirty <= m_maxdirty)
                     std::fill(&m_dirty[m_mindirty / 32], &m_dirty[m_maxdirty / 32] + 1, 0);
 #endif
-                m_mindirty = (UInt32)(m_dirty.size() * 32 - 1);
+                m_mindirty = (uint32_t)(m_dirty.size() * 32 - 1);
                 m_maxdirty = 0;
             }
         }
@@ -227,7 +229,7 @@ namespace mame
 
         ~palette_client()
         {
-            g.assert(m_isDisposed);  // can remove
+            assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;
@@ -361,14 +363,14 @@ namespace mame
             if (m_entry_color[index] == rgb)
                 return;
 
-            g.assert(index < m_numcolors);
+            assert(index < m_numcolors);
 
             // set the color
             m_entry_color[index] = rgb;
 
             // update across all groups
             for (int groupnum = 0; groupnum < m_numgroups; groupnum++)
-                update_adjusted_color((UInt32)groupnum, index);
+                update_adjusted_color((uint32_t)groupnum, index);
         }
 
 
@@ -387,14 +389,14 @@ namespace mame
             if (m_entry_contrast[index] == contrast)
                 return;
 
-            g.assert(index < m_numcolors);
+            assert(index < m_numcolors);
 
             // set the contrast
             m_entry_contrast[index] = contrast;
 
             // update across all groups
             for (int groupnum = 0; groupnum < m_numgroups; groupnum++)
-                update_adjusted_color((UInt32)groupnum, index);
+                update_adjusted_color((uint32_t)groupnum, index);
         }
 
 
@@ -418,14 +420,14 @@ namespace mame
             if (m_group_contrast[group] == contrast)
                 return;
 
-            g.assert(group < m_numgroups);
+            assert(group < m_numgroups);
 
             // set the contrast
             m_group_contrast[group] = contrast;
 
             // update across all colors
             for (int index = 0; index < m_numcolors; index++)
-                update_adjusted_color(group, (UInt32)index);
+                update_adjusted_color(group, (uint32_t)index);
         }
 
 
@@ -434,7 +436,7 @@ namespace mame
         {
             // clamp within range
             // start = std::max(start, 0U); ==> reduces to start = start
-            end = Math.Min(end, m_numcolors - 1);
+            end = std.min(end, m_numcolors - 1);
 
             // find the minimum and maximum brightness of all the colors in the range
             int32_t ymin = 1000 * 255;
@@ -443,8 +445,8 @@ namespace mame
             {
                 rgb_t rgb = m_entry_color[index];
                 uint32_t y = (uint32_t)(299 * rgb.r() + 587 * rgb.g() + 114 * rgb.b());
-                ymin = (int32_t)Math.Min((uint32_t)ymin, y);
-                ymax = (int32_t)Math.Max((uint32_t)ymax, y);
+                ymin = (int32_t)std.min((uint32_t)ymin, y);
+                ymax = (int32_t)std.max((uint32_t)ymax, y);
             }
 
             // determine target minimum/maximum
@@ -489,25 +491,25 @@ namespace mame
 
 
             // initialize gamma map
-            for (UInt32 index = 0; index < 256; index++)
-                m_gamma_map[index] = (byte)index;
+            for (uint32_t index = 0; index < 256; index++)
+                m_gamma_map[index] = (uint8_t)index;
 
             // initialize the per-entry data
-            for (UInt32 index = 0; index < numcolors; index++)
+            for (uint32_t index = 0; index < numcolors; index++)
             {
                 m_entry_color[index] = rgb_t.black();
                 m_entry_contrast[index] = 1.0f;
             }
 
             // initialize the per-group data
-            for (UInt32 index = 0; index < numgroups; index++)
+            for (uint32_t index = 0; index < numgroups; index++)
             {
                 m_group_bright[index] = 0.0f;
                 m_group_contrast[index] = 1.0f;
             }
 
             // initialize the expanded data
-            for (UInt32 index = 0; index < numcolors * numgroups; index++)
+            for (uint32_t index = 0; index < numcolors * numgroups; index++)
             {
                 m_adjusted_color[index] = rgb_t.black();
                 m_adjusted_rgb15[index] = rgb_t.black().as_rgb15();
@@ -533,7 +535,7 @@ namespace mame
             int g = rgb_t.clamp((int)((float)(gamma_map[entry.g()]) * contrast + brightness));
             int b = rgb_t.clamp((int)((float)(gamma_map[entry.b()]) * contrast + brightness));
             int a = entry.a();
-            return new rgb_t((byte)a,(byte)r,(byte)g,(byte)b);
+            return new rgb_t((uint8_t)a,(uint8_t)r,(uint8_t)g,(uint8_t)b);
         }
 
         /**
@@ -555,7 +557,7 @@ namespace mame
                                                     m_gamma_map);
 
             // if not different, ignore
-            UInt32 finalindex = group * m_numcolors + index;
+            uint32_t finalindex = group * m_numcolors + index;
             if (m_adjusted_color[finalindex] == adjusted)
                 return;
 
@@ -596,7 +598,7 @@ namespace mame
         //  palxbit - convert an x-bit value to 8 bits
         //-------------------------------------------------
 
-        static uint8_t pal1bit(uint8_t bits) { return palexpand<int_const_1>(bits); }
+        public static uint8_t pal1bit(uint8_t bits) { return palexpand<int_const_1>(bits); }
         static uint8_t pal2bit(uint8_t bits) { return palexpand<int_const_2>(bits); }
         static uint8_t pal3bit(uint8_t bits) { return palexpand<int_const_3>(bits); }
         static uint8_t pal4bit(uint8_t bits) { return palexpand<int_const_4>(bits); }

@@ -2,7 +2,10 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+
+using static mame.osdcore_global;
 
 
 namespace mame
@@ -73,7 +76,7 @@ namespace mame
             osd_module module = mod_type();
             if (module.probe())
             {
-                g.osd_printf_verbose("===> registered module {0} {1}\n", module.name(), module.type());
+                osd_printf_verbose("===> registered module {0} {1}\n", module.name(), module.type());
 
                 //int i;
                 //for (i = 0; m_modules[i] != NULL; i++)
@@ -83,7 +86,7 @@ namespace mame
             }
             else
             {
-                g.osd_printf_verbose("===> not supported {0} {1}\n", module.name(), module.type());
+                osd_printf_verbose("===> not supported {0} {1}\n", module.name(), module.type());
                 //module->~osd_module();
                 //global_free(module);
             }

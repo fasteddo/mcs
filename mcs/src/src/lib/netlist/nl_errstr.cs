@@ -2,7 +2,9 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.netlist.nl_errstr_global;
+using static mame.plib.pfmtlog_global;
 
 
 namespace mame.netlist
@@ -11,10 +13,6 @@ namespace mame.netlist
     {
         public const string sHINT_NO_DEACTIVATE = ".HINT_NO_DEACTIVATE";
         public const string sHINT_NC = ".HINT_NC";
-
-
-
-        static string PERRMSGV(int narg, string format, params object [] args) { return plib.pfmtlog_global.PERRMSGV(narg, format, args); }
 
 
         // nl_base.cpp
@@ -41,14 +39,14 @@ namespace mame.netlist
 
         // nl_parser.cpp
 
-        //PERRMSGV(MF_PARSER_UNEXPECTED_1,                1, "Unexpected {}")
-        public static string MF_UNEXPECTED_NETLIST_END(params object [] args)       { return PERRMSGV(0, "Unexpected NETLIST_END", args); }
-        //PERRMSGV(MF_UNEXPECTED_END_OF_FILE,             0, "Unexpected end of file, missing NETLIST_END")
+        public static string MF_PARSER_UNEXPECTED_1(params object [] args) { return PERRMSGV(1, "Unexpected {0}", args); }
+        public static string MF_UNEXPECTED_NETLIST_END(params object [] args)       { return PERRMSGV(0, "Unexpected NETLIST_END"); }
+        public static string MF_UNEXPECTED_END_OF_FILE(params object [] args)       { return PERRMSGV(0, "Unexpected end of file, missing NETLIST_END"); }
         //public static string MF_UNEXPECTED_NETLIST_START(params object [] args)     { return PERRMSGV(0, "Unexpected NETLIST_START", args); }
-        //PERRMSGV(MF_UNEXPECTED_NETLIST_EXTERNAL,        0, "Unexpected NETLIST_EXTERNAL within a netlist")
-        //PERRMSGV(MF_EXPECTED_NETLIST_START_1,           1, "Expected NETLIST_START but got {1}")
+        public static string MF_UNEXPECTED_NETLIST_EXTERNAL(params object [] args)       { return PERRMSGV(0, "Unexpected NETLIST_EXTERNAL within a netlist"); }
+        public static string MF_EXPECTED_NETLIST_START_1(params object [] args)       { return PERRMSGV(1, "Expected NETLIST_START but got {0}", args); }
         //PERRMSGV(MF_EXPECTED_IDENTIFIER_GOT_1,          1, "Expected an identifier, but got {1}")
-        //PERRMSGV(MF_EXPECTED_COMMA_OR_RP_1,             1, "Expected comma or right parenthesis but found <{1}>")
+        public static string MF_EXPECTED_COMMA_OR_RP_1(params object [] args)       { return PERRMSGV(1, "Expected comma or right parenthesis but found <{0}>", args); }
         //PERRMSGV(MF_DIPPINS_EQUAL_NUMBER_1,             1, "DIPPINS requires equal number of pins to DIPPINS, first pin is {}")
         //PERRMSGV(MF_PARAM_NOT_FP_1,                     1, "Parameter value <{1}> not floating point")
         //PERRMSGV(MF_TT_LINE_WITHOUT_HEAD,               0, "TT_LINE found without TT_HEAD")
@@ -75,7 +73,7 @@ namespace mame.netlist
         public static string MF_INVALID_ENUM_CONVERSION_1_2(params object [] args)  { return PERRMSGV(2, "Invalid element found {0} : {1}", args); }
         public static string MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(params object [] args) { return PERRMSGV(1, "Error adding parameter {0} to parameter list", args); }
         public static string MF_ADDING_1_2_TO_TERMINAL_LIST(params object [] args)  { return PERRMSGV(2, "Error adding {0} {1} to terminal list", args); }
-        public static string MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL(params object [] args) { return PERRMSGV(0, "You must pass at least 2 terminals to NET_C", args); }
+        public static string MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL(params object [] args) { return PERRMSGV(0, "You must pass at least 2 terminals to NET_C"); }
         public static string MF_FOUND_NO_OCCURRENCE_OF_1(params object [] args)     { return PERRMSGV(1, "Found no occurrence of {0}", args); }
         public static string MF_TERMINAL_1_2_NOT_FOUND(params object [] args)       { return PERRMSGV(2, "Alias {0} was resolved to be terminal {1}. Terminal {1} was not found.", args); }
         public static string MF_OBJECT_1_2_WRONG_TYPE(params object [] args)        { return PERRMSGV(2, "object {0}({1}) found but wrong type", args); }
@@ -109,7 +107,7 @@ namespace mame.netlist
         public static string MW_TERMINAL_1_WITHOUT_CONNECTIONS(params object [] args) { return PERRMSGV(1, "Found terminal {0} without connections", args); }
 
         public static string ME_TERMINAL_1_WITHOUT_NET(params object [] args) { return PERRMSGV(1, "Found terminal {0} without a net", args); }
-        public static string MF_TERMINALS_WITHOUT_NET(params object [] args) { return PERRMSGV(0, "Found terminals without a net", args); }
+        public static string MF_TERMINALS_WITHOUT_NET(params object [] args) { return PERRMSGV(0, "Found terminals without a net"); }
         public static string ME_TRISTATE_NO_PROXY_FOUND_2(params object [] args) { return PERRMSGV(2,
         "Tristate output {0} on device {1} is not connected to a proxy. You " + 
         "need to set parameter FORCE_TRISTATE_LOGIC for device {1} if " +

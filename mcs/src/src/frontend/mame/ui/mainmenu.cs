@@ -2,10 +2,12 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
 using slot_interface_enumerator = mame.device_interface_enumerator<mame.device_slot_interface>;  //typedef device_interface_enumerator<device_slot_interface> slot_interface_enumerator;
+using unsigned = System.UInt32;
+
+using static mame.ui.mainmenu_internal;
 
 
 namespace mame.ui
@@ -15,37 +17,40 @@ namespace mame.ui
         /*-------------------------------------------------
             ui_menu_main constructor - populate the main menu
         -------------------------------------------------*/
-        public menu_main(mame_ui_manager mui, render_container container) : base(mui, container) { }
+        public menu_main(mame_ui_manager mui, render_container container) : base(mui, container)
+        {
+            set_needs_prev_menu_item(false);
+        }
 
 
         protected override void populate(ref float customtop, ref float custombottom)
         {
             /* add main menu items */
-            item_append("Input (general)", 0, menu_options.INPUT_GROUPS);
+            item_append("Input (general)", 0, INPUT_GROUPS);
 
-            item_append("Input (this machine)", 0, menu_options.INPUT_SPECIFIC);
+            item_append("Input (this machine)", 0, INPUT_SPECIFIC);
 
             if (ui().machine_info().has_analog())
-                item_append("Analog Controls", 0, menu_options.ANALOG);
+                item_append("Analog Controls", 0, ANALOG);
             if (ui().machine_info().has_dips())
-                item_append("DIP Switches", 0, menu_options.SETTINGS_DIP_SWITCHES);
+                item_append("DIP Switches", 0, SETTINGS_DIP_SWITCHES);
             if (ui().machine_info().has_configs())
-                item_append("Machine Configuration", null, 0, menu_options.SETTINGS_DRIVER_CONFIG);
+                item_append("Machine Configuration", null, 0, SETTINGS_DRIVER_CONFIG);
 
-            item_append("Bookkeeping Info", 0, menu_options.BOOKKEEPING);
+            item_append("Bookkeeping Info", 0, BOOKKEEPING);
 
-            item_append("Machine Information", 0, menu_options.GAME_INFO);
+            item_append("Machine Information", 0, GAME_INFO);
 
             if (ui().found_machine_warnings())
-                item_append("Warning Information", 0, menu_options.WARN_INFO);
+                item_append("Warning Information", 0, WARN_INFO);
 
             foreach (device_image_interface image in new image_interface_enumerator(machine().root_device()))
             {
                 if (image.user_loadable())
                 {
-                    item_append("Image Information", 0, menu_options.IMAGE_MENU_IMAGE_INFO);
+                    item_append("Image Information", 0, IMAGE_MENU_IMAGE_INFO);
 
-                    item_append("File Manager", 0, menu_options.IMAGE_MENU_FILE_MANAGER);
+                    item_append("File Manager", 0, IMAGE_MENU_FILE_MANAGER);
 
                     break;
                 }
@@ -67,10 +72,10 @@ namespace mame.ui
 #endif
 
             if (ui().machine_info().has_bioses())
-                item_append("BIOS Selection", 0, menu_options.BIOS_SELECTION);
+                item_append("BIOS Selection", 0, BIOS_SELECTION);
 
             if (new slot_interface_enumerator(machine().root_device()).first() != null)
-                item_append("Slot Devices", 0, menu_options.SLOT_DEVICES);
+                item_append("Slot Devices", 0, SLOT_DEVICES);
 
             throw new emu_unimplemented();
 #if false
@@ -84,9 +89,9 @@ namespace mame.ui
                 item_append("Keyboard Mode", 0, ui_menu_main_options.KEYBOARD_MODE);
 #endif
 
-            item_append("Slider Controls", 0, menu_options.SLIDERS);
+            item_append("Slider Controls", 0, SLIDERS);
 
-            item_append("Video Options", 0, menu_options.VIDEO_TARGETS);
+            item_append("Video Options", 0, VIDEO_TARGETS);
 
             throw new emu_unimplemented();
 #if false
@@ -96,11 +101,14 @@ namespace mame.ui
             if (machine().options().cheat() && machine().cheat().first() != null)
                 item_append("Cheat", null, 0, ui_menu_main_options.CHEAT);
 
-            if (machine().options().plugins() && !mame_machine_manager::instance()->lua()->get_menu().empty())
-                item_append("Plugin Options", 0, menu_options.PLUGINS);
+            if (machine().phase() >= machine_phase::RESET)
+            {
+                if (machine().options().plugins() && !mame_machine_manager::instance()->lua()->get_menu().empty())
+                    item_append(_("Plugin Options"), 0, (void *)PLUGINS);
 
-            if (mame_machine_manager::instance()->lua()->call_plugin_check<const char *>("data_list", true))
-                item_append("External DAT View", null, 0, ui_menu_main_options.EXTERNAL_DATS);
+                if (mame_machine_manager::instance()->lua()->call_plugin_check<const char *>("data_list", "", true))
+                    item_append(_("External DAT View"), 0, (void *)EXTERNAL_DATS);
+            }
 
             item_append(ui_menu_item_type.SEPARATOR);
 
@@ -118,7 +126,18 @@ namespace mame.ui
 
             //  item_append(_("Quit from Machine"), nullptr, 0, (void *)QUIT_GAME);
 
-            item_append("Select New Machine", 0, menu_options.SELECT_GAME);
+            throw new emu_unimplemented();
+#if false
+            if (machine().phase() == machine_phase::INIT)
+            {
+                item_append(_("Start Machine"), 0, (void *)DISMISS);
+            }
+            else
+            {
+                item_append(_("Select New Machine"), 0, (void *)SELECT_GAME);
+                item_append(_("Return to Machine"), 0, (void *)DISMISS);
+            }
+#endif
         }
 
 
@@ -136,5 +155,42 @@ namespace mame.ui
 #endif
             }
         }
+    }
+
+
+    static class mainmenu_internal
+    {
+        //enum : unsigned {
+        public const unsigned INPUT_GROUPS         = 0;
+        public const unsigned INPUT_SPECIFIC       = 1;
+        public const unsigned SETTINGS_DIP_SWITCHES = 2;
+        public const unsigned SETTINGS_DRIVER_CONFIG = 3;
+        public const unsigned ANALOG               = 4;
+        public const unsigned BOOKKEEPING          = 5;
+        public const unsigned GAME_INFO            = 6;
+        public const unsigned WARN_INFO            = 7;
+        public const unsigned IMAGE_MENU_IMAGE_INFO = 8;
+        public const unsigned IMAGE_MENU_FILE_MANAGER = 9;
+        public const unsigned TAPE_CONTROL         = 10;
+        public const unsigned SLOT_DEVICES         = 11;
+        public const unsigned NETWORK_DEVICES      = 12;
+        public const unsigned KEYBOARD_MODE        = 13;
+        public const unsigned SLIDERS              = 14;
+        public const unsigned VIDEO_TARGETS        = 15;
+        public const unsigned VIDEO_OPTIONS        = 16;
+        public const unsigned CROSSHAIR            = 17;
+        public const unsigned CHEAT                = 18;
+        public const unsigned PLUGINS              = 19;
+        public const unsigned BIOS_SELECTION       = 20;
+        public const unsigned BARCODE_READ         = 21;
+        public const unsigned PTY_INFO             = 22;
+        public const unsigned EXTERNAL_DATS        = 23;
+        public const unsigned ADD_FAVORITE         = 24;
+        public const unsigned REMOVE_FAVORITE      = 25;
+        public const unsigned ABOUT                = 26;
+        public const unsigned QUIT_GAME            = 27;
+        public const unsigned DISMISS              = 28;
+        public const unsigned SELECT_GAME          = 29;
+        //};
     }
 }

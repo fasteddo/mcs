@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
@@ -14,6 +13,11 @@ using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 
+using static mame.device_global;
+using static mame.diexec_global;
+using static mame.emucore_global;
+using static mame.util;
+
 
 namespace mame
 {
@@ -22,7 +26,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(I8257, i8257_device, "i8257", "Intel 8257 DMA Controller")
         static device_t device_creator_i8257_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8257_device(mconfig, tag, owner, clock); }
-        public static readonly device_type I8257 = g.DEFINE_DEVICE_TYPE(device_creator_i8257_device, "i8257", "Intel 8257 DMA Controller");
+        public static readonly device_type I8257 = DEFINE_DEVICE_TYPE(device_creator_i8257_device, "i8257", "Intel 8257 DMA Controller");
 
 
         class device_execute_interface_i8257 : device_execute_interface
@@ -51,11 +55,11 @@ namespace mame
         //};
 
 
-        bool MODE_CHAN_ENABLE(int x) { return g.BIT(m_transfer_mode, x) != 0; }
-        bool MODE_ROTATING_PRIORITY { get { return g.BIT(m_transfer_mode, 4) != 0; } }
-        bool MODE_EXTENDED_WRITE { get { return g.BIT(m_transfer_mode, 5) != 0; } }
-        bool MODE_TC_STOP { get { return g.BIT(m_transfer_mode, 6) != 0; } }
-        bool MODE_AUTOLOAD { get { return g.BIT(m_transfer_mode, 7) != 0; } }
+        bool MODE_CHAN_ENABLE(int x) { return BIT(m_transfer_mode, x) != 0; }
+        bool MODE_ROTATING_PRIORITY { get { return BIT(m_transfer_mode, 4) != 0; } }
+        bool MODE_EXTENDED_WRITE { get { return BIT(m_transfer_mode, 5) != 0; } }
+        bool MODE_TC_STOP { get { return BIT(m_transfer_mode, 6) != 0; } }
+        bool MODE_AUTOLOAD { get { return BIT(m_transfer_mode, 7) != 0; } }
         uint8_t MODE_TRANSFER_MASK { get { return m_channel[m_current_channel].m_mode; } }
         const uint8_t MODE_TRANSFER_VERIFY     = 0;
         const uint8_t MODE_TRANSFER_WRITE      = 1;
@@ -126,7 +130,7 @@ namespace mame
             m_reverse_rw = false;
             m_tc = false;
             m_msb = 0;
-            m_hreq = g.CLEAR_LINE;
+            m_hreq = CLEAR_LINE;
             m_hack = 0;
             m_ready = 1;
             m_state = 0;
@@ -155,7 +159,7 @@ namespace mame
         public void write(offs_t offset, uint8_t data)
         {
             LOG("{0} \n", "write");
-            if (g.BIT(offset, 3) == 0)
+            if (BIT(offset, 3) == 0)
             {
                 int channel = (int)((offset >> 1) & 0x03);
 
@@ -280,16 +284,16 @@ namespace mame
             m_out_dack_cb.resolve_all_safe();
 
             // state saving
-            save_item(g.NAME(new { m_msb }));
-            save_item(g.NAME(new { m_hreq }));
-            save_item(g.NAME(new { m_hack }));
-            save_item(g.NAME(new { m_ready }));
-            save_item(g.NAME(new { m_state }));
-            save_item(g.NAME(new { m_current_channel }));
-            save_item(g.NAME(new { m_last_channel }));
-            save_item(g.NAME(new { m_transfer_mode }));
-            save_item(g.NAME(new { m_status }));
-            save_item(g.NAME(new { m_request }));
+            save_item(NAME(new { m_msb }));
+            save_item(NAME(new { m_hreq }));
+            save_item(NAME(new { m_hack }));
+            save_item(NAME(new { m_ready }));
+            save_item(NAME(new { m_state }));
+            save_item(NAME(new { m_current_channel }));
+            save_item(NAME(new { m_last_channel }));
+            save_item(NAME(new { m_transfer_mode }));
+            save_item(NAME(new { m_status }));
+            save_item(NAME(new { m_request }));
 
             //throw new emu_unimplemented();
 #if false
@@ -454,7 +458,7 @@ namespace mame
         bool is_request_active(int channel)
         {
             LOG("{0} Channel {1}: {2} && MODE_CHAN_ENABLE:{3}\n", "is_request_active", channel, m_request, MODE_CHAN_ENABLE(channel));
-            return g.BIT(m_request, channel) != 0 && MODE_CHAN_ENABLE(channel);
+            return BIT(m_request, channel) != 0 && MODE_CHAN_ENABLE(channel);
         }
 
 

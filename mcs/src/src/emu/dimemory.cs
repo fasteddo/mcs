@@ -2,11 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using memory_interface_enumerator = mame.device_interface_enumerator<mame.device_memory_interface>;  //typedef device_interface_enumerator<device_memory_interface> memory_interface_enumerator;
 using size_t = System.UInt64;
 using u32 = System.UInt32;
+
+using static mame.cpp_global;
 
 
 namespace mame
@@ -78,7 +81,7 @@ namespace mame
         //-------------------------------------------------
         public void set_addrmap(int spacenum, address_map_constructor map)
         {
-            g.assert(0 <= spacenum);
+            assert(0 <= spacenum);
 
             if (spacenum >= (int)(m_address_map.size()))
                 m_address_map.resize((size_t)spacenum + 1);
@@ -90,7 +93,7 @@ namespace mame
         // basic information getters
         public bool has_space(int index = 0) { return index >= 0 && index < (int)m_addrspace.size() && m_addrspace[index] != null; }
         public bool has_configured_map(int index = 0) { return index >= 0 && index < (int)m_address_map.size() && m_address_map[index] != null; }
-        public address_space space(int index = 0) { g.assert(index >= 0 && index < (int)m_addrspace.size() && m_addrspace[index] != null); return m_addrspace[index]; }
+        public address_space space(int index = 0) { assert(index >= 0 && index < (int)m_addrspace.size() && m_addrspace[index] != null); return m_addrspace[index]; }
 
 
         // address translation
@@ -105,9 +108,9 @@ namespace mame
         //template <typename Space>
         public void allocate(address_space Space, memory_manager manager, int spacenum)
         {
-            g.assert((0 <= spacenum) && (max_space_count() > spacenum));
+            assert((0 <= spacenum) && (max_space_count() > spacenum));
             m_addrspace.resize(std.max(m_addrspace.size(), (size_t)spacenum + 1));
-            g.assert(m_addrspace[spacenum] == null);
+            assert(m_addrspace[spacenum] == null);
             m_addrspace[spacenum] = Space;  //std::make_unique<Space>(manager, *this, spacenum, space_config(spacenum)->addr_width());
         }
         public void prepare_maps() { foreach (var space in m_addrspace) { if (space != null) { space.prepare_map(); } } }

@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.util;
 
 
 namespace mame
@@ -41,7 +42,7 @@ namespace mame
         public void popup_time(int seconds, string format, params object [] args)
         {
             // extract the text
-            popup_time_string(seconds, string.Format(format, args));
+            popup_time_string(seconds, string_format(format, args));
         }
     }
 }

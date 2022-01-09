@@ -2,11 +2,12 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
+
+using static mame.diexec_global;
 
 
 namespace mame
@@ -83,7 +84,7 @@ namespace mame
         //uint8_t m_protection_result;
         uint8_t m_konami_sound_control;
         uint8_t m_irq_enabled;
-        int m_irq_line = g.INPUT_LINE_NMI;
+        int m_irq_line = INPUT_LINE_NMI;
         uint8_t m_frogger_adjust = 0;  //false;
         uint8_t m_x_scale = GALAXIAN_XSCALE;
         uint8_t m_h0_start = GALAXIAN_H0START;

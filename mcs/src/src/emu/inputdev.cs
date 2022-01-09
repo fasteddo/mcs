@@ -2,10 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using s32 = System.Int32;
 using u8 = System.Byte;
+
+using static mame.cpp_global;
+using static mame.input_global;
+using static mame.inputdev_global;
+using static mame.osdcore_global;
 
 
 namespace mame
@@ -28,21 +32,25 @@ namespace mame
     }
 
 
+    // callback for getting the value of an item on a device
+    public delegate int item_get_state_func(object device_internal, object item_internal);  //typedef s32 (*item_get_state_func)(void *device_internal, void *item_internal);
+
+
     // ======================> joystick_map
     // a 9x9 joystick map
     class joystick_map
     {
         // joystick mapping codes
-        const byte JOYSTICK_MAP_NEUTRAL = 0x00;
-        const byte JOYSTICK_MAP_LEFT    = 0x01;
-        const byte JOYSTICK_MAP_RIGHT   = 0x02;
-        const byte JOYSTICK_MAP_UP      = 0x04;
-        const byte JOYSTICK_MAP_DOWN    = 0x08;
-        const byte JOYSTICK_MAP_STICKY  = 0x0f;
+        const u8 JOYSTICK_MAP_NEUTRAL = 0x00;
+        const u8 JOYSTICK_MAP_LEFT    = 0x01;
+        const u8 JOYSTICK_MAP_RIGHT   = 0x02;
+        const u8 JOYSTICK_MAP_UP      = 0x04;
+        const u8 JOYSTICK_MAP_DOWN    = 0x08;
+        const u8 JOYSTICK_MAP_STICKY  = 0x0f;
 
 
         // internal state
-        u8 [,] m_map = new byte[9, 9];            // 9x9 grid
+        u8 [,] m_map = new u8[9, 9];            // 9x9 grid
         u8 m_lastmap;              // last value returned (for sticky tracking)
         string m_origstring;           // originally parsed string
 
@@ -95,9 +103,9 @@ namespace mame
                     // copy from the srcrow, applying up/down symmetry if in the bottom half
                     for (int colnum = 0; colnum < 9; colnum++)
                     {
-                        byte val = srcrow[srcrowIdx, colnum];
+                        u8 val = srcrow[srcrowIdx, colnum];
                         if (symmetric)
-                            val = (byte)((val & (JOYSTICK_MAP_LEFT | JOYSTICK_MAP_RIGHT)) | ((val & JOYSTICK_MAP_UP) << 1) | ((val & JOYSTICK_MAP_DOWN) >> 1));
+                            val = (u8)((val & (JOYSTICK_MAP_LEFT | JOYSTICK_MAP_RIGHT)) | ((val & JOYSTICK_MAP_UP) << 1) | ((val & JOYSTICK_MAP_DOWN) >> 1));
                         m_map[rownum, colnum] = val;
                     }
                 }
@@ -111,16 +119,16 @@ namespace mame
                         if (colnum > 0 && (mapstringIdx == mapstring.Length || mapstring[mapstringIdx] == '.'))  //(*mapstring == 0 || *mapstring == '.'))
                         {
                             bool symmetric = (colnum >= 5);
-                            byte val = m_map[rownum, symmetric ? (8 - colnum) : (colnum - 1)];
+                            u8 val = m_map[rownum, symmetric ? (8 - colnum) : (colnum - 1)];
                             if (symmetric)
-                                val = (byte)((val & (JOYSTICK_MAP_UP | JOYSTICK_MAP_DOWN)) | ((val & JOYSTICK_MAP_LEFT) << 1) | ((val & JOYSTICK_MAP_RIGHT) >> 1));
+                                val = (u8)((val & (JOYSTICK_MAP_UP | JOYSTICK_MAP_DOWN)) | ((val & JOYSTICK_MAP_LEFT) << 1) | ((val & JOYSTICK_MAP_RIGHT) >> 1));
                             m_map[rownum, colnum] = val;
                         }
 
                         // otherwise, convert the character to its value
                         else
                         {
-                            byte [] charmap = new byte[]
+                            u8 [] charmap = new u8[]
                             {
                                 JOYSTICK_MAP_UP | JOYSTICK_MAP_LEFT,
                                 JOYSTICK_MAP_UP,
@@ -284,7 +292,7 @@ namespace mame
         public bool check_axis(input_item_modifier modifier, s32 memory)
         {
             // use INVALID_AXIS_VALUE as a short-circuit
-            return (memory != inputdev_global.INVALID_AXIS_VALUE) && item_check_axis(modifier, memory);
+            return (memory != INVALID_AXIS_VALUE) && item_check_axis(modifier, memory);
         }
 
 
@@ -360,8 +368,8 @@ namespace mame
             if (machine().phase() != machine_phase.INIT)
                 throw new emu_fatalerror("Can only call input_device::add_item at init time!");
 
-            g.assert(itemid > input_item_id.ITEM_ID_INVALID && itemid < input_item_id.ITEM_ID_MAXIMUM);
-            g.assert(getstate != null);
+            assert(itemid > input_item_id.ITEM_ID_INVALID && itemid < input_item_id.ITEM_ID_MAXIMUM);
+            assert(getstate != null);
 
             // if we have a generic ID, pick a new internal one
             input_item_id originalid = itemid;
@@ -374,10 +382,10 @@ namespace mame
                 }
             }
 
-            g.assert(itemid <= input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
+            assert(itemid <= input_item_id.ITEM_ID_ABSOLUTE_MAXIMUM);
 
             // make sure we don't have any overlap
-            g.assert(m_item[(int)itemid] == null);
+            assert(m_item[(int)itemid] == null);
 
             // determine the class and create the appropriate item class
             switch (m_manager.device_class(devclass()).standard_item_class(originalid))
@@ -396,12 +404,12 @@ namespace mame
 
                 default:
                     m_item[(int)itemid] = null;
-                    g.assert(false);
+                    assert(false);
                     break;
             }
 
             // assign the new slot and update the maximum
-            m_maxitem = (input_item_id)Math.Max((int)m_maxitem, (int)itemid);
+            m_maxitem = (input_item_id)std.max((int)m_maxitem, (int)itemid);
             return itemid;
         }
 
@@ -547,7 +555,7 @@ namespace mame
     {
         // internal state
         input_manager m_manager;              // reference to our manager
-        input_device [] m_device = new input_device[input_global.DEVICE_INDEX_MAXIMUM]; // array of devices in this class
+        input_device [] m_device = new input_device[DEVICE_INDEX_MAXIMUM]; // array of devices in this class
         input_device_class m_devclass;             // our device class
         string m_name;                 // name of class (used for option settings)
         int m_maxindex;             // maximum populated index
@@ -569,7 +577,7 @@ namespace mame
             m_multi = multi;
 
 
-            g.assert(m_name != null);
+            assert(m_name != null);
         }
 
 
@@ -635,21 +643,21 @@ namespace mame
         // indexing helpers
         public input_device add_device(input_device new_device)
         {
-            g.assert(new_device.devclass() == m_devclass);
+            assert(new_device.devclass() == m_devclass);
 
             // find the next empty index
-            for (int devindex = 0; devindex < input_global.DEVICE_INDEX_MAXIMUM; devindex++)
+            for (int devindex = 0; devindex < DEVICE_INDEX_MAXIMUM; devindex++)
             {
                 if (m_device[devindex] == null)
                 {
                     // update the device and maximum index found
                     new_device.set_devindex(devindex);
-                    m_maxindex = Math.Max(m_maxindex, devindex);
+                    m_maxindex = std.max(m_maxindex, devindex);
 
                     if (new_device.id()[0] == 0)
-                        g.osd_printf_verbose("Input: Adding {0} #{1}: {2}\n", m_name, devindex, new_device.name());
+                        osd_printf_verbose("Input: Adding {0} #{1}: {2}\n", m_name, devindex, new_device.name());
                     else
-                        g.osd_printf_verbose("Input: Adding {0} #{1}: {2} (device id: {3})\n", m_name, devindex, new_device.name(), new_device.id());
+                        osd_printf_verbose("Input: Adding {0} #{1}: {2} (device id: {3})\n", m_name, devindex, new_device.name(), new_device.id());
 
                     m_device[devindex] = new_device;
                     return m_device[devindex];
@@ -779,7 +787,7 @@ namespace mame
             if (!map.parse(mapstring))
                 return false;
 
-            g.osd_printf_verbose("Input: Changing default joystick map = {0}\n", map.to_string());
+            osd_printf_verbose("Input: Changing default joystick map = {0}\n", map.to_string());
 
             // iterate over joysticks and set the map
             for (int joynum = 0; joynum <= maxindex(); joynum++)

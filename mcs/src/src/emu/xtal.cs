@@ -2,11 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
+using u16 = System.UInt16;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.emucore_global;
 
 
 namespace mame
@@ -487,7 +490,7 @@ namespace mame
 
         //template <typename T> constexpr XTAL operator *(T &&mult) const noexcept { return XTAL(m_base_clock, m_current_clock * mult); }
         public static XTAL operator* (XTAL lhs, int rhs) { return new XTAL(lhs.m_base_clock, lhs.m_current_clock * rhs); }
-        public static XTAL operator* (UInt16 lhs, XTAL rhs) { return new XTAL(rhs.m_base_clock, lhs * rhs.m_current_clock); }
+        public static XTAL operator* (u16 lhs, XTAL rhs) { return new XTAL(rhs.m_base_clock, lhs * rhs.m_current_clock); }
 
         //template <typename T> constexpr XTAL operator /(T &&div) const noexcept { return XTAL(m_base_clock, m_current_clock / div); }
         public static XTAL operator/ (XTAL lhs, int rhs) { return new XTAL(lhs.m_base_clock, lhs.m_current_clock / rhs); }
@@ -516,7 +519,7 @@ namespace mame
 
             full_message += util.string_format(" Context: {0}\n", message);
 
-            g.fatalerror("{0}\n", full_message);
+            fatalerror("{0}\n", full_message);
         }
 
 
@@ -525,7 +528,7 @@ namespace mame
             if (base_clock == last_correct_value)
                 return true;
 
-            unsigned xtal_count = (UInt32)known_xtals.Length;  //sizeof(known_xtals) / sizeof(known_xtals[0]);
+            unsigned xtal_count = (unsigned)known_xtals.Length;  //sizeof(known_xtals) / sizeof(known_xtals[0]);
             unsigned last_index = xtal_count - 1;
             unsigned fill1  = last_index | (last_index >> 1);
             unsigned fill2  = fill1 | (fill1 >> 2);
@@ -547,7 +550,7 @@ namespace mame
                 {
                     double sfreq = known_xtals[slot];
                     double diff = std.abs((base_clock - sfreq) / base_clock);
-                    if (diff <= (2 * g.DBL_EPSILON))
+                    if (diff <= (2 * DBL_EPSILON))
                     {
                         last_correct_value = base_clock;
                         return true;

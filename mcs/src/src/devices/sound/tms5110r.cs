@@ -2,10 +2,10 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int8_t = System.Byte;
 using int16_t = System.Int16;
+using unsigned_short = System.UInt16;
 
 
 namespace mame
@@ -24,8 +24,8 @@ namespace mame
         public int energy_bits;
         public int pitch_bits;
         public int [] kbits = new int [MAX_K];
-        public UInt16 [] energytable = new UInt16 [MAX_SCALE];
-        public UInt16 [] pitchtable = new UInt16 [MAX_SCALE];
+        public unsigned_short [] energytable = new unsigned_short [MAX_SCALE];
+        public unsigned_short [] pitchtable = new unsigned_short [MAX_SCALE];
         public int [,] ktable = new int [MAX_K, MAX_SCALE];
         public int16_t [] chirptable = new int16_t [MAX_CHIRP_SIZE];
         public int8_t [] interp_coeff = new int8_t [8];
@@ -38,8 +38,8 @@ namespace mame
             int energy_bits,
             int pitch_bits,
             int [] kbits,
-            UInt16 [] energytable,
-            UInt16 [] pitchtable,
+            unsigned_short [] energytable,
+            unsigned_short [] pitchtable,
             int [,] ktable,
             int16_t [] chirptable,
             int8_t [] interp_coeff
@@ -78,7 +78,7 @@ namespace mame
         /* energy */
         //#define TI_0280_PATENT_ENERGY \
 
-        static readonly UInt16 [] TI_028X_LATER_ENERGY =
+        static readonly unsigned_short [] TI_028X_LATER_ENERGY =
             /* E  */
             {   0,  1,  2,  3,  4,  6,  8, 11,
                16, 23, 33, 47, 63, 85,114,  0 };
@@ -89,7 +89,7 @@ namespace mame
         //#define TI_5110_PITCH \
         //#define TI_2501E_PITCH \
 
-        static readonly UInt16 [] TI_5220_PITCH =
+        static readonly unsigned_short [] TI_5220_PITCH =
             /* P */
             {    0,  15,  16,  17,  18,  19,  20,  21,
                 22,  23,  24,  25,  26,  27,  28,  29,

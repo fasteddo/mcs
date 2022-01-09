@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using bitmap_ptr = mame.bitmap_argb32;
 using int32_t = System.Int32;

@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
@@ -12,6 +11,13 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using unsigned = System.UInt32;
 
+using static mame.device_creator_helper_global;
+using static mame.device_global;
+using static mame.diexec_global;
+using static mame.emucore_global;
+using static mame.hash_global;
+using static mame.romentry_global;
+
 
 namespace mame
 {
@@ -19,15 +25,15 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NAMCO_53XX, namco_53xx_device, "namco53", "Namco 53xx")
         static device_t device_creator_namco_53xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_53xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NAMCO_53XX = g.DEFINE_DEVICE_TYPE(device_creator_namco_53xx_device, "namco53", "Namco 53xx");
+        public static readonly device_type NAMCO_53XX = DEFINE_DEVICE_TYPE(device_creator_namco_53xx_device, "namco53", "Namco 53xx");
 
 
         //ROM_START( namco_53xx )
         static readonly MemoryContainer<tiny_rom_entry> rom_namco_53xx = new MemoryContainer<tiny_rom_entry>()
         {
-            g.ROM_REGION( 0x400, "mcu", 0 ),
-            g.ROM_LOAD( "53xx.bin",     0x0000, 0x0400, g.CRC("b326fecb") + g.SHA1("758d8583d658e4f1df93184009d86c3eb8713899") ),
-            g.ROM_END,
+            ROM_REGION( 0x400, "mcu", 0 ),
+            ROM_LOAD( "53xx.bin",     0x0000, 0x0400, CRC("b326fecb") + SHA1("758d8583d658e4f1df93184009d86c3eb8713899") ),
+            ROM_END,
         };
 
 
@@ -100,14 +106,14 @@ namespace mame
         public void reset(int state)
         {
             // The incoming signal is active low
-            m_cpu.op[0].set_input_line(g.INPUT_LINE_RESET, state == 0 ? 1 : 0);
+            m_cpu.op0.set_input_line(INPUT_LINE_RESET, state == 0 ? 1 : 0);
         }
 
 
         //WRITE_LINE_MEMBER(namco_53xx_device::chip_select)
         public void chip_select(int state)
         {
-            m_cpu.op[0].set_input_line(0, state);
+            m_cpu.op0.set_input_line(0, state);
         }
 
 
@@ -129,7 +135,7 @@ namespace mame
             m_in.resolve_all_safe_u8(0);
             m_p.resolve_safe();
 
-            save_item(g.NAME(new { m_portO }));
+            save_item(NAME(new { m_portO }));
         }
 
         //-------------------------------------------------
@@ -147,14 +153,14 @@ namespace mame
         //-------------------------------------------------
         protected override void device_add_mconfig(machine_config config)
         {
-            g.MB8843(config, m_cpu, g.DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
-            m_cpu.op[0].read_k().set(K_r).reg();
-            m_cpu.op[0].write_o().set(O_w).reg();
-            m_cpu.op[0].write_p().set(P_w).reg();
-            m_cpu.op[0].read_r(0).set(R0_r).reg();
-            m_cpu.op[0].read_r(1).set(R1_r).reg();
-            m_cpu.op[0].read_r(2).set(R2_r).reg();
-            m_cpu.op[0].read_r(3).set(R3_r).reg();
+            MB8843(config, m_cpu, DERIVED_CLOCK(1,1)); /* parent clock, internally divided by 6 */
+            m_cpu.op0.read_k().set(K_r).reg();
+            m_cpu.op0.write_o().set(O_w).reg();
+            m_cpu.op0.write_p().set(P_w).reg();
+            m_cpu.op0.read_r(0).set(R0_r).reg();
+            m_cpu.op0.read_r(1).set(R1_r).reg();
+            m_cpu.op0.read_r(2).set(R2_r).reg();
+            m_cpu.op0.read_r(3).set(R3_r).reg();
         }
     }
 }

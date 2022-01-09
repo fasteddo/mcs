@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -83,6 +82,11 @@ namespace mame.netlist
         //{
         //    return net().Q_Analog();
         //}
+        public nl_fptype op()
+        {
+            return net().Q_Analog();
+        }
+
 
         /// @brief sets conductivity value of this terminal
         ///

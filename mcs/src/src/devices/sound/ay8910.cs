@@ -2,16 +2,22 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using s8 = System.SByte;
+using s16 = System.Int16;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
+
+using static mame.ay8910_global;
+using static mame.device_global;
+using static mame.disound_global;
+using static mame.emucore_global;
+using static mame.util;
 
 
 namespace mame
@@ -46,7 +52,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(AY8910, ay8910_device, "ay8910", "AY-3-8910A PSG")
         static device_t device_creator_ay8910_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8910_device(mconfig, tag, owner, clock); }
-        public static readonly device_type AY8910 = g.DEFINE_DEVICE_TYPE(device_creator_ay8910_device, "ay8910", "AY-3-8910A PSG");
+        public static readonly device_type AY8910 = DEFINE_DEVICE_TYPE(device_creator_ay8910_device, "ay8910", "AY-3-8910A PSG");
 
 
         public class device_sound_interface_ay8910 : device_sound_interface
@@ -74,7 +80,7 @@ namespace mame
         }
 
 
-        /* register id's */
+        // register id's
         //enum
         //{
         const int AY_AFINE    = 0x00;
@@ -201,7 +207,7 @@ namespace mame
                 attack = (shape & 0x04) != 0 ? mask : (u8)0x00;
                 if ((shape & 0x08) == 0)
                 {
-                    /* if Continue = 0, map the shape to the equivalent one which has Continue = 1 */
+                    // if Continue = 0, map the shape to the equivalent one which has Continue = 1
                     hold = 1;
                     alternate = attack;
                 }
@@ -334,17 +340,19 @@ namespace mame
         int m_ready;
         sound_stream m_channel;
         bool m_active;
-        s32 m_register_latch;
+        u8 m_register_latch;
         u8 [] m_regs = new u8[16];
-        s32 m_last_enable;
+        s16 m_last_enable;
         tone_t [] m_tone = new tone_t[NUM_CHANNELS];
         envelope_t [] m_envelope = new envelope_t[NUM_CHANNELS];
         u8 m_prescale_noise;
-        s32 m_count_noise;
-        s32 m_rng;
+        s16 m_noise_value;
+        s16 m_count_noise;
+        u32 m_rng;
+        u8 m_noise_out;
         u8 m_mode;
         u8 m_env_step_mask;
-        /* init parameters ... */
+        // init parameters ...
         int m_step;
         int m_zero_is_off;
         u8 [] m_vol_enabled = new u8[NUM_CHANNELS];
@@ -353,9 +361,9 @@ namespace mame
         s32 [,] m_vol_table = new s32[NUM_CHANNELS, 16];
         s32 [,] m_env_table = new s32[NUM_CHANNELS, 32];
         s32 [] m_vol3d_table;  //std::unique_ptr<s32[]> m_vol3d_table;
-        int m_flags;          /* Flags */
-        int m_feature;        /* Chip specific features */
-        int [] m_res_load = new int[3];    /* Load on channel in ohms */
+        int m_flags;          // Flags
+        int m_feature;        // Chip specific features
+        int [] m_res_load = new int[3];    // Load on channel in ohms
         devcb_read8 m_port_a_read_cb;
         devcb_read8 m_port_b_read_cb;
         devcb_write8 m_port_a_write_cb;
@@ -385,8 +393,10 @@ namespace mame
             m_register_latch = 0;
             m_last_enable = 0;
             m_prescale_noise = 0;
+            m_noise_value = 0;
             m_count_noise = 0;
             m_rng = 0;
+            m_noise_out = 0;
             m_mode = 0;
             m_env_step_mask = (((feature & (int)config_t.PSG_HAS_EXPANDED_MODE) == 0) && (psg_type == psg_type_t.PSG_TYPE_AY)) ? (u8)0x0f : (u8)0x1f;
             m_step =          (((feature & (int)config_t.PSG_HAS_EXPANDED_MODE) == 0) && (psg_type == psg_type_t.PSG_TYPE_AY)) ? 2 : 1;
@@ -415,11 +425,16 @@ namespace mame
 
 
         public device_sound_interface_ay8910 disound { get { return m_disound; } }
+        public device_sound_interface add_route(u32 output, string target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return disound.add_route(output, target, gain, input, mixoutput); }
+        public device_sound_interface add_route(u32 output, device_sound_interface target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return disound.add_route(output, target, gain, input, mixoutput); }
+        public device_sound_interface add_route(u32 output, speaker_device target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return disound.add_route(output, target, gain, input, mixoutput); }
+        public device_sound_interface add_route(u32 output, device_t base_, string target, double gain, u32 input, u32 mixoutput) { return disound.add_route(output, base_, target, gain, input, mixoutput); }
+        public void set_output_gain(int outputnum, float gain) { disound.set_output_gain(outputnum, gain); }
 
 
         // configuration helpers
         public void set_flags(int flags) { m_flags = flags; }
-        //void set_psg_type(psg_type_t psg_type) { set_type(psg_type); }
+        //void set_psg_type(psg_type_t psg_type)
         public void set_resistors_load(int res_load0, int res_load1, int res_load2) { m_res_load[0] = res_load0; m_res_load[1] = res_load1; m_res_load[2] = res_load2; }
 
         public devcb_read8.binder port_a_read_callback() { return m_port_a_read_cb.bind(); }
@@ -496,10 +511,10 @@ namespace mame
             int master_clock = (int)clock();
 
             if (m_ioports < 1 && !(m_port_a_read_cb.isnull() && m_port_a_write_cb.isnull()))
-                g.fatalerror("Device '{0}' is a {1} and has no port A!", tag(), name());
+                fatalerror("Device '{0}' is a {1} and has no port A!", tag(), name());
 
             if (m_ioports < 2 && !(m_port_b_read_cb.isnull() && m_port_b_write_cb.isnull()))
-                g.fatalerror("Device '{0}' is a {1} and has no port B!", tag(), name());
+                fatalerror("Device '{0}' is a {1} and has no port B!", tag(), name());
 
             m_port_a_read_cb.resolve();
             m_port_b_read_cb.resolve();
@@ -516,8 +531,8 @@ namespace mame
 
             build_mixer_table();
 
-            /* The envelope is pacing twice as fast for the YM2149 as for the AY-3-8910,    */
-            /* This handled by the step parameter. Consequently we use a multipler of 2 here. */
+            // The envelope is pacing twice as fast for the YM2149 as for the AY-3-8910,
+            // This handled by the step parameter. Consequently we use a multipler of 2 here.
             m_channel = m_disound.stream_alloc(0, m_streams, (u32)(master_clock / 8));
 
             ay_set_clock(master_clock);
@@ -551,7 +566,7 @@ namespace mame
 
             int samples = (int)outputs[0].samples();
 
-            /* hack to prevent us from hanging when starting filtered outputs */
+            // hack to prevent us from hanging when starting filtered outputs
             if (m_ready == 0)
             {
                 for (int chan = 0; chan < m_streams; chan++)
@@ -560,14 +575,14 @@ namespace mame
                 }
             }
 
-            /* The 8910 has three outputs, each output is the mix of one of the three */
-            /* tone generators and of the (single) noise generator. The two are mixed */
-            /* BEFORE going into the DAC. The formula to mix each channel is: */
-            /* (ToneOn | ToneDisable) & (NoiseOn | NoiseDisable). */
-            /* Note that this means that if both tone and noise are disabled, the output */
-            /* is 1, not 0, and can be modulated changing the volume. */
+            // The 8910 has three outputs, each output is the mix of one of the three
+            // tone generators and of the (single) noise generator. The two are mixed
+            // BEFORE going into the DAC. The formula to mix each channel is:
+            // (ToneOn | ToneDisable) & (NoiseOn | NoiseDisable).
+            // Note that this means that if both tone and noise are disabled, the output
+            // is 1, not 0, and can be modulated changing the volume.
 
-            /* buffering loop */
+            // buffering loop
             for (int sampindex = 0; sampindex < samples; sampindex++)
             {
                 for (int chan = 0; chan < NUM_CHANNELS; chan++)
@@ -578,29 +593,31 @@ namespace mame
                     while (tone.count >= period)
                     {
                         tone.duty_cycle = (u8)((tone.duty_cycle - 1) & 0x1f);
-                        tone.output = is_expanded_mode() ? (u8)g.BIT(duty_cycle[tone_duty(ref tone)], tone.duty_cycle) : (u8)g.BIT(tone.duty_cycle, 0);
+                        tone.output = is_expanded_mode() ? (u8)BIT(duty_cycle[tone_duty(ref tone)], tone.duty_cycle) : (u8)BIT(tone.duty_cycle, 0);
                         tone.count -= period;
                     }
                 }
 
-                m_count_noise++;
-                if (m_count_noise >= noise_period())
+                if ((++m_count_noise) >= noise_period())
                 {
-                    /* toggle the prescaler output. Noise is no different to
-                    * channels.
-                    */
+                    // toggle the prescaler output. Noise is no different to
+                    // channels.
                     m_count_noise = 0;
                     m_prescale_noise ^= 1;
 
-                    if (m_prescale_noise == 0 || is_expanded_mode()) // AY8930 noise generator rate is twice compares as compatibility mode
+                    // TODO : verify algorithm for AY8930
+                    if (is_expanded_mode()) // AY8930 noise generator rate is twice compares as compatibility mode
                     {
-                        /* The Random Number Generator of the 8910 is a 17-bit shift */
-                        /* register. The input to the shift register is bit0 XOR bit3 */
-                        /* (bit0 is the output). This was verified on AY-3-8910 and YM2149 chips. */
-
-                        // TODO : get actually algorithm for AY8930
-                        m_rng ^= (((m_rng & 1) ^ ((m_rng >> 3) & 1)) << 17);
-                        m_rng >>= 1;
+                        if ((++m_noise_value) >= (((u8)m_rng & noise_and()) | noise_or()))
+                        {
+                            m_noise_value = 0;
+                            m_noise_out ^= 1;
+                            noise_rng_tick();
+                        }
+                    }
+                    else if (m_prescale_noise == 0)
+                    {
+                        noise_rng_tick();
                     }
                 }
 
@@ -610,20 +627,19 @@ namespace mame
                     m_vol_enabled[chan] = (u8)((tone.output | (tone_enable(chan) ? 1 : 0)) & (noise_output() | (noise_enable(chan) ? 1 : 0)));
                 }
 
-                /* update envelope */
+                // update envelope
                 for (int chan = 0; chan < NUM_CHANNELS; chan++)
                 {
                     ref envelope_t envelope = ref m_envelope[chan];  //envelope = &m_envelope[chan];
                     if (envelope.holding == 0)
                     {
                         u32 period = envelope.period * (u32)m_step;
-                        envelope.count++;
-                        if (envelope.count >= period)
+                        if ((++envelope.count) >= period)
                         {
                             envelope.count = 0;
                             envelope.step--;
 
-                            /* check envelope current position */
+                            // check envelope current position
                             if (envelope.step < 0)
                             {
                                 if (envelope.hold != 0)
@@ -636,8 +652,8 @@ namespace mame
                                 }
                                 else
                                 {
-                                    /* if CountEnv has looped an odd number of times (usually 1), */
-                                    /* invert the output. */
+                                    // if CountEnv has looped an odd number of times (usually 1),
+                                    // invert the output.
                                     if (envelope.alternate != 0 && (envelope.step & (m_env_step_mask + 1)) != 0)
                                         envelope.attack ^= m_env_step_mask;
 
@@ -713,10 +729,10 @@ namespace mame
                 {
                     u8 register_latch = (u8)(m_register_latch + get_register_bank());
 
-                    /* Data port */
+                    // Data port
                     if (m_register_latch == AY_EASHAPE || m_regs[m_register_latch] != data)
                     {
-                        /* update the output buffer before changing the register */
+                        // update the output buffer before changing the register
                         m_channel.update();
                     }
 
@@ -728,8 +744,8 @@ namespace mame
                 m_active = (data >> 4) == 0; // mask programmed 4-bit code
                 if (m_active)
                 {
-                    /* Register port */
-                    m_register_latch = data & 0x0f;
+                    // Register port
+                    m_register_latch = (u8)(data & 0x0f);
                 }
                 else
                 {
@@ -742,15 +758,15 @@ namespace mame
         u8 ay8910_read_ym()
         {
             device_type chip_type = type();
-            int r = m_register_latch + get_register_bank();
+            u8 r = (u8)(m_register_latch + get_register_bank());
 
             if (!m_active) return 0xff; // high impedance
 
             if ((r & 0xf) == AY_EASHAPE) // shared register
                 r &= 0xf;
 
-            /* There are no state dependent register in the AY8910! */
-            /* m_channel->update(); */
+            // There are no state dependent register in the AY8910!
+            // m_channel->update();
 
             switch (r)
             {
@@ -813,15 +829,17 @@ namespace mame
             m_active = false;
             m_register_latch = 0;
             m_rng = 1;
+            m_noise_out = 0;
             m_mode = 0; // ay-3-8910 compatible mode
             for (int chan = 0; chan < NUM_CHANNELS; chan++)
             {
                 m_tone[chan].reset();
                 m_envelope[chan].reset();
             }
+            m_noise_value = 0;
             m_count_noise = 0;
             m_prescale_noise = 0;
-            m_last_enable = -1;  /* force a write */
+            m_last_enable = -1;  // force a write
             for (int i = 0; i < AY_PORTA; i++)
                 ay8910_write_reg(i,0);
             m_ready = 1;
@@ -844,19 +862,26 @@ namespace mame
         }
 
 
+        void noise_rng_tick() { throw new emu_unimplemented(); }
+
+
         // inlines
-        bool tone_enable(int chan) { return g.BIT(m_regs[AY_ENABLE], chan) != 0; }
+        bool tone_enable(int chan) { return BIT(m_regs[AY_ENABLE], chan) != 0; }
         u8 tone_volume(ref tone_t tone) { return (u8)(tone.volume & (is_expanded_mode() ? 0x1f : 0x0f)); }
         u8 tone_envelope(ref tone_t tone) { return (u8)((tone.volume >> (is_expanded_mode() ? 5 : 4)) & ((m_feature & (int)config_t.PSG_EXTENDED_ENVELOPE) != 0 ? 3 : 1)); }
         u8 tone_duty(ref tone_t tone) { return is_expanded_mode() ? ((tone.duty & 0x8) != 0 ? (u8)0x8 : (u8)(tone.duty & 0xf)) : (u8)0x4; }
         u8 get_envelope_chan(int chan) { return is_expanded_mode() ? (u8)chan : (u8)0; }
 
-        bool noise_enable(int chan) { return g.BIT(m_regs[AY_ENABLE], 3 + chan) != 0; }
+        bool noise_enable(int chan) { return BIT(m_regs[AY_ENABLE], 3 + chan) != 0; }
         u8 noise_period() { return is_expanded_mode() ? (u8)(m_regs[AY_NOISEPER] & 0xff) : (u8)((m_regs[AY_NOISEPER] & 0x1f) << 1); }
-        u8 noise_output() { return (u8)(m_rng & 1); }
+        u8 noise_output() { return is_expanded_mode() ? (u8)(m_noise_out & 1U) : (u8)(m_rng & 1U); }
 
         bool is_expanded_mode() { return (m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0 && ((m_mode & 0xe) == 0xa); }
         u8 get_register_bank() { return is_expanded_mode() ? (u8)((m_mode & 0x1) << 4) : (u8)0; }
+
+
+        u8 noise_and() { return (u8)(m_regs[AY_NOISEAND] & 0xffU); }
+        u8 noise_or() { return (u8)(m_regs[AY_NOISEOR] & 0xffU); }
 
 
         // internal helpers
@@ -906,14 +931,11 @@ namespace mame
                             env_mask = 0;
                         }
                     }
+
                     if ((m_feature & (int)config_t.PSG_EXTENDED_ENVELOPE) != 0) // AY8914 Has a two bit tone_envelope field
-                    {
                         indx = indx | (int)(env_mask | (m_vol_enabled[chan] != 0 ? ((env_volume >> (3-tone_envelope(ref tone))) << (chan*5)) : 0U));
-                    }
                     else
-                    {
                         indx = indx | (int)(env_mask | (m_vol_enabled[chan] != 0 ? env_volume << (chan*5) : 0U));
-                    }
                 }
                 else
                 {
@@ -933,7 +955,7 @@ namespace mame
 
             //if (r >= 11 && r <= 13) printf("%d %x %02x\n", PSG->index, r, v);
 
-            m_regs[r] = (byte)v;
+            m_regs[r] = (u8)v;
             u8 coarse;
 
             switch (r)
@@ -954,7 +976,7 @@ namespace mame
                     m_tone[2].set_period(m_regs[AY_CFINE], coarse);
                     break;
                 case AY_NOISEPER:
-                    /* No action required */
+                    // No action required
                     break;
                 case AY_AVOL:
                     m_tone[0].set_volume(m_regs[AY_AVOL]);
@@ -974,17 +996,17 @@ namespace mame
                     if ((m_last_enable == -1) ||
                         ((m_last_enable & 0x40) != (m_regs[AY_ENABLE] & 0x40)))
                     {
-                        /* write out 0xff if port set to input */
+                        // write out 0xff if port set to input
                         if (!m_port_a_write_cb.isnull())
-                            m_port_a_write_cb.op_u8((offs_t)0, (m_regs[AY_ENABLE] & 0x40) != 0 ? m_regs[AY_PORTA] : (byte)0xff);
+                            m_port_a_write_cb.op_u8((offs_t)0, (m_regs[AY_ENABLE] & 0x40) != 0 ? m_regs[AY_PORTA] : (u8)0xff);
                     }
 
                     if ((m_last_enable == -1) ||
                         ((m_last_enable & 0x80) != (m_regs[AY_ENABLE] & 0x80)))
                     {
-                        /* write out 0xff if port set to input */
+                        // write out 0xff if port set to input
                         if (!m_port_b_write_cb.isnull())
-                            m_port_b_write_cb.op_u8((offs_t)0, (m_regs[AY_ENABLE] & 0x80) != 0 ? m_regs[AY_PORTB] : (byte)0xff);
+                            m_port_b_write_cb.op_u8((offs_t)0, (m_regs[AY_ENABLE] & 0x80) != 0 ? m_regs[AY_PORTB] : (u8)0xff);
                     }
                     m_last_enable = m_regs[AY_ENABLE];
                     break;
@@ -1066,7 +1088,7 @@ namespace mame
                     break;
                 case AY_NOISEAND:
                 case AY_NOISEOR:
-                    // not implemented
+                    // No action required
                     break;
                 default:
                     m_regs[r] = 0; // reserved, set as 0
@@ -1088,7 +1110,7 @@ namespace mame
             if ((m_flags & AY8910_RESISTOR_OUTPUT) != 0)
             {
                 if (m_type != psg_type_t.PSG_TYPE_AY)
-                    g.fatalerror("AY8910_RESISTOR_OUTPUT currently only supported for AY8910 devices.");
+                    fatalerror("AY8910_RESISTOR_OUTPUT currently only supported for AY8910 devices.");
 
                 for (int chan = 0; chan < NUM_CHANNELS; chan++)
                 {
@@ -1104,10 +1126,8 @@ namespace mame
                     build_single_table(m_res_load[chan], m_par_env, normalize, ref m_env_table, chan, 0);
                 }
             }
-            /*
-             * The previous implementation added all three channels up instead of averaging them.
-             * The factor of 3 will force the same levels if normalizing is used.
-             */
+            // The previous implementation added all three channels up instead of averaging them.
+            // The factor of 3 will force the same levels if normalizing is used.
             else
             {
                 build_3D_table(m_res_load[0], m_par, m_par_env, normalize, 3, m_zero_is_off, ref m_vol3d_table);
@@ -1136,17 +1156,19 @@ namespace mame
             save_item(STRUCT_MEMBER(m_envelope, holding));
 #endif
 
-            save_item(g.NAME(new { m_active }));
-            save_item(g.NAME(new { m_register_latch }));
-            save_item(g.NAME(new { m_regs }));
-            save_item(g.NAME(new { m_last_enable }));
+            save_item(NAME(new { m_active }));
+            save_item(NAME(new { m_register_latch }));
+            save_item(NAME(new { m_regs }));
+            save_item(NAME(new { m_last_enable }));
 
-            save_item(g.NAME(new { m_count_noise }));
-            save_item(g.NAME(new { m_prescale_noise }));
+            save_item(NAME(new { m_noise_value }));
+            save_item(NAME(new { m_count_noise }));
+            save_item(NAME(new { m_prescale_noise }));
 
-            save_item(g.NAME(new { m_rng }));
-            save_item(g.NAME(new { m_mode }));
-            save_item(g.NAME(new { m_flags }));
+            save_item(NAME(new { m_rng }));
+            save_item(NAME(new { m_noise_out }));
+            save_item(NAME(new { m_mode }));
+            save_item(NAME(new { m_flags }));
         }
 
 
@@ -1213,7 +1235,7 @@ namespace mame
                     tab[j] = (int)(MAX_OUTPUT * temp[j]);
             }
 
-            /* for (e = 0;e<16;e++) printf("%d %d\n",e << 10, tab[e << 10]); */
+            // for (e = 0;e<16;e++) printf("%d %d\n",e << 10, tab[e << 10]);
         }
 
 
@@ -1286,7 +1308,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(AY8914, ay8914_device, "ay8914", "AY-3-8914A PSG")
         static device_t device_creator_ay8914_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8914_device(mconfig, tag, owner, clock); }
-        public static readonly device_type AY8914 = g.DEFINE_DEVICE_TYPE(device_creator_ay8914_device, "ay8914", "AY-3-8914A PSG");
+        public static readonly device_type AY8914 = DEFINE_DEVICE_TYPE(device_creator_ay8914_device, "ay8914", "AY-3-8914A PSG");
 
 
         static readonly u8 [] mapping8914to8910 = new u8[16] { 0, 2, 4, 11, 1, 3, 5, 12, 7, 6, 13, 8, 9, 10, 14, 15 };
@@ -1299,7 +1321,7 @@ namespace mame
         }
 
 
-        /* AY8914 handlers needed due to different register map */
+        // AY8914 handlers needed due to different register map
         u8 read(offs_t offset)
         {
             u8 rv;

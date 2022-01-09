@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.netlist.nl_setup_global;
 
 
 namespace mame
@@ -12,7 +13,7 @@ namespace mame
         //NETLIST_START(ICL8038_DIP)
         public static void netlist_ICL8038_DIP(netlist.nlparse_t setup)
         {
-            netlist.nl_setup_global.NETLIST_START();
+            NETLIST_START();
 
             throw new emu_unimplemented();
 #if false
@@ -68,7 +69,7 @@ namespace mame
             ALIAS(6, COMP.VCC) // V+
 #endif
 
-            netlist.nl_setup_global.NETLIST_END();
+            NETLIST_END();
         }
     }
 }

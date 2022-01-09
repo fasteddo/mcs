@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
@@ -13,6 +12,13 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using unsigned = System.UInt32;
 
+using static mame.device_creator_helper_global;
+using static mame.device_global;
+using static mame.diexec_global;
+using static mame.emucore_global;
+using static mame.hash_global;
+using static mame.romentry_global;
+
 
 namespace mame
 {
@@ -20,7 +26,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NAMCO_51XX, namco_51xx_device, "namco51", "Namco 51xx")
         static device_t device_creator_namco_51xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_51xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NAMCO_51XX = g.DEFINE_DEVICE_TYPE(device_creator_namco_51xx_device, "namco51", "Namco 51xx");
+        public static readonly device_type NAMCO_51XX = DEFINE_DEVICE_TYPE(device_creator_namco_51xx_device, "namco51", "Namco 51xx");
 
 
         const bool VERBOSE = false;
@@ -29,9 +35,9 @@ namespace mame
         //ROM_START( namco_51xx )
         static readonly MemoryContainer<tiny_rom_entry> rom_namco_51xx = new MemoryContainer<tiny_rom_entry>()
         {
-            g.ROM_REGION( 0x400, "mcu", 0 ),
-            g.ROM_LOAD( "51xx.bin",     0x0000, 0x0400, g.CRC("c2f57ef8") + g.SHA1("50de79e0d6a76bda95ffb02fcce369a79e6abfec") ),
-            g.ROM_END,
+            ROM_REGION( 0x400, "mcu", 0 ),
+            ROM_LOAD( "51xx.bin",     0x0000, 0x0400, CRC("c2f57ef8") + SHA1("50de79e0d6a76bda95ffb02fcce369a79e6abfec") ),
+            ROM_END,
         };
 
 
@@ -65,7 +71,7 @@ namespace mame
         public void reset(int state)
         {
             // Reset line is active low.
-            m_cpu.op[0].set_input_line(g.INPUT_LINE_RESET, state == 0 ? 1 : 0);
+            m_cpu.op0.set_input_line(INPUT_LINE_RESET, state == 0 ? 1 : 0);
         }
 
 
@@ -73,7 +79,7 @@ namespace mame
         public void vblank(int state)
         {
             // The timer is active on falling edges.
-            m_cpu.op[0].clock_w(state == 0 ? 1 : 0);
+            m_cpu.op0.clock_w(state == 0 ? 1 : 0);
         }
 
 
@@ -87,7 +93,7 @@ namespace mame
         //WRITE_LINE_MEMBER( namco_51xx_device::chip_select )
         public void chip_select(int state)
         {
-            m_cpu.op[0].set_input_line(0, state);
+            m_cpu.op0.set_input_line(0, state);
         }
 
 
@@ -117,8 +123,8 @@ namespace mame
             m_out.resolve_safe();
             m_lockout.resolve_safe();
 
-            save_item(g.NAME(new { m_portO }));
-            save_item(g.NAME(new { m_rw }));
+            save_item(NAME(new { m_portO }));
+            save_item(NAME(new { m_rw }));
         }
 
         //-------------------------------------------------
@@ -135,14 +141,14 @@ namespace mame
         //-------------------------------------------------
         protected override void device_add_mconfig(machine_config config)
         {
-            g.MB8843(config, m_cpu, g.DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
-            m_cpu.op[0].read_k().set(K_r).reg();
-            m_cpu.op[0].read_r(0).set(R0_r).reg();
-            m_cpu.op[0].read_r(1).set(R1_r).reg();
-            m_cpu.op[0].read_r(2).set(R2_r).reg();
-            m_cpu.op[0].read_r(3).set(R3_r).reg();
-            m_cpu.op[0].write_o().set(O_w).reg();
-            m_cpu.op[0].write_p().set(P_w).reg();
+            MB8843(config, m_cpu, DERIVED_CLOCK(1,1));     /* parent clock, internally divided by 6 */
+            m_cpu.op0.read_k().set(K_r).reg();
+            m_cpu.op0.read_r(0).set(R0_r).reg();
+            m_cpu.op0.read_r(1).set(R1_r).reg();
+            m_cpu.op0.read_r(2).set(R2_r).reg();
+            m_cpu.op0.read_r(3).set(R3_r).reg();
+            m_cpu.op0.write_o().set(O_w).reg();
+            m_cpu.op0.write_p().set(P_w).reg();
         }
 
 

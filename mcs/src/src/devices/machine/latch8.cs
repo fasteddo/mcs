@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
@@ -13,6 +12,11 @@ using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using unsigned = System.UInt32;
 
+using static mame.cpp_global;
+using static mame.device_global;
+using static mame.emucore_global;
+using static mame.util;
+
 
 namespace mame
 {
@@ -20,7 +24,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(LATCH8, latch8_device, "latch8", "8-bit latch")
         static device_t device_creator_latch8_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new latch8_device(mconfig, tag, owner, clock); }
-        public static readonly device_type LATCH8 = g.DEFINE_DEVICE_TYPE(device_creator_latch8_device, "latch8", "8-bit latch");
+        public static readonly device_type LATCH8 = DEFINE_DEVICE_TYPE(device_creator_latch8_device, "latch8", "8-bit latch");
 
 
         devcb_write_line.array<u64_const_8> m_write_cb;
@@ -71,7 +75,7 @@ namespace mame
 
         public uint8_t read(offs_t offset)
         {
-            g.assert(offset == 0);
+            assert(offset == 0);
 
             uint8_t res = m_value;
             if (m_has_read)
@@ -89,7 +93,7 @@ namespace mame
 
         public void write(offs_t offset, uint8_t data)
         {
-            g.assert(offset == 0);
+            assert(offset == 0);
 
             if (m_nosync != 0xff)
                 machine().scheduler().synchronize(timerproc, (0xff << 8) | data);
@@ -106,7 +110,7 @@ namespace mame
         //DECLARE_READ_LINE_MEMBER( bit0_r ) { return BIT(m_value, 0); }
         //DECLARE_READ_LINE_MEMBER( bit1_r ) { return BIT(m_value, 1); }
         //DECLARE_READ_LINE_MEMBER( bit2_r ) { return BIT(m_value, 2); }
-        public int bit3_r() { return g.BIT(m_value, 3); }  //DECLARE_READ_LINE_MEMBER( bit3_r ) { return BIT(m_value, 3); }
+        public int bit3_r() { return BIT(m_value, 3); }  //DECLARE_READ_LINE_MEMBER( bit3_r ) { return BIT(m_value, 3); }
         //DECLARE_READ_LINE_MEMBER( bit4_r ) { return BIT(m_value, 4); }
         //DECLARE_READ_LINE_MEMBER( bit5_r ) { return BIT(m_value, 5); }
         //DECLARE_READ_LINE_MEMBER( bit6_r ) { return BIT(m_value, 6); }
@@ -118,8 +122,8 @@ namespace mame
         //DECLARE_READ_LINE_MEMBER( bit1_q_r ) { return BIT(~m_value, 1); }
         //DECLARE_READ_LINE_MEMBER( bit2_q_r ) { return BIT(~m_value, 2); }
         //DECLARE_READ_LINE_MEMBER( bit3_q_r ) { return BIT(~m_value, 3); }
-        public int bit4_q_r() { return g.BIT(~m_value, 4); }  //DECLARE_READ_LINE_MEMBER( bit4_q_r ) { return BIT(~m_value, 4); }
-        public int bit5_q_r() { return g.BIT(~m_value, 5); }  //DECLARE_READ_LINE_MEMBER( bit5_q_r ) { return BIT(~m_value, 5); }
+        public int bit4_q_r() { return BIT(~m_value, 4); }  //DECLARE_READ_LINE_MEMBER( bit4_q_r ) { return BIT(~m_value, 4); }
+        public int bit5_q_r() { return BIT(~m_value, 5); }  //DECLARE_READ_LINE_MEMBER( bit5_q_r ) { return BIT(~m_value, 5); }
         //DECLARE_READ_LINE_MEMBER( bit6_q_r ) { return BIT(~m_value, 6); }
         //DECLARE_READ_LINE_MEMBER( bit7_q_r ) { return BIT(~m_value, 7); }
 
@@ -155,7 +159,7 @@ namespace mame
                 cb.resolve();
             }
 
-            save_item(g.NAME(new { m_value }));
+            save_item(NAME(new { m_value }));
         }
 
 
@@ -189,8 +193,8 @@ namespace mame
                 uint8_t changed = (uint8_t)(old_val ^ m_value);
                 for (int i = 0; i < 8; i++)
                 {
-                    if (g.BIT(changed, i) != 0 && !m_write_cb[i].isnull())
-                        m_write_cb[i].op_s32(g.BIT(m_value, i));
+                    if (BIT(changed, i) != 0 && !m_write_cb[i].isnull())
+                        m_write_cb[i].op_s32(BIT(m_value, i));
                 }
             }
         }
@@ -203,9 +207,9 @@ namespace mame
             int Bit = new int_Bit().value;
 
             uint8_t mask = (uint8_t)(1U << (int)offset);
-            uint8_t masked_data = (uint8_t)(g.BIT(data, Bit) << (int)offset);
+            uint8_t masked_data = (uint8_t)(BIT(data, Bit) << (int)offset);
 
-            g.assert(offset < 8);
+            assert(offset < 8);
 
             /* No need to synchronize ? */
             if ((m_nosync & mask) != 0)

@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 
 namespace mame.ui
@@ -14,7 +13,6 @@ namespace mame.ui
         //UINT8                   m_error;
         //bool                    m_rerandomize;
         string m_search;  //char                    m_search[40];
-        //int                     m_skip_main_items;
         //int                     m_matchlist[VISIBLE_GAMES_IN_LIST];
         std.vector<game_driver> m_driverlist;
         //std::unique_ptr<driver_enumerator> m_drivlist;
@@ -44,9 +42,6 @@ namespace mame.ui
         }
 
 
-        //virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
-
-
         // force game select menu
         public static void force_game_select(mame_ui_manager mui, render_container container)
         {
@@ -54,7 +49,8 @@ namespace mame.ui
         }
 
 
-        protected override bool menu_has_search_active() { return !string.IsNullOrEmpty(m_search); }
+        //virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
+        //virtual bool custom_ui_cancel() override { return !m_search.empty(); }
 
 
         // internal methods

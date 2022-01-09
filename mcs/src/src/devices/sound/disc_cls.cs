@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int32_t = System.Int32;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
@@ -237,21 +236,32 @@ namespace mame
     }
 
 
-#if false
-    class DISCRETE_CLASS_NAME(dss_input_pulse): public discrete_base_node, public discrete_input_interface, public discrete_step_interface
+    //class DISCRETE_CLASS_NAME(dss_input_pulse): public discrete_base_node, public discrete_input_interface, public discrete_step_interface
+    partial class discrete_dss_input_pulse_node : discrete_base_node,
+                                                  discrete_input_interface,
+                                                  discrete_step_interface
     {
-        DISCRETE_CLASS_CONSTRUCTOR(dss_input_pulse, base)
-        DISCRETE_CLASS_DESTRUCTOR(dss_input_pulse)
-    public:
-        void step(void);
-        void reset(void);
-        void input_write(int sub_node, UINT8 data );
-    private:
-        //double      m_gain;             /* node gain */
-        //double      m_offset;           /* node offset */
-        UINT8       m_data;             /* data written */
-    };
-#endif
+        //double m_gain;             /* node gain */
+        //double m_offset;           /* node offset */
+        uint8_t m_data;             /* data written */
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(dss_input_pulse, base)
+        public discrete_dss_input_pulse_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(dss_input_pulse)
+
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        // disc_inp.cs
+
+        //DISCRETE_STEP(dss_input_pulse)
+        //DISCRETE_RESET(dss_input_pulse)
+        //virtual void input_write(int sub_node, uint8_t data ) override;
+    }
 
 
     //class DISCRETE_CLASS_NAME(dss_input_stream): public discrete_base_node, public discrete_input_interface, public discrete_step_interface

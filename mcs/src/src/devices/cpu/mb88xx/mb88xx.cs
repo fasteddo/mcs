@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
@@ -15,6 +14,13 @@ using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+
+using static mame.device_global;
+using static mame.diexec_global;
+using static mame.distate_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
+using static mame.util;
 
 
 namespace mame
@@ -127,10 +133,10 @@ namespace mame
         const int INT_CAUSE_EXTERNAL = 0x04;
 
 
-        byte READOP(offs_t a) { return m_cache.read_byte(a); }
+        uint8_t READOP(offs_t a) { return m_cache.read_byte(a); }
 
-        byte RDMEM(offs_t a) { return m_data.read_byte(a); }
-        void WRMEM(offs_t a, byte v) { m_data.write_byte(a, v); }
+        uint8_t RDMEM(offs_t a) { return m_data.read_byte(a); }
+        void WRMEM(offs_t a, uint8_t v) { m_data.write_byte(a, v); }
 
         int TEST_ST() { return m_st & 1; }
         int TEST_ZF() { return m_zf & 1; }
@@ -139,15 +145,15 @@ namespace mame
         int TEST_SF() { return m_sf & 1; }
         int TEST_NF() { return m_nf & 1; }
 
-        void UPDATE_ST_C(byte v) { m_st=(v&0x10) != 0 ? (byte)0 : (byte)1; }
-        void UPDATE_ST_Z(byte v) { m_st=(v==0) ? (byte)0 : (byte)1; }
+        void UPDATE_ST_C(uint8_t v) { m_st=(v&0x10) != 0 ? (uint8_t)0 : (uint8_t)1; }
+        void UPDATE_ST_Z(uint8_t v) { m_st=(v==0) ? (uint8_t)0 : (uint8_t)1; }
 
-        void UPDATE_CF(byte v) { m_cf=((v&0x10)==0) ? (byte)0 : (byte)1; }
-        void UPDATE_ZF(byte v) { m_zf=(v!=0) ? (byte)0 : (byte)1; }
+        void UPDATE_CF(uint8_t v) { m_cf=((v&0x10)==0) ? (uint8_t)0 : (uint8_t)1; }
+        void UPDATE_ZF(uint8_t v) { m_zf=(v!=0) ? (uint8_t)0 : (uint8_t)1; }
 
         void CYCLES(int x) { m_icount.i -= x; }
 
-        UInt16 GETPC() { return (UInt16)(((int)m_PA << 6) + m_PC); }
+        uint16_t GETPC() { return (uint16_t)(((int)m_PA << 6) + m_PC); }
         offs_t GETEA() { return (offs_t)((m_X << 4) + m_Y); }
 
         void INCPC() { m_PC++; if ( m_PC >= 0x40 ) { m_PC = 0; m_PA++; } }
@@ -223,8 +229,8 @@ namespace mame
             m_class_interfaces.Add(new device_disasm_interface_mb88(mconfig, this));
 
 
-            m_program_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, (byte)program_width, 0, (program_width == 9) ? program_9bit : (program_width == 10) ? program_10bit : (address_map_constructor)program_11bit);
-            m_data_config = new address_space_config("data", g.ENDIANNESS_BIG, 8, (byte)data_width, 0, (data_width == 4) ? data_4bit : (data_width == 5) ? data_5bit : (data_width == 6) ? data_6bit : (address_map_constructor)data_7bit);
+            m_program_config = new address_space_config("program", ENDIANNESS_BIG, 8, (uint8_t)program_width, 0, (program_width == 9) ? program_9bit : (program_width == 10) ? program_10bit : (address_map_constructor)program_11bit);
+            m_data_config = new address_space_config("data", ENDIANNESS_BIG, 8, (uint8_t)data_width, 0, (data_width == 4) ? data_4bit : (data_width == 5) ? data_5bit : (data_width == 6) ? data_6bit : (address_map_constructor)data_7bit);
             m_PLA = null;
             m_read_k = new devcb_read8(this);
             m_write_o = new devcb_write8(this);
@@ -296,9 +302,9 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_mb88>();
 
 
-            m_dimemory.space(g.AS_PROGRAM).cache(m_cache);
-            m_dimemory.space(g.AS_PROGRAM).specific(m_program);
-            m_dimemory.space(g.AS_DATA).specific(m_data);
+            m_dimemory.space(AS_PROGRAM).cache(m_cache);
+            m_dimemory.space(AS_PROGRAM).specific(m_program);
+            m_dimemory.space(AS_DATA).specific(m_data);
 
             m_read_k.resolve_safe_u8(0);
             m_write_o.resolve_safe();
@@ -312,30 +318,30 @@ namespace mame
 
             m_ctr = 0;
 
-            save_item(g.NAME(new { m_PC }));
-            save_item(g.NAME(new { m_PA }));
-            save_item(g.NAME(new { m_SP }));  //save_item(NAME(m_SP[0]));
+            save_item(NAME(new { m_PC }));
+            save_item(NAME(new { m_PA }));
+            save_item(NAME(new { m_SP }));  //save_item(NAME(m_SP[0]));
             //save_item(NAME(new { m_SP[1] }));
             //save_item(NAME(new { m_SP[2] }));
             //save_item(NAME(new { m_SP[3] }));
-            save_item(g.NAME(new { m_SI }));
-            save_item(g.NAME(new { m_A }));
-            save_item(g.NAME(new { m_X }));
-            save_item(g.NAME(new { m_Y }));
-            save_item(g.NAME(new { m_st }));
-            save_item(g.NAME(new { m_zf }));
-            save_item(g.NAME(new { m_cf }));
-            save_item(g.NAME(new { m_vf }));
-            save_item(g.NAME(new { m_sf }));
-            save_item(g.NAME(new { m_nf }));
-            save_item(g.NAME(new { m_pio }));
-            save_item(g.NAME(new { m_TH }));
-            save_item(g.NAME(new { m_TL }));
-            save_item(g.NAME(new { m_TP }));
-            save_item(g.NAME(new { m_ctr }));
-            save_item(g.NAME(new { m_SB }));
-            save_item(g.NAME(new { m_SBcount }));
-            save_item(g.NAME(new { m_pending_interrupt }));
+            save_item(NAME(new { m_SI }));
+            save_item(NAME(new { m_A }));
+            save_item(NAME(new { m_X }));
+            save_item(NAME(new { m_Y }));
+            save_item(NAME(new { m_st }));
+            save_item(NAME(new { m_zf }));
+            save_item(NAME(new { m_cf }));
+            save_item(NAME(new { m_vf }));
+            save_item(NAME(new { m_sf }));
+            save_item(NAME(new { m_nf }));
+            save_item(NAME(new { m_pio }));
+            save_item(NAME(new { m_TH }));
+            save_item(NAME(new { m_TL }));
+            save_item(NAME(new { m_TP }));
+            save_item(NAME(new { m_ctr }));
+            save_item(NAME(new { m_SB }));
+            save_item(NAME(new { m_SBcount }));
+            save_item(NAME(new { m_pending_interrupt }));
 
             m_distate.state_add( MB88_PC,  "PC",  m_PC).formatstr("%02X");
             m_distate.state_add( MB88_PA,  "PA",  m_PA).formatstr("%02X");
@@ -348,9 +354,9 @@ namespace mame
             m_distate.state_add( MB88_TL,  "TL",  m_TL).formatstr("%01X");
             m_distate.state_add( MB88_SB,  "SB",  m_SB).formatstr("%01X");
 
-            m_distate.state_add( g.STATE_GENPC, "GENPC", m_debugger_pc).callimport().callexport().noshow();
-            m_distate.state_add( g.STATE_GENPCBASE, "CURPC", m_debugger_pc ).callimport().callexport().noshow();
-            m_distate.state_add( g.STATE_GENFLAGS, "GENFLAGS", m_debugger_flags).callimport().callexport().formatstr("%6s").noshow();
+            m_distate.state_add( STATE_GENPC, "GENPC", m_debugger_pc).callimport().callexport().noshow();
+            m_distate.state_add( STATE_GENPCBASE, "CURPC", m_debugger_pc ).callimport().callexport().noshow();
+            m_distate.state_add( STATE_GENFLAGS, "GENFLAGS", m_debugger_flags).callimport().callexport().formatstr("%6s").noshow();
 
             set_icountptr(m_icount);
         }
@@ -396,9 +402,9 @@ namespace mame
         {
             while (m_icount.i > 0)
             {
-                byte opcode;
-                byte arg;
-                byte oc;
+                uint8_t opcode;
+                uint8_t arg;
+                uint8_t oc;
 
                 /* fetch the opcode */
                 debugger_instruction_hook(GETPC());
@@ -417,7 +423,7 @@ namespace mame
                         break;
 
                     case 0x01: /* outO ZCS:...*/
-                        m_write_o.op_u8((byte)pla(m_A, TEST_CF()));
+                        m_write_o.op_u8((uint8_t)pla(m_A, TEST_CF()));
                         m_st = 1;
                         break;
 
@@ -486,9 +492,9 @@ namespace mame
 
                     case 0x0c: /* rol ZCS:xxx */
                         m_A <<= 1;
-                        m_A |= (byte)TEST_CF();
+                        m_A |= (uint8_t)TEST_CF();
                         UPDATE_ST_C(m_A);
-                        m_cf = (byte)(m_st ^ 1);
+                        m_cf = (uint8_t)(m_st ^ 1);
                         m_A &= 0x0f;
                         UPDATE_ZF(m_A);
                         break;
@@ -502,42 +508,42 @@ namespace mame
                     case 0x0e: /* adc ZCS:xxx */
                         arg = RDMEM(GETEA());
                         arg += m_A;
-                        arg += (byte)TEST_CF();
+                        arg += (uint8_t)TEST_CF();
                         UPDATE_ST_C(arg);
-                        m_cf = (byte)(m_st ^ 1);
-                        m_A = (byte)(arg & 0x0f);
+                        m_cf = (uint8_t)(m_st ^ 1);
+                        m_A = (uint8_t)(arg & 0x0f);
                         UPDATE_ZF(m_A);
                         break;
 
                     case 0x0f: /* and ZCS:x.x */
                         m_A &= RDMEM(GETEA());
                         UPDATE_ZF(m_A);
-                        m_st = (byte)(m_zf ^ 1);
+                        m_st = (uint8_t)(m_zf ^ 1);
                         break;
 
                     case 0x10: /* daa ZCS:.xx */
                         if ( TEST_CF() != 0 || m_A > 9 ) m_A += 6;
                         UPDATE_ST_C(m_A);
-                        m_cf = (byte)(m_st ^ 1);
+                        m_cf = (uint8_t)(m_st ^ 1);
                         m_A &= 0x0f;
                         break;
 
                     case 0x11: /* das ZCS:.xx */
                         if ( TEST_CF() != 0 || m_A > 9 ) m_A += 10;
                         UPDATE_ST_C(m_A);
-                        m_cf = (byte)(m_st ^ 1);
+                        m_cf = (uint8_t)(m_st ^ 1);
                         m_A &= 0x0f;
                         break;
 
                     case 0x12: /* inK ZCS:x.. */
-                        m_A = (byte)(m_read_k.op_u8() & 0x0f);
+                        m_A = (uint8_t)(m_read_k.op_u8() & 0x0f);
                         UPDATE_ZF(m_A);
                         m_st = 1;
                         break;
 
                     case 0x13: /* inR ZCS:x.. */
                         arg = m_Y;
-                        m_A = (byte)(m_read_r[arg & 3].op_u8() & 0x0f);
+                        m_A = (uint8_t)(m_read_r[arg & 3].op_u8() & 0x0f);
                         UPDATE_ZF(m_A);
                         m_st = 1;
                         break;
@@ -598,9 +604,9 @@ namespace mame
                         break;
 
                     case 0x1c: /* ror ZCS:xxx */
-                        m_A |= (byte)(TEST_CF() << 4);
-                        UPDATE_ST_C((byte)(m_A << 4));
-                        m_cf = (byte)(m_st ^ 1);
+                        m_A |= (uint8_t)(TEST_CF() << 4);
+                        UPDATE_ST_C((uint8_t)(m_A << 4));
+                        m_cf = (uint8_t)(m_st ^ 1);
                         m_A >>= 1;
                         m_A &= 0x0f;
                         UPDATE_ZF(m_A);
@@ -614,22 +620,22 @@ namespace mame
                     case 0x1e: /* sbc ZCS:xxx */
                         arg = RDMEM(GETEA());
                         arg -= m_A;
-                        arg -= (byte)TEST_CF();
+                        arg -= (uint8_t)TEST_CF();
                         UPDATE_ST_C(arg);
-                        m_cf = (byte)(m_st ^ 1);
-                        m_A = (byte)(arg & 0x0f);
+                        m_cf = (uint8_t)(m_st ^ 1);
+                        m_A = (uint8_t)(arg & 0x0f);
                         UPDATE_ZF(m_A);
                         break;
 
                     case 0x1f: /* or ZCS:x.x */
                         m_A |= RDMEM(GETEA());
                         UPDATE_ZF(m_A);
-                        m_st = (byte)(m_zf ^ 1);
+                        m_st = (uint8_t)(m_zf ^ 1);
                         break;
 
                     case 0x20: /* setR ZCS:... */
                         arg = m_read_r[m_Y / 4].op_u8();
-                        m_write_r[m_Y / 4].op_u8((byte)(arg | (1 << (m_Y%4))));
+                        m_write_r[m_Y / 4].op_u8((uint8_t)(arg | (1 << (m_Y%4))));
                         m_st = 1;
                         break;
 
@@ -640,7 +646,7 @@ namespace mame
 
                     case 0x22: /* rstR ZCS:... */
                         arg = m_read_r[m_Y / 4].op_u8();
-                        m_write_r[m_Y / 4].op_u8((byte)(arg & ~(1 << (m_Y%4))));
+                        m_write_r[m_Y / 4].op_u8((uint8_t)(arg & ~(1 << (m_Y%4))));
                         m_st = 1;
                         break;
 
@@ -651,20 +657,20 @@ namespace mame
 
                     case 0x24: /* tstr ZCS:..x */
                         arg = m_read_r[m_Y / 4].op_u8();
-                        m_st = ( arg & ( 1 << (m_Y%4) ) ) != 0 ? (byte)0 : (byte)1;
+                        m_st = ( arg & ( 1 << (m_Y%4) ) ) != 0 ? (uint8_t)0 : (uint8_t)1;
                         break;
 
                     case 0x25: /* tsti ZCS:..x */
-                        m_st = (byte)(m_nf ^ 1);
+                        m_st = (uint8_t)(m_nf ^ 1);
                         break;
 
                     case 0x26: /* tstv ZCS:..x */
-                        m_st = (byte)(m_vf ^ 1);
+                        m_st = (uint8_t)(m_vf ^ 1);
                         m_vf = 0;
                         break;
 
                     case 0x27: /* tsts ZCS:..x */
-                        m_st = (byte)(m_sf ^ 1);
+                        m_st = (uint8_t)(m_sf ^ 1);
                         if (m_sf != 0)
                         {
                             /* re-enable the timer if we disabled it previously */
@@ -676,11 +682,11 @@ namespace mame
                         break;
 
                     case 0x28: /* tstc ZCS:..x */
-                        m_st = (byte)(m_cf ^ 1);
+                        m_st = (uint8_t)(m_cf ^ 1);
                         break;
 
                     case 0x29: /* tstz ZCS:..x */
-                        m_st = (byte)(m_zf ^ 1);
+                        m_st = (uint8_t)(m_zf ^ 1);
                         break;
 
                     case 0x2a: /* sts ZCS:x.. */
@@ -696,14 +702,14 @@ namespace mame
                         break;
 
                     case 0x2c: /* rts ZCS:... */
-                        m_SI = (byte)(( m_SI - 1 ) & 3);
-                        m_PC = (byte)(m_SP[m_SI] & 0x3f);
-                        m_PA = (byte)((m_SP[m_SI] >> 6) & 0x1f);
+                        m_SI = (uint8_t)(( m_SI - 1 ) & 3);
+                        m_PC = (uint8_t)(m_SP[m_SI] & 0x3f);
+                        m_PA = (uint8_t)((m_SP[m_SI] >> 6) & 0x1f);
                         m_st = 1;
                         break;
 
                     case 0x2d: /* neg ZCS: ..x */
-                        m_A = (byte)((~m_A)+1);
+                        m_A = (uint8_t)((~m_A)+1);
                         m_A &= 0x0f;
                         UPDATE_ST_Z(m_A);
                         break;
@@ -714,58 +720,58 @@ namespace mame
                         UPDATE_CF(arg);
                         arg &= 0x0f;
                         UPDATE_ST_Z(arg);
-                        m_zf = (byte)(m_st ^ 1);
+                        m_zf = (uint8_t)(m_st ^ 1);
                         break;
 
                     case 0x2f: /* eor ZCS:x.x */
                         m_A ^= RDMEM(GETEA());
                         UPDATE_ST_Z(m_A);
-                        m_zf = (byte)(m_st ^ 1);
+                        m_zf = (uint8_t)(m_st ^ 1);
                         break;
 
                     case 0x30: case 0x31: case 0x32: case 0x33: /* sbit ZCS:... */
                         arg = RDMEM(GETEA());
-                        WRMEM(GETEA(), (byte)(arg | (1 << (opcode&3))));
+                        WRMEM(GETEA(), (uint8_t)(arg | (1 << (opcode&3))));
                         m_st = 1;
                         break;
 
                     case 0x34: case 0x35: case 0x36: case 0x37: /* rbit ZCS:... */
                         arg = RDMEM(GETEA());
-                        WRMEM(GETEA(), (byte)(arg & ~(1 << (opcode&3))));
+                        WRMEM(GETEA(), (uint8_t)(arg & ~(1 << (opcode&3))));
                         m_st = 1;
                         break;
 
                     case 0x38: case 0x39: case 0x3a: case 0x3b: /* tbit ZCS:... */
                         arg = RDMEM(GETEA());
-                        m_st = ( arg & (1 << (opcode&3) ) ) != 0 ? (byte)0 : (byte)1;
+                        m_st = ( arg & (1 << (opcode&3) ) ) != 0 ? (uint8_t)0 : (uint8_t)1;
                         break;
 
                     case 0x3c: /* rti ZCS:... */
                         /* restore address and saved state flags on the top bits of the stack */
-                        m_SI = (byte)(( m_SI - 1 ) & 3);
-                        m_PC = (byte)(m_SP[m_SI] & 0x3f);
-                        m_PA = (byte)((m_SP[m_SI] >> 6) & 0x1f);
-                        m_st = (byte)((m_SP[m_SI] >> 13)&1);
-                        m_zf = (byte)((m_SP[m_SI] >> 14)&1);
-                        m_cf = (byte)((m_SP[m_SI] >> 15)&1);
+                        m_SI = (uint8_t)(( m_SI - 1 ) & 3);
+                        m_PC = (uint8_t)(m_SP[m_SI] & 0x3f);
+                        m_PA = (uint8_t)((m_SP[m_SI] >> 6) & 0x1f);
+                        m_st = (uint8_t)((m_SP[m_SI] >> 13)&1);
+                        m_zf = (uint8_t)((m_SP[m_SI] >> 14)&1);
+                        m_cf = (uint8_t)((m_SP[m_SI] >> 15)&1);
                         break;
 
                     case 0x3d: /* jpa imm ZCS:..x */
-                        m_PA = (byte)(READOP(GETPC()) & 0x1f);
-                        m_PC = (byte)(m_A * 4);
+                        m_PA = (uint8_t)(READOP(GETPC()) & 0x1f);
+                        m_PC = (uint8_t)(m_A * 4);
                         oc = 2;
                         m_st = 1;
                         break;
 
                     case 0x3e: /* en imm ZCS:... */
-                        update_pio_enable((byte)(m_pio | READOP(GETPC())));
+                        update_pio_enable((uint8_t)(m_pio | READOP(GETPC())));
                         INCPC();
                         oc = 2;
                         m_st = 1;
                         break;
 
                     case 0x3f: /* dis imm ZCS:... */
-                        update_pio_enable((byte)(m_pio & ~(READOP(GETPC()))));
+                        update_pio_enable((uint8_t)(m_pio & ~(READOP(GETPC()))));
                         INCPC();
                         oc = 2;
                         m_st = 1;
@@ -773,38 +779,38 @@ namespace mame
 
                     case 0x40:  case 0x41:  case 0x42:  case 0x43: /* setD ZCS:... */
                         arg = m_read_r[0].op_u8();
-                        arg |= (byte)(1 << (opcode&3));
+                        arg |= (uint8_t)(1 << (opcode&3));
                         m_write_r[0].op_u8(arg);
                         m_st = 1;
                         break;
 
                     case 0x44:  case 0x45:  case 0x46:  case 0x47: /* rstD ZCS:... */
                         arg = m_read_r[0].op_u8();
-                        arg &= (byte)(~(1 << (opcode&3)));
+                        arg &= (uint8_t)(~(1 << (opcode&3)));
                         m_write_r[0].op_u8(arg);
                         m_st = 1;
                         break;
 
                     case 0x48:  case 0x49:  case 0x4a:  case 0x4b: /* tstD ZCS:..x */
                         arg = m_read_r[2].op_u8();
-                        m_st = (arg & (1 << (opcode&3))) != 0 ? (byte)0 : (byte)1;
+                        m_st = (arg & (1 << (opcode&3))) != 0 ? (uint8_t)0 : (uint8_t)1;
                         break;
 
                     case 0x4c:  case 0x4d:  case 0x4e:  case 0x4f: /* tba ZCS:..x */
-                        m_st = (m_A & (1 << (opcode&3))) != 0 ? (byte)0 : (byte)1;
+                        m_st = (m_A & (1 << (opcode&3))) != 0 ? (uint8_t)0 : (uint8_t)1;
                         break;
 
                     case 0x50:  case 0x51:  case 0x52:  case 0x53: /* xd ZCS:x.. */
-                        arg = RDMEM((UInt32)(opcode&3));
-                        WRMEM((UInt32)(opcode&3),m_A);
+                        arg = RDMEM((offs_t)(opcode&3));
+                        WRMEM((offs_t)(opcode&3),m_A);
                         m_A = arg;
                         UPDATE_ZF(m_A);
                         m_st = 1;
                         break;
 
                     case 0x54:  case 0x55:  case 0x56:  case 0x57: /* xyd ZCS:x.. */
-                        arg = RDMEM((UInt32)((opcode&3)+4));
-                        WRMEM((UInt32)((opcode&3)+4),m_Y);
+                        arg = RDMEM((offs_t)((opcode&3)+4));
+                        WRMEM((offs_t)((opcode&3)+4),m_Y);
                         m_Y = arg;
                         UPDATE_ZF(m_Y);
                         m_st = 1;
@@ -812,7 +818,7 @@ namespace mame
 
                     case 0x58:  case 0x59:  case 0x5a:  case 0x5b:
                     case 0x5c:  case 0x5d:  case 0x5e:  case 0x5f: /* lxi ZCS:x.. */
-                        m_X = (byte)(opcode & 7);
+                        m_X = (uint8_t)(opcode & 7);
                         UPDATE_ZF(m_X);
                         m_st = 1;
                         break;
@@ -825,9 +831,9 @@ namespace mame
                         if ( TEST_ST() != 0 )
                         {
                             m_SP[m_SI] = GETPC();
-                            m_SI = (byte)(( m_SI + 1 ) & 3);
-                            m_PC = (byte)(arg & 0x3f);
-                            m_PA = (byte)(( ( opcode & 7 ) << 2 ) | ( arg >> 6 ));
+                            m_SI = (uint8_t)(( m_SI + 1 ) & 3);
+                            m_PC = (uint8_t)(arg & 0x3f);
+                            m_PA = (uint8_t)(( ( opcode & 7 ) << 2 ) | ( arg >> 6 ));
                         }
                         m_st = 1;
                         break;
@@ -839,8 +845,8 @@ namespace mame
                         oc = 2;
                         if ( TEST_ST() != 0 )
                         {
-                            m_PC = (byte)(arg & 0x3f);
-                            m_PA = (byte)(( ( opcode & 7 ) << 2 ) | ( arg >> 6 ));
+                            m_PC = (uint8_t)(arg & 0x3f);
+                            m_PA = (uint8_t)(( ( opcode & 7 ) << 2 ) | ( arg >> 6 ));
                         }
                         m_st = 1;
                         break;
@@ -849,11 +855,11 @@ namespace mame
                     case 0x74:  case 0x75:  case 0x76:  case 0x77:
                     case 0x78:  case 0x79:  case 0x7a:  case 0x7b:
                     case 0x7c:  case 0x7d:  case 0x7e:  case 0x7f: /* ai ZCS:xxx */
-                        arg = (byte)(opcode & 0x0f);
+                        arg = (uint8_t)(opcode & 0x0f);
                         arg += m_A;
                         UPDATE_ST_C(arg);
-                        m_cf = (byte)(m_st ^ 1);
-                        m_A = (byte)(arg & 0x0f);
+                        m_cf = (uint8_t)(m_st ^ 1);
+                        m_A = (uint8_t)(arg & 0x0f);
                         UPDATE_ZF(m_A);
                         break;
 
@@ -861,7 +867,7 @@ namespace mame
                     case 0x84:  case 0x85:  case 0x86:  case 0x87:
                     case 0x88:  case 0x89:  case 0x8a:  case 0x8b:
                     case 0x8c:  case 0x8d:  case 0x8e:  case 0x8f: /* lxi ZCS:x.. */
-                        m_Y = (byte)(opcode & 0x0f);
+                        m_Y = (uint8_t)(opcode & 0x0f);
                         UPDATE_ZF(m_Y);
                         m_st = 1;
                         break;
@@ -870,7 +876,7 @@ namespace mame
                     case 0x94:  case 0x95:  case 0x96:  case 0x97:
                     case 0x98:  case 0x99:  case 0x9a:  case 0x9b:
                     case 0x9c:  case 0x9d:  case 0x9e:  case 0x9f: /* li ZCS:x.. */
-                        m_A = (byte)(opcode & 0x0f);
+                        m_A = (uint8_t)(opcode & 0x0f);
                         UPDATE_ZF(m_A);
                         m_st = 1;
                         break;
@@ -879,28 +885,28 @@ namespace mame
                     case 0xa4:  case 0xa5:  case 0xa6:  case 0xa7:
                     case 0xa8:  case 0xa9:  case 0xaa:  case 0xab:
                     case 0xac:  case 0xad:  case 0xae:  case 0xaf: /* cyi ZCS:xxx */
-                        arg = (byte)((opcode & 0x0f) - m_Y);
+                        arg = (uint8_t)((opcode & 0x0f) - m_Y);
                         UPDATE_CF(arg);
                         arg &= 0x0f;
                         UPDATE_ST_Z(arg);
-                        m_zf = (byte)(m_st ^ 1);
+                        m_zf = (uint8_t)(m_st ^ 1);
                         break;
 
                     case 0xb0:  case 0xb1:  case 0xb2:  case 0xb3:
                     case 0xb4:  case 0xb5:  case 0xb6:  case 0xb7:
                     case 0xb8:  case 0xb9:  case 0xba:  case 0xbb:
                     case 0xbc:  case 0xbd:  case 0xbe:  case 0xbf: /* ci ZCS:xxx */
-                        arg = (byte)((opcode & 0x0f) - m_A);
+                        arg = (uint8_t)((opcode & 0x0f) - m_A);
                         UPDATE_CF(arg);
                         arg &= 0x0f;
                         UPDATE_ST_Z(arg);
-                        m_zf = (byte)(m_st ^ 1);
+                        m_zf = (uint8_t)(m_st ^ 1);
                         break;
 
                     default: /* jmp ZCS:..x */
                         if ( TEST_ST() != 0 )
                         {
-                            m_PC = (byte)(opcode & 0x3f);
+                            m_PC = (uint8_t)(opcode & 0x3f);
                         }
                         m_st = 1;
                         break;
@@ -917,12 +923,12 @@ namespace mame
         void device_execute_interface_execute_set_input(int state)
         {
             /* on rising edge trigger interrupt */
-            if ( (m_pio & 0x04) != 0 && m_nf == 0 && state != g.CLEAR_LINE )
+            if ( (m_pio & 0x04) != 0 && m_nf == 0 && state != CLEAR_LINE )
             {
                 m_pending_interrupt |= INT_CAUSE_EXTERNAL;
             }
 
-            m_nf = state != g.CLEAR_LINE ? (uint8_t)1 : (uint8_t)0;
+            m_nf = state != CLEAR_LINE ? (uint8_t)1 : (uint8_t)0;
         }
 
         //virtual uint64_t execute_clocks_to_cycles(uint64_t clocks) const noexcept override { return (clocks + 6 - 1) / 6; }
@@ -934,8 +940,8 @@ namespace mame
         {
             return new space_config_vector()
             {
-                std.make_pair(g.AS_PROGRAM, m_program_config),
-                std.make_pair(g.AS_DATA,    m_data_config)
+                std.make_pair(AS_PROGRAM, m_program_config),
+                std.make_pair(AS_DATA,    m_data_config)
             };
         }
 
@@ -945,19 +951,19 @@ namespace mame
         {
             switch (entry.index())
             {
-                case g.STATE_GENFLAGS:
-                    m_st = (m_debugger_flags & 0x01) != 0 ? (byte)1 : (byte)0;
-                    m_zf = (m_debugger_flags & 0x02) != 0 ? (byte)1 : (byte)0;
-                    m_cf = (m_debugger_flags & 0x04) != 0 ? (byte)1 : (byte)0;
-                    m_vf = (m_debugger_flags & 0x08) != 0 ? (byte)1 : (byte)0;
-                    m_sf = (m_debugger_flags & 0x10) != 0 ? (byte)1 : (byte)0;
-                    m_nf = (m_debugger_flags & 0x20) != 0 ? (byte)1 : (byte)0;
+                case STATE_GENFLAGS:
+                    m_st = (m_debugger_flags & 0x01) != 0 ? (uint8_t)1 : (uint8_t)0;
+                    m_zf = (m_debugger_flags & 0x02) != 0 ? (uint8_t)1 : (uint8_t)0;
+                    m_cf = (m_debugger_flags & 0x04) != 0 ? (uint8_t)1 : (uint8_t)0;
+                    m_vf = (m_debugger_flags & 0x08) != 0 ? (uint8_t)1 : (uint8_t)0;
+                    m_sf = (m_debugger_flags & 0x10) != 0 ? (uint8_t)1 : (uint8_t)0;
+                    m_nf = (m_debugger_flags & 0x20) != 0 ? (uint8_t)1 : (uint8_t)0;
                     break;
 
-                case g.STATE_GENPC:
-                case g.STATE_GENPCBASE:
-                    m_PC = (byte)(m_debugger_pc & 0x3f);
-                    m_PA = (byte)(( m_debugger_pc >> 6 ) & 0x1f);
+                case STATE_GENPC:
+                case STATE_GENPCBASE:
+                    m_PC = (uint8_t)(m_debugger_pc & 0x3f);
+                    m_PA = (uint8_t)(( m_debugger_pc >> 6 ) & 0x1f);
                     break;
             }
         }
@@ -966,7 +972,7 @@ namespace mame
         {
             switch (entry.index())
             {
-                case g.STATE_GENFLAGS:
+                case STATE_GENFLAGS:
                     m_debugger_flags = 0;
                     if (TEST_ST() != 0) m_debugger_flags |= 0x01;
                     if (TEST_ZF() != 0) m_debugger_flags |= 0x02;
@@ -976,8 +982,8 @@ namespace mame
                     if (TEST_NF() != 0) m_debugger_flags |= 0x20;
                     break;
 
-                case g.STATE_GENPC:
-                case g.STATE_GENPCBASE:
+                case STATE_GENPC:
+                case STATE_GENPCBASE:
                     m_debugger_pc = GETPC();
                     break;
             }
@@ -988,8 +994,8 @@ namespace mame
             str = "";
             switch (entry.index())
             {
-                case g.STATE_GENFLAGS:
-                    str = string.Format("{0}{1}{2}{3}{4}{5}",
+                case STATE_GENFLAGS:
+                    str = string_format("{0}{1}{2}{3}{4}{5}",
                             TEST_ST() != 0 ? 'T' : 't',
                             TEST_ZF() != 0 ? 'Z' : 'z',
                             TEST_CF() != 0 ? 'C' : 'c',
@@ -1020,7 +1026,7 @@ namespace mame
                the program can write to S and recover the value even if serial is enabled */
             if (m_sf == 0)
             {
-                m_SB = (byte)((m_SB >> 1) | (m_read_si.op_s32() != 0 ? 8 : 0));
+                m_SB = (uint8_t)((m_SB >> 1) | (m_read_si.op_s32() != 0 ? 8 : 0));
 
                 if (m_SBcount >= 4)
                 {
@@ -1058,10 +1064,10 @@ namespace mame
 
         void increment_timer()
         {
-            m_TL = (byte)((m_TL + 1) & 0x0f);
+            m_TL = (uint8_t)((m_TL + 1) & 0x0f);
             if (m_TL == 0)
             {
-                m_TH = (byte)((m_TH + 1) & 0x0f);
+                m_TH = (uint8_t)((m_TH + 1) & 0x0f);
                 if (m_TH == 0)
                 {
                     m_vf = 1;
@@ -1077,7 +1083,7 @@ namespace mame
             /* internal clock enable */
             if (( m_pio & 0x80 ) != 0)
             {
-                m_TP += (byte)cycles;
+                m_TP += (uint8_t)cycles;
                 while (m_TP >= TIMER_PRESCALE)
                 {
                     m_TP -= TIMER_PRESCALE;
@@ -1089,10 +1095,10 @@ namespace mame
             if ((m_pending_interrupt & m_pio) != 0)
             {
                 m_SP[m_SI] = GETPC();
-                m_SP[m_SI] |= (UInt16)(TEST_CF() << 15);
-                m_SP[m_SI] |= (UInt16)(TEST_ZF() << 14);
-                m_SP[m_SI] |= (UInt16)(TEST_ST() << 13);
-                m_SI = (byte)(( m_SI + 1 ) & 3);
+                m_SP[m_SI] |= (uint16_t)(TEST_CF() << 15);
+                m_SP[m_SI] |= (uint16_t)(TEST_ZF() << 14);
+                m_SP[m_SI] |= (uint16_t)(TEST_ST() << 13);
+                m_SI = (uint8_t)(( m_SI + 1 ) & 3);
 
                 /* the datasheet doesn't mention interrupt vectors but
                 the Arabian MCU program expects the following */
@@ -1155,7 +1161,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(MB8842,  mb8842_cpu_device,  "mb8842",  "Fujitsu MB8842")
         static device_t device_creator_mb8842_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8842_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8842 = g.DEFINE_DEVICE_TYPE(device_creator_mb8842_cpu_device, "mb8842",  "Fujitsu MB8842");
+        public static readonly device_type MB8842 = DEFINE_DEVICE_TYPE(device_creator_mb8842_cpu_device, "mb8842",  "Fujitsu MB8842");
 
 
         // construction/destruction
@@ -1170,7 +1176,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(MB8843,  mb8843_cpu_device,  "mb8843",  "Fujitsu MB8843")
         static device_t device_creator_mb8843_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8843_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8843 = g.DEFINE_DEVICE_TYPE(device_creator_mb8843_cpu_device, "mb8843",  "Fujitsu MB8843");
+        public static readonly device_type MB8843 = DEFINE_DEVICE_TYPE(device_creator_mb8843_cpu_device, "mb8843",  "Fujitsu MB8843");
 
 
         // construction/destruction
@@ -1185,7 +1191,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(MB8844,  mb8844_cpu_device,  "mb8844",  "Fujitsu MB8844")
         static device_t device_creator_mb8844_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8844_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8844 = g.DEFINE_DEVICE_TYPE(device_creator_mb8844_cpu_device, "mb8844", "Fujitsu MB8844");
+        public static readonly device_type MB8844 = DEFINE_DEVICE_TYPE(device_creator_mb8844_cpu_device, "mb8844", "Fujitsu MB8844");
 
 
         // construction/destruction

@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using available_machine_filter = mame.ui.available_machine_filter_impl;  //using available_machine_filter      = available_machine_filter_impl<>;
 using bios_machine_filter = mame.ui.bios_machine_filter_impl;  //using bios_machine_filter           = bios_machine_filter_impl<>;
@@ -20,85 +19,40 @@ using unsigned = System.UInt32;
 using vertical_machine_filter = mame.ui.vertical_machine_filter_impl;  //using vertical_machine_filter       = vertical_machine_filter_impl<>;
 using working_machine_filter = mame.ui.working_machine_filter_impl;  //using working_machine_filter        = working_machine_filter_impl<>;
 
+using static mame.corestr_global;
+using static mame.cpp_global;
+using static mame.language_global;
+using static mame.rendfont_global;
+using static mame.romload_global;
+using static mame.unicode_global;
+using static mame.ui_global;
+using static mame.utils_global;
+
 
 namespace mame
 {
-    public static partial class utils_global
-    {
-        public const int MAX_CUST_FILTER = 8;
-
-
-        public const string UI_VERSION_TAG = "# UI INFO ";
-
-
-        //-------------------------------------------------
-        //  search a substring with even partial matching
-        //-------------------------------------------------
-        public static int fuzzy_substring(string s_needle, string s_haystack)
-        {
-            if (s_needle.Length == 0)
-                return s_haystack.Length;
-            if (s_haystack.Length == 0)
-                return s_needle.Length;
-
-            s_needle = s_needle.ToLower();
-            s_haystack = s_haystack.ToLower();
-
-            if (s_needle == s_haystack)
-                return 0;
-            if (s_haystack.IndexOf(s_needle) != -1)
-                return 0;
-
-            var row1 = new int [s_haystack.Length + 2];  // auto *row1 = global_alloc_array_clear<int>(s_haystack.Length + 2);
-            var row2 = new int [s_haystack.Length + 2];  // auto *row2 = global_alloc_array_clear<int>(s_haystack.Length + 2);
-
-            for (int i = 0; i < s_needle.Length; ++i)
-            {
-                row2[0] = i + 1;
-                for (int j = 0; j < s_haystack.Length; ++j)
-                {
-                    int cost = (s_needle[i] == s_haystack[j]) ? 0 : 1;
-                    row2[j + 1] = Math.Min(row1[j + 1] + 1, Math.Min(row2[j] + 1, row1[j] + cost));
-                }
-
-                var tmp = row1;  // int *tmp = row1;
-                row1 = row2;
-                row2 = tmp;
-            }
-
-            var first = row1;  //int *first;
-            int firstIdx = 0;
-            var smallest = row2;  //int *smallest;
-            int smallestIdx = 0;
-            //first = smallest = row1;
-            int lastIdx = s_haystack.Length;  //int *last = row1 + s_haystack.Length;
-
-            while (++firstIdx != lastIdx)
-            {
-                if (first[firstIdx] < smallest[smallestIdx])  // if (*first < *smallest)
-                    smallestIdx = firstIdx;  // smallest = first;
-            }
-
-            int rv = smallest[smallestIdx];  // int rv = *smallest;
-            row1 = null;  // global_free_array(row1);
-            row2 = null;  // global_free_array(row2);
-
-            return rv;
-        }
-    }
-
-
     // TODO: namespace these things
 
     public class ui_system_info
     {
         public game_driver driver = null;
         public int index;
+        public bool is_clone = false;
         public bool available = false;
+
+        public string description;
+        public string parent;
+
+        public string reading_description;  //std::wstring reading_description;
+        public string reading_parent;  //std::wstring reading_parent;
 
         public string ucs_shortname;  //std::u32string ucs_shortname;
         public string ucs_description;  //std::u32string ucs_description;
+        public string ucs_reading_description;  //std::u32string ucs_reading_description;
         public string ucs_manufacturer_description;  //std::u32string ucs_manufacturer_description;
+        public string ucs_manufacturer_reading_description;  //std::u32string ucs_manufacturer_reading_description;
+        public string ucs_default_description;  //std::u32string ucs_default_description;
+        public string ucs_manufacturer_default_description;  //std::u32string ucs_manufacturer_default_description;
 
 
         public ui_system_info() { }
@@ -122,8 +76,11 @@ namespace mame
         public string instance;
         public uint8_t startempty = 0;
         public string parentlongname;
+        public string infotext = "";
         public string usage;
         public string devicetype;
+        public std.vector<software_info_item> info;
+        //std::vector<std::reference_wrapper<std::string const> > alttitles;
         public bool available = false;
 
 
@@ -131,7 +88,7 @@ namespace mame
 
         // info for software list item
         //ui_software_info(
-        //        software_info const &info,
+        //        software_info const &sw,
         //        software_part const &p,
         //        game_driver const &d,
         //        std::string const &li,
@@ -148,11 +105,12 @@ namespace mame
             if (ReferenceEquals(null, left))
                 return ReferenceEquals(null, right);
 
-            return left.shortname == right.shortname && left.longname == right.longname && left.parentname == right.parentname
-                && left.year == right.year && left.publisher == right.publisher && left.supported == right.supported
-                && left.part == right.part && left.driver == right.driver && left.listname == right.listname
-                && left.interface_ == right.interface_ && left.instance == right.instance && left.startempty == right.startempty
-                && left.parentlongname == right.parentlongname && left.usage == right.usage && left.devicetype == right.devicetype;
+            // compares all fields except info (fragile), alttitles (included in info) and available (environmental)
+            return (left.shortname == right.shortname) && (left.longname == right.longname) && (left.parentname == right.parentname)
+                   && (left.year == right.year) && (left.publisher == right.publisher) && (left.supported == right.supported)
+                   && (left.part == right.part) && (left.driver == right.driver) && (left.listname == right.listname)
+                   && (left.interface_ == right.interface_) && (left.instance == right.instance) && (left.startempty == right.startempty)
+                   && (left.parentlongname == right.parentlongname) && (left.devicetype == right.devicetype);
         }
 
         public override bool Equals(Object obj)
@@ -164,6 +122,9 @@ namespace mame
     }
 
 
+    //void swap(ui_system_info &a, ui_system_info &b) noexcept;
+
+
     namespace ui
     {
         class software_filter_data
@@ -171,6 +132,10 @@ namespace mame
             std.vector<string> m_regions;
             std.vector<string> m_publishers;
             std.vector<string> m_years;
+            std.vector<string> m_developers;
+            std.vector<string> m_distributors;
+            std.vector<string> m_authors;
+            std.vector<string> m_programmers;
             std.vector<string> m_device_types;
             std.vector<string> m_list_names;
             std.vector<string> m_list_descriptions;
@@ -179,6 +144,10 @@ namespace mame
             public std.vector<string> regions() { return m_regions; }
             public std.vector<string> publishers() { return m_publishers; }
             public std.vector<string> years() { return m_years; }
+            public std.vector<string> developers() { return m_developers; }
+            public std.vector<string> distributors() { return m_distributors; }
+            public std.vector<string> authors() { return m_authors; }
+            public std.vector<string> programmers() { return m_programmers; }
             public std.vector<string> device_types() { return m_device_types; }
             public std.vector<string> list_names() { return m_list_names; }
             public std.vector<string> list_descriptions() { return m_list_descriptions; }
@@ -187,6 +156,7 @@ namespace mame
             //void add_region(std::string const &longname);
             //void add_publisher(std::string const &publisher);
             //void add_year(std::string const &year);
+            //void add_info(software_info_item const &info);
             //void add_device_type(std::string const &device_type);
             //void add_list(std::string const &name, std::string const &description);
             //void finalise();
@@ -207,7 +177,7 @@ namespace mame
             public static string extract_publisher(string publisher)
             {
                 size_t found = publisher.find('(');
-                return publisher.substr(0, found - ((found != 0 && (g.npos != found)) ? 1U : 0U));
+                return publisher.substr(0, found - ((found != 0 && (npos != found)) ? 1U : 0U));
             }
         }
 
@@ -287,28 +257,28 @@ namespace mame
 
             static readonly string [] MACHINE_FILTER_NAMES = new string[(int)type.COUNT]
             {
-                "Unfiltered",
-                "Available",
-                "Unavailable",
-                "Working",
-                "Not Working",
-                "Mechanical",
-                "Not Mechanical",
-                "Category",
-                "Favorites",
-                "BIOS",
-                "Not BIOS",
-                "Parents",
-                "Clones",
-                "Manufacturer",
-                "Year",
-                "Save Supported",
-                "Save Unsupported",
-                "CHD Required",
-                "No CHD Required",
-                "Vertical Screen",
-                "Horizontal Screen",
-                "Custom Filter"
+                N_p("machine-filter", "Unfiltered"),
+                N_p("machine-filter", "Available"),
+                N_p("machine-filter", "Unavailable"),
+                N_p("machine-filter", "Working"),
+                N_p("machine-filter", "Not Working"),
+                N_p("machine-filter", "Mechanical"),
+                N_p("machine-filter", "Not Mechanical"),
+                N_p("machine-filter", "Category"),
+                N_p("machine-filter", "Favorites"),
+                N_p("machine-filter", "BIOS"),
+                N_p("machine-filter", "Not BIOS"),
+                N_p("machine-filter", "Parents"),
+                N_p("machine-filter", "Clones"),
+                N_p("machine-filter", "Manufacturer"),
+                N_p("machine-filter", "Year"),
+                N_p("machine-filter", "Save Supported"),
+                N_p("machine-filter", "Save Unsupported"),
+                N_p("machine-filter", "CHD Required"),
+                N_p("machine-filter", "No CHD Required"),
+                N_p("machine-filter", "Vertical Screen"),
+                N_p("machine-filter", "Horizontal Screen"),
+                N_p("machine-filter", "Custom Filter")
             };
 
 
@@ -331,14 +301,14 @@ namespace mame
 
             public static string config_name(type n)
             {
-                g.assert(type.COUNT > n);
+                assert(type.COUNT > n);
                 return MACHINE_FILTER_NAMES[(int)n];
             }
 
             public static string display_name(type n)
             {
-                g.assert(type.COUNT > n);
-                return MACHINE_FILTER_NAMES[(int)n];
+                assert(type.COUNT > n);
+                return __("machine-filter", MACHINE_FILTER_NAMES[(int)n]);
             }
 
 
@@ -347,7 +317,7 @@ namespace mame
             //-------------------------------------------------
             protected static machine_filter create(type n, machine_filter_data data, string value, emu_file file, unsigned indent)
             {
-                g.assert(type.COUNT > n);
+                assert(type.COUNT > n);
 
                 switch (n)
                 {
@@ -406,7 +376,7 @@ namespace mame
             protected static machine_filter create(emu_file file, machine_filter_data data, unsigned indent)
             {
                 string buffer;
-                if (file.gets(out buffer, utils_global.MAX_CHAR_INFO) == null)
+                if (file.gets(out buffer, MAX_CHAR_INFO) == null)
                     return null;
 
                 // split it into a key/value or bail
@@ -418,10 +388,10 @@ namespace mame
                 }
                 key = key.substr(2 * indent);
                 size_t split = key.find(" = ");
-                if (g.npos == split)
+                if (npos == split)
                     return null;
                 size_t nl = key.find_first_of("\r\n", split);
-                string value = key.substr(split + 3, (g.npos == nl) ? nl : (nl - split - 3));
+                string value = key.substr(split + 3, (npos == nl) ? nl : (nl - split - 3));
                 key = key.substr(0, split);
 
                 // look for a filter type that matches
@@ -450,6 +420,10 @@ namespace mame
                 CLONES,
                 YEAR,
                 PUBLISHERS,
+                DEVELOPERS,
+                DISTRIBUTORS,
+                AUTHORS,
+                PROGRAMMERS,
                 SUPPORTED,
                 PARTIAL_SUPPORTED,
                 UNSUPPORTED,
@@ -470,21 +444,25 @@ namespace mame
 
             static readonly string [] SOFTWARE_FILTER_NAMES = new string[(int)type.COUNT]
             {
-                "Unfiltered",
-                "Available",
-                "Unavailable",
-                "Favorites",
-                "Parents",
-                "Clones",
-                "Year",
-                "Publisher",
-                "Supported",
-                "Partially Supported",
-                "Unsupported",
-                "Release Region",
-                "Device Type",
-                "Software List",
-                "Custom Filter"
+                N_p("software-filter", "Unfiltered"),
+                N_p("software-filter", "Available"),
+                N_p("software-filter", "Unavailable"),
+                N_p("software-filter", "Favorites"),
+                N_p("software-filter", "Parents"),
+                N_p("software-filter", "Clones"),
+                N_p("software-filter", "Year"),
+                N_p("software-filter", "Publisher"),
+                N_p("software-filter", "Developer"),
+                N_p("software-filter", "Distributor"),
+                N_p("software-filter", "Author"),
+                N_p("software-filter", "Programmer"),
+                N_p("software-filter", "Supported"),
+                N_p("software-filter", "Partially Supported"),
+                N_p("software-filter", "Unsupported"),
+                N_p("software-filter", "Release Region"),
+                N_p("software-filter", "Device Type"),
+                N_p("software-filter", "Software List"),
+                N_p("software-filter", "Custom Filter"),
             };
 
 
@@ -499,19 +477,19 @@ namespace mame
 
             protected static string config_name(type n)
             {
-                g.assert(type.COUNT > n);
+                assert(type.COUNT > n);
                 return SOFTWARE_FILTER_NAMES[(int)n];
             }
             protected static string display_name(type n)
             {
-                g.assert(type.COUNT > n);
-                return SOFTWARE_FILTER_NAMES[(int)n];
+                assert(type.COUNT > n);
+                return __("software-filter", SOFTWARE_FILTER_NAMES[(int)n]);
             }
 
 
             protected static software_filter create(type n, software_filter_data data, string value, emu_file file, unsigned indent)
             {
-                g.assert(type.COUNT > n);
+                assert(type.COUNT > n);
 
                 switch (n)
                 {
@@ -531,6 +509,14 @@ namespace mame
                     return new years_software_filter(data, value, file, indent);
                 case type.PUBLISHERS:
                     return new publishers_software_filter(data, value, file, indent);
+                case type.DEVELOPERS:
+                    return new developer_software_filter(data, value, file, indent);
+                case type.DISTRIBUTORS:
+                    return new distributor_software_filter(data, value, file, indent);
+                case type.AUTHORS:
+                    return new author_software_filter(data, value, file, indent);
+                case type.PROGRAMMERS:
+                    return new programmer_software_filter(data, value, file, indent);
                 case type.SUPPORTED:
                     return new supported_software_filter(data, value, file, indent);
                 case type.PARTIAL_SUPPORTED:
@@ -556,7 +542,7 @@ namespace mame
             protected static software_filter create(emu_file file, software_filter_data data, unsigned indent)
             {
                 string buffer;  //char buffer[MAX_CHAR_INFO];
-                if (file.gets(out buffer, utils_global.MAX_CHAR_INFO) == null)
+                if (file.gets(out buffer, MAX_CHAR_INFO) == null)
                     return null;
 
                 // split it into a key/value or bail
@@ -568,10 +554,10 @@ namespace mame
                 }
                 key = key.substr(2 * indent);
                 size_t split = key.find(" = ");
-                if (g.npos == split)
+                if (npos == split)
                     return null;
                 size_t nl = key.find_first_of("\r\n", split);
-                string value = key.substr(split + 3, (g.npos == nl) ? nl : (nl - split - 3));
+                string value = key.substr(split + 3, (npos == nl) ? nl : (nl - split - 3));
                 key = key.substr(0, split);
 
                 // look for a filter type that matches
@@ -647,7 +633,7 @@ namespace mame
             public static string extract_manufacturer(string manufacturer)
             {
                 size_t found = manufacturer.find('(');
-                if ((found != g.npos) && (found > 0))
+                if ((found != npos) && (found > 0))
                     return manufacturer.substr(0, found - 1);
                 else
                     return manufacturer;
@@ -702,6 +688,9 @@ namespace mame
 
     public static partial class utils_global
     {
+        public const string UI_VERSION_TAG = "# UI INFO ";
+
+
         public const int MAX_CHAR_INFO   = 256;
 
 
@@ -733,11 +722,13 @@ namespace mame
         public const int HOVER_ARROW_DOWN   = HOVER_DAT_UP +  5;
         public const int HOVER_B_FAV        = HOVER_DAT_UP +  6;
         public const int HOVER_B_EXPORT     = HOVER_DAT_UP +  7;
-        public const int HOVER_B_DATS       = HOVER_DAT_UP +  8;
-        public const int HOVER_RPANEL_ARROW = HOVER_DAT_UP +  9;
-        public const int HOVER_LPANEL_ARROW = HOVER_DAT_UP + 10;
-        public const int HOVER_FILTER_FIRST = HOVER_DAT_UP + 11;
-        public const int HOVER_FILTER_LAST  = HOVER_FILTER_FIRST + ((int)ui.machine_filter.type.COUNT > (int)ui.software_filter.type.COUNT ? (int)ui.machine_filter.type.COUNT : (int)ui.software_filter.type.COUNT);  // Math.Max(ui.machine_filter.type.COUNT, ui.software_filter.type.COUNT),
+        public const int HOVER_B_AUDIT      = HOVER_DAT_UP +  8;
+        public const int HOVER_B_DATS       = HOVER_DAT_UP +  9;
+        public const int HOVER_BACKTRACK    = HOVER_DAT_UP + 10;
+        public const int HOVER_RPANEL_ARROW = HOVER_DAT_UP + 11;
+        public const int HOVER_LPANEL_ARROW = HOVER_DAT_UP + 12;
+        public const int HOVER_FILTER_FIRST = HOVER_DAT_UP + 13;
+        public const int HOVER_FILTER_LAST  = HOVER_FILTER_FIRST + ((int)ui.machine_filter.type.COUNT > (int)ui.software_filter.type.COUNT ? (int)ui.machine_filter.type.COUNT : (int)ui.software_filter.type.COUNT);  //public const int HOVER_FILTER_LAST = HOVER_FILTER_FIRST + std::max<int>(ui::machine_filter::COUNT, ui::software_filter::COUNT),
         public const int HOVER_RP_FIRST     = HOVER_FILTER_LAST + 1;
         public const int HOVER_RP_LAST      = HOVER_RP_FIRST + 1 + RP_LAST;
         public const int HOVER_INFO_TEXT    = HOVER_RP_LAST + 1;
@@ -790,9 +781,35 @@ namespace mame
         //  into a buffer
         //-------------------------------------------------
         //template <typename F>
-        public static bool input_character(string buffer, size_t size, char32_t unichar, input_character_filter filter)
+        public static bool input_character(ref string buffer, size_t size, char32_t unichar, input_character_filter filter)
         {
-            throw new emu_unimplemented();
+            bool result = false;
+            var buflen = buffer.size();
+
+            if ((unichar == 8) || (unichar == 0x7f))
+            {
+                // backspace
+                if (0 < buflen)
+                {
+                    //auto buffer_oldend = buffer.c_str() + buflen;
+                    //auto buffer_newend = utf8_previous_char(buffer_oldend);
+                    if (buffer.Length > 0)
+                        buffer = buffer.Remove(buffer.Length - 1);  //buffer.resize(buffer_newend - buffer.c_str());
+                    result = true;
+                }
+            }
+            else if ((unichar >= ' ') && filter(unichar))
+            {
+                // append this character - check against the size first
+                string utf8_char = utf8_from_uchar(unichar);
+                if ((buffer.size() + utf8_char.size()) <= size)
+                {
+                    buffer += utf8_char;
+                    result = true;
+                }
+            }
+
+            return result;
         }
 
 
@@ -801,9 +818,10 @@ namespace mame
         //  into a buffer
         //-------------------------------------------------
         //template <typename F>
-        public static bool input_character(string buffer, char32_t unichar, input_character_filter filter)
+        public static bool input_character(ref string buffer, char32_t unichar, input_character_filter filter)
         {
-            throw new emu_unimplemented();
+            var size = size_t.MaxValue;  //auto size = std::numeric_limits<std::string::size_type>::max();
+            return input_character(ref buffer, size, unichar, filter);
         }
     }
 
@@ -842,7 +860,7 @@ namespace mame
 
             public override void save_ini(emu_file file, unsigned indent)
             {
-                file.puts(util.string_format("{0}{1}{2} = 1\n", 2 * indent, "", config_name()));  // %2$*1$s%3$s = 1\n
+                file.puts(util.string_format("{1:{0}}{2} = 1\n", -1 * 2 * indent, "", config_name()));  // %2$*1$s%3$s = 1\n
             }
 
             public override type get_type() { return Type; }
@@ -853,7 +871,7 @@ namespace mame
                 if (Type == n)
                 {
                     result = "_> ";
-                    render_font.convert_command_glyph(ref result);
+                    convert_command_glyph(ref result);
                 }
                 result += display_name(n);
                 return result;
@@ -890,7 +908,7 @@ namespace mame
 
             public override void save_ini(emu_file file, unsigned indent)
             {
-                file.puts(util.string_format("{0}{1}{2} = 1\n", 2 * indent, "", config_name()));  // %2$*1$s%3$s = 1\n
+                file.puts(util.string_format("{1:{0}}{2} = 1\n", -1 * 2 * indent, "", config_name()));  // %2$*1$s%3$s = 1\n
             }
 
             public override type get_type() { return Type; }
@@ -901,7 +919,7 @@ namespace mame
                 if (Type == n)
                 {
                     result = "_> ";
-                    render_font.convert_command_glyph(ref result);
+                    convert_command_glyph(ref result);
                 }
                 result += display_name(n);
                 return result;
@@ -926,12 +944,8 @@ namespace mame
                 m_selection = 0;
 
 
-                if (value != null)
-                {
-                    var found = choices.IndexOf(value);  //List<string> const_iterator_found = std::find(choices.begin(), choices.end(), value);
-                    if (-1 != found)
-                        m_selection = (unsigned)found;  // std::distance(choices.begin(), found);
-                }
+                if (!string.IsNullOrEmpty(value))
+                    set_value(value);
             }
 
 
@@ -975,7 +989,15 @@ namespace mame
             public override void save_ini(emu_file file, unsigned indent)
             {
                 string text = filter_text();
-                file.puts(util.string_format("{0}{1}{2} = {3}\n", 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
+                file.puts(util.string_format("{1:{0}}{2} = {3}\n", -1 * 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
+            }
+
+
+            void set_value(string value)
+            {
+                var found = m_choices.IndexOf(value);  //auto const found(std::find(m_choices.begin(), m_choices.end(), value));
+                if (found != -1)  //if (m_choices.end() != found)
+                    m_selection = (unsigned)found;  //m_selection = std::distance(m_choices.begin(), found);
             }
 
 
@@ -1049,7 +1071,7 @@ namespace mame
             public override void save_ini(emu_file file, unsigned indent)
             {
                 string text = filter_text();
-                file.puts(util.string_format("{0}{1}{2} = {3}\n", 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
+                file.puts(util.string_format("{1:{0}}{2} = {3}\n", -1 * 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
             }
 
 
@@ -1102,7 +1124,7 @@ namespace mame
 
                 ~menu_configure()
                 {
-                    g.assert(m_isDisposed_menu_configure);  // can remove
+                    assert(m_isDisposed_menu_configure);  // can remove
                 }
 
                 bool m_isDisposed_menu_configure = false;
@@ -1121,7 +1143,7 @@ namespace mame
                             text,  //std::begin(text), std::end(text),
                             x, x2, y - top, y - ui().box_tb_border(),
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            ui().colors().text_color(), g.UI_GREEN_COLOR, 1.0f);
+                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
                 }
 
 
@@ -1138,7 +1160,7 @@ namespace mame
                         if (m_parent.m_filters[i].wants_adjuster())
                         {
                             string name = "^!";
-                            render_font.convert_command_glyph(ref name);
+                            convert_command_glyph(ref name);
                             item_append(name, m_parent.m_filters[i].adjust_text(), m_parent.m_filters[i].arrow_flags(), FILTER.ADJUST_FIRST + i);
                         }
 
@@ -1301,7 +1323,7 @@ namespace mame
                 if (Type == n)
                 {
                     result = "_> ";
-                    render_font.convert_command_glyph(ref result);
+                    convert_command_glyph(ref result);
                 }
                 else
                 {
@@ -1310,7 +1332,7 @@ namespace mame
                         if (m_filters[i].get_type() == n)
                         {
                             result = util.string_format("@custom{0} ", i + 1);
-                            render_font.convert_command_glyph(ref result);
+                            convert_command_glyph(ref result);
                             break;
                         }
                     }
@@ -1392,7 +1414,7 @@ namespace mame
 
                 ~menu_configure()
                 {
-                    g.assert(m_isDisposed);  // can remove
+                    assert(m_isDisposed);  // can remove
                 }
 
                 bool m_isDisposed_menu_configure = false;
@@ -1411,7 +1433,7 @@ namespace mame
                             text,  //std::begin(text), std::end(text),
                             x, x2, y - top, y - ui().box_tb_border(),
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            ui().colors().text_color(), g.UI_GREEN_COLOR, 1.0f);
+                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
                 }
 
 
@@ -1421,15 +1443,15 @@ namespace mame
                     unsigned i = 0;
                     for (i = 0; (MAX > i) && m_parent.m_filters[i] != null; ++i)
                     {
-                        item_append(util.string_format("Filter {0}", i + 1), m_parent.m_filters[i].display_name(), get_arrow_flags(i), (UInt32)FILTER.FILTER_FIRST + i);  // %1$u
+                        item_append(util.string_format("Filter {0}", i + 1), m_parent.m_filters[i].display_name(), get_arrow_flags(i), (unsigned)FILTER.FILTER_FIRST + i);  // %1$u
                         if (m_added)
                             set_selected_index(item_count() - 2);
 
                         if (m_parent.m_filters[i].wants_adjuster())
                         {
                             string name = "^!";
-                            render_font.convert_command_glyph(ref name);
-                            item_append(name, m_parent.m_filters[i].adjust_text(), m_parent.m_filters[i].arrow_flags(), (UInt32)FILTER.ADJUST_FIRST + i);
+                            convert_command_glyph(ref name);
+                            item_append(name, m_parent.m_filters[i].adjust_text(), m_parent.m_filters[i].arrow_flags(), (unsigned)FILTER.ADJUST_FIRST + i);
                         }
 
                         item_append(menu_item_type.SEPARATOR);
@@ -1578,7 +1600,7 @@ namespace mame
                     result = "_> ";
                     //throw new emu_unimplemented();
 #if false
-                    render_font.convert_command_glyph(ref result);
+                    g.convert_command_glyph(ref result);
 #endif
                 }
                 else
@@ -1587,8 +1609,9 @@ namespace mame
                     {
                         if (m_filters[i].get_type() == n)
                         {
-                            result = string.Format("@custom{0} ", i + 1);
-                            render_font.convert_command_glyph(ref result);
+                            //result = convert_command_glyph(util::string_format("@custom%u ", i + 1));
+                            result = util.string_format("@custom{0} ", i + 1);
+                            convert_command_glyph(ref result);
                             break;
                         }
                     }
@@ -1691,9 +1714,9 @@ namespace mame
             public override bool apply(ui_system_info system)
             {
                 Pointer<tiny_rom_entry> rom = system.driver.rom;
-                for (int romOffset = 0; !g.ROMENTRY_ISEND(rom[romOffset]); ++romOffset)
+                for (int romOffset = 0; !ROMENTRY_ISEND(rom[romOffset]); ++romOffset)
                 {
-                    if (g.ROMENTRY_ISREGION(rom[romOffset]) && romload_global.ROMREGION_ISDISKDATA(rom[romOffset]))
+                    if (ROMENTRY_ISREGION(rom[romOffset]) && ROMREGION_ISDISKDATA(rom[romOffset]))
                         return true;
                 }
 
@@ -1916,7 +1939,7 @@ namespace mame
                             text,  //std::begin(text), std::end(text),
                             x, x2, y - top, y - ui().box_tb_border(),
                             text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            ui().colors().text_color(), g.UI_GREEN_COLOR, 1.0f);
+                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
                 }
 
 
@@ -1982,7 +2005,7 @@ namespace mame
                         if (mgr.get_file_name(i) == ini)
                         {
                             m_ini = i;
-                            if (g.npos != split)
+                            if (npos != split)
                             {
                                 string group = s.substr(split + 1);
                                 for (unsigned j = 0; mgr.get_category_count(i) > j; ++j)
@@ -2022,7 +2045,7 @@ namespace mame
             public override void save_ini(emu_file file, unsigned indent)
             {
                 string text = filter_text();
-                file.puts(util.string_format("{0}{1}{2} = {3}\n", 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
+                file.puts(util.string_format("{1:{0}}{2} = {3}\n", -1 * 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
             }
 
             public override bool apply(ui_system_info system)
@@ -2063,7 +2086,7 @@ namespace mame
 
             static bool include_clones_default(string name)
             {
-                return g.core_stricmp(name, "category.ini") == 0 || g.core_stricmp(name, "alltime.ini") == 0;
+                return core_stricmp(name, "category.ini") == 0 || core_stricmp(name, "alltime.ini") == 0;
             }
         }
 
@@ -2292,6 +2315,86 @@ namespace mame
 
 
         //-------------------------------------------------
+        //  software info filters
+        //-------------------------------------------------
+        //template <software_filter::type Type>
+        class software_info_filter_base : choice_filter_impl_base_software_filter  //class software_info_filter_base : public choice_filter_impl_base<software_filter, Type>
+        {
+            string m_info_type;
+
+
+            protected software_info_filter_base(string type, std.vector<string> choices, string value, software_filter.type Type)
+                : base(choices, value, Type)
+            {
+                m_info_type = type;
+            }
+
+
+            public override bool apply(ui_software_info info)
+            {
+                if (!this.have_choices())
+                {
+                    return true;
+                }
+                else if (!this.selection_valid())
+                {
+                    return false;
+                }
+                else
+                {
+                    var found = 
+                        std.find_if(
+                            info.info,
+                            (software_info_item i) => { return this.apply(i); });  //[this] (software_info_item const &i) { return this->apply(i); }));
+                    return default != found;
+                }
+            }
+
+
+            bool apply(software_info_item info)
+            {
+                return (info.name() == m_info_type) && (info.value() == this.selection_text());
+            }
+        }
+
+
+        class developer_software_filter : software_info_filter_base  //class developer_software_filter : public software_info_filter_base<software_filter::DEVELOPERS>
+        {
+            public developer_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+                : base("developer", data.developers(), value, software_filter.type.DEVELOPERS)
+            {
+            }
+        }
+
+
+        class distributor_software_filter : software_info_filter_base  //class distributor_software_filter : public software_info_filter_base<software_filter::DISTRIBUTORS>
+        {
+            public distributor_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+                : base("distributor", data.distributors(), value, software_filter.type.DISTRIBUTORS)
+            {
+            }
+        }
+
+
+        class author_software_filter : software_info_filter_base  //class author_software_filter : public software_info_filter_base<software_filter::AUTHORS>
+        {
+            public author_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+                : base("author", data.authors(), value, software_filter.type.AUTHORS)
+            {
+            }
+        }
+
+
+        class programmer_software_filter : software_info_filter_base  //class programmer_software_filter : public software_info_filter_base<software_filter::PROGRAMMERS>
+        {
+            public programmer_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+                : base("programmer", data.programmers(), value, software_filter.type.PROGRAMMERS)
+            {
+            }
+        }
+
+
+        //-------------------------------------------------
         //  composite software filter
         //-------------------------------------------------
         class custom_software_filter : composite_filter_impl_base_software_filter  //class custom_software_filter : public composite_filter_impl_base<custom_software_filter, software_filter, software_filter::CUSTOM>
@@ -2332,6 +2435,10 @@ namespace mame
                 case type.FAVORITE:
                 case type.YEAR:
                 case type.PUBLISHERS:
+                case type.DEVELOPERS:
+                case type.DISTRIBUTORS:
+                case type.AUTHORS:
+                case type.PROGRAMMERS:
                 case type.REGION:
                 case type.DEVICE_TYPE:
                 case type.LIST:
@@ -2345,7 +2452,15 @@ namespace mame
 
             static bool is_inclusion(type n)
             {
-                return (type.YEAR == n) || (type.PUBLISHERS == n) || (type.REGION == n) || (type.DEVICE_TYPE == n) || (type.LIST == n);
+                return (type.YEAR == n)
+                    || (type.PUBLISHERS == n)
+                    || (type.DEVELOPERS == n)
+                    || (type.DISTRIBUTORS == n)
+                    || (type.AUTHORS == n)
+                    || (type.PROGRAMMERS == n)
+                    || (type.REGION == n)
+                    || (type.DEVICE_TYPE == n)
+                    || (type.LIST == n);
             }
         }
     }

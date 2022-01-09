@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int64_t = System.Int64;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -179,15 +178,14 @@ namespace mame.plib
         //    static_assert(ptime_le<ptime<O, RES>, ptime>::value, "Invalid ptime type");
         //    return static_cast<mult_type>(m_time / rhs.m_time);
         //}
-        public static ptime<TYPE, TYPE_OPS, TYPE_RES> operator/(ptime<TYPE, TYPE_OPS, TYPE_RES> lhs, ptime<TYPE, TYPE_OPS, TYPE_RES> rhs) { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.divide(lhs.m_time, rhs.m_time)); }
-        public static ptime<TYPE, TYPE_OPS, TYPE_RES> operator/(ptime<TYPE, TYPE_OPS, TYPE_RES> lhs, Int64 rhs) { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.divide(lhs.m_time, ops.cast(rhs))); }
-
         //template <typename T>
         //constexpr std::enable_if_t<std::is_integral<T>::value, ptime>
         //operator/(const T &rhs) const noexcept
         //{
         //    return ptime(m_time / rhs);
         //}
+        public static TYPE operator/(ptime<TYPE, TYPE_OPS, TYPE_RES> lhs, ptime<TYPE, TYPE_OPS, TYPE_RES> rhs) { return ops.divide(lhs.m_time, rhs.m_time); }
+        public static ptime<TYPE, TYPE_OPS, TYPE_RES> operator/(ptime<TYPE, TYPE_OPS, TYPE_RES> lhs, Int64 rhs) { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.divide(lhs.m_time, ops.cast(rhs))); }
 
         //template <typename O>
         //friend constexpr bool operator<(const ptime &lhs, const ptime<O, RES> &rhs) noexcept
@@ -249,7 +247,7 @@ namespace mame.plib
         //constexpr double as_long_double() const noexcept { return as_fp<long double>(); }
 
 
-        //constexpr ptime shl(unsigned shift) const noexcept { return ptime(m_time << shift); }
+        public ptime<TYPE, TYPE_OPS, TYPE_RES> shl(unsigned shift) { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.shift_left(m_time, (int)shift)); }  //constexpr ptime shl(unsigned shift) const noexcept { return ptime(m_time << shift); }
         public ptime<TYPE, TYPE_OPS, TYPE_RES> shr(unsigned shift) { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.shift_right(m_time, (int)shift)); }  //constexpr ptime shr(unsigned shift) const noexcept { return ptime(m_time >> shift); }
 
         // for save states ....

@@ -2,13 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int64_t = System.Int64;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+
+using static mame.cpp_global;
 
 
 namespace mame
@@ -87,7 +88,7 @@ namespace mame
             // close an archive file (may actually be left open due to caching)
             ~archive_file()
             {
-                g.assert(m_isDisposed);  // can remove
+                assert(m_isDisposed);  // can remove
             }
 
             bool m_isDisposed = false;

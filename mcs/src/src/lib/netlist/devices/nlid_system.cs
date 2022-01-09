@@ -2,13 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
 using unsigned = System.UInt32;
+
+using static mame.nl_factory_global;
 
 
 namespace mame.netlist.devices
@@ -38,10 +39,10 @@ namespace mame.netlist.devices
     class nld_logic_input : device_t
     {
         //NETLIB_DEVICE_IMPL(logic_input, "LOGIC_INPUT", "IN,FAMILY")
-        public static readonly factory.constructor_ptr_t decl_logic_input = g.NETLIB_DEVICE_IMPL<nld_logic_input>("LOGIC_INPUT", "IN,FAMILY");
+        public static readonly factory.constructor_ptr_t decl_logic_input = NETLIB_DEVICE_IMPL<nld_logic_input>("LOGIC_INPUT", "IN,FAMILY");
 
         //NETLIB_DEVICE_IMPL_ALIAS(logic_input_ttl, logic_input, "TTL_INPUT", "IN")
-        public static readonly factory.constructor_ptr_t decl_logic_input_ttl = g.NETLIB_DEVICE_IMPL_ALIAS<nld_logic_input>("logic_input_ttl", "TTL_INPUT", "IN");
+        public static readonly factory.constructor_ptr_t decl_logic_input_ttl = NETLIB_DEVICE_IMPL_ALIAS<nld_logic_input>("logic_input_ttl", "TTL_INPUT", "IN");
 
 
         logic_output_t m_Q;
@@ -82,7 +83,7 @@ namespace mame.netlist.devices
     class nld_analog_input : device_t
     {
         //NETLIB_DEVICE_IMPL(analog_input,        "ANALOG_INPUT",           "IN")
-        public static readonly factory.constructor_ptr_t decl_analog_input = g.NETLIB_DEVICE_IMPL<nld_analog_input>("ANALOG_INPUT", "IN");
+        public static readonly factory.constructor_ptr_t decl_analog_input = NETLIB_DEVICE_IMPL<nld_analog_input>("ANALOG_INPUT", "IN");
 
 
         analog_output_t m_Q;

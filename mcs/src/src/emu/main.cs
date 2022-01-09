@@ -2,13 +2,18 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.main_global;
 
 
 namespace mame
 {
     public static class main_global
     {
+        //**************************************************************************
+        //    CONSTANTS
+        //**************************************************************************
+
         public const int EMU_ERR_NONE             = 0;    // no error
         public const int EMU_ERR_FAILED_VALIDITY  = 1;    // failed validity checks
         public const int EMU_ERR_MISSING_FILES    = 2;    // missing files
@@ -24,19 +29,23 @@ namespace mame
 
     public static partial class emulator_info
     {
-        public static string get_appname() { return mame_global_emulator_info.get_appname(); }
-        public static string get_appname_lower() { return mame_global_emulator_info.get_appname_lower(); }
-        public static string get_configname() { return mame_global_emulator_info.get_configname(); }
-        public static string get_copyright() { return mame_global_emulator_info.get_copyright(); }
-        public static string get_copyright_info() { return mame_global_emulator_info.get_copyright_info(); }
-        //public static string get_bare_build_version();
-        //public static string get_build_version();
-        //public static void display_ui_chooser(running_machine machine);
-        //public static int start_frontend(emu_options options, osd_interface osd, List<string> args);
-        //public static void draw_user_interface(running_machine machine);
-        //public static void periodic_check();
-        //public static bool frame_hook();
-        public static void sound_hook() { mame_machine_manager.instance().lua().on_sound_update(); }
+        // src/mame/mame.cs
+        //static const char *get_appname();
+        //static const char *get_appname_lower();
+        //static const char *get_configname();
+        //static const char *get_copyright();
+        //static const char *get_copyright_info();
+
+        // src/frontend/mame/mame.cs
+        //static const char *get_bare_build_version();
+        //static const char *get_build_version();
+        //static void display_ui_chooser(running_machine &machine);
+        //static int start_frontend(emu_options &options, osd_interface &osd, std::vector<std::string> &args);
+        //static int start_frontend(emu_options &options, osd_interface &osd, int argc, char *argv[]);
+        //static void draw_user_interface(running_machine& machine);
+        //static void periodic_check();
+        //static bool frame_hook();
+        //static void sound_hook();
         //static void layout_script_cb(layout_file &file, const char *script);
         //static bool standalone();
     }

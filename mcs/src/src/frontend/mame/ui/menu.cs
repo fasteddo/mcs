@@ -2,29 +2,36 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
-using cleanup_callback_vector = mame.std.vector<mame.ui.menu.cleanup_callback>;
 using global_state_map = mame.std.map<mame.running_machine, mame.ui.menu.global_state>;
 using texture_ptr = mame.render_texture;
 using uint32_t = System.UInt32;
+
+using static mame.corestr_global;
+using static mame.cpp_global;
+using static mame.emucore_global;
+using static mame.language_global;
+using static mame.osdfile_global;
+using static mame.render_global;
+using static mame.rendertypes_global;
+using static mame.rendutil_global;
+using static mame.ui_global;
+using static mame.utils_global;
 
 
 namespace mame.ui
 {
     public abstract class menu : IDisposable
     {
-        //using cleanup_callback = std::function<void(running_machine &)>;
-        public delegate void cleanup_callback(running_machine machine);
-
-
         //using global_state_ptr = std::shared_ptr<global_state>;
         //using global_state_map = std::map<running_machine *, global_state_ptr>;
 
 
         // flags for menu items
-        //enum : unsigned
+        //enum : uint32_t
         //{
         public const uint32_t FLAG_LEFT_ARROW     = 1 << 0;
         public const uint32_t FLAG_RIGHT_ARROW    = 1 << 1;
@@ -32,43 +39,9 @@ namespace mame.ui
         const uint32_t FLAG_MULTILINE      = 1 << 3;
         const uint32_t FLAG_REDTEXT        = 1 << 4;
         protected const uint32_t FLAG_DISABLE        = 1 << 5;
-        const uint32_t FLAG_UI_DATS        = 1 << 6;
         const uint32_t FLAG_UI_HEADING     = 1 << 7;
         const uint32_t FLAG_COLOR_BOX      = 1 << 8;
         //}
-
-
-        protected enum menu_options
-        {
-            INPUT_GROUPS,
-            INPUT_SPECIFIC,
-            SETTINGS_DIP_SWITCHES,
-            SETTINGS_DRIVER_CONFIG,
-            ANALOG,
-            BOOKKEEPING,
-            GAME_INFO,
-            WARN_INFO,
-            IMAGE_MENU_IMAGE_INFO,
-            IMAGE_MENU_FILE_MANAGER,
-            TAPE_CONTROL,
-            SLOT_DEVICES,
-            NETWORK_DEVICES,
-            KEYBOARD_MODE,
-            SLIDERS,
-            VIDEO_TARGETS,
-            VIDEO_OPTIONS,
-            CROSSHAIR,
-            CHEAT,
-            PLUGINS,
-            SELECT_GAME,
-            BIOS_SELECTION,
-            BARCODE_READ,
-            PTY_INFO,
-            EXTERNAL_DATS,
-            ADD_FAVORITE,
-            REMOVE_FAVORITE,
-            QUIT_GAME,
-        }
 
 
         // flags to pass to process
@@ -77,10 +50,11 @@ namespace mame.ui
         const uint32_t PROCESS_NOKEYS      = 1 << 0;
         const uint32_t PROCESS_LR_ALWAYS   = 1 << 1;
         protected const uint32_t PROCESS_LR_REPEAT   = 1 << 2;
-        protected const uint32_t PROCESS_CUSTOM_ONLY = 1 << 3;
-        const uint32_t PROCESS_ONLYCHAR    = 1 << 4;
-        protected const uint32_t PROCESS_NOINPUT     = 1 << 5;
-        const uint32_t PROCESS_NOIMAGE     = 1 << 6;
+        const uint32_t PROCESS_CUSTOM_NAV  = 1 << 3;
+        protected const uint32_t PROCESS_CUSTOM_ONLY = 1 << 4;
+        const uint32_t PROCESS_ONLYCHAR    = 1 << 5;
+        protected const uint32_t PROCESS_NOINPUT     = 1 << 6;
+        const uint32_t PROCESS_NOIMAGE     = 1 << 7;
         //}
 
 
@@ -95,13 +69,11 @@ namespace mame.ui
 
         public class global_state : widgets_manager, IDisposable
         {
-            //using cleanup_callback_vector = std::vector<cleanup_callback>;
             //using bitmap_ptr = widgets_manager::bitmap_ptr;
             //using texture_ptr = widgets_manager::texture_ptr;
 
 
             running_machine m_machine;
-            cleanup_callback_vector m_cleanup_callbacks = new cleanup_callback_vector();
             bitmap_argb32 m_bgrnd_bitmap;
             render_texture m_bgrnd_texture;
 
@@ -113,7 +85,6 @@ namespace mame.ui
                 : base(machine)
             {
                 m_machine = machine;
-                m_cleanup_callbacks = new cleanup_callback_vector();
                 m_bgrnd_bitmap = null;
                 m_bgrnd_texture = null;  //, m_bgrnd_texture(nullptr, machine.render())
                 m_stack = null;
@@ -127,16 +98,16 @@ namespace mame.ui
                 if (options.use_background_image() && (machine.system() == ___empty.driver____empty))
                 {
                     m_bgrnd_bitmap = new bitmap_argb32(0, 0);
-                    emu_file backgroundfile = new emu_file(".", g.OPEN_FLAG_READ);
+                    emu_file backgroundfile = new emu_file(".", OPEN_FLAG_READ);
                     if (!backgroundfile.open("background.jpg"))
                     {
-                        g.render_load_jpeg(out m_bgrnd_bitmap, backgroundfile.core_file_get());
+                        render_load_jpeg(out m_bgrnd_bitmap, backgroundfile.core_file_get());
                         backgroundfile.close();
                     }
 
                     if (!m_bgrnd_bitmap.valid() && !backgroundfile.open("background.png"))
                     {
-                        g.render_load_png(out m_bgrnd_bitmap, backgroundfile.core_file_get());
+                        render_load_png(out m_bgrnd_bitmap, backgroundfile.core_file_get());
                         backgroundfile.close();
                     }
 
@@ -149,7 +120,7 @@ namespace mame.ui
 
             ~global_state()
             {
-                g.assert(m_isDisposed);  // can remove
+                assert(m_isDisposed);  // can remove
             }
 
             bool m_isDisposed = false;
@@ -158,23 +129,14 @@ namespace mame.ui
                 //throw new emu_unimplemented();
 #if false
                 // it shouldn't really be possible to get here with active menus because of reference loops
-                global.assert(m_stack == null);
-                global.assert(m_free == null);
+                assert(!m_stack);
+                assert(!m_free);
 #endif
 
                 stack_reset();
                 clear_free_list();
 
-                foreach (var callback in m_cleanup_callbacks)
-                    callback(m_machine);
-
                 m_isDisposed = true;
-            }
-
-
-            public void add_cleanup_callback(cleanup_callback callback)
-            {
-                m_cleanup_callbacks.emplace_back(callback);
             }
 
 
@@ -267,6 +229,7 @@ namespace mame.ui
 
         global_state m_global_state;  //global_state_ptr m_global_state;
         bool m_special_main_menu;
+        bool m_needs_prev_menu_item;
         mame_ui_manager m_ui;              // UI we are attached to
         render_container m_container;       // render_container we render to
         menu m_parent;           // pointer to parent menu
@@ -299,6 +262,7 @@ namespace mame.ui
             m_visible_items = 0;
             m_global_state = get_global_state(mui.machine());
             m_special_main_menu = false;
+            m_needs_prev_menu_item = true;
             m_ui = mui;
             m_container = container;
             m_parent = null;
@@ -312,7 +276,7 @@ namespace mame.ui
             m_mouse_x = -1.0f;
             m_mouse_y = -1.0f;
 
-            g.assert(m_global_state != null); // not calling init is bad
+            assert(m_global_state != null); // not calling init is bad
 
 
             reset(reset_options.SELECT_FIRST);
@@ -322,7 +286,7 @@ namespace mame.ui
 
         ~menu()
         {
-            g.assert(m_isDisposed);  // can remove
+            assert(m_isDisposed);  // can remove
         }
 
         protected bool m_isDisposed = false;
@@ -342,17 +306,10 @@ namespace mame.ui
         //void item_append(std::string &&text, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN) { item_append(text, std::string(), flags, ref, type); }
         protected void item_append(string text, string subtext, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN)  //void item_append(std::string &&text, std::string &&subtext, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN);
         {
-            // only allow multiline as the first item
-            if ((flags & FLAG_MULTILINE) != 0)
-            {
-                g.assert(m_items.size() == 1);
-            }
-
-            // only allow a single multi-line item
-            else if (m_items.size() >= 2)
-            {
-                g.assert((m_items[0].flags & FLAG_MULTILINE) == 0);
-            }
+            if ((flags & FLAG_MULTILINE) != 0) // only allow multiline as the first item
+                assert(m_items.size() == 1);
+            else if (m_items.size() >= 2) // only allow a single multi-line item
+                assert((m_items[0].flags & FLAG_MULTILINE) == 0);
 
             // allocate a new item and populate it
             menu_item pitem = new menu_item();
@@ -364,7 +321,7 @@ namespace mame.ui
 
             // append to array
             var index = m_items.size();
-            if (!m_items.empty())
+            if (!m_items.empty() && m_needs_prev_menu_item)
             {
                 m_items.emplace((int)m_items.size() - 1, pitem);  //item.end() - 1, pitem);
                 --index;
@@ -417,7 +374,7 @@ namespace mame.ui
 #endif
                 var state = new global_state(machine, mopt);
                 var ins = s_global_states.emplace(machine, state);
-                g.assert(ins); // calling init twice is bad
+                assert(ins); // calling init twice is bad
 
                 if (ins)
                     machine.add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit); // add an exit callback to free memory
@@ -476,7 +433,7 @@ namespace mame.ui
 
             // if the menus are to be hidden, return a cancel here
             if (mui.is_menu_active() && ((mui.machine().ui_input().pressed((int)ioport_type.IPT_UI_CONFIGURE) && !state.stack_has_special_main_menu()) || state.topmost_menu<menu>() == null))
-                return g.UI_HANDLER_CANCEL;
+                return UI_HANDLER_CANCEL;
 
             return 0;
         }
@@ -511,27 +468,8 @@ namespace mame.ui
             if (m_items.empty())
             {
                 // add an item to return - this is a really hacky way of doing this
-                if (m_parent == null)
-                {
-                    if (machine().phase() == machine_phase.INIT)
-                        item_append(g.__("Start Machine"), 0, null);
-                    else
-                        item_append(g.__("Return to Machine"), 0, null);
-                }
-                else if (m_parent.is_special_main_menu())
-                {
-                    if (machine().options().ui() == emu_options.ui_option.UI_SIMPLE)
-                        item_append(g.__("Exit"), 0, null);
-                    else
-                        item_append(g.__("Exit"), FLAG_LEFT_ARROW | FLAG_RIGHT_ARROW, null);
-                }
-                else
-                {
-                    if (machine().options().ui() != emu_options.ui_option.UI_SIMPLE && stack_has_special_main_menu())
-                        item_append(g.__("Return to Previous Menu"), FLAG_LEFT_ARROW | FLAG_RIGHT_ARROW, null);
-                    else
-                        item_append(g.__("Return to Previous Menu"), 0, null);
-                }
+                if (m_needs_prev_menu_item)
+                    item_append(__("Return to Previous Menu"), 0, null);
 
                 // let implementation add other items
                 populate(ref m_customtop, ref m_custombottom);
@@ -547,10 +485,15 @@ namespace mame.ui
         protected virtual void draw(uint32_t flags)
         {
             // first draw the FPS counter
-            if (mame_machine_manager.instance().ui().show_fps_counter())
+            if (ui().show_fps_counter())
             {
-                ui().draw_text_full(container(), machine().video().speed_text(), 0.0f, 0.0f, 1.0f,
-                    text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(), out _, out _);
+                ui().draw_text_full(
+                        container(),
+                        machine().video().speed_text(),
+                        0.0f, 0.0f, 1.0f,
+                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD,
+                        mame_ui_manager.draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(),
+                        out _, out _);
             }
 
             bool customonly = (flags & PROCESS_CUSTOM_ONLY) != 0;
@@ -601,7 +544,7 @@ namespace mame.ui
             if (visible_main_menu_height + visible_extra_menu_height + 2.0f * ui().box_tb_border() > 1.0f)
                 visible_main_menu_height = 1.0f - 2.0f * ui().box_tb_border() - visible_extra_menu_height;
 
-            m_visible_lines = Math.Min((int)(Math.Floor(visible_main_menu_height / line_height)), (int)m_items.size());
+            m_visible_lines = std.min((int)(std.floor(visible_main_menu_height / line_height)), (int)m_items.size());
             visible_main_menu_height = (float)m_visible_lines * line_height;
 
             // compute top/left of inner menu area by centering
@@ -616,13 +559,14 @@ namespace mame.ui
             if (!customonly)
                 ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
 
-            // determine the first visible line based on the current selection
+            if ((m_selected >= (top_line + m_visible_lines)) || (m_selected < (top_line + 1)))
+                top_line = m_selected - (m_visible_lines / 2);
             if (top_line < 0 || is_first_selected())
                 top_line = 0;
-            if (m_selected >= (top_line + m_visible_lines))
-                top_line = m_selected - (m_visible_lines / 2);
-            if (top_line > (int)m_items.size() - m_visible_lines || is_last_selected())
+            else if ((top_line > ((int)m_items.size() - m_visible_lines)) || is_last_selected())
                 top_line = (int)m_items.size() - m_visible_lines;
+            else if (m_selected >= (top_line + m_visible_lines - 2))
+                top_line = m_selected - m_visible_lines + ((m_selected == ((int)m_items.size() - 1)) ? 1 : 2);
 
             // if scrolling, show arrows
             bool show_top_arrow = (((int)m_items.size() > m_visible_lines) && !first_item_visible());
@@ -644,8 +588,8 @@ namespace mame.ui
             // loop over visible lines
             m_hover = (int)m_items.size() + 1;
             bool selected_subitem_too_big = false;
-            float line_x0 = x1 + 0.5f * g.UI_LINE_WIDTH;
-            float line_x1 = x2 - 0.5f * g.UI_LINE_WIDTH;
+            float line_x0 = x1 + 0.5f * UI_LINE_WIDTH;
+            float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
             if (!customonly)
             {
                 for (int linenum = 0; linenum < m_visible_lines; linenum++)
@@ -660,20 +604,31 @@ namespace mame.ui
                     float line_y0 = visible_top + (float)linenum * line_height;
                     float line_y1 = line_y0 + line_height;
 
-                    // set the hover if this is our item
-                    if (mouse_in_rect(line_x0, line_y0, line_x1, line_y1) && is_selectable(pitem))
-                        m_hover = itemnum;
+                    // work out what we're dealing with
+                    bool uparrow = linenum == 0 && show_top_arrow;
+                    bool downarrow = (linenum == (m_visible_lines - 1)) && show_bottom_arrow;
 
-                    // if we're selected, draw with a different background
+                    // set the hover if this is our item
+                    bool hovered = mouse_in_rect(line_x0, line_y0, line_x1, line_y1);
+                    if (hovered)
+                    {
+                        if (uparrow)
+                            m_hover = HOVER_ARROW_UP;
+                        else if (downarrow)
+                            m_hover = HOVER_ARROW_DOWN;
+                        else if (is_selectable(pitem))
+                            m_hover = itemnum;
+                    }
+
                     if (is_selected(itemnum))
                     {
+                        // if we're selected, draw with a different background
                         fgcolor = fgcolor2 = fgcolor3 = ui().colors().selected_color();
                         bgcolor = ui().colors().selected_bg_color();
                     }
-
-                    // else if the mouse is over this item, draw with a different background
-                    else if (itemnum == m_hover)
+                    else if (hovered && (uparrow || downarrow || is_selectable(pitem)))
                     {
+                        // else if the mouse is over this item, draw with a different background
                         fgcolor = fgcolor2 = fgcolor3 = ui().colors().mouseover_color();
                         bgcolor = ui().colors().mouseover_bg_color();
                     }
@@ -682,7 +637,7 @@ namespace mame.ui
                     if (bgcolor != ui().colors().text_bg_color())
                         highlight(line_x0, line_y0, line_x1, line_y1, bgcolor);
 
-                    if (linenum == 0 && show_top_arrow)
+                    if (uparrow)
                     {
                         // if we're on the top line, display the up arrow
                         draw_arrow(
@@ -691,11 +646,9 @@ namespace mame.ui
                                     0.5f * (x1 + x2) + 0.5f * ud_arrow_width,
                                     line_y0 + 0.75f * line_height,
                                     fgcolor,
-                                    g.ROT0);
-                        if (m_hover == itemnum)
-                            m_hover = utils_global.HOVER_ARROW_UP;
+                                    ROT0);
                     }
-                    else if (linenum == m_visible_lines - 1 && show_bottom_arrow)
+                    else if (downarrow)
                     {
                         // if we're on the bottom line, display the down arrow
                         draw_arrow(
@@ -704,27 +657,30 @@ namespace mame.ui
                                     0.5f * (x1 + x2) + 0.5f * ud_arrow_width,
                                     line_y0 + 0.75f * line_height,
                                     fgcolor,
-                                    g.ROT0 ^ g.ORIENTATION_FLIP_Y);
-                        if (m_hover == itemnum)
-                            m_hover = utils_global.HOVER_ARROW_DOWN;
+                                    ROT0 ^ ORIENTATION_FLIP_Y);
                     }
-                    else if (itemtext == menu_item.MENU_SEPARATOR_ITEM)
+                    else if (pitem.type == menu_item_type.SEPARATOR)
                     {
                         // if we're just a divider, draw a line
-                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                        container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                     }
-                    else if (pitem.subtext == null)
+                    else if (pitem.subtext.empty())
                     {
                         // if we don't have a subitem, just draw the string centered
                         if ((pitem.flags & FLAG_UI_HEADING) != 0)
                         {
                             float heading_width = ui().get_string_width(itemtext);
-                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - lr_border, line_y0 + 0.5f * line_height, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + lr_border, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                            container().add_line(visible_left, line_y0 + 0.5f * line_height, visible_left + ((visible_width - heading_width) / 2) - lr_border, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                            container().add_line(visible_left + visible_width - ((visible_width - heading_width) / 2) + lr_border, line_y0 + 0.5f * line_height, visible_left + visible_width, line_y0 + 0.5f * line_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                         }
 
-                        ui().draw_text_full(container(), itemtext, effective_left, line_y0, effective_width,
-                            text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor, out _, out _);
+                        ui().draw_text_full(
+                                container(),
+                                itemtext,
+                                effective_left, line_y0, effective_width,
+                                text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE,
+                                mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor,
+                                out _, out _);
                     }
                     else
                     {
@@ -734,18 +690,26 @@ namespace mame.ui
                         float subitem_width;
 
                         // draw the left-side text
-                        ui().draw_text_full(container(), itemtext, effective_left, line_y0, effective_width,
-                                    text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor, out item_width, out _);
+                        ui().draw_text_full(
+                                container(),
+                                itemtext,
+                                effective_left, line_y0, effective_width,
+                                text_layout.text_justify.LEFT, text_layout.word_wrapping.TRUNCATE,
+                                mame_ui_manager.draw_mode.NORMAL, fgcolor, bgcolor,
+                                out item_width, out _);
 
                         if ((pitem.flags & FLAG_COLOR_BOX) != 0)
                         {
-                            rgb_t color = new rgb_t((UInt32)Convert.ToInt64(pitem.subtext, 16));  //rgb_t color = rgb_t((uint32_t)strtoul(pitem.subtext.c_str(), nullptr, 16));
+                            rgb_t color = new rgb_t((uint32_t)std.strtoul(pitem.subtext, null, 16));
 
                             // give 2 spaces worth of padding
                             subitem_width = ui().get_string_width("FF00FF00");
 
-                            ui().draw_outlined_box(container(), effective_left + effective_width - subitem_width, line_y0,
-                                effective_left + effective_width, line_y1, color);
+                            ui().draw_outlined_box(
+                                    container(),
+                                    effective_left + effective_width - subitem_width, line_y0 + (UI_LINE_WIDTH * 2.0f),
+                                    effective_left + effective_width, line_y1 - (UI_LINE_WIDTH * 2.0f),
+                                    color);
                         }
                         else
                         {
@@ -763,40 +727,47 @@ namespace mame.ui
                             }
 
                             // customize subitem text color
-                            if (g.core_stricmp(pitem.subtext, "On") == 0)
+                            if (core_stricmp(pitem.subtext, "On") == 0)
                                 fgcolor2 = new rgb_t(0x00,0xff,0x00);
 
-                            if (g.core_stricmp(pitem.subtext, "Off") == 0)
+                            if (core_stricmp(pitem.subtext, "Off") == 0)
                                 fgcolor2 = new rgb_t(0xff,0x00,0x00);
 
-                            if (g.core_stricmp(pitem.subtext, "Auto") == 0)
+                            if (core_stricmp(pitem.subtext, "Auto") == 0)
                                 fgcolor2 = new rgb_t(0xff,0xff,0x00);
 
                             // draw the subitem right-justified
-                            ui().draw_text_full(container(), subitem_text, effective_left + item_width, line_y0, effective_width - item_width,
-                                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, subitem_invert ? fgcolor3 : fgcolor2, bgcolor, out subitem_width, out _);
+                            ui().draw_text_full(
+                                    container(),
+                                    subitem_text,
+                                    effective_left + item_width, line_y0, effective_width - item_width,
+                                    text_layout.text_justify.RIGHT, text_layout.word_wrapping.TRUNCATE,
+                                    mame_ui_manager.draw_mode.NORMAL, subitem_invert ? fgcolor3 : fgcolor2, bgcolor,
+                                    out subitem_width, out _);
                         }
 
                         // apply arrows
                         if (is_selected(itemnum) && (pitem.flags & FLAG_LEFT_ARROW) != 0)
                         {
+                            float l = effective_left + effective_width - subitem_width - gutter_width;
+                            float r = l + lr_arrow_width;
                             draw_arrow(
-                                        effective_left + effective_width - subitem_width - gutter_width,
-                                        line_y0 + 0.1f * line_height,
-                                        effective_left + effective_width - subitem_width - gutter_width + lr_arrow_width,
-                                        line_y0 + 0.9f * line_height,
+                                        l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height,
                                         fgcolor,
-                                        g.ROT90 ^ g.ORIENTATION_FLIP_X);
+                                        ROT90 ^ ORIENTATION_FLIP_X);
+                            if (mouse_in_rect(l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height))
+                                m_hover = HOVER_UI_LEFT;
                         }
                         if (is_selected(itemnum) && (pitem.flags & FLAG_RIGHT_ARROW) != 0)
                         {
+                            float r = effective_left + effective_width + gutter_width;
+                            float l = r - lr_arrow_width;
                             draw_arrow(
-                                        effective_left + effective_width + gutter_width - lr_arrow_width,
-                                        line_y0 + 0.1f * line_height,
-                                        effective_left + effective_width + gutter_width,
-                                        line_y0 + 0.9f * line_height,
+                                        l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height,
                                         fgcolor,
-                                        g.ROT90);
+                                        ROT90);
+                            if (mouse_in_rect(l, line_y0 + 0.1f * line_height, r, line_y0 + 0.9f * line_height))
+                                m_hover = HOVER_UI_RIGHT;
                         }
                     }
                 }
@@ -812,8 +783,13 @@ namespace mame.ui
                 float target_width, target_height;
 
                 // compute the multi-line target width/height
-                ui().draw_text_full(container(), pitem.subtext, 0, 0, visible_width * 0.75f,
-                            text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out target_width, out target_height);
+                ui().draw_text_full(
+                        container(),
+                        pitem.subtext,
+                        0, 0, visible_width * 0.75f,
+                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD,
+                        mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(),
+                        out target_width, out target_height);
 
                 // determine the target location
                 float target_x = visible_left + visible_width - target_width - lr_border;
@@ -822,14 +798,19 @@ namespace mame.ui
                     target_y = line_y - target_height - ui().box_tb_border();
 
                 // add a box around that
-                ui().draw_outlined_box(container(), target_x - lr_border,
-                        target_y - ui().box_tb_border(),
-                        target_x + target_width + lr_border,
-                        target_y + target_height + ui().box_tb_border(),
+                ui().draw_outlined_box(
+                        container(),
+                        target_x - lr_border, target_y - ui().box_tb_border(),
+                        target_x + target_width + lr_border, target_y + target_height + ui().box_tb_border(),
                         subitem_invert ? ui().colors().selected_bg_color() : ui().colors().background_color());
 
-                ui().draw_text_full(container(), pitem.subtext, target_x, target_y, target_width,
-                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(), out _, out _);
+                ui().draw_text_full(
+                        container(),
+                        pitem.subtext,
+                        target_x, target_y, target_width,
+                        text_layout.text_justify.RIGHT, text_layout.word_wrapping.WORD,
+                        mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(),
+                        out _, out _);
             }
 
             // if there is something special to add, do it by calling the virtual method
@@ -858,15 +839,20 @@ namespace mame.ui
             float target_y;
 
             // compute the multi-line target width/height
-            ui().draw_text_full(container(), text, 0, 0, 1.0f - 2.0f * lr_border - 2.0f * gutter_width,
-                        text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out target_width, out target_height);
+            ui().draw_text_full(
+                    container(),
+                    text,
+                    0, 0, 1.0f - 2.0f * lr_border - 2.0f * gutter_width,
+                    text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD,
+                    mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(),
+                    out target_width, out target_height);
             target_height += 2.0f * line_height;
             if (target_height > 1.0f - 2.0f * ui().box_tb_border())
-                target_height = (float)Math.Floor((1.0f - 2.0f * ui().box_tb_border()) / line_height) * line_height;
+                target_height = floorf((1.0f - 2.0f * ui().box_tb_border()) / line_height) * line_height;
 
             // maximum against "return to prior menu" text
             prior_width = ui().get_string_width(backtext) + 2.0f * gutter_width;
-            target_width = Math.Max(target_width, prior_width);
+            target_width = std.max(target_width, prior_width);
 
             // determine the target location
             target_x = 0.5f - 0.5f * target_width;
@@ -883,25 +869,33 @@ namespace mame.ui
                 target_y = 1.0f - ui().box_tb_border() - target_height;
 
             // add a box around that
-            ui().draw_outlined_box(container(), target_x - lr_border - gutter_width,
-                                    target_y - ui().box_tb_border(),
-                                    target_x + target_width + gutter_width + lr_border,
-                                    target_y + target_height + ui().box_tb_border(),
-                                    (m_items[0].flags & FLAG_REDTEXT) != 0 ? g.UI_RED_COLOR : ui().colors().background_color());
-
-            ui().draw_text_full(container(), text, target_x, target_y, target_width,
-                        text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(), out _, out _);
+            ui().draw_outlined_box(
+                    container(),
+                    target_x - lr_border - gutter_width, target_y - ui().box_tb_border(),
+                    target_x + target_width + gutter_width + lr_border, target_y + target_height + ui().box_tb_border(),
+                    (m_items[0].flags & FLAG_REDTEXT) != 0 ? UI_RED_COLOR : ui().colors().background_color());
+            ui().draw_text_full(
+                    container(),
+                    text,
+                    target_x, target_y, target_width,
+                    text_layout.text_justify.LEFT, text_layout.word_wrapping.WORD,
+                    mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(),
+                    out _, out _);
 
             // draw the "return to prior menu" text with a hilight behind it
             highlight(
-                        target_x + 0.5f * g.UI_LINE_WIDTH,
-                        target_y + target_height - line_height,
-                        target_x + target_width - 0.5f * g.UI_LINE_WIDTH,
-                        target_y + target_height,
-                        ui().colors().selected_bg_color());
-
-            ui().draw_text_full(container(), backtext, target_x, target_y + target_height - line_height, target_width,
-                        text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(), out _, out _);
+                    target_x + 0.5f * UI_LINE_WIDTH,
+                    target_y + target_height - line_height,
+                    target_x + target_width - 0.5f * UI_LINE_WIDTH,
+                    target_y + target_height,
+                    ui().colors().selected_bg_color());
+            ui().draw_text_full(
+                    container(),
+                    backtext,
+                    target_x, target_y + target_height - line_height, target_width,
+                    text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE,
+                    mame_ui_manager.draw_mode.NORMAL, ui().colors().selected_color(), ui().colors().selected_bg_color(),
+                    out _, out _);
 
             // artificially set the hover to the last item so a double-click exits
             m_hover = (int)m_items.size() - 1;
@@ -911,6 +905,9 @@ namespace mame.ui
         protected mame_ui_manager ui() { return m_ui; }
         protected running_machine machine() { return m_ui.machine(); }
         protected render_container container() { return m_container; }
+
+
+        protected void set_needs_prev_menu_item(bool needs) { m_needs_prev_menu_item = needs; }
 
 
         // free all items in the menu, and all memory allocated from the memory pool
@@ -944,15 +941,13 @@ namespace mame.ui
         protected void stack_reset() { m_global_state.stack_reset(); }
         protected bool stack_has_special_main_menu() { return m_global_state.stack_has_special_main_menu(); }
 
-        protected void add_cleanup_callback(cleanup_callback callback) { m_global_state.add_cleanup_callback(callback); }
-
 
         // process a menu, drawing it and returning any interesting events
         //-------------------------------------------------
         //  process - process a menu, drawing it
         //  and returning any interesting events
         //-------------------------------------------------
-        protected menu_event process(UInt32 flags, float x0 = 0.0f, float y0 = 0.0f)
+        protected menu_event process(uint32_t flags, float x0 = 0.0f, float y0 = 0.0f)
         {
             // reset the menu_event
             m_event.iptkey = (int)ioport_type.IPT_INVALID;
@@ -1077,7 +1072,7 @@ namespace mame.ui
         //-------------------------------------------------
         public void highlight(float x0, float y0, float x1, float y1, rgb_t bgcolor)
         {
-            container().add_quad(x0, y0, x1, y1, bgcolor, m_global_state.hilight_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXWRAP(1) | g.PRIMFLAG_PACKABLE);
+            container().add_quad(x0, y0, x1, y1, bgcolor, m_global_state.hilight_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1) | PRIMFLAG_PACKABLE);
         }
 
 
@@ -1088,9 +1083,9 @@ namespace mame.ui
         //-------------------------------------------------
         //  draw_arrow
         //-------------------------------------------------
-        protected void draw_arrow(float x0, float y0, float x1, float y1, rgb_t fgcolor, UInt32 orientation)
+        protected void draw_arrow(float x0, float y0, float x1, float y1, rgb_t fgcolor, uint32_t orientation)
         {
-            container().add_quad(x0, y0, x1, y1, fgcolor, m_global_state.arrow_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | g.PRIMFLAG_TEXORIENT(orientation) | g.PRIMFLAG_PACKABLE);
+            container().add_quad(x0, y0, x1, y1, fgcolor, m_global_state.arrow_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXORIENT(orientation) | PRIMFLAG_PACKABLE);
         }
 
 
@@ -1119,7 +1114,7 @@ namespace mame.ui
                         mame_ui_manager.draw_mode.NONE, rgb_t.black(), rgb_t.white(),
                         out width, out _, text_size);
                 width += 2.0f * lrborder;
-                maxwidth = Math.Max(maxwidth, width);
+                maxwidth = std.max(maxwidth, width);
             }
 
             if (scale && ((origx2 - origx1) < maxwidth))
@@ -1153,11 +1148,11 @@ namespace mame.ui
         }
 
 
-        void draw_background()
+        protected void draw_background()
         {
             // draw background image if available
             if (ui().options().use_background_image() && m_global_state.bgrnd_bitmap() != null && m_global_state.bgrnd_bitmap().valid())
-                container().add_quad(0.0f, 0.0f, 1.0f, 1.0f, rgb_t.white(), m_global_state.bgrnd_texture(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                container().add_quad(0.0f, 0.0f, 1.0f, 1.0f, rgb_t.white(), m_global_state.bgrnd_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
         }
 
 
@@ -1232,30 +1227,48 @@ namespace mame.ui
                         if ((flags & PROCESS_ONLYCHAR) == 0)
                         {
                             if (m_hover >= 0 && m_hover < (int)m_items.size())
+                            {
                                 m_selected = m_hover;
-                            else if (m_hover == utils_global.HOVER_ARROW_UP)
-                            {
-                                if ((flags & FLAG_UI_DATS) != 0)
-                                {
-                                    top_line -= m_visible_items - (last_item_visible() ? 1 : 0);
-                                    return;
-                                }
-                                m_selected -= m_visible_items;
-                                if (m_selected < 0)
-                                    m_selected = 0;
-                                top_line -= m_visible_items - (last_item_visible() ? 1 : 0);
                             }
-                            else if (m_hover == utils_global.HOVER_ARROW_DOWN)
+                            else if (m_hover == HOVER_ARROW_UP)
                             {
-                                if ((flags & FLAG_UI_DATS) != 0)
+                                if ((flags & PROCESS_CUSTOM_NAV) != 0)
                                 {
-                                    top_line += m_visible_lines - 2;
-                                    return;
+                                    ev.iptkey = (int)ioport_type.IPT_UI_PAGE_UP;
+                                    stop = true;
                                 }
-                                m_selected += m_visible_lines - 2 + (is_first_selected() ? 1 : 0);
-                                if (m_selected > (int)m_items.size() - 1)
-                                    m_selected = (int)m_items.size() - 1;
-                                top_line += m_visible_lines - 2;
+                                else
+                                {
+                                    m_selected -= m_visible_items;
+                                    if (m_selected < 0)
+                                        m_selected = 0;
+                                    top_line -= m_visible_items - (last_item_visible() ? 1 : 0);
+                                }
+                            }
+                            else if (m_hover == HOVER_ARROW_DOWN)
+                            {
+                                if ((flags & PROCESS_CUSTOM_NAV) != 0)
+                                {
+                                    ev.iptkey = (int)ioport_type.IPT_UI_PAGE_DOWN;
+                                    stop = true;
+                                }
+                                else
+                                {
+                                    m_selected += m_visible_lines - 2 + (is_first_selected() ? 1 : 0);
+                                    if (m_selected > (int)m_items.size() - 1)
+                                        m_selected = (int)m_items.size() - 1;
+                                    top_line += m_visible_lines - 2;
+                                }
+                            }
+                            else if (m_hover == HOVER_UI_LEFT)
+                            {
+                                ev.iptkey = (int)ioport_type.IPT_UI_LEFT;
+                                stop = true;
+                            }
+                            else if (m_hover == HOVER_UI_RIGHT)
+                            {
+                                ev.iptkey = (int)ioport_type.IPT_UI_RIGHT;
+                                stop = true;
                             }
                         }
                         break;
@@ -1266,7 +1279,7 @@ namespace mame.ui
                         {
                             m_selected = m_hover;
                             ev.iptkey = (int)ioport_type.IPT_UI_SELECT;
-                            if (is_last_selected())
+                            if (is_last_selected() && m_needs_prev_menu_item)
                             {
                                 ev.iptkey = (int)ioport_type.IPT_UI_CANCEL;
                                 stack_pop();
@@ -1281,13 +1294,12 @@ namespace mame.ui
                         {
                             if (local_menu_event.zdelta > 0)
                             {
-                                if ((flags & FLAG_UI_DATS) != 0)
+                                if ((flags & PROCESS_CUSTOM_NAV) != 0) // FIXME: DAT menu logic - let the derived class handle this
                                 {
                                     top_line -= local_menu_event.num_lines;
                                     return;
                                 }
-
-                                if (is_first_selected())
+                                else if (is_first_selected())
                                 {
                                     select_last_item();
                                 }
@@ -1303,13 +1315,12 @@ namespace mame.ui
                             }
                             else
                             {
-                                if ((flags & FLAG_UI_DATS) != 0)
+                                if ((flags & PROCESS_CUSTOM_NAV) != 0) // FIXME: DAT menu logic - let the derived class handle this
                                 {
                                     top_line += local_menu_event.num_lines;
                                     return;
                                 }
-
-                                if (is_last_selected())
+                                else if (is_last_selected())
                                 {
                                     select_first_item();
                                 }
@@ -1357,7 +1368,7 @@ namespace mame.ui
             // if we hit select, return TRUE or pop the stack, depending on the item
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_SELECT, 0))
             {
-                if (is_last_selected())
+                if (is_last_selected() && m_needs_prev_menu_item)
                 {
                     iptkey = (int)ioport_type.IPT_UI_CANCEL;
                     stack_pop(machine());
@@ -1372,7 +1383,7 @@ namespace mame.ui
             // hitting cancel also pops the stack
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_CANCEL, 0))
             {
-                if (!menu_has_search_active())
+                if (!custom_ui_cancel())
                     stack_pop();
                 return;
             }
@@ -1384,9 +1395,6 @@ namespace mame.ui
             bool ignoreleft = (flags & PROCESS_LR_ALWAYS) == 0 && (selected_item().flags & FLAG_LEFT_ARROW) == 0;
             bool ignoreright = (flags & PROCESS_LR_ALWAYS) == 0 && (selected_item().flags & FLAG_RIGHT_ARROW) == 0;
 
-            if ((m_items[0].flags & FLAG_UI_DATS) != 0)
-                ignoreleft = ignoreright = false;
-
             // accept left/right keys as-is with repeat
             if (ignoreleft && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_LEFT, (flags & PROCESS_LR_REPEAT) != 0 ? 6 : 0))
                 return;
@@ -1396,13 +1404,11 @@ namespace mame.ui
             // up backs up by one item
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_UP, 6))
             {
-                if ((m_items[0].flags & FLAG_UI_DATS) != 0)
+                if ((flags & PROCESS_CUSTOM_NAV) != 0)
                 {
-                    top_line--;
                     return;
                 }
-
-                if (is_first_selected())
+                else if (is_first_selected())
                 {
                     select_last_item();
                 }
@@ -1420,13 +1426,11 @@ namespace mame.ui
             // down advances by one item
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_DOWN, 6))
             {
-                if ((m_items[0].flags & FLAG_UI_DATS) != 0)
+                if ((flags & PROCESS_CUSTOM_NAV) != 0)
                 {
-                    top_line++;
                     return;
                 }
-
-                if (is_last_selected())
+                else if (is_last_selected())
                 {
                     select_first_item();
                 }
@@ -1444,6 +1448,9 @@ namespace mame.ui
             // page up backs up by visitems
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_PAGE_UP, 6))
             {
+                if ((flags & PROCESS_CUSTOM_NAV) != 0)
+                    return;
+
                 m_selected -= m_visible_items;
                 top_line -= m_visible_items - (last_item_visible() ? 1 : 0);
                 if (m_selected < 0)
@@ -1454,6 +1461,9 @@ namespace mame.ui
             // page down advances by visitems
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_PAGE_DOWN, 6))
             {
+                if ((flags & PROCESS_CUSTOM_NAV) != 0)
+                    return;
+
                 m_selected += m_visible_lines - 2 + (is_first_selected() ? 1 : 0);
                 top_line += m_visible_lines - 2;
 
@@ -1464,11 +1474,21 @@ namespace mame.ui
 
             // home goes to the start
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_HOME, 0))
+            {
+                if ((flags & PROCESS_CUSTOM_NAV) != 0)
+                    return;
+
                 select_first_item();
+            }
 
             // end goes to the last
             if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_END, 0))
+            {
+                if ((flags & PROCESS_CUSTOM_NAV) != 0)
+                    return;
+
                 select_last_item();
+            }
 
             // pause enables/disables pause
             if (!ignorepause && exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_PAUSE, 0))
@@ -1498,12 +1518,11 @@ namespace mame.ui
         }
 
 
+        protected virtual bool custom_ui_cancel() { return false; }
+
+
         // overridable event handling
         protected virtual bool custom_mouse_down() { return false; }
-
-
-        // test if search is active
-        protected virtual bool menu_has_search_active() { return false; }
 
 
         protected static bool is_selectable(menu_item item) { return (item.flags & (FLAG_MULTILINE | FLAG_DISABLE)) == 0 && item.type != menu_item_type.SEPARATOR; }

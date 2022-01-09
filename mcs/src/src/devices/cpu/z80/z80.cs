@@ -2,16 +2,24 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
+using int8_t = System.SByte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using unsigned = System.UInt32;
+
+using static mame.device_global;
+using static mame.diexec_global;
+using static mame.distate_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
+using static mame.osdcore_global;
+using static mame.util;
 
 
 /* On an NMOS Z80, if LD A,I or LD A,R is interrupted, P/V flag gets reset,
@@ -27,7 +35,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(Z80, z80_device, "z80", "Zilog Z80")
         static device_t device_creator_z80_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new z80_device(mconfig, tag, owner, clock); }
-        public static readonly device_type Z80 = g.DEFINE_DEVICE_TYPE(device_creator_z80_device, "z80", "Zilog Z80");
+        public static readonly device_type Z80 = DEFINE_DEVICE_TYPE(device_creator_z80_device, "z80", "Zilog Z80");
 
 
         public class device_execute_interface_z80 : device_execute_interface
@@ -72,18 +80,18 @@ namespace mame
 
         //enum
         //{
-        const int NSC800_RSTA = g.INPUT_LINE_IRQ0 + 1;
-        const int NSC800_RSTB = g.INPUT_LINE_IRQ0 + 2;
-        const int NSC800_RSTC = g.INPUT_LINE_IRQ0 + 3;
-        const int Z80_INPUT_LINE_WAIT  = g.INPUT_LINE_IRQ0 + 4;
-        const int Z80_INPUT_LINE_BOGUSWAIT = g.INPUT_LINE_IRQ0 + 5; /* WAIT pin implementation used to be nonexistent, please remove this when all drivers are updated with Z80_INPUT_LINE_WAIT */
-        public const int Z80_INPUT_LINE_BUSRQ = g.INPUT_LINE_IRQ0 + 6;
+        const int NSC800_RSTA = INPUT_LINE_IRQ0 + 1;
+        const int NSC800_RSTB = INPUT_LINE_IRQ0 + 2;
+        const int NSC800_RSTC = INPUT_LINE_IRQ0 + 3;
+        const int Z80_INPUT_LINE_WAIT  = INPUT_LINE_IRQ0 + 4;
+        const int Z80_INPUT_LINE_BOGUSWAIT = INPUT_LINE_IRQ0 + 5; /* WAIT pin implementation used to be nonexistent, please remove this when all drivers are updated with Z80_INPUT_LINE_WAIT */
+        public const int Z80_INPUT_LINE_BUSRQ = INPUT_LINE_IRQ0 + 6;
         //}
 
 
         //enum
         //{
-        const int Z80_PC   =  g.STATE_GENPC;
+        const int Z80_PC   =  STATE_GENPC;
         const int Z80_SP   =  1;
         const int Z80_A    =  2;
         const int Z80_B    =  3;
@@ -396,9 +404,9 @@ namespace mame
             m_daisy = new z80_daisy_chain_interface(mconfig, this);
 
 
-            m_program_config = new address_space_config("program", g.ENDIANNESS_LITTLE, 8, 16, 0);
-            m_opcodes_config = new address_space_config("opcodes", g.ENDIANNESS_LITTLE, 8, 16, 0);
-            m_io_config = new address_space_config("io", g.ENDIANNESS_LITTLE, 8, 16, 0);
+            m_program_config = new address_space_config("program", ENDIANNESS_LITTLE, 8, 16, 0);
+            m_opcodes_config = new address_space_config("opcodes", ENDIANNESS_LITTLE, 8, 16, 0);
+            m_io_config = new address_space_config("io", ENDIANNESS_LITTLE, 8, 16, 0);
             m_irqack_cb = new devcb_write_line(this);
             m_refresh_cb = new devcb_write8(this);
             m_halt_cb = new devcb_write_line(this);
@@ -428,14 +436,10 @@ namespace mame
 
             if (!tables_initialised)
             {
-                //UINT8 *padd = &SZHVC_add[  0*256];
-                //UINT8 *padc = &SZHVC_add[256*256];
-                //UINT8 *psub = &SZHVC_sub[  0*256];
-                //UINT8 *psbc = &SZHVC_sub[256*256];
-                UInt32 paddIdx =   0*256;
-                UInt32 padcIdx = 256*256;
-                UInt32 psubIdx =   0*256;
-                UInt32 psbcIdx = 256*256;
+                uint32_t paddIdx =   0*256;  //uint8_t *padd = &SZHVC_add[  0*256];
+                uint32_t padcIdx = 256*256;  //uint8_t *padc = &SZHVC_add[256*256];
+                uint32_t psubIdx =   0*256;  //uint8_t *psub = &SZHVC_sub[  0*256];
+                uint32_t psbcIdx = 256*256;  //uint8_t *psbc = &SZHVC_sub[256*256];
                 for (int oldval = 0; oldval < 256; oldval++)
                 {
                     for (int newval = 0; newval < 256; newval++)
@@ -444,8 +448,8 @@ namespace mame
                         int val = newval - oldval;
                         //*padd = (newval) ? ((newval & 0x80) ? SF : 0) : ZF;
                         //*padd |= (newval & (YF | XF));  /* undocumented flag bits 5+3 */
-                        SZHVC_add[paddIdx] = (newval) != 0 ? ((newval & 0x80) != 0 ? SF : (byte)0) : ZF;
-                        SZHVC_add[paddIdx] |= (byte)(newval & (YF | XF));  /* undocumented flag bits 5+3 */
+                        SZHVC_add[paddIdx] = (newval) != 0 ? ((newval & 0x80) != 0 ? SF : (uint8_t)0) : ZF;
+                        SZHVC_add[paddIdx] |= (uint8_t)(newval & (YF | XF));  /* undocumented flag bits 5+3 */
                         if ( (newval & 0x0f) < (oldval & 0x0f) ) SZHVC_add[paddIdx] |= HF;
                         if ( newval < oldval ) SZHVC_add[paddIdx] |= CF;
                         if (( (val^oldval^0x80) & (val^newval) & 0x80 ) != 0) SZHVC_add[paddIdx] |= VF;
@@ -453,8 +457,8 @@ namespace mame
 
                         /* adc with carry set */
                         val = newval - oldval - 1;
-                        SZHVC_add[padcIdx] = (newval) != 0 ? ((newval & 0x80) != 0 ? SF : (byte)0) : ZF;
-                        SZHVC_add[padcIdx] |= (byte)(newval & (YF | XF));  /* undocumented flag bits 5+3 */
+                        SZHVC_add[padcIdx] = (newval) != 0 ? ((newval & 0x80) != 0 ? SF : (uint8_t)0) : ZF;
+                        SZHVC_add[padcIdx] |= (uint8_t)(newval & (YF | XF));  /* undocumented flag bits 5+3 */
                         if ( (newval & 0x0f) <= (oldval & 0x0f) ) SZHVC_add[padcIdx] |= HF;
                         if ( newval <= oldval ) SZHVC_add[padcIdx] |= CF;
                         if (( (val^oldval^0x80) & (val^newval) & 0x80 ) != 0) SZHVC_add[padcIdx] |= VF;
@@ -462,8 +466,8 @@ namespace mame
 
                         /* cp, sub or sbc w/o carry set */
                         val = oldval - newval;
-                        SZHVC_sub[psubIdx] = (byte)(NF | ((newval) != 0 ? ((newval & 0x80) != 0 ? SF : (byte)0) : ZF));
-                        SZHVC_sub[psubIdx] |= (byte)(newval & (YF | XF));  /* undocumented flag bits 5+3 */
+                        SZHVC_sub[psubIdx] = (uint8_t)(NF | ((newval) != 0 ? ((newval & 0x80) != 0 ? SF : (uint8_t)0) : ZF));
+                        SZHVC_sub[psubIdx] |= (uint8_t)(newval & (YF | XF));  /* undocumented flag bits 5+3 */
                         if ( (newval & 0x0f) > (oldval & 0x0f) ) SZHVC_sub[psubIdx] |= HF;
                         if ( newval > oldval ) SZHVC_sub[psubIdx] |= CF;
                         if (( (val^oldval) & (oldval^newval) & 0x80 ) != 0) SZHVC_sub[psubIdx] |= VF;
@@ -471,8 +475,8 @@ namespace mame
 
                         /* sbc with carry set */
                         val = oldval - newval - 1;
-                        SZHVC_sub[psbcIdx] = (byte)(NF | ((newval) != 0 ? ((newval & 0x80) != 0 ? SF : (byte)0) : ZF));
-                        SZHVC_sub[psbcIdx] |= (byte)(newval & (YF | XF));  /* undocumented flag bits 5+3 */
+                        SZHVC_sub[psbcIdx] = (uint8_t)(NF | ((newval) != 0 ? ((newval & 0x80) != 0 ? SF : (uint8_t)0) : ZF));
+                        SZHVC_sub[psbcIdx] |= (uint8_t)(newval & (YF | XF));  /* undocumented flag bits 5+3 */
                         if ( (newval & 0x0f) >= (oldval & 0x0f) ) SZHVC_sub[psbcIdx] |= HF;
                         if ( newval >= oldval ) SZHVC_sub[psbcIdx] |= CF;
                         if (( (val^oldval) & (oldval^newval) & 0x80 ) != 0) SZHVC_sub[psbcIdx] |= VF;
@@ -491,15 +495,15 @@ namespace mame
                     if (( i&0x20 ) != 0) ++p;
                     if (( i&0x40 ) != 0) ++p;
                     if (( i&0x80 ) != 0) ++p;
-                    SZ[i] = i != 0 ? (byte)(i & SF) : ZF;
-                    SZ[i] |= (byte)(i & (YF | XF));       /* undocumented flag bits 5+3 */
-                    SZ_BIT[i] = i != 0 ? (byte)(i & SF) : (byte)(ZF | PF);
-                    SZ_BIT[i] |= (byte)(i & (YF | XF));   /* undocumented flag bits 5+3 */
-                    SZP[i] = (byte)(SZ[i] | ((p & 1) != 0 ? (byte)0 : PF));
+                    SZ[i] = i != 0 ? (uint8_t)(i & SF) : ZF;
+                    SZ[i] |= (uint8_t)(i & (YF | XF));       /* undocumented flag bits 5+3 */
+                    SZ_BIT[i] = i != 0 ? (uint8_t)(i & SF) : (uint8_t)(ZF | PF);
+                    SZ_BIT[i] |= (uint8_t)(i & (YF | XF));   /* undocumented flag bits 5+3 */
+                    SZP[i] = (uint8_t)(SZ[i] | ((p & 1) != 0 ? (uint8_t)0 : PF));
                     SZHV_inc[i] = SZ[i];
                     if( i == 0x80 ) SZHV_inc[i] |= VF;
                     if( (i & 0x0f) == 0x00 ) SZHV_inc[i] |= HF;
-                    SZHV_dec[i] = (byte)(SZ[i] | NF);
+                    SZHV_dec[i] = (uint8_t)(SZ[i] | NF);
                     if( i == 0x7f ) SZHV_dec[i] |= VF;
                     if( (i & 0x0f) == 0x0f ) SZHV_dec[i] |= HF;
                 }
@@ -507,34 +511,34 @@ namespace mame
                 tables_initialised = true;
             }
 
-            save_item(g.NAME(new { m_prvpc.w.l }));
-            save_item(g.NAME(new { PC }));
-            save_item(g.NAME(new { SP }));
-            save_item(g.NAME(new { AF }));
-            save_item(g.NAME(new { BC }));
-            save_item(g.NAME(new { DE }));
-            save_item(g.NAME(new { HL }));
-            save_item(g.NAME(new { IX }));
-            save_item(g.NAME(new { IY }));
-            save_item(g.NAME(new { WZ }));
-            save_item(g.NAME(new { m_af2.w.l }));
-            save_item(g.NAME(new { m_bc2.w.l }));
-            save_item(g.NAME(new { m_de2.w.l }));
-            save_item(g.NAME(new { m_hl2.w.l }));
-            save_item(g.NAME(new { m_r }));
-            save_item(g.NAME(new { m_r2 }));
-            save_item(g.NAME(new { m_iff1 }));
-            save_item(g.NAME(new { m_iff2 }));
-            save_item(g.NAME(new { m_halt }));
-            save_item(g.NAME(new { m_im }));
-            save_item(g.NAME(new { m_i }));
-            save_item(g.NAME(new { m_nmi_state }));
-            save_item(g.NAME(new { m_nmi_pending }));
-            save_item(g.NAME(new { m_irq_state }));
-            save_item(g.NAME(new { m_wait_state }));
-            save_item(g.NAME(new { m_busrq_state }));
-            save_item(g.NAME(new { m_after_ei }));
-            save_item(g.NAME(new { m_after_ldair }));
+            save_item(NAME(new { m_prvpc.w.l }));
+            save_item(NAME(new { PC }));
+            save_item(NAME(new { SP }));
+            save_item(NAME(new { AF }));
+            save_item(NAME(new { BC }));
+            save_item(NAME(new { DE }));
+            save_item(NAME(new { HL }));
+            save_item(NAME(new { IX }));
+            save_item(NAME(new { IY }));
+            save_item(NAME(new { WZ }));
+            save_item(NAME(new { m_af2.w.l }));
+            save_item(NAME(new { m_bc2.w.l }));
+            save_item(NAME(new { m_de2.w.l }));
+            save_item(NAME(new { m_hl2.w.l }));
+            save_item(NAME(new { m_r }));
+            save_item(NAME(new { m_r2 }));
+            save_item(NAME(new { m_iff1 }));
+            save_item(NAME(new { m_iff2 }));
+            save_item(NAME(new { m_halt }));
+            save_item(NAME(new { m_im }));
+            save_item(NAME(new { m_i }));
+            save_item(NAME(new { m_nmi_state }));
+            save_item(NAME(new { m_nmi_pending }));
+            save_item(NAME(new { m_irq_state }));
+            save_item(NAME(new { m_wait_state }));
+            save_item(NAME(new { m_busrq_state }));
+            save_item(NAME(new { m_after_ei }));
+            save_item(NAME(new { m_after_ldair }));
 
             /* Reset registers to their initial values */
             PRVPC = 0;
@@ -567,19 +571,19 @@ namespace mame
             m_after_ldair = false;
             m_ea = 0;
 
-            m_dimemory.space(g.AS_PROGRAM).cache(m_args);
-            m_dimemory.space(m_dimemory.has_space(g.AS_OPCODES) ? g.AS_OPCODES : g.AS_PROGRAM).cache(m_opcodes);
-            m_dimemory.space(g.AS_PROGRAM).specific(m_data);
-            m_dimemory.space(g.AS_IO).specific(m_io);
+            m_dimemory.space(AS_PROGRAM).cache(m_args);
+            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(m_opcodes);
+            m_dimemory.space(AS_PROGRAM).specific(m_data);
+            m_dimemory.space(AS_IO).specific(m_io);
 
             IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
             F = ZF;           /* Zero flag is set */
 
             /* set up the state table */
-            m_distate.state_add(g.STATE_GENPC,     "PC",        m_pc.w.l).callimport();
-            m_distate.state_add(g.STATE_GENPCBASE, "CURPC",     m_prvpc.w.l).callimport().noshow();
+            m_distate.state_add(STATE_GENPC,     "PC",        m_pc.w.l).callimport();
+            m_distate.state_add(STATE_GENPCBASE, "CURPC",     m_prvpc.w.l).callimport().noshow();
             m_distate.state_add(Z80_SP,            "SP",        SP);
-            m_distate.state_add(g.STATE_GENFLAGS,  "GENFLAGS",  F).noshow().formatstr("%8s");
+            m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  F).noshow().formatstr("%8s");
             m_distate.state_add(Z80_A,             "A",         A).noshow();
             m_distate.state_add(Z80_B,             "B",         B).noshow();
             m_distate.state_add(Z80_C,             "C",         C).noshow();
@@ -646,7 +650,7 @@ namespace mame
             m_iff1 = 0;
             m_iff2 = 0;
 
-            WZ = (UInt16)PCD;
+            WZ = (uint16_t)PCD;
         }
 
 
@@ -655,7 +659,7 @@ namespace mame
         //virtual UINT32 execute_max_cycles() const { return 16; }
         //virtual UINT32 execute_input_lines() const { return 4; }
         //virtual uint32_t execute_default_irq_vector(int inputnum) const override { return 0xff; }
-        bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == g.INPUT_LINE_NMI; }
+        bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == INPUT_LINE_NMI; }
 
         static int opcount = 0;  // for debugging purposes
 
@@ -694,7 +698,7 @@ namespace mame
 
 
                 if (opcount % 200000 == 0)
-                    g.osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, opcode, A, B, C, F, HL);
+                    osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, opcode, A, B, C, F, HL);
 
                 //if (opcount >= 0 && opcount < 500)
                 //    global.osd_printf_debug("z80.execute_run() - {0} {1}: op_{2:x2}() - A: {3,3} B: {4,3} C: {5,3} F: {6,3} HL: {7,3}\n", tag(), opcount, r, A, B, C, F, HL);
@@ -716,18 +720,18 @@ namespace mame
                     m_busrq_state = state;
                     break;
 
-                case g.INPUT_LINE_NMI:
+                case INPUT_LINE_NMI:
                     /* mark an NMI pending on the rising edge */
-                    if (m_nmi_state == g.CLEAR_LINE && state != g.CLEAR_LINE)
+                    if (m_nmi_state == CLEAR_LINE && state != CLEAR_LINE)
                         m_nmi_pending = true;
-                    m_nmi_state = (byte)state;
+                    m_nmi_state = (uint8_t)state;
                     break;
 
-                case g.INPUT_LINE_IRQ0:
+                case INPUT_LINE_IRQ0:
                     /* update the IRQ state via the daisy chain */
-                    m_irq_state = (byte)state;
+                    m_irq_state = (uint8_t)state;
                     if (m_daisy.daisy_chain_present())
-                        m_irq_state = (m_daisy.daisy_update_irq_state() == g.ASSERT_LINE) ? (byte)g.ASSERT_LINE : m_irq_state;
+                        m_irq_state = (m_daisy.daisy_update_irq_state() == ASSERT_LINE) ? (uint8_t)ASSERT_LINE : m_irq_state;
 
                     /* the main execute loop will take the interrupt */
                     break;
@@ -745,21 +749,21 @@ namespace mame
         // device_memory_interface overrides
         space_config_vector device_memory_interface_memory_space_config()
         {
-            if (memory().has_configured_map(g.AS_OPCODES))
+            if (memory().has_configured_map(AS_OPCODES))
             {
                 return new space_config_vector()
                 {
-                    std.make_pair(g.AS_PROGRAM, m_program_config),
-                    std.make_pair(g.AS_OPCODES, m_opcodes_config),
-                    std.make_pair(g.AS_IO,      m_io_config)
+                    std.make_pair(AS_PROGRAM, m_program_config),
+                    std.make_pair(AS_OPCODES, m_opcodes_config),
+                    std.make_pair(AS_IO,      m_io_config)
                 };
             }
             else
             {
                 return new space_config_vector()
                 {
-                    std.make_pair(g.AS_PROGRAM, m_program_config),
-                    std.make_pair(g.AS_IO,      m_io_config)
+                    std.make_pair(AS_PROGRAM, m_program_config),
+                    std.make_pair(AS_IO,      m_io_config)
                 };
             }
         }
@@ -771,8 +775,8 @@ namespace mame
             switch (entry.index())
             {
                 case Z80_R:
-                    m_r = (byte)(m_rtemp & 0x7f);
-                    m_r2 = (byte)(m_rtemp & 0x80);
+                    m_r = (uint8_t)(m_rtemp & 0x7f);
+                    m_r2 = (uint8_t)(m_rtemp & 0x80);
                     break;
 
                 default:
@@ -785,7 +789,7 @@ namespace mame
             switch (entry.index())
             {
                 case Z80_R:
-                    m_rtemp = (byte)((m_r & 0x7f) | (m_r2 & 0x80));
+                    m_rtemp = (uint8_t)((m_r & 0x7f) | (m_r2 & 0x80));
                     break;
 
                 default:
@@ -799,8 +803,8 @@ namespace mame
 
             switch (entry.index())
             {
-                case g.STATE_GENFLAGS:
-                    str = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}",  // %c%c%c%c%c%c%c%c
+                case STATE_GENFLAGS:
+                    str = string_format("{0}{1}{2}{3}{4}{5}{6}{7}",  // %c%c%c%c%c%c%c%c
                         (F & 0x80) > 0 ? 'S':'.',
                         (F & 0x40) > 0 ? 'Z':'.',
                         (F & 0x20) > 0 ? 'Y':'.',
@@ -830,7 +834,7 @@ namespace mame
 
 
         //define EXEC(prefix,opcode) do { \
-        public void EXEC_op(byte opcode)
+        public void EXEC_op(uint8_t opcode)
         {
             //byte op = opcode; //unsigned op = opcode; \
 
@@ -905,7 +909,7 @@ namespace mame
             }
         }
 
-        public void EXEC_cb(byte opcode)
+        public void EXEC_cb(uint8_t opcode)
         {
             //byte op = opcode; //unsigned op = opcode; \
 
@@ -980,7 +984,7 @@ namespace mame
             }
         }
 
-        public void EXEC_dd(byte opcode)
+        public void EXEC_dd(uint8_t opcode)
         {
             //byte op = opcode; //unsigned op = opcode; \
 
@@ -1055,7 +1059,7 @@ namespace mame
             }
         }
 
-        public void EXEC_ed(byte opcode)
+        public void EXEC_ed(uint8_t opcode)
         {
             //byte op = opcode; //unsigned op = opcode; \
 
@@ -1130,7 +1134,7 @@ namespace mame
             }
         }
 
-        public void EXEC_fd(byte opcode)
+        public void EXEC_fd(uint8_t opcode)
         {
             //byte op = opcode; //unsigned op = opcode; \
 
@@ -1206,7 +1210,7 @@ namespace mame
         }
 
 
-        public void EXEC_xycb(byte opcode)
+        public void EXEC_xycb(uint8_t opcode)
         {
             //byte op = opcode; //unsigned op = opcode; \
 
@@ -1289,7 +1293,7 @@ namespace mame
          **********************************************************/
         void op_00() {                                                                       } /* NOP              */
         void op_01() { BC = arg16();                                                         } /* LD   BC,w        */
-        void op_02() { wm(BC,A); WZ_L = (byte)((BC + 1) & 0xFF);  WZ_H = A;                          } /* LD (BC),A */
+        void op_02() { wm(BC,A); WZ_L = (uint8_t)((BC + 1) & 0xFF);  WZ_H = A;               } /* LD (BC),A */
         void op_03() { BC++;                                                                 } /* INC  BC          */
         void op_04() { B = inc(B);                                                           } /* INC  B           */
         void op_05() { B = dec(B);                                                           } /* DEC  B           */
@@ -1298,16 +1302,16 @@ namespace mame
 
         void op_08() { ex_af();                                                              } /* EX   AF,AF'      */
         void op_09() { add16(ref m_hl, m_bc);                                                    } /* ADD  HL,BC       */
-        void op_0a() { A = rm(BC);  WZ=(UInt16)(BC+1);                                                 } /* LD   A,(BC)      */
+        void op_0a() { A = rm(BC);  WZ=(uint16_t)(BC+1);                                                 } /* LD   A,(BC)      */
         void op_0b() { BC--;                                                                 } /* DEC  BC          */
         void op_0c() { C = inc(C);                                                           } /* INC  C           */
         void op_0d() { C = dec(C);                                                           } /* DEC  C           */
         void op_0e() { C = arg();                                                            } /* LD   C,n         */
         void op_0f() { rrca();                                                               } /* RRCA             */
 
-        void op_10() { B--; jr_cond(B > 0, 0x10);                                                } /* DJNZ o           */
+        void op_10() { B--; jr_cond(B > 0, 0x10);                                            } /* DJNZ o           */
         void op_11() { DE = arg16();                                                         } /* LD   DE,w        */
-        void op_12() { wm(DE,A); WZ_L = (byte)((DE + 1) & 0xFF);  WZ_H = A;                          } /* LD (DE),A */
+        void op_12() { wm(DE,A); WZ_L = (uint8_t)((DE + 1) & 0xFF);  WZ_H = A;               } /* LD (DE),A */
         void op_13() { DE++;                                                                 } /* INC  DE          */
         void op_14() { D = inc(D);                                                           } /* INC  D           */
         void op_15() { D = dec(D);                                                           } /* DEC  D           */
@@ -1316,7 +1320,7 @@ namespace mame
 
         void op_18() { jr();                                                                 } /* JR   o           */
         void op_19() { add16(ref m_hl, m_de);                                                    } /* ADD  HL,DE       */
-        void op_1a() { A = rm(DE); WZ = (UInt16)(DE + 1);                                              } /* LD   A,(DE)      */
+        void op_1a() { A = rm(DE); WZ = (uint16_t)(DE + 1);                                              } /* LD   A,(DE)      */
         void op_1b() { DE--;                                                                 } /* DEC  DE          */
         void op_1c() { E = inc(E);                                                           } /* INC  E           */
         void op_1d() { E = dec(E);                                                           } /* DEC  E           */
@@ -1325,7 +1329,7 @@ namespace mame
 
         void op_20() { jr_cond((F & ZF) == 0, 0x20);                                             } /* JR   NZ,o        */
         void op_21() { HL = arg16();                                                         } /* LD   HL,w        */
-        void op_22() { m_ea = arg16(); wm16((UInt16)m_ea, m_hl); WZ = (UInt16)(m_ea + 1);                      } /* LD   (w),HL      */
+        void op_22() { m_ea = arg16(); wm16((uint16_t)m_ea, m_hl); WZ = (uint16_t)(m_ea + 1);                      } /* LD   (w),HL      */
         void op_23() { HL++;                                                                 } /* INC  HL          */
         void op_24() { H = inc(H);                                                           } /* INC  H           */
         void op_25() { H = dec(H);                                                           } /* DEC  H           */
@@ -1334,30 +1338,30 @@ namespace mame
 
         void op_28() { jr_cond((F & ZF) > 0, 0x28);                                                } /* JR   Z,o         */
         void op_29() { add16(ref m_hl, m_hl);                                                    } /* ADD  HL,HL       */
-        void op_2a() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_hl); WZ = (UInt16)(m_ea + 1);                        } /* LD   HL,(w)      */
+        void op_2a() { m_ea = arg16(); rm16((uint16_t)m_ea, ref m_hl); WZ = (uint16_t)(m_ea + 1);                        } /* LD   HL,(w)      */
         void op_2b() { HL--;                                                                 } /* DEC  HL          */
         void op_2c() { L = inc(L);                                                           } /* INC  L           */
         void op_2d() { L = dec(L);                                                           } /* DEC  L           */
         void op_2e() { L = arg();                                                            } /* LD   L,n         */
-        void op_2f() { A ^= 0xff; F = (byte)((F & (SF | ZF | PF | CF)) | HF | NF | (A & (YF | XF))); } /* CPL              */
+        void op_2f() { A ^= 0xff; F = (uint8_t)((F & (SF | ZF | PF | CF)) | HF | NF | (A & (YF | XF))); } /* CPL              */
 
         void op_30() { jr_cond((F & CF) == 0, 0x30);                                             } /* JR   NC,o        */
         void op_31() { SP = arg16();                                                         } /* LD   SP,w        */
-        void op_32() { m_ea = arg16(); wm((UInt16)m_ea, A); WZ_L = (byte)((m_ea + 1) & 0xFF); WZ_H = A;      } /* LD   (w),A       */
+        void op_32() { m_ea = arg16(); wm((uint16_t)m_ea, A); WZ_L = (uint8_t)((m_ea + 1) & 0xFF); WZ_H = A;      } /* LD   (w),A       */
         void op_33() { SP++;                                                                 } /* INC  SP          */
         void op_34() { wm(HL, inc(rm(HL)));                                                  } /* INC  (HL)        */
         void op_35() { wm(HL, dec(rm(HL)));                                                  } /* DEC  (HL)        */
         void op_36() { wm(HL, arg());                                                        } /* LD   (HL),n      */
-        void op_37() { F = (byte)((F & (SF | ZF | YF | XF | PF)) | CF | (A & (YF | XF)));            } /* SCF              */
+        void op_37() { F = (uint8_t)((F & (SF | ZF | YF | XF | PF)) | CF | (A & (YF | XF)));            } /* SCF              */
 
         void op_38() { jr_cond((F & CF) > 0, 0x38);                                                } /* JR   C,o         */
         void op_39() { add16(ref m_hl, m_sp);                                                    } /* ADD  HL,SP       */
-        void op_3a() { m_ea = arg16(); A = rm((UInt16)m_ea); WZ = (UInt16)(m_ea + 1);                          } /* LD   A,(w)       */
+        void op_3a() { m_ea = arg16(); A = rm((uint16_t)m_ea); WZ = (uint16_t)(m_ea + 1);                          } /* LD   A,(w)       */
         void op_3b() { SP--;                                                                 } /* DEC  SP          */
         void op_3c() { A = inc(A);                                                           } /* INC  A           */
         void op_3d() { A = dec(A);                                                           } /* DEC  A           */
         void op_3e() { A = arg();                                                            } /* LD   A,n         */
-        void op_3f() { F = (byte)(((F&(SF|ZF|YF|XF|PF|CF))|((F&CF)<<4)|(A&(YF|XF)))^CF);             } /* CCF        */
+        void op_3f() { F = (uint8_t)(((F&(SF|ZF|YF|XF|PF|CF))|((F&CF)<<4)|(A&(YF|XF)))^CF);             } /* CCF        */
 
         void op_40() {                                                                       } /* LD   B,B         */
         void op_41() { B = C;                                                                } /* LD   B,C         */
@@ -1513,7 +1517,7 @@ namespace mame
         void op_c7() { rst(0x00);                                                            } /* RST  0           */
 
         void op_c8() { ret_cond((F & ZF) > 0, 0xc8);                                               } /* RET  Z           */
-        void op_c9() { pop(ref m_pc); WZ = (UInt16)PCD;                                                  } /* RET              */
+        void op_c9() { pop(ref m_pc); WZ = (uint16_t)PCD;                                                  } /* RET              */
         void op_ca() { jp_cond((F & ZF) > 0);                                                      } /* JP   Z,a         */
         void op_cb() { m_r++; EXEC_cb(rop());                                                } /* **** CB xx       */
         void op_cc() { call_cond((F & ZF) > 0, 0xcc);                                              } /* CALL Z,a         */
@@ -1524,7 +1528,7 @@ namespace mame
         void op_d0() { ret_cond((F & CF) == 0, 0xd0);                                            } /* RET  NC          */
         void op_d1() { pop(ref m_de);                                                            } /* POP  DE          */
         void op_d2() { jp_cond((F & CF) == 0);                                                   } /* JP   NC,a        */
-        void op_d3() { UInt32 n = (UInt32)(arg() | (A << 8)); out_((UInt16)n, A); WZ_L = (byte)(((n & 0xff) + 1) & 0xff);  WZ_H = A;   } /* OUT  (n),A       */
+        void op_d3() { unsigned n = (unsigned)(arg() | (A << 8)); out_((uint16_t)n, A); WZ_L = (uint8_t)(((n & 0xff) + 1) & 0xff);  WZ_H = A;   } /* OUT  (n),A       */
         void op_d4() { call_cond((F & CF) == 0, 0xd4);                                           } /* CALL NC,a        */
         void op_d5() { push(m_de);                                                           } /* PUSH DE          */
         void op_d6() { sub(arg());                                                           } /* SUB  n           */
@@ -1533,7 +1537,7 @@ namespace mame
         void op_d8() { ret_cond((F & CF) > 0, 0xd8);                                               } /* RET  C           */
         void op_d9() { exx();                                                                } /* EXX              */
         void op_da() { jp_cond((F & CF) > 0);                                                      } /* JP   C,a         */
-        void op_db() { UInt32 n = (UInt32)(arg() | (A << 8)); A = in_((UInt16)n); WZ = (UInt16)(n + 1);                 } /* IN   A,(n)  */
+        void op_db() { unsigned n = (unsigned)(arg() | (A << 8)); A = in_((uint16_t)n); WZ = (uint16_t)(n + 1);                 } /* IN   A,(n)  */
         void op_dc() { call_cond((F & CF) > 0, 0xdc);                                              } /* CALL C,a         */
         void op_dd() { m_r++; EXEC_dd(rop());                                                } /* **** DD xx       */
         void op_de() { sbc_a(arg());                                                         } /* SBC  A,n         */
@@ -1914,7 +1918,7 @@ namespace mame
 
         void dd_20() { illegal_1(); op_20();                            } /* DB   DD          */
         void dd_21() { IX = arg16();                                    } /* LD   IX,w        */
-        void dd_22() { m_ea = arg16(); wm16((UInt16)m_ea, m_ix); WZ = (UInt16)(m_ea + 1); } /* LD   (w),IX      */
+        void dd_22() { m_ea = arg16(); wm16((uint16_t)m_ea, m_ix); WZ = (uint16_t)(m_ea + 1); } /* LD   (w),IX      */
         void dd_23() { IX++;                                            } /* INC  IX          */
         void dd_24() { HX = inc(HX);                                    } /* INC  HX          */
         void dd_25() { HX = dec(HX);                                    } /* DEC  HX          */
@@ -1923,7 +1927,7 @@ namespace mame
 
         void dd_28() { illegal_1(); op_28();                            } /* DB   DD          */
         void dd_29() { add16(ref m_ix, m_ix);                               } /* ADD  IX,IX       */
-        void dd_2a() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_ix); WZ = (UInt16)(m_ea + 1); } /* LD   IX,(w)      */
+        void dd_2a() { m_ea = arg16(); rm16((uint16_t)m_ea, ref m_ix); WZ = (uint16_t)(m_ea + 1); } /* LD   IX,(w)      */
         void dd_2b() { IX--;                                            } /* DEC  IX          */
         void dd_2c() { LX = inc(LX);                                    } /* INC  LX          */
         void dd_2d() { LX = dec(LX);                                    } /* DEC  LX          */
@@ -1934,9 +1938,9 @@ namespace mame
         void dd_31() { illegal_1(); op_31();                            } /* DB   DD          */
         void dd_32() { illegal_1(); op_32();                            } /* DB   DD          */
         void dd_33() { illegal_1(); op_33();                            } /* DB   DD          */
-        void dd_34() { eax(); wm((UInt16)m_ea, inc(rm((UInt16)m_ea)));                  } /* INC  (IX+o)      */
-        void dd_35() { eax(); wm((UInt16)m_ea, dec(rm((UInt16)m_ea)));                  } /* DEC  (IX+o)      */
-        void dd_36() { eax(); wm((UInt16)m_ea, arg());                          } /* LD   (IX+o),n    */
+        void dd_34() { eax(); wm((uint16_t)m_ea, inc(rm((uint16_t)m_ea)));                  } /* INC  (IX+o)      */
+        void dd_35() { eax(); wm((uint16_t)m_ea, dec(rm((uint16_t)m_ea)));                  } /* DEC  (IX+o)      */
+        void dd_36() { eax(); wm((uint16_t)m_ea, arg());                          } /* LD   (IX+o),n    */
         void dd_37() { illegal_1(); op_37();                            } /* DB   DD          */
 
         void dd_38() { illegal_1(); op_38();                            } /* DB   DD          */
@@ -1954,7 +1958,7 @@ namespace mame
         void dd_43() { illegal_1(); op_43();                            } /* DB   DD          */
         void dd_44() { B = HX;                                          } /* LD   B,HX        */
         void dd_45() { B = LX;                                          } /* LD   B,LX        */
-        void dd_46() { eax(); B = rm((UInt16)m_ea);                             } /* LD   B,(IX+o)    */
+        void dd_46() { eax(); B = rm((uint16_t)m_ea);                             } /* LD   B,(IX+o)    */
         void dd_47() { illegal_1(); op_47();                            } /* DB   DD          */
 
         void dd_48() { illegal_1(); op_48();                            } /* DB   DD          */
@@ -1963,7 +1967,7 @@ namespace mame
         void dd_4b() { illegal_1(); op_4b();                            } /* DB   DD          */
         void dd_4c() { C = HX;                                          } /* LD   C,HX        */
         void dd_4d() { C = LX;                                          } /* LD   C,LX        */
-        void dd_4e() { eax(); C = rm((UInt16)m_ea);                             } /* LD   C,(IX+o)    */
+        void dd_4e() { eax(); C = rm((uint16_t)m_ea);                             } /* LD   C,(IX+o)    */
         void dd_4f() { illegal_1(); op_4f();                            } /* DB   DD          */
 
         void dd_50() { illegal_1(); op_50();                            } /* DB   DD          */
@@ -1972,7 +1976,7 @@ namespace mame
         void dd_53() { illegal_1(); op_53();                            } /* DB   DD          */
         void dd_54() { D = HX;                                          } /* LD   D,HX        */
         void dd_55() { D = LX;                                          } /* LD   D,LX        */
-        void dd_56() { eax(); D = rm((UInt16)m_ea);                             } /* LD   D,(IX+o)    */
+        void dd_56() { eax(); D = rm((uint16_t)m_ea);                             } /* LD   D,(IX+o)    */
         void dd_57() { illegal_1(); op_57();                            } /* DB   DD          */
 
         void dd_58() { illegal_1(); op_58();                            } /* DB   DD          */
@@ -1981,7 +1985,7 @@ namespace mame
         void dd_5b() { illegal_1(); op_5b();                            } /* DB   DD          */
         void dd_5c() { E = HX;                                          } /* LD   E,HX        */
         void dd_5d() { E = LX;                                          } /* LD   E,LX        */
-        void dd_5e() { eax(); E = rm((UInt16)m_ea);                             } /* LD   E,(IX+o)    */
+        void dd_5e() { eax(); E = rm((uint16_t)m_ea);                             } /* LD   E,(IX+o)    */
         void dd_5f() { illegal_1(); op_5f();                            } /* DB   DD          */
 
         void dd_60() { HX = B;                                          } /* LD   HX,B        */
@@ -1990,7 +1994,7 @@ namespace mame
         void dd_63() { HX = E;                                          } /* LD   HX,E        */
         void dd_64() {                                                  } /* LD   HX,HX       */
         void dd_65() { HX = LX;                                         } /* LD   HX,LX       */
-        void dd_66() { eax(); H = rm((UInt16)m_ea);                             } /* LD   H,(IX+o)    */
+        void dd_66() { eax(); H = rm((uint16_t)m_ea);                             } /* LD   H,(IX+o)    */
         void dd_67() { HX = A;                                          } /* LD   HX,A        */
 
         void dd_68() { LX = B;                                          } /* LD   LX,B        */
@@ -1999,17 +2003,17 @@ namespace mame
         void dd_6b() { LX = E;                                          } /* LD   LX,E        */
         void dd_6c() { LX = HX;                                         } /* LD   LX,HX       */
         void dd_6d() {                                                  } /* LD   LX,LX       */
-        void dd_6e() { eax(); L = rm((UInt16)m_ea);                             } /* LD   L,(IX+o)    */
+        void dd_6e() { eax(); L = rm((uint16_t)m_ea);                             } /* LD   L,(IX+o)    */
         void dd_6f() { LX = A;                                          } /* LD   LX,A        */
 
-        void dd_70() { eax(); wm((UInt16)m_ea, B);                              } /* LD   (IX+o),B    */
-        void dd_71() { eax(); wm((UInt16)m_ea, C);                              } /* LD   (IX+o),C    */
-        void dd_72() { eax(); wm((UInt16)m_ea, D);                              } /* LD   (IX+o),D    */
-        void dd_73() { eax(); wm((UInt16)m_ea, E);                              } /* LD   (IX+o),E    */
-        void dd_74() { eax(); wm((UInt16)m_ea, H);                              } /* LD   (IX+o),H    */
-        void dd_75() { eax(); wm((UInt16)m_ea, L);                              } /* LD   (IX+o),L    */
+        void dd_70() { eax(); wm((uint16_t)m_ea, B);                              } /* LD   (IX+o),B    */
+        void dd_71() { eax(); wm((uint16_t)m_ea, C);                              } /* LD   (IX+o),C    */
+        void dd_72() { eax(); wm((uint16_t)m_ea, D);                              } /* LD   (IX+o),D    */
+        void dd_73() { eax(); wm((uint16_t)m_ea, E);                              } /* LD   (IX+o),E    */
+        void dd_74() { eax(); wm((uint16_t)m_ea, H);                              } /* LD   (IX+o),H    */
+        void dd_75() { eax(); wm((uint16_t)m_ea, L);                              } /* LD   (IX+o),L    */
         void dd_76() { illegal_1(); op_76();                            } /* DB   DD          */
-        void dd_77() { eax(); wm((UInt16)m_ea, A);                              } /* LD   (IX+o),A    */
+        void dd_77() { eax(); wm((uint16_t)m_ea, A);                              } /* LD   (IX+o),A    */
 
         void dd_78() { illegal_1(); op_78();                            } /* DB   DD          */
         void dd_79() { illegal_1(); op_79();                            } /* DB   DD          */
@@ -2017,7 +2021,7 @@ namespace mame
         void dd_7b() { illegal_1(); op_7b();                            } /* DB   DD          */
         void dd_7c() { A = HX;                                          } /* LD   A,HX        */
         void dd_7d() { A = LX;                                          } /* LD   A,LX        */
-        void dd_7e() { eax(); A = rm((UInt16)m_ea);                             } /* LD   A,(IX+o)    */
+        void dd_7e() { eax(); A = rm((uint16_t)m_ea);                             } /* LD   A,(IX+o)    */
         void dd_7f() { illegal_1(); op_7f();                            } /* DB   DD          */
 
         void dd_80() { illegal_1(); op_80();                            } /* DB   DD          */
@@ -2026,7 +2030,7 @@ namespace mame
         void dd_83() { illegal_1(); op_83();                            } /* DB   DD          */
         void dd_84() { add_a(HX);                                       } /* ADD  A,HX        */
         void dd_85() { add_a(LX);                                       } /* ADD  A,LX        */
-        void dd_86() { eax(); add_a(rm((UInt16)m_ea));                          } /* ADD  A,(IX+o)    */
+        void dd_86() { eax(); add_a(rm((uint16_t)m_ea));                          } /* ADD  A,(IX+o)    */
         void dd_87() { illegal_1(); op_87();                            } /* DB   DD          */
 
         void dd_88() { illegal_1(); op_88();                            } /* DB   DD          */
@@ -2035,7 +2039,7 @@ namespace mame
         void dd_8b() { illegal_1(); op_8b();                            } /* DB   DD          */
         void dd_8c() { adc_a(HX);                                       } /* ADC  A,HX        */
         void dd_8d() { adc_a(LX);                                       } /* ADC  A,LX        */
-        void dd_8e() { eax(); adc_a(rm((UInt16)m_ea));                          } /* ADC  A,(IX+o)    */
+        void dd_8e() { eax(); adc_a(rm((uint16_t)m_ea));                          } /* ADC  A,(IX+o)    */
         void dd_8f() { illegal_1(); op_8f();                            } /* DB   DD          */
 
         void dd_90() { illegal_1(); op_90();                            } /* DB   DD          */
@@ -2044,7 +2048,7 @@ namespace mame
         void dd_93() { illegal_1(); op_93();                            } /* DB   DD          */
         void dd_94() { sub(HX);                                         } /* SUB  HX          */
         void dd_95() { sub(LX);                                         } /* SUB  LX          */
-        void dd_96() { eax(); sub(rm((UInt16)m_ea));                            } /* SUB  (IX+o)      */
+        void dd_96() { eax(); sub(rm((uint16_t)m_ea));                            } /* SUB  (IX+o)      */
         void dd_97() { illegal_1(); op_97();                            } /* DB   DD          */
 
         void dd_98() { illegal_1(); op_98();                            } /* DB   DD          */
@@ -2053,7 +2057,7 @@ namespace mame
         void dd_9b() { illegal_1(); op_9b();                            } /* DB   DD          */
         void dd_9c() { sbc_a(HX);                                       } /* SBC  A,HX        */
         void dd_9d() { sbc_a(LX);                                       } /* SBC  A,LX        */
-        void dd_9e() { eax(); sbc_a(rm((UInt16)m_ea));                          } /* SBC  A,(IX+o)    */
+        void dd_9e() { eax(); sbc_a(rm((uint16_t)m_ea));                          } /* SBC  A,(IX+o)    */
         void dd_9f() { illegal_1(); op_9f();                            } /* DB   DD          */
 
         void dd_a0() { illegal_1(); op_a0();                            } /* DB   DD          */
@@ -2062,7 +2066,7 @@ namespace mame
         void dd_a3() { illegal_1(); op_a3();                            } /* DB   DD          */
         void dd_a4() { and_a(HX);                                       } /* AND  HX          */
         void dd_a5() { and_a(LX);                                       } /* AND  LX          */
-        void dd_a6() { eax(); and_a(rm((UInt16)m_ea));                          } /* AND  (IX+o)      */
+        void dd_a6() { eax(); and_a(rm((uint16_t)m_ea));                          } /* AND  (IX+o)      */
         void dd_a7() { illegal_1(); op_a7();                            } /* DB   DD          */
 
         void dd_a8() { illegal_1(); op_a8();                            } /* DB   DD          */
@@ -2071,7 +2075,7 @@ namespace mame
         void dd_ab() { illegal_1(); op_ab();                            } /* DB   DD          */
         void dd_ac() { xor_a(HX);                                       } /* XOR  HX          */
         void dd_ad() { xor_a(LX);                                       } /* XOR  LX          */
-        void dd_ae() { eax(); xor_a(rm((UInt16)m_ea));                          } /* XOR  (IX+o)      */
+        void dd_ae() { eax(); xor_a(rm((uint16_t)m_ea));                          } /* XOR  (IX+o)      */
         void dd_af() { illegal_1(); op_af();                            } /* DB   DD          */
 
         void dd_b0() { illegal_1(); op_b0();                            } /* DB   DD          */
@@ -2080,7 +2084,7 @@ namespace mame
         void dd_b3() { illegal_1(); op_b3();                            } /* DB   DD          */
         void dd_b4() { or_a(HX);                                        } /* OR   HX          */
         void dd_b5() { or_a(LX);                                        } /* OR   LX          */
-        void dd_b6() { eax(); or_a(rm((UInt16)m_ea));                           } /* OR   (IX+o)      */
+        void dd_b6() { eax(); or_a(rm((uint16_t)m_ea));                           } /* OR   (IX+o)      */
         void dd_b7() { illegal_1(); op_b7();                            } /* DB   DD          */
 
         void dd_b8() { illegal_1(); op_b8();                            } /* DB   DD          */
@@ -2089,7 +2093,7 @@ namespace mame
         void dd_bb() { illegal_1(); op_bb();                            } /* DB   DD          */
         void dd_bc() { cp(HX);                                          } /* CP   HX          */
         void dd_bd() { cp(LX);                                          } /* CP   LX          */
-        void dd_be() { eax(); cp(rm((UInt16)m_ea));                             } /* CP   (IX+o)      */
+        void dd_be() { eax(); cp(rm((uint16_t)m_ea));                             } /* CP   (IX+o)      */
         void dd_bf() { illegal_1(); op_bf();                            } /* DB   DD          */
 
         void dd_c0() { illegal_1(); op_c0();                            } /* DB   DD          */
@@ -2245,73 +2249,73 @@ namespace mame
         void ed_3e() { illegal_2();                                     } /* DB   ED          */
         void ed_3f() { illegal_2();                                     } /* DB   ED          */
 
-        void ed_40() { B = in_(BC); F = (byte)((F & CF) | SZP[B]);               } /* IN   B,(C)       */
+        void ed_40() { B = in_(BC); F = (uint8_t)((F & CF) | SZP[B]);               } /* IN   B,(C)       */
         void ed_41() { out_(BC, B);                                      } /* OUT  (C),B       */
         void ed_42() { sbc_hl(m_bc);                                    } /* SBC  HL,BC       */
-        void ed_43() { m_ea = arg16(); wm16((UInt16)m_ea, m_bc); WZ = (UInt16)(m_ea + 1); } /* LD   (w),BC      */
+        void ed_43() { m_ea = arg16(); wm16((uint16_t)m_ea, m_bc); WZ = (uint16_t)(m_ea + 1); } /* LD   (w),BC      */
         void ed_44() { neg();                                           } /* NEG              */
         void ed_45() { retn();                                          } /* RETN             */
         void ed_46() { m_im = 0;                                        } /* IM   0           */
         void ed_47() { ld_i_a();                                        } /* LD   i,A         */
 
-        void ed_48() { C = in_(BC); F = (byte)((F & CF) | SZP[C]);               } /* IN   C,(C)       */
+        void ed_48() { C = in_(BC); F = (uint8_t)((F & CF) | SZP[C]);               } /* IN   C,(C)       */
         void ed_49() { out_(BC, C);                                      } /* OUT  (C),C       */
         void ed_4a() { adc_hl(m_bc);                                    } /* ADC  HL,BC       */
-        void ed_4b() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_bc); WZ = (UInt16)(m_ea + 1); } /* LD   BC,(w)      */
+        void ed_4b() { m_ea = arg16(); rm16((uint16_t)m_ea, ref m_bc); WZ = (uint16_t)(m_ea + 1); } /* LD   BC,(w)      */
         void ed_4c() { neg();                                           } /* NEG              */
         void ed_4d() { reti();                                          } /* RETI             */
         void ed_4e() { m_im = 0;                                        } /* IM   0           */
         void ed_4f() { ld_r_a();                                        } /* LD   r,A         */
 
-        void ed_50() { D = in_(BC); F = (byte)((F & CF) | SZP[D]);               } /* IN   D,(C)       */
+        void ed_50() { D = in_(BC); F = (uint8_t)((F & CF) | SZP[D]);               } /* IN   D,(C)       */
         void ed_51() { out_(BC, D);                                      } /* OUT  (C),D       */
         void ed_52() { sbc_hl(m_de);                                    } /* SBC  HL,DE       */
-        void ed_53() { m_ea = arg16(); wm16((UInt16)m_ea, m_de); WZ = (UInt16)(m_ea + 1); } /* LD   (w),DE      */
+        void ed_53() { m_ea = arg16(); wm16((uint16_t)m_ea, m_de); WZ = (uint16_t)(m_ea + 1); } /* LD   (w),DE      */
         void ed_54() { neg();                                           } /* NEG              */
         void ed_55() { retn();                                          } /* RETN             */
         void ed_56() { m_im = 1;                                        } /* IM   1           */
         void ed_57() { ld_a_i();                                        } /* LD   A,i         */
 
-        void ed_58() { E = in_(BC); F = (byte)((F & CF) | SZP[E]);               } /* IN   E,(C)       */
+        void ed_58() { E = in_(BC); F = (uint8_t)((F & CF) | SZP[E]);               } /* IN   E,(C)       */
         void ed_59() { out_(BC, E);                                      } /* OUT  (C),E       */
         void ed_5a() { adc_hl(m_de);                                    } /* ADC  HL,DE       */
-        void ed_5b() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_de); WZ = (UInt16)(m_ea + 1); } /* LD   DE,(w)      */
+        void ed_5b() { m_ea = arg16(); rm16((uint16_t)m_ea, ref m_de); WZ = (uint16_t)(m_ea + 1); } /* LD   DE,(w)      */
         void ed_5c() { neg();                                           } /* NEG              */
         void ed_5d() { reti();                                          } /* RETI             */
         void ed_5e() { m_im = 2;                                        } /* IM   2           */
         void ed_5f() { ld_a_r();                                        } /* LD   A,r         */
 
-        void ed_60() { H = in_(BC); F = (byte)((F & CF) | SZP[H]);               } /* IN   H,(C)       */
+        void ed_60() { H = in_(BC); F = (uint8_t)((F & CF) | SZP[H]);               } /* IN   H,(C)       */
         void ed_61() { out_(BC, H);                                      } /* OUT  (C),H       */
         void ed_62() { sbc_hl(m_hl);                                    } /* SBC  HL,HL       */
-        void ed_63() { m_ea = arg16(); wm16((UInt16)m_ea, m_hl); WZ = (UInt16)(m_ea + 1); } /* LD   (w),HL      */
+        void ed_63() { m_ea = arg16(); wm16((uint16_t)m_ea, m_hl); WZ = (uint16_t)(m_ea + 1); } /* LD   (w),HL      */
         void ed_64() { neg();                                           } /* NEG              */
         void ed_65() { retn();                                          } /* RETN             */
         void ed_66() { m_im = 0;                                        } /* IM   0           */
         void ed_67() { rrd();                                           } /* RRD  (HL)        */
 
-        void ed_68() { L = in_(BC); F = (byte)((F & CF) | SZP[L]);               } /* IN   L,(C)       */
+        void ed_68() { L = in_(BC); F = (uint8_t)((F & CF) | SZP[L]);               } /* IN   L,(C)       */
         void ed_69() { out_(BC, L);                                      } /* OUT  (C),L       */
         void ed_6a() { adc_hl(m_hl);                                    } /* ADC  HL,HL       */
-        void ed_6b() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_hl); WZ = (UInt16)(m_ea + 1); } /* LD   HL,(w)      */
+        void ed_6b() { m_ea = arg16(); rm16((uint16_t)m_ea, ref m_hl); WZ = (uint16_t)(m_ea + 1); } /* LD   HL,(w)      */
         void ed_6c() { neg();                                           } /* NEG              */
         void ed_6d() { reti();                                          } /* RETI             */
         void ed_6e() { m_im = 0;                                        } /* IM   0           */
         void ed_6f() { rld();                                           } /* RLD  (HL)        */
 
-        void ed_70() { byte res = in_(BC); F = (byte)((F & CF) | SZP[res]);     } /* IN   0,(C)       */
+        void ed_70() { uint8_t res = in_(BC); F = (uint8_t)((F & CF) | SZP[res]);     } /* IN   0,(C)       */
         void ed_71() { out_(BC, 0);                                      } /* OUT  (C),0       */
         void ed_72() { sbc_hl(m_sp);                                    } /* SBC  HL,SP       */
-        void ed_73() { m_ea = arg16(); wm16((UInt16)m_ea, m_sp); WZ = (UInt16)(m_ea + 1); } /* LD   (w),SP      */
+        void ed_73() { m_ea = arg16(); wm16((uint16_t)m_ea, m_sp); WZ = (uint16_t)(m_ea + 1); } /* LD   (w),SP      */
         void ed_74() { neg();                                           } /* NEG              */
         void ed_75() { retn();                                          } /* RETN             */
         void ed_76() { m_im = 1;                                        } /* IM   1           */
         void ed_77() { illegal_2();                                     } /* DB   ED,77       */
 
-        void ed_78() { A = in_(BC); F = (byte)((F & CF) | SZP[A]); WZ = (UInt16)(BC + 1);  } /* IN   A,(C)       */
-        void ed_79() { out_(BC, A);  WZ = (UInt16)(BC + 1);                        } /* OUT  (C),A       */
+        void ed_78() { A = in_(BC); F = (uint8_t)((F & CF) | SZP[A]); WZ = (uint16_t)(BC + 1);  } /* IN   A,(C)       */
+        void ed_79() { out_(BC, A);  WZ = (uint16_t)(BC + 1);                        } /* OUT  (C),A       */
         void ed_7a() { adc_hl(m_sp);                                    } /* ADC  HL,SP       */
-        void ed_7b() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_sp); WZ = (UInt16)(m_ea + 1); } /* LD   SP,(w)      */
+        void ed_7b() { m_ea = arg16(); rm16((uint16_t)m_ea, ref m_sp); WZ = (uint16_t)(m_ea + 1); } /* LD   SP,(w)      */
         void ed_7c() { neg();                                           } /* NEG              */
         void ed_7d() { reti();                                          } /* RETI             */
         void ed_7e() { m_im = 2;                                        } /* IM   2           */
@@ -2504,7 +2508,7 @@ namespace mame
 
         void fd_20() { illegal_1(); op_20();                            } /* DB   FD          */
         void fd_21() { IY = arg16();                                    } /* LD   IY,w        */
-        void fd_22() { m_ea = arg16(); wm16((UInt16)m_ea, m_iy); WZ = (UInt16)(m_ea + 1); } /* LD   (w),IY      */
+        void fd_22() { m_ea = arg16(); wm16((uint16_t)m_ea, m_iy); WZ = (uint16_t)(m_ea + 1); } /* LD   (w),IY      */
         void fd_23() { IY++;                                            } /* INC  IY          */
         void fd_24() { HY = inc(HY);                                    } /* INC  HY          */
         void fd_25() { HY = dec(HY);                                    } /* DEC  HY          */
@@ -2513,7 +2517,7 @@ namespace mame
 
         void fd_28() { illegal_1(); op_28();                            } /* DB   FD          */
         void fd_29() { add16(ref m_iy, m_iy);                               } /* ADD  IY,IY       */
-        void fd_2a() { m_ea = arg16(); rm16((UInt16)m_ea, ref m_iy); WZ = (UInt16)(m_ea + 1); } /* LD   IY,(w)      */
+        void fd_2a() { m_ea = arg16(); rm16((uint16_t)m_ea, ref m_iy); WZ = (uint16_t)(m_ea + 1); } /* LD   IY,(w)      */
         void fd_2b() { IY--;                                            } /* DEC  IY          */
         void fd_2c() { LY = inc(LY);                                    } /* INC  LY          */
         void fd_2d() { LY = dec(LY);                                    } /* DEC  LY          */
@@ -2524,9 +2528,9 @@ namespace mame
         void fd_31() { illegal_1(); op_31();                            } /* DB   FD          */
         void fd_32() { illegal_1(); op_32();                            } /* DB   FD          */
         void fd_33() { illegal_1(); op_33();                            } /* DB   FD          */
-        void fd_34() { eay(); wm((UInt16)m_ea, inc(rm((UInt16)m_ea)));                  } /* INC  (IY+o)      */
-        void fd_35() { eay(); wm((UInt16)m_ea, dec(rm((UInt16)m_ea)));                  } /* DEC  (IY+o)      */
-        void fd_36() { eay(); wm((UInt16)m_ea, arg());                          } /* LD   (IY+o),n    */
+        void fd_34() { eay(); wm((uint16_t)m_ea, inc(rm((uint16_t)m_ea)));                  } /* INC  (IY+o)      */
+        void fd_35() { eay(); wm((uint16_t)m_ea, dec(rm((uint16_t)m_ea)));                  } /* DEC  (IY+o)      */
+        void fd_36() { eay(); wm((uint16_t)m_ea, arg());                          } /* LD   (IY+o),n    */
         void fd_37() { illegal_1(); op_37();                            } /* DB   FD          */
 
         void fd_38() { illegal_1(); op_38();                            } /* DB   FD          */
@@ -2544,7 +2548,7 @@ namespace mame
         void fd_43() { illegal_1(); op_43();                            } /* DB   FD          */
         void fd_44() { B = HY;                                          } /* LD   B,HY        */
         void fd_45() { B = LY;                                          } /* LD   B,LY        */
-        void fd_46() { eay(); B = rm((UInt16)m_ea);                             } /* LD   B,(IY+o)    */
+        void fd_46() { eay(); B = rm((uint16_t)m_ea);                             } /* LD   B,(IY+o)    */
         void fd_47() { illegal_1(); op_47();                            } /* DB   FD          */
 
         void fd_48() { illegal_1(); op_48();                            } /* DB   FD          */
@@ -2553,7 +2557,7 @@ namespace mame
         void fd_4b() { illegal_1(); op_4b();                            } /* DB   FD          */
         void fd_4c() { C = HY;                                          } /* LD   C,HY        */
         void fd_4d() { C = LY;                                          } /* LD   C,LY        */
-        void fd_4e() { eay(); C = rm((UInt16)m_ea);                             } /* LD   C,(IY+o)    */
+        void fd_4e() { eay(); C = rm((uint16_t)m_ea);                             } /* LD   C,(IY+o)    */
         void fd_4f() { illegal_1(); op_4f();                            } /* DB   FD          */
 
         void fd_50() { illegal_1(); op_50();                            } /* DB   FD          */
@@ -2562,7 +2566,7 @@ namespace mame
         void fd_53() { illegal_1(); op_53();                            } /* DB   FD          */
         void fd_54() { D = HY;                                          } /* LD   D,HY        */
         void fd_55() { D = LY;                                          } /* LD   D,LY        */
-        void fd_56() { eay(); D = rm((UInt16)m_ea);                             } /* LD   D,(IY+o)    */
+        void fd_56() { eay(); D = rm((uint16_t)m_ea);                             } /* LD   D,(IY+o)    */
         void fd_57() { illegal_1(); op_57();                            } /* DB   FD          */
 
         void fd_58() { illegal_1(); op_58();                            } /* DB   FD          */
@@ -2571,7 +2575,7 @@ namespace mame
         void fd_5b() { illegal_1(); op_5b();                            } /* DB   FD          */
         void fd_5c() { E = HY;                                          } /* LD   E,HY        */
         void fd_5d() { E = LY;                                          } /* LD   E,LY        */
-        void fd_5e() { eay(); E = rm((UInt16)m_ea);                             } /* LD   E,(IY+o)    */
+        void fd_5e() { eay(); E = rm((uint16_t)m_ea);                             } /* LD   E,(IY+o)    */
         void fd_5f() { illegal_1(); op_5f();                            } /* DB   FD          */
 
         void fd_60() { HY = B;                                          } /* LD   HY,B        */
@@ -2580,7 +2584,7 @@ namespace mame
         void fd_63() { HY = E;                                          } /* LD   HY,E        */
         void fd_64() {                                                  } /* LD   HY,HY       */
         void fd_65() { HY = LY;                                         } /* LD   HY,LY       */
-        void fd_66() { eay(); H = rm((UInt16)m_ea);                             } /* LD   H,(IY+o)    */
+        void fd_66() { eay(); H = rm((uint16_t)m_ea);                             } /* LD   H,(IY+o)    */
         void fd_67() { HY = A;                                          } /* LD   HY,A        */
 
         void fd_68() { LY = B;                                          } /* LD   LY,B        */
@@ -2589,17 +2593,17 @@ namespace mame
         void fd_6b() { LY = E;                                          } /* LD   LY,E        */
         void fd_6c() { LY = HY;                                         } /* LD   LY,HY       */
         void fd_6d() {                                                  } /* LD   LY,LY       */
-        void fd_6e() { eay(); L = rm((UInt16)m_ea);                             } /* LD   L,(IY+o)    */
+        void fd_6e() { eay(); L = rm((uint16_t)m_ea);                             } /* LD   L,(IY+o)    */
         void fd_6f() { LY = A;                                          } /* LD   LY,A        */
 
-        void fd_70() { eay(); wm((UInt16)m_ea, B);                              } /* LD   (IY+o),B    */
-        void fd_71() { eay(); wm((UInt16)m_ea, C);                              } /* LD   (IY+o),C    */
-        void fd_72() { eay(); wm((UInt16)m_ea, D);                              } /* LD   (IY+o),D    */
-        void fd_73() { eay(); wm((UInt16)m_ea, E);                              } /* LD   (IY+o),E    */
-        void fd_74() { eay(); wm((UInt16)m_ea, H);                              } /* LD   (IY+o),H    */
-        void fd_75() { eay(); wm((UInt16)m_ea, L);                              } /* LD   (IY+o),L    */
+        void fd_70() { eay(); wm((uint16_t)m_ea, B);                              } /* LD   (IY+o),B    */
+        void fd_71() { eay(); wm((uint16_t)m_ea, C);                              } /* LD   (IY+o),C    */
+        void fd_72() { eay(); wm((uint16_t)m_ea, D);                              } /* LD   (IY+o),D    */
+        void fd_73() { eay(); wm((uint16_t)m_ea, E);                              } /* LD   (IY+o),E    */
+        void fd_74() { eay(); wm((uint16_t)m_ea, H);                              } /* LD   (IY+o),H    */
+        void fd_75() { eay(); wm((uint16_t)m_ea, L);                              } /* LD   (IY+o),L    */
         void fd_76() { illegal_1(); op_76();                            } /* DB   FD          */
-        void fd_77() { eay(); wm((UInt16)m_ea, A);                              } /* LD   (IY+o),A    */
+        void fd_77() { eay(); wm((uint16_t)m_ea, A);                              } /* LD   (IY+o),A    */
 
         void fd_78() { illegal_1(); op_78();                            } /* DB   FD          */
         void fd_79() { illegal_1(); op_79();                            } /* DB   FD          */
@@ -2607,7 +2611,7 @@ namespace mame
         void fd_7b() { illegal_1(); op_7b();                            } /* DB   FD          */
         void fd_7c() { A = HY;                                          } /* LD   A,HY        */
         void fd_7d() { A = LY;                                          } /* LD   A,LY        */
-        void fd_7e() { eay(); A = rm((UInt16)m_ea);                             } /* LD   A,(IY+o)    */
+        void fd_7e() { eay(); A = rm((uint16_t)m_ea);                             } /* LD   A,(IY+o)    */
         void fd_7f() { illegal_1(); op_7f();                            } /* DB   FD          */
 
         void fd_80() { illegal_1(); op_80();                            } /* DB   FD          */
@@ -2616,7 +2620,7 @@ namespace mame
         void fd_83() { illegal_1(); op_83();                            } /* DB   FD          */
         void fd_84() { add_a(HY);                                       } /* ADD  A,HY        */
         void fd_85() { add_a(LY);                                       } /* ADD  A,LY        */
-        void fd_86() { eay(); add_a(rm((UInt16)m_ea));                          } /* ADD  A,(IY+o)    */
+        void fd_86() { eay(); add_a(rm((uint16_t)m_ea));                          } /* ADD  A,(IY+o)    */
         void fd_87() { illegal_1(); op_87();                            } /* DB   FD          */
 
         void fd_88() { illegal_1(); op_88();                            } /* DB   FD          */
@@ -2625,7 +2629,7 @@ namespace mame
         void fd_8b() { illegal_1(); op_8b();                            } /* DB   FD          */
         void fd_8c() { adc_a(HY);                                       } /* ADC  A,HY        */
         void fd_8d() { adc_a(LY);                                       } /* ADC  A,LY        */
-        void fd_8e() { eay(); adc_a(rm((UInt16)m_ea));                          } /* ADC  A,(IY+o)    */
+        void fd_8e() { eay(); adc_a(rm((uint16_t)m_ea));                          } /* ADC  A,(IY+o)    */
         void fd_8f() { illegal_1(); op_8f();                            } /* DB   FD          */
 
         void fd_90() { illegal_1(); op_90();                            } /* DB   FD          */
@@ -2634,7 +2638,7 @@ namespace mame
         void fd_93() { illegal_1(); op_93();                            } /* DB   FD          */
         void fd_94() { sub(HY);                                         } /* SUB  HY          */
         void fd_95() { sub(LY);                                         } /* SUB  LY          */
-        void fd_96() { eay(); sub(rm((UInt16)m_ea));                            } /* SUB  (IY+o)      */
+        void fd_96() { eay(); sub(rm((uint16_t)m_ea));                            } /* SUB  (IY+o)      */
         void fd_97() { illegal_1(); op_97();                            } /* DB   FD          */
 
         void fd_98() { illegal_1(); op_98();                            } /* DB   FD          */
@@ -2643,7 +2647,7 @@ namespace mame
         void fd_9b() { illegal_1(); op_9b();                            } /* DB   FD          */
         void fd_9c() { sbc_a(HY);                                       } /* SBC  A,HY        */
         void fd_9d() { sbc_a(LY);                                       } /* SBC  A,LY        */
-        void fd_9e() { eay(); sbc_a(rm((UInt16)m_ea));                          } /* SBC  A,(IY+o)    */
+        void fd_9e() { eay(); sbc_a(rm((uint16_t)m_ea));                          } /* SBC  A,(IY+o)    */
         void fd_9f() { illegal_1(); op_9f();                            } /* DB   FD          */
 
         void fd_a0() { illegal_1(); op_a0();                            } /* DB   FD          */
@@ -2652,7 +2656,7 @@ namespace mame
         void fd_a3() { illegal_1(); op_a3();                            } /* DB   FD          */
         void fd_a4() { and_a(HY);                                       } /* AND  HY          */
         void fd_a5() { and_a(LY);                                       } /* AND  LY          */
-        void fd_a6() { eay(); and_a(rm((UInt16)m_ea));                          } /* AND  (IY+o)      */
+        void fd_a6() { eay(); and_a(rm((uint16_t)m_ea));                          } /* AND  (IY+o)      */
         void fd_a7() { illegal_1(); op_a7();                            } /* DB   FD          */
 
         void fd_a8() { illegal_1(); op_a8();                            } /* DB   FD          */
@@ -2661,7 +2665,7 @@ namespace mame
         void fd_ab() { illegal_1(); op_ab();                            } /* DB   FD          */
         void fd_ac() { xor_a(HY);                                       } /* XOR  HY          */
         void fd_ad() { xor_a(LY);                                       } /* XOR  LY          */
-        void fd_ae() { eay(); xor_a(rm((UInt16)m_ea));                          } /* XOR  (IY+o)      */
+        void fd_ae() { eay(); xor_a(rm((uint16_t)m_ea));                          } /* XOR  (IY+o)      */
         void fd_af() { illegal_1(); op_af();                            } /* DB   FD          */
 
         void fd_b0() { illegal_1(); op_b0();                            } /* DB   FD          */
@@ -2670,7 +2674,7 @@ namespace mame
         void fd_b3() { illegal_1(); op_b3();                            } /* DB   FD          */
         void fd_b4() { or_a(HY);                                        } /* OR   HY          */
         void fd_b5() { or_a(LY);                                        } /* OR   LY          */
-        void fd_b6() { eay(); or_a(rm((UInt16)m_ea));                           } /* OR   (IY+o)      */
+        void fd_b6() { eay(); or_a(rm((uint16_t)m_ea));                           } /* OR   (IY+o)      */
         void fd_b7() { illegal_1(); op_b7();                            } /* DB   FD          */
 
         void fd_b8() { illegal_1(); op_b8();                            } /* DB   FD          */
@@ -2679,7 +2683,7 @@ namespace mame
         void fd_bb() { illegal_1(); op_bb();                            } /* DB   FD          */
         void fd_bc() { cp(HY);                                          } /* CP   HY          */
         void fd_bd() { cp(LY);                                          } /* CP   LY          */
-        void fd_be() { eay(); cp(rm((UInt16)m_ea));                             } /* CP   (IY+o)      */
+        void fd_be() { eay(); cp(rm((uint16_t)m_ea));                             } /* CP   (IY+o)      */
         void fd_bf() { illegal_1(); op_bf();                            } /* DB   FD          */
 
         void fd_c0() { illegal_1(); op_c0();                            } /* DB   FD          */
@@ -2760,77 +2764,77 @@ namespace mame
         * opcodes with DD/FD CB prefix
         * rotate, shift and bit operations with (IX+o)
         **********************************************************/
-        void xycb_00() { B = rlc(rm((UInt16)m_ea)); wm((UInt16)m_ea, B);    } /* RLC  B=(XY+o)    */
-        void xycb_01() { C = rlc(rm((UInt16)m_ea)); wm((UInt16)m_ea, C);    } /* RLC  C=(XY+o)    */
-        void xycb_02() { D = rlc(rm((UInt16)m_ea)); wm((UInt16)m_ea, D);    } /* RLC  D=(XY+o)    */
-        void xycb_03() { E = rlc(rm((UInt16)m_ea)); wm((UInt16)m_ea, E);    } /* RLC  E=(XY+o)    */
-        void xycb_04() { H = rlc(rm((UInt16)m_ea)); wm((UInt16)m_ea, H);    } /* RLC  H=(XY+o)    */
-        void xycb_05() { L = rlc(rm((UInt16)m_ea)); wm((UInt16)m_ea, L);    } /* RLC  L=(XY+o)    */
-        void xycb_06() { wm((UInt16)m_ea, rlc(rm((UInt16)m_ea)));           } /* RLC  (XY+o)      */
-        void xycb_07() { A = rlc(rm((UInt16)m_ea)); wm((UInt16)m_ea, A);    } /* RLC  A=(XY+o)    */
+        void xycb_00() { B = rlc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B);    } /* RLC  B=(XY+o)    */
+        void xycb_01() { C = rlc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C);    } /* RLC  C=(XY+o)    */
+        void xycb_02() { D = rlc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D);    } /* RLC  D=(XY+o)    */
+        void xycb_03() { E = rlc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E);    } /* RLC  E=(XY+o)    */
+        void xycb_04() { H = rlc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H);    } /* RLC  H=(XY+o)    */
+        void xycb_05() { L = rlc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L);    } /* RLC  L=(XY+o)    */
+        void xycb_06() { wm((uint16_t)m_ea, rlc(rm((uint16_t)m_ea)));           } /* RLC  (XY+o)      */
+        void xycb_07() { A = rlc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A);    } /* RLC  A=(XY+o)    */
 
-        void xycb_08() { B = rrc(rm((UInt16)m_ea)); wm((UInt16)m_ea, B);    } /* RRC  B=(XY+o)    */
-        void xycb_09() { C = rrc(rm((UInt16)m_ea)); wm((UInt16)m_ea, C);    } /* RRC  C=(XY+o)    */
-        void xycb_0a() { D = rrc(rm((UInt16)m_ea)); wm((UInt16)m_ea, D);    } /* RRC  D=(XY+o)    */
-        void xycb_0b() { E = rrc(rm((UInt16)m_ea)); wm((UInt16)m_ea, E);    } /* RRC  E=(XY+o)    */
-        void xycb_0c() { H = rrc(rm((UInt16)m_ea)); wm((UInt16)m_ea, H);    } /* RRC  H=(XY+o)    */
-        void xycb_0d() { L = rrc(rm((UInt16)m_ea)); wm((UInt16)m_ea, L);    } /* RRC  L=(XY+o)    */
-        void xycb_0e() { wm((UInt16)m_ea,rrc(rm((UInt16)m_ea)));            } /* RRC  (XY+o)      */
-        void xycb_0f() { A = rrc(rm((UInt16)m_ea)); wm((UInt16)m_ea, A);    } /* RRC  A=(XY+o)    */
+        void xycb_08() { B = rrc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B);    } /* RRC  B=(XY+o)    */
+        void xycb_09() { C = rrc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C);    } /* RRC  C=(XY+o)    */
+        void xycb_0a() { D = rrc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D);    } /* RRC  D=(XY+o)    */
+        void xycb_0b() { E = rrc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E);    } /* RRC  E=(XY+o)    */
+        void xycb_0c() { H = rrc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H);    } /* RRC  H=(XY+o)    */
+        void xycb_0d() { L = rrc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L);    } /* RRC  L=(XY+o)    */
+        void xycb_0e() { wm((uint16_t)m_ea,rrc(rm((uint16_t)m_ea)));            } /* RRC  (XY+o)      */
+        void xycb_0f() { A = rrc(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A);    } /* RRC  A=(XY+o)    */
 
-        void xycb_10() { B = rl(rm((UInt16)m_ea)); wm((UInt16)m_ea, B);     } /* RL   B=(XY+o)    */
-        void xycb_11() { C = rl(rm((UInt16)m_ea)); wm((UInt16)m_ea, C);     } /* RL   C=(XY+o)    */
-        void xycb_12() { D = rl(rm((UInt16)m_ea)); wm((UInt16)m_ea, D);     } /* RL   D=(XY+o)    */
-        void xycb_13() { E = rl(rm((UInt16)m_ea)); wm((UInt16)m_ea, E);     } /* RL   E=(XY+o)    */
-        void xycb_14() { H = rl(rm((UInt16)m_ea)); wm((UInt16)m_ea, H);     } /* RL   H=(XY+o)    */
-        void xycb_15() { L = rl(rm((UInt16)m_ea)); wm((UInt16)m_ea, L);     } /* RL   L=(XY+o)    */
-        void xycb_16() { wm((UInt16)m_ea,rl(rm((UInt16)m_ea)));             } /* RL   (XY+o)      */
-        void xycb_17() { A = rl(rm((UInt16)m_ea)); wm((UInt16)m_ea, A);     } /* RL   A=(XY+o)    */
+        void xycb_10() { B = rl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B);     } /* RL   B=(XY+o)    */
+        void xycb_11() { C = rl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C);     } /* RL   C=(XY+o)    */
+        void xycb_12() { D = rl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D);     } /* RL   D=(XY+o)    */
+        void xycb_13() { E = rl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E);     } /* RL   E=(XY+o)    */
+        void xycb_14() { H = rl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H);     } /* RL   H=(XY+o)    */
+        void xycb_15() { L = rl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L);     } /* RL   L=(XY+o)    */
+        void xycb_16() { wm((uint16_t)m_ea,rl(rm((uint16_t)m_ea)));             } /* RL   (XY+o)      */
+        void xycb_17() { A = rl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A);     } /* RL   A=(XY+o)    */
 
-        void xycb_18() { B = rr(rm((UInt16)m_ea)); wm((UInt16)m_ea, B);     } /* RR   B=(XY+o)    */
-        void xycb_19() { C = rr(rm((UInt16)m_ea)); wm((UInt16)m_ea, C);     } /* RR   C=(XY+o)    */
-        void xycb_1a() { D = rr(rm((UInt16)m_ea)); wm((UInt16)m_ea, D);     } /* RR   D=(XY+o)    */
-        void xycb_1b() { E = rr(rm((UInt16)m_ea)); wm((UInt16)m_ea, E);     } /* RR   E=(XY+o)    */
-        void xycb_1c() { H = rr(rm((UInt16)m_ea)); wm((UInt16)m_ea, H);     } /* RR   H=(XY+o)    */
-        void xycb_1d() { L = rr(rm((UInt16)m_ea)); wm((UInt16)m_ea, L);     } /* RR   L=(XY+o)    */
-        void xycb_1e() { wm((UInt16)m_ea, rr(rm((UInt16)m_ea)));            } /* RR   (XY+o)      */
-        void xycb_1f() { A = rr(rm((UInt16)m_ea)); wm((UInt16)m_ea, A);     } /* RR   A=(XY+o)    */
+        void xycb_18() { B = rr(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B);     } /* RR   B=(XY+o)    */
+        void xycb_19() { C = rr(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C);     } /* RR   C=(XY+o)    */
+        void xycb_1a() { D = rr(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D);     } /* RR   D=(XY+o)    */
+        void xycb_1b() { E = rr(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E);     } /* RR   E=(XY+o)    */
+        void xycb_1c() { H = rr(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H);     } /* RR   H=(XY+o)    */
+        void xycb_1d() { L = rr(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L);     } /* RR   L=(XY+o)    */
+        void xycb_1e() { wm((uint16_t)m_ea, rr(rm((uint16_t)m_ea)));            } /* RR   (XY+o)      */
+        void xycb_1f() { A = rr(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A);     } /* RR   A=(XY+o)    */
 
-        void xycb_20() { B = sla(rm((UInt16)m_ea)); wm((UInt16)m_ea, B);    } /* SLA  B=(XY+o)    */
-        void xycb_21() { C = sla(rm((UInt16)m_ea)); wm((UInt16)m_ea, C);    } /* SLA  C=(XY+o)    */
-        void xycb_22() { D = sla(rm((UInt16)m_ea)); wm((UInt16)m_ea, D);    } /* SLA  D=(XY+o)    */
-        void xycb_23() { E = sla(rm((UInt16)m_ea)); wm((UInt16)m_ea, E);    } /* SLA  E=(XY+o)    */
-        void xycb_24() { H = sla(rm((UInt16)m_ea)); wm((UInt16)m_ea, H);    } /* SLA  H=(XY+o)    */
-        void xycb_25() { L = sla(rm((UInt16)m_ea)); wm((UInt16)m_ea, L);    } /* SLA  L=(XY+o)    */
-        void xycb_26() { wm((UInt16)m_ea, sla(rm((UInt16)m_ea)));           } /* SLA  (XY+o)      */
-        void xycb_27() { A = sla(rm((UInt16)m_ea)); wm((UInt16)m_ea, A);    } /* SLA  A=(XY+o)    */
+        void xycb_20() { B = sla(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B);    } /* SLA  B=(XY+o)    */
+        void xycb_21() { C = sla(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C);    } /* SLA  C=(XY+o)    */
+        void xycb_22() { D = sla(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D);    } /* SLA  D=(XY+o)    */
+        void xycb_23() { E = sla(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E);    } /* SLA  E=(XY+o)    */
+        void xycb_24() { H = sla(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H);    } /* SLA  H=(XY+o)    */
+        void xycb_25() { L = sla(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L);    } /* SLA  L=(XY+o)    */
+        void xycb_26() { wm((uint16_t)m_ea, sla(rm((uint16_t)m_ea)));           } /* SLA  (XY+o)      */
+        void xycb_27() { A = sla(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A);    } /* SLA  A=(XY+o)    */
 
-        void xycb_28() { B = sra(rm((UInt16)m_ea)); wm((UInt16)m_ea, B);    } /* SRA  B=(XY+o)    */
-        void xycb_29() { C = sra(rm((UInt16)m_ea)); wm((UInt16)m_ea, C);    } /* SRA  C=(XY+o)    */
-        void xycb_2a() { D = sra(rm((UInt16)m_ea)); wm((UInt16)m_ea, D);    } /* SRA  D=(XY+o)    */
-        void xycb_2b() { E = sra(rm((UInt16)m_ea)); wm((UInt16)m_ea, E);    } /* SRA  E=(XY+o)    */
-        void xycb_2c() { H = sra(rm((UInt16)m_ea)); wm((UInt16)m_ea, H);    } /* SRA  H=(XY+o)    */
-        void xycb_2d() { L = sra(rm((UInt16)m_ea)); wm((UInt16)m_ea, L);    } /* SRA  L=(XY+o)    */
-        void xycb_2e() { wm((UInt16)m_ea, sra(rm((UInt16)m_ea)));           } /* SRA  (XY+o)      */
-        void xycb_2f() { A = sra(rm((UInt16)m_ea)); wm((UInt16)m_ea, A);    } /* SRA  A=(XY+o)    */
+        void xycb_28() { B = sra(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B);    } /* SRA  B=(XY+o)    */
+        void xycb_29() { C = sra(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C);    } /* SRA  C=(XY+o)    */
+        void xycb_2a() { D = sra(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D);    } /* SRA  D=(XY+o)    */
+        void xycb_2b() { E = sra(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E);    } /* SRA  E=(XY+o)    */
+        void xycb_2c() { H = sra(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H);    } /* SRA  H=(XY+o)    */
+        void xycb_2d() { L = sra(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L);    } /* SRA  L=(XY+o)    */
+        void xycb_2e() { wm((uint16_t)m_ea, sra(rm((uint16_t)m_ea)));           } /* SRA  (XY+o)      */
+        void xycb_2f() { A = sra(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A);    } /* SRA  A=(XY+o)    */
 
-        void xycb_30() { B = sll(rm((UInt16)m_ea)); wm((UInt16)m_ea, B);    } /* SLL  B=(XY+o)    */
-        void xycb_31() { C = sll(rm((UInt16)m_ea)); wm((UInt16)m_ea, C);    } /* SLL  C=(XY+o)    */
-        void xycb_32() { D = sll(rm((UInt16)m_ea)); wm((UInt16)m_ea, D);    } /* SLL  D=(XY+o)    */
-        void xycb_33() { E = sll(rm((UInt16)m_ea)); wm((UInt16)m_ea, E);    } /* SLL  E=(XY+o)    */
-        void xycb_34() { H = sll(rm((UInt16)m_ea)); wm((UInt16)m_ea, H);    } /* SLL  H=(XY+o)    */
-        void xycb_35() { L = sll(rm((UInt16)m_ea)); wm((UInt16)m_ea, L);    } /* SLL  L=(XY+o)    */
-        void xycb_36() { wm((UInt16)m_ea, sll(rm((UInt16)m_ea)));           } /* SLL  (XY+o)      */
-        void xycb_37() { A = sll(rm((UInt16)m_ea)); wm((UInt16)m_ea, A);    } /* SLL  A=(XY+o)    */
+        void xycb_30() { B = sll(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B);    } /* SLL  B=(XY+o)    */
+        void xycb_31() { C = sll(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C);    } /* SLL  C=(XY+o)    */
+        void xycb_32() { D = sll(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D);    } /* SLL  D=(XY+o)    */
+        void xycb_33() { E = sll(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E);    } /* SLL  E=(XY+o)    */
+        void xycb_34() { H = sll(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H);    } /* SLL  H=(XY+o)    */
+        void xycb_35() { L = sll(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L);    } /* SLL  L=(XY+o)    */
+        void xycb_36() { wm((uint16_t)m_ea, sll(rm((uint16_t)m_ea)));           } /* SLL  (XY+o)      */
+        void xycb_37() { A = sll(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A);    } /* SLL  A=(XY+o)    */
 
-        void xycb_38() { B = srl(rm((UInt16)m_ea)); wm((UInt16)m_ea, B);    } /* SRL  B=(XY+o)    */
-        void xycb_39() { C = srl(rm((UInt16)m_ea)); wm((UInt16)m_ea, C);    } /* SRL  C=(XY+o)    */
-        void xycb_3a() { D = srl(rm((UInt16)m_ea)); wm((UInt16)m_ea, D);    } /* SRL  D=(XY+o)    */
-        void xycb_3b() { E = srl(rm((UInt16)m_ea)); wm((UInt16)m_ea, E);    } /* SRL  E=(XY+o)    */
-        void xycb_3c() { H = srl(rm((UInt16)m_ea)); wm((UInt16)m_ea, H);    } /* SRL  H=(XY+o)    */
-        void xycb_3d() { L = srl(rm((UInt16)m_ea)); wm((UInt16)m_ea, L);    } /* SRL  L=(XY+o)    */
-        void xycb_3e() { wm((UInt16)m_ea, srl(rm((UInt16)m_ea)));           } /* SRL  (XY+o)      */
-        void xycb_3f() { A = srl(rm((UInt16)m_ea)); wm((UInt16)m_ea, A);    } /* SRL  A=(XY+o)    */
+        void xycb_38() { B = srl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B);    } /* SRL  B=(XY+o)    */
+        void xycb_39() { C = srl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C);    } /* SRL  C=(XY+o)    */
+        void xycb_3a() { D = srl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D);    } /* SRL  D=(XY+o)    */
+        void xycb_3b() { E = srl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E);    } /* SRL  E=(XY+o)    */
+        void xycb_3c() { H = srl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H);    } /* SRL  H=(XY+o)    */
+        void xycb_3d() { L = srl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L);    } /* SRL  L=(XY+o)    */
+        void xycb_3e() { wm((uint16_t)m_ea, srl(rm((uint16_t)m_ea)));           } /* SRL  (XY+o)      */
+        void xycb_3f() { A = srl(rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A);    } /* SRL  A=(XY+o)    */
 
         void xycb_40() { xycb_46();                         } /* BIT  0,(XY+o)    */
         void xycb_41() { xycb_46();                         } /* BIT  0,(XY+o)    */
@@ -2838,7 +2842,7 @@ namespace mame
         void xycb_43() { xycb_46();                         } /* BIT  0,(XY+o)    */
         void xycb_44() { xycb_46();                         } /* BIT  0,(XY+o)    */
         void xycb_45() { xycb_46();                         } /* BIT  0,(XY+o)    */
-        void xycb_46() { bit_xy(0, rm((UInt16)m_ea));               } /* BIT  0,(XY+o)    */
+        void xycb_46() { bit_xy(0, rm((uint16_t)m_ea));               } /* BIT  0,(XY+o)    */
         void xycb_47() { xycb_46();                         } /* BIT  0,(XY+o)    */
 
         void xycb_48() { xycb_4e();                         } /* BIT  1,(XY+o)    */
@@ -2847,7 +2851,7 @@ namespace mame
         void xycb_4b() { xycb_4e();                         } /* BIT  1,(XY+o)    */
         void xycb_4c() { xycb_4e();                         } /* BIT  1,(XY+o)    */
         void xycb_4d() { xycb_4e();                         } /* BIT  1,(XY+o)    */
-        void xycb_4e() { bit_xy(1, rm((UInt16)m_ea));               } /* BIT  1,(XY+o)    */
+        void xycb_4e() { bit_xy(1, rm((uint16_t)m_ea));               } /* BIT  1,(XY+o)    */
         void xycb_4f() { xycb_4e();                         } /* BIT  1,(XY+o)    */
 
         void xycb_50() { xycb_56();                         } /* BIT  2,(XY+o)    */
@@ -2856,7 +2860,7 @@ namespace mame
         void xycb_53() { xycb_56();                         } /* BIT  2,(XY+o)    */
         void xycb_54() { xycb_56();                         } /* BIT  2,(XY+o)    */
         void xycb_55() { xycb_56();                         } /* BIT  2,(XY+o)    */
-        void xycb_56() { bit_xy(2, rm((UInt16)m_ea));               } /* BIT  2,(XY+o)    */
+        void xycb_56() { bit_xy(2, rm((uint16_t)m_ea));               } /* BIT  2,(XY+o)    */
         void xycb_57() { xycb_56();                         } /* BIT  2,(XY+o)    */
 
         void xycb_58() { xycb_5e();                         } /* BIT  3,(XY+o)    */
@@ -2865,7 +2869,7 @@ namespace mame
         void xycb_5b() { xycb_5e();                         } /* BIT  3,(XY+o)    */
         void xycb_5c() { xycb_5e();                         } /* BIT  3,(XY+o)    */
         void xycb_5d() { xycb_5e();                         } /* BIT  3,(XY+o)    */
-        void xycb_5e() { bit_xy(3, rm((UInt16)m_ea));               } /* BIT  3,(XY+o)    */
+        void xycb_5e() { bit_xy(3, rm((uint16_t)m_ea));               } /* BIT  3,(XY+o)    */
         void xycb_5f() { xycb_5e();                         } /* BIT  3,(XY+o)    */
 
         void xycb_60() { xycb_66();                         } /* BIT  4,(XY+o)    */
@@ -2874,7 +2878,7 @@ namespace mame
         void xycb_63() { xycb_66();                         } /* BIT  4,(XY+o)    */
         void xycb_64() { xycb_66();                         } /* BIT  4,(XY+o)    */
         void xycb_65() { xycb_66();                         } /* BIT  4,(XY+o)    */
-        void xycb_66() { bit_xy(4, rm((UInt16)m_ea));               } /* BIT  4,(XY+o)    */
+        void xycb_66() { bit_xy(4, rm((uint16_t)m_ea));               } /* BIT  4,(XY+o)    */
         void xycb_67() { xycb_66();                         } /* BIT  4,(XY+o)    */
 
         void xycb_68() { xycb_6e();                         } /* BIT  5,(XY+o)    */
@@ -2883,7 +2887,7 @@ namespace mame
         void xycb_6b() { xycb_6e();                         } /* BIT  5,(XY+o)    */
         void xycb_6c() { xycb_6e();                         } /* BIT  5,(XY+o)    */
         void xycb_6d() { xycb_6e();                         } /* BIT  5,(XY+o)    */
-        void xycb_6e() { bit_xy(5, rm((UInt16)m_ea));               } /* BIT  5,(XY+o)    */
+        void xycb_6e() { bit_xy(5, rm((uint16_t)m_ea));               } /* BIT  5,(XY+o)    */
         void xycb_6f() { xycb_6e();                         } /* BIT  5,(XY+o)    */
 
         void xycb_70() { xycb_76();                         } /* BIT  6,(XY+o)    */
@@ -2892,7 +2896,7 @@ namespace mame
         void xycb_73() { xycb_76();                         } /* BIT  6,(XY+o)    */
         void xycb_74() { xycb_76();                         } /* BIT  6,(XY+o)    */
         void xycb_75() { xycb_76();                         } /* BIT  6,(XY+o)    */
-        void xycb_76() { bit_xy(6, rm((UInt16)m_ea));               } /* BIT  6,(XY+o)    */
+        void xycb_76() { bit_xy(6, rm((uint16_t)m_ea));               } /* BIT  6,(XY+o)    */
         void xycb_77() { xycb_76();                         } /* BIT  6,(XY+o)    */
 
         void xycb_78() { xycb_7e();                         } /* BIT  7,(XY+o)    */
@@ -2901,152 +2905,152 @@ namespace mame
         void xycb_7b() { xycb_7e();                         } /* BIT  7,(XY+o)    */
         void xycb_7c() { xycb_7e();                         } /* BIT  7,(XY+o)    */
         void xycb_7d() { xycb_7e();                         } /* BIT  7,(XY+o)    */
-        void xycb_7e() { bit_xy(7, rm((UInt16)m_ea));               } /* BIT  7,(XY+o)    */
+        void xycb_7e() { bit_xy(7, rm((uint16_t)m_ea));               } /* BIT  7,(XY+o)    */
         void xycb_7f() { xycb_7e();                         } /* BIT  7,(XY+o)    */
 
-        void xycb_80() { B = res(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* RES  0,B=(XY+o)  */
-        void xycb_81() { C = res(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* RES  0,C=(XY+o)  */
-        void xycb_82() { D = res(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* RES  0,D=(XY+o)  */
-        void xycb_83() { E = res(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* RES  0,E=(XY+o)  */
-        void xycb_84() { H = res(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* RES  0,H=(XY+o)  */
-        void xycb_85() { L = res(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* RES  0,L=(XY+o)  */
-        void xycb_86() { wm((UInt16)m_ea, res(0, rm((UInt16)m_ea)));        } /* RES  0,(XY+o)    */
-        void xycb_87() { A = res(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* RES  0,A=(XY+o)  */
+        void xycb_80() { B = res(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* RES  0,B=(XY+o)  */
+        void xycb_81() { C = res(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* RES  0,C=(XY+o)  */
+        void xycb_82() { D = res(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* RES  0,D=(XY+o)  */
+        void xycb_83() { E = res(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* RES  0,E=(XY+o)  */
+        void xycb_84() { H = res(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* RES  0,H=(XY+o)  */
+        void xycb_85() { L = res(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* RES  0,L=(XY+o)  */
+        void xycb_86() { wm((uint16_t)m_ea, res(0, rm((uint16_t)m_ea)));        } /* RES  0,(XY+o)    */
+        void xycb_87() { A = res(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* RES  0,A=(XY+o)  */
 
-        void xycb_88() { B = res(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* RES  1,B=(XY+o)  */
-        void xycb_89() { C = res(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* RES  1,C=(XY+o)  */
-        void xycb_8a() { D = res(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* RES  1,D=(XY+o)  */
-        void xycb_8b() { E = res(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* RES  1,E=(XY+o)  */
-        void xycb_8c() { H = res(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* RES  1,H=(XY+o)  */
-        void xycb_8d() { L = res(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* RES  1,L=(XY+o)  */
-        void xycb_8e() { wm((UInt16)m_ea, res(1, rm((UInt16)m_ea)));        } /* RES  1,(XY+o)    */
-        void xycb_8f() { A = res(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* RES  1,A=(XY+o)  */
+        void xycb_88() { B = res(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* RES  1,B=(XY+o)  */
+        void xycb_89() { C = res(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* RES  1,C=(XY+o)  */
+        void xycb_8a() { D = res(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* RES  1,D=(XY+o)  */
+        void xycb_8b() { E = res(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* RES  1,E=(XY+o)  */
+        void xycb_8c() { H = res(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* RES  1,H=(XY+o)  */
+        void xycb_8d() { L = res(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* RES  1,L=(XY+o)  */
+        void xycb_8e() { wm((uint16_t)m_ea, res(1, rm((uint16_t)m_ea)));        } /* RES  1,(XY+o)    */
+        void xycb_8f() { A = res(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* RES  1,A=(XY+o)  */
 
-        void xycb_90() { B = res(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* RES  2,B=(XY+o)  */
-        void xycb_91() { C = res(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* RES  2,C=(XY+o)  */
-        void xycb_92() { D = res(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* RES  2,D=(XY+o)  */
-        void xycb_93() { E = res(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* RES  2,E=(XY+o)  */
-        void xycb_94() { H = res(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* RES  2,H=(XY+o)  */
-        void xycb_95() { L = res(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* RES  2,L=(XY+o)  */
-        void xycb_96() { wm((UInt16)m_ea, res(2, rm((UInt16)m_ea)));        } /* RES  2,(XY+o)    */
-        void xycb_97() { A = res(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* RES  2,A=(XY+o)  */
+        void xycb_90() { B = res(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* RES  2,B=(XY+o)  */
+        void xycb_91() { C = res(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* RES  2,C=(XY+o)  */
+        void xycb_92() { D = res(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* RES  2,D=(XY+o)  */
+        void xycb_93() { E = res(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* RES  2,E=(XY+o)  */
+        void xycb_94() { H = res(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* RES  2,H=(XY+o)  */
+        void xycb_95() { L = res(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* RES  2,L=(XY+o)  */
+        void xycb_96() { wm((uint16_t)m_ea, res(2, rm((uint16_t)m_ea)));        } /* RES  2,(XY+o)    */
+        void xycb_97() { A = res(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* RES  2,A=(XY+o)  */
 
-        void xycb_98() { B = res(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* RES  3,B=(XY+o)  */
-        void xycb_99() { C = res(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* RES  3,C=(XY+o)  */
-        void xycb_9a() { D = res(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* RES  3,D=(XY+o)  */
-        void xycb_9b() { E = res(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* RES  3,E=(XY+o)  */
-        void xycb_9c() { H = res(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* RES  3,H=(XY+o)  */
-        void xycb_9d() { L = res(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* RES  3,L=(XY+o)  */
-        void xycb_9e() { wm((UInt16)m_ea, res(3, rm((UInt16)m_ea)));        } /* RES  3,(XY+o)    */
-        void xycb_9f() { A = res(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* RES  3,A=(XY+o)  */
+        void xycb_98() { B = res(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* RES  3,B=(XY+o)  */
+        void xycb_99() { C = res(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* RES  3,C=(XY+o)  */
+        void xycb_9a() { D = res(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* RES  3,D=(XY+o)  */
+        void xycb_9b() { E = res(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* RES  3,E=(XY+o)  */
+        void xycb_9c() { H = res(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* RES  3,H=(XY+o)  */
+        void xycb_9d() { L = res(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* RES  3,L=(XY+o)  */
+        void xycb_9e() { wm((uint16_t)m_ea, res(3, rm((uint16_t)m_ea)));        } /* RES  3,(XY+o)    */
+        void xycb_9f() { A = res(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* RES  3,A=(XY+o)  */
 
-        void xycb_a0() { B = res(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* RES  4,B=(XY+o)  */
-        void xycb_a1() { C = res(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* RES  4,C=(XY+o)  */
-        void xycb_a2() { D = res(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* RES  4,D=(XY+o)  */
-        void xycb_a3() { E = res(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* RES  4,E=(XY+o)  */
-        void xycb_a4() { H = res(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* RES  4,H=(XY+o)  */
-        void xycb_a5() { L = res(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* RES  4,L=(XY+o)  */
-        void xycb_a6() { wm((UInt16)m_ea, res(4, rm((UInt16)m_ea)));        } /* RES  4,(XY+o)    */
-        void xycb_a7() { A = res(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* RES  4,A=(XY+o)  */
+        void xycb_a0() { B = res(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* RES  4,B=(XY+o)  */
+        void xycb_a1() { C = res(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* RES  4,C=(XY+o)  */
+        void xycb_a2() { D = res(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* RES  4,D=(XY+o)  */
+        void xycb_a3() { E = res(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* RES  4,E=(XY+o)  */
+        void xycb_a4() { H = res(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* RES  4,H=(XY+o)  */
+        void xycb_a5() { L = res(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* RES  4,L=(XY+o)  */
+        void xycb_a6() { wm((uint16_t)m_ea, res(4, rm((uint16_t)m_ea)));        } /* RES  4,(XY+o)    */
+        void xycb_a7() { A = res(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* RES  4,A=(XY+o)  */
 
-        void xycb_a8() { B = res(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* RES  5,B=(XY+o)  */
-        void xycb_a9() { C = res(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* RES  5,C=(XY+o)  */
-        void xycb_aa() { D = res(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* RES  5,D=(XY+o)  */
-        void xycb_ab() { E = res(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* RES  5,E=(XY+o)  */
-        void xycb_ac() { H = res(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* RES  5,H=(XY+o)  */
-        void xycb_ad() { L = res(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* RES  5,L=(XY+o)  */
-        void xycb_ae() { wm((UInt16)m_ea, res(5, rm((UInt16)m_ea)));        } /* RES  5,(XY+o)    */
-        void xycb_af() { A = res(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* RES  5,A=(XY+o)  */
+        void xycb_a8() { B = res(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* RES  5,B=(XY+o)  */
+        void xycb_a9() { C = res(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* RES  5,C=(XY+o)  */
+        void xycb_aa() { D = res(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* RES  5,D=(XY+o)  */
+        void xycb_ab() { E = res(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* RES  5,E=(XY+o)  */
+        void xycb_ac() { H = res(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* RES  5,H=(XY+o)  */
+        void xycb_ad() { L = res(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* RES  5,L=(XY+o)  */
+        void xycb_ae() { wm((uint16_t)m_ea, res(5, rm((uint16_t)m_ea)));        } /* RES  5,(XY+o)    */
+        void xycb_af() { A = res(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* RES  5,A=(XY+o)  */
 
-        void xycb_b0() { B = res(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* RES  6,B=(XY+o)  */
-        void xycb_b1() { C = res(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* RES  6,C=(XY+o)  */
-        void xycb_b2() { D = res(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* RES  6,D=(XY+o)  */
-        void xycb_b3() { E = res(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* RES  6,E=(XY+o)  */
-        void xycb_b4() { H = res(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* RES  6,H=(XY+o)  */
-        void xycb_b5() { L = res(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* RES  6,L=(XY+o)  */
-        void xycb_b6() { wm((UInt16)m_ea, res(6, rm((UInt16)m_ea)));        } /* RES  6,(XY+o)    */
-        void xycb_b7() { A = res(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* RES  6,A=(XY+o)  */
+        void xycb_b0() { B = res(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* RES  6,B=(XY+o)  */
+        void xycb_b1() { C = res(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* RES  6,C=(XY+o)  */
+        void xycb_b2() { D = res(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* RES  6,D=(XY+o)  */
+        void xycb_b3() { E = res(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* RES  6,E=(XY+o)  */
+        void xycb_b4() { H = res(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* RES  6,H=(XY+o)  */
+        void xycb_b5() { L = res(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* RES  6,L=(XY+o)  */
+        void xycb_b6() { wm((uint16_t)m_ea, res(6, rm((uint16_t)m_ea)));        } /* RES  6,(XY+o)    */
+        void xycb_b7() { A = res(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* RES  6,A=(XY+o)  */
 
-        void xycb_b8() { B = res(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* RES  7,B=(XY+o)  */
-        void xycb_b9() { C = res(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* RES  7,C=(XY+o)  */
-        void xycb_ba() { D = res(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* RES  7,D=(XY+o)  */
-        void xycb_bb() { E = res(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* RES  7,E=(XY+o)  */
-        void xycb_bc() { H = res(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* RES  7,H=(XY+o)  */
-        void xycb_bd() { L = res(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* RES  7,L=(XY+o)  */
-        void xycb_be() { wm((UInt16)m_ea, res(7, rm((UInt16)m_ea)));        } /* RES  7,(XY+o)    */
-        void xycb_bf() { A = res(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* RES  7,A=(XY+o)  */
+        void xycb_b8() { B = res(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* RES  7,B=(XY+o)  */
+        void xycb_b9() { C = res(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* RES  7,C=(XY+o)  */
+        void xycb_ba() { D = res(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* RES  7,D=(XY+o)  */
+        void xycb_bb() { E = res(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* RES  7,E=(XY+o)  */
+        void xycb_bc() { H = res(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* RES  7,H=(XY+o)  */
+        void xycb_bd() { L = res(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* RES  7,L=(XY+o)  */
+        void xycb_be() { wm((uint16_t)m_ea, res(7, rm((uint16_t)m_ea)));        } /* RES  7,(XY+o)    */
+        void xycb_bf() { A = res(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* RES  7,A=(XY+o)  */
 
-        void xycb_c0() { B = set(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* SET  0,B=(XY+o)  */
-        void xycb_c1() { C = set(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* SET  0,C=(XY+o)  */
-        void xycb_c2() { D = set(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* SET  0,D=(XY+o)  */
-        void xycb_c3() { E = set(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* SET  0,E=(XY+o)  */
-        void xycb_c4() { H = set(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* SET  0,H=(XY+o)  */
-        void xycb_c5() { L = set(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* SET  0,L=(XY+o)  */
-        void xycb_c6() { wm((UInt16)m_ea, set(0, rm((UInt16)m_ea)));        } /* SET  0,(XY+o)    */
-        void xycb_c7() { A = set(0, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* SET  0,A=(XY+o)  */
+        void xycb_c0() { B = set(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* SET  0,B=(XY+o)  */
+        void xycb_c1() { C = set(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* SET  0,C=(XY+o)  */
+        void xycb_c2() { D = set(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* SET  0,D=(XY+o)  */
+        void xycb_c3() { E = set(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* SET  0,E=(XY+o)  */
+        void xycb_c4() { H = set(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* SET  0,H=(XY+o)  */
+        void xycb_c5() { L = set(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* SET  0,L=(XY+o)  */
+        void xycb_c6() { wm((uint16_t)m_ea, set(0, rm((uint16_t)m_ea)));        } /* SET  0,(XY+o)    */
+        void xycb_c7() { A = set(0, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* SET  0,A=(XY+o)  */
 
-        void xycb_c8() { B = set(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* SET  1,B=(XY+o)  */
-        void xycb_c9() { C = set(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* SET  1,C=(XY+o)  */
-        void xycb_ca() { D = set(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* SET  1,D=(XY+o)  */
-        void xycb_cb() { E = set(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* SET  1,E=(XY+o)  */
-        void xycb_cc() { H = set(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* SET  1,H=(XY+o)  */
-        void xycb_cd() { L = set(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* SET  1,L=(XY+o)  */
-        void xycb_ce() { wm((UInt16)m_ea, set(1, rm((UInt16)m_ea)));        } /* SET  1,(XY+o)    */
-        void xycb_cf() { A = set(1, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* SET  1,A=(XY+o)  */
+        void xycb_c8() { B = set(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* SET  1,B=(XY+o)  */
+        void xycb_c9() { C = set(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* SET  1,C=(XY+o)  */
+        void xycb_ca() { D = set(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* SET  1,D=(XY+o)  */
+        void xycb_cb() { E = set(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* SET  1,E=(XY+o)  */
+        void xycb_cc() { H = set(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* SET  1,H=(XY+o)  */
+        void xycb_cd() { L = set(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* SET  1,L=(XY+o)  */
+        void xycb_ce() { wm((uint16_t)m_ea, set(1, rm((uint16_t)m_ea)));        } /* SET  1,(XY+o)    */
+        void xycb_cf() { A = set(1, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* SET  1,A=(XY+o)  */
 
-        void xycb_d0() { B = set(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* SET  2,B=(XY+o)  */
-        void xycb_d1() { C = set(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* SET  2,C=(XY+o)  */
-        void xycb_d2() { D = set(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* SET  2,D=(XY+o)  */
-        void xycb_d3() { E = set(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* SET  2,E=(XY+o)  */
-        void xycb_d4() { H = set(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* SET  2,H=(XY+o)  */
-        void xycb_d5() { L = set(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* SET  2,L=(XY+o)  */
-        void xycb_d6() { wm((UInt16)m_ea, set(2, rm((UInt16)m_ea)));        } /* SET  2,(XY+o)    */
-        void xycb_d7() { A = set(2, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* SET  2,A=(XY+o)  */
+        void xycb_d0() { B = set(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* SET  2,B=(XY+o)  */
+        void xycb_d1() { C = set(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* SET  2,C=(XY+o)  */
+        void xycb_d2() { D = set(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* SET  2,D=(XY+o)  */
+        void xycb_d3() { E = set(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* SET  2,E=(XY+o)  */
+        void xycb_d4() { H = set(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* SET  2,H=(XY+o)  */
+        void xycb_d5() { L = set(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* SET  2,L=(XY+o)  */
+        void xycb_d6() { wm((uint16_t)m_ea, set(2, rm((uint16_t)m_ea)));        } /* SET  2,(XY+o)    */
+        void xycb_d7() { A = set(2, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* SET  2,A=(XY+o)  */
 
-        void xycb_d8() { B = set(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* SET  3,B=(XY+o)  */
-        void xycb_d9() { C = set(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* SET  3,C=(XY+o)  */
-        void xycb_da() { D = set(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* SET  3,D=(XY+o)  */
-        void xycb_db() { E = set(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* SET  3,E=(XY+o)  */
-        void xycb_dc() { H = set(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* SET  3,H=(XY+o)  */
-        void xycb_dd() { L = set(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* SET  3,L=(XY+o)  */
-        void xycb_de() { wm((UInt16)m_ea, set(3, rm((UInt16)m_ea)));        } /* SET  3,(XY+o)    */
-        void xycb_df() { A = set(3, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* SET  3,A=(XY+o)  */
+        void xycb_d8() { B = set(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* SET  3,B=(XY+o)  */
+        void xycb_d9() { C = set(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* SET  3,C=(XY+o)  */
+        void xycb_da() { D = set(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* SET  3,D=(XY+o)  */
+        void xycb_db() { E = set(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* SET  3,E=(XY+o)  */
+        void xycb_dc() { H = set(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* SET  3,H=(XY+o)  */
+        void xycb_dd() { L = set(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* SET  3,L=(XY+o)  */
+        void xycb_de() { wm((uint16_t)m_ea, set(3, rm((uint16_t)m_ea)));        } /* SET  3,(XY+o)    */
+        void xycb_df() { A = set(3, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* SET  3,A=(XY+o)  */
 
-        void xycb_e0() { B = set(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* SET  4,B=(XY+o)  */
-        void xycb_e1() { C = set(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* SET  4,C=(XY+o)  */
-        void xycb_e2() { D = set(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* SET  4,D=(XY+o)  */
-        void xycb_e3() { E = set(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* SET  4,E=(XY+o)  */
-        void xycb_e4() { H = set(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* SET  4,H=(XY+o)  */
-        void xycb_e5() { L = set(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* SET  4,L=(XY+o)  */
-        void xycb_e6() { wm((UInt16)m_ea, set(4, rm((UInt16)m_ea)));        } /* SET  4,(XY+o)    */
-        void xycb_e7() { A = set(4, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* SET  4,A=(XY+o)  */
+        void xycb_e0() { B = set(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* SET  4,B=(XY+o)  */
+        void xycb_e1() { C = set(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* SET  4,C=(XY+o)  */
+        void xycb_e2() { D = set(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* SET  4,D=(XY+o)  */
+        void xycb_e3() { E = set(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* SET  4,E=(XY+o)  */
+        void xycb_e4() { H = set(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* SET  4,H=(XY+o)  */
+        void xycb_e5() { L = set(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* SET  4,L=(XY+o)  */
+        void xycb_e6() { wm((uint16_t)m_ea, set(4, rm((uint16_t)m_ea)));        } /* SET  4,(XY+o)    */
+        void xycb_e7() { A = set(4, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* SET  4,A=(XY+o)  */
 
-        void xycb_e8() { B = set(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* SET  5,B=(XY+o)  */
-        void xycb_e9() { C = set(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* SET  5,C=(XY+o)  */
-        void xycb_ea() { D = set(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* SET  5,D=(XY+o)  */
-        void xycb_eb() { E = set(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* SET  5,E=(XY+o)  */
-        void xycb_ec() { H = set(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* SET  5,H=(XY+o)  */
-        void xycb_ed() { L = set(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* SET  5,L=(XY+o)  */
-        void xycb_ee() { wm((UInt16)m_ea, set(5, rm((UInt16)m_ea)));        } /* SET  5,(XY+o)    */
-        void xycb_ef() { A = set(5, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* SET  5,A=(XY+o)  */
+        void xycb_e8() { B = set(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* SET  5,B=(XY+o)  */
+        void xycb_e9() { C = set(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* SET  5,C=(XY+o)  */
+        void xycb_ea() { D = set(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* SET  5,D=(XY+o)  */
+        void xycb_eb() { E = set(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* SET  5,E=(XY+o)  */
+        void xycb_ec() { H = set(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* SET  5,H=(XY+o)  */
+        void xycb_ed() { L = set(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* SET  5,L=(XY+o)  */
+        void xycb_ee() { wm((uint16_t)m_ea, set(5, rm((uint16_t)m_ea)));        } /* SET  5,(XY+o)    */
+        void xycb_ef() { A = set(5, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* SET  5,A=(XY+o)  */
 
-        void xycb_f0() { B = set(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* SET  6,B=(XY+o)  */
-        void xycb_f1() { C = set(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* SET  6,C=(XY+o)  */
-        void xycb_f2() { D = set(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* SET  6,D=(XY+o)  */
-        void xycb_f3() { E = set(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* SET  6,E=(XY+o)  */
-        void xycb_f4() { H = set(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* SET  6,H=(XY+o)  */
-        void xycb_f5() { L = set(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* SET  6,L=(XY+o)  */
-        void xycb_f6() { wm((UInt16)m_ea, set(6, rm((UInt16)m_ea)));        } /* SET  6,(XY+o)    */
-        void xycb_f7() { A = set(6, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* SET  6,A=(XY+o)  */
+        void xycb_f0() { B = set(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* SET  6,B=(XY+o)  */
+        void xycb_f1() { C = set(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* SET  6,C=(XY+o)  */
+        void xycb_f2() { D = set(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* SET  6,D=(XY+o)  */
+        void xycb_f3() { E = set(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* SET  6,E=(XY+o)  */
+        void xycb_f4() { H = set(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* SET  6,H=(XY+o)  */
+        void xycb_f5() { L = set(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* SET  6,L=(XY+o)  */
+        void xycb_f6() { wm((uint16_t)m_ea, set(6, rm((uint16_t)m_ea)));        } /* SET  6,(XY+o)    */
+        void xycb_f7() { A = set(6, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* SET  6,A=(XY+o)  */
 
-        void xycb_f8() { B = set(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, B); } /* SET  7,B=(XY+o)  */
-        void xycb_f9() { C = set(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, C); } /* SET  7,C=(XY+o)  */
-        void xycb_fa() { D = set(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, D); } /* SET  7,D=(XY+o)  */
-        void xycb_fb() { E = set(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, E); } /* SET  7,E=(XY+o)  */
-        void xycb_fc() { H = set(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, H); } /* SET  7,H=(XY+o)  */
-        void xycb_fd() { L = set(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, L); } /* SET  7,L=(XY+o)  */
-        void xycb_fe() { wm((UInt16)m_ea, set(7, rm((UInt16)m_ea)));        } /* SET  7,(XY+o)    */
-        void xycb_ff() { A = set(7, rm((UInt16)m_ea)); wm((UInt16)m_ea, A); } /* SET  7,A=(XY+o)  */
+        void xycb_f8() { B = set(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, B); } /* SET  7,B=(XY+o)  */
+        void xycb_f9() { C = set(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, C); } /* SET  7,C=(XY+o)  */
+        void xycb_fa() { D = set(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, D); } /* SET  7,D=(XY+o)  */
+        void xycb_fb() { E = set(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, E); } /* SET  7,E=(XY+o)  */
+        void xycb_fc() { H = set(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, H); } /* SET  7,H=(XY+o)  */
+        void xycb_fd() { L = set(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, L); } /* SET  7,L=(XY+o)  */
+        void xycb_fe() { wm((uint16_t)m_ea, set(7, rm((uint16_t)m_ea)));        } /* SET  7,(XY+o)    */
+        void xycb_ff() { A = set(7, rm((uint16_t)m_ea)); wm((uint16_t)m_ea, A); } /* SET  7,A=(XY+o)  */
 
 
         void illegal_1() { logerror("Z80 ill. opcode ${0} ${1} (${2})\n", m_opcodes.read_byte((PCD-1)&0xffff), m_opcodes.read_byte(PCD), PCD-1); }  // $%02x $%02x ($%04x)
@@ -3079,7 +3083,7 @@ namespace mame
         /***************************************************************
          * Input a byte from given I/O port
          ***************************************************************/
-        byte in_(uint16_t port)
+        uint8_t in_(uint16_t port)
         {
             return m_io.read_byte(port);
         }
@@ -3133,11 +3137,11 @@ namespace mame
          ***************************************************************/
         public virtual uint8_t rop()
         {
-            UInt32 pc = PCD;
+            unsigned pc = PCD;
             PC++;
             uint8_t res = m_opcodes.read_byte(pc);
             m_icount.i -= 2;  // m_icount -= 2;
-            m_refresh_cb.op_u8((UInt16)((m_i << 8) | (m_r2 & 0x80) | ((m_r-1) & 0x7f)), 0x00, 0xff);
+            m_refresh_cb.op_u8((uint16_t)((m_i << 8) | (m_r2 & 0x80) | ((m_r-1) & 0x7f)), 0x00, 0xff);
             m_icount.i += 2;  //m_icount += 2;
             return res;
         }
@@ -3150,14 +3154,14 @@ namespace mame
          ***************************************************************/
         protected virtual uint8_t arg()
         {
-            UInt32 pc = PCD;
+            unsigned pc = PCD;
             PC++;
             return m_args.read_byte(pc);
         }
 
         protected virtual uint16_t arg16()
         {
-            UInt32 pc = PCD;
+            unsigned pc = PCD;
             PC += 2;
             return m_args.read_word(pc);
         }
@@ -3168,14 +3172,14 @@ namespace mame
          ***************************************************************/
         void eax()
         {
-            m_ea = (UInt32)(UInt16)(IX + (sbyte)arg());
-            WZ = (UInt16)m_ea;
+            m_ea = (uint32_t)(uint16_t)(IX + (int8_t)arg());
+            WZ = (uint16_t)m_ea;
         }
 
         void eay()
         {
-            m_ea = (UInt32)(UInt16)(IY + (sbyte)arg());
-            WZ = (UInt16)m_ea;
+            m_ea = (uint32_t)(uint16_t)(IY + (int8_t)arg());
+            WZ = (uint16_t)m_ea;
         }
 
         /***************************************************************
@@ -3183,7 +3187,7 @@ namespace mame
          ***************************************************************/
         void pop(ref PAIR r)
         {
-            rm16((UInt16)SPD, ref r);
+            rm16((uint16_t)SPD, ref r);
             SP += 2;
         }
 
@@ -3193,7 +3197,7 @@ namespace mame
         public void push(PAIR r)
         {
             SP -= 2;
-            wm16((UInt16)SPD, r);
+            wm16((uint16_t)SPD, r);
         }
 
         /***************************************************************
@@ -3202,7 +3206,7 @@ namespace mame
         void jp()
         {
             PCD = arg16();
-            WZ = (UInt16)PCD;
+            WZ = (uint16_t)PCD;
         }
 
         /***************************************************************
@@ -3213,7 +3217,7 @@ namespace mame
             if (cond)
             {
                 PCD = arg16();
-                WZ = (UInt16)PCD;
+                WZ = (uint16_t)PCD;
             }
             else
             {
@@ -3226,8 +3230,8 @@ namespace mame
          ***************************************************************/
         void jr()
         {
-            sbyte a = (sbyte)arg();    /* arg() also increments PC */
-            PC += (UInt16)a;           /* so don't do PC += arg() */
+            int8_t a = (int8_t)arg();    /* arg() also increments PC */
+            PC += (uint16_t)a;           /* so don't do PC += arg() */
             WZ = PC;
         }
 
@@ -3253,7 +3257,7 @@ namespace mame
         void call()
         {
             m_ea = arg16();
-            WZ = (UInt16)m_ea;
+            WZ = (uint16_t)m_ea;
             push(m_pc);
             PCD = m_ea;
         }
@@ -3266,7 +3270,7 @@ namespace mame
             if (cond)
             {
                 m_ea = arg16();
-                WZ = (UInt16)m_ea;
+                WZ = (uint16_t)m_ea;
                 push(m_pc);
                 PCD = m_ea;
                 CC_ex(opcode);
@@ -3318,7 +3322,7 @@ namespace mame
         void ld_r_a()
         {
             m_r = A;
-            m_r2 = (byte)(A & 0x80);  /* keep bit 7 of r */
+            m_r2 = (uint8_t)(A & 0x80);  /* keep bit 7 of r */
         }
 
         /***************************************************************
@@ -3326,8 +3330,8 @@ namespace mame
          ***************************************************************/
         void ld_a_r()
         {
-            A = (byte)((m_r & 0x7f) | m_r2);
-            F = (byte)((F & CF) | SZ[A] | (m_iff2 << 2));
+            A = (uint8_t)((m_r & 0x7f) | m_r2);
+            F = (uint8_t)((F & CF) | SZ[A] | (m_iff2 << 2));
             m_after_ldair = true;
         }
 
@@ -3345,7 +3349,7 @@ namespace mame
         void ld_a_i()
         {
             A = m_i;
-            F = (byte)((F & CF) | SZ[A] | (m_iff2 << 2));
+            F = (uint8_t)((F & CF) | SZ[A] | (m_iff2 << 2));
             m_after_ldair = true;
         }
 
@@ -3362,20 +3366,20 @@ namespace mame
         /***************************************************************
          * INC  r8
          ***************************************************************/
-        byte inc(uint8_t value)
+        uint8_t inc(uint8_t value)
         {
-            byte res = (byte)(value + 1);
-            F = (byte)((F & CF) | SZHV_inc[res]);
-            return (byte)res;
+            uint8_t res = (uint8_t)(value + 1);
+            F = (uint8_t)((F & CF) | SZHV_inc[res]);
+            return (uint8_t)res;
         }
 
         /***************************************************************
          * DEC  r8
          ***************************************************************/
-        byte dec(uint8_t value)
+        uint8_t dec(uint8_t value)
         {
-            byte res = (byte)(value - 1);
-            F = (byte)((F & CF) | SZHV_dec[res]);
+            uint8_t res = (uint8_t)(value - 1);
+            F = (uint8_t)((F & CF) | SZHV_dec[res]);
             return res;
         }
 
@@ -3384,8 +3388,8 @@ namespace mame
          ***************************************************************/
         void rlca()
         {
-            A = (byte)((A << 1) | (A >> 7));
-            F = (byte)((F & (SF | ZF | PF)) | (A & (YF | XF | CF)));
+            A = (uint8_t)((A << 1) | (A >> 7));
+            F = (uint8_t)((F & (SF | ZF | PF)) | (A & (YF | XF | CF)));
         }
 
         /***************************************************************
@@ -3393,9 +3397,9 @@ namespace mame
          ***************************************************************/
         void rrca()
         {
-            F = (byte)((F & (SF | ZF | PF)) | (A & CF));
-            A = (byte)((A >> 1) | (A << 7));
-            F |= (byte)(A & (YF | XF));
+            F = (uint8_t)((F & (SF | ZF | PF)) | (A & CF));
+            A = (uint8_t)((A >> 1) | (A << 7));
+            F |= (uint8_t)(A & (YF | XF));
         }
 
         /***************************************************************
@@ -3403,9 +3407,9 @@ namespace mame
          ***************************************************************/
         void rla()
         {
-            byte res = (byte)((A << 1) | (F & CF));
-            byte c = (A & 0x80) != 0 ? CF : (byte)0;
-            F = (byte)((F & (SF | ZF | PF)) | c | (res & (YF | XF)));
+            uint8_t res = (uint8_t)((A << 1) | (F & CF));
+            uint8_t c = (A & 0x80) != 0 ? CF : (uint8_t)0;
+            F = (uint8_t)((F & (SF | ZF | PF)) | c | (res & (YF | XF)));
             A = res;
         }
 
@@ -3414,9 +3418,9 @@ namespace mame
          ***************************************************************/
         void rra()
         {
-            byte res = (byte)((A >> 1) | (F << 7));
-            byte c = (A & 0x01) != 0 ? CF : (byte)0;
-            F = (byte)((F & (SF | ZF | PF)) | c | (res & (YF | XF)));
+            uint8_t res = (uint8_t)((A >> 1) | (F << 7));
+            uint8_t c = (A & 0x01) != 0 ? CF : (uint8_t)0;
+            F = (uint8_t)((F & (SF | ZF | PF)) | c | (res & (YF | XF)));
             A = res;
         }
 
@@ -3425,11 +3429,11 @@ namespace mame
          ***************************************************************/
         void rrd()
         {
-            byte n = rm(HL);
-            WZ = (UInt16)(HL+1);
-            wm(HL, (byte)((n >> 4) | (A << 4)));
-            A = (byte)((A & 0xf0) | (n & 0x0f));
-            F = (byte)((F & CF) | SZP[A]);
+            uint8_t n = rm(HL);
+            WZ = (uint16_t)(HL+1);
+            wm(HL, (uint8_t)((n >> 4) | (A << 4)));
+            A = (uint8_t)((A & 0xf0) | (n & 0x0f));
+            F = (uint8_t)((F & CF) | SZP[A]);
         }
 
         /***************************************************************
@@ -3437,11 +3441,11 @@ namespace mame
          ***************************************************************/
         void rld()
         {
-            byte n = rm(HL);
-            WZ = (UInt16)(HL+1);
-            wm(HL, (byte)((n << 4) | (A & 0x0f)));
-            A = (byte)((A & 0xf0) | (n >> 4));
-            F = (byte)((F & CF) | SZP[A]);
+            uint8_t n = rm(HL);
+            WZ = (uint16_t)(HL+1);
+            wm(HL, (uint8_t)((n << 4) | (A & 0x0f)));
+            A = (uint8_t)((A & 0xf0) | (n >> 4));
+            F = (uint8_t)((F & CF) | SZP[A]);
         }
 
 
@@ -3450,10 +3454,10 @@ namespace mame
          ***************************************************************/
         void add_a(uint8_t value)
         {
-            UInt32 ah = AFD & 0xff00;
-            UInt32 res = (byte)((ah >> 8) + value);
+            uint32_t ah = AFD & 0xff00;
+            uint32_t res = (uint8_t)((ah >> 8) + value);
             F = SZHVC_add[ah | res];
-            A = (byte)res;
+            A = (uint8_t)res;
         }
 
         /***************************************************************
@@ -3461,10 +3465,10 @@ namespace mame
          ***************************************************************/
         void adc_a(uint8_t value)
         {
-            UInt32 ah = AFD & 0xff00, c = AFD & 1;
-            UInt32 res = (byte)((ah >> 8) + value + c);
+            uint32_t ah = AFD & 0xff00, c = AFD & 1;
+            uint32_t res = (uint8_t)((ah >> 8) + value + c);
             F = SZHVC_add[(c << 16) | ah | res];
-            A = (byte)res;
+            A = (uint8_t)res;
         }
 
         /***************************************************************
@@ -3472,10 +3476,10 @@ namespace mame
          ***************************************************************/
         void sub(uint8_t value)
         {
-            UInt32 ah = AFD & 0xff00;
-            UInt32 res = (byte)((ah >> 8) - value);
+            uint32_t ah = AFD & 0xff00;
+            uint32_t res = (uint8_t)((ah >> 8) - value);
             F = SZHVC_sub[ah | res];
-            A = (byte)res;
+            A = (uint8_t)res;
         }
 
         /***************************************************************
@@ -3483,10 +3487,10 @@ namespace mame
          ***************************************************************/
         void sbc_a(uint8_t value)
         {
-            UInt32 ah = AFD & 0xff00, c = AFD & 1;
-            UInt32 res = (byte)((ah >> 8) - value - c);
+            uint32_t ah = AFD & 0xff00, c = AFD & 1;
+            uint32_t res = (uint8_t)((ah >> 8) - value - c);
             F = SZHVC_sub[(c<<16) | ah | res];
-            A = (byte)res;
+            A = (uint8_t)res;
         }
 
         /***************************************************************
@@ -3494,7 +3498,7 @@ namespace mame
          ***************************************************************/
         void neg()
         {
-            byte value = A;
+            uint8_t value = A;
             A = 0;
             sub(value);
         }
@@ -3504,7 +3508,7 @@ namespace mame
          ***************************************************************/
         void daa()
         {
-            byte a = A;
+            uint8_t a = A;
             if ((F & NF) != 0)
             {
                 if (((F & HF) | (((A & 0xf) > 9) ? 1 : 0)) != 0)  a -= 6;
@@ -3516,7 +3520,7 @@ namespace mame
                 if (((F & CF) | ((A > 0x99) ? 1 : 0)) != 0)       a += 0x60;
             }
 
-            F = (byte)((F & (CF | NF)) | ((A > 0x99) ? 1 : 0) | ((A ^ a) & HF) | SZP[a]);
+            F = (uint8_t)((F & (CF | NF)) | ((A > 0x99) ? 1 : 0) | ((A ^ a) & HF) | SZP[a]);
             A = a;
         }
 
@@ -3526,7 +3530,7 @@ namespace mame
         void and_a(uint8_t value)
         {
             A &= value;
-            F = (byte)(SZP[A] | HF);
+            F = (uint8_t)(SZP[A] | HF);
         }
 
         /***************************************************************
@@ -3554,7 +3558,7 @@ namespace mame
         {
             unsigned val = value;
             uint32_t ah = AFD & 0xff00;
-            uint32_t res = (byte)((ah >> 8) - val);
+            uint32_t res = (uint8_t)((ah >> 8) - val);
             F = (uint8_t)((uint32_t)(SZHVC_sub[ah | res] & ~(YF | XF)) | (val & (YF | XF)));
         }
 
@@ -3593,10 +3597,10 @@ namespace mame
         void ex_sp(ref PAIR r)
         {
             PAIR tmp = new PAIR();
-            rm16((UInt16)SPD, ref tmp);
-            wm16((UInt16)SPD, r);
+            rm16((uint16_t)SPD, ref tmp);
+            wm16((uint16_t)SPD, r);
             r = tmp;
-            WZ = (UInt16)r.d;
+            WZ = (uint16_t)r.d;
         }
 
         /***************************************************************
@@ -3645,25 +3649,25 @@ namespace mame
         /***************************************************************
          * RLC  r8
          ***************************************************************/
-        byte rlc(uint8_t value)
+        uint8_t rlc(uint8_t value)
         {
-            UInt32 res = value;
-            UInt32 c = (res & 0x80) != 0 ? CF : 0U;
+            unsigned res = value;
+            unsigned c = (res & 0x80) != 0 ? CF : 0U;
             res = ((res << 1) | (res >> 7)) & 0xff;
-            F = (byte)(SZP[res] | c);
-            return (byte)res;
+            F = (uint8_t)(SZP[res] | c);
+            return (uint8_t)res;
         }
 
         /***************************************************************
          * RRC  r8
          ***************************************************************/
-        byte rrc(uint8_t value)
+        uint8_t rrc(uint8_t value)
         {
-            UInt32 res = value;
-            UInt32 c = (res & 0x01) != 0 ? CF : 0U;
+            unsigned res = value;
+            unsigned c = (res & 0x01) != 0 ? CF : 0U;
             res = ((res >> 1) | (res << 7)) & 0xff;
-            F = (byte)(SZP[res] | c);
-            return (byte)res;
+            F = (uint8_t)(SZP[res] | c);
+            return (uint8_t)res;
         }
 
         /***************************************************************
@@ -3693,49 +3697,49 @@ namespace mame
         /***************************************************************
          * SLA  r8
          ***************************************************************/
-        byte sla(uint8_t value)
+        uint8_t sla(uint8_t value)
         {
-            UInt32 res = value;
-            UInt32 c = (res & 0x80) != 0 ? CF : 0U;
+            unsigned res = value;
+            unsigned c = (res & 0x80) != 0 ? CF : 0U;
             res = (res << 1) & 0xff;
-            F = (byte)(SZP[res] | c);
-            return (byte)res;
+            F = (uint8_t)(SZP[res] | c);
+            return (uint8_t)res;
         }
 
         /***************************************************************
          * SRA  r8
          ***************************************************************/
-        byte sra(uint8_t value)
+        uint8_t sra(uint8_t value)
         {
-            UInt32 res = value;
-            UInt32 c = (res & 0x01) != 0 ? CF : 0U;
+            unsigned res = value;
+            unsigned c = (res & 0x01) != 0 ? CF : 0U;
             res = ((res >> 1) | (res & 0x80)) & 0xff;
-            F = (byte)(SZP[res] | c);
-            return (byte)res;
+            F = (uint8_t)(SZP[res] | c);
+            return (uint8_t)res;
         }
 
         /***************************************************************
          * SLL  r8
          ***************************************************************/
-        byte sll(uint8_t value)
+        uint8_t sll(uint8_t value)
         {
-            UInt32 res = value;
-            UInt32 c = (res & 0x80) != 0 ? CF : 0U;
+            unsigned res = value;
+            unsigned c = (res & 0x80) != 0 ? CF : 0U;
             res = ((res << 1) | 0x01) & 0xff;
-            F = (byte)(SZP[res] | c);
-            return (byte)res;
+            F = (uint8_t)(SZP[res] | c);
+            return (uint8_t)res;
         }
 
         /***************************************************************
          * SRL  r8
          ***************************************************************/
-        byte srl(uint8_t value)
+        uint8_t srl(uint8_t value)
         {
-            UInt32 res = value;
-            UInt32 c = (res & 0x01) != 0 ? CF : 0U;
+            unsigned res = value;
+            unsigned c = (res & 0x01) != 0 ? CF : 0U;
             res = (res >> 1) & 0xff;
-            F = (byte)(SZP[res] | c);
-            return (byte)res;
+            F = (uint8_t)(SZP[res] | c);
+            return (uint8_t)res;
         }
 
         /***************************************************************
@@ -3743,7 +3747,7 @@ namespace mame
          ***************************************************************/
         void bit(int bit, uint8_t value)
         {
-            F = (byte)((F & CF) | HF | (SZ_BIT[value & (1 << bit)] & ~(YF | XF)) | (value & (YF | XF)));
+            F = (uint8_t)((F & CF) | HF | (SZ_BIT[value & (1 << bit)] & ~(YF | XF)) | (value & (YF | XF)));
         }
 
         /***************************************************************
@@ -3751,7 +3755,7 @@ namespace mame
          ***************************************************************/
         void bit_hl(int bit, uint8_t value)
         {
-            F = (byte)((F & CF) | HF | (SZ_BIT[value & (1 << bit)] & ~(YF | XF)) | (WZ_H & (YF | XF)));
+            F = (uint8_t)((F & CF) | HF | (SZ_BIT[value & (1 << bit)] & ~(YF | XF)) | (WZ_H & (YF | XF)));
         }
 
         /***************************************************************
@@ -3765,17 +3769,17 @@ namespace mame
         /***************************************************************
          * RES  bit,r8
          ***************************************************************/
-        byte res(int bit, uint8_t value)
+        uint8_t res(int bit, uint8_t value)
         {
-            return (byte)(value & ~(1 << bit));
+            return (uint8_t)(value & ~(1 << bit));
         }
 
         /***************************************************************
          * SET  bit,r8
          ***************************************************************/
-        byte set(int bit, uint8_t value)
+        uint8_t set(int bit, uint8_t value)
         {
-            return (byte)(value | (1 << bit));
+            return (uint8_t)(value | (1 << bit));
         }
 
         /***************************************************************
@@ -3783,7 +3787,7 @@ namespace mame
          ***************************************************************/
         void ldi()
         {
-            byte io = rm(HL);
+            uint8_t io = rm(HL);
             wm(DE, io);
             F &= SF | ZF | CF;
             if (((A + io) & 0x02) != 0) F |= YF; /* bit 1 -> flag 5 */
@@ -3798,10 +3802,10 @@ namespace mame
         void cpi()
         {
             uint8_t val = rm(HL);
-            uint8_t res = (byte)(A - val);
+            uint8_t res = (uint8_t)(A - val);
             WZ++;
             HL++; BC--;
-            F = (byte)((F & CF) | (SZ[res]&~(YF|XF)) | ((A^val^res)&HF) | NF);
+            F = (uint8_t)((F & CF) | (SZ[res]&~(YF|XF)) | ((A^val^res)&HF) | NF);
             if ((F & HF) != 0) res -= 1;
             if ((res & 0x02) != 0) F |= YF; /* bit 1 -> flag 5 */
             if ((res & 0x08) != 0) F |= XF; /* bit 3 -> flag 3 */
@@ -3813,17 +3817,17 @@ namespace mame
          ***************************************************************/
         void ini()
         {
-            UInt32 t;
+            unsigned t;
             uint8_t io = in_(BC);
-            WZ = (UInt16)(BC + 1);
+            WZ = (uint16_t)(BC + 1);
             B--;
             wm(HL, io);
             HL++;
             F = SZ[B];
-            t = (UInt32)((C + 1) & 0xff) + (UInt32)io;
+            t = (unsigned)((C + 1) & 0xff) + (unsigned)io;
             if ((io & SF) != 0) F |= NF;
             if ((t & 0x100) != 0) F |= HF | CF;
-            F |= (byte)(SZP[(byte)(t & 0x07) ^ B] & PF);
+            F |= (uint8_t)(SZP[(uint8_t)(t & 0x07) ^ B] & PF);
         }
 
         /***************************************************************
@@ -3831,17 +3835,17 @@ namespace mame
          ***************************************************************/
         void outi()
         {
-            UInt32 t;
+            unsigned t;
             uint8_t io = rm(HL);
             B--;
-            WZ = (UInt16)(BC + 1);
+            WZ = (uint16_t)(BC + 1);
             out_(BC, io);
             HL++;
             F = SZ[B];
-            t = (UInt32)L + (UInt32)io;
+            t = (unsigned)L + (unsigned)io;
             if ((io & SF) != 0) F |= NF;
             if ((t & 0x100) != 0) F |= HF | CF;
-            F |= (byte)(SZP[(byte)(t & 0x07) ^ B] & PF);
+            F |= (uint8_t)(SZP[(uint8_t)(t & 0x07) ^ B] & PF);
         }
 
         /***************************************************************
@@ -3864,10 +3868,10 @@ namespace mame
         void cpd()
         {
             uint8_t val = rm(HL);
-            uint8_t res = (byte)(A - val);
+            uint8_t res = (uint8_t)(A - val);
             WZ--;
             HL--; BC--;
-            F = (byte)((F & CF) | (SZ[res]&~(YF|XF)) | ((A^val^res)&HF) | NF);
+            F = (uint8_t)((F & CF) | (SZ[res]&~(YF|XF)) | ((A^val^res)&HF) | NF);
             if ((F & HF) != 0) res -= 1;
             if ((res & 0x02) != 0) F |= YF; /* bit 1 -> flag 5 */
             if ((res & 0x08) != 0) F |= XF; /* bit 3 -> flag 3 */
@@ -3879,17 +3883,17 @@ namespace mame
          ***************************************************************/
         void ind()
         {
-            UInt32 t;
+            unsigned t;
             uint8_t io = in_(BC);
-            WZ = (UInt16)(BC - 1);
+            WZ = (uint16_t)(BC - 1);
             B--;
             wm(HL, io);
             HL--;
             F = SZ[B];
-            t = ((UInt32)(C - 1) & 0xff) + (UInt32)io;
+            t = ((unsigned)(C - 1) & 0xff) + (unsigned)io;
             if ((io & SF) != 0) F |= NF;
             if ((t & 0x100) != 0) F |= HF | CF;
-            F |= (byte)(SZP[(byte)(t & 0x07) ^ B] & PF);
+            F |= (uint8_t)(SZP[(uint8_t)(t & 0x07) ^ B] & PF);
         }
 
         /***************************************************************
@@ -3897,17 +3901,17 @@ namespace mame
          ***************************************************************/
         void outd()
         {
-            UInt32 t;
+            unsigned t;
             uint8_t io = rm(HL);
             B--;
-            WZ = (UInt16)(BC - 1);
+            WZ = (uint16_t)(BC - 1);
             out_(BC, io);
             HL--;
             F = SZ[B];
-            t = (UInt32)L + (UInt32)io;
+            t = (unsigned)L + (unsigned)io;
             if ((io & SF) != 0) F |= NF;
             if ((t & 0x100) != 0) F |= HF | CF;
-            F |= (byte)(SZP[(byte)(t & 0x07) ^ B] & PF);
+            F |= (uint8_t)(SZP[(uint8_t)(t & 0x07) ^ B] & PF);
         }
 
         /***************************************************************
@@ -3919,7 +3923,7 @@ namespace mame
             if (BC != 0)
             {
                 PC -= 2;
-                WZ = (UInt16)(PC + 1);
+                WZ = (uint16_t)(PC + 1);
                 CC_ex(0xb0);
             }
         }
@@ -3933,7 +3937,7 @@ namespace mame
             if (BC != 0 && !((F & ZF) != 0))
             {
                 PC -= 2;
-                WZ = (UInt16)(PC + 1);
+                WZ = (uint16_t)(PC + 1);
                 CC_ex(0xb1);
             }
         }
@@ -3973,7 +3977,7 @@ namespace mame
             if (BC != 0)
             {
                 PC -= 2;
-                WZ = (UInt16)(PC + 1);
+                WZ = (uint16_t)(PC + 1);
                 CC_ex(0xb8);
             }
         }
@@ -3987,7 +3991,7 @@ namespace mame
             if (BC != 0 && !((F & ZF) != 0))
             {
                 PC -= 2;
-                WZ = (UInt16)(PC + 1);
+                WZ = (uint16_t)(PC + 1);
                 CC_ex(0xb9);
             }
         }
@@ -4031,7 +4035,7 @@ namespace mame
         {
             if (m_nmi_pending)
                 take_nmi();
-            else if (m_irq_state != g.CLEAR_LINE && m_iff1 != 0 && !m_after_ei)
+            else if (m_irq_state != CLEAR_LINE && m_iff1 != 0 && !m_after_ei)
                 take_interrupt();
         }
 
@@ -4059,7 +4063,7 @@ namespace mame
                 // even, and all 8 bits will be used; even $FF is handled normally.
                 irq_vector = (irq_vector & 0xff) | (m_i << 8);
                 push(m_pc);
-                rm16((UInt16)irq_vector, ref m_pc);
+                rm16((uint16_t)irq_vector, ref m_pc);
                 LOG("Z80 IM2 [${0}] = ${1}\n", irq_vector, PCD);  //[$%04x] = $%04x
                 /* CALL opcode timing + 'interrupt latency' cycles */
                 m_icount.i -= m_cc_op[0xcd] + m_cc_ex[0xff];
@@ -4088,18 +4092,18 @@ namespace mame
                     {
                         case 0xcd0000:  /* call */
                             push(m_pc);
-                            PCD = (UInt32)(irq_vector & 0xffff);
+                            PCD = (uint32_t)(irq_vector & 0xffff);
                                 /* CALL $xxxx cycles */
                             m_icount.i -= m_cc_op[0xcd];
                             break;
                         case 0xc30000:  /* jump */
-                            PCD = (UInt32)(irq_vector & 0xffff);
+                            PCD = (uint32_t)(irq_vector & 0xffff);
                             /* JP $xxxx cycles */
                             m_icount.i -= m_cc_op[0xc3];
                             break;
                         default:        /* rst (or other opcodes?) */
                             push(m_pc);
-                            PCD = (UInt32)(irq_vector & 0x0038);
+                            PCD = (uint32_t)(irq_vector & 0x0038);
                             /* RST $xx cycles */
                             m_icount.i -= m_cc_op[0xff];
                             break;
@@ -4110,7 +4114,7 @@ namespace mame
                 m_icount.i -= m_cc_ex[0xff];
             }
 
-            WZ = (UInt16)PCD;
+            WZ = (uint16_t)PCD;
 
 #if HAS_LDAIR_QUIRK
             /* reset parity flag after LD A,I or LD A,R */
@@ -4132,7 +4136,7 @@ namespace mame
             m_iff1 = 0;
             push(m_pc);
             PCD = 0x0066;
-            WZ = (UInt16)PCD;
+            WZ = (uint16_t)PCD;
             m_icount.i -= 11;
             m_nmi_pending = false;
         }

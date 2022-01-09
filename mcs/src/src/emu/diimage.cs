@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
 
@@ -222,44 +221,99 @@ namespace mame
 
 
         public bool exists() { return !m_image_name.empty(); }
+
+        // get image file path/name
         public string filename() { return m_image_name.empty() ? null : m_image_name; }
         //string basename() { return m_basename.empty() ? null : m_basename.c_str(); }
         public string basename_noext() { return m_basename_noext.empty() ? null : m_basename_noext; }
         //string filetype() { return m_filetype; }
         //bool is_filetype(const std::string &candidate_filetype) { return !core_stricmp(filetype().c_str(), candidate_filetype.c_str()); }
+
         //bool is_open() const noexcept { return bool(m_file); }
         //util::core_file &image_core_file() const noexcept { return *m_file; }
         //u64 length() { check_for_file(); return m_file->size(); }
         //bool is_readonly() const noexcept { return m_readonly; }
-        //u32 fread(void *buffer, u32 length) { check_for_file(); return m_file->read(buffer, length); }
-        //u32 fread(std::unique_ptr<u8[]> &ptr, u32 length) { ptr = std::make_unique<u8[]>(length); return fread(ptr.get(), length); }
-        //u32 fread(std::unique_ptr<u8[]> &ptr, u32 length, offs_t offset) { ptr = std::make_unique<u8[]>(length); return fread(ptr.get() + offset, length - offset); }
-        //u32 fwrite(const void *buffer, u32 length) { check_for_file(); return m_file->write(buffer, length); }
-        //int fseek(s64 offset, int whence) { check_for_file(); return m_file->seek(offset, whence); }
-        //u64 ftell() { check_for_file(); return m_file->tell(); }
-        //int fgetc() { char ch; if (fread(&ch, 1) != 1) ch = '\0'; return ch; }
-        //char *fgets(char *buffer, u32 length) { check_for_file(); return m_file->gets(buffer, length); }
-        //int image_feof() { check_for_file(); return m_file->eof(); }
-        //void *ptr() {check_for_file(); return const_cast<void *>(m_file->buffer()); }
 
+        // image file I/O wrappers
+        // TODO: move away from using these and let implementations use the I/O interface directly
+        // FIXME: don't swallow errors
+        //u64 length()
+        //{
+        //    check_for_file();
+        //    u64 result = 0;
+        //    m_file->length(result);
+        //    return result;
+        //}
+        //u32 fread(void *buffer, u32 length)
+        //{
+        //    check_for_file();
+        //    size_t actual;
+        //    m_file->read(buffer, length, actual);
+        //    return actual;
+        //}
+        //u32 fwrite(const void *buffer, u32 length)
+        //{
+        //    check_for_file();
+        //    size_t actual;
+        //    m_file->write(buffer, length, actual);
+        //    return actual;
+        //}
+        //std::error_condition fseek(s64 offset, int whence)
+        //{
+        //    check_for_file();
+        //    return m_file->seek(offset, whence);
+        //}
+        //u64 ftell()
+        //{
+        //    check_for_file();
+        //    u64 result = 0;
+        //    m_file->tell(result);
+        //    return result;
+        //}
+        //int fgetc()
+        //{
+        //    char ch;
+        //    if (fread(&ch, 1) != 1)
+        //        ch = '\0';
+        //    return ch;
+        //}
+        //char *fgets(char *buffer, u32 length)
+        //{
+        //    check_for_file();
+        //    return m_file->gets(buffer, length);
+        //}
+        //bool image_feof()
+        //{
+        //    check_for_file();
+        //    return m_file->eof();
+        //}
+        //const void *ptr()
+        //{
+        //    check_for_file();
+        //    return m_file->buffer();
+        //}
 
-        // configuration access
+        // allocate and read into buffers
+        //u32 fread(std::unique_ptr<u8 []> &ptr, u32 length) { ptr = std::make_unique<u8 []>(length); return fread(ptr.get(), length); }
+        //u32 fread(std::unique_ptr<u8 []> &ptr, u32 length, offs_t offset) { ptr = std::make_unique<u8 []>(length); return fread(ptr.get() + offset, length - offset); }
 
+        // access to software list item information
         public software_info software_entry() { return (m_software_part_ptr == null) ? null : m_software_part_ptr.info(); }
         public software_part part_entry() { return m_software_part_ptr; }
         public string software_list_name() { return m_software_list_name; }
         public bool loaded_through_softlist() { return m_software_part_ptr != null; }
 
 
-        //void set_working_directory(const char *working_directory) { m_working_directory = working_directory; }
-        //const char * working_directory();
+        // working directory
+        //void set_working_directory(std::string_view working_directory) { m_working_directory = working_directory; }
+        //void set_working_directory(std::string &&working_directory) { m_working_directory = std::move(working_directory); }
+        //const std::string &working_directory() const { return m_working_directory; }
 
-
+        // access to software list properties and ROM data areas
         //u8 *get_software_region(const char *tag);
         //u32 get_software_region_length(const char *tag);
         //const char *get_feature(const char *feature_name) const;
         //bool load_software_region(const char *tag, std::unique_ptr<u8[]> &ptr);
-
 
         //u32 crc();
         //hash_collection& hash() { return m_hash; }
@@ -271,7 +325,6 @@ namespace mame
         //void battery_save(const void *buffer, int length);
 
         //const char *image_type_name()  const { return device_typename(image_type()); }
-
 
 
         public string instance_name() { return m_instance_name; }

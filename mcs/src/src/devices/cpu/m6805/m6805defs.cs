@@ -2,13 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int16_t = System.Int16;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
+
+using static mame.cpp_global;
 
 
 namespace mame
@@ -109,7 +110,7 @@ namespace mame
         {
             switch (M)
             {
-                case addr_mode.IM: g.static_assert(addr_mode.IM != M, "invalid mode for this instruction"); break;
+                case addr_mode.IM: static_assert(addr_mode.IM != M, "invalid mode for this instruction"); break;
                 case addr_mode.DI: DIRECT(big); break;
                 case addr_mode.EX: EXTENDED(big); break;
                 case addr_mode.IX: INDEXED(); break;

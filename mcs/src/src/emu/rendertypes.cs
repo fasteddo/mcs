@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.rendertypes_global;
 
 
 namespace mame
@@ -31,7 +32,7 @@ namespace mame
     //**************************************************************************
 
     // render_bounds - floating point bounding rectangle
-    public class render_bounds
+    public struct render_bounds
     {
         public float x0;                 // leftmost X coordinate
         public float y0;                 // topmost Y coordinate
@@ -39,7 +40,6 @@ namespace mame
         public float y1;                 // bottommost Y coordinate
 
 
-        public render_bounds() { }
         public render_bounds(render_bounds rhs) { x0 = rhs.x0; y0 = rhs.y0; x1 = rhs.x1; y1 = rhs.y1; }
 
 
@@ -103,7 +103,7 @@ namespace mame
 
 
     // render_color - floating point set of ARGB values
-    public class render_color
+    public struct render_color
     {
         public float a;                  // alpha component (0.0 = transparent, 1.0 = opaque)
         public float r;                  // red component (0.0 = none, 1.0 = max)
@@ -111,7 +111,6 @@ namespace mame
         public float b;                  // blue component (0.0 = none, 1.0 = max)
 
 
-        public render_color() { }
         public render_color(render_color other) { this.a = other.a; this.r = other.r; this.g = other.g; this.b = other.b; }
 
 
@@ -141,19 +140,18 @@ namespace mame
 
 
     // render_texuv - floating point set of UV texture coordinates
-    public class render_texuv
+    public struct render_texuv
     {
         public float u;                  // U coordinate (0.0-1.0)
         public float v;                  // V coordinate (0.0-1.0)
 
 
-        public render_texuv() { }
         public render_texuv(render_texuv tex) { u = tex.u; v = tex.v; }
     }
 
 
     // render_quad_texuv - floating point set of UV texture coordinates
-    public class render_quad_texuv
+    public struct render_quad_texuv
     {
         public render_texuv tl;                 // top-left UV coordinate
         public render_texuv tr;                 // top-right UV coordinate
@@ -161,20 +159,12 @@ namespace mame
         public render_texuv br;                 // bottom-right UV coordinate
 
 
-        public render_quad_texuv()
-        {
-            tl = new render_texuv();
-            tr = new render_texuv();
-            bl = new render_texuv();
-            br = new render_texuv();
-        }
-
         public render_quad_texuv(render_quad_texuv other)
         {
-            tl = new render_texuv(other.tl);
-            tr = new render_texuv(other.tr);
-            bl = new render_texuv(other.bl);
-            br = new render_texuv(other.br);
+            tl = other.tl;
+            tr = other.tr;
+            bl = other.bl;
+            br = other.br;
         }
     }
 }

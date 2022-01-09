@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using s32 = System.Int32;
@@ -10,6 +9,10 @@ using s64 = System.Int64;
 using seconds_t = System.Int32;  //typedef s32 seconds_t;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+
+using static mame.attotime_global;
+using static mame.cpp_global;
+using static mame.eminline_global;
 
 
 namespace mame
@@ -19,20 +22,20 @@ namespace mame
     //typedef s32 seconds_t;
 
 
-    public struct attotime
+    public static class attotime_global
     {
         // core definitions
-        public const attoseconds_t ATTOSECONDS_PER_SECOND_SQRT = 1000000000;
+        public const attoseconds_t ATTOSECONDS_PER_SECOND_SQRT = 1_000_000_000;
         public const attoseconds_t ATTOSECONDS_PER_SECOND = ATTOSECONDS_PER_SECOND_SQRT * ATTOSECONDS_PER_SECOND_SQRT;
-        public const attoseconds_t ATTOSECONDS_PER_MILLISECOND = ATTOSECONDS_PER_SECOND / 1000;
-        public const attoseconds_t ATTOSECONDS_PER_MICROSECOND = ATTOSECONDS_PER_SECOND / 1000000;
-        public const attoseconds_t ATTOSECONDS_PER_NANOSECOND = ATTOSECONDS_PER_SECOND / 1000000000;
+        public const attoseconds_t ATTOSECONDS_PER_MILLISECOND = ATTOSECONDS_PER_SECOND / 1_000;
+        public const attoseconds_t ATTOSECONDS_PER_MICROSECOND = ATTOSECONDS_PER_SECOND / 1_000_000;
+        public const attoseconds_t ATTOSECONDS_PER_NANOSECOND = ATTOSECONDS_PER_SECOND / 1_000_000_000;
 
-        public const seconds_t ATTOTIME_MAX_SECONDS = 1000000000;
+        public const seconds_t ATTOTIME_MAX_SECONDS = 1_000_000_000;
 
         // convert between a double and attoseconds
         public static double ATTOSECONDS_TO_DOUBLE(attoseconds_t x) { return (double)x * 1e-18; }
-        //#define DOUBLE_TO_ATTOSECONDS(x)        ((attoseconds_t)((x) * 1e18))
+        public static attoseconds_t DOUBLE_TO_ATTOSECONDS(double x) { return (attoseconds_t)(x * 1e18); }
 
         // convert between hertz (as a double) and attoseconds
         public static double ATTOSECONDS_TO_HZ(attoseconds_t x) { return (double)ATTOSECONDS_PER_SECOND / (double)x; }
@@ -48,8 +51,11 @@ namespace mame
         public static attoseconds_t ATTOSECONDS_IN_MSEC(u32 x) { return (attoseconds_t)x * ATTOSECONDS_PER_MILLISECOND; }
         public static attoseconds_t ATTOSECONDS_IN_USEC(u32 x) { return (attoseconds_t)x * ATTOSECONDS_PER_MICROSECOND; }
         public static attoseconds_t ATTOSECONDS_IN_NSEC(u32 x) { return (attoseconds_t)x * ATTOSECONDS_PER_NANOSECOND; }
+    }
 
 
+    public struct attotime
+    {
         // constants
         public static readonly attotime zero = new attotime(0, 0);
         public static readonly attotime never = new attotime(ATTOTIME_MAX_SECONDS, 0);
@@ -88,7 +94,7 @@ namespace mame
                     -ATTOSECONDS_PER_SECOND;                                        // out-of-range negative values
         }
 
-        public double as_hz() { g.assert(!is_zero()); return m_seconds == 0 ? ATTOSECONDS_TO_HZ(m_attoseconds) : is_never() ? 0.0 : 1.0 / as_double(); }
+        public double as_hz() { assert(!is_zero()); return m_seconds == 0 ? ATTOSECONDS_TO_HZ(m_attoseconds) : is_never() ? 0.0 : 1.0 / as_double(); }
 
         //double as_khz() const noexcept { assert(!is_zero()); return m_seconds == 0 ? double(ATTOSECONDS_PER_MILLISECOND) / double(m_attoseconds) : is_never() ? 0.0 : 1e-3 / as_double(); }
         //double as_mhz() const noexcept { assert(!is_zero()); return m_seconds == 0 ? double(ATTOSECONDS_PER_MICROSECOND) / double(m_attoseconds) : is_never() ? 0.0 : 1e-6 / as_double(); }
@@ -101,7 +107,7 @@ namespace mame
         u64 as_ticks(u32 frequency)
         {
             u32 fracticks = (u32)((new attotime(0, m_attoseconds) * frequency).m_seconds);
-            return g.mulu_32x32((u32)m_seconds, frequency) + fracticks;
+            return mulu_32x32((u32)m_seconds, frequency) + fracticks;
         }
 
 
@@ -117,16 +123,15 @@ namespace mame
         {
             //static char buffers[8][30];
             //static int nextbuf;
-            //char *buffer = &buffers[nextbuf++ % 8][0];
-            string buffer;
+            string buffer;  //char *buffer = &buffers[nextbuf++ % 8][0];
 
             // special case: never
             if (this == never)
-                buffer = "(never)";  //sprintf(buffer, "%-*s", precision, "(never)");
+                sprintf(out buffer, "{0}", "(never)");  //sprintf(buffer, "%-*s", precision, "(never)");
 
             // case 1: we want no precision; seconds only
             else if (precision == 0)
-                buffer = string.Format("%d", m_seconds);  //sprintf(buffer, "%d", m_seconds);
+                sprintf(out buffer, "{0}", m_seconds);  //sprintf(buffer, "%d", m_seconds);
 
             // case 2: we want 9 or fewer digits of precision
             else if (precision <= 9)
@@ -138,21 +143,21 @@ namespace mame
                     upper /= 10;
                     temp++;
                 }
-                buffer = string.Format("{0}.{1}", m_seconds, upper.ToString(new string('0', precision)));  //sprintf(buffer, "%d.%0*d", m_seconds, precision, upper);
+                sprintf(out buffer, "{0}.{1}", m_seconds, upper.ToString(new string('0', precision)));  //sprintf(buffer, "%d.%0*d", m_seconds, precision, upper);
             }
 
             // case 3: more than 9 digits of precision
             else
             {
                 u32 lower;
-                u32 upper = g.divu_64x32_rem((u64)m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out lower);
+                u32 upper = divu_64x32_rem((u64)m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out lower);
                 int temp = precision;
                 while (temp < 18)
                 {
                     lower /= 10;
                     temp++;
                 }
-                buffer = string.Format("{0}.{1}{2}", m_seconds, upper, lower);  //sprintf(buffer, "%d.%09d%0*d", m_seconds, upper, precision - 9, lower);
+                sprintf(out buffer, "{0}.{1}{2}", m_seconds, upper, lower);;  //sprintf(buffer, "%d.%09d%0*d", m_seconds, upper, precision - 9, lower);
             }
 
             return buffer;
@@ -183,7 +188,7 @@ namespace mame
                     return new attotime(0, (attoseconds_t)ticks * attos_per_tick);  //return attotime(0, ticks * attos_per_tick);
 
                 u32 remainder;
-                s32 secs = (s32)g.divu_64x32_rem(ticks, frequency, out remainder);
+                s32 secs = (s32)divu_64x32_rem(ticks, frequency, out remainder);
                 return new attotime(secs, (attoseconds_t)remainder * attos_per_tick);  //return attotime(secs, u64(remainder) * attos_per_tick);
             }
             else
@@ -302,26 +307,26 @@ namespace mame
 
             // split attoseconds into upper and lower halves which fit into 32 bits
             u32 attolo;
-            u32 attohi = g.divu_64x32_rem((u64)left.m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out attolo);
+            u32 attohi = divu_64x32_rem((u64)left.m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out attolo);
 
             // scale the lower half, then split into high/low parts
-            u64 temp = g.mulu_32x32(attolo, factor);
+            u64 temp = mulu_32x32(attolo, factor);
             u32 reslo;
-            temp = g.divu_64x32_rem(temp, (u32)ATTOSECONDS_PER_SECOND_SQRT, out reslo);
+            temp = divu_64x32_rem(temp, (u32)ATTOSECONDS_PER_SECOND_SQRT, out reslo);
 
             // scale the upper half, then split into high/low parts
-            temp += g.mulu_32x32(attohi, factor);
+            temp += mulu_32x32(attohi, factor);
             u32 reshi;
-            temp = g.divu_64x32_rem(temp, (u32)ATTOSECONDS_PER_SECOND_SQRT, out reshi);
+            temp = divu_64x32_rem(temp, (u32)ATTOSECONDS_PER_SECOND_SQRT, out reshi);
 
             // scale the seconds
-            temp += g.mulu_32x32((u32)left.m_seconds, factor);
+            temp += mulu_32x32((u32)left.m_seconds, factor);
             if (temp >= ATTOTIME_MAX_SECONDS)
                 return never;  //return *this = never;
 
             // build the result
             seconds_t seconds = (seconds_t)temp;  //m_seconds = temp;
-            attoseconds_t attoseconds = (attoseconds_t)reslo + g.mul_32x32((s32)reshi, (s32)ATTOSECONDS_PER_SECOND_SQRT);  //m_attoseconds = (attoseconds_t)reslo + mul_32x32(reshi, ATTOSECONDS_PER_SECOND_SQRT);
+            attoseconds_t attoseconds = (attoseconds_t)reslo + mul_32x32((s32)reshi, (s32)ATTOSECONDS_PER_SECOND_SQRT);  //m_attoseconds = (attoseconds_t)reslo + mul_32x32(reshi, ATTOSECONDS_PER_SECOND_SQRT);
             return new attotime(seconds, attoseconds);  //return *this;
         }
 
@@ -344,22 +349,22 @@ namespace mame
 
             // split attoseconds into upper and lower halves which fit into 32 bits
             u32 attolo;
-            u32 attohi = g.divu_64x32_rem((u64)left.m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out attolo);
+            u32 attohi = divu_64x32_rem((u64)left.m_attoseconds, (u32)ATTOSECONDS_PER_SECOND_SQRT, out attolo);
 
             // divide the seconds and get the remainder
             u32 remainder;
-            seconds_t seconds = (seconds_t)g.divu_64x32_rem((u64)left.m_seconds, factor, out remainder);  //m_seconds = divu_64x32_rem(m_seconds, factor, &remainder);
+            seconds_t seconds = (seconds_t)divu_64x32_rem((u64)left.m_seconds, factor, out remainder);  //m_seconds = divu_64x32_rem(m_seconds, factor, &remainder);
 
             // combine the upper half of attoseconds with the remainder and divide that
-            u64 temp = (u64)attohi + g.mulu_32x32(remainder, (u32)ATTOSECONDS_PER_SECOND_SQRT);  //u64 temp = s64(attohi) + mulu_32x32(remainder, ATTOSECONDS_PER_SECOND_SQRT);
-            u32 reshi = g.divu_64x32_rem(temp, factor, out remainder);
+            u64 temp = (u64)attohi + mulu_32x32(remainder, (u32)ATTOSECONDS_PER_SECOND_SQRT);  //u64 temp = s64(attohi) + mulu_32x32(remainder, ATTOSECONDS_PER_SECOND_SQRT);
+            u32 reshi = divu_64x32_rem(temp, factor, out remainder);
 
             // combine the lower half of attoseconds with the remainder and divide that
-            temp = attolo + g.mulu_32x32(remainder, (u32)ATTOSECONDS_PER_SECOND_SQRT);
-            u32 reslo = g.divu_64x32_rem(temp, factor, out remainder);
+            temp = attolo + mulu_32x32(remainder, (u32)ATTOSECONDS_PER_SECOND_SQRT);
+            u32 reslo = divu_64x32_rem(temp, factor, out remainder);
 
             // round based on the remainder
-            attoseconds_t attoseconds = (attoseconds_t)reslo + (attoseconds_t)g.mulu_32x32(reshi, (u32)ATTOSECONDS_PER_SECOND_SQRT);  //m_attoseconds = (attoseconds_t)reslo + mulu_32x32(reshi, ATTOSECONDS_PER_SECOND_SQRT);
+            attoseconds_t attoseconds = (attoseconds_t)reslo + (attoseconds_t)mulu_32x32(reshi, (u32)ATTOSECONDS_PER_SECOND_SQRT);  //m_attoseconds = (attoseconds_t)reslo + mulu_32x32(reshi, ATTOSECONDS_PER_SECOND_SQRT);
             if (remainder >= factor / 2)
             {
                 if (++attoseconds >= ATTOSECONDS_PER_SECOND)  //if (++m_attoseconds >= ATTOSECONDS_PER_SECOND)

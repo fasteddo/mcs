@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int16_t = System.Int16;
 using int32_t = System.Int32;
@@ -10,6 +9,8 @@ using int64_t = System.Int64;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+
+using static mame.osdcomm_global;
 
 
 namespace mame

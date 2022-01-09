@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.nlm_base_global;
 
 
 namespace mame

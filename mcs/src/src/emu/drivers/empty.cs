@@ -2,9 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using u32 = System.UInt32;
+
+using static mame.device_creator_helper_global;
+using static mame.emucore_global;
+using static mame.gamedrv_global;
+using static mame.romentry_global;
+using static mame.screen_global;
 
 
 namespace mame
@@ -21,7 +26,7 @@ namespace mame
         public void ___empty(machine_config config)
         {
             // video hardware
-            screen_device screen = g.SCREEN(config, "screen", g.SCREEN_TYPE_RASTER);
+            screen_device screen = SCREEN(config, "screen", SCREEN_TYPE_RASTER);
             screen.set_screen_update(screen_update);
             screen.set_size(640, 480);
             screen.set_visarea(0, 639, 0, 479);
@@ -51,7 +56,7 @@ namespace mame
         //ROM_START( ___empty )
         static readonly MemoryContainer<tiny_rom_entry> rom____empty = new MemoryContainer<tiny_rom_entry>()
         {
-            g.ROM_END,
+            ROM_END,
         };
 
 
@@ -65,6 +70,6 @@ namespace mame
 
 
         //                                                          creator,                 rom           YEAR,   NAME,       PARENT,  MACHINE,              INPUT, INIT,                     MONITOR,COMPANY, FULLNAME,FLAGS
-        public static readonly game_driver driver____empty = g.GAME(device_creator____empty, rom____empty, "2007", "___empty", "0",     empty_state____empty, null,  driver_device.empty_init, g.ROT0, "MAME", "No Driver Loaded", g.MACHINE_NO_SOUND_HW );
+        public static readonly game_driver driver____empty = GAME(device_creator____empty, rom____empty, "2007", "___empty", "0",     empty_state____empty, null,  driver_device.empty_init, ROT0,   "MAME",  "No Driver Loaded", MACHINE_NO_SOUND_HW );
     }
 }

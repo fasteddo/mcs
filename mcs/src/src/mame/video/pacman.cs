@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -12,6 +11,11 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.emucore_global;
+using static mame.resnet_global;
+using static mame.tilemap_global;
+using static mame.util;
 
 
 namespace mame
@@ -86,7 +90,7 @@ namespace mame
             double [] rweights = new double[3];
             double [] gweights = new double[3];
             double [] bweights = new double[2];
-            g.compute_resistor_weights(0, 255, -1.0,
+            compute_resistor_weights(0, 255, -1.0,
                     3, resistances3, out rweights, 0, 0,
                     3, resistances3, out gweights, 0, 0,
                     2, resistances2, out bweights, 0, 0);
@@ -99,23 +103,23 @@ namespace mame
                 int bit2;
 
                 // red component
-                bit0 = g.BIT(color_prom[i], 0);
-                bit1 = g.BIT(color_prom[i], 1);
-                bit2 = g.BIT(color_prom[i], 2);
-                int r = g.combine_weights(rweights, bit0, bit1, bit2);
+                bit0 = BIT(color_prom[i], 0);
+                bit1 = BIT(color_prom[i], 1);
+                bit2 = BIT(color_prom[i], 2);
+                int r = combine_weights(rweights, bit0, bit1, bit2);
 
                 // green component
-                bit0 = g.BIT(color_prom[i], 3);
-                bit1 = g.BIT(color_prom[i], 4);
-                bit2 = g.BIT(color_prom[i], 5);
-                int gr = g.combine_weights(gweights, bit0, bit1, bit2);
+                bit0 = BIT(color_prom[i], 3);
+                bit1 = BIT(color_prom[i], 4);
+                bit2 = BIT(color_prom[i], 5);
+                int gr = combine_weights(gweights, bit0, bit1, bit2);
 
                 // blue component
-                bit0 = g.BIT(color_prom[i], 6);
-                bit1 = g.BIT(color_prom[i], 7);
-                int b = g.combine_weights(bweights, bit0, bit1);
+                bit0 = BIT(color_prom[i], 6);
+                bit1 = BIT(color_prom[i], 7);
+                int b = combine_weights(bweights, bit0, bit1);
 
-                palette.dipalette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
+                palette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
 
             // color_prom now points to the beginning of the lookup table
@@ -127,10 +131,10 @@ namespace mame
                 uint8_t ctabentry = (uint8_t)(color_prom[i] & 0x0f);
 
                 // first palette bank
-                palette.dipalette.set_pen_indirect((pen_t)i, ctabentry);
+                palette.set_pen_indirect((pen_t)i, ctabentry);
 
                 // second palette bank
-                palette.dipalette.set_pen_indirect((pen_t)(i + 64 * 4), (indirect_pen_t)(0x10 + ctabentry));
+                palette.set_pen_indirect((pen_t)(i + 64 * 4), (indirect_pen_t)(0x10 + ctabentry));
             }
         }
 
@@ -162,14 +166,14 @@ namespace mame
 
         void init_save_state()
         {
-            save_item(g.NAME(new { m_charbank }));
-            save_item(g.NAME(new { m_spritebank }));
-            save_item(g.NAME(new { m_palettebank }));
-            save_item(g.NAME(new { m_colortablebank }));
-            save_item(g.NAME(new { m_flipscreen }));
-            save_item(g.NAME(new { m_bgpriority }));
-            save_item(g.NAME(new { m_irq_mask }));
-            save_item(g.NAME(new { m_interrupt_vector }));
+            save_item(NAME(new { m_charbank }));
+            save_item(NAME(new { m_spritebank }));
+            save_item(NAME(new { m_palettebank }));
+            save_item(NAME(new { m_colortablebank }));
+            save_item(NAME(new { m_flipscreen }));
+            save_item(NAME(new { m_bgpriority }));
+            save_item(NAME(new { m_irq_mask }));
+            save_item(NAME(new { m_interrupt_vector }));
         }
 
 
@@ -191,7 +195,7 @@ namespace mame
             /* one pixel to the left to get a more correct placement */
             m_xoffsethack = 1;
 
-            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, pacman_get_tile_info, pacman_scan_rows, 8, 8, 36, 28);
+            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op0, pacman_get_tile_info, pacman_scan_rows, 8, 8, 36, 28);
         }
 
 
@@ -212,8 +216,8 @@ namespace mame
         //WRITE_LINE_MEMBER(pacman_state::flipscreen_w)
         void flipscreen_w(int state)
         {
-            m_flipscreen = (byte)state;
-            m_bg_tilemap.set_flip(m_flipscreen * (g.TILEMAP_FLIPX + g.TILEMAP_FLIPY));
+            m_flipscreen = (uint8_t)state;
+            m_bg_tilemap.set_flip(m_flipscreen * (TILEMAP_FLIPX + TILEMAP_FLIPY));
         }
 
 
@@ -222,7 +226,7 @@ namespace mame
             if (m_bgpriority != 0)
                 bitmap.fill(0, cliprect);
             else
-                m_bg_tilemap.draw(screen, bitmap, cliprect, g.TILEMAP_DRAW_OPAQUE, 0);
+                m_bg_tilemap.draw(screen, bitmap, cliprect, TILEMAP_DRAW_OPAQUE, 0);
 
             if (m_spriteram != null)
             {
@@ -259,20 +263,20 @@ namespace mame
 
                     color = (spriteram[offs + 1] & 0x1f) | (m_colortablebank << 5) | (m_palettebank << 6);
 
-                    m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
+                    m_gfxdecode.op0.gfx(1).transmask(bitmap,spriteclip,
                             (u32)(( spriteram[offs] >> 2) | (m_spritebank << 6)),
                             (u32)color,
                             fx,fy,
                             sx,sy,
-                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (u32)color & 0x3f, 0));
+                            m_palette.op0.transpen_mask(m_gfxdecode.op0.gfx(1), (u32)color & 0x3f, 0));
 
                     /* also plot the sprite with wraparound (tunnel in Crush Roller) */
-                    m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
+                    m_gfxdecode.op0.gfx(1).transmask(bitmap,spriteclip,
                             (u32)(( spriteram[offs] >> 2) | (m_spritebank << 6)),
                             (u32)color,
                             fx,fy,
                             sx - 256,sy,
-                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (u32)color & 0x3f, 0));
+                            m_palette.op0.transpen_mask(m_gfxdecode.op0.gfx(1), (u32)color & 0x3f, 0));
                 }
 
                 /* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
@@ -301,20 +305,20 @@ namespace mame
                     fx = (uint8_t)((spriteram[offs] & 1) ^ m_inv_spr);
                     fy = (uint8_t)((spriteram[offs] & 2) ^ ((m_inv_spr) << 1));
 
-                    m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
+                    m_gfxdecode.op0.gfx(1).transmask(bitmap,spriteclip,
                             (u32)((spriteram[offs] >> 2) | (m_spritebank << 6)),
                             (u32)color,
                             fx,fy,
                             sx,sy + m_xoffsethack,
-                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (u32)color & 0x3f, 0));
+                            m_palette.op0.transpen_mask(m_gfxdecode.op0.gfx(1), (u32)color & 0x3f, 0));
 
                     /* also plot the sprite with wraparound (tunnel in Crush Roller) */
-                    m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,spriteclip,
+                    m_gfxdecode.op0.gfx(1).transmask(bitmap,spriteclip,
                             (u32)((spriteram[offs] >> 2) | (m_spritebank << 6)),
                             (u32)color,
                             fx,fy,
                             sx - 256,sy + m_xoffsethack,
-                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (u32)color & 0x3f, 0));
+                            m_palette.op0.transpen_mask(m_gfxdecode.op0.gfx(1), (u32)color & 0x3f, 0));
                 }
             }
 

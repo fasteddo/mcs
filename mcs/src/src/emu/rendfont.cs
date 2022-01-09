@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using char32_t = System.UInt32;
@@ -15,6 +16,15 @@ using u32 = System.UInt32;
 using u64 = System.UInt64;
 using unsigned = System.UInt32;
 
+using static mame.cmddata_global;
+using static mame.corestr_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
+using static mame.rendfont_global;
+using static mame.uicmd14_global;
+using static mame.uismall_global;
+using static mame.unicode_global;
+
 
 namespace mame
 {
@@ -26,7 +36,7 @@ namespace mame
 
 
         const bool VERBOSE = false;
-        static void LOG(string format, params object [] args) { if (VERBOSE) g.osd_printf_verbose(format, args); }
+        static void LOG(string format, params object [] args) { if (VERBOSE) osd_printf_verbose(format, args); }
 
 
         // internal format
@@ -137,7 +147,7 @@ namespace mame
             }
 
             // if the filename is 'default' default to 'ui.bdf' for backwards compatibility
-            if (filename != null && g.core_stricmp(filename, "default") == 0)
+            if (filename != null && core_stricmp(filename, "default") == 0)
                 filename = "ui.bdf";
 
             // attempt to load an external BDF font first
@@ -149,8 +159,8 @@ namespace mame
             }
 
             // load the compiled in data instead
-            emu_file ramfile = new emu_file(g.OPEN_FLAG_READ);
-            std.error_condition filerr = ramfile.open_ram(new MemoryU8(uismall_global.font_uismall), (UInt32)uismall_global.font_uismall.Length);//, sizeof(font_uismall));
+            emu_file ramfile = new emu_file(OPEN_FLAG_READ);
+            std.error_condition filerr = ramfile.open_ram(new MemoryU8(font_uismall), (u32)font_uismall.Length);//, sizeof(font_uismall));
             if (!filerr)
                 load_cached(ramfile, 0, 0);
 
@@ -186,7 +196,7 @@ namespace mame
             // loop over characters
             while (!str.empty())
             {
-                int scharcount = unicode_global.uchar_from_utf8(out schar, str);
+                int scharcount = uchar_from_utf8(out schar, str);
                 totwidth += get_char(schar).width;
                 str = str.Substring(scharcount);  //string.remove_prefix(scharcount);
             }
@@ -207,7 +217,7 @@ namespace mame
             while (!utf8string.empty())
             {
                 char uchar;  //char32_t uchar;
-                int count = unicode_global.uchar_from_utf8(out uchar, utf8string);
+                int count = uchar_from_utf8(out uchar, utf8string);
                 if (count < 0)
                     break;
 
@@ -304,7 +314,7 @@ namespace mame
             else if (m_glyphs[page] == null || m_glyphs[page].Count == 0)
             {
                 //mamep: make table for command glyph
-                if ((m_format == format.OSD) || ((chnum >= cmddata_global.COMMAND_UNICODE) && (chnum < cmddata_global.COMMAND_UNICODE + cmddata_global.MAX_GLYPH_FONT)))
+                if ((m_format == format.OSD) || ((chnum >= COMMAND_UNICODE) && (chnum < COMMAND_UNICODE + MAX_GLYPH_FONT)))
                 {
                     m_glyphs[page] = new List<glyph>(256);  // new glyph[256];
                     for (int i = 0; i < 256; i++)
@@ -325,7 +335,7 @@ namespace mame
             if (!gl.bitmap.valid())
             {
                 //mamep: command glyph support
-                if (m_height_cmd != 0 && chnum >= cmddata_global.COMMAND_UNICODE && chnum < cmddata_global.COMMAND_UNICODE + cmddata_global.MAX_GLYPH_FONT)
+                if (m_height_cmd != 0 && chnum >= COMMAND_UNICODE && chnum < COMMAND_UNICODE + MAX_GLYPH_FONT)
                 {
                     glyph glyph_ch = m_glyphs_cmd[page][(int)(chnum % 256)];
                     float scale = (float)m_height / (float)m_height_cmd;
@@ -373,7 +383,7 @@ namespace mame
 
             rgb_t fgcol = (gl.color != 0 ? gl.color : new rgb_t(0xff, 0xff, 0xff, 0xff));
             rgb_t bgcol = new rgb_t(0x00, 0xff, 0xff, 0xff);
-            bool is_cmd = ((chnum >= cmddata_global.COMMAND_UNICODE) && (chnum < cmddata_global.COMMAND_UNICODE + cmddata_global.MAX_GLYPH_FONT));
+            bool is_cmd = ((chnum >= COMMAND_UNICODE) && (chnum < COMMAND_UNICODE + MAX_GLYPH_FONT));
 
             if (is_cmd)
             {
@@ -499,7 +509,7 @@ namespace mame
                             if (dest != null)
                                 { dest[0] = (accum & (1 << accumbit)) != 0 ? fgcol : bgcol;  dest++; }  //*dest++ = (accum & (1 << accumbit)) ? fgcol : bgcol;
 
-                            accumbit = (byte)((accumbit - 1) & 7);
+                            accumbit = (u8)((accumbit - 1) & 7);
                         }
                     }
                 }
@@ -523,7 +533,7 @@ namespace mame
             u64 bytes;
 
             // first try to open the BDF itself
-            emu_file file = new emu_file(manager().machine().options().font_path(), g.OPEN_FLAG_READ);
+            emu_file file = new emu_file(manager().machine().options().font_path(), OPEN_FLAG_READ);
             filerr = file.open(filename);
             if (filerr)
                 return false;
@@ -552,14 +562,14 @@ namespace mame
         //-------------------------------------------------
         //  load_cached - load a font in cached format
         //-------------------------------------------------
-        bool load_cached(emu_file file, UInt64 length, UInt32 hash)
+        bool load_cached(emu_file file, u64 length, u32 hash)
         {
             // get the file size, read the header, and check that it looks good
             u64 filesize = file.size();
             bdc_header header = new bdc_header();
             if (!header.read(file))
             {
-                g.osd_printf_warning("render_font::load_cached: error reading BDC header\n");
+                osd_printf_warning("render_font::load_cached: error reading BDC header\n");
                 return false;
             }
             else if (!header.check_magic() || (bdc_header.MAJVERSION != header.get_major_version()) || (bdc_header.MINVERSION != header.get_minor_version()))
@@ -593,14 +603,14 @@ namespace mame
             }
             catch (Exception )
             {
-                g.osd_printf_error("render_font::load_cached: allocation error\n");
+                osd_printf_error("render_font::load_cached: allocation error\n");
             }
             for (u64 bytes_read = 0; remaining > bytes_read; )
             {
                 u32 chunk = (u32)std.min(u32.MaxValue, remaining);
                 if (file.read(new Pointer<u8>(m_rawdata, (int)bytes_read), chunk) != chunk)  //if (file.read(&m_rawdata[bytes_read], chunk) != chunk)
                 {
-                    g.osd_printf_error("render_font::load_cached: error reading BDC data\n");
+                    osd_printf_error("render_font::load_cached: error reading BDC data\n");
                     m_rawdata.clear();
                     return false;
                 }
@@ -644,7 +654,7 @@ namespace mame
                 offset += (size_t)((gl.bmwidth * gl.bmheight + 7) / 8);
                 if (m_rawdata.size() < offset)
                 {
-                    g.osd_printf_verbose("render_font::load_cached: BDC file too small to hold all glyphs\n");
+                    osd_printf_verbose("render_font::load_cached: BDC file too small to hold all glyphs\n");
                     m_rawdata.clear();
                     return false;
                 }
@@ -671,15 +681,15 @@ namespace mame
         void render_font_command_glyph()
         {
             // FIXME: this is copy/pasta from the BDC loading, and it shouldn't be injected into every font
-            emu_file file = new emu_file(g.OPEN_FLAG_READ);
-            if (!file.open_ram(new MemoryU8(uicmd14_global.font_uicmd14), (u32)uicmd14_global.font_uicmd14.Length))
+            emu_file file = new emu_file(OPEN_FLAG_READ);
+            if (!file.open_ram(new MemoryU8(font_uicmd14), (u32)font_uicmd14.Length))
             {
                 // get the file size, read the header, and check that it looks good
                 u64 filesize = file.size();
                 bdc_header header = new bdc_header();
                 if (!header.read(file))
                 {
-                    g.osd_printf_warning("render_font::render_font_command_glyph: error reading BDC header\n");
+                    osd_printf_warning("render_font::render_font_command_glyph: error reading BDC header\n");
                     file.close();
                     return;
                 }
@@ -714,10 +724,10 @@ namespace mame
 
                 for (u64 bytes_read = 0; remaining > bytes_read; )
                 {
-                    u32 chunk = (u32)Math.Min(u32.MaxValue, remaining);
+                    u32 chunk = (u32)std.min(u32.MaxValue, remaining);
                     if (file.read(new Pointer<u8>(m_rawdata_cmd, (int)bytes_read), chunk) != chunk)
                     {
-                        g.osd_printf_error("render_font::render_font_command_glyph: error reading BDC data\n");
+                        osd_printf_error("render_font::render_font_command_glyph: error reading BDC data\n");
                         m_rawdata_cmd.clear();
                         file.close();
                         return;
@@ -764,7 +774,7 @@ namespace mame
                     offset += (size_t)((gl.bmwidth * gl.bmheight + 7) / 8);
                     if (m_rawdata_cmd.size() < offset)
                     {
-                        g.osd_printf_verbose("render_font::render_font_command_glyph: BDC file too small to hold all glyphs\n");
+                        osd_printf_verbose("render_font::render_font_command_glyph: BDC file too small to hold all glyphs\n");
                         m_rawdata_cmd.clear();
                         return;
                     }
@@ -794,8 +804,11 @@ namespace mame
 
             return ptr;
         }
+    }
 
 
+    public static class rendfont_global
+    {
         public static string convert_command_glyph(ref string str)
         {
             // TODO check accuracy
@@ -807,35 +820,35 @@ namespace mame
             {
                 // decode UTF-8
                 char uchar;  //char32_t uchar;
-                int codelen = unicode_global.uchar_from_utf8(out uchar, str);  //int const codelen(uchar_from_utf8(&uchar, str));
+                int codelen = uchar_from_utf8(out uchar, str);  //int const codelen(uchar_from_utf8(&uchar, str));
                 if (0 >= codelen)
                     break;
                 str = str.Substring(codelen);  //str.remove_prefix(codelen);
 
                 // check for three metacharacters
-                cmddata_global.fix_command_t [] fixcmd = null;  //fix_command_t const *fixcmd(nullptr);
+                fix_command_t [] fixcmd = null;  //fix_command_t const *fixcmd(nullptr);
                 int fixcmdOffset = 0;
                 switch (uchar)
                 {
-                case cmddata_global.COMMAND_CONVERT_TEXT:
-                    for (int fixtextOffset = 0; cmddata_global.convert_text[fixtextOffset].glyph_code != 0; ++fixtextOffset)  //for (fix_strings_t const *fixtext = convert_text; fixtext->glyph_code; ++fixtext)
+                case COMMAND_CONVERT_TEXT:
+                    for (int fixtextOffset = 0; convert_text[fixtextOffset].glyph_code != 0; ++fixtextOffset)  //for (fix_strings_t const *fixtext = convert_text; fixtext->glyph_code; ++fixtext)
                     {
-                        var fixtext = cmddata_global.convert_text[fixtextOffset];
+                        var fixtext = convert_text[fixtextOffset];
                         if (str.substr(0, fixtext.glyph_str.length()) == fixtext.glyph_str)
                         {
-                            uchar = (char)(fixtext.glyph_code + cmddata_global.COMMAND_UNICODE);
+                            uchar = (char)(fixtext.glyph_code + COMMAND_UNICODE);
                             str = str.Substring((int)fixtext.glyph_str.length());  //str.remove_prefix(fixtext->glyph_str.length());
                             break;
                         }
                     }
                     break;
 
-                case cmddata_global.COMMAND_DEFAULT_TEXT:
-                    fixcmd = cmddata_global.default_text;
+                case COMMAND_DEFAULT_TEXT:
+                    fixcmd = default_text;
                     break;
 
-                case cmddata_global.COMMAND_EXPAND_TEXT:
-                    fixcmd = cmddata_global.expand_text;
+                case COMMAND_EXPAND_TEXT:
+                    fixcmd = expand_text;
                     break;
                 }
 
@@ -853,7 +866,7 @@ namespace mame
 
                         if (fixcmd[fixcmdOffset].glyph_code != 0 && !str.empty())
                         {
-                            uchar = (char)(cmddata_global.COMMAND_UNICODE + fixcmd[fixcmdOffset].glyph_code);
+                            uchar = (char)(COMMAND_UNICODE + fixcmd[fixcmdOffset].glyph_code);
                             str = str.Substring(1);  //str.remove_prefix(1);
                         }
                     }
@@ -861,14 +874,14 @@ namespace mame
 
                 // copy character to output
                 string temp;
-                int outlen = unicode_global.utf8_from_uchar(out temp, /*buf.Length - j,*/ uchar);  //int const outlen(utf8_from_uchar(&buf[j], buf.size() - j, uchar));
+                int outlen = utf8_from_uchar(out temp, /*buf.Length - j,*/ uchar);  //int const outlen(utf8_from_uchar(&buf[j], buf.size() - j, uchar));
                 if (0 >= outlen)
                     break;
 
                 for (int tempi = 0; tempi < temp.Length; tempi++)
                     buf[(int)j + tempi] = temp[tempi];
 
-                j += (UInt32)outlen;
+                j += (size_t)outlen;
             }
 
             return new string(buf.ToArray()).Substring(0, (int)j);  //return std::string(&buf[0], j);
@@ -900,7 +913,7 @@ namespace mame
 
         public bool read(emu_file f)
         {
-            return f.read(new Pointer<u8>(m_data), (UInt32)m_data.Count) == m_data.Count;
+            return f.read(new Pointer<u8>(m_data), (u32)m_data.Count) == m_data.Count;
         }
         //bool write(emu_file &f)
         //{

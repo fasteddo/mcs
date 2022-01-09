@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
@@ -10,6 +11,13 @@ using execute_interface_enumerator = mame.device_interface_enumerator<mame.devic
 using s32 = System.Int32;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+
+using static mame.attotime_global;
+using static mame.cpp_global;
+using static mame.diexec_global;
+using static mame.eminline_global;
+using static mame.machine_global;
+using static mame.profiler_global;
 
 
 namespace mame
@@ -136,7 +144,7 @@ namespace mame
         public emu_timer m_next_get() { return m_next; }
         public void m_next_set(emu_timer value) { m_next = value; }
 
-        running_machine machine() { g.assert(m_machine != null); return m_machine; }
+        running_machine machine() { assert(m_machine != null); return m_machine; }
         public bool enabled() { return m_enabled; }
         public int param() { return m_param; }
         public object ptr() { return m_ptr; }
@@ -337,7 +345,7 @@ namespace mame
             m_basetime = attotime.zero;
             m_callback_timer_expire_time = attotime.zero;
             m_suspend_changes_pending = true;
-            m_quantum_minimum = attotime.ATTOSECONDS_IN_NSEC(1) / 1000;
+            m_quantum_minimum = ATTOSECONDS_IN_NSEC(1) / 1000;
 
             // append a single never-expiring timer so there is always one in the list
             //m_timer_list = m_timer_allocator.alloc().init(machine, null, null, true);
@@ -361,7 +369,7 @@ namespace mame
 
         ~device_scheduler()
         {
-            g.assert(m_isDisposed);  // can remove
+            assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;
@@ -411,7 +419,7 @@ namespace mame
         //-------------------------------------------------
         public void timeslice()
         {
-            bool call_debugger = (machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0;
+            bool call_debugger = (machine().debug_flags & DEBUG_FLAG_ENABLED) != 0;
 
             // build the execution list if we don't have one yet
             //if (UNEXPECTED(m_execute_list == null))
@@ -452,9 +460,9 @@ namespace mame
                         // compute how many attoseconds to execute this CPU
                         attoseconds_t delta = target.attoseconds() - exec.m_localtime.attoseconds();
                         if (delta < 0 && target.seconds() > exec.m_localtime.seconds())
-                            delta += attotime.ATTOSECONDS_PER_SECOND;
+                            delta += ATTOSECONDS_PER_SECOND;
 
-                        g.assert(delta == (target - exec.m_localtime).as_attoseconds());
+                        assert(delta == (target - exec.m_localtime).as_attoseconds());
 
                         if (exec.m_attoseconds_per_cycle == 0)
                         {
@@ -464,7 +472,7 @@ namespace mame
                         else if (delta >= exec.m_attoseconds_per_cycle)
                         {
                             // compute how many cycles we want to execute
-                            int ran = exec.m_cycles_running = (int)g.divu_64x32((u64)delta >> exec.m_divshift, (u32)exec.m_divisor);
+                            int ran = exec.m_cycles_running = (int)divu_64x32((u64)delta >> exec.m_divshift, (u32)exec.m_divisor);
 
                             if (machine().video().frame_update_count() % 1000 == 0)
                             {
@@ -474,7 +482,7 @@ namespace mame
                             // if we're not suspended, actually execute
                             if (exec.m_suspend == 0)
                             {
-                                profiler_global.g_profiler.start(exec.m_profiler);
+                                g_profiler.start(exec.m_profiler);
 
 
                                 // note that this global variable cycles_stolen can be modified
@@ -511,7 +519,7 @@ namespace mame
 
                                 ran -= exec.m_cycles_stolen;
 
-                                profiler_global.g_profiler.stop();
+                                g_profiler.stop();
                             }
 
                             // account for these cycles
@@ -526,11 +534,11 @@ namespace mame
                             else
                             {
                                 u32 remainder;
-                                s32 secs = (s32)g.divu_64x32_rem((u64)ran, exec.m_cycles_per_second, out remainder);
+                                s32 secs = (s32)divu_64x32_rem((u64)ran, exec.m_cycles_per_second, out remainder);
                                 deltatime = new attotime(secs, remainder * exec.m_attoseconds_per_cycle);
                             }
 
-                            g.assert(deltatime >= attotime.zero);
+                            assert(deltatime >= attotime.zero);
                             exec.m_localtime += deltatime;
 
                             if (machine().video().frame_update_count() % 100 == 0)
@@ -723,7 +731,7 @@ namespace mame
             {
                 // start with a huge time factor and find the 2nd smallest cycle time
                 attoseconds_t smallest = first.minimum_quantum();
-                attoseconds_t perfect = attotime.ATTOSECONDS_PER_SECOND - 1;
+                attoseconds_t perfect = ATTOSECONDS_PER_SECOND - 1;
                 for (device_execute_interface exec = first.m_nextexec; exec != null; exec = exec.m_nextexec)
                 {
                     // find the 2nd smallest cycle interval
@@ -745,7 +753,7 @@ namespace mame
                     // adjust all the actuals; this doesn't affect the current
                     m_quantum_minimum = perfect;
                     for (quantum_slot quant = m_quantum_list.first(); quant != null; quant = quant.next())
-                        quant.actual_set(Math.Max(quant.requested(), m_quantum_minimum));
+                        quant.actual_set(std.max(quant.requested(), m_quantum_minimum));
                 }
             }
         }
@@ -834,7 +842,7 @@ namespace mame
             {
                 suspendchanged |= exec.m_suspend ^ exec.m_nextsuspend;
                 exec.m_suspend = exec.m_nextsuspend;
-                exec.m_nextsuspend &= ~device_execute_interface.SUSPEND_REASON_TIMESLICE;
+                exec.m_nextsuspend &= ~SUSPEND_REASON_TIMESLICE;
                 exec.m_eatcycles = exec.m_nexteatcycles;
             }
 
@@ -852,7 +860,7 @@ namespace mame
         //-------------------------------------------------
         void add_scheduling_quantum(attotime quantum, attotime duration)
         {
-            g.assert(quantum.seconds() == 0);
+            assert(quantum.seconds() == 0);
 
             attotime curtime = time();
             attotime expire = curtime + duration;
@@ -882,7 +890,7 @@ namespace mame
             {
                 quantum_slot quant = m_quantum_allocator.alloc();
                 quant.requested_set(quantum_attos);
-                quant.actual_set(Math.Max(quantum_attos, m_quantum_minimum));
+                quant.actual_set(std.max(quantum_attos, m_quantum_minimum));
                 quant.expire_set(expire);
                 m_quantum_list.insert_after(quant, insert_after);
             }
@@ -979,7 +987,7 @@ namespace mame
                 // call the callback
                 if (was_enabled)
                 {
-                    profiler_global.g_profiler.start(profile_type.PROFILER_TIMER_CALLBACK);
+                    g_profiler.start(profile_type.PROFILER_TIMER_CALLBACK);
 
                     if (timer.m_callback != null)
                     {
@@ -991,7 +999,7 @@ namespace mame
                         timer.m_callback(timer.m_ptr, timer.m_param);
                     }
 
-                    profiler_global.g_profiler.stop();
+                    g_profiler.stop();
                 }
 
                 // reset or remove the timer, but only if it wasn't modified during the callback

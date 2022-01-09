@@ -2,41 +2,47 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using size_t = System.UInt64;
 
+using static mame.corefile_global;
+using static mame.emucore_global;
+using static mame.emuopts_global;
+using static mame.mameopts_global;
+using static mame.options_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
+
 
 namespace mame
 {
-    class mame_options
+    public static class mameopts_global
     {
         // option priorities
         //enum
         //{
         // command-line options are HIGH priority
-        const int OPTION_PRIORITY_SUBCMD      = g.OPTION_PRIORITY_HIGH;
-        public const int OPTION_PRIORITY_CMDLINE     = g.OPTION_PRIORITY_HIGH + 1;
+        const int OPTION_PRIORITY_SUBCMD      = OPTION_PRIORITY_HIGH;
+        public const int OPTION_PRIORITY_CMDLINE     = OPTION_PRIORITY_HIGH + 1;
 
         // INI-based options are NORMAL priority, in increasing order:
-        public const int OPTION_PRIORITY_MAME_INI    = g.OPTION_PRIORITY_NORMAL + 1;
-        const int OPTION_PRIORITY_DEBUG_INI   = g.OPTION_PRIORITY_NORMAL + 2;
-        const int OPTION_PRIORITY_ORIENTATION_INI = g.OPTION_PRIORITY_NORMAL + 3;
-        const int OPTION_PRIORITY_SYSTYPE_INI = g.OPTION_PRIORITY_NORMAL + 4;
-        const int OPTION_PRIORITY_SCREEN_INI  = g.OPTION_PRIORITY_NORMAL + 5;
-        const int OPTION_PRIORITY_SOURCE_INI  = g.OPTION_PRIORITY_NORMAL + 6;
-        const int OPTION_PRIORITY_GPARENT_INI = g.OPTION_PRIORITY_NORMAL + 7;
-        const int OPTION_PRIORITY_PARENT_INI  = g.OPTION_PRIORITY_NORMAL + 8;
-        public const int OPTION_PRIORITY_DRIVER_INI  = g.OPTION_PRIORITY_NORMAL + 9;
-        public const int OPTION_PRIORITY_INI         = g.OPTION_PRIORITY_NORMAL + 10;
+        public const int OPTION_PRIORITY_MAME_INI    = OPTION_PRIORITY_NORMAL + 1;
+        public const int OPTION_PRIORITY_DEBUG_INI   = OPTION_PRIORITY_NORMAL + 2;
+        public const int OPTION_PRIORITY_ORIENTATION_INI = OPTION_PRIORITY_NORMAL + 3;
+        public const int OPTION_PRIORITY_SYSTYPE_INI = OPTION_PRIORITY_NORMAL + 4;
+        public const int OPTION_PRIORITY_SCREEN_INI  = OPTION_PRIORITY_NORMAL + 5;
+        public const int OPTION_PRIORITY_SOURCE_INI  = OPTION_PRIORITY_NORMAL + 6;
+        public const int OPTION_PRIORITY_GPARENT_INI = OPTION_PRIORITY_NORMAL + 7;
+        public const int OPTION_PRIORITY_PARENT_INI  = OPTION_PRIORITY_NORMAL + 8;
+        public const int OPTION_PRIORITY_DRIVER_INI  = OPTION_PRIORITY_NORMAL + 9;
+        public const int OPTION_PRIORITY_INI         = OPTION_PRIORITY_NORMAL + 10;
         //}
+    }
 
 
-        static int m_slot_options = 0;
-        static int m_device_options = 0;
-
-
+    class mame_options
+    {
         // parsing wrappers
 
         //-------------------------------------------------
@@ -62,7 +68,7 @@ namespace mame
                 return;
 
             // parse "vertical.ini" or "horizont.ini"
-            if (((int)cursystem.flags & g.ORIENTATION_SWAP_XY) != 0)
+            if (((int)cursystem.flags & ORIENTATION_SWAP_XY) != 0)
                 parse_one_ini(options, "vertical", OPTION_PRIORITY_ORIENTATION_INI, ref error_stream);
             else
                 parse_one_ini(options, "horizont", OPTION_PRIORITY_ORIENTATION_INI, ref error_stream);
@@ -109,7 +115,7 @@ namespace mame
             }
 
             // next parse "source/<sourcefile>.ini"
-            string sourcename = g.core_filename_extract_base(cursystem.type.source(), true).Insert(0, "source" + g.PATH_SEPARATOR);
+            string sourcename = core_filename_extract_base(cursystem.type.source(), true).Insert(0, "source" + PATH_SEPARATOR);
             parse_one_ini(options, sourcename, OPTION_PRIORITY_SOURCE_INI, ref error_stream);
 
             // then parse the grandparent, parent, and system-specific INIs
@@ -130,7 +136,7 @@ namespace mame
         //-------------------------------------------------
         public static game_driver system(emu_options options)
         {
-            int index = driver_list.find(g.core_filename_extract_base(options.system_name(), true));
+            int index = driver_list.find(core_filename_extract_base(options.system_name(), true));
             return (index != -1) ? driver_list.driver((size_t)index) : null;
         }
 
@@ -155,11 +161,11 @@ namespace mame
             emu_options temp_options = new emu_options(emu_options.option_support.GENERAL_AND_SYSTEM);
 
             // pick up whatever changes the osd did to the default inipath
-            temp_options.set_default_value(emu_options.OPTION_INIPATH, options.ini_path());
+            temp_options.set_default_value(OPTION_INIPATH, options.ini_path());
 
             try
             {
-                temp_options.parse_command_line(args, emu_options.OPTION_PRIORITY_CMDLINE, true);
+                temp_options.parse_command_line(args, mameopts_global.OPTION_PRIORITY_CMDLINE, true);
             }
             catch (options_exception)
             {
@@ -180,12 +186,12 @@ namespace mame
             }
 
             // and fish out hashpath
-            var entry = temp_options.get_entry(emu_options.OPTION_HASHPATH);
+            var entry = temp_options.get_entry(OPTION_HASHPATH);
             if (entry != null)
             {
                 try
                 {
-                    options.set_value(emu_options.OPTION_HASHPATH, entry.value(), entry.priority());
+                    options.set_value(OPTION_HASHPATH, entry.value(), entry.priority());
                 }
                 catch (options_exception)
                 {
@@ -205,14 +211,14 @@ namespace mame
                 return;
 
             // open the file; if we fail, that's ok
-            emu_file file = new emu_file(options.ini_path(), g.OPEN_FLAG_READ);
-            g.osd_printf_verbose("Attempting load of {0}.ini\n", basename);
+            emu_file file = new emu_file(options.ini_path(), OPEN_FLAG_READ);
+            osd_printf_verbose("Attempting load of {0}.ini\n", basename);
             std.error_condition filerr = file.open(basename + ".ini");
             if (filerr)
                 return;
 
             // parse the file
-            g.osd_printf_verbose("Parsing {0}.ini\n", basename);
+            osd_printf_verbose("Parsing {0}.ini\n", basename);
             try
             {
                 options.parse_ini_file(file.core_file_get(), priority, priority < OPTION_PRIORITY_DRIVER_INI, false);

@@ -2,8 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using memory_interface_enumerator = mame.device_interface_enumerator<mame.device_memory_interface>;  //typedef device_interface_enumerator<device_memory_interface> memory_interface_enumerator;
@@ -19,15 +17,81 @@ using u32 = System.UInt32;
 using u64 = System.UInt64;
 using uX = mame.FlexPrim;
 
+using static mame.device_global;
+using static mame.emu.detail.emumem_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
+using static mame.emumem_internal;
+using static mame.osdcore_global;
+using static mame.util;
+
 
 namespace mame
 {
+    public static partial class emumem_global
+    {
+        // address space names for common use
+        public const int AS_PROGRAM = 0; // program address space
+        public const int AS_DATA    = 1; // data address space
+        public const int AS_IO      = 2; // I/O address space
+        public const int AS_OPCODES = 3; // (decrypted) opcodes, when separate from data accesses
+    }
+
+
+    // read or write constants
+    public enum read_or_write
+    {
+        READ = 1,
+        WRITE = 2,
+        READWRITE = 3
+    }
+
+
     // offsets and addresses are 32-bit (for now...)
     //using offs_t = u32;
 
 
     // address map constructors are delegates that build up an address_map
     public delegate void address_map_constructor(address_map map, device_t owner);  //using address_map_constructor = named_delegate<void (address_map &)>;
+
+
+    // struct with function pointers for accessors; use is generally discouraged unless necessary
+    public struct data_accessors
+    {
+        //u8      (*read_byte)(address_space &space, offs_t address);
+        //u16     (*read_word)(address_space &space, offs_t address);
+        //u16     (*read_word_masked)(address_space &space, offs_t address, u16 mask);
+        //u32     (*read_dword)(address_space &space, offs_t address);
+        //u32     (*read_dword_masked)(address_space &space, offs_t address, u32 mask);
+        //u64     (*read_qword)(address_space &space, offs_t address);
+        //u64     (*read_qword_masked)(address_space &space, offs_t address, u64 mask);
+
+        //void    (*write_byte)(address_space &space, offs_t address, u8 data);
+        //void    (*write_word)(address_space &space, offs_t address, u16 data);
+        //void    (*write_word_masked)(address_space &space, offs_t address, u16 data, u16 mask);
+        //void    (*write_dword)(address_space &space, offs_t address, u32 data);
+        //void    (*write_dword_masked)(address_space &space, offs_t address, u32 data, u32 mask);
+        //void    (*write_qword)(address_space &space, offs_t address, u64 data);
+        //void    (*write_qword_masked)(address_space &space, offs_t address, u64 data, u64 mask);
+    }
+
+
+    // a line in the memory structure dump
+    class memory_entry_context
+    {
+        memory_view view;  //memory_view *view;
+        bool disabled;
+        int slot;
+    }
+
+
+    public class memory_entry
+    {
+        offs_t start;
+        offs_t end;
+        handler_entry entry;
+        std.vector<memory_entry_context> context;
+    }
 
 
     // ======================> read_delegate
@@ -108,662 +172,314 @@ namespace mame
     public delegate void write64smo_delegate(u64 data);
 
 
+    namespace emu.detail
+    {
 #if false
-    namespace emu.detail {
+        // TODO: replace with std::void_t when we move to C++17
+        template <typename... T> struct void_wrapper { using type = void; };
+        template <typename... T> using void_t = typename void_wrapper<T...>::type;
 
-    // TODO: replace with std::void_t when we move to C++17
-    template <typename... T> struct void_wrapper { using type = void; };
-    template <typename... T> using void_t = typename void_wrapper<T...>::type;
+        template <typename D, typename T, typename Enable = void> struct rw_device_class  { };
 
-    template <typename D, typename T, typename Enable = void> struct rw_device_class  { };
+        template <typename D, typename T, typename Ret, typename... Params>
+        struct rw_device_class<D, Ret (T::*)(Params...), std::enable_if_t<std::is_constructible<D, device_t &, const char *, Ret (T::*)(Params...), const char *>::value> > { using type = T; };
+        template <typename D, typename T, typename Ret, typename... Params>
+        struct rw_device_class<D, Ret (T::*)(Params...) const, std::enable_if_t<std::is_constructible<D, device_t &, const char *, Ret (T::*)(Params...) const, const char *>::value> > { using type = T; };
+        template <typename D, typename T, typename Ret, typename... Params>
+        struct rw_device_class<D, Ret (*)(T &, Params...), std::enable_if_t<std::is_constructible<D, device_t &, const char *, Ret (*)(T &, Params...), const char *>::value> > { using type = T; };
 
-    template <typename D, typename T, typename Ret, typename... Params>
-    struct rw_device_class<D, Ret (T::*)(Params...), std::enable_if_t<std::is_constructible<D, device_t &, const char *, Ret (T::*)(Params...), const char *>::value> > { using type = T; };
-    template <typename D, typename T, typename Ret, typename... Params>
-    struct rw_device_class<D, Ret (T::*)(Params...) const, std::enable_if_t<std::is_constructible<D, device_t &, const char *, Ret (T::*)(Params...) const, const char *>::value> > { using type = T; };
-    template <typename D, typename T, typename Ret, typename... Params>
-    struct rw_device_class<D, Ret (*)(T &, Params...), std::enable_if_t<std::is_constructible<D, device_t &, const char *, Ret (*)(T &, Params...), const char *>::value> > { using type = T; };
+        template <typename D, typename T> using rw_device_class_t  = typename rw_device_class<D, T>::type;
 
-    template <typename D, typename T> using rw_device_class_t  = typename rw_device_class<D, T>::type;
-
-    template <typename T, typename Enable = void> struct rw_delegate_type;
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8_delegate, std::remove_reference_t<T> > > > { using type = read8_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16_delegate, std::remove_reference_t<T> > > > { using type = read16_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32_delegate, std::remove_reference_t<T> > > > { using type = read32_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64_delegate, std::remove_reference_t<T> > > > { using type = read64_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8m_delegate, std::remove_reference_t<T> > > > { using type = read8m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16m_delegate, std::remove_reference_t<T> > > > { using type = read16m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32m_delegate, std::remove_reference_t<T> > > > { using type = read32m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64m_delegate, std::remove_reference_t<T> > > > { using type = read64m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8s_delegate, std::remove_reference_t<T> > > > { using type = read8s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16s_delegate, std::remove_reference_t<T> > > > { using type = read16s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32s_delegate, std::remove_reference_t<T> > > > { using type = read32s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64s_delegate, std::remove_reference_t<T> > > > { using type = read64s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8sm_delegate, std::remove_reference_t<T> > > > { using type = read8sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16sm_delegate, std::remove_reference_t<T> > > > { using type = read16sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32sm_delegate, std::remove_reference_t<T> > > > { using type = read32sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64sm_delegate, std::remove_reference_t<T> > > > { using type = read64sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8mo_delegate, std::remove_reference_t<T> > > > { using type = read8mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16mo_delegate, std::remove_reference_t<T> > > > { using type = read16mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32mo_delegate, std::remove_reference_t<T> > > > { using type = read32mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64mo_delegate, std::remove_reference_t<T> > > > { using type = read64mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8smo_delegate, std::remove_reference_t<T> > > > { using type = read8smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16smo_delegate, std::remove_reference_t<T> > > > { using type = read16smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32smo_delegate, std::remove_reference_t<T> > > > { using type = read32smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64smo_delegate, std::remove_reference_t<T> > > > { using type = read64smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8_delegate, std::remove_reference_t<T> > > > { using type = write8_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16_delegate, std::remove_reference_t<T> > > > { using type = write16_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32_delegate, std::remove_reference_t<T> > > > { using type = write32_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64_delegate, std::remove_reference_t<T> > > > { using type = write64_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8m_delegate, std::remove_reference_t<T> > > > { using type = write8m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16m_delegate, std::remove_reference_t<T> > > > { using type = write16m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32m_delegate, std::remove_reference_t<T> > > > { using type = write32m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64m_delegate, std::remove_reference_t<T> > > > { using type = write64m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8s_delegate, std::remove_reference_t<T> > > > { using type = write8s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16s_delegate, std::remove_reference_t<T> > > > { using type = write16s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32s_delegate, std::remove_reference_t<T> > > > { using type = write32s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64s_delegate, std::remove_reference_t<T> > > > { using type = write64s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8sm_delegate, std::remove_reference_t<T> > > > { using type = write8sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16sm_delegate, std::remove_reference_t<T> > > > { using type = write16sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32sm_delegate, std::remove_reference_t<T> > > > { using type = write32sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64sm_delegate, std::remove_reference_t<T> > > > { using type = write64sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8mo_delegate, std::remove_reference_t<T> > > > { using type = write8mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16mo_delegate, std::remove_reference_t<T> > > > { using type = write16mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32mo_delegate, std::remove_reference_t<T> > > > { using type = write32mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64mo_delegate, std::remove_reference_t<T> > > > { using type = write64mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8smo_delegate, std::remove_reference_t<T> > > > { using type = write8smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16smo_delegate, std::remove_reference_t<T> > > > { using type = write16smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32smo_delegate, std::remove_reference_t<T> > > > { using type = write32smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64smo_delegate, std::remove_reference_t<T> > > > { using type = write64smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
-    template <typename T> using rw_delegate_type_t = typename rw_delegate_type<T>::type;
-    template <typename T> using rw_delegate_device_class_t = typename rw_delegate_type<T>::device_class;
+        template <typename T, typename Enable = void> struct rw_delegate_type;
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8_delegate, std::remove_reference_t<T> > > > { using type = read8_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16_delegate, std::remove_reference_t<T> > > > { using type = read16_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32_delegate, std::remove_reference_t<T> > > > { using type = read32_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64_delegate, std::remove_reference_t<T> > > > { using type = read64_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8m_delegate, std::remove_reference_t<T> > > > { using type = read8m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16m_delegate, std::remove_reference_t<T> > > > { using type = read16m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32m_delegate, std::remove_reference_t<T> > > > { using type = read32m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64m_delegate, std::remove_reference_t<T> > > > { using type = read64m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8s_delegate, std::remove_reference_t<T> > > > { using type = read8s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16s_delegate, std::remove_reference_t<T> > > > { using type = read16s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32s_delegate, std::remove_reference_t<T> > > > { using type = read32s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64s_delegate, std::remove_reference_t<T> > > > { using type = read64s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8sm_delegate, std::remove_reference_t<T> > > > { using type = read8sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16sm_delegate, std::remove_reference_t<T> > > > { using type = read16sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32sm_delegate, std::remove_reference_t<T> > > > { using type = read32sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64sm_delegate, std::remove_reference_t<T> > > > { using type = read64sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8mo_delegate, std::remove_reference_t<T> > > > { using type = read8mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16mo_delegate, std::remove_reference_t<T> > > > { using type = read16mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32mo_delegate, std::remove_reference_t<T> > > > { using type = read32mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64mo_delegate, std::remove_reference_t<T> > > > { using type = read64mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read8smo_delegate, std::remove_reference_t<T> > > > { using type = read8smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read16smo_delegate, std::remove_reference_t<T> > > > { using type = read16smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read32smo_delegate, std::remove_reference_t<T> > > > { using type = read32smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<read64smo_delegate, std::remove_reference_t<T> > > > { using type = read64smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8_delegate, std::remove_reference_t<T> > > > { using type = write8_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16_delegate, std::remove_reference_t<T> > > > { using type = write16_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32_delegate, std::remove_reference_t<T> > > > { using type = write32_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64_delegate, std::remove_reference_t<T> > > > { using type = write64_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8m_delegate, std::remove_reference_t<T> > > > { using type = write8m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16m_delegate, std::remove_reference_t<T> > > > { using type = write16m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32m_delegate, std::remove_reference_t<T> > > > { using type = write32m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64m_delegate, std::remove_reference_t<T> > > > { using type = write64m_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8s_delegate, std::remove_reference_t<T> > > > { using type = write8s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16s_delegate, std::remove_reference_t<T> > > > { using type = write16s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32s_delegate, std::remove_reference_t<T> > > > { using type = write32s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64s_delegate, std::remove_reference_t<T> > > > { using type = write64s_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8sm_delegate, std::remove_reference_t<T> > > > { using type = write8sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16sm_delegate, std::remove_reference_t<T> > > > { using type = write16sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32sm_delegate, std::remove_reference_t<T> > > > { using type = write32sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64sm_delegate, std::remove_reference_t<T> > > > { using type = write64sm_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8mo_delegate, std::remove_reference_t<T> > > > { using type = write8mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16mo_delegate, std::remove_reference_t<T> > > > { using type = write16mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32mo_delegate, std::remove_reference_t<T> > > > { using type = write32mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64mo_delegate, std::remove_reference_t<T> > > > { using type = write64mo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write8smo_delegate, std::remove_reference_t<T> > > > { using type = write8smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write16smo_delegate, std::remove_reference_t<T> > > > { using type = write16smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write32smo_delegate, std::remove_reference_t<T> > > > { using type = write32smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> struct rw_delegate_type<T, void_t<rw_device_class_t<write64smo_delegate, std::remove_reference_t<T> > > > { using type = write64smo_delegate; using device_class = rw_device_class_t<type, std::remove_reference_t<T> >; };
+        template <typename T> using rw_delegate_type_t = typename rw_delegate_type<T>::type;
+        template <typename T> using rw_delegate_device_class_t = typename rw_delegate_type<T>::device_class;
 
 
-    template <typename T>
-    inline rw_delegate_type_t<T> make_delegate(device_t &base, char const *tag, T &&func, char const *name)
-    { return rw_delegate_type_t<T>(base, tag, std::forward<T>(func), name); }
+        template <typename T>
+        inline rw_delegate_type_t<T> make_delegate(device_t &base, char const *tag, T &&func, char const *name)
+        { return rw_delegate_type_t<T>(base, tag, std::forward<T>(func), name); }
 
-    template <typename T>
-    inline rw_delegate_type_t<T> make_delegate(rw_delegate_device_class_t<T> &object, T &&func, char const *name)
-    { return rw_delegate_type_t<T>(object, std::forward<T>(func), name); }
-
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read8_delegate, device_t &, L, const char *>::value, read8_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
-    { return read8_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read8m_delegate, device_t &, L, const char *>::value, read8m_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
-    { return read8m_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read8s_delegate, device_t &, L, const char *>::value, read8s_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
-    { return read8s_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read8sm_delegate, device_t &, L, const char *>::value, read8sm_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
-    { return read8sm_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read8mo_delegate, device_t &, L, const char *>::value, read8mo_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
-    { return read8mo_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read8smo_delegate, device_t &, L, const char *>::value, read8smo_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
-    { return read8smo_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read16_delegate, device_t &, L, const char *>::value, read16_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
-    { return read16_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read16m_delegate, device_t &, L, const char *>::value, read16m_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
-    { return read16m_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read16s_delegate, device_t &, L, const char *>::value, read16s_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
-    { return read16s_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read16sm_delegate, device_t &, L, const char *>::value, read16sm_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
-    { return read16sm_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read16mo_delegate, device_t &, L, const char *>::value, read16mo_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
-    { return read16mo_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read16smo_delegate, device_t &, L, const char *>::value, read16smo_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
-    { return read16smo_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read32_delegate, device_t &, L, const char *>::value, read32_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
-    { return read32_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read32m_delegate, device_t &, L, const char *>::value, read32m_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
-    { return read32m_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read32s_delegate, device_t &, L, const char *>::value, read32s_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
-    { return read32s_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read32sm_delegate, device_t &, L, const char *>::value, read32sm_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
-    { return read32sm_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read32mo_delegate, device_t &, L, const char *>::value, read32mo_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
-    { return read32mo_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read32smo_delegate, device_t &, L, const char *>::value, read32smo_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
-    { return read32smo_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read64_delegate, device_t &, L, const char *>::value, read64_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
-    { return read64_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read64m_delegate, device_t &, L, const char *>::value, read64m_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
-    { return read64m_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read64s_delegate, device_t &, L, const char *>::value, read64s_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
-    { return read64s_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read64sm_delegate, device_t &, L, const char *>::value, read64sm_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
-    { return read64sm_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read64mo_delegate, device_t &, L, const char *>::value, read64mo_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
-    { return read64mo_delegate(owner, std::forward<L>(l), name); }
-
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<read64smo_delegate, device_t &, L, const char *>::value, read64smo_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
-    { return read64smo_delegate(owner, std::forward<L>(l), name); }
+        template <typename T>
+        inline rw_delegate_type_t<T> make_delegate(rw_delegate_device_class_t<T> &object, T &&func, char const *name)
+        { return rw_delegate_type_t<T>(object, std::forward<T>(func), name); }
 
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write8_delegate, device_t &, L, const char *>::value, write8_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
-    { return write8_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read8_delegate, device_t &, L, const char *>::value, read8_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
+        { return read8_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write8m_delegate, device_t &, L, const char *>::value, write8m_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
-    { return write8m_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read8m_delegate, device_t &, L, const char *>::value, read8m_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
+        { return read8m_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write8s_delegate, device_t &, L, const char *>::value, write8s_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
-    { return write8s_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read8s_delegate, device_t &, L, const char *>::value, read8s_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
+        { return read8s_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write8sm_delegate, device_t &, L, const char *>::value, write8sm_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
-    { return write8sm_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read8sm_delegate, device_t &, L, const char *>::value, read8sm_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
+        { return read8sm_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write8mo_delegate, device_t &, L, const char *>::value, write8mo_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
-    { return write8mo_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read8mo_delegate, device_t &, L, const char *>::value, read8mo_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
+        { return read8mo_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write8smo_delegate, device_t &, L, const char *>::value, write8smo_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
-    { return write8smo_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read8smo_delegate, device_t &, L, const char *>::value, read8smo_delegate> make_lr8_delegate(device_t &owner, L &&l, const char *name)
+        { return read8smo_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write16_delegate, device_t &, L, const char *>::value, write16_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
-    { return write16_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read16_delegate, device_t &, L, const char *>::value, read16_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
+        { return read16_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write16m_delegate, device_t &, L, const char *>::value, write16m_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
-    { return write16m_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read16m_delegate, device_t &, L, const char *>::value, read16m_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
+        { return read16m_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write16s_delegate, device_t &, L, const char *>::value, write16s_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
-    { return write16s_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read16s_delegate, device_t &, L, const char *>::value, read16s_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
+        { return read16s_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write16sm_delegate, device_t &, L, const char *>::value, write16sm_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
-    { return write16sm_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read16sm_delegate, device_t &, L, const char *>::value, read16sm_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
+        { return read16sm_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write16mo_delegate, device_t &, L, const char *>::value, write16mo_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
-    { return write16mo_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read16mo_delegate, device_t &, L, const char *>::value, read16mo_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
+        { return read16mo_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write16smo_delegate, device_t &, L, const char *>::value, write16smo_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
-    { return write16smo_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read16smo_delegate, device_t &, L, const char *>::value, read16smo_delegate> make_lr16_delegate(device_t &owner, L &&l, const char *name)
+        { return read16smo_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write32_delegate, device_t &, L, const char *>::value, write32_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
-    { return write32_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read32_delegate, device_t &, L, const char *>::value, read32_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
+        { return read32_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write32m_delegate, device_t &, L, const char *>::value, write32m_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
-    { return write32m_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read32m_delegate, device_t &, L, const char *>::value, read32m_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
+        { return read32m_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write32s_delegate, device_t &, L, const char *>::value, write32s_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
-    { return write32s_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read32s_delegate, device_t &, L, const char *>::value, read32s_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
+        { return read32s_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write32sm_delegate, device_t &, L, const char *>::value, write32sm_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
-    { return write32sm_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read32sm_delegate, device_t &, L, const char *>::value, read32sm_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
+        { return read32sm_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write32mo_delegate, device_t &, L, const char *>::value, write32mo_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
-    { return write32mo_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read32mo_delegate, device_t &, L, const char *>::value, read32mo_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
+        { return read32mo_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write32smo_delegate, device_t &, L, const char *>::value, write32smo_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
-    { return write32smo_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read32smo_delegate, device_t &, L, const char *>::value, read32smo_delegate> make_lr32_delegate(device_t &owner, L &&l, const char *name)
+        { return read32smo_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write64_delegate, device_t &, L, const char *>::value, write64_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
-    { return write64_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read64_delegate, device_t &, L, const char *>::value, read64_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
+        { return read64_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write64m_delegate, device_t &, L, const char *>::value, write64m_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
-    { return write64m_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read64m_delegate, device_t &, L, const char *>::value, read64m_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
+        { return read64m_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write64s_delegate, device_t &, L, const char *>::value, write64s_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
-    { return write64s_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read64s_delegate, device_t &, L, const char *>::value, read64s_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
+        { return read64s_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write64sm_delegate, device_t &, L, const char *>::value, write64sm_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
-    { return write64sm_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read64sm_delegate, device_t &, L, const char *>::value, read64sm_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
+        { return read64sm_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write64mo_delegate, device_t &, L, const char *>::value, write64mo_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
-    { return write64mo_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read64mo_delegate, device_t &, L, const char *>::value, read64mo_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
+        { return read64mo_delegate(owner, std::forward<L>(l), name); }
 
-    template <typename L>
-    inline std::enable_if_t<std::is_constructible<write64smo_delegate, device_t &, L, const char *>::value, write64smo_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
-    { return write64smo_delegate(owner, std::forward<L>(l), name); }
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<read64smo_delegate, device_t &, L, const char *>::value, read64smo_delegate> make_lr64_delegate(device_t &owner, L &&l, const char *name)
+        { return read64smo_delegate(owner, std::forward<L>(l), name); }
+
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write8_delegate, device_t &, L, const char *>::value, write8_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
+        { return write8_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write8m_delegate, device_t &, L, const char *>::value, write8m_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
+        { return write8m_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write8s_delegate, device_t &, L, const char *>::value, write8s_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
+        { return write8s_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write8sm_delegate, device_t &, L, const char *>::value, write8sm_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
+        { return write8sm_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write8mo_delegate, device_t &, L, const char *>::value, write8mo_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
+        { return write8mo_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write8smo_delegate, device_t &, L, const char *>::value, write8smo_delegate> make_lw8_delegate(device_t &owner, L &&l, const char *name)
+        { return write8smo_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write16_delegate, device_t &, L, const char *>::value, write16_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
+        { return write16_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write16m_delegate, device_t &, L, const char *>::value, write16m_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
+        { return write16m_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write16s_delegate, device_t &, L, const char *>::value, write16s_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
+        { return write16s_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write16sm_delegate, device_t &, L, const char *>::value, write16sm_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
+        { return write16sm_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write16mo_delegate, device_t &, L, const char *>::value, write16mo_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
+        { return write16mo_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write16smo_delegate, device_t &, L, const char *>::value, write16smo_delegate> make_lw16_delegate(device_t &owner, L &&l, const char *name)
+        { return write16smo_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write32_delegate, device_t &, L, const char *>::value, write32_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
+        { return write32_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write32m_delegate, device_t &, L, const char *>::value, write32m_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
+        { return write32m_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write32s_delegate, device_t &, L, const char *>::value, write32s_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
+        { return write32s_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write32sm_delegate, device_t &, L, const char *>::value, write32sm_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
+        { return write32sm_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write32mo_delegate, device_t &, L, const char *>::value, write32mo_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
+        { return write32mo_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write32smo_delegate, device_t &, L, const char *>::value, write32smo_delegate> make_lw32_delegate(device_t &owner, L &&l, const char *name)
+        { return write32smo_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write64_delegate, device_t &, L, const char *>::value, write64_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
+        { return write64_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write64m_delegate, device_t &, L, const char *>::value, write64m_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
+        { return write64m_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write64s_delegate, device_t &, L, const char *>::value, write64s_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
+        { return write64s_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write64sm_delegate, device_t &, L, const char *>::value, write64sm_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
+        { return write64sm_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write64mo_delegate, device_t &, L, const char *>::value, write64mo_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
+        { return write64mo_delegate(owner, std::forward<L>(l), name); }
+
+        template <typename L>
+        inline std::enable_if_t<std::is_constructible<write64smo_delegate, device_t &, L, const char *>::value, write64smo_delegate> make_lw64_delegate(device_t &owner, L &&l, const char *name)
+        { return write64smo_delegate(owner, std::forward<L>(l), name); }
 #endif
 
 
-    public static partial class emumem_global
-    {
-        // =====================-> Address segmentation for the search tree
-
-        public static int handler_entry_dispatch_level(int highbits)
+        public static partial class emumem_global
         {
-            return (highbits > 48) ? 3 : (highbits > 32) ? 2 : (highbits > 14) ? 1 : 0;
-        }
+            // =====================-> Width -> types
+
+            //template<int Width> struct handler_entry_size {};
+            //template<> struct handler_entry_size<0> { using uX = u8;  };
+            //template<> struct handler_entry_size<1> { using uX = u16; };
+            //template<> struct handler_entry_size<2> { using uX = u32; };
+            //template<> struct handler_entry_size<3> { using uX = u64; };
 
 
-        static int handler_entry_dispatch_level_to_lowbits(int level, int width, int ashift)
-        {
-            return level == 3 ? 48 : level == 2 ? 32 : level == 1 ? 14 : width + ashift;
-        }
+            // =====================-> Address segmentation for the search tree
 
-
-        //constexpr int handler_entry_dispatch_lowbits(int highbits, int width, int ashift)
-
-
-        // ======================> memopry_units_descritor forwards declaration
-
-        //template<int Width, int AddrShift, endianness_t Endian> class memory_units_descriptor;
-    }
-
-
-    // read or write constants
-    public enum read_or_write
-    {
-        READ = 1,
-        WRITE = 2,
-        READWRITE = 3
-    }
-
-
-    public static partial class emumem_global
-    {
-        const bool MEM_DUMP = false;
-        const bool VERBOSE = false;
-        public const bool VALIDATE_REFCOUNTS = false;
-
-
-        // address space names for common use
-        public const int AS_PROGRAM = 0; // program address space
-        public const int AS_DATA    = 1; // data address space
-        public const int AS_IO      = 2; // I/O address space
-        public const int AS_OPCODES = 3; // (decrypted) opcodes, when separate from data accesses
-
-
-        // other address map constants
-        public const int MEMORY_BLOCK_CHUNK = 65536;                   // minimum chunk size of allocated memory blocks
-
-
-        //**************************************************************************
-        //  MACROS
-        //**************************************************************************
-
-        // helper macro for merging data with the memory mask
-        //#define COMBINE_DATA(varptr)            (*(varptr) = (*(varptr) & ~mem_mask) | (data & mem_mask))
-        public static void COMBINE_DATA(ref u16 varptr, u16 data, u16 mem_mask) { varptr = (u16)((varptr & ~mem_mask) | (data & mem_mask)); }
-        public static void COMBINE_DATA(ref u32 varptr, u32 data, u32 mem_mask) { varptr = (varptr & ~mem_mask) | (data & mem_mask); }
-
-        public static bool ACCESSING_BITS_0_7(u16 mem_mask) { return (mem_mask & 0x000000ffU) != 0; }
-        //#define ACCESSING_BITS_8_15             ((mem_mask & 0x0000ff00U) != 0)
-        //#define ACCESSING_BITS_16_23            ((mem_mask & 0x00ff0000U) != 0)
-        //#define ACCESSING_BITS_24_31            ((mem_mask & 0xff000000U) != 0)
-        //#define ACCESSING_BITS_32_39            ((mem_mask & 0x000000ff00000000U) != 0)
-        //#define ACCESSING_BITS_40_47            ((mem_mask & 0x0000ff0000000000U) != 0)
-        //#define ACCESSING_BITS_48_55            ((mem_mask & 0x00ff000000000000U) != 0)
-        //#define ACCESSING_BITS_56_63            ((mem_mask & 0xff00000000000000U) != 0)
-
-        //#define ACCESSING_BITS_0_15             ((mem_mask & 0x0000ffffU) != 0)
-        //#define ACCESSING_BITS_16_31            ((mem_mask & 0xffff0000U) != 0)
-        //#define ACCESSING_BITS_32_47            ((mem_mask & 0x0000ffff00000000U) != 0)
-        //#define ACCESSING_BITS_48_63            ((mem_mask & 0xffff000000000000U) != 0)
-
-        //#define ACCESSING_BITS_0_31             ((mem_mask & 0xffffffffU) != 0)
-        //#define ACCESSING_BITS_32_63            ((mem_mask & 0xffffffff00000000U) != 0)
-
-        // helpers for checking address alignment
-        public static bool WORD_ALIGNED(UInt32 a) { return (a & 1) == 0; }
-        public static bool DWORD_ALIGNED(UInt32 a) { return (a & 3) == 0; }
-        public static bool QWORD_ALIGNED(UInt32 a) { return (a & 7) == 0; }
-
-
-        //#if VERBOSE
-        //template <typename Format, typename... Params> static void VPRINTF(Format &&fmt, Params &&...args)
-        //{
-        //    util::stream_format(std::cerr, std::forward<Format>(fmt), std::forward<Params>(args)...);
-        //}
-        //#else
-        //template <typename Format, typename... Params> static void VPRINTF(Format &&, Params &&...) {}
-        //#endif
-        public static void VPRINTF(string format, params object [] args) { if (VERBOSE) g.osd_printf_info(format, args); }
-
-
-        // =====================-> Width -> types
-
-        //template<int Width> struct handler_entry_size {};
-        //template<> struct handler_entry_size<0> { using uX = u8;  };
-        //template<> struct handler_entry_size<1> { using uX = u16; };
-        //template<> struct handler_entry_size<2> { using uX = u32; };
-        //template<> struct handler_entry_size<3> { using uX = u64; };
-
-
-        // ======================> address offset -> byte offset
-
-        public static offs_t memory_offset_to_byte(offs_t offset, int AddrShift) { return AddrShift < 0 ? offset << g.iabs(AddrShift) : offset >> g.iabs(AddrShift); }
-
-
-        // ======================> generic read/write decomposition routines
-
-        // generic direct read
-        //template<int Width, int AddrShift, endianness_t Endian, int TargetWidth, bool Aligned, typename T>
-        public static uX memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_TargetWidth, bool_Aligned>(Func<offs_t, uX, uX> rop, offs_t address, uX mask)  //typename emu::detail::handler_entry_size<TargetWidth>::uX  memory_read_generic(T rop, offs_t address, typename emu::detail::handler_entry_size<TargetWidth>::uX mask)
-            where int_Width : int_const, new()
-            where int_AddrShift : int_const, new()
-            where endianness_t_Endian : endianness_t_const, new()
-            where int_TargetWidth : int_const, new()
-            where bool_Aligned : bool_const, new()
-        {
-            //using TargetType = typename emu::detail::handler_entry_size<TargetWidth>::uX;
-            //using NativeType = typename emu::detail::handler_entry_size<Width>::uX;
-
-
-            int Width = new int_Width().value;
-            int AddrShift = new int_AddrShift().value;
-            endianness_t Endian = new endianness_t_Endian().value;
-            int TargetWidth = new int_TargetWidth().value;
-            bool Aligned = new bool_Aligned().value;
-
-
-            u32 TARGET_BYTES = 1U << TargetWidth;
-            u32 TARGET_BITS = 8 * TARGET_BYTES;
-            u32 NATIVE_BYTES = 1U << Width;
-            u32 NATIVE_BITS = 8 * NATIVE_BYTES;
-            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << g.iabs(AddrShift) : NATIVE_BYTES >> g.iabs(AddrShift);
-            u32 NATIVE_MASK = Width + AddrShift >= 0 ? g.make_bitmask32(Width + AddrShift) : 0;
-
-            // equal to native size and aligned; simple pass-through to the native reader
-            if (NATIVE_BYTES == TARGET_BYTES && (Aligned || (address & NATIVE_MASK) == 0))
-                return rop(address & ~NATIVE_MASK, mask);
-
-            // if native size is larger, see if we can do a single masked read (guaranteed if we're aligned)
-            if (NATIVE_BYTES > TARGET_BYTES)
+            public static int handler_entry_dispatch_level(int highbits)
             {
-                u32 offsbits2 = 8 * (memory_offset_to_byte(address, AddrShift) & (NATIVE_BYTES - (Aligned ? TARGET_BYTES : 1)));
-                if (Aligned || (offsbits2 + TARGET_BITS <= NATIVE_BITS))
-                {
-                    if (Endian != g.ENDIANNESS_LITTLE) offsbits2 = NATIVE_BITS - TARGET_BITS - offsbits2;
-                    return rop(address & ~NATIVE_MASK, new uX(Width, mask) << (int)offsbits2) >> (int)offsbits2;  //return rop(address & ~NATIVE_MASK, (NativeType)mask << offsbits) >> offsbits;
-                }
+                return (highbits > 48) ? 3 : (highbits > 32) ? 2 : (highbits > 14) ? 1 : 0;
             }
 
-            // determine our alignment against the native boundaries, and mask the address
-            u32 offsbits = 8 * (memory_offset_to_byte(address, AddrShift) & (NATIVE_BYTES - 1));
-            address &= ~NATIVE_MASK;
 
-            // if we're here, and native size is larger or equal to the target, we need exactly 2 reads
-            if (NATIVE_BYTES >= TARGET_BYTES)
+            public static int handler_entry_dispatch_level_to_lowbits(int level, int width, int ashift)
             {
-                // little-endian case
-                if (Endian == g.ENDIANNESS_LITTLE)
-                {
-                    // read lower bits from lower address
-                    uX result = new uX(TargetWidth, 0);  //TargetType result = 0;
-                    uX curmask = new uX(Width, mask) << (int)offsbits;  //NativeType curmask = (NativeType)mask << offsbits;
-                    if (curmask != 0) result = rop(address, curmask) >> (int)offsbits;
-
-                    // read upper bits from upper address
-                    offsbits = NATIVE_BITS - offsbits;
-                    curmask = new uX(Width, mask >> (int)offsbits);
-                    if (curmask != 0) result |= rop(address + NATIVE_STEP, curmask) << (int)offsbits;
-                    return result;
-                }
-
-                // big-endian case
-                else
-                {
-                    // left-justify the mask to the target type
-                    u32 LEFT_JUSTIFY_TARGET_TO_NATIVE_SHIFT = ((NATIVE_BITS >= TARGET_BITS) ? (NATIVE_BITS - TARGET_BITS) : 0);
-                    uX result = new uX(Width, 0);  //NativeType result = 0;
-                    uX ljmask = new uX(Width, mask) << (int)LEFT_JUSTIFY_TARGET_TO_NATIVE_SHIFT;  //NativeType ljmask = (NativeType)mask << LEFT_JUSTIFY_TARGET_TO_NATIVE_SHIFT;
-                    uX curmask = ljmask >> (int)offsbits;  //NativeType curmask = ljmask >> offsbits;
-
-                    // read upper bits from lower address
-                    if (curmask != 0) result = rop(address, curmask) << (int)offsbits;
-                    offsbits = NATIVE_BITS - offsbits;
-
-                    // read lower bits from upper address
-                    curmask = ljmask << (int)offsbits;
-                    if (curmask != 0) result |= rop(address + NATIVE_STEP, curmask) >> (int)offsbits;
-
-                    // return the un-justified result
-                    return result >> (int)LEFT_JUSTIFY_TARGET_TO_NATIVE_SHIFT;
-                }
+                return level == 3 ? 48 : level == 2 ? 32 : level == 1 ? 14 : width + ashift;
             }
 
-            // if we're here, then we have 2 or more reads needed to get our final result
-            else
+
+            public static int handler_entry_dispatch_lowbits(int highbits, int width, int ashift)
             {
-                // compute the maximum number of loops; we do it this way so that there are
-                // a fixed number of loops for the compiler to unroll if it desires
-                u32 MAX_SPLITS_MINUS_ONE = TARGET_BYTES / NATIVE_BYTES - 1;
-                uX result = new uX(TargetWidth, 0);  //TargetType result = 0;
-
-                // little-endian case
-                if (Endian == g.ENDIANNESS_LITTLE)
-                {
-                    // read lowest bits from first address
-                    uX curmask = new uX(Width, mask << (int)offsbits);  //NativeType curmask = mask << offsbits;
-                    if (curmask != 0U) result = new uX(TargetWidth, rop(address, curmask) >> (int)offsbits);
-
-                    // read middle bits from subsequent addresses
-                    offsbits = NATIVE_BITS - offsbits;
-                    for (u32 index = 0; index < MAX_SPLITS_MINUS_ONE; index++)
-                    {
-                        address += NATIVE_STEP;
-                        curmask = new uX(Width, mask >> (int)offsbits);
-                        if (curmask != 0) result |= new uX(TargetWidth, rop(address, curmask)) << (int)offsbits;  //if (curmask != 0) result |= (TargetType)rop(address, curmask) << offsbits;
-                        offsbits += NATIVE_BITS;
-                    }
-
-                    // if we're not aligned and we still have bits left, read uppermost bits from last address
-                    if (!Aligned && offsbits < TARGET_BITS)
-                    {
-                        curmask = new uX(Width, mask >> (int)offsbits);
-                        if (curmask != 0) result |= new uX(TargetWidth, rop(address + NATIVE_STEP, curmask)) << (int)offsbits;  //if (curmask != 0) result |= (TargetType)rop(address + NATIVE_STEP, curmask) << offsbits;
-                    }
-                }
-
-                // big-endian case
-                else
-                {
-                    // read highest bits from first address
-                    offsbits = TARGET_BITS - (NATIVE_BITS - offsbits);
-                    uX curmask = new uX(Width, mask >> (int)offsbits);  //NativeType curmask = mask >> offsbits;
-                    if (curmask != 0) result = new uX(TargetWidth, rop(address, curmask)) << (int)offsbits;  //if (curmask != 0) result = (TargetType)rop(address, curmask) << offsbits;
-
-                    // read middle bits from subsequent addresses
-                    for (u32 index = 0; index < MAX_SPLITS_MINUS_ONE; index++)
-                    {
-                        offsbits -= NATIVE_BITS;
-                        address += NATIVE_STEP;
-                        curmask = new uX(Width, mask >> (int)offsbits);
-                        if (curmask != 0) result |= new uX(TargetWidth, rop(address, curmask)) << (int)offsbits;  //if (curmask != 0) result |= (TargetType)rop(address, curmask) << offsbits;
-                    }
-
-                    // if we're not aligned and we still have bits left, read lowermost bits from the last address
-                    if (!Aligned && offsbits != 0)
-                    {
-                        offsbits = NATIVE_BITS - offsbits;
-                        curmask = new uX(Width, mask << (int)offsbits);
-                        if (curmask != 0) result |= rop(address + NATIVE_STEP, curmask) >> (int)offsbits;
-                    }
-                }
-
-                return result;
+                return (highbits > 48) ? 48 :
+                       (highbits > 32) ? 32 :
+                       (highbits > 14) ? 14 :
+                       width + ashift;
             }
         }
-
-
-        //template<int Width, int AddrShift, endianness_t Endian, int TargetWidth, bool Aligned, typename T>
-        public static void memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_TargetWidth, bool_Aligned>(Action<offs_t, uX, uX> wop, offs_t address, uX data, uX mask)
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        // ======================> Direct dispatching
-
-        public static uX dispatch_read<int_Level, int_Width, int_AddrShift>(offs_t mask, offs_t offset, uX mem_mask, Pointer<handler_entry_read<int_Width, int_AddrShift>> dispatch)  //template<int Level, int Width, int AddrShift> typename emu::detail::handler_entry_size<Width>::uX dispatch_read(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_read<Width, AddrShift> *const *dispatch)
-            where int_Level : int_const, new()
-            where int_Width : int_const, new()
-            where int_AddrShift : int_const, new()
-        {
-            int Level = new int_Level().value;
-            int Width = new int_Width().value;
-            int AddrShift = new int_AddrShift().value;
-
-            u32 LowBits = (u32)emumem_global.handler_entry_dispatch_level_to_lowbits(Level, Width, AddrShift);  //static constexpr u32 LowBits  = emu::detail::handler_entry_dispatch_level_to_lowbits(Level, Width, AddrShift);
-            return dispatch[(offset & mask) >> (int)LowBits].read(offset, mem_mask);  //return dispatch[(offset & mask) >> LowBits]->read(offset, mem_mask);
-        }
-
-
-        public static void dispatch_write<int_Level, int_Width, int_AddrShift>(offs_t mask, offs_t offset, uX data, uX mem_mask, Pointer<handler_entry_write<int_Width, int_AddrShift>> dispatch)  //template<int Level, int Width, int AddrShift> void dispatch_write(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX data, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_write<Width, AddrShift> *const *dispatch)
-            where int_Level : int_const, new()
-            where int_Width : int_const, new()
-            where int_AddrShift : int_const, new()
-        {
-            int Level = new int_Level().value;
-            int Width = new int_Width().value;
-            int AddrShift = new int_AddrShift().value;
-
-            u32 LowBits = (u32)emumem_global.handler_entry_dispatch_level_to_lowbits(Level, Width, AddrShift);  //static constexpr u32 LowBits  = emu::detail::handler_entry_dispatch_level_to_lowbits(Level, Width, AddrShift);
-            dispatch[(offset & mask) >> (int)LowBits].write(offset, data, mem_mask);  //return dispatch[(offset & mask) >> LowBits]->write(offset, data, mem_mask);
-        }
-
-
-        // debugging
-        //-------------------------------------------------
-        //  generate_memdump - internal memory dump
-        //-------------------------------------------------
-        public static void generate_memdump(running_machine machine)
-        {
-            if (MEM_DUMP)
-            {
-                throw new emu_unimplemented();
-            }
-        }
-
-
-        // =====================-> Address segmentation for the search tree
-        public static int handler_entry_dispatch_lowbits(int highbits, int width, int ashift)
-        {
-            return (highbits > 48) ? 48 :
-                   (highbits > 32) ? 32 :
-                   (highbits > 14) ? 14 :
-                   width + ashift;
-        }
-    }
-
-
-#if false
-    // struct with function pointers for accessors; use is generally discouraged unless necessary
-    struct data_accessors
-    {
-        u8      (*read_byte)(address_space &space, offs_t address);
-        u16     (*read_word)(address_space &space, offs_t address);
-        u16     (*read_word_masked)(address_space &space, offs_t address, u16 mask);
-        u32     (*read_dword)(address_space &space, offs_t address);
-        u32     (*read_dword_masked)(address_space &space, offs_t address, u32 mask);
-        u64     (*read_qword)(address_space &space, offs_t address);
-        u64     (*read_qword_masked)(address_space &space, offs_t address, u64 mask);
-
-        void    (*write_byte)(address_space &space, offs_t address, u8 data);
-        void    (*write_word)(address_space &space, offs_t address, u16 data);
-        void    (*write_word_masked)(address_space &space, offs_t address, u16 data, u16 mask);
-        void    (*write_dword)(address_space &space, offs_t address, u32 data);
-        void    (*write_dword_masked)(address_space &space, offs_t address, u32 data, u32 mask);
-        void    (*write_qword)(address_space &space, offs_t address, u64 data);
-        void    (*write_qword_masked)(address_space &space, offs_t address, u64 data, u64 mask);
-    };
-#endif
-
-
-    // struct with function pointers for accessors; use is generally discouraged unless necessary
-    public struct data_accessors
-    {
-        //public Func<address_space, offs_t, u8> read_byte;  //u8      (*read_byte)(address_space &space, offs_t address);
-        //public Func<address_space, offs_t, u16> read_word;  //u16     (*read_word)(address_space &space, offs_t address);
-        //public Func<address_space, offs_t, u16, u16> read_word_masked;  //u16     (*read_word_masked)(address_space &space, offs_t address, u16 mask);
-        //public Func<address_space, offs_t, u32> read_dword;  //u32     (*read_dword)(address_space &space, offs_t address);
-        //public Func<address_space, offs_t, u32, u32> read_dword_masked;  //u32     (*read_dword_masked)(address_space &space, offs_t address, u32 mask);
-        //public Func<address_space, offs_t, u64> read_qword;  //u64     (*read_qword)(address_space &space, offs_t address);
-        //public Func<address_space, offs_t, u64, u64> read_qword_masked;  //u64     (*read_qword_masked)(address_space &space, offs_t address, u64 mask);
-
-        //public Action<address_space, offs_t, u8> write_byte;  //void    (*write_byte)(address_space &space, offs_t address, u8 data);
-        //public Action<address_space, offs_t, u16> write_word;  //void    (*write_word)(address_space &space, offs_t address, u16 data);
-        //public Action<address_space, offs_t, u16, u16> write_word_masked;  //void    (*write_word_masked)(address_space &space, offs_t address, u16 data, u16 mask);
-        //public Action<address_space, offs_t, u32> write_dword;  //void    (*write_dword)(address_space &space, offs_t address, u32 data);
-        //public Action<address_space, offs_t, u32, u32> write_dword_masked;  //void    (*write_dword_masked)(address_space &space, offs_t address, u32 data, u32 mask);
-        //public Action<address_space, offs_t, u64> write_qword;  //void    (*write_qword)(address_space &space, offs_t address, u64 data);
-        //public Action<address_space, offs_t, u64, u64> write_qword_masked;  //void    (*write_qword_masked)(address_space &space, offs_t address, u64 data, u64 mask);
-    }
-
-
-    // a line in the memory structure dump
-    class memory_entry_context
-    {
-        memory_view view;  //memory_view *view;
-        bool disabled;
-        int slot;
-    }
-
-
-    public class memory_entry
-    {
-        offs_t start;
-        offs_t end;
-        handler_entry entry;
-        std.vector<memory_entry_context> context;
     }
 
 
@@ -854,7 +570,7 @@ namespace mame
 
         protected virtual void dump_map(std.vector<memory_entry> map)
         {
-            g.fatalerror("dump_map called on non-dispatching class\n");
+            fatalerror("dump_map called on non-dispatching class\n");
         }
 
         protected abstract string name();
@@ -867,17 +583,17 @@ namespace mame
 
         public virtual void select_a(int slot)
         {
-            g.fatalerror("select_a called on non-view\n");
+            fatalerror("select_a called on non-view\n");
         }
 
         public virtual void select_u(int slot)
         {
-            g.fatalerror("select_u called on non-view\n");
+            fatalerror("select_u called on non-view\n");
         }
 
         public virtual offs_t dispatch_entry(offs_t address)
         {
-            g.fatalerror("dispatch_entry called on non-dispatching class\n");
+            fatalerror("dispatch_entry called on non-dispatching class\n");
             return default;
         }
     }
@@ -902,7 +618,7 @@ namespace mame
         protected static readonly int AddrShift = new int_AddrShift().value;
 
 
-        protected static readonly u32 NATIVE_MASK = Width + AddrShift >= 0 ? g.make_bitmask32(Width + AddrShift) : 0;  //static constexpr u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask<u32>(Width + AddrShift) : 0;
+        protected static readonly u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask32(Width + AddrShift) : 0;  //static constexpr u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask<u32>(Width + AddrShift) : 0;
 
 
         public class mapping
@@ -929,7 +645,7 @@ namespace mame
 
         public virtual void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_read<int_Width, int_AddrShift> handler)
         {
-            g.fatalerror("lookup called on non-dispatching class\n");
+            fatalerror("lookup called on non-dispatching class\n");
         }
 
 
@@ -946,13 +662,13 @@ namespace mame
 
         public virtual void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read<int_Width, int_AddrShift> handler)
         {
-            g.fatalerror("populate called on non-dispatching class\n");
+            fatalerror("populate called on non-dispatching class\n");
         }
 
 
         public virtual void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read<int_Width, int_AddrShift> handler)
         {
-            g.fatalerror("populate called on non-dispatching class\n");
+            fatalerror("populate called on non-dispatching class\n");
         }
 
 
@@ -970,13 +686,13 @@ namespace mame
 
         public virtual void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift> descriptor, u8 rkey, std.vector<mapping> mappings)
         {
-            g.fatalerror("populate_mismatched called on non-dispatching class\n");
+            fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
         public virtual void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift> descriptor, std.vector<mapping> mappings)
         {
-            g.fatalerror("populate_mismatched called on non-dispatching class\n");
+            fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
@@ -994,34 +710,34 @@ namespace mame
 
         protected virtual void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_read_passthrough<int_Width, int_AddrShift> handler, std.vector<mapping> mappings)
         {
-            g.fatalerror("populate_passthrough called on non-dispatching class\n");
+            fatalerror("populate_passthrough called on non-dispatching class\n");
         }
 
 
         protected virtual void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_read_passthrough<int_Width, int_AddrShift> handler, std.vector<mapping> mappings)
         {
-            g.fatalerror("populate_passthrough called on non-dispatching class\n");
+            fatalerror("populate_passthrough called on non-dispatching class\n");
         }
 
 
         // Remove a set of passthrough handlers, leaving the lower handler in their place
         public virtual void detach(std.unordered_set<handler_entry> handlers)
         {
-            g.fatalerror("detach called on non-dispatching class\n");
+            fatalerror("detach called on non-dispatching class\n");
         }
 
 
         // Return the internal structures of the root dispatch
         public virtual Pointer<handler_entry_read<int_Width, int_AddrShift>> get_dispatch()
         {
-            g.fatalerror("get_dispatch called on non-dispatching class\n");
+            fatalerror("get_dispatch called on non-dispatching class\n");
             return null;
         }
 
 
         public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, offs_t ostart, offs_t oend, Pointer<handler_entry_read<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)
         {
-            g.fatalerror("init_handlers called on non-view class\n");
+            fatalerror("init_handlers called on non-view class\n");
         }
 
 
@@ -1052,7 +768,7 @@ namespace mame
         protected static readonly int AddrShift = new int_AddrShift().value;
 
 
-        protected static readonly u32 NATIVE_MASK = Width + AddrShift >= 0 ? g.make_bitmask32(Width + AddrShift) : 0;  //static constexpr u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask<u32>(Width + AddrShift) : 0;
+        protected static readonly u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask32(Width + AddrShift) : 0;  //static constexpr u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask<u32>(Width + AddrShift) : 0;
 
 
         public class mapping
@@ -1079,7 +795,7 @@ namespace mame
 
         protected virtual void lookup(offs_t address, ref offs_t start, ref offs_t end, ref handler_entry_write<int_Width, int_AddrShift> handler)
         {
-            g.fatalerror("lookup called on non-dispatching class\n");
+            fatalerror("lookup called on non-dispatching class\n");
         }
 
 
@@ -1096,13 +812,13 @@ namespace mame
 
         public virtual void populate_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write<int_Width, int_AddrShift> handler)
         {
-            g.fatalerror("populate called on non-dispatching class\n");
+            fatalerror("populate called on non-dispatching class\n");
         }
 
 
         public virtual void populate_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write<int_Width, int_AddrShift> handler)
         {
-            g.fatalerror("populate called on non-dispatching class\n");
+            fatalerror("populate called on non-dispatching class\n");
         }
 
 
@@ -1121,13 +837,13 @@ namespace mame
 
         public virtual void populate_mismatched_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, memory_units_descriptor<int_Width, int_AddrShift> descriptor, u8 rkey, std.vector<mapping> mappings)
         {
-            g.fatalerror("populate_mismatched called on non-dispatching class\n");
+            fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
         public virtual void populate_mismatched_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, memory_units_descriptor<int_Width, int_AddrShift> descriptor, std.vector<mapping> mappings)
         {
-            g.fatalerror("populate_mismatched called on non-dispatching class\n");
+            fatalerror("populate_mismatched called on non-dispatching class\n");
         }
 
 
@@ -1145,34 +861,34 @@ namespace mame
 
         protected virtual void populate_passthrough_nomirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, handler_entry_write_passthrough<int_Width, int_AddrShift> handler, std.vector<mapping> mappings)
         {
-            g.fatalerror("populate_passthrough called on non-dispatching class\n");
+            fatalerror("populate_passthrough called on non-dispatching class\n");
         }
 
 
         protected virtual void populate_passthrough_mirror(offs_t start, offs_t end, offs_t ostart, offs_t oend, offs_t mirror, handler_entry_write_passthrough<int_Width, int_AddrShift> handler, std.vector<mapping> mappings)
         {
-            g.fatalerror("populate_passthrough called on non-dispatching class\n");
+            fatalerror("populate_passthrough called on non-dispatching class\n");
         }
 
 
         // Remove a set of passthrough handlers, leaving the lower handler in their place
         public virtual void detach(std.unordered_set<handler_entry> handlers)
         {
-            g.fatalerror("detach called on non-dispatching class\n");
+            fatalerror("detach called on non-dispatching class\n");
         }
 
 
         // Return the internal structures of the root dispatch
         public virtual Pointer<handler_entry_write<int_Width, int_AddrShift>> get_dispatch()
         {
-            g.fatalerror("get_dispatch called on non-dispatching class\n");
+            fatalerror("get_dispatch called on non-dispatching class\n");
             return null;
         }
 
 
         public virtual void init_handlers(offs_t start_entry, offs_t end_entry, u32 lowbits, offs_t ostart, offs_t oend, Pointer<handler_entry_write<int_Width, int_AddrShift>> dispatch, Pointer<handler_entry.range> ranges)
         {
-            g.fatalerror("init_handlers called on non-view class\n");
+            fatalerror("init_handlers called on non-view class\n");
         }
 
 
@@ -1212,10 +928,208 @@ namespace mame
     //template<int Width, int AddrShift> class handler_entry_write_unmapped;
 
 
+    public static partial class emumem_global
+    {
+        // ======================> address offset -> byte offset
+
+        public static offs_t memory_offset_to_byte(offs_t offset, int AddrShift) { return AddrShift < 0 ? offset << iabs(AddrShift) : offset >> iabs(AddrShift); }
+
+
+        // ======================> generic read/write decomposition routines
+
+        // generic direct read
+        //template<int Width, int AddrShift, endianness_t Endian, int TargetWidth, bool Aligned, typename T>
+        public static uX memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_TargetWidth, bool_Aligned>(Func<offs_t, uX, uX> rop, offs_t address, uX mask)  //typename emu::detail::handler_entry_size<TargetWidth>::uX  memory_read_generic(T rop, offs_t address, typename emu::detail::handler_entry_size<TargetWidth>::uX mask)
+            where int_Width : int_const, new()
+            where int_AddrShift : int_const, new()
+            where endianness_t_Endian : endianness_t_const, new()
+            where int_TargetWidth : int_const, new()
+            where bool_Aligned : bool_const, new()
+        {
+            //using TargetType = typename emu::detail::handler_entry_size<TargetWidth>::uX;
+            //using NativeType = typename emu::detail::handler_entry_size<Width>::uX;
+
+
+            int Width = new int_Width().value;
+            int AddrShift = new int_AddrShift().value;
+            endianness_t Endian = new endianness_t_Endian().value;
+            int TargetWidth = new int_TargetWidth().value;
+            bool Aligned = new bool_Aligned().value;
+
+
+            u32 TARGET_BYTES = 1U << TargetWidth;
+            u32 TARGET_BITS = 8 * TARGET_BYTES;
+            u32 NATIVE_BYTES = 1U << Width;
+            u32 NATIVE_BITS = 8 * NATIVE_BYTES;
+            u32 NATIVE_STEP = AddrShift >= 0 ? NATIVE_BYTES << iabs(AddrShift) : NATIVE_BYTES >> iabs(AddrShift);
+            u32 NATIVE_MASK = Width + AddrShift >= 0 ? make_bitmask32(Width + AddrShift) : 0;
+
+            // equal to native size and aligned; simple pass-through to the native reader
+            if (NATIVE_BYTES == TARGET_BYTES && (Aligned || (address & NATIVE_MASK) == 0))
+                return rop(address & ~NATIVE_MASK, mask);
+
+            // if native size is larger, see if we can do a single masked read (guaranteed if we're aligned)
+            if (NATIVE_BYTES > TARGET_BYTES)
+            {
+                u32 offsbits2 = 8 * (memory_offset_to_byte(address, AddrShift) & (NATIVE_BYTES - (Aligned ? TARGET_BYTES : 1)));
+                if (Aligned || (offsbits2 + TARGET_BITS <= NATIVE_BITS))
+                {
+                    if (Endian != ENDIANNESS_LITTLE) offsbits2 = NATIVE_BITS - TARGET_BITS - offsbits2;
+                    return rop(address & ~NATIVE_MASK, new uX(Width, mask) << (int)offsbits2) >> (int)offsbits2;  //return rop(address & ~NATIVE_MASK, (NativeType)mask << offsbits) >> offsbits;
+                }
+            }
+
+            // determine our alignment against the native boundaries, and mask the address
+            u32 offsbits = 8 * (memory_offset_to_byte(address, AddrShift) & (NATIVE_BYTES - 1));
+            address &= ~NATIVE_MASK;
+
+            // if we're here, and native size is larger or equal to the target, we need exactly 2 reads
+            if (NATIVE_BYTES >= TARGET_BYTES)
+            {
+                // little-endian case
+                if (Endian == ENDIANNESS_LITTLE)
+                {
+                    // read lower bits from lower address
+                    uX result = new uX(TargetWidth, 0);  //TargetType result = 0;
+                    uX curmask = new uX(Width, mask) << (int)offsbits;  //NativeType curmask = (NativeType)mask << offsbits;
+                    if (curmask != 0) result = rop(address, curmask) >> (int)offsbits;
+
+                    // read upper bits from upper address
+                    offsbits = NATIVE_BITS - offsbits;
+                    curmask = new uX(Width, mask >> (int)offsbits);
+                    if (curmask != 0) result |= rop(address + NATIVE_STEP, curmask) << (int)offsbits;
+                    return result;
+                }
+
+                // big-endian case
+                else
+                {
+                    // left-justify the mask to the target type
+                    u32 LEFT_JUSTIFY_TARGET_TO_NATIVE_SHIFT = ((NATIVE_BITS >= TARGET_BITS) ? (NATIVE_BITS - TARGET_BITS) : 0);
+                    uX result = new uX(Width, 0);  //NativeType result = 0;
+                    uX ljmask = new uX(Width, mask) << (int)LEFT_JUSTIFY_TARGET_TO_NATIVE_SHIFT;  //NativeType ljmask = (NativeType)mask << LEFT_JUSTIFY_TARGET_TO_NATIVE_SHIFT;
+                    uX curmask = ljmask >> (int)offsbits;  //NativeType curmask = ljmask >> offsbits;
+
+                    // read upper bits from lower address
+                    if (curmask != 0) result = rop(address, curmask) << (int)offsbits;
+                    offsbits = NATIVE_BITS - offsbits;
+
+                    // read lower bits from upper address
+                    curmask = ljmask << (int)offsbits;
+                    if (curmask != 0) result |= rop(address + NATIVE_STEP, curmask) >> (int)offsbits;
+
+                    // return the un-justified result
+                    return result >> (int)LEFT_JUSTIFY_TARGET_TO_NATIVE_SHIFT;
+                }
+            }
+
+            // if we're here, then we have 2 or more reads needed to get our final result
+            else
+            {
+                // compute the maximum number of loops; we do it this way so that there are
+                // a fixed number of loops for the compiler to unroll if it desires
+                u32 MAX_SPLITS_MINUS_ONE = TARGET_BYTES / NATIVE_BYTES - 1;
+                uX result = new uX(TargetWidth, 0);  //TargetType result = 0;
+
+                // little-endian case
+                if (Endian == ENDIANNESS_LITTLE)
+                {
+                    // read lowest bits from first address
+                    uX curmask = new uX(Width, mask << (int)offsbits);  //NativeType curmask = mask << offsbits;
+                    if (curmask != 0U) result = new uX(TargetWidth, rop(address, curmask) >> (int)offsbits);
+
+                    // read middle bits from subsequent addresses
+                    offsbits = NATIVE_BITS - offsbits;
+                    for (u32 index = 0; index < MAX_SPLITS_MINUS_ONE; index++)
+                    {
+                        address += NATIVE_STEP;
+                        curmask = new uX(Width, mask >> (int)offsbits);
+                        if (curmask != 0) result |= new uX(TargetWidth, rop(address, curmask)) << (int)offsbits;  //if (curmask != 0) result |= (TargetType)rop(address, curmask) << offsbits;
+                        offsbits += NATIVE_BITS;
+                    }
+
+                    // if we're not aligned and we still have bits left, read uppermost bits from last address
+                    if (!Aligned && offsbits < TARGET_BITS)
+                    {
+                        curmask = new uX(Width, mask >> (int)offsbits);
+                        if (curmask != 0) result |= new uX(TargetWidth, rop(address + NATIVE_STEP, curmask)) << (int)offsbits;  //if (curmask != 0) result |= (TargetType)rop(address + NATIVE_STEP, curmask) << offsbits;
+                    }
+                }
+
+                // big-endian case
+                else
+                {
+                    // read highest bits from first address
+                    offsbits = TARGET_BITS - (NATIVE_BITS - offsbits);
+                    uX curmask = new uX(Width, mask >> (int)offsbits);  //NativeType curmask = mask >> offsbits;
+                    if (curmask != 0) result = new uX(TargetWidth, rop(address, curmask)) << (int)offsbits;  //if (curmask != 0) result = (TargetType)rop(address, curmask) << offsbits;
+
+                    // read middle bits from subsequent addresses
+                    for (u32 index = 0; index < MAX_SPLITS_MINUS_ONE; index++)
+                    {
+                        offsbits -= NATIVE_BITS;
+                        address += NATIVE_STEP;
+                        curmask = new uX(Width, mask >> (int)offsbits);
+                        if (curmask != 0) result |= new uX(TargetWidth, rop(address, curmask)) << (int)offsbits;  //if (curmask != 0) result |= (TargetType)rop(address, curmask) << offsbits;
+                    }
+
+                    // if we're not aligned and we still have bits left, read lowermost bits from the last address
+                    if (!Aligned && offsbits != 0)
+                    {
+                        offsbits = NATIVE_BITS - offsbits;
+                        curmask = new uX(Width, mask << (int)offsbits);
+                        if (curmask != 0) result |= rop(address + NATIVE_STEP, curmask) >> (int)offsbits;
+                    }
+                }
+
+                return result;
+            }
+        }
+
+
+        //template<int Width, int AddrShift, endianness_t Endian, int TargetWidth, bool Aligned, typename T>
+        public static void memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_TargetWidth, bool_Aligned>(Action<offs_t, uX, uX> wop, offs_t address, uX data, uX mask)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        // ======================> Direct dispatching
+
+        public static uX dispatch_read<int_Level, int_Width, int_AddrShift>(offs_t mask, offs_t offset, uX mem_mask, Pointer<handler_entry_read<int_Width, int_AddrShift>> dispatch)  //template<int Level, int Width, int AddrShift> typename emu::detail::handler_entry_size<Width>::uX dispatch_read(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_read<Width, AddrShift> *const *dispatch)
+            where int_Level : int_const, new()
+            where int_Width : int_const, new()
+            where int_AddrShift : int_const, new()
+        {
+            int Level = new int_Level().value;
+            int Width = new int_Width().value;
+            int AddrShift = new int_AddrShift().value;
+
+            u32 LowBits = (u32)handler_entry_dispatch_level_to_lowbits(Level, Width, AddrShift);  //static constexpr u32 LowBits  = emu::detail::handler_entry_dispatch_level_to_lowbits(Level, Width, AddrShift);
+            return dispatch[(offset & mask) >> (int)LowBits].read(offset, mem_mask);  //return dispatch[(offset & mask) >> LowBits]->read(offset, mem_mask);
+        }
+
+
+        public static void dispatch_write<int_Level, int_Width, int_AddrShift>(offs_t mask, offs_t offset, uX data, uX mem_mask, Pointer<handler_entry_write<int_Width, int_AddrShift>> dispatch)  //template<int Level, int Width, int AddrShift> void dispatch_write(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX data, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_write<Width, AddrShift> *const *dispatch)
+            where int_Level : int_const, new()
+            where int_Width : int_const, new()
+            where int_AddrShift : int_const, new()
+        {
+            int Level = new int_Level().value;
+            int Width = new int_Width().value;
+            int AddrShift = new int_AddrShift().value;
+
+            u32 LowBits = (u32)handler_entry_dispatch_level_to_lowbits(Level, Width, AddrShift);  //static constexpr u32 LowBits  = emu::detail::handler_entry_dispatch_level_to_lowbits(Level, Width, AddrShift);
+            dispatch[(offset & mask) >> (int)LowBits].write(offset, data, mem_mask);  //return dispatch[(offset & mask) >> LowBits]->write(offset, data, mem_mask);
+        }
+    }
+
+
     // ======================> memory_access_specific
     // memory_access_specific does uncached but faster accesses by shortcutting the address_space virtual call
 
-    namespace emu.detail {
+    namespace emu.detail
+    {
 
     //template<int Level, int Width, int AddrShift, endianness_t Endian>
     public class memory_access_specific<int_Level, int_Width, int_AddrShift, endianness_t_Endian>
@@ -1261,8 +1175,8 @@ namespace mame
         //}
 
 
-        public u8 read_byte(offs_t address) { return Width == 0 ? read_native(address & ~NATIVE_MASK).u8 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(0, 0xff)).u8; }
-        public u16 read_word(offs_t address) { return Width == 1 ? read_native(address & ~NATIVE_MASK).u16 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).u16; }
+        public u8 read_byte(offs_t address) { return Width == 0 ? read_native(address & ~NATIVE_MASK).u8 : memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(0, 0xff)).u8; }
+        public u16 read_word(offs_t address) { return Width == 1 ? read_native(address & ~NATIVE_MASK).u16 : memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).u16; }
         //u16 read_word(offs_t address, u16 mask) { return memory_read_generic<Width, AddrShift, Endian, 1, true>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
         //u16 read_word_unaligned(offs_t address) { return memory_read_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, 0xffff); }
         //u16 read_word_unaligned(offs_t address, u16 mask) { return memory_read_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
@@ -1275,8 +1189,8 @@ namespace mame
         //u64 read_qword_unaligned(offs_t address) { return memory_read_generic<Width, AddrShift, Endian, 3, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, 0xffffffffffffffffU); }
         //u64 read_qword_unaligned(offs_t address, u64 mask) { return memory_read_generic<Width, AddrShift, Endian, 3, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
 
-        public void write_byte(offs_t address, u8 data) { if (Width == 0) write_native(address & ~NATIVE_MASK, new uX(0, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(0, data), new uX(0, 0xff)); }
-        public void write_word(offs_t address, u16 data) { if (Width == 1) write_native(address & ~NATIVE_MASK, new uX(1, data)); else emumem_global.memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(1, data), new uX(1, 0xffff)); }
+        public void write_byte(offs_t address, u8 data) { if (Width == 0) write_native(address & ~NATIVE_MASK, new uX(0, data)); else memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(0, data), new uX(0, 0xff)); }
+        public void write_word(offs_t address, u16 data) { if (Width == 1) write_native(address & ~NATIVE_MASK, new uX(1, data)); else memory_write_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX data2, uX mask) => { write_native(offset, data2, mask); }, address, new uX(1, data), new uX(1, 0xffff)); }
         //void write_word(offs_t address, u16 data, u16 mask) { memory_write_generic<Width, AddrShift, Endian, 1, true>([this](offs_t offset, NativeType data, NativeType mask) { write_native(offset, data, mask); }, address, data, mask); }
         //void write_word_unaligned(offs_t address, u16 data) { memory_write_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType data, NativeType mask) { write_native(offset, data, mask); }, address, data, 0xffff); }
         //void write_word_unaligned(offs_t address, u16 data, u16 mask) { memory_write_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType data, NativeType mask) { write_native(offset, data, mask); }, address, data, mask); }
@@ -1293,14 +1207,14 @@ namespace mame
         uX read_native(offs_t address) { return read_native(address, ~new uX(Width, 0)); }
         uX read_native(offs_t address, uX mask)  //NativeType read_native(offs_t address, NativeType mask = ~NativeType(0)) {
         {
-            return emumem_global.dispatch_read<int_Level, int_Width, int_AddrShift>(offs_t.MaxValue, address & m_addrmask, mask, m_dispatch_read);  //return dispatch_read<Level, Width, AddrShift, Endian>(offs_t(-1), address & m_addrmask, mask, m_dispatch_read);;
+            return dispatch_read<int_Level, int_Width, int_AddrShift>(offs_t.MaxValue, address & m_addrmask, mask, m_dispatch_read);  //return dispatch_read<Level, Width, AddrShift, Endian>(offs_t(-1), address & m_addrmask, mask, m_dispatch_read);;
         }
 
 
         void write_native(offs_t address, uX data) { write_native(address, data, ~new uX(Width, 0)); }
         void write_native(offs_t address, uX data, uX mask)  //void write_native(offs_t address, NativeType data, NativeType mask = ~NativeType(0)) {
         {
-            emumem_global.dispatch_write<int_Level, int_Width, int_AddrShift>(offs_t.MaxValue, address & m_addrmask, data, mask, m_dispatch_write);  //dispatch_write<Level, Width, AddrShift, Endian>(offs_t(-1), address & m_addrmask, data, mask, m_dispatch_write);;
+            dispatch_write<int_Level, int_Width, int_AddrShift>(offs_t.MaxValue, address & m_addrmask, data, mask, m_dispatch_write);  //dispatch_write<Level, Width, AddrShift, Endian>(offs_t(-1), address & m_addrmask, data, mask, m_dispatch_write);;
         }
 
 
@@ -1394,8 +1308,8 @@ namespace mame
         //    return m_cache_r->get_ptr(address);
         //}
 
-        public u8 read_byte(offs_t address) { return Width == 0 ? read_native(address & ~NATIVE_MASK).u8 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(0, 0xff)).u8; }
-        public u16 read_word(offs_t address) { return Width == 1 ? read_native(address & ~NATIVE_MASK).u16 : emumem_global.memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).u16; }
+        public u8 read_byte(offs_t address) { return Width == 0 ? read_native(address & ~NATIVE_MASK).u8 : memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(0, 0xff)).u8; }
+        public u16 read_word(offs_t address) { return Width == 1 ? read_native(address & ~NATIVE_MASK).u16 : memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>((offs_t offset, uX mask) => { return read_native(offset, mask); }, address, new uX(1, 0xffff)).u16; }
         //u16 read_word(offs_t address, u16 mask) { return memory_read_generic<Width, AddrShift, Endian, 1, true>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
         //u16 read_word_unaligned(offs_t address) { return memory_read_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, 0xffff); }
         //u16 read_word_unaligned(offs_t address, u16 mask) { return memory_read_generic<Width, AddrShift, Endian, 1, false>([this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }, address, mask); }
@@ -1484,7 +1398,7 @@ namespace mame
 
 
         //static constexpr int Level = emu::detail::handler_entry_dispatch_level(HighBits);
-        public class int_Level : int_const { public int value { get { return emumem_global.handler_entry_dispatch_level(HighBits); } } }
+        public class int_Level : int_const { public int value { get { return handler_entry_dispatch_level(HighBits); } } }
 
 
         //using cache = emu::detail::memory_access_cache<Width, AddrShift, Endian>;
@@ -1500,16 +1414,6 @@ namespace mame
             //public specific(int Level, int Width, int AddrShift, endianness_t Endian) : base(Level, Width, AddrShift, Endian) { }
         }
         //public specific m_specific;
-
-
-        //public memory_access(int HighBits, int Width, int AddrShift, endianness_t Endian)
-        //{
-        //    Level = mame.emumem_global.handler_entry_dispatch_level(HighBits);
-        //
-        //
-        //    m_cache = new cache(Width, AddrShift, Endian);
-        //    m_specific = new specific(Level, Width, AddrShift, Endian);
-        //}
     }
 
 
@@ -1567,7 +1471,7 @@ namespace mame
         public address_space_config()
         {
             m_name = "unknown";
-            m_endianness = g.ENDIANNESS_NATIVE;
+            m_endianness = ENDIANNESS_NATIVE;
             m_data_width = 0;
             m_addr_width = 0;
             m_addr_shift = 0;
@@ -1637,7 +1541,7 @@ namespace mame
         public offs_t byte2addr(offs_t address) { return m_addr_shift > 0 ? (address << m_addr_shift) : (address >> -m_addr_shift); }
 
         // address-to-byte conversion helpers
-        public offs_t addr2byte_end(offs_t address) { return m_addr_shift < 0 ? (UInt32)((address << -m_addr_shift) | ((1U << -m_addr_shift) - 1)) : (address >> m_addr_shift); }
+        public offs_t addr2byte_end(offs_t address) { return m_addr_shift < 0 ? (offs_t)((address << -m_addr_shift) | ((1U << -m_addr_shift) - 1)) : (address >> m_addr_shift); }
         //offs_t byte2addr_end(offs_t address) { return (m_addrbus_shift > 0) ? ((address << m_addrbus_shift) | ((1 << m_addrbus_shift) - 1)) : (address >> -m_addrbus_shift); }
     }
 
@@ -1657,8 +1561,8 @@ namespace mame
         {
             m_config = config;
             m_manager = manager;
-            m_addrmask = g.make_bitmask32(m_config.addr_width());
-            m_logaddrmask = g.make_bitmask32(m_config.logaddr_width());
+            m_addrmask = make_bitmask32(m_config.addr_width());
+            m_logaddrmask = make_bitmask32(m_config.logaddr_width());
             m_addrchars = (u8)((m_config.addr_width() + 3) / 4);
             m_logaddrchars = (u8)((m_config.logaddr_width() + 3) / 4);
         }
@@ -1743,36 +1647,36 @@ namespace mame
 
         // install taps with mirroring
         protected virtual memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u8> tap, memory_passthrough_handler mph = null)   //virtual memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 8-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 8-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u16> tap, memory_passthrough_handler mph = null)   //virtual memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 16-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 16-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u32> tap, memory_passthrough_handler mph = null)   //virtual memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 32-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 32-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u64> tap, memory_passthrough_handler mph = null)   //virtual memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 64-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 64-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u8> tap, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 8-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 8-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u16> tap, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 16-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 16-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u32> tap, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 32-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 32-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u64> tap, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 64-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 64-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
         public virtual memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u8> tapr, install_tap_func<u8> tapw, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tapr, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tapw, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 8-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 8-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
         public virtual memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u16> tapr, install_tap_func<u16> tapw, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tapr, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 16-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 16-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u32> tapr, install_tap_func<u32> tapw, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tapr, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 32-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 32-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<u64> tapr, install_tap_func<u64> tapw, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapr, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 64-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 64-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
 
         protected virtual memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<uX> tap, memory_passthrough_handler mph = null)   //virtual memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 8-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 8-bits wide bus read tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<uX> tap, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tap, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 64-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 64-bits wide bus write tap in a {0}-bits wide bus\n", data_width()); return null; }
         protected virtual memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, string name, install_tap_func<uX> tapr, install_tap_func<uX> tapw, memory_passthrough_handler mph = null)  //virtual memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, offs_t addrmirror, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapr, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr);
-        { g.fatalerror("Trying to install a 64-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
+        { fatalerror("Trying to install a 64-bits wide bus read/write tap in a {0}-bits wide bus\n", data_width()); return null; }
 
 
         // install views
@@ -2156,15 +2060,15 @@ namespace mame
         protected void check_optimize_all(string function, int width, offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, out offs_t nstart, out offs_t nend, out offs_t nmask, out offs_t nmirror, out u64 nunitmask, out int ncswidth)
         {
             if (addrstart > addrend)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is after the end address.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is after the end address.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect);
             if ((addrstart & ~m_addrmask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrstart & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrstart & m_addrmask);
             if ((addrend & ~m_addrmask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrend & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrend & m_addrmask);
 
             // Check the relative data widths
             if (width > m_config.data_width())
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, cannot install a {6}-bits wide handler in a {7}-bits wide address space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, width, m_config.data_width());
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, cannot install a {6}-bits wide handler in a {7}-bits wide address space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, width, m_config.data_width());
 
             // Check the validity of the addresses given their intrinsic width
             // We assume that busses with non-zero address shift have a data width matching the shift (reality says yes)
@@ -2172,9 +2076,9 @@ namespace mame
             offs_t lowbits_mask = width != 0 && m_config.addr_shift() == 0 ? ((offs_t)width >> 3) - 1 : default_lowbits_mask;
 
             if ((addrstart & lowbits_mask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address has low bits set, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrstart & ~lowbits_mask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, start address has low bits set, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrstart & ~lowbits_mask);
             if (((~addrend) & lowbits_mask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address has low bits unset, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrend | lowbits_mask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, end address has low bits unset, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrend | lowbits_mask);
 
 
             offs_t set_bits = addrstart | addrend;
@@ -2187,27 +2091,27 @@ namespace mame
             changing_bits |= changing_bits >> 16;
 
             if ((addrmask & ~m_addrmask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrmask & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrmask & m_addrmask);
             if ((addrselect & ~m_addrmask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrselect & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select is outside of the global address mask {6}, did you mean {7} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, m_addrmask, addrselect & m_addrmask);
             if ((addrmask & ~changing_bits) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is trying to unmask an unchanging address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmask & changing_bits);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mask is trying to unmask an unchanging address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmask & changing_bits);
             if ((addrmirror & changing_bits) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~changing_bits);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~changing_bits);
             if ((addrselect & changing_bits) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~changing_bits);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a changing address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~changing_bits);
             if ((addrmirror & set_bits) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~set_bits);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~set_bits);
             if ((addrselect & set_bits) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~set_bits);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, select touches a set address bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrselect & ~set_bits);
             if ((addrmirror & addrselect) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a select bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~addrselect);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, mirror touches a select bit, did you mean {6} ?\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, addrmirror & ~addrselect);
 
             // Check the cswidth, if provided
             if (cswidth > m_config.data_width())
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is too large for a {7}-bit space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, m_config.data_width());
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is too large for a {7}-bit space.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, m_config.data_width());
             if (width != 0 && (cswidth % width) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is not a multiple of handler size {7}.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, width);
+                fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the cswidth of {6} is not a multiple of handler size {7}.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, cswidth, width);
 
             ncswidth = cswidth != 0 ? cswidth : width;
 
@@ -2224,7 +2128,7 @@ namespace mame
                     while (cmask != 0 && (cmask & block_mask) == 0)
                         cmask >>= width;
                     if (cmask != 0 && cmask != block_mask)
-                        g.fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the unitmask of %016x has incorrect granularity for %d-bit chip selection.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth);
+                        fatalerror("{0}: In range {1}-{2} mask {3} mirror {4} select {5}, the unitmask of %016x has incorrect granularity for %d-bit chip selection.\n", function, addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth);
                 }
             }
 
@@ -2256,22 +2160,22 @@ namespace mame
                 // 2. Clearing
                 u64 smask;
                 u64 emask;
-                if (m_config.endianness() == g.ENDIANNESS_BIG)
+                if (m_config.endianness() == ENDIANNESS_BIG)
                 {
-                    smask =  g.make_bitmask64((u32)m_config.data_width() - ((addrstart - nstart) << (3 - m_config.addr_shift())));
-                    emask = ~g.make_bitmask64((u32)m_config.data_width() - ((addrend - nstart + 1) << (3 - m_config.addr_shift())));
+                    smask =  make_bitmask64((u32)m_config.data_width() - ((addrstart - nstart) << (3 - m_config.addr_shift())));
+                    emask = ~make_bitmask64((u32)m_config.data_width() - ((addrend - nstart + 1) << (3 - m_config.addr_shift())));
                 }
                 else
                 {
-                    smask = ~g.make_bitmask64((addrstart - nstart) << (3 - m_config.addr_shift()));
-                    emask =  g.make_bitmask64((addrend - nstart + 1) << (3 - m_config.addr_shift()));
+                    smask = ~make_bitmask64((addrstart - nstart) << (3 - m_config.addr_shift()));
+                    emask =  make_bitmask64((addrend - nstart + 1) << (3 - m_config.addr_shift()));
                 }
 
                 nunitmask &= smask & emask;
 
                 // 3. Mirroring
                 offs_t to_mirror = nmirror & default_lowbits_mask;
-                if (m_config.endianness() == g.ENDIANNESS_BIG)
+                if (m_config.endianness() == ENDIANNESS_BIG)
                 {
                     for (int i = 0; to_mirror != 0; i++)
                     {
@@ -2322,17 +2226,17 @@ namespace mame
         protected void check_optimize_mirror(string function, offs_t addrstart, offs_t addrend, offs_t addrmirror, out offs_t nstart, out offs_t nend, out offs_t nmask, out offs_t nmirror)
         {
             if (addrstart > addrend)
-                g.fatalerror("{0}: In range {1}-{2} mirror {3}, start address is after the end address.\n", function, addrstart, addrend, addrmirror);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, start address is after the end address.\n", function, addrstart, addrend, addrmirror);
             if ((addrstart & ~m_addrmask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mirror {3}, start address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrstart & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, start address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrstart & m_addrmask);
             if ((addrend & ~m_addrmask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mirror {3}, end address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrend & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, end address is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrend & m_addrmask);
 
             offs_t lowbits_mask = (offs_t)((m_config.data_width() >> (3 - m_config.addr_shift())) - 1);
             if ((addrstart & lowbits_mask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mirror {3}, start address has low bits set, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrstart & ~lowbits_mask);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, start address has low bits set, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrstart & ~lowbits_mask);
             if (((~addrend) & lowbits_mask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mirror {3}, end address has low bits unset, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrend | lowbits_mask);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, end address has low bits unset, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrend | lowbits_mask);
 
             offs_t set_bits = addrstart | addrend;
             offs_t changing_bits = addrstart ^ addrend;
@@ -2344,11 +2248,11 @@ namespace mame
             changing_bits |= changing_bits >> 16;
 
             if ((addrmirror & ~m_addrmask) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrmirror & m_addrmask);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, mirror is outside of the global address mask {4}, did you mean {5} ?\n", function, addrstart, addrend, addrmirror, m_addrmask, addrmirror & m_addrmask);
             if ((addrmirror & changing_bits) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a changing address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~changing_bits);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a changing address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~changing_bits);
             if ((addrmirror & set_bits) != 0)
-                g.fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a set address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~set_bits);
+                fatalerror("{0}: In range {1}-{2} mirror {3}, mirror touches a set address bit, did you mean {4} ?\n", function, addrstart, addrend, addrmirror, addrmirror & ~set_bits);
 
             nstart = addrstart;
             nend = addrend;
@@ -2377,7 +2281,7 @@ namespace mame
 
 
     // address_space holds live information about an address space
-    public abstract class address_space : address_space_installer, IDisposable
+    public abstract partial class address_space : address_space_installer, IDisposable
     {
         //friend class memory_bank;
         //friend class memory_block;
@@ -2413,39 +2317,11 @@ namespace mame
         u32 m_in_notification;  // notification(s) currently being done
 
 
+        // emumem_aspace.cs
+
         // construction/destruction
-        protected address_space(memory_manager manager, device_memory_interface memory, int spacenum)
-            : base(memory.space_config(spacenum), manager)
-        {
-            m_device = memory.device();
-            m_unmap = 0;
-            m_spacenum = spacenum;
-            m_log_unmap = true;
-            m_name = memory.space_config(spacenum).name();
-            m_notifier_id = 0;
-            m_in_notification = 0;
-        }
-
-
-        ~address_space()
-        {
-            g.assert(m_isDisposed);  // can remove
-        }
-
-    
-        bool m_isDisposed = false;
-        public void Dispose()
-        {
-            if (!m_isDisposed)
-            {
-                m_unmap_r.unref();
-                m_unmap_w.unref();
-                m_nop_r.unref();
-                m_nop_w.unref();
-            }
-    
-            m_isDisposed = true;
-        }
+        //address_space(memory_manager &manager, device_memory_interface &memory, int spacenum);
+        //virtual ~address_space();
 
 
         // getters
@@ -2466,11 +2342,11 @@ namespace mame
             endianness_t Endian = new endianness_t_Endian().value;
 
             if (AddrShift != m_config.addr_shift())
-                g.fatalerror("Requesting cache() with address shift {0} while the config says {1}\n", AddrShift, m_config.addr_shift());
+                fatalerror("Requesting cache() with address shift {0} while the config says {1}\n", AddrShift, m_config.addr_shift());
             if (8 << Width != m_config.data_width())
-                g.fatalerror("Requesting cache() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
+                fatalerror("Requesting cache() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
             if (Endian != m_config.endianness())
-                g.fatalerror("Requesting cache() with endianness {0} while the config says {1}\n",
+                fatalerror("Requesting cache() with endianness {0} while the config says {1}\n",
                            util.endian_to_string_view(Endian), util.endian_to_string_view(m_config.endianness()));
 
             v.set(this, get_cache_info());
@@ -2489,32 +2365,23 @@ namespace mame
             int AddrShift = new int_AddrShift().value;
             endianness_t Endian = new endianness_t_Endian().value;
 
-            if (Level != emumem_global.handler_entry_dispatch_level(m_config.addr_width()))
-                g.fatalerror("Requesting specific() with wrong level, bad address width (the config says {0})\n", m_config.addr_width());
+            if (Level != handler_entry_dispatch_level(m_config.addr_width()))
+                fatalerror("Requesting specific() with wrong level, bad address width (the config says {0})\n", m_config.addr_width());
             if (AddrShift != m_config.addr_shift())
-                g.fatalerror("Requesting specific() with address shift {0} while the config says {1}\n", AddrShift, m_config.addr_shift());
+                fatalerror("Requesting specific() with address shift {0} while the config says {1}\n", AddrShift, m_config.addr_shift());
             if (8 << Width != m_config.data_width())
-                g.fatalerror("Requesting specific() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
+                fatalerror("Requesting specific() with data width {0} while the config says {1}\n", 8 << Width, m_config.data_width());
             if (Endian != m_config.endianness())
-                g.fatalerror("Requesting spefific() with endianness {0} while the config says {1}\n",
+                fatalerror("Requesting spefific() with endianness {0} while the config says {1}\n",
                            util.endian_to_string_view(Endian), util.endian_to_string_view(m_config.endianness()));
 
             v.set(this, get_specific_info());
         }
 
 
-        //**************************************************************************
-        //  MEMORY MAPPING HELPERS
-        //**************************************************************************
+        // emumem_aspace.cs
 
-        public int add_change_notifier(Action<read_or_write> n)  //int add_change_notifier(std::function<void (read_or_write)> n);
-        {
-            int id = m_notifier_id++;
-            m_notifiers.emplace_back(new notifier_t() { m_notifier = n, m_id = id });
-            return id;
-        }
-
-
+        //int add_change_notifier(std::function<void (read_or_write)> n);
         //void remove_change_notifier(int id);
 
 
@@ -2586,154 +2453,13 @@ namespace mame
 
         // setup
 
-        //-------------------------------------------------
-        //  prepare_map - allocate the address map and
-        //  walk through it to find implicit memory regions
-        //  and identify shared regions
-        //-------------------------------------------------
-        public void prepare_map()
-        {
-            // allocate the address map
-            m_map = new address_map(m_device, m_spacenum);
+        // emumem_aspace.cs
 
-            // merge in the submaps
-            m_map.import_submaps(m_manager.machine(), m_device.owner() != null ? m_device.owner() : m_device, data_width(), endianness(), addr_shift());
-
-            // extract global parameters specified by the map
-            m_unmap = (m_map.m_unmapval == 0) ? 0U : u64.MaxValue;  //m_unmap = (m_map->m_unmapval == 0) ? 0 : ~0;
-            if (m_map.m_globalmask != 0)
-            {
-                if ((m_map.m_globalmask & ~m_addrmask) != 0)
-                    g.fatalerror("Can't set a global address mask of {0} on a {1}-bits address width bus.\n", m_map.m_globalmask, addr_width());
-
-                m_addrmask = m_map.m_globalmask;
-            }
-
-            prepare_map_generic(m_map, true);
-        }
-
-
-        //-------------------------------------------------
-        //  prepare_map_generic - walk through an address
-        //  map to find implicit memory regions and
-        //  identify shared regions
-        //-------------------------------------------------
-        public void prepare_map_generic(address_map map, bool allow_alloc)
-        {
-            memory_region devregion = (m_spacenum == 0) ? m_device.memregion(g.DEVICE_SELF) : null;
-            u32 devregionsize = (devregion != null) ? devregion.bytes() : 0;
-
-            // make a pass over the address map, adjusting for the device and getting memory pointers
-            foreach (address_map_entry entry in map.m_entrylist)
-            {
-                // computed adjusted addresses first
-                adjust_addresses(ref entry.m_addrstart, ref entry.m_addrend, ref entry.m_addrmask, ref entry.m_addrmirror);
-
-                // if we have a share entry, add it to our map
-                if (entry.m_share != null)
-                {
-                    // if we can't find it, add it to our map if we're allowed to
-                    string fulltag = entry.m_devbase.subtag(entry.m_share);
-                    memory_share share = m_manager.share_find(fulltag);
-                    if (share == null)
-                    {
-                        if (!allow_alloc)
-                            g.fatalerror("Trying to create share '{0}' too late\n", fulltag);
-
-                        emumem_global.VPRINTF("Creating share '{0}' of length {1}\n", fulltag, entry.m_addrend + 1 - entry.m_addrstart);
-                        share = m_manager.share_alloc(m_device, fulltag, (u8)m_config.data_width(), address_to_byte(entry.m_addrend + 1 - entry.m_addrstart), endianness());
-                    }
-                    else
-                    {
-                        string result = share.compare((u8)m_config.data_width(), address_to_byte(entry.m_addrend + 1 - entry.m_addrstart), endianness());
-                        if (!result.empty())
-                            g.fatalerror("{0}\n", result);
-                    }
-
-                    entry.m_memory = share.ptr();
-                }
-
-                // if this is a ROM handler without a specified region and not shared, attach it to the implicit region
-                if (m_spacenum == emumem_global.AS_PROGRAM && entry.m_read.m_type == map_handler_type.AMH_ROM && entry.m_region == null && entry.m_share == null)
-                {
-                    // make sure it fits within the memory region before doing so, however
-                    if (entry.m_addrend < devregionsize)
-                    {
-                        entry.m_region = m_device.tag();
-                        entry.m_rgnoffs = address_to_byte(entry.m_addrstart);
-                    }
-                }
-
-                // validate adjusted addresses against implicit regions
-                if (entry.m_region != null)
-                {
-                    // determine full tag
-                    string fulltag = entry.m_devbase.subtag(entry.m_region);
-
-                    // find the region
-                    memory_region region = m_manager.machine().root_device().memregion(fulltag);
-                    if (region == null)
-                        g.fatalerror("device '{0}' {1} space memory map entry {2}-{3} references nonexistent region \"{4}\"\n", m_device.tag(), m_name, entry.m_addrstart, entry.m_addrend, entry.m_region);
-
-                    // validate the region
-                    if (entry.m_rgnoffs + m_config.addr2byte(entry.m_addrend - entry.m_addrstart + 1) > region.bytes())
-                        g.fatalerror("device '{0}' {1} space memory map entry {2}-{3} extends beyond region \"{4}\" size ({5})\n", m_device.tag(), m_name, entry.m_addrstart, entry.m_addrend, entry.m_region, region.bytes());
-
-                    if (entry.m_share != null)
-                        g.fatalerror("device '{0}' {1} space memory map entry {2}-{3} has both .region() and .share()\n", m_device.tag(), m_name, entry.m_addrstart, entry.m_addrend);
-                }
-
-                // convert any region-relative entries to their memory pointers
-                if (entry.m_region != null)
-                {
-                    // determine full tag
-                    string fulltag = entry.m_devbase.subtag(entry.m_region);
-
-                    // set the memory address
-                    entry.m_memory = new PointerU8(m_manager.machine().root_device().memregion(fulltag).base_(), (int)entry.m_rgnoffs);  //entry.m_memory = m_manager.machine().root_device().memregion(fulltag)->base() + entry.m_rgnoffs;
-                }
-
-                // allocate anonymous ram when needed
-                if (entry.m_memory == null && (entry.m_read.m_type == map_handler_type.AMH_RAM || entry.m_write.m_type == map_handler_type.AMH_RAM))
-                {
-                    if (!allow_alloc)
-                        g.fatalerror("Trying to create memory in range {0}-{1} too late\n", entry.m_addrstart, entry.m_addrend);
-
-                    entry.m_memory = m_manager.anonymous_alloc(this, address_to_byte(entry.m_addrend + 1 - entry.m_addrstart), (u8)m_config.data_width(), entry.m_addrstart, entry.m_addrend);
-                }
-            }
-        }
-
-
+        //void prepare_map();
         //void prepare_device_map(address_map &map);
+        //void populate_from_map(address_map *map = nullptr);
 
-
-        //-------------------------------------------------
-        //  populate_from_map - walk the map in reverse
-        //  order and install the appropriate handler for
-        //  each case
-        //-------------------------------------------------
-        public void populate_from_map(address_map map = null)
-        {
-            // no map specified, use the space-specific one
-            if (map == null)
-                map = m_map;
-
-            // no map, nothing to do
-            if (map == null)
-                return;
-
-            // install the handlers, using the original, unadjusted memory map
-            foreach (address_map_entry entry in map.m_entrylist)
-            {
-                // map both read and write halves
-                populate_map_entry(entry, read_or_write.READ);
-                populate_map_entry(entry, read_or_write.WRITE);
-            }
-
-            if (emumem_global.VALIDATE_REFCOUNTS)
-                validate_reference_counts();
-        }
+        //void prepare_map_generic(address_map &map, bool allow_alloc);
 
 
         //template<int Width, int AddrShift>
@@ -2796,7 +2522,7 @@ namespace mame
 
 
             m_tag = tag;
-            m_name = util.string_format("Bank '%s'", m_tag);
+            m_name = util.string_format("Bank '{0}'", m_tag);
             machine().save().save_item(device, "memory", m_tag, 0, m_curentry, "m_curentry");
         }
 
@@ -2935,8 +2661,8 @@ namespace mame
                 return util.string_format("share {0} found with unexpected size (expected {1}, found {2})", m_name, bytes, m_bytes);
             if (endianness != m_endianness && m_bitwidth != 8)
                 return util.string_format("share {0} found with unexpected endianness (expected {1}, found {2})", m_name,
-                                           endianness == g.ENDIANNESS_LITTLE ? "little" : "big",
-                                           m_endianness == g.ENDIANNESS_LITTLE ? "little" : "big");
+                                           endianness == ENDIANNESS_LITTLE ? "little" : "big",
+                                           m_endianness == ENDIANNESS_LITTLE ? "little" : "big");
             return "";
         }
     }
@@ -2995,7 +2721,7 @@ namespace mame
 
     // ======================> memory_view
     // a memory view allows switching between submaps in the map
-    public class memory_view
+    public partial class memory_view
     {
         //template<int Level, int Width, int AddrShift, endianness_t Endian> friend class address_space_specific;
         //template<int Level, int Width, int AddrShift> friend class memory_view_entry_specific;
@@ -3009,38 +2735,31 @@ namespace mame
         //DISABLE_COPYING(memory_view);
 
 
-        public abstract class memory_view_entry : address_space_installer
+        public abstract partial class memory_view_entry : address_space_installer
         {
             //memory_view &m_view;
             protected address_map m_map;  //std::unique_ptr<address_map> m_map;
             //int m_id;
 
 
-            protected memory_view_entry(address_space_config config, memory_manager manager, memory_view view, int id)
-                 : base(config, manager)
-            {
-                throw new emu_unimplemented();
-            }
+            // emumem_mview.cs
 
+            //memory_view_entry(const address_space_config &config, memory_manager &manager, memory_view &view, int id);
 
             //virtual ~memory_view_entry() = default;
 
             //address_map_entry &operator()(offs_t start, offs_t end);
-            public address_map_entry op(offs_t start, offs_t end)
-            {
-                return m_map.op(start, end);
-            }
 
 
             protected abstract void populate_from_map(address_map map = null);
 
 
-            //std::string key() const;
+            // emumem_mview.cs
 
+            //std::string key() const;
 
             //void prepare_map_generic(address_map &map, bool allow_alloc);
             //void prepare_device_map(address_map &map);
-
 
             //void check_range_optimize_all(const char *function, int width, offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, offs_t &nstart, offs_t &nend, offs_t &nmask, offs_t &nmirror, u64 &nunitmask, int &ncswidth);
             //void check_range_optimize_mirror(const char *function, offs_t addrstart, offs_t addrend, offs_t addrmirror, offs_t &nstart, offs_t &nend, offs_t &nmask, offs_t &nmirror);
@@ -3063,59 +2782,20 @@ namespace mame
         //std::string                                     m_context;
 
 
-        public memory_view(device_t device, string name)
-        {
-            m_device = device;
-            m_name = name;
-            m_config = null;
-            m_addrstart = 0;
-            m_addrend = 0;
-            m_space = null;
-            m_handler_read = null;
-            m_handler_write = null;
-            m_cur_id = -1;
-            m_cur_slot = -1;
+        // emumem_mview.cs
 
+        //memory_view(device_t &device, std::string name);
 
-            device.view_register(this);
-        }
-
+        //~memory_view();
 
         //memory_view_entry &operator[](int slot);
-        public memory_view_entry op(int slot)
-        {
-            if (m_config == null)
-                g.fatalerror("A view must be in a map or a space before it can be setup.");
-
-            var i = m_entry_mapping.find(slot);
-            if (i == default)
-            {
-                memory_view_entry e;
-                int id = (int)m_entries.size();
-                e = emumem_mview_global.mve_make(emumem_global.handler_entry_dispatch_level(m_config.addr_width()), m_config.data_width(), m_config.addr_shift(), m_config.endianness(),
-                             m_config, m_device.machine().memory(), this, id);
-                m_entries.resize((size_t)id + 1);
-                m_entries[id] = e;  //m_entries[id].reset(e);
-                m_entry_mapping[slot] = id;
-                if (m_handler_read != null)
-                {
-                    m_handler_read.select_u(id);
-                    m_handler_write.select_u(id);
-                }
-                return e;
-            }
-            else
-            {
-                return m_entries[i];
-            }
-        }
 
 
         public void select(int slot)
         {
             var i = m_entry_mapping.find(slot);
             if (i == default)
-                g.fatalerror("memory_view {0}: select of unknown slot {1}", m_name, slot);
+                fatalerror("memory_view {0}: select of unknown slot {1}", m_name, slot);
 
             m_cur_slot = slot;
             m_cur_id = i;
@@ -3136,7 +2816,7 @@ namespace mame
         public void initialize_from_address_map(offs_t addrstart, offs_t addrend, address_space_config config)
         {
             if (m_config != null)
-                g.fatalerror("A memory_view can be present in only one address map.");
+                fatalerror("A memory_view can be present in only one address map.");
 
             m_config = config;
             m_addrstart = addrstart;
@@ -3149,16 +2829,15 @@ namespace mame
         //int id_to_slot(int id) const;
 
 
-        public void register_state()
-        {
-            throw new emu_unimplemented();
-        }
+        // emumem_mview.cs
+
+        //void register_state();
     }
 
 
     // ======================> memory_manager
     // holds internal state for the memory system
-    public class memory_manager
+    public partial class memory_manager
     {
         //friend class address_space;
         //template<int Level, int Width, int AddrShift, endianness_t Endian> friend class address_space_specific;
@@ -3247,7 +2926,7 @@ namespace mame
         {
             // make sure we don't have a share of the same name; also find the end of the list
             if (m_sharelist.find(name) != default)
-                g.fatalerror("share_alloc called with duplicate share name \"{0}\"\n", name);
+                fatalerror("share_alloc called with duplicate share name \"{0}\"\n", name);
 
             // allocate and register the memory
             MemoryU8 ptr = allocate_memory(dev, 0, name, width, bytes);
@@ -3284,7 +2963,7 @@ namespace mame
 
             // make sure we don't have a bank of the same name
             if (!ins)
-                g.fatalerror("bank_alloc called with duplicate bank name \"{0}\"\n", name);
+                fatalerror("bank_alloc called with duplicate bank name \"{0}\"\n", name);
 
             return bank;  //return ins.first->second.get();
         }
@@ -3309,7 +2988,7 @@ namespace mame
         {
             // make sure we don't have a region of the same name; also find the end of the list
             if (m_regionlist.find(name) != default)
-                g.fatalerror("region_alloc called with duplicate region name \"{0}\"\n", name);
+                fatalerror("region_alloc called with duplicate region name \"{0}\"\n", name);
 
             // allocate the region
             //return m_regionlist.emplace(name, std::make_unique<memory_region>(machine(), name, length, width, endian)).first->second.get();
@@ -3323,93 +3002,10 @@ namespace mame
         //void region_free(std::string name);
 
 
+        // emumem_aspace.cs
+
         // Allocate the address spaces
-        //-------------------------------------------------
-        //  allocate - allocate memory spaces
-        //-------------------------------------------------
-        void allocate(device_memory_interface memory)
-        {
-            for (int spacenum = 0; spacenum < memory.max_space_count(); ++spacenum)
-            {
-                // if there is a configuration for this space, we need an address space
-                address_space_config spaceconfig = memory.space_config(spacenum);
-                if (spaceconfig != null)
-                {
-                    int level = emumem_global.handler_entry_dispatch_level(spaceconfig.addr_width());
-                    // allocate one of the appropriate type
-                    switch ((level << 8) | (spaceconfig.endianness() == g.ENDIANNESS_BIG ? 0x1000 : 0) |spaceconfig.data_width() | (spaceconfig.addr_shift() + 4))
-                    {
-                        case 0x0000|0x000| 8|(4+1): memory.allocate(new address_space_specific<int_const_0, int_const_0, int_const_1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000| 8|(4+1): memory.allocate(new address_space_specific<int_const_0, int_const_0, int_const_1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100| 8|(4+1): memory.allocate(new address_space_specific<int_const_1, int_const_0, int_const_1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100| 8|(4+1): memory.allocate(new address_space_specific<int_const_1, int_const_0, int_const_1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000| 8|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_0,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000| 8|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_0,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100| 8|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_0,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100| 8|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_0,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|16|(4+3): memory.allocate(new address_space_specific<int_const_0, int_const_1,  int_const_3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|16|(4+3): memory.allocate(new address_space_specific<int_const_0, int_const_1,  int_const_3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|16|(4+3): memory.allocate(new address_space_specific<int_const_1, int_const_1,  int_const_3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|16|(4+3): memory.allocate(new address_space_specific<int_const_1, int_const_1,  int_const_3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|16|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_1,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|16|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_1,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|16|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_1,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|16|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_1,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|16|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_1, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|16|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_1, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|16|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_1, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|16|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_1, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|32|(4+3): memory.allocate(new address_space_specific<int_const_0, int_const_2,  int_const_3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|32|(4+3): memory.allocate(new address_space_specific<int_const_0, int_const_2,  int_const_3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|32|(4+3): memory.allocate(new address_space_specific<int_const_1, int_const_2,  int_const_3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|32|(4+3): memory.allocate(new address_space_specific<int_const_1, int_const_2,  int_const_3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|32|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_2,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|32|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_2,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|32|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_2,  int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|32|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_2,  int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|32|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_2, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|32|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_2, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|32|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_2, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|32|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_2, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|32|(4-2): memory.allocate(new address_space_specific<int_const_0, int_const_2, int_const_n2, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|32|(4-2): memory.allocate(new address_space_specific<int_const_0, int_const_2, int_const_n2, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|32|(4-2): memory.allocate(new address_space_specific<int_const_1, int_const_2, int_const_n2, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|32|(4-2): memory.allocate(new address_space_specific<int_const_1, int_const_2, int_const_n2, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|64|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|64|(4-0): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|64|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|64|(4-0): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_0, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|64|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|64|(4-1): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|64|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n1, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|64|(4-1): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n1, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|64|(4-2): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n2, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|64|(4-2): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n2, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|64|(4-2): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n2, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|64|(4-2): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n2, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        case 0x0000|0x000|64|(4-3): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x000|64|(4-3): memory.allocate(new address_space_specific<int_const_0, int_const_3, int_const_n3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x0000|0x100|64|(4-3): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n3, endianness_t_const_ENDIANNESS_LITTLE>(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-                        case 0x1000|0x100|64|(4-3): memory.allocate(new address_space_specific<int_const_1, int_const_3, int_const_n3, endianness_t_const_ENDIANNESS_BIG   >(this, memory, spacenum, memory.space_config(spacenum).addr_width()), this, spacenum); break;
-
-                        default:
-                            throw new emu_fatalerror("Invalid width {0}/shift {1} specified for address_space::allocate", spaceconfig.data_width(), spaceconfig.addr_shift());
-                    }
-                }
-            }
-        }
+        //void allocate(device_memory_interface &memory);
 
 
         // Allocate some ram and register it for saving
@@ -3431,5 +3027,58 @@ namespace mame
 
             return ptr;
         }
+    }
+
+
+    public static partial class emumem_global
+    {
+        //**************************************************************************
+        //  MACROS
+        //**************************************************************************
+
+        // helper macro for merging data with the memory mask
+        //#define COMBINE_DATA(varptr)            (*(varptr) = (*(varptr) & ~mem_mask) | (data & mem_mask))
+        public static void COMBINE_DATA(ref u16 varptr, u16 data, u16 mem_mask) { varptr = (u16)((varptr & ~mem_mask) | (data & mem_mask)); }
+        public static void COMBINE_DATA(ref u32 varptr, u32 data, u32 mem_mask) { varptr = (varptr & ~mem_mask) | (data & mem_mask); }
+
+        public static bool ACCESSING_BITS_0_7(u16 mem_mask) { return (mem_mask & 0x000000ffU) != 0; }
+        //#define ACCESSING_BITS_8_15             ((mem_mask & 0x0000ff00U) != 0)
+        //#define ACCESSING_BITS_16_23            ((mem_mask & 0x00ff0000U) != 0)
+        //#define ACCESSING_BITS_24_31            ((mem_mask & 0xff000000U) != 0)
+        //#define ACCESSING_BITS_32_39            ((mem_mask & 0x000000ff00000000U) != 0)
+        //#define ACCESSING_BITS_40_47            ((mem_mask & 0x0000ff0000000000U) != 0)
+        //#define ACCESSING_BITS_48_55            ((mem_mask & 0x00ff000000000000U) != 0)
+        //#define ACCESSING_BITS_56_63            ((mem_mask & 0xff00000000000000U) != 0)
+
+        //#define ACCESSING_BITS_0_15             ((mem_mask & 0x0000ffffU) != 0)
+        //#define ACCESSING_BITS_16_31            ((mem_mask & 0xffff0000U) != 0)
+        //#define ACCESSING_BITS_32_47            ((mem_mask & 0x0000ffff00000000U) != 0)
+        //#define ACCESSING_BITS_48_63            ((mem_mask & 0xffff000000000000U) != 0)
+
+        //#define ACCESSING_BITS_0_31             ((mem_mask & 0xffffffffU) != 0)
+        //#define ACCESSING_BITS_32_63            ((mem_mask & 0xffffffff00000000U) != 0)
+
+        // helpers for checking address alignment
+        public static bool WORD_ALIGNED(u32 a) { return (a & 1) == 0; }
+        public static bool DWORD_ALIGNED(u32 a) { return (a & 3) == 0; }
+        public static bool QWORD_ALIGNED(u32 a) { return (a & 7) == 0; }
+    }
+
+
+    static class emumem_internal
+    {
+        const bool VERBOSE = false;
+        public const bool VALIDATE_REFCOUNTS = false;
+
+
+        //#if VERBOSE
+        //template <typename Format, typename... Params> static void VPRINTF(Format &&fmt, Params &&...args)
+        //{
+        //    util::stream_format(std::cerr, std::forward<Format>(fmt), std::forward<Params>(args)...);
+        //}
+        //#else
+        //template <typename Format, typename... Params> static void VPRINTF(Format &&, Params &&...) {}
+        //#endif
+        public static void VPRINTF(string format, params object [] args) { if (VERBOSE) osd_printf_info(format, args); }
     }
 }

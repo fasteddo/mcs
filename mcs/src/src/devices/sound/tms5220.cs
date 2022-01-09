@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
@@ -15,6 +14,11 @@ using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using unsigned = System.UInt32;
+using unsigned_char = System.Byte;
+
+using static mame.device_global;
+using static mame.emucore_global;
+using static mame.tms5110r_global;
 
 
 namespace mame
@@ -24,7 +28,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(TMS5220,   tms5220_device,   "tms5220",   "TMS5220")
         static device_t device_creator_tms5220_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new tms5220_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TMS5220 = g.DEFINE_DEVICE_TYPE(device_creator_tms5220_device, "tms5220", "TMS5220");
+        public static readonly device_type TMS5220 = DEFINE_DEVICE_TYPE(device_creator_tms5220_device, "tms5220", "TMS5220");
 
 
         /* *****debugging defines***** */
@@ -148,7 +152,7 @@ namespace mame
         //};
 
 
-        const UInt32 FIFO_SIZE = 16;
+        const uint32_t FIFO_SIZE = 16;
 
 
         device_sound_interface_tms5220 m_disound;
@@ -572,10 +576,10 @@ namespace mame
                     break;
                 case TMS5220_IS_5220C:
                 case TMS5220_IS_5220:
-                    m_coeff = tms5110r_global.tms5220_coeff;
+                    m_coeff = tms5220_coeff;
                     break;
                 default:
-                    g.fatalerror("Unknown variant in tms5220_set_variant\n");
+                    fatalerror("Unknown variant in tms5220_set_variant\n");
                     break;
             }
 
@@ -775,46 +779,46 @@ namespace mame
             // for sanity purposes these variables should be in the same order as in tms5220.h!
 
             // 5110 specific stuff
-            save_item(g.NAME(new { m_PDC }));
-            save_item(g.NAME(new { m_CTL_pins }));
-            save_item(g.NAME(new { m_state }));
+            save_item(NAME(new { m_PDC }));
+            save_item(NAME(new { m_CTL_pins }));
+            save_item(NAME(new { m_state }));
 
             // new VSM stuff
-            save_item(g.NAME(new { m_address }));
-            save_item(g.NAME(new { m_next_is_address }));
-            save_item(g.NAME(new { m_schedule_dummy_read }));
-            save_item(g.NAME(new { m_addr_bit }));
-            save_item(g.NAME(new { m_CTL_buffer }));
+            save_item(NAME(new { m_address }));
+            save_item(NAME(new { m_next_is_address }));
+            save_item(NAME(new { m_schedule_dummy_read }));
+            save_item(NAME(new { m_addr_bit }));
+            save_item(NAME(new { m_CTL_buffer }));
 
             // old VSM stuff
-            save_item(g.NAME(new { m_read_byte_register }));
-            save_item(g.NAME(new { m_RDB_flag }));
+            save_item(NAME(new { m_read_byte_register }));
+            save_item(NAME(new { m_RDB_flag }));
 
             // FIFO
-            save_item(g.NAME(new { m_fifo }));
-            save_item(g.NAME(new { m_fifo_head }));
-            save_item(g.NAME(new { m_fifo_tail }));
-            save_item(g.NAME(new { m_fifo_count }));
-            save_item(g.NAME(new { m_fifo_bits_taken }));
+            save_item(NAME(new { m_fifo }));
+            save_item(NAME(new { m_fifo_head }));
+            save_item(NAME(new { m_fifo_tail }));
+            save_item(NAME(new { m_fifo_count }));
+            save_item(NAME(new { m_fifo_bits_taken }));
 
             // global status bits (booleans)
-            save_item(g.NAME(new { m_previous_talk_status }));
-            save_item(g.NAME(new { m_SPEN }));
-            save_item(g.NAME(new { m_DDIS }));
-            save_item(g.NAME(new { m_TALK }));
-            save_item(g.NAME(new { m_TALKD }));
-            save_item(g.NAME(new { m_buffer_low }));
-            save_item(g.NAME(new { m_buffer_empty }));
-            save_item(g.NAME(new { m_irq_pin }));
-            save_item(g.NAME(new { m_ready_pin }));
+            save_item(NAME(new { m_previous_talk_status }));
+            save_item(NAME(new { m_SPEN }));
+            save_item(NAME(new { m_DDIS }));
+            save_item(NAME(new { m_TALK }));
+            save_item(NAME(new { m_TALKD }));
+            save_item(NAME(new { m_buffer_low }));
+            save_item(NAME(new { m_buffer_empty }));
+            save_item(NAME(new { m_irq_pin }));
+            save_item(NAME(new { m_ready_pin }));
 
             // current and previous frames
-            save_item(g.NAME(new { m_OLDE }));
-            save_item(g.NAME(new { m_OLDP }));
+            save_item(NAME(new { m_OLDE }));
+            save_item(NAME(new { m_OLDP }));
 
-            save_item(g.NAME(new { m_new_frame_energy_idx }));
-            save_item(g.NAME(new { m_new_frame_pitch_idx }));
-            save_item(g.NAME(new { m_new_frame_k_idx }));
+            save_item(NAME(new { m_new_frame_energy_idx }));
+            save_item(NAME(new { m_new_frame_pitch_idx }));
+            save_item(NAME(new { m_new_frame_k_idx }));
 #if TMS5220_PERFECT_INTERPOLATION_HACK
             save_item(NAME(m_old_frame_energy_idx));
             save_item(NAME(m_old_frame_pitch_idx));
@@ -822,39 +826,39 @@ namespace mame
             save_item(NAME(m_old_zpar));
             save_item(NAME(m_old_uv_zpar));
 #endif
-            save_item(g.NAME(new { m_current_energy }));
-            save_item(g.NAME(new { m_current_pitch }));
-            save_item(g.NAME(new { m_current_k }));
+            save_item(NAME(new { m_current_energy }));
+            save_item(NAME(new { m_current_pitch }));
+            save_item(NAME(new { m_current_k }));
 
-            save_item(g.NAME(new { m_previous_energy }));
+            save_item(NAME(new { m_previous_energy }));
 
-            save_item(g.NAME(new { m_subcycle }));
-            save_item(g.NAME(new { m_subc_reload }));
-            save_item(g.NAME(new { m_PC }));
-            save_item(g.NAME(new { m_IP }));
-            save_item(g.NAME(new { m_inhibit }));
-            save_item(g.NAME(new { m_uv_zpar }));
-            save_item(g.NAME(new { m_zpar }));
-            save_item(g.NAME(new { m_pitch_zero }));
-            save_item(g.NAME(new { m_c_variant_rate }));
-            save_item(g.NAME(new { m_pitch_count }));
+            save_item(NAME(new { m_subcycle }));
+            save_item(NAME(new { m_subc_reload }));
+            save_item(NAME(new { m_PC }));
+            save_item(NAME(new { m_IP }));
+            save_item(NAME(new { m_inhibit }));
+            save_item(NAME(new { m_uv_zpar }));
+            save_item(NAME(new { m_zpar }));
+            save_item(NAME(new { m_pitch_zero }));
+            save_item(NAME(new { m_c_variant_rate }));
+            save_item(NAME(new { m_pitch_count }));
 
-            save_item(g.NAME(new { m_u }));
-            save_item(g.NAME(new { m_x }));
+            save_item(NAME(new { m_u }));
+            save_item(NAME(new { m_x }));
 
-            save_item(g.NAME(new { m_RNG }));
-            save_item(g.NAME(new { m_excitation_data }));
+            save_item(NAME(new { m_RNG }));
+            save_item(NAME(new { m_excitation_data }));
 
-            save_item(g.NAME(new { m_digital_select }));
+            save_item(NAME(new { m_digital_select }));
 
-            save_item(g.NAME(new { m_io_ready }));
+            save_item(NAME(new { m_io_ready }));
 
             // "proper" rs+ws emulation
-            save_item(g.NAME(new { m_true_timing }));
+            save_item(NAME(new { m_true_timing }));
 
-            save_item(g.NAME(new { m_rs_ws }));
-            save_item(g.NAME(new { m_read_latch }));
-            save_item(g.NAME(new { m_write_latch }));
+            save_item(NAME(new { m_rs_ws }));
+            save_item(NAME(new { m_read_latch }));
+            save_item(NAME(new { m_write_latch }));
         }
 
 
@@ -915,7 +919,7 @@ namespace mame
             else //(! m_DDIS)
             {
                 // R Nabet : we parse commands at once.  It is necessary for such commands as read.
-                process_command((byte)data);
+                process_command((unsigned_char)data);
             }
         }
 
@@ -1503,7 +1507,7 @@ namespace mame
         /**********************************************************************************************
              process_command -- extract a byte from the FIFO and interpret it as a command
         ***********************************************************************************************/
-        void process_command(byte cmd)  //void tms5220_device::process_command(unsigned char cmd)
+        void process_command(unsigned_char cmd)  //void tms5220_device::process_command(unsigned char cmd)
         {
             LOGMASKED(LOG_COMMAND_DUMP, "process_command called with parameter {0}\n", cmd);
 
@@ -1834,7 +1838,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(TMS5220C,  tms5220c_device,  "tms5220c",  "TMS5220C")
         static device_t device_creator_tms5220c_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new tms5220c_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TMS5220C = g.DEFINE_DEVICE_TYPE(device_creator_tms5220c_device, "tms5220c", "TMS5220C");
+        public static readonly device_type TMS5220C = DEFINE_DEVICE_TYPE(device_creator_tms5220c_device, "tms5220c", "TMS5220C");
 
         tms5220c_device(machine_config mconfig, string tag, device_t owner, uint32_t clock) : base(mconfig, TMS5220C, tag, owner, clock, TMS5220_IS_5220C) { }
     }

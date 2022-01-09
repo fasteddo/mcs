@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
@@ -15,6 +14,10 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
+using static mame.cpp_global;
+using static mame.device_global;
+using static mame.emucore_global;
+
 
 namespace mame
 {
@@ -26,7 +29,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(POKEY, pokey_device, "pokey", "Atari C012294 POKEY")
         static pokey_device device_creator_pokey_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pokey_device(mconfig, tag, owner, clock); }
-        public static readonly device_type POKEY = g.DEFINE_DEVICE_TYPE(device_creator_pokey_device, "pokey", "Atari C012294 POKEY");
+        public static readonly device_type POKEY = DEFINE_DEVICE_TYPE(device_creator_pokey_device, "pokey", "Atari C012294 POKEY");
 
 
         public class device_sound_interface_pokey : device_sound_interface
@@ -469,7 +472,7 @@ namespace mame
                 break;
             }
 
-            return (byte)data;
+            return (uint8_t)data;
         }
 
 
@@ -613,27 +616,27 @@ namespace mame
             save_item(STRUCT_MEMBER(m_channel, m_AUDC));
 #endif
 
-            save_item(g.NAME(new { m_clock_cnt }));
-            save_item(g.NAME(new { m_p4 }));
-            save_item(g.NAME(new { m_p5 }));
-            save_item(g.NAME(new { m_p9 }));
-            save_item(g.NAME(new { m_p17 }));
+            save_item(NAME(new { m_clock_cnt }));
+            save_item(NAME(new { m_p4 }));
+            save_item(NAME(new { m_p5 }));
+            save_item(NAME(new { m_p9 }));
+            save_item(NAME(new { m_p17 }));
 
-            save_item(g.NAME(new { m_POTx }));
-            save_item(g.NAME(new { m_AUDCTL }));
-            save_item(g.NAME(new { m_ALLPOT }));
-            save_item(g.NAME(new { m_KBCODE }));
-            save_item(g.NAME(new { m_SERIN }));
-            save_item(g.NAME(new { m_SEROUT }));
-            save_item(g.NAME(new { m_IRQST }));
-            save_item(g.NAME(new { m_IRQEN }));
-            save_item(g.NAME(new { m_SKSTAT }));
-            save_item(g.NAME(new { m_SKCTL }));
+            save_item(NAME(new { m_POTx }));
+            save_item(NAME(new { m_AUDCTL }));
+            save_item(NAME(new { m_ALLPOT }));
+            save_item(NAME(new { m_KBCODE }));
+            save_item(NAME(new { m_SERIN }));
+            save_item(NAME(new { m_SEROUT }));
+            save_item(NAME(new { m_IRQST }));
+            save_item(NAME(new { m_IRQEN }));
+            save_item(NAME(new { m_SKSTAT }));
+            save_item(NAME(new { m_SKCTL }));
 
-            save_item(g.NAME(new { m_pot_counter }));
-            save_item(g.NAME(new { m_kbd_cnt }));
-            save_item(g.NAME(new { m_kbd_latch }));
-            save_item(g.NAME(new { m_kbd_state }));
+            save_item(NAME(new { m_pot_counter }));
+            save_item(NAME(new { m_kbd_cnt }));
+            save_item(NAME(new { m_kbd_latch }));
+            save_item(NAME(new { m_kbd_state }));
 
             // State support
 
@@ -724,7 +727,7 @@ namespace mame
             case SYNC_WRITE:
                 {
                     offs_t offset = (offs_t)((param >> 8) & 0xff);
-                    byte data = (byte)(param & 0xff);
+                    uint8_t data = (uint8_t)(param & 0xff);
                     write_internal(offset, data);
                 }
                 break;
@@ -733,10 +736,10 @@ namespace mame
                 break;
             case SYNC_POT:
                 //logerror("x %02x \n", (param & 0x20));
-                m_ALLPOT |= (byte)(param & 0xff);
+                m_ALLPOT |= (uint8_t)(param & 0xff);
                 break;
             case SYNC_SET_IRQST:
-                m_IRQST |=  (byte)(param & 0xff);
+                m_IRQST |=  (uint8_t)(param & 0xff);
                 break;
             default:
                 throw new emu_fatalerror("Unknown id in pokey_device::device_timer");
@@ -767,7 +770,7 @@ namespace mame
                 double rTot = m_voltab[m_out_raw];
 
                 double V0 = rTot / (rTot + m_r_pullup) * m_v_ref / 5.0;
-                double mult = (m_cap == 0.0) ? 1.0 : 1.0 - Math.Exp(-(rTot + m_r_pullup) / (m_cap * m_r_pullup * rTot) * m_clock_period.as_double());
+                double mult = (m_cap == 0.0) ? 1.0 : 1.0 - exp(-(rTot + m_r_pullup) / (m_cap * m_r_pullup * rTot) * m_clock_period.as_double());
 
                 for (int sampindex = 0; sampindex < buffer.samples(); sampindex++)
                 {
@@ -799,7 +802,7 @@ namespace mame
                     */
 
                 double V0 = (m_r_pullup / rTot) * m_v_ref  / 5.0;
-                double mult = (m_cap == 0.0) ? 1.0 : 1.0 - Math.Exp(-1.0 / (m_cap * m_r_pullup) * m_clock_period.as_double());
+                double mult = (m_cap == 0.0) ? 1.0 : 1.0 - exp(-1.0 / (m_cap * m_r_pullup) * m_clock_period.as_double());
 
                 for (int sampindex = 0; sampindex < buffer.samples(); sampindex++)
                 {
@@ -988,7 +991,7 @@ namespace mame
                 m_kbd_cnt = 0;
             if (m_keyboard_r != null)
             {
-                byte ret = m_keyboard_r(m_kbd_cnt);
+                uint8_t ret = m_keyboard_r(m_kbd_cnt);
 
                 switch (m_kbd_cnt)
                 {
@@ -1005,15 +1008,15 @@ namespace mame
                     }
                     break;
                 case POK_KEY_SHIFT:
-                    m_kbd_latch = (byte)((m_kbd_latch & 0xbf) | ((ret & 2) << 5));
+                    m_kbd_latch = (uint8_t)((m_kbd_latch & 0xbf) | ((ret & 2) << 5));
                     if ((m_kbd_latch & 0x40) != 0)
                         m_SKSTAT |= SK_SHIFT;
                     else
-                        m_SKSTAT &= unchecked((byte)~SK_SHIFT);
+                        m_SKSTAT &= unchecked((uint8_t)~SK_SHIFT);
                     /* FIXME: sync ? */
                     break;
                 case POK_KEY_CTRL:
-                    m_kbd_latch = (byte)((m_kbd_latch & 0x7f) | ((ret & 2) << 6));
+                    m_kbd_latch = (uint8_t)((m_kbd_latch & 0x7f) | ((ret & 2) << 6));
                     break;
                 }
 
@@ -1022,7 +1025,7 @@ namespace mame
                 case 0: /* waiting for key */
                     if ((ret & 1) != 0)
                     {
-                        m_kbd_latch = (byte)((m_kbd_latch & 0xc0) | m_kbd_cnt);
+                        m_kbd_latch = (uint8_t)((m_kbd_latch & 0xc0) | m_kbd_cnt);
                         m_kbd_state++;
                     }
                     break;
@@ -1064,7 +1067,7 @@ namespace mame
                             m_kbd_state = 2;
                         else
                         {
-                            m_SKSTAT &= unchecked((byte)~SK_KEYBD);
+                            m_SKSTAT &= unchecked((uint8_t)~SK_KEYBD);
                             m_kbd_state = 0;
                         }
                     }
@@ -1082,7 +1085,7 @@ namespace mame
             {
                 if ((m_POTx[pot]<m_pot_counter) || (m_pot_counter == 228))
                 {
-                    upd |= (byte)(1 << pot);
+                    upd |= (uint8_t)(1 << pot);
                     /* latching is emulated in read */
                 }
             }
@@ -1097,7 +1100,7 @@ namespace mame
         {
             int mask = (1 << size) - 1;
             int i;
-            UInt32 lfsr = 0;
+            uint32_t lfsr = 0;
 
             int polyIdx = 0;
 
@@ -1107,8 +1110,8 @@ namespace mame
                 /* calculate next bit */
                 int in_ = (int)((((lfsr >> 0) & 1) == 0 ? 1U : 0U) ^ ((lfsr >> xorbit) & 1));
                 lfsr = lfsr >> 1;
-                lfsr = ((UInt32)in_ << (size-1)) | lfsr;
-                poly[polyIdx] = lfsr ^ (UInt32)invert;
+                lfsr = ((uint32_t)in_ << (size-1)) | lfsr;
+                poly[polyIdx] = lfsr ^ (uint32_t)invert;
                 LOG_POLY("{0}: {1}\n", i, poly[polyIdx]);  // %05x: %02x
                 polyIdx++;
             }
@@ -1119,7 +1122,7 @@ namespace mame
         {
             int mask = (1 << size) - 1;
             int i;
-            UInt32 lfsr = (UInt32)mask;
+            uint32_t lfsr = (uint32_t)mask;
 
             int polyIdx = 0;
 
@@ -1133,8 +1136,8 @@ namespace mame
                     int in8 = (int)(((lfsr >> 8) & 1) ^ ((lfsr >> 13) & 1));
                     int in_ = (int)(lfsr & 1);
                     lfsr = lfsr >> 1;
-                    lfsr = (lfsr & 0xff7f) | ((UInt32)in8 << 7);
-                    lfsr = ((UInt32)in_ << 16) | lfsr;
+                    lfsr = (lfsr & 0xff7f) | ((uint32_t)in8 << 7);
+                    lfsr = ((uint32_t)in_ << 16) | lfsr;
                     poly[polyIdx] = lfsr;
                     LOG_RAND("{0}: {1}\n", i, poly[polyIdx]);  // %05x: %02x
                     polyIdx++;
@@ -1147,7 +1150,7 @@ namespace mame
                     /* calculate next bit */
                     int in_ = (int)(((lfsr >> 0) & 1) ^ ((lfsr >> 5) & 1));
                     lfsr = lfsr >> 1;
-                    lfsr = ((UInt32)in_ << 8) | lfsr;
+                    lfsr = ((uint32_t)in_ << 8) | lfsr;
                     poly[polyIdx] = lfsr;
                     LOG_RAND("{0}: {1}\n", i, poly[polyIdx]);  // %05x: %02x
                     polyIdx++;
@@ -1198,7 +1201,7 @@ namespace mame
                     rTot += 1.0 / r_chan[(j >> (i*4)) & 0x0f];
                 }
                 rTot = 1.0 / rTot;
-                m_voltab[j] = (UInt32)rTot;
+                m_voltab[j] = (stream_buffer_sample_t)rTot;
             }
         }
 
@@ -1210,11 +1213,11 @@ namespace mame
                 if ((m_channel[ch].m_AUDC & PURE) != 0)
                     m_channel[ch].m_output ^= 1;
                 else if ((m_channel[ch].m_AUDC & POLY4) != 0)
-                    m_channel[ch].m_output = (byte)(m_poly4[m_p4] & 1);
+                    m_channel[ch].m_output = (uint8_t)(m_poly4[m_p4] & 1);
                 else if ((m_AUDCTL & POLY9) != 0)
-                    m_channel[ch].m_output = (byte)(m_poly9[m_p9] & 1);
+                    m_channel[ch].m_output = (uint8_t)(m_poly9[m_p9] & 1);
                 else
-                    m_channel[ch].m_output = (byte)(m_poly17[m_p17] & 1);
+                    m_channel[ch].m_output = (uint8_t)(m_poly17[m_p17] & 1);
 
                 m_old_raw_inval = true;
             }
@@ -1238,7 +1241,7 @@ namespace mame
                 m_POTx[pot] = 228;
                 if( !m_pot_r_cb[pot].isnull() )
                 {
-                    int r = m_pot_r_cb[pot].op_u8((UInt32)pot);
+                    int r = m_pot_r_cb[pot].op_u8((offs_t)pot);
 
                     LOG("POKEY {0} pot_r({1}) returned {2}\n", tag(), pot, r);  // $%02x
                     if (r >= 228)
@@ -1250,11 +1253,11 @@ namespace mame
                         /* immediately set the ready - bit of m_ALLPOT
                          * In this case, most likely no capacitor is connected
                          */
-                        m_ALLPOT |= (byte)(1<<pot);
+                        m_ALLPOT |= (uint8_t)(1U<<pot);
                     }
 
                     /* final value */
-                    m_POTx[pot] = (byte)r;
+                    m_POTx[pot] = (uint8_t)r;
                 }
             }
         }
@@ -1382,7 +1385,7 @@ namespace mame
                 {
                     m_channel[i].reset_channel();
                     m_channel[i].m_output = 0;
-                    m_channel[i].m_filter_sample = (i<2 ? (byte)1 : (byte)0);
+                    m_channel[i].m_filter_sample = (i<2 ? (uint8_t)1 : (uint8_t)0);
                 }
 
                 m_old_raw_inval = true;
@@ -1391,7 +1394,7 @@ namespace mame
             case SKREST_C:
                 /* reset SKSTAT */
                 LOG("POKEY '{0}' SKREST {1}\n", tag(), data);
-                m_SKSTAT &= unchecked((byte)~(SK_FRAME|SK_OVERRUN|SK_KBERR));
+                m_SKSTAT &= unchecked((uint8_t)~(SK_FRAME|SK_OVERRUN|SK_KBERR));
                 break;
 
             case POTGO_C:
@@ -1420,7 +1423,7 @@ namespace mame
                 if(( m_IRQST & ~data ) != 0)
                 {
                     /* reset IRQST bits that are masked now, except the SEROC bit (acid5200 pokey_seroc test) */
-                    m_IRQST &= (byte)(IRQ_SEROC | data);
+                    m_IRQST &= (uint8_t)(IRQ_SEROC | data);
                 }
                 /* store irq enable */
                 m_IRQEN = data;

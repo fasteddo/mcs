@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using SharpCompress.Archives.SevenZip;
 using SharpCompress.Archives;
@@ -12,6 +11,11 @@ using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+
+using static mame.corestr_global;
+using static mame.cpp_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
 
 
 namespace mame
@@ -131,7 +135,7 @@ namespace mame
                             m7z_file_impl result;  //ptr result;
                             result = s_cache[cachenum];  //std::swap(s_cache[cachenum], result);
                             s_cache[cachenum] = null;
-                            g.osd_printf_verbose("un7z: found {0} in cache\n", filename);
+                            osd_printf_verbose("un7z: found {0} in cache\n", filename);
                             return result;
                         }
                     }
@@ -223,7 +227,7 @@ namespace mame
                 if (m_archive_stream.file == null)
                 {
                     osd_file file;  //osd_file::ptr file;
-                    std.error_condition err = osdfile_global.m_osdfile.open(m_filename, g.OPEN_FLAG_READ, out file, out m_archive_stream.length);  //std::error_condition const err = osd_file::open(m_filename, OPEN_FLAG_READ, file, m_archive_stream.length);
+                    std.error_condition err = m_osdfile.open(m_filename, OPEN_FLAG_READ, out file, out m_archive_stream.length);  //std::error_condition const err = osd_file::open(m_filename, OPEN_FLAG_READ, file, m_archive_stream.length);
                     if (err)
                         return err;
 
@@ -235,7 +239,7 @@ namespace mame
                     std.error_condition err = m_archive_stream.file.length(out m_archive_stream.length);  //std::error_condition const err = m_archive_stream.file->length(m_archive_stream.length);
                     if (err)
                     {
-                        g.osd_printf_verbose(
+                        osd_printf_verbose(
                                 "un7z: error getting length of archive file {0} ({1}:{2} {3})\n",
                                 m_filename, err.category().name(), err.value(), err.message());
                         return err;
@@ -412,10 +416,10 @@ namespace mame
                         }
                         else
                         {
-                            //auto const partialoffset = m_utf8_buf.size() - search_filename.length();
-                            bool namematch = g.core_stricmp(search_filename, entry.Key) == 0;  //const bool namematch = (search_filename.length() == m_utf8_buf.size()) && (search_filename.empty() || !core_strnicmp(&search_filename[0], &m_utf8_buf[0], search_filename.length()));
-                            //bool const partialmatch = partialpath && ((m_utf8_buf.size() > search_filename.length()) && (m_utf8_buf[partialoffset - 1] == '/')) && (search_filename.empty() || !core_strnicmp(&search_filename[0], &m_utf8_buf[partialoffset], search_filename.length()));
-                            found = (!matchcrc || crcmatch) && (namematch);  //found = (!matchcrc || crcmatch) && (namematch || partialmatch);
+                            var partialoffset = entry.Key.size() - search_filename.length();  //auto const partialoffset = m_utf8_buf.size() - search_filename.length();
+                            bool namematch = (search_filename.length() == entry.Key.size()) && (search_filename.empty() || (core_stricmp(search_filename, entry.Key) == 0));  //const bool namematch = (search_filename.length() == m_utf8_buf.size()) && (search_filename.empty() || !core_strnicmp(&search_filename[0], &m_utf8_buf[0], search_filename.length()));
+                            bool partialmatch = partialpath && ((entry.Key.size() > search_filename.length()) && (entry.Key[(int)partialoffset - 1] == '/')) && (search_filename.empty() || core_strnicmp(search_filename, entry.Key.Substring((int)partialoffset), search_filename.length()) == 0);  //bool const partialmatch = partialpath && ((m_utf8_buf.size() > search_filename.length()) && (m_utf8_buf[partialoffset - 1] == '/')) && (search_filename.empty() || !core_strnicmp(&search_filename[0], &m_utf8_buf[partialoffset], search_filename.length()));
+                            found = (!matchcrc || crcmatch) && (namematch || partialmatch);  //found = (!matchcrc || crcmatch) && (namematch || partialmatch);
                         }
 
                         if (found)
@@ -455,7 +459,7 @@ namespace mame
             {
                 m_impl = impl;
 
-                g.assert(m_impl != null);
+                assert(m_impl != null);
             }
 
             //~m7z_file_wrapper()

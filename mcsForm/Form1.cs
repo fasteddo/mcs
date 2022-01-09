@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
@@ -41,10 +42,12 @@ namespace mcsForm
             this.KeyPreview = true;
             this.KeyDown += Form1_KeyDown;
             this.KeyUp += Form1_KeyUp;
+            this.KeyPress += Form1_KeyPress;
             this.MouseMove += Form1_MouseMove;
             this.MouseDown += Form1_MouseDown;
             this.MouseUp += Form1_MouseUp;
             this.MouseDoubleClick += Form1_MouseDoubleClick;
+            this.MouseWheel += Form1_MouseWheel;
             this.MouseLeave += Form1_MouseLeave;
             this.FormClosing += Form1_FormClosing;
 
@@ -344,6 +347,17 @@ namespace mcsForm
         }
 
 
+        void Form1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            osd_interface_WinForms osd = (osd_interface_WinForms)mame.mame_machine_manager.instance().osd();
+
+            if (osd.keyboard_state == null)
+                return;
+
+            osd.ui_input_push_char_event(e.KeyChar);
+        }
+
+
         void Form1_MouseMove(object sender, MouseEventArgs e)
         {
             int mouseX = e.X;
@@ -505,6 +519,26 @@ namespace mcsForm
         }
 
 
+        void Form1_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (mame.mame_machine_manager.instance() == null || mame.mame_machine_manager.instance().osd() == null)
+                return;
+
+            osd_interface_WinForms osd = (osd_interface_WinForms)mame.mame_machine_manager.instance().osd();
+
+            if (osd.mouse_button_state == null)
+                return;
+
+
+            int mouseX = e.X;
+            int mouseY = e.Y;
+            short mouseDelta = (short)e.Delta;
+            int numberOfTextLinesToMove = Math.Abs(e.Delta * SystemInformation.MouseWheelScrollLines / 120);
+
+            osd.ui_input_push_mouse_wheel_event(mouseX, mouseY, mouseDelta, numberOfTextLinesToMove);
+        }
+
+
         void updateTimer_Tick(object sender, EventArgs e)
         {
             if (m_updateCount++ % 100 == 0)
@@ -659,7 +693,7 @@ namespace mcsForm
                 double final_real_time = tps == 0 ? 0 : (double)video.m_overall_real_seconds + (double)video.m_overall_real_ticks / (double)tps;
                 double final_emu_time = video.m_overall_emutime.as_double();
                 double average_speed_percentage = final_real_time == 0 ? 0 : 100 * final_emu_time / final_real_time;
-                string total_time = (video.m_overall_emutime + new mame.attotime(0, mame.attotime.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
+                string total_time = (video.m_overall_emutime + new mame.attotime(0, mame.attotime_global.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
                 this.Text = string.Format("Emulator running... Avg Speed: {0:f2}% ({1} seconds) Framedata_Copy_Threads: {2} - speed_text: {3}", average_speed_percentage, total_time, frameDataCopyThreadIds.Count, video.speed_text());
             }
         }

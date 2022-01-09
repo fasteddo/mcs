@@ -2,12 +2,28 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
+
+using static mame.device_creator_helper_global;
+using static mame.diexec_global;
+using static mame.digfx_global;
+using static mame.disound_global;
+using static mame.driver_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
+using static mame.gamedrv_global;
+using static mame.hash_global;
+using static mame.ioport_global;
+using static mame.ioport_input_string_helper;
+using static mame.ioport_ioport_type_helper;
+using static mame.rescap_global;
+using static mame.romentry_global;
+using static mame.screen_global;
+using static mame.util;
 
 
 namespace mame
@@ -27,18 +43,18 @@ namespace mame
 
             /* IRQ is clocked on the rising edge of 16V, equal to the previous 32V */
             if ((scanline & 16) != 0)
-                m_maincpu.op[0].set_input_line(0, ((scanline - 1) & 32) != 0 ? g.ASSERT_LINE : g.CLEAR_LINE);
+                m_maincpu.op0.set_input_line(0, ((scanline - 1) & 32) != 0 ? ASSERT_LINE : CLEAR_LINE);
 
             /* do a partial update now to handle sprite multiplexing (Maze Invaders) */
-            m_screen.op[0].update_partial(scanline);
+            m_screen.op0.update_partial(scanline);
         }
 
 
         protected override void machine_start()
         {
-            save_item(g.NAME(new { m_oldpos }));
-            save_item(g.NAME(new { m_sign }));
-            save_item(g.NAME(new { m_dsw_select }));
+            save_item(NAME(new { m_oldpos }));
+            save_item(NAME(new { m_sign }));
+            save_item(NAME(new { m_dsw_select }));
 
             std.fill(m_oldpos, (uint8_t)0);
             std.fill(m_sign, (uint8_t)0);
@@ -49,7 +65,7 @@ namespace mame
         //MACHINE_RESET_MEMBER(centiped_state,centiped)
         void machine_reset_centiped()
         {
-            m_maincpu.op[0].set_input_line(0, g.CLEAR_LINE);
+            m_maincpu.op0.set_input_line(0, CLEAR_LINE);
 
             if (m_earom.found())
                 earom_control_w(0);
@@ -58,7 +74,7 @@ namespace mame
 
         void irq_ack_w(uint8_t data)
         {
-            m_maincpu.op[0].set_input_line(0, g.CLEAR_LINE);
+            m_maincpu.op0.set_input_line(0, CLEAR_LINE);
         }
 
 
@@ -191,22 +207,22 @@ namespace mame
 
         uint8_t earom_read()
         {
-            return m_earom.op[0].data();
+            return m_earom.op0.data();
         }
 
 
         void earom_write(offs_t offset, uint8_t data)
         {
-            m_earom.op[0].set_address((uint8_t)(offset & 0x3f));
-            m_earom.op[0].set_data(data);
+            m_earom.op0.set_address((uint8_t)(offset & 0x3f));
+            m_earom.op0.set_data(data);
         }
 
 
         void earom_control_w(uint8_t data)
         {
             // CK = DB0, C1 = /DB1, C2 = DB2, CS1 = DB3, /CS2 = GND
-            m_earom.op[0].set_control((uint8_t)g.BIT(data, 3), 1, g.BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)g.BIT(data, 2));
-            m_earom.op[0].set_clk(g.BIT(data, 0));
+            m_earom.op0.set_control((uint8_t)BIT(data, 3), 1, BIT(data, 1) == 0 ? (uint8_t)1 : (uint8_t)0, (uint8_t)BIT(data, 2));
+            m_earom.op0.set_clk(BIT(data, 0));
         }
 
 
@@ -265,68 +281,68 @@ namespace mame
             INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
             PORT_START("IN0");
-            PORT_BIT( 0x0f, g.IP_ACTIVE_HIGH, g.IPT_CUSTOM );   /* trackball data */
-            PORT_DIPNAME( 0x10, 0x00, g.DEF_STR( g.Cabinet ) );
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.Upright ) );
-            PORT_DIPSETTING(    0x10, g.DEF_STR( g.Cocktail ) );
-            PORT_SERVICE( 0x20, g.IP_ACTIVE_LOW );
-            PORT_BIT( 0x40, g.IP_ACTIVE_HIGH, g.IPT_CUSTOM ); PORT_VBLANK("screen");
-            PORT_BIT( 0x80, g.IP_ACTIVE_HIGH, g.IPT_CUSTOM );   /* trackball sign bit */
+            PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_CUSTOM );   /* trackball data */
+            PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) );
+            PORT_DIPSETTING(    0x00, DEF_STR( Upright ) );
+            PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) );
+            PORT_SERVICE( 0x20, IP_ACTIVE_LOW );
+            PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_VBLANK("screen");
+            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_CUSTOM );   /* trackball sign bit */
 
             PORT_START("IN1");
-            PORT_BIT( 0x01, g.IP_ACTIVE_LOW, g.IPT_START1 );
-            PORT_BIT( 0x02, g.IP_ACTIVE_LOW, g.IPT_START2 );
-            PORT_BIT( 0x04, g.IP_ACTIVE_LOW, g.IPT_BUTTON1 );
-            PORT_BIT( 0x08, g.IP_ACTIVE_LOW, g.IPT_BUTTON1 ); PORT_COCKTAIL();
-            PORT_BIT( 0x10, g.IP_ACTIVE_LOW, g.IPT_TILT );
-            PORT_BIT( 0x20, g.IP_ACTIVE_LOW, g.IPT_COIN1 );
-            PORT_BIT( 0x40, g.IP_ACTIVE_LOW, g.IPT_COIN2 );
-            PORT_BIT( 0x80, g.IP_ACTIVE_LOW, g.IPT_SERVICE1 );
+            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 );
+            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 );
+            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 );
+            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ); PORT_COCKTAIL();
+            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT );
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 );
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 );
+            PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 );
 
             PORT_START("IN2");
-            PORT_BIT( 0x0f, g.IP_ACTIVE_HIGH, g.IPT_CUSTOM );   /* trackball data */
-            PORT_BIT( 0x70, g.IP_ACTIVE_HIGH, g.IPT_UNKNOWN );
-            PORT_BIT( 0x80, g.IP_ACTIVE_HIGH, g.IPT_CUSTOM );   /* trackball sign bit */
+            PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_CUSTOM );   /* trackball data */
+            PORT_BIT( 0x70, IP_ACTIVE_HIGH, IPT_UNKNOWN );
+            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_CUSTOM );   /* trackball sign bit */
 
             PORT_START("IN3");
-            PORT_BIT( 0x01, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_DOWN ); PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x02, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_UP ); PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x04, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_RIGHT ); PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x08, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_LEFT ); PORT_8WAY(); PORT_COCKTAIL();
-            PORT_BIT( 0x10, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_UP ); PORT_8WAY();
-            PORT_BIT( 0x20, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_DOWN ); PORT_8WAY();
-            PORT_BIT( 0x40, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_LEFT ); PORT_8WAY();
-            PORT_BIT( 0x80, g.IP_ACTIVE_LOW, g.IPT_JOYSTICK_RIGHT ); PORT_8WAY();
+            PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ); PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_8WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ); PORT_8WAY();
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_8WAY();
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_8WAY();
+            PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_8WAY();
 
             PORT_START("DSW1");
-            PORT_DIPNAME( 0x03, 0x00, g.DEF_STR( g.Language ) );     PORT_DIPLOCATION("N9:!1,!2");
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.English ) );
-            PORT_DIPSETTING(    0x01, g.DEF_STR( g.German ) );
-            PORT_DIPSETTING(    0x02, g.DEF_STR( g.French ) );
-            PORT_DIPSETTING(    0x03, g.DEF_STR( g.Spanish ) );
-            PORT_DIPNAME( 0x0c, 0x04, g.DEF_STR( g.Lives ) );        PORT_DIPLOCATION("N9:!3,!4");
+            PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) );     PORT_DIPLOCATION("N9:!1,!2");
+            PORT_DIPSETTING(    0x00, DEF_STR( English ) );
+            PORT_DIPSETTING(    0x01, DEF_STR( German ) );
+            PORT_DIPSETTING(    0x02, DEF_STR( French ) );
+            PORT_DIPSETTING(    0x03, DEF_STR( Spanish ) );
+            PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) );        PORT_DIPLOCATION("N9:!3,!4");
             PORT_DIPSETTING(    0x00, "2" );
             PORT_DIPSETTING(    0x04, "3" );
             PORT_DIPSETTING(    0x08, "4" );
             PORT_DIPSETTING(    0x0c, "5" );
-            PORT_DIPNAME( 0x30, 0x10, g.DEF_STR( g.Bonus_Life ) );   PORT_DIPLOCATION("N9:!5,!6");
+            PORT_DIPNAME( 0x30, 0x10, DEF_STR( Bonus_Life ) );   PORT_DIPLOCATION("N9:!5,!6");
             PORT_DIPSETTING(    0x00, "10000" );
             PORT_DIPSETTING(    0x10, "12000" );
             PORT_DIPSETTING(    0x20, "15000" );
             PORT_DIPSETTING(    0x30, "20000" );
-            PORT_DIPNAME( 0x40, 0x40, g.DEF_STR( g.Difficulty ) );   PORT_DIPLOCATION("N9:!7");
-            PORT_DIPSETTING(    0x40, g.DEF_STR( g.Easy ) );
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.Hard ) );
+            PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) );   PORT_DIPLOCATION("N9:!7");
+            PORT_DIPSETTING(    0x40, DEF_STR( Easy ) );
+            PORT_DIPSETTING(    0x00, DEF_STR( Hard ) );
             PORT_DIPNAME( 0x80, 0x00, "Credit Minimum" );        PORT_DIPLOCATION("N9:!8");
             PORT_DIPSETTING(    0x00, "1" );
             PORT_DIPSETTING(    0x80, "2" );
 
             PORT_START("DSW2");
-            PORT_DIPNAME( 0x03, 0x02, g.DEF_STR( g.Coinage ) );      PORT_DIPLOCATION("N8:!1,!2");
-            PORT_DIPSETTING(    0x03, g.DEF_STR( g._2C_1C ) );
-            PORT_DIPSETTING(    0x02, g.DEF_STR( g._1C_1C ) );
-            PORT_DIPSETTING(    0x01, g.DEF_STR( g._1C_2C ) );
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.Free_Play ) );
+            PORT_DIPNAME( 0x03, 0x02, DEF_STR( Coinage ) );      PORT_DIPLOCATION("N8:!1,!2");
+            PORT_DIPSETTING(    0x03, DEF_STR( _2C_1C ) );
+            PORT_DIPSETTING(    0x02, DEF_STR( _1C_1C ) );
+            PORT_DIPSETTING(    0x01, DEF_STR( _1C_2C ) );
+            PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) );
             PORT_DIPNAME( 0x0c, 0x00, "Right Coin" );            PORT_DIPLOCATION("N8:!3,!4");
             PORT_DIPSETTING(    0x00, "*1" );
             PORT_DIPSETTING(    0x04, "*4" );
@@ -336,7 +352,7 @@ namespace mame
             PORT_DIPSETTING(    0x00, "*1" );
             PORT_DIPSETTING(    0x10, "*2" );
             PORT_DIPNAME( 0xe0, 0x00, "Bonus Coins" );           PORT_DIPLOCATION("N8:!6,!7,!8");
-            PORT_DIPSETTING(    0x00, g.DEF_STR( g.None ) );
+            PORT_DIPSETTING(    0x00, DEF_STR( None ) );
             PORT_DIPSETTING(    0x20, "3 credits/2 coins" );
             PORT_DIPSETTING(    0x40, "5 credits/4 coins" );
             PORT_DIPSETTING(    0x60, "6 credits/4 coins" );
@@ -344,16 +360,16 @@ namespace mame
             PORT_DIPSETTING(    0xa0, "4 credits/3 coins" );
 
             PORT_START("TRACK0_X");  /* IN6, fake trackball input port. */
-            PORT_BIT( 0xff, 0x00, g.IPT_TRACKBALL_X ); PORT_SENSITIVITY(50); PORT_KEYDELTA(10); PORT_REVERSE();
+            PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ); PORT_SENSITIVITY(50); PORT_KEYDELTA(10); PORT_REVERSE();
 
             PORT_START("TRACK0_Y");  /* IN7, fake trackball input port. */
-            PORT_BIT( 0xff, 0x00, g.IPT_TRACKBALL_Y ); PORT_SENSITIVITY(50); PORT_KEYDELTA(10);
+            PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ); PORT_SENSITIVITY(50); PORT_KEYDELTA(10);
 
             PORT_START("TRACK1_X");  /* IN8, fake trackball input port. */
-            PORT_BIT( 0xff, 0x00, g.IPT_TRACKBALL_X ); PORT_SENSITIVITY(50); PORT_KEYDELTA(10); PORT_COCKTAIL();
+            PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ); PORT_SENSITIVITY(50); PORT_KEYDELTA(10); PORT_COCKTAIL();
 
             PORT_START("TRACK1_Y");  /* IN9, fake trackball input port. */
-            PORT_BIT( 0xff, 0x00, g.IPT_TRACKBALL_Y ); PORT_SENSITIVITY(50); PORT_KEYDELTA(10); PORT_REVERSE(); PORT_COCKTAIL();
+            PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ); PORT_SENSITIVITY(50); PORT_KEYDELTA(10); PORT_REVERSE(); PORT_COCKTAIL();
 
             INPUT_PORTS_END();
         }
@@ -370,30 +386,30 @@ namespace mame
 
         static readonly gfx_layout charlayout = new gfx_layout(
             8,8,
-            g.RGN_FRAC(1,2),
+            RGN_FRAC(1,2),
             2,
-            g.ArrayCombineUInt32( g.RGN_FRAC(1,2), 0 ),
-            g.ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
-            g.ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ),
+            ArrayCombineUInt32( RGN_FRAC(1,2), 0 ),
+            ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
+            ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ),
             8*8
         );
 
         static readonly gfx_layout spritelayout = new gfx_layout(
             8,16,
-            g.RGN_FRAC(1,2),
+            RGN_FRAC(1,2),
             2,
-            g.ArrayCombineUInt32( g.RGN_FRAC(1,2), 0 ),
-            g.ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
-            g.ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+            ArrayCombineUInt32( RGN_FRAC(1,2), 0 ),
+            ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
+            ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
                     8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 ),
             16*8
         );
 
         //static GFXDECODE_START( gfx_centiped )
-        static readonly gfx_decode_entry [] gfx_centiped = new gfx_decode_entry[]
+        static readonly gfx_decode_entry [] gfx_centiped =
         {
-            g.GFXDECODE_ENTRY( "gfx1", 0, charlayout,     0, 1 ),
-            g.GFXDECODE_ENTRY( "gfx1", 0, spritelayout,   4, 4*4*4 ),
+            GFXDECODE_ENTRY( "gfx1", 0, charlayout,     0, 1 ),
+            GFXDECODE_ENTRY( "gfx1", 0, spritelayout,   4, 4*4*4 ),
             //GFXDECODE_END
         };
 
@@ -414,36 +430,36 @@ namespace mame
         void centiped_base(machine_config config)
         {
             /* basic machine hardware */
-            g.M6502(config, m_maincpu, 12096000/8);  /* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */
+            M6502(config, m_maincpu, 12096000/8);  /* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */
 
-            g.MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_centiped);
+            MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_centiped);
 
-            g.ER2055(config, m_earom);
+            ER2055(config, m_earom);
 
-            g.LS259(config, m_outlatch);
-            m_outlatch.op[0].q_out_cb<u32_const_0>().set((write_line_delegate)coin_counter_left_w).reg();
-            m_outlatch.op[0].q_out_cb<u32_const_1>().set((write_line_delegate)coin_counter_center_w).reg();
-            m_outlatch.op[0].q_out_cb<u32_const_2>().set((write_line_delegate)coin_counter_right_w).reg();
-            m_outlatch.op[0].q_out_cb<u32_const_3>().set_output("led0").invert().reg(); // LED 1
-            m_outlatch.op[0].q_out_cb<u32_const_4>().set_output("led1").invert().reg(); // LED 2
+            LS259(config, m_outlatch);
+            m_outlatch.op0.q_out_cb<u32_const_0>().set((write_line_delegate)coin_counter_left_w).reg();
+            m_outlatch.op0.q_out_cb<u32_const_1>().set((write_line_delegate)coin_counter_center_w).reg();
+            m_outlatch.op0.q_out_cb<u32_const_2>().set((write_line_delegate)coin_counter_right_w).reg();
+            m_outlatch.op0.q_out_cb<u32_const_3>().set_output("led0").invert().reg(); // LED 1
+            m_outlatch.op0.q_out_cb<u32_const_4>().set_output("led1").invert().reg(); // LED 2
 
-            g.WATCHDOG_TIMER(config, "watchdog").set_vblank_count("screen", 8);
+            WATCHDOG_TIMER(config, "watchdog").set_vblank_count("screen", 8);
 
             /* timer */
-            g.TIMER(config, "32v").configure_scanline(generate_interrupt, "screen", 0, 16);
+            TIMER(config, "32v").configure_scanline(generate_interrupt, "screen", 0, 16);
 
             /* video hardware */
-            g.SCREEN(config, m_screen, g.SCREEN_TYPE_RASTER);
-            m_screen.op[0].set_refresh_hz(60);
-            m_screen.op[0].set_size(32*8, 32*8);
-            m_screen.op[0].set_visarea(0*8, 32*8-1, 0*8, 30*8-1);
-            m_screen.op[0].set_screen_update(screen_update_centiped);
-            m_screen.op[0].set_palette(m_palette);
+            SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+            m_screen.op0.set_refresh_hz(60);
+            m_screen.op0.set_size(32*8, 32*8);
+            m_screen.op0.set_visarea(0*8, 32*8-1, 0*8, 30*8-1);
+            m_screen.op0.set_screen_update(screen_update_centiped);
+            m_screen.op0.set_palette(m_palette);
 
-            g.GFXDECODE(config, m_gfxdecode, m_palette, gfx_centiped);
-            g.PALETTE(config, m_palette).set_entries(4+4*4*4*4);
+            GFXDECODE(config, m_gfxdecode, m_palette, gfx_centiped);
+            PALETTE(config, m_palette).set_entries(4+4*4*4*4);
 
-            g.MCFG_VIDEO_START_OVERRIDE(config, video_start_centiped);
+            MCFG_VIDEO_START_OVERRIDE(config, video_start_centiped);
         }
 
 
@@ -451,17 +467,17 @@ namespace mame
         {
             centiped_base(config);
 
-            m_maincpu.op[0].memory().set_addrmap(g.AS_PROGRAM, centiped_map);
+            m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, centiped_map);
 
             // M10
-            m_outlatch.op[0].q_out_cb<u32_const_7>().set((write_line_delegate)flip_screen_w).reg();
+            m_outlatch.op0.q_out_cb<u32_const_7>().set((write_line_delegate)flip_screen_w).reg();
 
             /* sound hardware */
-            g.SPEAKER(config, "mono").front_center();
+            SPEAKER(config, "mono").front_center();
 
-            pokey_device pokey = g.POKEY(config, "pokey", 12096000/8);
-            pokey.set_output_opamp_low_pass(g.RES_K(3.3), g.CAP_U(0.01), 5.0);
-            pokey.disound.add_route(g.ALL_OUTPUTS, "mono", 0.5);
+            pokey_device pokey = POKEY(config, "pokey", 12096000/8);
+            pokey.set_output_opamp_low_pass(RES_K(3.3), CAP_U(0.01), 5.0);
+            pokey.disound.add_route(ALL_OUTPUTS, "mono", 0.5);
         }
     }
 
@@ -488,20 +504,20 @@ namespace mame
         //ROM_START( centiped )
         static readonly MemoryContainer<tiny_rom_entry> rom_centiped = new MemoryContainer<tiny_rom_entry>()
         {
-            g.ROM_REGION( 0x10000, "maincpu", 0 ),
-            g.ROM_LOAD( "136001-407.d1",  0x2000, 0x0800, g.CRC("c4d995eb") + g.SHA1("d0b2f0461cfa35842045d40ffb65e777703b773e") ),
-            g.ROM_LOAD( "136001-408.e1",  0x2800, 0x0800, g.CRC("bcdebe1b") + g.SHA1("53f3bf88a79ce40661c0a9381928e55d8c61777a") ),
-            g.ROM_LOAD( "136001-409.fh1", 0x3000, 0x0800, g.CRC("66d7b04a") + g.SHA1("8fa758095b618085090491dfb5ea114cdc87f9df") ),
-            g.ROM_LOAD( "136001-410.j1",  0x3800, 0x0800, g.CRC("33ce4640") + g.SHA1("780c2eb320f64fad6b265c0dada961646ed30174") ),
+            ROM_REGION( 0x10000, "maincpu", 0 ),
+            ROM_LOAD( "136001-407.d1",  0x2000, 0x0800, CRC("c4d995eb") + SHA1("d0b2f0461cfa35842045d40ffb65e777703b773e") ),
+            ROM_LOAD( "136001-408.e1",  0x2800, 0x0800, CRC("bcdebe1b") + SHA1("53f3bf88a79ce40661c0a9381928e55d8c61777a") ),
+            ROM_LOAD( "136001-409.fh1", 0x3000, 0x0800, CRC("66d7b04a") + SHA1("8fa758095b618085090491dfb5ea114cdc87f9df") ),
+            ROM_LOAD( "136001-410.j1",  0x3800, 0x0800, CRC("33ce4640") + SHA1("780c2eb320f64fad6b265c0dada961646ed30174") ),
 
-            g.ROM_REGION( 0x1000, "gfx1", 0 ),
-            g.ROM_LOAD( "136001-211.f7",  0x0000, 0x0800, g.CRC("880acfb9") + g.SHA1("6c862352c329776f2f9974a0df9dbe41f9dbc361") ),
-            g.ROM_LOAD( "136001-212.hj7", 0x0800, 0x0800, g.CRC("b1397029") + g.SHA1("974c03d29aeca672fffa4dfc00a06be6a851aacb") ),
+            ROM_REGION( 0x1000, "gfx1", 0 ),
+            ROM_LOAD( "136001-211.f7",  0x0000, 0x0800, CRC("880acfb9") + SHA1("6c862352c329776f2f9974a0df9dbe41f9dbc361") ),
+            ROM_LOAD( "136001-212.hj7", 0x0800, 0x0800, CRC("b1397029") + SHA1("974c03d29aeca672fffa4dfc00a06be6a851aacb") ),
 
-            g.ROM_REGION( 0x0100, "proms", 0 ),
-            g.ROM_LOAD( "136001-213.p4",  0x0000, 0x0100, g.CRC("6fa3093a") + g.SHA1("2b7aeca74c1ae4156bf1878453a047330f96f0a8") ),
+            ROM_REGION( 0x0100, "proms", 0 ),
+            ROM_LOAD( "136001-213.p4",  0x0000, 0x0100, CRC("6fa3093a") + SHA1("2b7aeca74c1ae4156bf1878453a047330f96f0a8") ),
 
-            g.ROM_END,
+            ROM_END,
         };
 
 
@@ -515,7 +531,7 @@ namespace mame
 
 
         // Centipede, Millipede, and clones
-        //                                                            creator,                  rom           YEAR,   NAME,       PARENT,  MACHINE,                  INPUT,                                 INIT,                      MONITOR,  COMPANY, FULLNAME,                 FLAGS
-        public static readonly game_driver driver_centipede = g.GAME( device_creator_centipede, rom_centiped, "1980", "centiped", "0",     centiped_state_centiped,  m_centiped.construct_ioport_centiped,  driver_device.empty_init,  g.ROT270, "Atari", "Centipede (revision 4)", g.MACHINE_SUPPORTS_SAVE );  /* 1 Player Only with Timer Options */
+        //                                                          creator,                  rom           YEAR,   NAME,       PARENT,  MACHINE,                  INPUT,                                 INIT,                      MONITOR, COMPANY, FULLNAME,                 FLAGS
+        public static readonly game_driver driver_centipede = GAME( device_creator_centipede, rom_centiped, "1980", "centiped", "0",     centiped_state_centiped,  m_centiped.construct_ioport_centiped,  driver_device.empty_init,  ROT270,  "Atari", "Centipede (revision 4)", MACHINE_SUPPORTS_SAVE );  /* 1 Player Only with Timer Options */
     }
 }

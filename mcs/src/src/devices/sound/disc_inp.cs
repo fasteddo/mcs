@@ -2,13 +2,17 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int32_t = System.Int32;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s32 = System.Int32;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
+using uint32_t = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.emucore_global;
 
 
 namespace mame
@@ -35,7 +39,7 @@ namespace mame
 
             m_port = m_device.machine().root_device().ioport(m_device.siblingtag((string)this.custom_data()));
             if (m_port == null)
-                g.fatalerror("DISCRETE_ADJUSTMENT - NODE_{0} has invalid tag\n", this.index());
+                fatalerror("DISCRETE_ADJUSTMENT - NODE_{0} has invalid tag\n", this.index());
 
             m_lastpval = 0x7fffffff;
             m_pmin     = (int32_t)DSS_ADJUSTMENT__PMIN;
@@ -54,8 +58,8 @@ namespace mame
                 /* force minimum and maximum to be > 0 */
                 min = (DSS_ADJUSTMENT__MIN > 0) ? DSS_ADJUSTMENT__MIN : 1;
                 max = (DSS_ADJUSTMENT__MAX > 0) ? DSS_ADJUSTMENT__MAX : 1;
-                m_min   = Math.Log10(min);
-                m_scale = Math.Log10(max) - Math.Log10(min);
+                m_min   = log10(min);
+                m_scale = log10(max) - log10(min);
             }
 
             this.step();
@@ -83,7 +87,7 @@ namespace mame
                 if (DSS_ADJUSTMENT__LOG == 0)
                     set_output(0,  scaledval);
                 else
-                    set_output(0,  Math.Pow(10, scaledval));
+                    set_output(0,  pow(10, scaledval));
             }
         }
     }
@@ -118,17 +122,17 @@ namespace mame
             m_gain = DSS_INPUT__GAIN;
             m_offset = DSS_INPUT__OFFSET;
 
-            m_data = (byte)DSS_INPUT__INIT;
+            m_data = (uint8_t)DSS_INPUT__INIT;
             set_output(0, m_data * m_gain + m_offset);
         }
 
 
         // discrete_input_interface
 
-        //void DISCRETE_CLASS_FUNC(dss_input_data, input_write)(int sub_node, UINT8 data )
-        public void input_write(int sub_node, byte data )
+        //void DISCRETE_CLASS_FUNC(dss_input_data, input_write)(int sub_node, uint8_t data )
+        public void input_write(int sub_node, uint8_t data)
         {
-            byte new_data = 0;
+            uint8_t new_data = 0;
 
             new_data = data;
 
@@ -158,7 +162,7 @@ namespace mame
             m_gain = DSS_INPUT__GAIN;
             m_offset = DSS_INPUT__OFFSET;
 
-            m_data = (DSS_INPUT__INIT == 0) ? (byte)0 : (byte)1;
+            m_data = (DSS_INPUT__INIT == 0) ? (uint8_t)0 : (uint8_t)1;
             set_output(0,  m_data * m_gain + m_offset);
         }
 
@@ -166,11 +170,11 @@ namespace mame
         // discrete_input_interface
 
         //void DISCRETE_CLASS_FUNC(dss_input_logic, input_write)(int sub_node, uint8_t data )
-        public void input_write(int sub_node, byte data)
+        public void input_write(int sub_node, uint8_t data)
         {
-            byte new_data    = 0;
+            uint8_t new_data = 0;
 
-            new_data =  data != 0 ? (byte)1 : (byte)0;
+            new_data =  data != 0 ? (uint8_t)1 : (uint8_t)0;
 
             if (m_data != new_data)
             {
@@ -181,6 +185,47 @@ namespace mame
 
                 /* Update the node output here so we don't have to do it each step */
                 set_output(0,  m_data * m_gain + m_offset);
+            }
+        }
+    }
+
+
+    //class DISCRETE_CLASS_NAME(dss_input_pulse): public discrete_base_node, public discrete_input_interface, public discrete_step_interface
+    partial class discrete_dss_input_pulse_node : discrete_base_node,
+                                                  discrete_input_interface,
+                                                  discrete_step_interface
+    {
+        //DISCRETE_STEP(dss_input_pulse)
+        public void step()
+        {
+            /* Set a valid output */
+            set_output(0, m_data);
+            /* Reset the input to default for the next cycle */
+            /* node order is now important */
+            m_data = (uint8_t)DSS_INPUT__INIT;
+        }
+
+
+        //DISCRETE_RESET(dss_input_pulse)
+        public override void reset()
+        {
+            m_data = (DSS_INPUT__INIT == 0) ? (uint8_t)0 : (uint8_t)1;
+            set_output(0,  m_data);
+        }
+
+
+        //void DISCRETE_CLASS_FUNC(dss_input_pulse, input_write)(int sub_node, uint8_t data )
+        public void input_write(int sub_node, uint8_t data)
+        {
+            uint8_t new_data = 0;
+
+            new_data = data != 0 ? (uint8_t)1 : (uint8_t)0;
+
+            if (m_data != new_data)
+            {
+                /* Bring the system up to now */
+                m_device.update_to_current_time();
+                m_data = new_data;
             }
         }
     }
@@ -221,22 +266,22 @@ namespace mame
             base.start();
 
             /* Stream out number is set during start */
-            m_stream_in_number = (UInt32)DSS_INPUT_STREAM__STREAM;
+            m_stream_in_number = (uint32_t)DSS_INPUT_STREAM__STREAM;
             m_gain = DSS_INPUT_STREAM__GAIN;
             m_offset = DSS_INPUT_STREAM__OFFSET;
             m_inview = null;
 
-            m_is_buffered = is_buffered() ? (byte)1 : (byte)0;
+            m_is_buffered = is_buffered() ? (uint8_t)1 : (uint8_t)0;
             m_buffer_stream = null;
         }
 
 
         // discrete_input_interface
 
-        //void DISCRETE_CLASS_FUNC(dss_input_stream, input_write)(int sub_node, UINT8 data )
-        public void input_write(int sub_node, byte data )
+        //void DISCRETE_CLASS_FUNC(dss_input_stream, input_write)(int sub_node, uint8_t data )
+        public void input_write(int sub_node, uint8_t data)
         {
-            byte new_data    = 0;
+            uint8_t new_data = 0;
 
             new_data =  data;
 

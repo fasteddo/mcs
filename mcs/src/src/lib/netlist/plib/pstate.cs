@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using size_t = System.UInt64;
 
@@ -17,12 +16,12 @@ namespace mame.plib
     {
         public struct datatype_t
         {
-            UInt32 m_size;
+            size_t m_size;
             bool m_is_integral;
             bool m_is_float;
             bool m_is_custom;
 
-            public datatype_t(UInt32 bsize, bool bintegral, bool bfloat)
+            public datatype_t(size_t bsize, bool bintegral, bool bfloat)
             {
                 m_size = bsize;
                 m_is_integral = bintegral;
@@ -83,13 +82,13 @@ namespace mame.plib
             object m_ptr;  //void *              m_ptr;
 
 
-            entry_t(string stname, datatype_t dt, object owner, int count, object ptr)  //entry_t(const pstring &stname, const datatype_t &dt, const void *owner, const std::size_t count, void *ptr)
+            entry_t(string stname, datatype_t dt, object owner, size_t count, object ptr)  //entry_t(const pstring &stname, const datatype_t &dt, const void *owner, const std::size_t count, void *ptr)
             {
                 m_name = stname;
                 m_dt = dt;
                 m_owner = owner;
                 m_callback = null;
-                m_count = (UInt32)count;
+                m_count = count;
                 m_ptr = ptr;
             }
 

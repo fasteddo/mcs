@@ -2,13 +2,16 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using netlist_state_t_devices_collection_type = mame.std.vector<mame.std.pair<string, mame.netlist.core_device_t>>;  //using devices_collection_type = std::vector<std::pair<pstring, poolptr<core_device_t>>>;
 using netlist_state_t_family_collection_type = mame.std.unordered_map<string, mame.netlist.logic_family_desc_t>;  //using family_collection_type = std::unordered_map<pstring, host_arena::unique_ptr<logic_family_desc_t>>;
 using netlist_state_t_nets_collection_type = mame.std.vector<mame.netlist.detail.net_t>;  //using nets_collection_type = std::vector<poolptr<detail::net_t>>;
 using size_t = System.UInt64;
+
+using static mame.netlist.nl_config_global;
+using static mame.netlist.nl_errstr_global;
+using static mame.nlm_base_global;
 
 
 namespace mame.netlist
@@ -80,15 +83,12 @@ namespace mame.netlist
             "#define IND_N(ind) ((ind) * 1e-9)   \n" +
             "#define IND_P(ind) ((ind) * 1e-12)  \n";
 
-            //throw new emu_unimplemented();
-#if false
-            m_setup->parser().add_include<plib::psource_str_t>("netlist/devices/net_lib.h", content);
+            m_setup.parser().add_include(new plib.psource_str_t("netlist/devices/net_lib.h", content));  //m_setup->parser().add_include<plib::psource_str_t>("netlist/devices/net_lib.h", content);
 
             // This is for core macro libraries
-            m_setup->parser().add_include<plib::psource_str_t>("devices/net_lib.h", content);
-#endif
+            m_setup.parser().add_include(new plib.psource_str_t("devices/net_lib.h", content));  //m_setup->parser().add_include<plib::psource_str_t>("devices/net_lib.h", content);
 
-            nlm_base_global.netlist_base_lib(m_setup.parser());  //NETLIST_NAME(base_lib)(m_setup->parser());
+            netlist_base_lib(m_setup.parser());  //NETLIST_NAME(base_lib)(m_setup->parser());
 
             //throw new emu_unimplemented();
 #if false
@@ -128,8 +128,8 @@ namespace mame.netlist
                 {
                     if (ret != null)
                     {
-                        m_log.fatal.op(nl_errstr_global.MF_MORE_THAN_ONE_1_DEVICE_FOUND(classname));
-                        throw new nl_exception(nl_errstr_global.MF_MORE_THAN_ONE_1_DEVICE_FOUND(classname));
+                        m_log.fatal.op(MF_MORE_THAN_ONE_1_DEVICE_FOUND(classname));
+                        throw new nl_exception(MF_MORE_THAN_ONE_1_DEVICE_FOUND(classname));
                     }
         
                     ret = d.second;
@@ -264,8 +264,8 @@ namespace mame.netlist
                 if (d.first == name)
                 {
                     //dev.release();
-                    log().fatal.op(nl_errstr_global.MF_DUPLICATE_NAME_DEVICE_LIST(name));
-                    throw new nl_exception(nl_errstr_global.MF_DUPLICATE_NAME_DEVICE_LIST(name));
+                    log().fatal.op(MF_DUPLICATE_NAME_DEVICE_LIST(name));
+                    throw new nl_exception(MF_DUPLICATE_NAME_DEVICE_LIST(name));
                 }
             }
 
@@ -315,7 +315,7 @@ namespace mame.netlist
 
         static string version()
         {
-            return new plib.pfmt("{0}.{1}").op(nl_config_global.NL_VERSION_MAJOR, nl_config_global.NL_VERSION_MINOR);
+            return new plib.pfmt("{0}.{1}").op(NL_VERSION_MAJOR, NL_VERSION_MINOR);
         }
 
 

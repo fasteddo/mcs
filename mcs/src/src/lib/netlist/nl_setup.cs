@@ -2,8 +2,11 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 
 using abstract_t_link_t = mame.std.pair<string, string>;  //using link_t = std::pair<pstring, pstring>;
 using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
@@ -13,8 +16,14 @@ using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_model_t_value_str_t = mame.netlist.param_model_t.value_base_t<string, mame.netlist.param_model_t.value_base_t_operators_string>;  //using value_str_t = value_base_t<pstring>;
 using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
+using parser_t_token_store = mame.plib.detail.token_store;  //using token_store = plib::ptokenizer::token_store;
+using ppreprocessor_defines_map_type = mame.std.unordered_map<string, mame.plib.ppreprocessor.define_t>;  //using defines_map_type = std::unordered_map<pstring, define_t>;
 using size_t = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.netlist.nl_errstr_global;
+using static mame.netlist.nl_setup_global;
 
 
 namespace mame.netlist
@@ -218,6 +227,10 @@ namespace mame.netlist
         public void SOLVER(string name, int freq) { devices.net_lib_global.SOLVER(helper_setup, name, freq); }
 
 
+        // netlist
+        public void MEMREGION_SOURCE(mame.device_t device, string _name) { netlist_global.MEMREGION_SOURCE(helper_setup, device, _name); }
+
+
         // nl_setup
         public void NET_MODEL(string model) { nl_setup_global.NET_MODEL(helper_setup, model); }
         public void ALIAS(string alias, string name) { nl_setup_global.ALIAS(helper_setup, alias, name); }
@@ -284,8 +297,8 @@ namespace mame.netlist
     // ----------------------------------------------------------------------------------------
     public class nlparse_t
     {
-        //plib::ppreprocessor.defines_map_type       m_defines;
-        //plib::psource_collection_t                  m_includes;
+        ppreprocessor_defines_map_type m_defines = new ppreprocessor_defines_map_type();
+        plib.psource_collection_t m_includes = new plib.psource_collection_t();
         std.stack<string> m_namespace_stack = new std.stack<string>();
         plib.psource_collection_t m_sources = new plib.psource_collection_t();
         detail.abstract_t m_abstract;
@@ -306,8 +319,8 @@ namespace mame.netlist
         public void register_model(string model_in)
         {
             var pos = model_in.find(' ');
-            if (pos == g.npos)
-                throw new nl_exception(nl_errstr_global.MF_UNABLE_TO_PARSE_MODEL_1(model_in));
+            if (pos == npos)
+                throw new nl_exception(MF_UNABLE_TO_PARSE_MODEL_1(model_in));
 
             string model = plib.pg.ucase(plib.pg.trim(plib.pg.left(model_in, pos)));
             string def = plib.pg.trim(model_in.substr(pos + 1));
@@ -315,7 +328,7 @@ namespace mame.netlist
             {
                 // FIXME: Add an directive MODEL_OVERWRITE to netlist language
                 //throw nl_exception(MF_MODEL_ALREADY_EXISTS_1(model_in));
-                log().info.op(nl_errstr_global.MI_MODEL_OVERWRITE_1(model, model_in));
+                log().info.op(MI_MODEL_OVERWRITE_1(model, model_in));
                 m_abstract.m_models[model] = def;
             }
         }
@@ -333,8 +346,8 @@ namespace mame.netlist
         {
             if (!m_abstract.m_alias.insert(alias, out_))
             {
-                log().fatal.op(nl_errstr_global.MF_ALIAS_ALREAD_EXISTS_1(alias));
-                throw new nl_exception(nl_errstr_global.MF_ALIAS_ALREAD_EXISTS_1(alias));
+                log().fatal.op(MF_ALIAS_ALREAD_EXISTS_1(alias));
+                throw new nl_exception(MF_ALIAS_ALREAD_EXISTS_1(alias));
             }
         }
 
@@ -344,8 +357,8 @@ namespace mame.netlist
             var list = plib.pg.psplit(terms, ", ");
             if (list.empty() || (list.size() % 2) == 1)
             {
-                log().fatal.op(nl_errstr_global.MF_DIP_PINS_MUST_BE_AN_EQUAL_NUMBER_OF_PINS_1(build_fqn("")));
-                throw new nl_exception(nl_errstr_global.MF_DIP_PINS_MUST_BE_AN_EQUAL_NUMBER_OF_PINS_1(build_fqn("")));
+                log().fatal.op(MF_DIP_PINS_MUST_BE_AN_EQUAL_NUMBER_OF_PINS_1(build_fqn("")));
+                throw new nl_exception(MF_DIP_PINS_MUST_BE_AN_EQUAL_NUMBER_OF_PINS_1(build_fqn("")));
             }
 
             size_t n = list.size();
@@ -375,8 +388,8 @@ namespace mame.netlist
             string key = build_fqn(name);
             if (device_exists(key))
             {
-                log().fatal.op(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(key));
-                throw new nl_exception(nl_errstr_global.MF_DEVICE_ALREADY_EXISTS_1(key));
+                log().fatal.op(MF_DEVICE_ALREADY_EXISTS_1(key));
+                throw new nl_exception(MF_DEVICE_ALREADY_EXISTS_1(key));
             }
 
             m_abstract.m_device_factory.push_back(new std.pair<string, factory.element_t>(key, f));  //m_abstract.m_device_factory.insert(m_abstract.m_device_factory.end(), {key, f});
@@ -394,7 +407,7 @@ namespace mame.netlist
                     {
                         if (ptokIdx == ptok_endIdx)  //if (ptok == ptok_end)
                         {
-                            var err = nl_errstr_global.MF_PARAM_COUNT_MISMATCH_2(name, params_and_connections.size());
+                            var err = MF_PARAM_COUNT_MISMATCH_2(name, params_and_connections.size());
                             log().fatal.op(err);
                             throw new nl_exception(err);
                             //break;
@@ -417,7 +430,7 @@ namespace mame.netlist
                     {
                         if (ptokIdx == params_and_connections.Count)  //if (ptok == params_and_connections.end())
                         {
-                            var err = nl_errstr_global.MF_PARAM_COUNT_MISMATCH_2(name, params_and_connections.size());
+                            var err = MF_PARAM_COUNT_MISMATCH_2(name, params_and_connections.size());
                             log().fatal.op(err);
                             throw new nl_exception(err);
                         }
@@ -434,7 +447,7 @@ namespace mame.netlist
 
                 if (ptokIdx != params_and_connections.Count)  //if (ptok != params_and_connections.end())
                 {
-                    var err = nl_errstr_global.MF_PARAM_COUNT_EXCEEDED_2(name, params_and_connections.size());
+                    var err = MF_PARAM_COUNT_EXCEEDED_2(name, params_and_connections.size());
                     log().fatal.op(err);
                     throw new nl_exception(err);
                 }
@@ -478,8 +491,8 @@ namespace mame.netlist
             var name = build_fqn(objname) + hintname;
             if (!m_abstract.m_hints.insert(name, false))
             {
-                log().fatal.op(nl_errstr_global.MF_ADDING_HINT_1(name));
-                throw new nl_exception(nl_errstr_global.MF_ADDING_HINT_1(name));
+                log().fatal.op(MF_ADDING_HINT_1(name));
+                throw new nl_exception(MF_ADDING_HINT_1(name));
             }
         }
 
@@ -495,8 +508,8 @@ namespace mame.netlist
             var list = plib.pg.psplit(terms, ", ");
             if (list.size() < 2)
             {
-                log().fatal.op(nl_errstr_global.MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL());
-                throw new nl_exception(nl_errstr_global.MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL());
+                log().fatal.op(MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL());
+                throw new nl_exception(MF_NET_C_NEEDS_AT_LEAST_2_TERMINAL());
             }
 
             for (size_t i = 1; i < list.size(); i++)
@@ -531,16 +544,16 @@ namespace mame.netlist
             {
                 if (!m_abstract.m_param_values.insert(fqn, val))
                 {
-                    log().fatal.op(nl_errstr_global.MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(param));
-                    throw new nl_exception(nl_errstr_global.MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(param));
+                    log().fatal.op(MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(param));
+                    throw new nl_exception(MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(param));
                 }
             }
             else
             {
-                if (idx.find("$(") == g.npos)
+                if (idx.find("$(") == npos)
                 {
                     //* There may be reason ... so make it an INFO
-                    log().info.op(nl_errstr_global.MI_OVERWRITING_PARAM_1_OLD_2_NEW_3(fqn, idx, val));
+                    log().info.op(MI_OVERWRITING_PARAM_1_OLD_2_NEW_3(fqn, idx, val));
                 }
 
                 m_abstract.m_param_values[fqn] = val;
@@ -611,8 +624,8 @@ namespace mame.netlist
             }))
                 return;
 
-            log().fatal.op(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
-            throw new nl_exception(nl_errstr_global.MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
+            log().fatal.op(MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
+            throw new nl_exception(MF_NOT_FOUND_IN_SOURCE_COLLECTION(netlist_name));
         }
 
 
@@ -650,7 +663,14 @@ namespace mame.netlist
         // FIXME: used by source_t - need a different approach at some time
         public bool parse_stream(plib.istream_uptr istrm, string name)  //bool parse_stream(plib::istream_uptr &&istrm, const pstring &name);
         {
-            throw new emu_unimplemented();
+            var filename = istrm.filename();
+            var preprocessed = new MemoryStream(  //auto preprocessed = std::make_unique<std::stringstream>(putf8string(
+                    Encoding.ASCII.GetBytes(new plib.ppreprocessor(m_includes, m_defines).process(istrm, filename)));  //plib::ppreprocessor(m_includes, &m_defines).process(std::move(istrm), filename)));
+
+            parser_t_token_store st = new parser_t_token_store();
+            parser_t parser = new parser_t(this);
+            parser.parse_tokens(new plib.istream_uptr(preprocessed, filename), st);
+            return parser.parse(st, name);
         }
 
 
@@ -658,7 +678,12 @@ namespace mame.netlist
 
 
         //template <typename S, typename... Args>
-        //void add_include(Args&&... args)
+        public void add_include(plib.psource_t args)  //void add_include(Args&&... args)
+        {
+            m_includes.add_source(args);  //m_includes.add_source<S>(std::forward<Args>(args)...);
+        }
+
+
         //void add_define(const pstring &def, const pstring &val)
         //void add_define(const pstring &defstr);
 

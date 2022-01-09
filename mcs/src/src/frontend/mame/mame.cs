@@ -2,51 +2,22 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
 using size_t = System.UInt64;
 
+using static mame.cpp_global;
+using static mame.emucore_global;
+using static mame.emuopts_global;
+using static mame.main_global;
+using static mame.mameopts_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
+using static mame.version_global;
+
 
 namespace mame
 {
-    public static partial class emulator_info
-    {
-        public static string get_bare_build_version() { return version_global.bare_build_version; }
-        public static string get_build_version() { return version_global.build_version; }
-
-        public static void display_ui_chooser(running_machine machine)
-        {
-            mame_ui_manager mui = mame_machine_manager.instance().ui();
-            render_container container = machine.render().ui_container();
-            if (machine.options().ui() == emu_options.ui_option.UI_SIMPLE)
-                ui.simple_menu_select_game.force_game_select(mui, container);
-            else
-                ui.menu_select_game.force_game_select(mui, container);
-        }
-
-        public static int start_frontend(emu_options options, osd_interface osd, std.vector<string> args)
-        {
-            cli_frontend frontend = new cli_frontend(options, osd);
-            return frontend.execute(args);
-        }
-
-        public static void draw_user_interface(running_machine machine) { mame_machine_manager.instance().ui().update_and_render(machine.render().ui_container()); }
-
-        public static void periodic_check() { mame_machine_manager.instance().lua().on_periodic(); }
-
-        public static bool frame_hook() { return mame_machine_manager.instance().lua().frame_hook(); }
-
-        public static void layout_script_cb(layout_file file, string script)
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        public static bool standalone() { return false; }
-    }
-
-
     public class mame_machine_manager : machine_manager
     {
         //DISABLE_COPYING(mame_machine_manager);
@@ -135,7 +106,7 @@ namespace mame
             std.vector<string> tokens = new std.vector<string>();
             size_t start = 0;
             size_t end = 0;
-            while ((end = text.find(sep, start)) != g.npos)
+            while ((end = text.find(sep, start)) != npos)
             {
                 string temp = text.substr(start, end - start);
                 if (temp != "") tokens.push_back(temp);
@@ -213,7 +184,7 @@ namespace mame
         public std.vector<string> missing_mandatory_images()  //std::vector<std::reference_wrapper<const std::string>> mame_machine_manager::missing_mandatory_images()
         {
             std.vector<string> results = new std.vector<string>();
-            g.assert(machine() != null);
+            assert(machine() != null);
 
             // make sure that any required image has a mounted file
             foreach (device_image_interface image in new image_interface_enumerator(machine().root_device()))
@@ -265,9 +236,9 @@ namespace mame
 
             // loop across multiple hard resets
             bool exit_pending = false;
-            int error = g.EMU_ERR_NONE;
+            int error = EMU_ERR_NONE;
 
-            while (error == g.EMU_ERR_NONE && !exit_pending)
+            while (error == EMU_ERR_NONE && !exit_pending)
             {
                 m_new_driver_pending = null;
 
@@ -286,7 +257,7 @@ namespace mame
                 if (m_options.read_config())
                 {
                     // but first, revert out any potential game-specific INI settings from previous runs via the internal UI
-                    m_options.revert(mame_options.OPTION_PRIORITY_INI);
+                    m_options.revert(OPTION_PRIORITY_INI);
 
                     string errors;
                     mame_options.parse_standard_inis(m_options, out errors);
@@ -355,7 +326,7 @@ namespace mame
                 while (iter.next(out pluginpath))
                 {
                     // user may specify environment variables; subsitute them
-                    osdcore_global.m_osdcore.osd_subst_env(out pluginpath, pluginpath);
+                    m_osdcore.osd_subst_env(out pluginpath, pluginpath);
 
                     // and then scan the directory recursively
                     m_plugins.scan_directory(pluginpath, true);
@@ -403,9 +374,9 @@ namespace mame
             // we have a special way to open the console plugin
             if (options().console())
             {
-                plugin_options.plugin p = m_plugins.find(emu_options.OPTION_CONSOLE);
+                plugin_options.plugin p = m_plugins.find(OPTION_CONSOLE);
                 if (p == null)
-                    g.fatalerror("Fatal error: Console plugin not found.\n");
+                    fatalerror("Fatal error: Console plugin not found.\n");
 
                 p.m_start = true;
             }
@@ -413,12 +384,12 @@ namespace mame
             m_lua.initialize();
 
             {
-                emu_file file = new emu_file(options().plugins_path(), g.OPEN_FLAG_READ);
+                emu_file file = new emu_file(options().plugins_path(), OPEN_FLAG_READ);
                 std.error_condition filerr = file.open("boot.lua");
                 if (!filerr)
                 {
                     string exppath;
-                    osdcore_global.m_osdcore.osd_subst_env(out exppath, file.fullpath());
+                    m_osdcore.osd_subst_env(out exppath, file.fullpath());
                     m_lua.load_script(file.fullpath());
                     file.close();
                 }
@@ -436,9 +407,47 @@ namespace mame
         }
 
 
-        public mame_ui_manager ui() { g.assert(m_ui != null); return m_ui; }
-        public cheat_manager cheat() { g.assert(m_cheat != null); return m_cheat; }
-        public inifile_manager inifile() { g.assert(m_inifile != null); return m_inifile; }
-        public favorite_manager favorite() { g.assert(m_favorite != null); return m_favorite; }
+        public mame_ui_manager ui() { assert(m_ui != null); return m_ui; }
+        public cheat_manager cheat() { assert(m_cheat != null); return m_cheat; }
+        public inifile_manager inifile() { assert(m_inifile != null); return m_inifile; }
+        public favorite_manager favorite() { assert(m_favorite != null); return m_favorite; }
+    }
+
+
+    public static partial class emulator_info
+    {
+        public static string get_bare_build_version() { return bare_build_version; }
+        public static string get_build_version() { return build_version; }
+
+        public static void display_ui_chooser(running_machine machine)
+        {
+            mame_ui_manager mui = mame_machine_manager.instance().ui();
+            render_container container = machine.render().ui_container();
+            if (machine.options().ui() == emu_options.ui_option.UI_SIMPLE)
+                ui.simple_menu_select_game.force_game_select(mui, container);
+            else
+                ui.menu_select_game.force_game_select(mui, container);
+        }
+
+        public static int start_frontend(emu_options options, osd_interface osd, std.vector<string> args)
+        {
+            cli_frontend frontend = new cli_frontend(options, osd);
+            return frontend.execute(args);
+        }
+
+        public static void draw_user_interface(running_machine machine) { mame_machine_manager.instance().ui().update_and_render(machine.render().ui_container()); }
+
+        public static void periodic_check() { mame_machine_manager.instance().lua().on_periodic(); }
+
+        public static bool frame_hook() { return mame_machine_manager.instance().lua().frame_hook(); }
+
+        public static void sound_hook() { mame_machine_manager.instance().lua().on_sound_update(); }
+
+        public static void layout_script_cb(layout_file file, string script)
+        {
+            throw new emu_unimplemented();
+        }
+
+        public static bool standalone() { return false; }
     }
 }

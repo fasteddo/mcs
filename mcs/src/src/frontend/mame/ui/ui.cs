@@ -2,23 +2,61 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using cassette_device_enumerator = mame.device_type_enumerator<mame.cassette_image_device>;  //typedef device_type_enumerator<cassette_image_device> cassette_device_enumerator;
 using char32_t = System.UInt32;
 using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
 using int32_t = System.Int32;
+using long_long = System.Int64;
 using mame_ui_manager_device_feature_set = mame.std.set<mame.std.pair<string, string>>;  //using device_feature_set = std::set<std::pair<std::string, std::string> >;
+using mame_ui_manager_session_data_map = mame.std.map<object, object>;  //using session_data_map = std::map<std::type_index, std::any>;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using std_time_t = System.Int64;
+using u64 = System.UInt64;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.gamedrv_global;
+using static mame.ioport_global;
+using static mame.language_global;
+using static mame.machine_global;
+using static mame.mameopts_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
+using static mame.profiler_global;
+using static mame.render_global;
+using static mame.rendertypes_global;
+using static mame.ui_global;
+using static mame.ui_internal;
+using static mame.util;
+using static mame.viewgfx_global;
 
 
 namespace mame
 {
+    public static partial class ui_global
+    {
+        public const float UI_MAX_FONT_HEIGHT      = 1.0f / 20.0f;
+
+        /* width of lines drawn in the UI */
+        public const float UI_LINE_WIDTH           = 1.0f / 500.0f;
+
+        /* handy colors */
+        public static readonly rgb_t UI_GREEN_COLOR          = new rgb_t(0xef,0x0a,0x66,0x0a);
+        public static readonly rgb_t UI_YELLOW_COLOR         = new rgb_t(0xef,0xcc,0x7a,0x28);
+        public static readonly rgb_t UI_RED_COLOR            = new rgb_t(0xef,0xb2,0x00,0x00);
+
+        /* cancel return value for a UI handler */
+        public const uint32_t UI_HANDLER_CANCEL       = uint32_t.MaxValue;
+    }
+
+
+    //typedef uint32_t (*ui_callback)(mame_ui_manager &, render_container &, uint32_t);
+
+
     enum ui_callback_type
     {
         GENERAL,
@@ -28,115 +66,7 @@ namespace mame
     }
 
 
-    public static class ui_global
-    {
-        //enum
-        //{
-        //LOADSAVE_NONE,
-        //LOADSAVE_LOAD,
-        //LOADSAVE_SAVE
-        //}
-
-
-        /* preferred font height; use ui_get_line_height() to get actual height */
-        public const float UI_MAX_FONT_HEIGHT      = 1.0f / 20.0f;
-
-        /* width of lines drawn in the UI */
-        public const float UI_LINE_WIDTH           = 1.0f / 500.0f;
-
-        /* handy colors */
-        public static readonly rgb_t UI_GREEN_COLOR          = new rgb_t(0xef,0x10,0x60,0x10);
-        public static readonly rgb_t UI_YELLOW_COLOR         = new rgb_t(0xef,0x60,0x60,0x10);
-        public static readonly rgb_t UI_RED_COLOR            = new rgb_t(0xf0,0x60,0x10,0x10);
-
-        /* cancel return value for a UI handler */
-        public const uint32_t UI_HANDLER_CANCEL       = uint32_t.MaxValue;
-
-        // list of natural keyboard keys that are not associated with UI_EVENT_CHARs
-        public static readonly input_item_id [] non_char_keys = 
-        {
-            input_item_id.ITEM_ID_ESC,
-            input_item_id.ITEM_ID_F1,
-            input_item_id.ITEM_ID_F2,
-            input_item_id.ITEM_ID_F3,
-            input_item_id.ITEM_ID_F4,
-            input_item_id.ITEM_ID_F5,
-            input_item_id.ITEM_ID_F6,
-            input_item_id.ITEM_ID_F7,
-            input_item_id.ITEM_ID_F8,
-            input_item_id.ITEM_ID_F9,
-            input_item_id.ITEM_ID_F10,
-            input_item_id.ITEM_ID_F11,
-            input_item_id.ITEM_ID_F12,
-            input_item_id.ITEM_ID_NUMLOCK,
-            input_item_id.ITEM_ID_0_PAD,
-            input_item_id.ITEM_ID_1_PAD,
-            input_item_id.ITEM_ID_2_PAD,
-            input_item_id.ITEM_ID_3_PAD,
-            input_item_id.ITEM_ID_4_PAD,
-            input_item_id.ITEM_ID_5_PAD,
-            input_item_id.ITEM_ID_6_PAD,
-            input_item_id.ITEM_ID_7_PAD,
-            input_item_id.ITEM_ID_8_PAD,
-            input_item_id.ITEM_ID_9_PAD,
-            input_item_id.ITEM_ID_DEL_PAD,
-            input_item_id.ITEM_ID_PLUS_PAD,
-            input_item_id.ITEM_ID_MINUS_PAD,
-            input_item_id.ITEM_ID_INSERT,
-            input_item_id.ITEM_ID_DEL,
-            input_item_id.ITEM_ID_HOME,
-            input_item_id.ITEM_ID_END,
-            input_item_id.ITEM_ID_PGUP,
-            input_item_id.ITEM_ID_PGDN,
-            input_item_id.ITEM_ID_UP,
-            input_item_id.ITEM_ID_DOWN,
-            input_item_id.ITEM_ID_LEFT,
-            input_item_id.ITEM_ID_RIGHT,
-            input_item_id.ITEM_ID_PAUSE,
-            input_item_id.ITEM_ID_CANCEL
-        };
-
-
-        public static readonly uint32_t [] mouse_bitmap = new UInt32[32*32]
-        {
-            0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x09a46f30,0x81ac7c43,0x24af8049,0x00ad7d45,0x00a8753a,0x00a46f30,0x009f6725,0x009b611c,0x00985b14,0x0095560d,0x00935308,0x00915004,0x00904e02,0x008f4e01,0x008f4d00,0x008f4d00,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x00a16a29,0xa2aa783d,0xffbb864a,0xc0b0824c,0x5aaf7f48,0x09ac7b42,0x00a9773c,0x00a67134,0x00a26b2b,0x009e6522,0x009a5e19,0x00965911,0x0094550b,0x00925207,0x00915004,0x008f4e01,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x009a5e18,0x39a06827,0xffb97c34,0xffe8993c,0xffc88940,0xedac7c43,0x93ad7c44,0x2dac7c43,0x00ab793f,0x00a87438,0x00a46f30,0x00a06827,0x009c611d,0x00985c15,0x0095570e,0x00935309,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x00935308,0x00965810,0xcc9a5e19,0xffe78a21,0xfffb9929,0xfff49931,0xffd88e39,0xffb9813f,0xc9ac7c43,0x66ad7c44,0x0cac7a41,0x00a9773c,0x00a67134,0x00a26b2b,0x009e6522,0x009a5e19,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4e01,0x00904e02,0x60925106,0xffba670a,0xfff88b11,0xfff98f19,0xfff99422,0xfff9982b,0xffe89434,0xffc9883c,0xf3ac7a41,0x9cad7c44,0x39ac7c43,0x00ab7a40,0x00a87539,0x00a56f31,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008e4d00,0x008e4d00,0x098e4d00,0xea8f4d00,0xffee7f03,0xfff68407,0xfff6870d,0xfff78b15,0xfff78f1d,0xfff79426,0xfff49730,0xffd98d38,0xffbc823f,0xd2ac7c43,0x6fad7c44,0x12ac7b42,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008e4d00,0x008e4d00,0x008e4c00,0x8a8e4c00,0xffc46800,0xfff37e00,0xfff37f02,0xfff38106,0xfff3830a,0xfff48711,0xfff48b19,0xfff58f21,0xfff5942b,0xffe79134,0xffcb863b,0xf9ac7a41,0xa5ac7c43,0x3fac7c43,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008e4d00,0x008e4d00,0x008e4c00,0x218d4c00,0xfc8e4c00,0xffee7a00,0xfff07c00,0xfff17c00,0xfff17d02,0xfff17e04,0xfff18008,0xfff2830d,0xfff28614,0xfff38a1c,0xfff38f25,0xfff2932e,0xffd98b37,0xffbc813e,0xdbac7c43,0x78ad7c44,0x15ac7b42,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008e4d00,0x008e4d00,0x008e4d00,0x008e4c00,0xb18d4c00,0xffcf6b00,0xffed7900,0xffed7900,0xffee7900,0xffee7a01,0xffee7a01,0xffee7b03,0xffee7c06,0xffef7e0a,0xffef8110,0xfff08618,0xfff08a20,0xfff18f2a,0xffe78f33,0xffcc863b,0xfcab7a40,0xaeac7c43,0x4bac7c43,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x488d4c00,0xffa85800,0xffe97500,0xffea7600,0xffea7600,0xffeb7600,0xffeb7600,0xffeb7600,0xffeb7701,0xffeb7702,0xffeb7804,0xffec7a07,0xffec7d0d,0xffec8013,0xffed851c,0xffee8a25,0xffee8f2e,0xffd98937,0xffbe813d,0xe4ab7a40,0x81ab7a40,0x1ba9763b,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x008d4c00,0xdb8d4c00,0xffd86c00,0xffe77300,0xffe77300,0xffe87300,0xffe87300,0xffe87300,0xffe87300,0xffe87300,0xffe87401,0xffe87401,0xffe87503,0xffe97606,0xffe9780a,0xffe97c10,0xffea7f16,0xffeb831d,0xffeb8623,0xffe48426,0xffc67725,0xffa5661f,0xb7985c15,0x54935309,0x038e4d00,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008e4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x6f8d4c00,0xffb25b00,0xffe36f00,0xffe47000,0xffe47000,0xffe57000,0xffe57000,0xffe57000,0xffe57000,0xffe57000,0xffe57000,0xffe57000,0xffe57000,0xffe57101,0xffe57000,0xffe47000,0xffe16e00,0xffde6c00,0xffd86900,0xffd06600,0xffc76200,0xffaa5500,0xff8a4800,0xea743f00,0x5a7a4200,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x0f8d4c00,0xf38d4c00,0xffdc6a00,0xffe16d00,0xffe16d00,0xffe26d00,0xffe26d00,0xffe26d00,0xffe26d00,0xffe26d00,0xffe16d00,0xffe06c00,0xffde6b00,0xffd96900,0xffd16500,0xffc76000,0xffb95900,0xffab5200,0xff9c4b00,0xff894300,0xff6b3600,0xf9512c00,0xa5542d00,0x3c5e3200,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x008d4c00,0x968d4c00,0xffbc5d00,0xffde6a00,0xffde6a00,0xffde6a00,0xffdf6a00,0xffdf6a00,0xffdf6a00,0xffde6a00,0xffdc6800,0xffd66600,0xffcc6100,0xffbf5b00,0xffaf5300,0xff9d4a00,0xff8a4200,0xff6d3500,0xff502900,0xe7402300,0x7b3f2200,0x15442500,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x2a8d4c00,0xff9b5000,0xffda6600,0xffdb6700,0xffdb6700,0xffdc6700,0xffdc6700,0xffdb6700,0xffd96500,0xffd16200,0xffc25b00,0xffad5100,0xff974700,0xff7f3c00,0xff602f00,0xff472500,0xbd3d2100,0x513d2100,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x008e4c00,0xc08d4c00,0xffc35c00,0xffd76300,0xffd76300,0xffd86300,0xffd86300,0xffd76300,0xffd06000,0xffc05800,0xffa54c00,0xff7f3b00,0xff582c00,0xf03f2200,0x903c2000,0x2a3e2100,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x548d4c00,0xffa55200,0xffd35f00,0xffd46000,0xffd46000,0xffd46000,0xffd25e00,0xffc65900,0xffac4e00,0xff833c00,0xe7472600,0x693c2000,0x0c3d2100,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x038d4c00,0xe48d4c00,0xffc95a00,0xffd15d00,0xffd15d00,0xffd15d00,0xffcb5a00,0xffb95200,0xff984300,0xff5f2e00,0x723f2200,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x7b8d4c00,0xffad5200,0xffce5a00,0xffce5a00,0xffcd5900,0xffc35500,0xffaa4a00,0xff853a00,0xf9472600,0x15432400,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x188d4c00,0xf98e4c00,0xffc95600,0xffcb5700,0xffc75500,0xffb94f00,0xff9b4200,0xff6c3100,0xab442500,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4d00,0x008e4c00,0xa58d4c00,0xffb35000,0xffc75300,0xffc05000,0xffac4800,0xff8b3a00,0xff542a00,0x45462500,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x398d4c00,0xff994d00,0xffc24f00,0xffb74b00,0xff9e4000,0xff763200,0xde472600,0x03492800,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x008e4c00,0xcf8d4c00,0xffb24b00,0xffab4500,0xff8d3900,0xff5e2b00,0x7e452500,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x638d4c00,0xff984800,0xffa03f00,0xff7e3200,0xfc492800,0x1b472600,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x098b4b00,0xed824600,0xff903800,0xff692c00,0xb4462600,0x004c2900,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x008a4a00,0x8a7e4400,0xff793500,0xff572900,0x51472600,0x00542d00,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008d4c00,0x00884900,0x247a4200,0xfc633500,0xe74f2a00,0x034d2900,0x005e3300,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008d4c00,0x00884900,0x00794100,0xb4643600,0x87552e00,0x00593000,0x006b3900,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008d4c00,0x00884900,0x007c4300,0x486d3b00,0x24643600,0x00693800,0x00774000,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
-            0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff
-        };
-    }
-
-
     // ======================> ui_colors
-
     public class ui_colors
     {
         rgb_t m_border_color;
@@ -201,7 +131,9 @@ namespace mame
     public class mame_ui_manager : ui_manager
     {
         delegate uint32_t handler_callback_func(render_container container, mame_ui_manager mui);  //using handler_callback_func = std::function<uint32_t (render_container &)>;
+
         //using device_feature_set = std::set<std::pair<std::string, std::string> >;
+        //using session_data_map = std::map<std::type_index, std::any>;
 
 
         public enum draw_mode
@@ -222,7 +154,7 @@ namespace mame
         osd_ticks_t m_showfps_end;
         bool m_show_profiler;
         osd_ticks_t m_popup_text_end;
-        byte [] m_non_char_keys_down;
+        uint8_t [] m_non_char_keys_down;  //std::unique_ptr<uint8_t []> m_non_char_keys_down;
         bitmap_argb32 m_mouse_bitmap;
         render_texture m_mouse_arrow_texture;
         bool m_mouse_show;
@@ -237,6 +169,8 @@ namespace mame
         mame_ui_manager_device_feature_set m_imperfect_features;
         std_time_t m_last_launch_time;
         std_time_t m_last_warning_time;
+
+        mame_ui_manager_session_data_map m_session_data = new mame_ui_manager_session_data_map();
 
         // static variables
         static string messagebox_text;
@@ -284,9 +218,12 @@ namespace mame
         {
             load_ui_options(machine());
 
+            // start loading system names as early as possible
+            ui.system_list.instance().cache_data(options());
+
             // initialize the other UI bits
             ui.menu.init(machine(), options());
-            viewgfx_global.ui_gfx_init(machine());
+            ui_gfx_init(machine());
 
             m_ui_colors.refresh(options());
 
@@ -301,8 +238,8 @@ namespace mame
                         draw_text_box(container, messagebox_text, ui.text_layout.text_justify.LEFT, 0.5f, 0.5f, colors().background_color());
                         return 0;
                     });
-            m_non_char_keys_down = new byte [(std.size(ui_global.non_char_keys) + 7) / 8]; // auto_alloc_array(machine, UINT8, (ARRAY_LENGTH(non_char_keys) + 7) / 8);
-            m_mouse_show = ((UInt64)machine().system().flags & g.MACHINE_CLICKABLE_ARTWORK) == g.MACHINE_CLICKABLE_ARTWORK ? true : false;
+            m_non_char_keys_down = new uint8_t [(std.size(non_char_keys) + 7) / 8];  //m_non_char_keys_down = std::make_unique<uint8_t[]>((std::size(non_char_keys) + 7) / 8);
+            m_mouse_show = ((u64)machine().system().flags & MACHINE_CLICKABLE_ARTWORK) == MACHINE_CLICKABLE_ARTWORK ? true : false;
 
             // request notification callbacks
             machine().add_notifier(machine_notification.MACHINE_NOTIFY_EXIT, exit);
@@ -315,7 +252,7 @@ namespace mame
             PointerU32 dst = m_mouse_bitmap.pix(0);  //uint32_t *dst = &m_mouse_bitmap.pix(0);
             //memcpy(dst,mouse_bitmap,32*32*sizeof(UINT32));
             for (int i = 0; i < 32*32; i++)
-                dst[i] = ui_global.mouse_bitmap[i];
+                dst[i] = mouse_bitmap[i];
 
             m_mouse_arrow_texture = machine().render().texture_alloc();
             m_mouse_arrow_texture.set_bitmap(m_mouse_bitmap, m_mouse_bitmap.cliprect(), texture_format.TEXFORMAT_ARGB32);
@@ -327,7 +264,7 @@ namespace mame
         bool single_step() { return m_single_step; }
         public ui_options options() { return m_ui_options; }
         public ui_colors colors() { return m_ui_colors; }
-        public ui.machine_info machine_info() { g.assert(m_machine_info != null); return m_machine_info; }
+        public ui.machine_info machine_info() { assert(m_machine_info != null); return m_machine_info; }
 
 
         // setters
@@ -357,7 +294,7 @@ namespace mame
             // if no test switch found, assign its input sequence to a service mode DIP
             if (!m_machine_info.has_test_switch() && m_machine_info.has_dips())
             {
-                string service_mode_dipname = ioport_configurer.string_from_token(g.DEF_STR(INPUT_STRING.INPUT_STRING_Service_Mode));
+                string service_mode_dipname = ioport_configurer.string_from_token(DEF_STR(INPUT_STRING.INPUT_STRING_Service_Mode));
                 foreach (var port in machine.ioport().ports())
                 {
                     foreach (ioport_field field in port.Value.fields())
@@ -439,7 +376,7 @@ namespace mame
 
             // disable everything if we are using -str for 300 or fewer seconds, or if we're the empty driver,
             // or if we are debugging, or if there's no mame window to send inputs to
-            if (!first_time || (str > 0 && str < 60 * 5) || machine().system() == ___empty.driver____empty || (machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0 || video_none)
+            if (!first_time || (str > 0 && str < 60 * 5) || machine().system() == ___empty.driver____empty || (machine().debug_flags & DEBUG_FLAG_ENABLED) != 0 || video_none)
                 show_gameinfo = show_warnings = show_mandatory_fileman = false;
 
 #if EMSCRIPTEN
@@ -468,17 +405,17 @@ namespace mame
                     {
                         // if the user cancels, exit out completely
                         machine().schedule_exit();
-                        return g.UI_HANDLER_CANCEL;
+                        return UI_HANDLER_CANCEL;
                     }
                     else if (machine().ui_input().pressed((int)ioport_type.IPT_UI_CONFIGURE))
                     {
                         config_menu = true;
-                        return g.UI_HANDLER_CANCEL;
+                        return UI_HANDLER_CANCEL;
                     }
                     else if (poller.poll() != input_code.INPUT_CODE_INVALID)
                     {
                         // if any key is pressed, just exit
-                        return g.UI_HANDLER_CANCEL;
+                        return UI_HANDLER_CANCEL;
                     }
 
                     return 0;
@@ -658,13 +595,13 @@ namespace mame
         public override void set_startup_text(string text, bool force)
         {
             //static osd_ticks_t lastupdatetime = 0;
-            osd_ticks_t curtime = osdcore_global.m_osdcore.osd_ticks();
+            osd_ticks_t curtime = m_osdcore.osd_ticks();
 
             // copy in the new text
             messagebox_text = text;
 
             // don't update more than 4 times/second
-            if (force || (curtime - lastupdatetime_set_startup_text) > osdcore_global.m_osdcore.osd_ticks_per_second() / 4)
+            if (force || (curtime - lastupdatetime_set_startup_text) > m_osdcore.osd_ticks_per_second() / 4)
             {
                 lastupdatetime_set_startup_text = curtime;
                 machine().video().frame_update();
@@ -689,7 +626,7 @@ namespace mame
                 if (alpha > 255)
                     alpha = 255;
                 if (alpha >= 0)
-                    container.add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t((uint8_t)alpha,0x00,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                    container.add_rect(0.0f, 0.0f, 1.0f, 1.0f, new rgb_t((uint8_t)alpha,0x00,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
             }
 
             // show red if overdriving sound
@@ -699,10 +636,10 @@ namespace mame
                 if (compressor < 1.0)
                 {
                     float width = 0.05f + std.min(0.15f, (1.0f - compressor) * 0.4f);
-                    container.add_rect(0.0f, 0.0f, 1.0f, width, new rgb_t(0xc0,0xff,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-                    container.add_rect(0.0f, 1.0f - width, 1.0f, 1.0f, new rgb_t(0xc0,0xff,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-                    container.add_rect(0.0f, width, width, 1.0f - width, new rgb_t(0xc0,0xff,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-                    container.add_rect(1.0f - width, width, 1.0f, 1.0f - width, new rgb_t(0xc0,0xff,0x00,0x00), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                    container.add_rect(0.0f, 0.0f, 1.0f, width, new rgb_t(0xc0,0xff,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                    container.add_rect(0.0f, 1.0f - width, 1.0f, 1.0f, new rgb_t(0xc0,0xff,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                    container.add_rect(0.0f, width, width, 1.0f - width, new rgb_t(0xc0,0xff,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                    container.add_rect(1.0f - width, width, 1.0f, 1.0f - width, new rgb_t(0xc0,0xff,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                 }
             }
 
@@ -714,7 +651,7 @@ namespace mame
             m_handler_param = m_handler_callback(container, this);
 
             // display any popup messages
-            if (osdcore_global.m_osdcore.osd_ticks() < m_popup_text_end)
+            if (m_osdcore.osd_ticks() < m_popup_text_end)
                 draw_text_box(container, messagebox_poptext, ui.text_layout.text_justify.CENTER, 0.5f, 0.9f, colors().background_color());
             else
                 m_popup_text_end = 0;
@@ -734,13 +671,13 @@ namespace mame
                     if (mouse_target.map_point_container(mouse_target_x, mouse_target_y, container, out mouse_x, out mouse_y))
                     {
                         float cursor_size = 0.6f * get_line_height();
-                        container.add_quad(mouse_x, mouse_y, mouse_x + cursor_size * container.manager().ui_aspect(container), mouse_y + cursor_size, colors().text_color(), m_mouse_arrow_texture, g.PRIMFLAG_ANTIALIAS(1) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                        container.add_quad(mouse_x, mouse_y, mouse_x + cursor_size * container.manager().ui_aspect(container), mouse_y + cursor_size, colors().text_color(), m_mouse_arrow_texture, PRIMFLAG_ANTIALIAS(1) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                     }
                 }
             }
 
             // cancel takes us back to the ingame handler
-            if (m_handler_param == g.UI_HANDLER_CANCEL)
+            if (m_handler_param == UI_HANDLER_CANCEL)
             {
                 //using namespace std::placeholders;
                 set_handler(ui_callback_type.GENERAL, handler_ingame);
@@ -783,7 +720,7 @@ namespace mame
                 // do we want to scale smaller? only do so if we exceed the threshold
                 if (scale_factor <= 1.0f)
                 {
-                    if (one_to_one_line_height < g.UI_MAX_FONT_HEIGHT || raw_font_pixel_height < 12)
+                    if (one_to_one_line_height < UI_MAX_FONT_HEIGHT || raw_font_pixel_height < 12)
                         scale_factor = 1.0f;
                 }
 
@@ -837,11 +774,11 @@ namespace mame
 
         public void draw_outlined_box(render_container container, float x0, float y0, float x1, float y1, rgb_t fgcolor, rgb_t bgcolor)
         {
-            container.add_rect(x0, y0, x1, y1, bgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-            container.add_line(x0, y0, x1, y0, g.UI_LINE_WIDTH, fgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-            container.add_line(x1, y0, x1, y1, g.UI_LINE_WIDTH, fgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-            container.add_line(x1, y1, x0, y1, g.UI_LINE_WIDTH, fgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-            container.add_line(x0, y1, x0, y0, g.UI_LINE_WIDTH, fgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+            container.add_rect(x0, y0, x1, y1, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x0, y0, x1, y0, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x1, y0, x1, y1, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x1, y1, x0, y1, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x0, y1, x0, y0, UI_LINE_WIDTH, fgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
         }
 
         //-------------------------------------------------
@@ -849,9 +786,12 @@ namespace mame
         //-------------------------------------------------
         void draw_text(render_container container, string buf, float x, float y)
         {
-            float unused1;
-            float unused2;
-            draw_text_full(container, buf, x, y, 1.0f - x, ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD, draw_mode.NORMAL, colors().text_color(), colors().text_bg_color(), out unused1, out unused2);
+            draw_text_full(
+                    container,
+                    buf,
+                    x, y, 1.0f - x,
+                    ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD,
+                    mame_ui_manager.draw_mode.NORMAL, colors().text_color(), colors().text_bg_color(), out _, out _);
         }
 
         //-------------------------------------------------
@@ -913,15 +853,15 @@ namespace mame
             var actual_left = layout.actual_left();
             var actual_width = layout.actual_width();
             var actual_height = layout.actual_height();
-            var x = std.min(std.max(xpos - actual_width / 2, box_lr_border()), 1.0f - actual_width - box_lr_border());
-            var y = std.min(std.max(ypos - actual_height / 2, box_tb_border()), 1.0f - actual_height - box_tb_border());
+            var x = std.clamp(xpos - actual_width / 2, box_lr_border(), 1.0f - actual_width - box_lr_border());
+            var y = std.clamp(ypos - actual_height / 2, box_tb_border(), 1.0f - actual_height - box_tb_border());
 
             // add a box around that
-            draw_outlined_box(container,
-                    x - box_lr_border(),
-                    y - box_tb_border(),
-                    x + actual_width + box_lr_border(),
-                    y + actual_height + box_tb_border(), backcolor);
+            draw_outlined_box(
+                    container,
+                    x - box_lr_border(), y - box_tb_border(),
+                    x + actual_width + box_lr_border(), y + actual_height + box_tb_border(),
+                    backcolor);
 
             // emit the text
             layout.emit(container, x - actual_left, y);
@@ -942,7 +882,7 @@ namespace mame
         public void save_ui_options()
         {
             // attempt to open the output file
-            emu_file file = new emu_file(machine().options().ini_path(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
+            emu_file file = new emu_file(machine().options().ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
             if (!file.open("ui.ini"))
             {
                 // generate the updated INI
@@ -969,14 +909,14 @@ namespace mame
             messagebox_poptext = text;
 
             // set a timer
-            m_popup_text_end = osdcore_global.m_osdcore.osd_ticks() + osdcore_global.m_osdcore.osd_ticks_per_second() * (UInt64)seconds;
+            m_popup_text_end = m_osdcore.osd_ticks() + m_osdcore.osd_ticks_per_second() * (osd_ticks_t)seconds;
         }
 
         //-------------------------------------------------
         //  show_fps_temp - show the FPS counter for
         //  a specific period of time
         //-------------------------------------------------
-        void show_fps_temp(double seconds) { if (!m_showfps) m_showfps_end = osdcore_global.m_osdcore.osd_ticks() + (osd_ticks_t)(seconds * osdcore_global.m_osdcore.osd_ticks_per_second()); }
+        void show_fps_temp(double seconds) { if (!m_showfps) m_showfps_end = m_osdcore.osd_ticks() + (osd_ticks_t)(seconds * m_osdcore.osd_ticks_per_second()); }
 
         //-------------------------------------------------
         //  set_show_fps - show/hide the FPS counter
@@ -1002,7 +942,7 @@ namespace mame
         //-------------------------------------------------
         public bool show_fps_counter()
         {
-            bool result = m_showfps || osdcore_global.m_osdcore.osd_ticks() < m_showfps_end;
+            bool result = m_showfps || m_osdcore.osd_ticks() < m_showfps_end;
             if (!result)
                 m_showfps_end = 0;
 
@@ -1015,7 +955,7 @@ namespace mame
         void set_show_profiler(bool show)
         {
             m_show_profiler = show;
-            profiler_global.g_profiler.enable(show);
+            g_profiler.enable(show);
         }
 
         //-------------------------------------------------
@@ -1141,10 +1081,12 @@ namespace mame
         //-------------------------------------------------
         void draw_fps_counter(render_container container)
         {
-            float unused1;
-            float unused2;
-            draw_text_full(container, machine().video().speed_text(), 0.0f, 0.0f, 1.0f,
-                ui.text_layout.text_justify.RIGHT, ui.text_layout.word_wrapping.WORD, draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(), out unused1, out unused2);
+            draw_text_full(
+                    container,
+                    machine().video().speed_text(),
+                    0.0f, 0.0f, 1.0f,
+                    ui.text_layout.text_justify.RIGHT, ui.text_layout.word_wrapping.WORD,
+                    draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(), out _, out _);
         }
 
 
@@ -1154,10 +1096,12 @@ namespace mame
         void draw_timecode_counter(render_container container)
         {
             string tempstring;
-            float unused1;
-            float unused2;
-            draw_text_full(container, machine().video().timecode_text(out tempstring), 0.0f, 0.0f, 1.0f,
-                ui.text_layout.text_justify.RIGHT, ui.text_layout.word_wrapping.WORD, draw_mode.OPAQUE_, new rgb_t(0xf0, 0xf0, 0x10, 0x10), rgb_t.black(), out unused1, out unused2);
+            draw_text_full(
+                    container,
+                    machine().video().timecode_text(out tempstring),
+                    0.0f, 0.0f, 1.0f,
+                    ui.text_layout.text_justify.RIGHT, ui.text_layout.word_wrapping.WORD,
+                    draw_mode.OPAQUE_, new rgb_t(0xf0, 0xf0, 0x10, 0x10), rgb_t.black(), out _, out _);
         }
 
 
@@ -1167,10 +1111,12 @@ namespace mame
         void draw_timecode_total(render_container container)
         {
             string tempstring;
-            float unused1;
-            float unused2;
-            draw_text_full(container, machine().video().timecode_total_text(out tempstring), 0.0f, 0.0f, 1.0f,
-                ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD, draw_mode.OPAQUE_, new rgb_t(0xf0, 0x10, 0xf0, 0x10), rgb_t.black(), out unused1, out unused2);
+            draw_text_full(
+                    container,
+                    machine().video().timecode_total_text(out tempstring),
+                    0.0f, 0.0f, 1.0f,
+                    ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD,
+                    draw_mode.OPAQUE_, new rgb_t(0xf0, 0x10, 0xf0, 0x10), rgb_t.black(), out _, out _);
         }
 
 
@@ -1179,10 +1125,13 @@ namespace mame
         //-------------------------------------------------
         void draw_profiler(render_container container)
         {
-            string text = profiler_global.g_profiler.text(machine());
-            float unused1;
-            float unused2;
-            draw_text_full(container, text, 0.0f, 0.0f, 1.0f, ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD, draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(), out unused1, out unused2);
+            string text = g_profiler.text(machine());
+            draw_text_full(
+                    container,
+                    text,
+                    0.0f, 0.0f, 1.0f,
+                    ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD,
+                    draw_mode.OPAQUE_, rgb_t.white(), rgb_t.black(), out _, out _);
         }
 
 
@@ -1221,7 +1170,7 @@ namespace mame
         //-------------------------------------------------
         //  create_layout
         //-------------------------------------------------
-        ui.text_layout create_layout(render_container container, float width = 1.0f, ui.text_layout.text_justify justify = ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping wrap = ui.text_layout.word_wrapping.WORD)
+        public ui.text_layout create_layout(render_container container, float width = 1.0f, ui.text_layout.text_justify justify = ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping wrap = ui.text_layout.word_wrapping.WORD)
         {
             // determine scale factors
             float yscale = get_line_height();
@@ -1232,27 +1181,6 @@ namespace mame
         }
 
 
-        // word wrap
-        //-------------------------------------------------
-        //  wrap_text
-        //-------------------------------------------------
-        public int wrap_text(render_container container, string origs, float x, float y, float origwrapwidth, out std.vector<int> xstart, out std.vector<int> xend, float text_size = 1.0f)
-        {
-            // create the layout
-            var layout = create_layout(container, origwrapwidth, ui.text_layout.text_justify.LEFT, ui.text_layout.word_wrapping.WORD);
-
-            // add the text
-            layout.add_text(
-                    origs,
-                    rgb_t.black(),
-                    rgb_t.black(),
-                    text_size);
-
-            // and get the wrapping info
-            return layout.get_wrap_info(out xstart, out xend);
-        }
-
-
         // draw an outlined box with given line color and filled with a texture
         //-------------------------------------------------
         //  draw_textured_box - add primitives to
@@ -1260,14 +1188,14 @@ namespace mame
         //  textured background and line color
         //-------------------------------------------------
         public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor) { draw_textured_box(container, x0, y0, x1, y1, backcolor, linecolor, null); }
-        public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture texture) { draw_textured_box(container, x0, y0, x1, y1, backcolor, linecolor, texture, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA)); }
+        public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture texture) { draw_textured_box(container, x0, y0, x1, y1, backcolor, linecolor, texture, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)); }
         public void draw_textured_box(render_container container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture texture, uint32_t flags)  //void draw_textured_box(render_container &container, float x0, float y0, float x1, float y1, rgb_t backcolor, rgb_t linecolor, render_texture *texture = nullptr, uint32_t flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
         {
             container.add_quad(x0, y0, x1, y1, backcolor, texture, flags);
-            container.add_line(x0, y0, x1, y0, g.UI_LINE_WIDTH, linecolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-            container.add_line(x1, y0, x1, y1, g.UI_LINE_WIDTH, linecolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-            container.add_line(x1, y1, x0, y1, g.UI_LINE_WIDTH, linecolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-            container.add_line(x0, y1, x0, y0, g.UI_LINE_WIDTH, linecolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+            container.add_line(x0, y0, x1, y0, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x1, y0, x1, y1, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x1, y1, x0, y1, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+            container.add_line(x0, y1, x0, y0, UI_LINE_WIDTH, linecolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
         }
 
 
@@ -1277,13 +1205,38 @@ namespace mame
             messagebox_poptext = message;
 
             // set a timer
-            m_popup_text_end = osdcore_global.m_osdcore.osd_ticks() + osdcore_global.m_osdcore.osd_ticks_per_second() * (osd_ticks_t)seconds;
+            m_popup_text_end = m_osdcore.osd_ticks() + m_osdcore.osd_ticks_per_second() * (osd_ticks_t)seconds;
         }
 
 
         protected override void menu_reset()
         {
             ui.menu.stack_reset(machine());
+        }
+
+
+        //template <typename Owner, typename Data, typename... Param>
+        //Data &get_session_data(Param &&... args)
+        //{
+        //    auto const ins(m_session_data.try_emplace(typeid(Owner)));
+        //    assert(!ins.first->second.has_value() == ins.second);
+        //    if (ins.second)
+        //        return ins.first->second.emplace<Data>(std::forward<Param>(args)...);
+        //    Data *const result(std::any_cast<Data>(&ins.first->second));
+        //    assert(result);
+        //    return *result;
+        //}
+        public Data get_session_data<Data>(Type owner, Data data)
+        {
+            var ins = m_session_data.try_emplace(owner, data);
+            return data;
+        }
+
+
+        // helper for getting a general input setting - used for instruction text
+        string get_general_input_setting(ioport_type type, int player = 0, input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD)
+        {
+            throw new emu_unimplemented();
         }
 
 
@@ -1333,11 +1286,11 @@ namespace mame
                     machine().set_ui_active(!machine().ui_active());
 
                     // display a popup indicating the new status
-                    string name = machine().input().seq_name(machine().ioport().type_seq(ioport_type.IPT_UI_TOGGLE_UI));
+                    string name = get_general_input_setting(ioport_type.IPT_UI_TOGGLE_UI);
                     if (machine().ui_active())
-                        popup_time(2, g.__("UI controls enabled\nUse {0} to toggle"), name);
+                        popup_time(2, __("UI controls enabled\nUse {0} to toggle"), name);
                     else
-                        popup_time(2, g.__("UI controls disabled\nUse {0} to toggle"), name);
+                        popup_time(2, __("UI controls disabled\nUse {0} to toggle"), name);
                 }
             }
 
@@ -1375,7 +1328,7 @@ namespace mame
             }
 
             // if the on-screen display isn't up and the user has toggled it, turn it on
-            if ((machine().debug_flags & g.DEBUG_FLAG_ENABLED) == 0 && machine().ui_input().pressed((int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY))
+            if ((machine().debug_flags & DEBUG_FLAG_ENABLED) == 0 && machine().ui_input().pressed((int)ioport_type.IPT_UI_ON_SCREEN_DISPLAY))
             {
                 //using namespace std::placeholders;
                 set_handler(ui_callback_type.MENU, ui.menu_sliders.ui_handler);  //, _1, std::ref_(*this)));
@@ -1395,8 +1348,8 @@ namespace mame
                     machine().pause();
 
                 //using namespace std::placeholders;
-                set_handler(ui_callback_type.VIEWER, viewgfx_global.ui_gfx_ui_handler);  //, _1, std::ref_(*this), is_paused));
-                return is_paused ? (UInt32)1 : 0;
+                set_handler(ui_callback_type.VIEWER, ui_gfx_ui_handler);  //, _1, std::ref_(*this), is_paused));
+                return is_paused ? 1U : 0U;
             }
 
             // handle a tape control key
@@ -1513,22 +1466,25 @@ namespace mame
         //  handler_confirm_quit - leads the user through
         //  confirming quit emulation
         //-------------------------------------------------
-        UInt32 handler_confirm_quit(render_container container, mame_ui_manager mui)
+        uint32_t handler_confirm_quit(render_container container, mame_ui_manager mui)
         {
-            UInt32 state = 0;
+            uint32_t state = 0;
 
             // get the text for 'UI Select'
-            string ui_select_text = machine().input().seq_name(machine().ioport().type_seq(ioport_type.IPT_UI_SELECT, 0, input_seq_type.SEQ_TYPE_STANDARD));
+            string ui_select_text = get_general_input_setting(ioport_type.IPT_UI_SELECT);
 
             // get the text for 'UI Cancel'
-            string ui_cancel_text = machine().input().seq_name(machine().ioport().type_seq(ioport_type.IPT_UI_CANCEL, 0, input_seq_type.SEQ_TYPE_STANDARD));
+            string ui_cancel_text = get_general_input_setting(ioport_type.IPT_UI_CANCEL);
 
             // assemble the quit message
-            string quit_message = string.Format("Are you sure you want to quit?\n\n" +
-                                                "Press ''{0}'' to quit,\n" + 
-                                                "Press ''{1}'' to return to emulation.", ui_select_text, ui_cancel_text);
+            string quit_message = string_format(
+                    __("Are you sure you want to quit?\n\n" +
+                    "Press ''{0}'' to quit,\n" +  //"Press ''%1$s'' to quit,\n" +
+                    "Press ''{1}'' to return to emulation."),  //"Press ''%2$s'' to return to emulation."),
+                    ui_select_text,
+                    ui_cancel_text);
 
-            draw_text_box(container, quit_message, ui.text_layout.text_justify.CENTER, 0.5f, 0.5f, g.UI_RED_COLOR);
+            draw_text_box(container, quit_message, ui.text_layout.text_justify.CENTER, 0.5f, 0.5f, UI_RED_COLOR);
             machine().pause();
 
             // if the user press ENTER, quit the game
@@ -1539,7 +1495,7 @@ namespace mame
             else if (machine().ui_input().pressed((int)ioport_type.IPT_UI_CANCEL))
             {
                 machine().resume();
-                state = g.UI_HANDLER_CANCEL;
+                state = UI_HANDLER_CANCEL;
             }
 
             return state;
@@ -1568,6 +1524,9 @@ namespace mame
 
             // free the font
             m_font = null;  //m_font.reset();
+
+            // free persistent data for other classes
+            m_session_data.clear();
         }
 
 
@@ -1619,8 +1578,8 @@ namespace mame
             // only save system-level configuration when times are valid
             if ((config_type.SYSTEM == cfg_type) && ((std_time_t)(-1) != m_last_launch_time) && ((std_time_t)(-1) != m_last_warning_time))
             {
-                parentnode.set_attribute_int("launched", (Int64)m_last_launch_time);
-                parentnode.set_attribute_int("warned", (Int64)m_last_warning_time);
+                parentnode.set_attribute_int("launched", (long_long)m_last_launch_time);
+                parentnode.set_attribute_int("warned", (long_long)m_last_warning_time);
 
                 foreach (var feature in m_unemulated_features)
                 {
@@ -1671,20 +1630,7 @@ namespace mame
         //int32_t slider_beam_width_max(screen_device &screen, std::string *str, int32_t newval);
         //int32_t slider_beam_dot_size(screen_device &screen, std::string *str, int32_t newval);
         //int32_t slider_beam_intensity_weight(screen_device &screen, std::string *str, int32_t newval);
-
-
-        //-------------------------------------------------
-        //  slider_get_screen_desc - returns the
-        //  description for a given screen
-        //-------------------------------------------------
-        public static string slider_get_screen_desc(screen_device screen)
-        {
-            if (new screen_device_enumerator(screen.machine().root_device()).count() > 1)
-                return string.Format("Screen '{0}'", screen.tag());  // %1$s
-            else
-                return "Screen";
-        }
-
+        //std::string slider_get_screen_desc(screen_device &screen);
 
 #if MAME_DEBUG
         int32_t slider_crossscale(ioport_field &field, std::string *str, int32_t newval);
@@ -1699,16 +1645,16 @@ namespace mame
         {
             // parse the file
             // attempt to open the output file
-            emu_file file = new emu_file(machine.options().ini_path(), g.OPEN_FLAG_READ);
+            emu_file file = new emu_file(machine.options().ini_path(), OPEN_FLAG_READ);
             if (!file.open("ui.ini"))
             {
                 try
                 {
-                    options().parse_ini_file(file.core_file_get(), g.OPTION_PRIORITY_MAME_INI, g.OPTION_PRIORITY_MAME_INI < g.OPTION_PRIORITY_DRIVER_INI, true);  //options().parse_ini_file((util::core_file &)file, OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true);
+                    options().parse_ini_file(file.core_file_get(), OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true);  //options().parse_ini_file((util::core_file &)file, OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true);
                 }
                 catch (options_exception )
                 {
-                    g.osd_printf_error("**Error loading ui.ini**\n");
+                    osd_printf_error("**Error loading ui.ini**\n");
                 }
 
                 file.close();
@@ -1753,5 +1699,98 @@ namespace mame
 
             return 0;
         }
+    }
+
+
+    public static class ui_internal
+    {
+        //enum
+        //{
+        //LOADSAVE_NONE,
+        //LOADSAVE_LOAD,
+        //LOADSAVE_SAVE
+        //}
+
+
+        // list of natural keyboard keys that are not associated with UI_EVENT_CHARs
+        public static readonly input_item_id [] non_char_keys = 
+        {
+            input_item_id.ITEM_ID_ESC,
+            input_item_id.ITEM_ID_F1,
+            input_item_id.ITEM_ID_F2,
+            input_item_id.ITEM_ID_F3,
+            input_item_id.ITEM_ID_F4,
+            input_item_id.ITEM_ID_F5,
+            input_item_id.ITEM_ID_F6,
+            input_item_id.ITEM_ID_F7,
+            input_item_id.ITEM_ID_F8,
+            input_item_id.ITEM_ID_F9,
+            input_item_id.ITEM_ID_F10,
+            input_item_id.ITEM_ID_F11,
+            input_item_id.ITEM_ID_F12,
+            input_item_id.ITEM_ID_NUMLOCK,
+            input_item_id.ITEM_ID_0_PAD,
+            input_item_id.ITEM_ID_1_PAD,
+            input_item_id.ITEM_ID_2_PAD,
+            input_item_id.ITEM_ID_3_PAD,
+            input_item_id.ITEM_ID_4_PAD,
+            input_item_id.ITEM_ID_5_PAD,
+            input_item_id.ITEM_ID_6_PAD,
+            input_item_id.ITEM_ID_7_PAD,
+            input_item_id.ITEM_ID_8_PAD,
+            input_item_id.ITEM_ID_9_PAD,
+            input_item_id.ITEM_ID_DEL_PAD,
+            input_item_id.ITEM_ID_PLUS_PAD,
+            input_item_id.ITEM_ID_MINUS_PAD,
+            input_item_id.ITEM_ID_INSERT,
+            input_item_id.ITEM_ID_DEL,
+            input_item_id.ITEM_ID_HOME,
+            input_item_id.ITEM_ID_END,
+            input_item_id.ITEM_ID_PGUP,
+            input_item_id.ITEM_ID_PGDN,
+            input_item_id.ITEM_ID_UP,
+            input_item_id.ITEM_ID_DOWN,
+            input_item_id.ITEM_ID_LEFT,
+            input_item_id.ITEM_ID_RIGHT,
+            input_item_id.ITEM_ID_PAUSE,
+            input_item_id.ITEM_ID_CANCEL
+        };
+
+
+        public static readonly uint32_t [] mouse_bitmap = new uint32_t[32*32]
+        {
+            0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x09a46f30,0x81ac7c43,0x24af8049,0x00ad7d45,0x00a8753a,0x00a46f30,0x009f6725,0x009b611c,0x00985b14,0x0095560d,0x00935308,0x00915004,0x00904e02,0x008f4e01,0x008f4d00,0x008f4d00,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x00a16a29,0xa2aa783d,0xffbb864a,0xc0b0824c,0x5aaf7f48,0x09ac7b42,0x00a9773c,0x00a67134,0x00a26b2b,0x009e6522,0x009a5e19,0x00965911,0x0094550b,0x00925207,0x00915004,0x008f4e01,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x009a5e18,0x39a06827,0xffb97c34,0xffe8993c,0xffc88940,0xedac7c43,0x93ad7c44,0x2dac7c43,0x00ab793f,0x00a87438,0x00a46f30,0x00a06827,0x009c611d,0x00985c15,0x0095570e,0x00935309,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x00935308,0x00965810,0xcc9a5e19,0xffe78a21,0xfffb9929,0xfff49931,0xffd88e39,0xffb9813f,0xc9ac7c43,0x66ad7c44,0x0cac7a41,0x00a9773c,0x00a67134,0x00a26b2b,0x009e6522,0x009a5e19,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4e01,0x00904e02,0x60925106,0xffba670a,0xfff88b11,0xfff98f19,0xfff99422,0xfff9982b,0xffe89434,0xffc9883c,0xf3ac7a41,0x9cad7c44,0x39ac7c43,0x00ab7a40,0x00a87539,0x00a56f31,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008e4d00,0x008e4d00,0x098e4d00,0xea8f4d00,0xffee7f03,0xfff68407,0xfff6870d,0xfff78b15,0xfff78f1d,0xfff79426,0xfff49730,0xffd98d38,0xffbc823f,0xd2ac7c43,0x6fad7c44,0x12ac7b42,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008e4d00,0x008e4d00,0x008e4c00,0x8a8e4c00,0xffc46800,0xfff37e00,0xfff37f02,0xfff38106,0xfff3830a,0xfff48711,0xfff48b19,0xfff58f21,0xfff5942b,0xffe79134,0xffcb863b,0xf9ac7a41,0xa5ac7c43,0x3fac7c43,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008e4d00,0x008e4d00,0x008e4c00,0x218d4c00,0xfc8e4c00,0xffee7a00,0xfff07c00,0xfff17c00,0xfff17d02,0xfff17e04,0xfff18008,0xfff2830d,0xfff28614,0xfff38a1c,0xfff38f25,0xfff2932e,0xffd98b37,0xffbc813e,0xdbac7c43,0x78ad7c44,0x15ac7b42,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008e4d00,0x008e4d00,0x008e4d00,0x008e4c00,0xb18d4c00,0xffcf6b00,0xffed7900,0xffed7900,0xffee7900,0xffee7a01,0xffee7a01,0xffee7b03,0xffee7c06,0xffef7e0a,0xffef8110,0xfff08618,0xfff08a20,0xfff18f2a,0xffe78f33,0xffcc863b,0xfcab7a40,0xaeac7c43,0x4bac7c43,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x488d4c00,0xffa85800,0xffe97500,0xffea7600,0xffea7600,0xffeb7600,0xffeb7600,0xffeb7600,0xffeb7701,0xffeb7702,0xffeb7804,0xffec7a07,0xffec7d0d,0xffec8013,0xffed851c,0xffee8a25,0xffee8f2e,0xffd98937,0xffbe813d,0xe4ab7a40,0x81ab7a40,0x1ba9763b,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x008d4c00,0xdb8d4c00,0xffd86c00,0xffe77300,0xffe77300,0xffe87300,0xffe87300,0xffe87300,0xffe87300,0xffe87300,0xffe87401,0xffe87401,0xffe87503,0xffe97606,0xffe9780a,0xffe97c10,0xffea7f16,0xffeb831d,0xffeb8623,0xffe48426,0xffc67725,0xffa5661f,0xb7985c15,0x54935309,0x038e4d00,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008e4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x6f8d4c00,0xffb25b00,0xffe36f00,0xffe47000,0xffe47000,0xffe57000,0xffe57000,0xffe57000,0xffe57000,0xffe57000,0xffe57000,0xffe57000,0xffe57000,0xffe57101,0xffe57000,0xffe47000,0xffe16e00,0xffde6c00,0xffd86900,0xffd06600,0xffc76200,0xffaa5500,0xff8a4800,0xea743f00,0x5a7a4200,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x0f8d4c00,0xf38d4c00,0xffdc6a00,0xffe16d00,0xffe16d00,0xffe26d00,0xffe26d00,0xffe26d00,0xffe26d00,0xffe26d00,0xffe16d00,0xffe06c00,0xffde6b00,0xffd96900,0xffd16500,0xffc76000,0xffb95900,0xffab5200,0xff9c4b00,0xff894300,0xff6b3600,0xf9512c00,0xa5542d00,0x3c5e3200,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x008d4c00,0x968d4c00,0xffbc5d00,0xffde6a00,0xffde6a00,0xffde6a00,0xffdf6a00,0xffdf6a00,0xffdf6a00,0xffde6a00,0xffdc6800,0xffd66600,0xffcc6100,0xffbf5b00,0xffaf5300,0xff9d4a00,0xff8a4200,0xff6d3500,0xff502900,0xe7402300,0x7b3f2200,0x15442500,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x2a8d4c00,0xff9b5000,0xffda6600,0xffdb6700,0xffdb6700,0xffdc6700,0xffdc6700,0xffdb6700,0xffd96500,0xffd16200,0xffc25b00,0xffad5100,0xff974700,0xff7f3c00,0xff602f00,0xff472500,0xbd3d2100,0x513d2100,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x008e4c00,0xc08d4c00,0xffc35c00,0xffd76300,0xffd76300,0xffd86300,0xffd86300,0xffd76300,0xffd06000,0xffc05800,0xffa54c00,0xff7f3b00,0xff582c00,0xf03f2200,0x903c2000,0x2a3e2100,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x548d4c00,0xffa55200,0xffd35f00,0xffd46000,0xffd46000,0xffd46000,0xffd25e00,0xffc65900,0xffac4e00,0xff833c00,0xe7472600,0x693c2000,0x0c3d2100,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x038d4c00,0xe48d4c00,0xffc95a00,0xffd15d00,0xffd15d00,0xffd15d00,0xffcb5a00,0xffb95200,0xff984300,0xff5f2e00,0x723f2200,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x7b8d4c00,0xffad5200,0xffce5a00,0xffce5a00,0xffcd5900,0xffc35500,0xffaa4a00,0xff853a00,0xf9472600,0x15432400,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x188d4c00,0xf98e4c00,0xffc95600,0xffcb5700,0xffc75500,0xffb94f00,0xff9b4200,0xff6c3100,0xab442500,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4d00,0x008e4c00,0xa58d4c00,0xffb35000,0xffc75300,0xffc05000,0xffac4800,0xff8b3a00,0xff542a00,0x45462500,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x398d4c00,0xff994d00,0xffc24f00,0xffb74b00,0xff9e4000,0xff763200,0xde472600,0x03492800,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x008e4c00,0xcf8d4c00,0xffb24b00,0xffab4500,0xff8d3900,0xff5e2b00,0x7e452500,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x638d4c00,0xff984800,0xffa03f00,0xff7e3200,0xfc492800,0x1b472600,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x098b4b00,0xed824600,0xff903800,0xff692c00,0xb4462600,0x004c2900,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008e4d00,0x008e4c00,0x008a4a00,0x8a7e4400,0xff793500,0xff572900,0x51472600,0x00542d00,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008d4c00,0x00884900,0x247a4200,0xfc633500,0xe74f2a00,0x034d2900,0x005e3300,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008e4d00,0x008d4c00,0x00884900,0x00794100,0xb4643600,0x87552e00,0x00593000,0x006b3900,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008f4d00,0x008d4c00,0x00884900,0x007c4300,0x486d3b00,0x24643600,0x00693800,0x00774000,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+            0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff
+        };
     }
 }

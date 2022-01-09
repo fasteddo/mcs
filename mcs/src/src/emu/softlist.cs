@@ -1,8 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
+
+using software_info_item_set = mame.std.set<mame.software_info_item>;
 
 
 namespace mame
@@ -16,7 +19,7 @@ namespace mame
 
 
     // an item in a list of name/value pairs
-    class feature_list_item
+    public class software_info_item
     {
         // internal state
         string m_name;
@@ -24,21 +27,33 @@ namespace mame
 
 
         // construction/destruction
-        feature_list_item(string name = null, string value = null)
+        software_info_item(string name = null, string value = null)
         {
             m_name = name;
             m_value = value;
         }
 
-        //feature_list_item(feature_list_item const &) = delete;
-        //feature_list_item(feature_list_item &&) = delete;
-        //feature_list_item& operator=(feature_list_item const &) = delete;
-        //feature_list_item& operator=(feature_list_item &&) = delete;
+        //software_info_item(const std::string &name, const std::string &value);
+        //software_info_item(software_info_item const &) = default;
+        //software_info_item(software_info_item &&) = default;
+        //software_info_item& operator=(software_info_item const &) = default;
+        //software_info_item& operator=(software_info_item &&) = default;
 
 
         // getters
         public string name() { return m_name; }
         public string value() { return m_value; }
+
+
+        // collection
+        //struct compare
+        //{
+        //    using is_transparent = void;
+        //    bool operator()(const software_info_item &a, const software_info_item &b) const noexcept { return a.m_name < b.m_name; }
+        //    bool operator()(const software_info_item &a, const std::string_view &b) const noexcept { return a.m_name < b; }
+        //    bool operator()(const std::string_view &a, const software_info_item &b) const noexcept { return a < b.m_name; }
+        //};
+        //using set = std::set<software_info_item, compare>;
     }
 
 
@@ -52,7 +67,7 @@ namespace mame
         software_info m_info;
         string m_name;
         string m_interface;
-        List<feature_list_item> m_featurelist;
+        software_info_item_set m_features;
         //std::vector<rom_entry>          m_romdata;
 
 
@@ -77,7 +92,7 @@ namespace mame
         public software_info info() { return m_info; }
         public string name() { return m_name; }
         //const char *interface() const { return m_interface; }
-        //const simple_list<feature_list_item> &featurelist() const { return m_featurelist; }
+        //const software_info_item::set &features() const noexcept { return m_features; }
         //rom_entry *romdata(uint32 index = 0) { return (index < m_romdata.count()) ? &m_romdata[index] : NULL; }
 
 
@@ -117,16 +132,8 @@ namespace mame
         public string feature(string feature_name)
         {
             // scan the feature list for an entry matching feature_name and return the value
-            //auto iter = std::find_if(
-            //    m_featurelist.begin(),
-            //    m_featurelist.end(),
-            //    anon);//[&feature_name](const feature_list_item &feature) { return feature.name() == feature_name; });
-            var iter = m_featurelist.Find(feature => { return feature.name() == feature_name; });
-
-            //return iter != m_featurelist.end()
-            //    ? iter->value().c_str()
-            //    : nullptr;
-            return iter != null ? iter.value() : null;
+            var iter = m_features.find((set) => { return set.name().CompareTo(feature_name) < 0; });  //auto const iter = m_features.find(feature_name);
+            return iter != default ? iter.value() : null;  //return (iter != m_features.end()) ? iter->value().c_str() : nullptr;
         }
     }
 
@@ -144,9 +151,9 @@ namespace mame
         string m_parentname;
         string m_year;           // Copyright year on title screen, actual release dates can be tracked in external resources
         string m_publisher;
-        //simple_list<feature_list_item> m_other_info;   // Here we store info like developer, serial #, etc. which belong to the software entry as a whole
-        //simple_list<feature_list_item> m_shared_info;  // Here we store info like TV standard compatibility, or add-on requirements, etc. which get inherited
-                                                    // by each part of this software entry (after loading these are stored in partdata->featurelist)
+        //std::list<software_info_item>   m_info;             // Here we store info like developer, serial #, etc. which belong to the software entry as a whole
+        //software_info_item::set         m_shared_features;  // Here we store info like TV standard compatibility, or add-on requirements, etc. which get inherited
+                                                    // by each part of this software entry (after loading these are stored in partdata->features)
         std.list<software_part> m_partdata = new std.list<software_part>();
 
 
@@ -180,8 +187,8 @@ namespace mame
         public string parentname() { return m_parentname; }
         //const char *year() const { return m_year; }
         //const char *publisher() const { return m_publisher; }
-        //const simple_list<feature_list_item> &other_info() const { return m_other_info; }
-        //const simple_list<feature_list_item> &shared_info() const { return m_shared_info; }
+        //const std::list<software_info_item> &info() const { return m_info; }
+        //const software_info_item::set &shared_features() const { return m_shared_features; }
         //software_support supported() const { return m_supported; }
         public std.list<software_part> parts() { return m_partdata; }
 
@@ -261,7 +268,7 @@ namespace mame
 
     // parses a software list
     //void parse_software_list(
-    //        util::core_file &file,
+    //        util::read_stream &file,
     //        std::string_view filename,
     //        std::string &listname,
     //        std::string &description,

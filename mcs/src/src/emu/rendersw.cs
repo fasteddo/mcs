@@ -2,14 +2,18 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.eminline_global;
+using static mame.emucore_global;
+using static mame.render_global;
+using static mame.rendertypes_global;
 
 
 namespace mame
@@ -258,7 +262,7 @@ namespace mame
         //-------------------------------------------------
         static u32 get_texel_palette16(render_texinfo texture, s32 curu, s32 curv)
         {
-            MemoryContainer<rgb_t> palbase = texture.palette;  //const rgb_t *palbase = texture.palette;
+            Pointer<rgb_t> palbase = new Pointer<rgb_t>(texture.palette);  //const rgb_t *palbase = texture.palette;
             if (_BilinearFilter)
             {
                 s32 u0 = curu >> 16;
@@ -298,7 +302,7 @@ namespace mame
             }
             else
             {
-                PointerU16 texbase = new PointerU16(texture.base_, (curv >> 16) * (s32)texture.rowpixels + (curu >> 16));  //const u16 *texbase = reinterpret_cast<const u16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
+                PointerU16 texbase = new PointerU16(texture.base_) + (curv >> 16) * (s32)texture.rowpixels + (curu >> 16);  //const u16 *texbase = reinterpret_cast<const u16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
                 return palbase[texbase[0]];
             }
         }
@@ -357,7 +361,7 @@ namespace mame
             }
             else
             {
-                PointerU32 texbase = new PointerU32(texture.base_) + ((curv >> 16) * (s32)texture.rowpixels + (curu >> 16));  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
+                PointerU32 texbase = new PointerU32(texture.base_) + (curv >> 16) * (s32)texture.rowpixels + (curu >> 16);  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
                 return texbase[0];
             }
         }
@@ -401,7 +405,7 @@ namespace mame
             }
             else
             {
-                PointerU32 texbase = new PointerU32(texture.base_) + ((curv >> 16) * (s32)texture.rowpixels + (curu >> 16));  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
+                PointerU32 texbase = new PointerU32(texture.base_) + (curv >> 16) * (s32)texture.rowpixels + (curu >> 16);  //const u32 *texbase = reinterpret_cast<const u32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
                 return texbase[0];
             }
         }
@@ -442,7 +446,7 @@ namespace mame
             // handle color and intensity
             u32 col = new rgb_t((u8)(255.0f * prim.color.r * prim.color.a), (u8)(255.0f * prim.color.g * prim.color.a), (u8)(255.0f * prim.color.b * prim.color.a));
 
-            if (render_global.PRIMFLAG_GET_ANTIALIAS(prim.flags))
+            if (PRIMFLAG_GET_ANTIALIAS(prim.flags))
             {
                 // build up the cosine table if we haven't yet
                 if (s_cosine_table[0] == 0)
@@ -459,12 +463,12 @@ namespace mame
                 if (dx >= dy)
                 {
                     int sx = ((x1 <= x2) ? 1 : -1);
-                    int sy = (dy == 0) ? 0 : g.div_32x32_shift(y2 - y1, dx, 16);
+                    int sy = (dy == 0) ? 0 : div_32x32_shift(y2 - y1, dx, 16);
                     if (sy < 0)
                         dy--;
                     x1 >>= 16;
                     int xx = x2 >> 16;
-                    int bwidth = g.mul_32x32_hi(beam << 4, (int)s_cosine_table[std.abs(sy) >> 5]);
+                    int bwidth = mul_32x32_hi(beam << 4, (int)s_cosine_table[std.abs(sy) >> 5]);
                     y1 -= bwidth >> 1; // start back half the diameter
                     for (;;)
                     {
@@ -476,7 +480,7 @@ namespace mame
                                 draw_aa_pixel(dstdata, pitch, x1, dy, apply_intensity(0xff & (~y1 >> 8), new rgb_t(col)));
                             dy++;
                             dx -= 0x10000 - (0xffff & y1); // take off amount plotted
-                            u8 a1 = (byte)((dx >> 8) & 0xff);   // calc remainder pixel
+                            u8 a1 = (u8)((dx >> 8) & 0xff);   // calc remainder pixel
                             dx >>= 16;                   // adjust to pixel (solid) count
                             while (dx-- != 0)                 // plot rest of pixels
                             {
@@ -495,12 +499,12 @@ namespace mame
                 else
                 {
                     int sy = ((y1 <= y2) ? 1: -1);
-                    int sx = (dx == 0) ? 0 : g.div_32x32_shift(x2 - x1, dy, 16);
+                    int sx = (dx == 0) ? 0 : div_32x32_shift(x2 - x1, dy, 16);
                     if (sx < 0)
                         dx--;
                     y1 >>= 16;
                     int yy = y2 >> 16;
-                    int bwidth = g.mul_32x32_hi(beam << 4, (int)s_cosine_table[std.abs(sx) >> 5]);
+                    int bwidth = mul_32x32_hi(beam << 4, (int)s_cosine_table[std.abs(sx) >> 5]);
                     x1 -= bwidth >> 1; // start back half the width
                     for (;;)
                     {
@@ -512,7 +516,7 @@ namespace mame
                                 draw_aa_pixel(dstdata, pitch, dx, y1, apply_intensity(0xff & (~x1 >> 8), new rgb_t(col)));
                             dx++;
                             dy -= 0x10000 - (0xffff & x1); // take off amount plotted
-                            u8 a1 = (byte)((dy >> 8) & 0xff);   // remainder pixel
+                            u8 a1 = (u8)((dy >> 8) & 0xff);   // remainder pixel
                             dy >>= 16;                   // adjust to pixel (solid) count
                             while (dy-- != 0)                 // plot rest of pixels
                             {
@@ -589,8 +593,8 @@ namespace mame
         {
             render_bounds fpos = prim.bounds;
 
-            g.assert(fpos.x0 <= fpos.x1);
-            g.assert(fpos.y0 <= fpos.y1);
+            assert(fpos.x0 <= fpos.x1);
+            assert(fpos.y0 <= fpos.y1);
 
             // clamp to integers
             s32 startx = (s32)round_nearest(fpos.x0);
@@ -613,10 +617,10 @@ namespace mame
                 return;
 
             // only support alpha and "none" blendmodes
-            g.assert(render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == g.BLENDMODE_NONE || render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == g.BLENDMODE_ALPHA);
+            assert(PRIMFLAG_GET_BLENDMODE(prim.flags) == BLENDMODE_NONE || PRIMFLAG_GET_BLENDMODE(prim.flags) == BLENDMODE_ALPHA);
 
             // fast case: no alpha
-            if (render_global.PRIMFLAG_GET_BLENDMODE(prim.flags) == g.BLENDMODE_NONE || is_opaque(prim.color.a))
+            if (PRIMFLAG_GET_BLENDMODE(prim.flags) == BLENDMODE_NONE || is_opaque(prim.color.a))
             {
                 u32 r = (u32)(256.0f * prim.color.r);
                 u32 g = (u32)(256.0f * prim.color.g);
@@ -692,7 +696,7 @@ namespace mame
         static void draw_quad_palette16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_none(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data &setup)
         {
             // ensure all parameters are valid
-            g.assert(prim.texture.palette != null);
+            assert(prim.texture.palette != null);
 
             // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
@@ -793,7 +797,7 @@ namespace mame
         static void draw_quad_palette16_add(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_add(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
         {
             // ensure all parameters are valid
-            g.assert(prim.texture.palette != null);
+            assert(prim.texture.palette != null);
 
             throw new emu_unimplemented();
         }
@@ -1182,8 +1186,8 @@ namespace mame
         //-------------------------------------------------
         static void setup_and_draw_textured_quad(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void setup_and_draw_textured_quad(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
         {
-            g.assert(prim.bounds.x0 <= prim.bounds.x1);
-            g.assert(prim.bounds.y0 <= prim.bounds.y1);
+            assert(prim.bounds.x0 <= prim.bounds.x1);
+            assert(prim.bounds.y0 <= prim.bounds.y1);
 
             // determine U/V deltas
             float fdudx = (prim.texcoords.tr.u - prim.texcoords.tl.u) / (prim.bounds.x1 - prim.bounds.x0);
@@ -1228,43 +1232,43 @@ namespace mame
             }
 
             // render based on the texture coordinates
-            u32 primflags = prim.flags & (render_global.PRIMFLAG_TEXFORMAT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK);
-            //switch (prim.flags & (render_global.PRIMFLAG_TEXFORMAT_MASK | render_global.PRIMFLAG_BLENDMODE_MASK))
+            u32 primflags = prim.flags & (PRIMFLAG_TEXFORMAT_MASK | PRIMFLAG_BLENDMODE_MASK);
+            //switch (prim.flags & (PRIMFLAG_TEXFORMAT_MASK | PRIMFLAG_BLENDMODE_MASK))
             {
-                if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE)) ||
-                    primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA)))
+                if (primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE)) ||
+                    primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
                     draw_quad_palette16_none(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ADD)))
+                else if (primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(BLENDMODE_ADD)))
                     draw_quad_palette16_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA)))
+                else if (primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE)) ||
+                         primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
                     draw_quad_yuy16_none(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ADD)))
+                else if (primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_YUY16) | PRIMFLAG_BLENDMODE(BLENDMODE_ADD)))
                     draw_quad_yuy16_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE)))
+                else if (primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE)) ||
+                         primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)) ||
+                         primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE)))
                     draw_quad_rgb32(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_RGB_MULTIPLY)) ||
-                         primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_RGB_MULTIPLY)))
+                else if (primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_RGB_MULTIPLY)) ||
+                         primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_RGB_MULTIPLY)))
                     draw_quad_rgb32_multiply(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ADD)))
+                else if (primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ADD)))
                     draw_quad_rgb32_add(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA)))
+                else if (primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA)))
                     draw_quad_argb32_alpha(prim, dstdata, pitch, setup);
 
-                else if (primflags == (render_global.PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ADD)))
+                else if (primflags == (PRIMFLAG_TEXFORMAT((u32)texture_format.TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ADD)))
                     draw_quad_argb32_add(prim, dstdata, pitch, setup);
 
                 else
-                    g.fatalerror("Unknown texformat({0})/blendmode({1}) combo\n", render_global.PRIMFLAG_GET_TEXFORMAT(prim.flags), render_global.PRIMFLAG_GET_BLENDMODE(prim.flags));
+                    fatalerror("Unknown texformat({0})/blendmode({1}) combo\n", PRIMFLAG_GET_TEXFORMAT(prim.flags), PRIMFLAG_GET_BLENDMODE(prim.flags));
             }
         }
 

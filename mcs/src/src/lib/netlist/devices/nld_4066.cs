@@ -2,11 +2,12 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
+
+using static mame.nl_factory_global;
 
 
 namespace mame.netlist.devices
@@ -15,7 +16,7 @@ namespace mame.netlist.devices
     class nld_CD4066_GATE : device_t
     {
         //NETLIB_DEVICE_IMPL(CD4066_GATE,         "CD4066_GATE",            "")
-        public static readonly netlist.factory.constructor_ptr_t decl_CD4066_GATE = g.NETLIB_DEVICE_IMPL<nld_CD4066_GATE>("CD4066_GATE", "");
+        public static readonly netlist.factory.constructor_ptr_t decl_CD4066_GATE = NETLIB_DEVICE_IMPL<nld_CD4066_GATE>("CD4066_GATE", "");
 
 
         analog.nld_R_base m_R;

@@ -2,10 +2,12 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.hash_global;
 
 
 namespace mame
@@ -288,7 +290,7 @@ namespace mame
             //-------------------------------------------------
             void buffer(Pointer<uint8_t> data, uint32_t length)  //void buffer(const uint8_t *data, uint32_t length)
             {
-                g.assert(m_creator != null);
+                assert(m_creator != null);
 
                 // append to each active hash
                 if (m_creator.m_doing_crc32)

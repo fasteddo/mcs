@@ -11,6 +11,8 @@ using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
+using static mame.cpp_global;
+
 
 namespace mame
 {
@@ -178,6 +180,25 @@ namespace mame
         /// \sa write_stream random_read random_read_write
         public interface random_write : write_stream, random_access  //class random_write : public virtual write_stream, public virtual random_access
         {
+            //using ptr = std::unique_ptr<random_write>;
+
+            /// \brief Write at specified position
+            ///
+            /// Writes up to the specified number of bytes from the supplied
+            /// buffer.  If seeking is supported, writing starts at the
+            /// specified position and the current position is unaffected.   May
+            /// write less than the requested number of bytes if an error
+            /// occurs.
+            /// \param [in] offset The position to start writing at, specified
+            ///   as a number of bytes from the beginning of the stream.
+            /// \param [in] buffer Buffer containing the data to write.  Must
+            ///   contain at least the specified number of bytes.
+            /// \param [in] length Number of bytes to write.
+            /// \param [out] actual Number of bytes actually written.  Will
+            ///   always be less than or equal to the requested length.
+            /// \return An error condition if seeking failed or writing stopped
+            ///   due to an error.
+            std.error_condition write_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual);
         }
 
 
@@ -240,13 +261,13 @@ namespace mame
             {
                 switch (whence)
                 {
-                case g.SEEK_SET:
+                case SEEK_SET:
                     if (0 > offset)
                         return std.errc.invalid_argument;
                     m_pointer = (uint64_t)offset;
                     return new std.error_condition();
 
-                case g.SEEK_CUR:
+                case SEEK_CUR:
                     if (0 > offset)
                     {
                         if ((uint64_t)(-offset) > m_pointer)
@@ -355,198 +376,6 @@ namespace mame
         //class osd_file_read_write_adapter : public osd_file_read_adapter, public random_read_write
 
 
-        // helper class for holding a core_file and closing it (or not) as necessary
-        class core_file_adapter_base : random_access
-        {
-            core_file m_file;
-            bool m_close;
-
-
-            //core_file_adapter_base(core_file::ptr &&file) noexcept : m_file(file.release()), m_close(true)
-            //{
-            //    assert(m_file);
-            //}
-
-            protected core_file_adapter_base(core_file file)
-            {
-                m_file = file;
-                m_close = false;
-            }
-
-            //virtual ~core_file_adapter_base()
-
-
-            public std.error_condition seek(int64_t offset, int whence)
-            {
-                if (m_file.seek(offset, whence) == 0)
-                    return new std.error_condition();
-                else
-                    return std.errc.invalid_argument; // TODO: better error reporting for core_file
-            }
-
-
-            public std.error_condition tell(out uint64_t result)
-            {
-                // no error reporting
-                result = m_file.tell();
-                return new std.error_condition();
-            }
-
-
-            public std.error_condition length(out uint64_t result)
-            {
-                // no error reporting
-                result = m_file.size();
-                return new std.error_condition();
-            }
-
-
-            protected core_file file()
-            {
-                return m_file;
-            }
-
-
-            public Stream stream { get { throw new emu_unimplemented(); } }
-        }
-
-
-        // core_file read implementation
-        class core_file_read_adapter : core_file_adapter_base, random_read
-        {
-            //core_file_read_adapter(core_file::ptr &&file) noexcept : core_file_adapter_base(std::move(file))
-            //{
-            //}
-
-            public core_file_read_adapter(core_file file) : base(file)
-            {
-            }
-
-
-            public std.error_condition read(PointerU8 buffer, size_t length, out size_t actual)
-            {
-                // TODO: should the client have to deal with reading less than expected even if EOF isn't hit?
-                if (uint32_t.MaxValue < length)  //if (std::numeric_limits<std::uint32_t>::max() < length)
-                {
-                    actual = 0U;
-                    return std.errc.invalid_argument;
-                }
-
-                // no way to distinguish between EOF and error
-                actual = file().read(buffer, (uint32_t)length);
-                return new std.error_condition();
-            }
-
-
-            public std.error_condition read_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual)
-            {
-                actual = 0U;
-
-                // TODO: should the client have to deal with reading less than expected even if EOF isn't hit?
-                if (uint32_t.MaxValue < length)  //if (std::numeric_limits<std::uint32_t>::max() < length)
-                    return std.errc.invalid_argument;
-
-                // no error reporting for tell
-                uint64_t oldpos = file().tell();
-                if (file().seek((int64_t)offset, g.SEEK_SET) != 0)
-                {
-                    file().seek((int64_t)oldpos, g.SEEK_SET);
-                    return std.errc.invalid_argument; // TODO: better error reporting for core_file
-                }
-
-                // no way to distinguish between EOF and error
-                actual = file().read(buffer, (uint32_t)length);
-
-                if (file().seek((int64_t)oldpos, g.SEEK_SET) == 0)
-                    return new std.error_condition();
-                else
-                    return std.errc.invalid_argument; // TODO: better error reporting for core_file
-            }
-        }
-
-
-        // core_file read/write implementation
-        class core_file_read_write_adapter : core_file_read_adapter, random_read_write
-        {
-            //using core_file_read_adapter::core_file_read_adapter;
-
-
-            public core_file_read_write_adapter(core_file file) : base(file)
-            {
-            }
-
-
-            public std.error_condition finalize()
-            {
-                return new std.error_condition();
-            }
-
-
-            public std.error_condition flush()
-            {
-                return file().flush();
-            }
-
-
-            public std.error_condition write(PointerU8 buffer, size_t length, out size_t actual)
-            {
-                actual = 0U;
-                while (length != 0)
-                {
-                    uint32_t chunk = std.min(uint32_t.MaxValue, (uint32_t)length);  //std::uint32_t const chunk = std::min<std::common_type_t<std::uint32_t, std::size_t> >(std::numeric_limits<std::uint32_t>::max(), length);
-                    uint32_t written = file().write(buffer, chunk);
-                    actual += written;
-                    if (written < chunk)
-                        return std.errc.io_error; // TODO: better error reporting for core_file
-                    buffer = buffer + written;  //buffer = reinterpret_cast<std::uint8_t const *>(buffer) + written;
-                    length -= written;
-                }
-
-                return new std.error_condition();
-            }
-
-
-            public std.error_condition write_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual)
-            {
-                actual = 0U;
-
-                // no error reporting for tell
-                uint64_t oldpos = file().tell();
-                if (file().seek((int64_t)offset, g.SEEK_SET) != 0)
-                {
-                    file().seek((int64_t)oldpos, g.SEEK_SET);
-                    return std.errc.invalid_argument; // TODO: better error reporting for core_file
-                }
-
-                std.error_condition err = new std.error_condition();
-                while (!err && length != 0)
-                {
-                    uint32_t chunk = std.min(uint32_t.MaxValue, (uint32_t)length);  //std::uint32_t const chunk = std::min<std::common_type_t<std::uint32_t, std::size_t> >(std::numeric_limits<std::uint32_t>::max(), length);
-                    uint32_t written = file().write(buffer, chunk);
-                    actual += written;
-                    if (written < chunk)
-                    {
-                        err = std.errc.io_error; // TODO: better error reporting for core_file
-                    }
-                    else
-                    {
-                        buffer = buffer + written;  //buffer = reinterpret_cast<std::uint8_t const *>(buffer) + written;
-                        length -= written;
-                    }
-                }
-
-                if (file().seek((int64_t)oldpos, g.SEEK_SET) == 0 || err)
-                    return err;
-                else
-                    return std.errc.invalid_argument; // TODO: better error reporting for core_file
-            }
-        }
-
-
-        // core_file helper that fills space when writing past the end-of-file
-        //class core_file_read_write_filler : public random_read_fill_wrapper<core_file_read_write_adapter>
-
-
         //random_read::ptr ram_read(void const *data, std::size_t size) noexcept;
         //random_read::ptr ram_read(void const *data, std::size_t size, std::uint8_t filler) noexcept;
         //random_read::ptr ram_read_copy(void const *data, std::size_t size) noexcept;
@@ -575,31 +404,5 @@ namespace mame
 
         //random_read_write::ptr osd_file_read_write(std::unique_ptr<osd_file> &&file) noexcept;
         //random_read_write::ptr osd_file_read_write(osd_file &file) noexcept;
-
-
-        // creating core_file read adapters
-
-        //random_read::ptr core_file_read(std::unique_ptr<core_file> &&file) noexcept;
-        //random_read::ptr core_file_read(std::unique_ptr<core_file> &&file, std::uint8_t filler) noexcept;
-
-        public static random_read core_file_read(core_file file)  //random_read::ptr core_file_read(core_file &file) noexcept;
-        {
-            return new core_file_read_adapter(file);  //return random_read::ptr(new (std::nothrow) core_file_read_adapter(file));
-        }
-
-        //random_read::ptr core_file_read(core_file &file, std::uint8_t filler) noexcept;
-
-
-        // creating core_file read/write adapters
-
-        //random_read_write::ptr core_file_read_write(std::unique_ptr<core_file> &&file) noexcept;
-        //random_read_write::ptr core_file_read_write(std::unique_ptr<core_file> &&file, std::uint8_t filler) noexcept;
-
-        public static random_read_write core_file_read_write(core_file file)  //random_read_write::ptr core_file_read_write(core_file &file) noexcept;
-        {
-            return new core_file_read_write_adapter(file);  //return random_read_write::ptr(new (std::nothrow) core_file_read_write_adapter(file));
-        }
-
-        //random_read_write::ptr core_file_read_write(core_file &file, std::uint8_t filler) noexcept;
     }
 }

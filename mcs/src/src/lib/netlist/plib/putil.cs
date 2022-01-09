@@ -2,7 +2,9 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 
 using psource_t_stream_ptr = mame.std.istream;  //using stream_ptr = plib::unique_ptr<std::istream>;
 using size_t = System.UInt64;
@@ -39,14 +41,42 @@ namespace mame.plib
     }
 
 
-    //namespace util
-    //{
-    //    pstring basename(const pstring &filename, const pstring &suffix = "");
-    //    pstring path(const pstring &filename);
-    //    bool    exists(const pstring &filename);
-    //    pstring buildpath(std::initializer_list<pstring> list );
-    //    pstring environment(const pstring &var, const pstring &default_val);
-    //} // namespace util
+    static class util  //namespace util
+    {
+        //pstring basename(const pstring &filename, const pstring &suffix = "");
+
+        public static string path(string filename)
+        {
+            //auto p=find_last_of(filename, pstring(1, PATH_SEP));
+            //if (p == pstring::npos)
+            //    return "";
+            //if (p == 0) // root case
+            //    return filename.substr(0, 1);
+            //
+            //return filename.substr(0, p);
+
+            return Path.GetDirectoryName(filename);
+        }
+
+        //bool    exists(const pstring &filename);
+
+        public static string buildpath(params string [] list)  //pstring buildpath(std::initializer_list<pstring> list );
+        {
+            //pstring ret = "";
+            //for( const auto &elem : list )
+            //{
+            //    if (ret.empty())
+            //        ret = elem;
+            //    else
+            //        ret += (PATH_SEP + elem);
+            //}
+            //return ret;
+
+            return Path.Combine(list);
+        }
+
+        //pstring environment(const pstring &var, const pstring &default_val);
+    }
 
 
     public static class container

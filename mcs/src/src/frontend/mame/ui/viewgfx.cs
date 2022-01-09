@@ -2,110 +2,34 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using gfx_interface_enumerator = mame.device_interface_enumerator<mame.device_gfx_interface>;  //typedef device_interface_enumerator<device_gfx_interface> gfx_interface_enumerator;
 using int32_t = System.Int32;
 using palette_interface_enumerator = mame.device_interface_enumerator<mame.device_palette_interface>;  //typedef device_interface_enumerator<device_palette_interface> palette_interface_enumerator;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
+using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.digfx_global;
+using static mame.emucore_global;
+using static mame.input_global;
+using static mame.language_global;
+using static mame.render_global;
+using static mame.rendertypes_global;
+using static mame.rendutil_global;
+using static mame.tilemap_global;
+using static mame.ui_global;
+using static mame.viewgfx_global;
+using static mame.viewgfx_internal;
 
 
 namespace mame
 {
     public static class viewgfx_global
     {
-        enum ui_gfx_modes
-        {
-            UI_GFX_PALETTE = 0,
-            UI_GFX_GFXSET,
-            UI_GFX_TILEMAP
-        }
-
-
-        // information about a single gfx device
-        class ui_gfx_info
-        {
-            public device_gfx_interface interface_;    // pointer to device's gfx interface
-            public uint8_t setcount;                     // how many gfx sets device has
-            public uint8_t [] rotate = new uint8_t[g.MAX_GFX_ELEMENTS];     // current rotation (orientation) value
-            public uint8_t [] columns = new uint8_t[g.MAX_GFX_ELEMENTS];    // number of items per row
-            public int [] offset = new int[g.MAX_GFX_ELEMENTS];     // current offset of top,left item
-            public int [] color = new int[g.MAX_GFX_ELEMENTS];      // current color selected
-            public device_palette_interface [] palette = new device_palette_interface[g.MAX_GFX_ELEMENTS]; // associated palette (maybe multiple choice one day?)
-            public int [] color_count = new int[g.MAX_GFX_ELEMENTS]; // Range of color values
-        }
-
-
-        class ui_gfx_state
-        {
-            public bool started;        // have we called ui_gfx_count_devices() yet?
-            public uint8_t mode;           // which mode are we in?
-
-            // intermediate bitmaps
-            public bool bitmap_dirty;   // is the bitmap dirty?
-            public bitmap_rgb32 bitmap = new bitmap_rgb32();         // bitmap for drawing gfx and tilemaps
-            public render_texture texture;        // texture for rendering the above bitmap
-
-            // palette-specific data
-            public class palette_class
-            {
-                public device_palette_interface interface_;     // pointer to current device
-                public int devcount;             // how many palette devices exist
-                public int devindex;             // which palette device is visible
-                public uint8_t which;                // which subset (pens or indirect colors)?
-                public uint8_t columns;              // number of items per row
-                public int offset;               // current offset of top left item
-            }
-            public palette_class palette = new palette_class();
-
-            // graphics-specific data
-            public class gfxset_class
-            {
-                public uint8_t devcount;   // how many gfx devices exist
-                public uint8_t devindex;   // which device is visible
-                public uint8_t set;        // which set is visible
-            }
-            public gfxset_class gfxset = new gfxset_class();
-
-            // information about each gfx device
-            public ui_gfx_info [] gfxdev = new ui_gfx_info[viewgfx_global.MAX_GFX_DECODERS];
-
-            // tilemap-specific data
-            public class tilemap_class
-            {
-                public int which;                // which tilemap are we viewing?
-                public int xoffs;                // current X offset
-                public int yoffs;                // current Y offset
-                public int zoom;                 // zoom factor
-                public bool zoom_frac;      // zoom via reciprocal fractions
-                public bool auto_zoom;      // auto-zoom toggle
-                public uint8_t rotate;              // current rotation (orientation) value
-                public uint32_t flags;                    // render flags
-            }
-            public tilemap_class tilemap = new tilemap_class();
-
-            public ui_gfx_state()
-            {
-                for (int i = 0; i < viewgfx_global.MAX_GFX_DECODERS; i++)
-                    gfxdev[i] = new ui_gfx_info();
-            }
-        }
-
-
-        public const int MAX_GFX_DECODERS = 8;
-        const int MAX_ZOOM_LEVEL = 8;
-        const int MIN_ZOOM_LEVEL = 8;
-
-
-        /***************************************************************************
-            GLOBAL VARIABLES
-        ***************************************************************************/
-        static ui_gfx_state ui_gfx = new ui_gfx_state();
-
-
         // initialization
         //-------------------------------------------------
         //  ui_gfx_init - initialize the graphics viewer
@@ -140,7 +64,7 @@ namespace mame
             {
                 state.gfxdev[i].interface_ = null;
                 state.gfxdev[i].setcount = 0;
-                for (uint8_t j = 0; j < g.MAX_GFX_ELEMENTS; j++)
+                for (uint8_t j = 0; j < MAX_GFX_ELEMENTS; j++)
                 {
                     state.gfxdev[i].rotate[j] = rotate;
                     state.gfxdev[i].columns[j] = 16;
@@ -159,7 +83,7 @@ namespace mame
             state.tilemap.zoom_frac = false;
             state.tilemap.auto_zoom = true;
             state.tilemap.rotate = rotate;
-            state.tilemap.flags = g.TILEMAP_DRAW_ALL_CATEGORIES;
+            state.tilemap.flags = TILEMAP_DRAW_ALL_CATEGORIES;
         }
 
 
@@ -245,7 +169,7 @@ again:
             // handle keys
             if (mui.machine().ui_input().pressed((int)ioport_type.IPT_UI_SELECT))
             {
-                state.mode = (byte)((state.mode + 1) % 3);
+                state.mode = (uint8_t)((state.mode + 1) % 3);
                 state.bitmap_dirty = true;
             }
 
@@ -268,15 +192,107 @@ cancel:
 
             state.bitmap_dirty = true;
 
-            return g.UI_HANDLER_CANCEL;
+            return UI_HANDLER_CANCEL;
         }
+    }
+
+
+    public static class viewgfx_internal
+    {
+        public enum ui_gfx_modes
+        {
+            UI_GFX_PALETTE = 0,
+            UI_GFX_GFXSET,
+            UI_GFX_TILEMAP
+        }
+
+
+        public const int MAX_GFX_DECODERS = 8;
+        const int MAX_ZOOM_LEVEL = 8;
+        const int MIN_ZOOM_LEVEL = 8;
+
+
+        // information about a single gfx device
+        public class ui_gfx_info
+        {
+            public device_gfx_interface interface_;    // pointer to device's gfx interface
+            public uint8_t setcount;                     // how many gfx sets device has
+            public uint8_t [] rotate = new uint8_t[MAX_GFX_ELEMENTS];     // current rotation (orientation) value
+            public uint8_t [] columns = new uint8_t[MAX_GFX_ELEMENTS];    // number of items per row
+            public int [] offset = new int[MAX_GFX_ELEMENTS];     // current offset of top,left item
+            public int [] color = new int[MAX_GFX_ELEMENTS];      // current color selected
+            public device_palette_interface [] palette = new device_palette_interface[MAX_GFX_ELEMENTS]; // associated palette (maybe multiple choice one day?)
+            public int [] color_count = new int[MAX_GFX_ELEMENTS]; // Range of color values
+        }
+
+
+        public class ui_gfx_state
+        {
+            public bool started;        // have we called ui_gfx_count_devices() yet?
+            public uint8_t mode;           // which mode are we in?
+
+            // intermediate bitmaps
+            public bool bitmap_dirty;   // is the bitmap dirty?
+            public bitmap_rgb32 bitmap = new bitmap_rgb32();         // bitmap for drawing gfx and tilemaps
+            public render_texture texture;        // texture for rendering the above bitmap
+
+            // palette-specific data
+            public class palette_class
+            {
+                public device_palette_interface interface_;     // pointer to current device
+                public int devcount;             // how many palette devices exist
+                public int devindex;             // which palette device is visible
+                public uint8_t which;                // which subset (pens or indirect colors)?
+                public uint8_t columns;              // number of items per row
+                public int offset;               // current offset of top left item
+            }
+            public palette_class palette = new palette_class();
+
+            // graphics-specific data
+            public class gfxset_class
+            {
+                public uint8_t devcount;   // how many gfx devices exist
+                public uint8_t devindex;   // which device is visible
+                public uint8_t set;        // which set is visible
+            }
+            public gfxset_class gfxset = new gfxset_class();
+
+            // information about each gfx device
+            public ui_gfx_info [] gfxdev = new ui_gfx_info[MAX_GFX_DECODERS];
+
+            // tilemap-specific data
+            public class tilemap_class
+            {
+                public int which;                // which tilemap are we viewing?
+                public int xoffs;                // current X offset
+                public int yoffs;                // current Y offset
+                public int zoom;                 // zoom factor
+                public bool zoom_frac;      // zoom via reciprocal fractions
+                public bool auto_zoom;      // auto-zoom toggle
+                public uint8_t rotate;              // current rotation (orientation) value
+                public uint32_t flags;                    // render flags
+            }
+            public tilemap_class tilemap = new tilemap_class();
+
+            public ui_gfx_state()
+            {
+                for (int i = 0; i < MAX_GFX_DECODERS; i++)
+                    gfxdev[i] = new ui_gfx_info();
+            }
+        }
+
+
+        /***************************************************************************
+            GLOBAL VARIABLES
+        ***************************************************************************/
+        public static ui_gfx_state ui_gfx = new ui_gfx_state();
 
 
         //-------------------------------------------------
         //  ui_gfx_count_devices - count the palettes,
         //  gfx decoders and gfx sets in the machine
         //-------------------------------------------------
-        static void ui_gfx_count_devices(running_machine machine, ui_gfx_state state)
+        public static void ui_gfx_count_devices(running_machine machine, ui_gfx_state state)
         {
             // count the palette devices
             state.palette.devcount = new palette_interface_enumerator(machine.root_device()).count();
@@ -290,16 +306,16 @@ cancel:
             foreach (device_gfx_interface interface_ in new gfx_interface_enumerator(machine.root_device()))
             {
                 // count the gfx sets in each device, skipping devices with none
-                byte count = 0;
-                while (count < g.MAX_GFX_ELEMENTS && interface_.gfx(count) != null)
+                uint8_t count = 0;
+                while (count < MAX_GFX_ELEMENTS && interface_.gfx(count) != null)
                     count++;
 
                 // count = index of first nullptr
                 if (count > 0)
                 {
                     state.gfxdev[state.gfxset.devcount].interface_ = interface_;
-                    state.gfxdev[state.gfxset.devcount].setcount = (byte)count;
-                    for (byte slot = 0; slot != count; slot++)
+                    state.gfxdev[state.gfxset.devcount].setcount = count;
+                    for (uint8_t slot = 0; slot != count; slot++)
                     {
                         var gfx = interface_.gfx(slot);
                         if (gfx.has_palette())
@@ -328,7 +344,7 @@ cancel:
         //-------------------------------------------------
         //  ui_gfx_exit - clean up after ourselves
         //-------------------------------------------------
-        static void ui_gfx_exit(running_machine machine)
+        public static void ui_gfx_exit(running_machine machine)
         {
             // free the texture
             machine.render().texture_free(ui_gfx.texture);
@@ -359,7 +375,7 @@ cancel:
         //  palette_handler - handler for the palette
         //  viewer
         //-------------------------------------------------
-        static void palette_handler(mame_ui_manager mui, render_container container, ui_gfx_state state)
+        public static void palette_handler(mame_ui_manager mui, render_container container, ui_gfx_state state)
         {
             device_palette_interface palette = state.palette.interface_;
             palette_device paldev = (palette_device)palette.device();
@@ -384,7 +400,7 @@ cancel:
             boxbounds.y1 = 1.0f - 0.5f * chheight;
 
             // the character cell box bounds starts a half character in from the box
-            cellboxbounds = new render_bounds(boxbounds);
+            cellboxbounds = boxbounds;
             cellboxbounds.x0 += 0.5f * chwidth;
             cellboxbounds.x1 -= 0.5f * chwidth;
             cellboxbounds.y0 += 0.5f * chheight;
@@ -402,7 +418,7 @@ cancel:
 
             // figure out the title
             string title_buf = "";
-            title_buf += string.Format("'%s'", palette.device().tag());
+            util.stream_format(ref title_buf, "'{0}'", palette.device().tag());
             if (palette.indirect_entries() > 0)
                 title_buf += state.palette.which != 0 ? " COLORS" : " PENS";
 
@@ -420,14 +436,14 @@ cancel:
                 int index = state.palette.offset + (int)((mouse_x - cellboxbounds.x0) / cellwidth) + (int)((mouse_y - cellboxbounds.y0) / cellheight) * state.palette.columns;
                 if (index < total)
                 {
-                    title_buf += string.Format(" #{0}", index);  // #%X
+                    util.stream_format(ref title_buf, " #{0}", index);  // #%X
                     if (palette.indirect_entries() > 0 && state.palette.which == 0)
-                        title_buf += string.Format(" => {0}", palette.pen_indirect(index));  // %X
+                        util.stream_format(ref title_buf, " => {0}", palette.pen_indirect(index));  // %X
                     else if (paldev != null && paldev.basemem().base_() != null)
-                        title_buf += string.Format(" = {0}", paldev.read_entry((pen_t)index));  // %X
+                        util.stream_format(ref title_buf, " = {0}", paldev.read_entry((pen_t)index));  // %X
 
                     rgb_t col = state.palette.which != 0 ? palette.indirect_color(index) : raw_color[index];
-                    title_buf += string.Format(" (A:{0} R:{1} G:{2} B:{3})", col.a(), col.r(), col.g(), col.b());  //  (A:%X R:%X G:%X B:%X)
+                    util.stream_format(ref title_buf, " (A:{0} R:{1} G:{2} B:{3})", col.a(), col.r(), col.g(), col.b());  //  (A:%X R:%X G:%X B:%X)
                 }
             }
 
@@ -461,7 +477,7 @@ cancel:
                 // if we're skipping, draw a point between the character and the box to indicate which
                 // one it's referring to
                 if (skip != 0)
-                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + cellboxbounds.y0), g.UI_LINE_WIDTH, rgb_t.white(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + cellboxbounds.y0), UI_LINE_WIDTH, rgb_t.white(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
             }
 
             // draw the side column headers
@@ -478,10 +494,10 @@ cancel:
                     x0 = boxbounds.x0 + 5.5f * chwidth;
                     y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight;
                     if (skip != 0)
-                        container.add_point(0.5f * (x0 + cellboxbounds.x0), y0 + 0.5f * cellheight, g.UI_LINE_WIDTH, rgb_t.white(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                        container.add_point(0.5f * (x0 + cellboxbounds.x0), y0 + 0.5f * cellheight, UI_LINE_WIDTH, rgb_t.white(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
                     // draw the row header
-                    buffer = string.Format("{0:X5}", state.palette.offset + y * state.palette.columns);  // %5X
+                    sprintf(out buffer, "{0:X5}", state.palette.offset + y * state.palette.columns);
                     for (int x = 4; x >= 0; x--)
                     {
                         x0 -= ui_font.char_width(chheight, aspect, buffer[x]);
@@ -501,7 +517,7 @@ cancel:
                         pen_t pen = state.palette.which != 0 ? palette.indirect_color(index) : raw_color[index];
                         container.add_rect(cellboxbounds.x0 + x * cellwidth, cellboxbounds.y0 + y * cellheight,
                                            cellboxbounds.x0 + (x + 1) * cellwidth, cellboxbounds.y0 + (y + 1) * cellheight,
-                                           new rgb_t(0xff000000 | pen), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                                           new rgb_t(0xff000000 | pen), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
                     }
                 }
             }
@@ -539,7 +555,7 @@ cancel:
                     state.palette.devindex--;
                     palette_set_device(machine, state);
                     palette = state.palette.interface_;
-                    state.palette.which = (palette.indirect_entries() > 0) ? (byte)1 : (byte)0;
+                    state.palette.which = (palette.indirect_entries() > 0) ? (uint8_t)1 : (uint8_t)0;
                 }
             }
 
@@ -596,7 +612,7 @@ cancel:
         //  gfxset_handler - handler for the graphics
         //  viewer
         //-------------------------------------------------
-        static void gfxset_handler(mame_ui_manager mui, render_container container, ui_gfx_state state)
+        public static void gfxset_handler(mame_ui_manager mui, render_container container, ui_gfx_state state)
         {
             render_font ui_font = mui.get_font();
             int dev = state.gfxset.devindex;
@@ -628,7 +644,7 @@ cancel:
             boxbounds.y1 = 1.0f - 0.5f * chheight;
 
             // the character cell box bounds starts a half character in from the box
-            cellboxbounds = new render_bounds(boxbounds);
+            cellboxbounds = boxbounds;
             cellboxbounds.x0 += 0.5f * chwidth;
             cellboxbounds.x1 -= 0.5f * chwidth;
             cellboxbounds.y0 += 0.5f * chheight;
@@ -645,8 +661,8 @@ cancel:
             cellboxheight = (int)((cellboxbounds.y1 - cellboxbounds.y0) * (float)targheight);
 
             // compute the number of source pixels in a cell
-            cellxpix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width());
-            cellypix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
+            cellxpix = 1 + ((info.rotate[set] & ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width());
+            cellypix = 1 + ((info.rotate[set] & ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
 
             // compute the largest pixel scale factor that still fits
             xcells = info.columns[set];
@@ -657,7 +673,7 @@ cancel:
                     break;
                 xcells--;
             }
-            info.columns[set] = (byte)xcells;
+            info.columns[set] = (uint8_t)xcells;
 
             if (pixelscale <= 0.0f)
                 pixelscale = 1.0f;
@@ -691,7 +707,7 @@ cancel:
 
             // figure out the title
             string title_buf = "";
-            title_buf += string.Format("'{0}' {1}/{2}", gfxinterface.device().tag(), set, info.setcount - 1);
+            util.stream_format(ref title_buf, "'{0}' {1}/{2}", gfxinterface.device().tag(), set, info.setcount - 1);
 
             // if the mouse pointer is over a pixel in a tile, add some info about the tile and pixel
             bool found_pixel = false;
@@ -710,21 +726,21 @@ cancel:
                 if (code < gfx.elements() && xpixel < (cellxpix - 1) && ypixel < (cellypix - 1))
                 {
                     found_pixel = true;
-                    if ((info.rotate[set] & g.ORIENTATION_FLIP_X) != 0)
+                    if ((info.rotate[set] & ORIENTATION_FLIP_X) != 0)
                         xpixel = (cellxpix - 2) - xpixel;
-                    if ((info.rotate[set] & g.ORIENTATION_FLIP_Y) != 0)
+                    if ((info.rotate[set] & ORIENTATION_FLIP_Y) != 0)
                         ypixel = (cellypix - 2) - ypixel;
-                    if ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0)
+                    if ((info.rotate[set] & ORIENTATION_SWAP_XY) != 0)
                         std.swap(ref xpixel, ref ypixel);
-                    byte pixdata = gfx.get_data((UInt32)code)[xpixel + ypixel * (int)gfx.rowbytes()];
-                    title_buf += string.Format(" #{0}:{1} @ {2},{3} = {4}",  // #%X:%X @ %d,%d = %X",
+                    uint8_t pixdata = gfx.get_data((u32)code)[xpixel + ypixel * (int)gfx.rowbytes()];
+                    util.stream_format(ref title_buf, " #{0}:{1} @ {2},{3} = {4}",  // #%X:%X @ %d,%d = %X",
                                         code, info.color[set], xpixel, ypixel,
                                         gfx.colorbase() + info.color[set] * gfx.granularity() + pixdata);
                 }
             }
             if (!found_pixel)
             {
-                title_buf += string.Format(" {0}x{1} COLOR {2}/{3}", gfx.width(), gfx.height(), info.color[set], info.color_count[set]);  // %dx%d COLOR %X/%X
+                util.stream_format(ref title_buf, " {0}x{1} COLOR {2}/{3}", gfx.width(), gfx.height(), info.color[set], info.color_count[set]);  // %dx%d COLOR %X/%X
             }
 
             // expand the outer box to fit the title
@@ -758,7 +774,7 @@ cancel:
                 // if we're skipping, draw a point between the character and the box to indicate which
                 // one it's referring to
                 if (skip != 0)
-                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + boxbounds.y0 + 3.5f * chheight), g.UI_LINE_WIDTH, rgb_t.white(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                    container.add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + boxbounds.y0 + 3.5f * chheight), UI_LINE_WIDTH, rgb_t.white(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
             }
 
             // draw the side column headers
@@ -775,10 +791,10 @@ cancel:
                     x0 = boxbounds.x0 + 5.5f * chwidth;
                     y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight;
                     if (skip != 0)
-                        container.add_point(0.5f * (x0 + boxbounds.x0 + 6.0f * chwidth), y0 + 0.5f * cellheight, g.UI_LINE_WIDTH, rgb_t.white(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                        container.add_point(0.5f * (x0 + boxbounds.x0 + 6.0f * chwidth), y0 + 0.5f * cellheight, UI_LINE_WIDTH, rgb_t.white(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
                     // draw the row header
-                    buffer = string.Format("{0:X5}", info.offset[set] + y * xcells);
+                    sprintf(out buffer, "{0:X5}", info.offset[set] + y * xcells);
                     for (int x = 4; x >= 0; x--)
                     {
                         x0 -= ui_font.char_width(chheight, aspect, buffer[x]);
@@ -792,7 +808,7 @@ cancel:
 
             // add the final quad
             container.add_quad(cellboxbounds.x0, cellboxbounds.y0, cellboxbounds.x1, cellboxbounds.y1,
-                               rgb_t.white(), state.texture, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                               rgb_t.white(), state.texture, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
             // handle keyboard navigation before drawing
             gfxset_handle_keys(mui.machine(), state, xcells, ycells);
@@ -815,7 +831,7 @@ cancel:
                 else if (state.gfxset.devindex > 0)
                 {
                     state.gfxset.devindex--;
-                    state.gfxset.set = (byte)(state.gfxdev[state.gfxset.devindex].setcount - 1);
+                    state.gfxset.set = (uint8_t)(state.gfxdev[state.gfxset.devindex].setcount - 1);
                 }
 
                 state.bitmap_dirty = true;
@@ -854,7 +870,7 @@ cancel:
             // handle rotation (R)
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ROTATE))
             {
-                info.rotate[set] = (uint8_t)g.orientation_add(g.ROT90, info.rotate[set]);
+                info.rotate[set] = (uint8_t)orientation_add(ROT90, info.rotate[set]);
                 state.bitmap_dirty = true;
             }
 
@@ -906,8 +922,8 @@ cancel:
             ui_gfx_info info = state.gfxdev[dev];
 
             // compute the number of source pixels in a cell
-            int cellxpix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width());
-            int cellypix = 1 + ((info.rotate[set] & g.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
+            int cellxpix = 1 + ((info.rotate[set] & ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width());
+            int cellypix = 1 + ((info.rotate[set] & ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height());
 
             // realloc the bitmap if it is too small
             if (!state.bitmap.valid() || state.texture == null || state.bitmap.width() != cellxpix * xcells || state.bitmap.height() != cellypix * ycells)
@@ -969,15 +985,15 @@ cancel:
         //-------------------------------------------------
         static void gfxset_draw_item(running_machine machine, gfx_element gfx, int index, bitmap_rgb32 bitmap, int dstx, int dsty, int color, int rotate, device_palette_interface dpalette)
         {
-            int width = (rotate & g.ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width();
-            int height = (rotate & g.ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height();
+            int width = (rotate & ORIENTATION_SWAP_XY) != 0 ? gfx.height() : gfx.width();
+            int height = (rotate & ORIENTATION_SWAP_XY) != 0 ? gfx.width() : gfx.height();
             Pointer<rgb_t> palette = new Pointer<rgb_t>(dpalette.palette().entry_list_raw(), (int)gfx.colorbase() + color * gfx.granularity());  //const rgb_t *palette = dpalette->palette()->entry_list_raw() + gfx.colorbase() + color * gfx.granularity();
 
             // loop over rows in the cell
             for (int y = 0; y < height; y++)
             {
                 PointerU32 dest = bitmap.pix(dsty + y, dstx);  //uint32_t *dest = &bitmap.pix(dsty + y, dstx);
-                Pointer<uint8_t> src = gfx.get_data((UInt32)index);  //const uint8_t *src = gfx.get_data(index);
+                Pointer<uint8_t> src = gfx.get_data((u32)index);  //const uint8_t *src = gfx.get_data(index);
 
                 // loop over columns in the cell
                 for (int x = 0; x < width; x++)
@@ -987,18 +1003,18 @@ cancel:
                     Pointer<uint8_t> s;  //const uint8_t *s;
 
                     // compute effective x,y values after rotation
-                    if ((rotate & g.ORIENTATION_SWAP_XY) == 0)
+                    if ((rotate & ORIENTATION_SWAP_XY) == 0)
                     {
-                        if ((rotate & g.ORIENTATION_FLIP_X) != 0)
+                        if ((rotate & ORIENTATION_FLIP_X) != 0)
                             effx = gfx.width() - 1 - effx;
-                        if ((rotate & g.ORIENTATION_FLIP_Y) != 0)
+                        if ((rotate & ORIENTATION_FLIP_Y) != 0)
                             effy = gfx.height() - 1 - effy;
                     }
                     else
                     {
-                        if ((rotate & g.ORIENTATION_FLIP_X) != 0)
+                        if ((rotate & ORIENTATION_FLIP_X) != 0)
                             effx = gfx.height() - 1 - effx;
-                        if ((rotate & g.ORIENTATION_FLIP_Y) != 0)
+                        if ((rotate & ORIENTATION_FLIP_Y) != 0)
                             effy = gfx.width() - 1 - effy;
                         std.swap(ref effx, ref effy);
                     }
@@ -1022,7 +1038,7 @@ cancel:
         //  tilemap_handler - handler for the tilemap
         //  viewer
         //-------------------------------------------------
-        static void tilemap_handler(mame_ui_manager mui, render_container container, ui_gfx_state state)
+        public static void tilemap_handler(mame_ui_manager mui, render_container container, ui_gfx_state state)
         {
             render_font ui_font = mui.get_font();
             render_bounds mapboxbounds;
@@ -1039,7 +1055,7 @@ cancel:
             tilemap_t tilemap = mui.machine().tilemap().find(state.tilemap.which);
             uint32_t mapwidth = tilemap.width();
             uint32_t mapheight = tilemap.height();
-            if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
+            if ((state.tilemap.rotate & ORIENTATION_SWAP_XY) != 0)
                 std.swap(ref mapwidth, ref mapheight);
 
             // add a half character padding for the box
@@ -1052,7 +1068,7 @@ cancel:
             boxbounds.y1 = 1.0f - 0.5f * chheight;
 
             // the tilemap box bounds starts a half character in from the box
-            mapboxbounds = new render_bounds(boxbounds);
+            mapboxbounds = boxbounds;
             mapboxbounds.x0 += 0.5f * chwidth;
             mapboxbounds.x1 -= 0.5f * chwidth;
             mapboxbounds.y0 += 0.5f * chheight;
@@ -1095,7 +1111,7 @@ cancel:
 
             // figure out the title
             string title_buf = "";
-            title_buf += string.Format("TILEMAP {0}/{1}", state.tilemap.which + 1, mui.machine().tilemap().count() - 1);
+            util.stream_format(ref title_buf, "TILEMAP {0}/{1}", state.tilemap.which + 1, mui.machine().tilemap().count() - 1);
 
             // if the mouse pointer is over a tile, add some info about its coordinates and color
             int32_t mouse_target_x;
@@ -1110,22 +1126,22 @@ cancel:
             {
                 int xpixel = (int)((mouse_x - mapboxbounds.x0) * targwidth);
                 int ypixel = (int)((mouse_y - mapboxbounds.y0) * targheight);
-                if ((state.tilemap.rotate & g.ORIENTATION_FLIP_X) != 0)
+                if ((state.tilemap.rotate & ORIENTATION_FLIP_X) != 0)
                     xpixel = (mapboxwidth - 1) - xpixel;
-                if ((state.tilemap.rotate & g.ORIENTATION_FLIP_Y) != 0)
+                if ((state.tilemap.rotate & ORIENTATION_FLIP_Y) != 0)
                     ypixel = (mapboxheight - 1) - ypixel;
-                if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
+                if ((state.tilemap.rotate & ORIENTATION_SWAP_XY) != 0)
                     std.swap(ref xpixel, ref ypixel);
 
                 throw new emu_unimplemented();
             }
             else
             {
-                title_buf += string.Format(" {0}x{1} OFFS {2},{3}", tilemap.width(), tilemap.height(), state.tilemap.xoffs, state.tilemap.yoffs);
+                util.stream_format(ref title_buf, " {0}x{1} OFFS {2},{3}", tilemap.width(), tilemap.height(), state.tilemap.xoffs, state.tilemap.yoffs);
             }
 
-            if (state.tilemap.flags != g.TILEMAP_DRAW_ALL_CATEGORIES)
-                title_buf += string.Format(" CAT {0}", state.tilemap.flags);
+            if (state.tilemap.flags != TILEMAP_DRAW_ALL_CATEGORIES)
+                util.stream_format(ref title_buf, " CAT {0}", state.tilemap.flags);
 
             // expand the outer box to fit the title
             string title = title_buf;
@@ -1155,7 +1171,7 @@ cancel:
             container.add_quad(mapboxbounds.x0, mapboxbounds.y0,
                                mapboxbounds.x1, mapboxbounds.y1,
                                rgb_t.white(), state.texture,
-                               g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA) | render_global.PRIMFLAG_TEXORIENT(state.tilemap.rotate));
+                               PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXORIENT(state.tilemap.rotate));
 
             // handle keyboard input
             tilemap_handle_keys(mui.machine(), state, pixelscale);
@@ -1213,7 +1229,7 @@ cancel:
 
                 state.bitmap_dirty = true;
 
-                machine.popmessage(state.tilemap.zoom_frac ? g.__("Zoom = 1/{0}") : g.__("Zoom = {0}"), state.tilemap.zoom);
+                machine.popmessage(state.tilemap.zoom_frac ? __("Zoom = 1/{0}") : __("Zoom = {0}"), state.tilemap.zoom);
             }
 
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_IN) && !at_max_zoom)
@@ -1244,20 +1260,20 @@ cancel:
 
                 state.bitmap_dirty = true;
 
-                machine.popmessage(state.tilemap.zoom_frac ? g.__("Zoom = 1/{0}") : g.__("Zoom = {0}"), state.tilemap.zoom);
+                machine.popmessage(state.tilemap.zoom_frac ? __("Zoom = 1/{0}") : __("Zoom = {0}"), state.tilemap.zoom);
             }
 
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ZOOM_DEFAULT) && !state.tilemap.auto_zoom)
             {
                 state.tilemap.auto_zoom = true;
 
-                machine.popmessage(g.__("Expand to fit"));
+                machine.popmessage(__("Expand to fit"));
             }
 
             // handle rotation (R)
             if (machine.ui_input().pressed((int)ioport_type.IPT_UI_ROTATE))
             {
-                state.tilemap.rotate = (uint8_t)g.orientation_add(g.ROT90, state.tilemap.rotate);
+                state.tilemap.rotate = (uint8_t)orientation_add(ROT90, state.tilemap.rotate);
                 state.bitmap_dirty = true;
             }
 
@@ -1270,7 +1286,7 @@ cancel:
             }
 
             // handle flags (category)
-            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_PAGE_UP) && state.tilemap.flags != g.TILEMAP_DRAW_ALL_CATEGORIES)
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_PAGE_UP) && state.tilemap.flags != TILEMAP_DRAW_ALL_CATEGORIES)
             {
                 if (state.tilemap.flags > 0)
                 {
@@ -1279,14 +1295,14 @@ cancel:
                 }
                 else
                 {
-                    state.tilemap.flags = g.TILEMAP_DRAW_ALL_CATEGORIES;
+                    state.tilemap.flags = TILEMAP_DRAW_ALL_CATEGORIES;
                     machine.popmessage("Category All");
                 }
                 state.bitmap_dirty = true;
             }
-            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_PAGE_DOWN) && (state.tilemap.flags < g.TILEMAP_DRAW_CATEGORY_MASK || (state.tilemap.flags == g.TILEMAP_DRAW_ALL_CATEGORIES)))
+            if (machine.ui_input().pressed((int)ioport_type.IPT_UI_PAGE_DOWN) && (state.tilemap.flags < TILEMAP_DRAW_CATEGORY_MASK || (state.tilemap.flags == TILEMAP_DRAW_ALL_CATEGORIES)))
             {
-                if (state.tilemap.flags == g.TILEMAP_DRAW_ALL_CATEGORIES)
+                if (state.tilemap.flags == TILEMAP_DRAW_ALL_CATEGORIES)
                     state.tilemap.flags = 0;
                 else
                     state.tilemap.flags++;
@@ -1296,38 +1312,38 @@ cancel:
 
             // handle navigation (up,down,left,right), taking orientation into account
             int step = 8;
-            if (machine.input().code_pressed(g.KEYCODE_LSHIFT)) step = 1;
-            if (machine.input().code_pressed(g.KEYCODE_LCONTROL)) step = 64;
+            if (machine.input().code_pressed(KEYCODE_LSHIFT)) step = 1;
+            if (machine.input().code_pressed(KEYCODE_LCONTROL)) step = 64;
             if (machine.ui_input().pressed_repeat((int)ioport_type.IPT_UI_UP, 4))
             {
-                if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
-                    state.tilemap.xoffs -= (state.tilemap.rotate & g.ORIENTATION_FLIP_Y) != 0 ? -step : step;
+                if ((state.tilemap.rotate & ORIENTATION_SWAP_XY) != 0)
+                    state.tilemap.xoffs -= (state.tilemap.rotate & ORIENTATION_FLIP_Y) != 0 ? -step : step;
                 else
-                    state.tilemap.yoffs -= (state.tilemap.rotate & g.ORIENTATION_FLIP_Y) != 0 ? -step : step;
+                    state.tilemap.yoffs -= (state.tilemap.rotate & ORIENTATION_FLIP_Y) != 0 ? -step : step;
                 state.bitmap_dirty = true;
             }
             if (machine.ui_input().pressed_repeat((int)ioport_type.IPT_UI_DOWN, 4))
             {
-                if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
-                    state.tilemap.xoffs += (state.tilemap.rotate & g.ORIENTATION_FLIP_Y) != 0 ? -step : step;
+                if ((state.tilemap.rotate & ORIENTATION_SWAP_XY) != 0)
+                    state.tilemap.xoffs += (state.tilemap.rotate & ORIENTATION_FLIP_Y) != 0 ? -step : step;
                 else
-                    state.tilemap.yoffs += (state.tilemap.rotate & g.ORIENTATION_FLIP_Y) != 0 ? -step : step;
+                    state.tilemap.yoffs += (state.tilemap.rotate & ORIENTATION_FLIP_Y) != 0 ? -step : step;
                 state.bitmap_dirty = true;
             }
             if (machine.ui_input().pressed_repeat((int)ioport_type.IPT_UI_LEFT, 6))
             {
-                if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
-                    state.tilemap.yoffs -= (state.tilemap.rotate & g.ORIENTATION_FLIP_X) != 0 ? -step : step;
+                if ((state.tilemap.rotate & ORIENTATION_SWAP_XY) != 0)
+                    state.tilemap.yoffs -= (state.tilemap.rotate & ORIENTATION_FLIP_X) != 0 ? -step : step;
                 else
-                    state.tilemap.xoffs -= (state.tilemap.rotate & g.ORIENTATION_FLIP_X) != 0 ? -step : step;
+                    state.tilemap.xoffs -= (state.tilemap.rotate & ORIENTATION_FLIP_X) != 0 ? -step : step;
                 state.bitmap_dirty = true;
             }
             if (machine.ui_input().pressed_repeat((int)ioport_type.IPT_UI_RIGHT, 6))
             {
-                if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
-                    state.tilemap.yoffs += (state.tilemap.rotate & g.ORIENTATION_FLIP_X) != 0 ? -step : step;
+                if ((state.tilemap.rotate & ORIENTATION_SWAP_XY) != 0)
+                    state.tilemap.yoffs += (state.tilemap.rotate & ORIENTATION_FLIP_X) != 0 ? -step : step;
                 else
-                    state.tilemap.xoffs += (state.tilemap.rotate & g.ORIENTATION_FLIP_X) != 0 ? -step : step;
+                    state.tilemap.xoffs += (state.tilemap.rotate & ORIENTATION_FLIP_X) != 0 ? -step : step;
                 state.bitmap_dirty = true;
             }
 
@@ -1350,7 +1366,7 @@ cancel:
         static void tilemap_update_bitmap(running_machine machine, ui_gfx_state state, int width, int height)
         {
             // swap the coordinates back if they were talking about a rotated surface
-            if ((state.tilemap.rotate & g.ORIENTATION_SWAP_XY) != 0)
+            if ((state.tilemap.rotate & ORIENTATION_SWAP_XY) != 0)
                 std.swap(ref width, ref height);
 
             // realloc the bitmap if it is too small
@@ -1378,7 +1394,7 @@ cancel:
                 screen_device first_screen = new screen_device_enumerator(machine.root_device()).first();
                 if (first_screen != null)
                 {
-                    tilemap.draw_debug(first_screen, state.bitmap, (UInt32)state.tilemap.xoffs, (UInt32)state.tilemap.yoffs, state.tilemap.flags);
+                    tilemap.draw_debug(first_screen, state.bitmap, (u32)state.tilemap.xoffs, (u32)state.tilemap.yoffs, state.tilemap.flags);
                 }
 
                 // reset the texture to force an update

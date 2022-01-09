@@ -2,10 +2,10 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
+using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 
 
 namespace mame.netlist
@@ -60,41 +60,44 @@ namespace mame.netlist
         }
 
 
-        //void inactivate() noexcept
-        //{
-        //    if (!is_state(STATE_INP_PASSIVE))
-        //    {
-        //        set_state(STATE_INP_PASSIVE);
-        //        net().remove_from_active_list(*this);
-        //    }
-        //}
+        public void inactivate()
+        {
+            if (!is_state(state_e.STATE_INP_PASSIVE))
+            {
+                set_state(state_e.STATE_INP_PASSIVE);
+                net().remove_from_active_list(this);
+            }
+        }
 
-        //void activate() noexcept
-        //{
-        //    if (is_state(STATE_INP_PASSIVE))
-        //    {
-        //        net().add_to_active_list(*this);
-        //        set_state(STATE_INP_ACTIVE);
-        //    }
-        //}
 
-        //void activate_hl() noexcept
-        //{
-        //    if (is_state(STATE_INP_PASSIVE))
-        //    {
-        //        net().add_to_active_list(*this);
-        //        set_state(STATE_INP_HL);
-        //    }
-        //}
+        public void activate()
+        {
+            if (is_state(state_e.STATE_INP_PASSIVE))
+            {
+                net().add_to_active_list(this);
+                set_state(state_e.STATE_INP_ACTIVE);
+            }
+        }
 
-        //void activate_lh() noexcept
-        //{
-        //    if (is_state(STATE_INP_PASSIVE))
-        //    {
-        //        net().add_to_active_list(*this);
-        //        set_state(STATE_INP_LH);
-        //    }
-        //}
+
+        public void activate_hl()
+        {
+            if (is_state(state_e.STATE_INP_PASSIVE))
+            {
+                net().add_to_active_list(this);
+                set_state(state_e.STATE_INP_HL);
+            }
+        }
+
+
+        public void activate_lh()
+        {
+            if (is_state(state_e.STATE_INP_PASSIVE))
+            {
+                net().add_to_active_list(this);
+                set_state(state_e.STATE_INP_LH);
+            }
+        }
     }
 
 
@@ -141,10 +144,11 @@ namespace mame.netlist
         }
 
 
-        //inline void set_Q_time(const netlist_sig_t &newQ, const netlist_time_ext &at) noexcept
-        //{
-        //    m_my_net.set_Q_time(newQ, at); // take the shortcut
-        //}
+        public void set_Q_time(netlist_sig_t newQ, netlist_time_ext at)
+        {
+            m_my_net.set_Q_time(newQ, at); // take the shortcut
+        }
+
 
         /// \brief Dummy implementation for templatized generic devices
         ///

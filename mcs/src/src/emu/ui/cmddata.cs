@@ -2,18 +2,20 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
+using u32 = System.UInt32;
 using unsigned = System.UInt32;
+
+using static mame.cmddata_global;
 
 
 namespace mame
 {
-    public static class cmddata_global
+    public static partial class cmddata_global
     {
         // command.dat symbols assigned to Unicode PUA U+E000
-        public const UInt32 COMMAND_UNICODE = 0xe000;
-        public const UInt32 MAX_GLYPH_FONT = 150;
+        public const u32 COMMAND_UNICODE = 0xe000;
+        public const u32 MAX_GLYPH_FONT = 150;
 
 
         // Define Game Command Font Converting Conditions
@@ -24,26 +26,29 @@ namespace mame
 
         // Define Simple Game Command ShortCut
         public const char COMMAND_CONVERT_TEXT    = '@';
+    }
 
 
-        public class fix_command_t
-        {
-            public char glyph_char;
-            public unsigned glyph_code;
+    public struct fix_command_t
+    {
+        public char glyph_char;
+        public unsigned glyph_code;
 
-            public fix_command_t(char glyph_char, UInt32 glyph_code) { this.glyph_char = glyph_char; this.glyph_code = glyph_code; }
-        }
-
-
-        public class fix_strings_t
-        {
-            public string glyph_str;
-            public int glyph_code;
-
-            public fix_strings_t(string glyph_str, int glyph_code) { this.glyph_str = glyph_str; this.glyph_code = glyph_code; }
-        }
+        public fix_command_t(char glyph_char, unsigned glyph_code) { this.glyph_char = glyph_char; this.glyph_code = glyph_code; }
+    }
 
 
+    public struct fix_strings_t
+    {
+        public string glyph_str;
+        public int glyph_code;
+
+        public fix_strings_t(string glyph_str, int glyph_code) { this.glyph_str = glyph_str; this.glyph_code = glyph_code; }
+    }
+
+
+    public static partial class cmddata_global
+    {
         public static readonly fix_command_t [] default_text =
         {
             // Alphabetic Buttons (NeoGeo): A~D,H,Z

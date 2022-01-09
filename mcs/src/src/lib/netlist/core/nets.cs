@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
@@ -188,15 +187,71 @@ namespace mame.netlist
             public core_terminal_t railterminal() { return m_railterminal; }
 
 
-            //void add_to_active_list(core_terminal_t &term) noexcept;
-            //void remove_from_active_list(core_terminal_t &term) noexcept;
+            public void add_to_active_list(core_terminal_t term)
+            {
+                if (!m_list_active.empty())
+                {
+                    term.set_copied_input(m_cur_Q.op);
+                    m_list_active.push_front(term);
+                }
+                else
+                {
+                    m_list_active.push_front(term);
+                    railterminal().device().do_inc_active();
+                    if (m_in_queue.op == queue_status.DELAYED_DUE_TO_INACTIVE)
+                    {
+#if (AVOID_NOOP_QUEUE_PUSHES)
+                        if (m_next_scheduled_time > exec().time()
+                            && (m_cur_Q != m_new_Q))
+#else
+                        if (m_next_scheduled_time.op > exec().time())
+#endif
+                        {
+                            m_in_queue.op = queue_status.QUEUED;     // pending
+                            exec().qpush(new plib.pqentry_t<netlist_time, net_t>(m_next_scheduled_time.op, this));
+                        }
+                        else
+                        {
+                            m_in_queue.op = queue_status.DELIVERED;
+                            m_cur_Q = m_new_Q;
+                        }
+
+                        update_inputs();
+                    }
+                    else
+                    {
+                        term.set_copied_input(m_cur_Q.op);
+                    }
+                }
+            }
+
+
+            public void remove_from_active_list(core_terminal_t term)
+            {
+                //throw new emu_unimplemented();
+#if false
+                gsl_Expects(!m_list_active.empty());
+#endif
+                m_list_active.remove(term);
+                if (m_list_active.empty())
+                {
+#if (AVOID_NOOP_QUEUE_PUSHES)
+                    if (!!is_queued())
+                    {
+                        exec().qremove(this);
+                        m_in_queue = queue_status::DELAYED_DUE_TO_INACTIVE;
+                    }
+#endif
+                    railterminal().device().do_dec_active();
+                }
+            }
 
 
             // -----------------------------------------------------------------------------
             // setup stuff - cold
             // -----------------------------------------------------------------------------
 
-            //bool is_logic() const noexcept;
+            public bool is_logic() { return this is logic_net_t; }  //return dynamic_cast<const logic_net_t *>(this) != nullptr;
             public bool is_analog() { return this is analog_net_t; }  //return dynamic_cast<const analog_net_t *>(this) != nullptr;
 
 
@@ -253,7 +308,26 @@ namespace mame.netlist
 
 
             // only used for logic nets
-            //inline void set_Q_time(const netlist_sig_t &newQ, const netlist_time_ext &at) noexcept
+            public void set_Q_time(netlist_sig_t newQ, netlist_time_ext at)
+            {
+                //throw new emu_unimplemented();
+#if false
+                gsl_Expects(at >= netlist_time_ext::zero());
+#endif
+
+                if (newQ != m_new_Q.op)
+                {
+                    m_in_queue.op = queue_status.DELAYED_DUE_TO_INACTIVE;
+                    m_next_scheduled_time.op = at;
+                    m_cur_Q.op = m_new_Q.op = newQ;
+                    update_inputs();
+                }
+                else
+                {
+                    m_cur_Q.op = newQ;
+                    update_inputs();
+                }
+            }
         }
     } // namespace detail
 

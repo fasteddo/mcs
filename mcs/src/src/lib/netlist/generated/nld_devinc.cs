@@ -1,9 +1,10 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
-using mame.netlist;
 using System;
-using System.Collections.Generic;
+using mame.netlist;
+
+using static mame.netlist.nl_setup_global;
 
 
 namespace mame
@@ -37,7 +38,7 @@ namespace mame
         // usage       : OPAMP(name, MODEL)
         //#define OPAMP(...)                                                   \
         //    NET_REGISTER_DEVEXT(OPAMP, __VA_ARGS__)
-        public static void OPAMP(nlparse_t setup, string name, string val) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "OPAMP", name, val); }
+        public static void OPAMP(nlparse_t setup, string name, string val) { NET_REGISTER_DEVEXT(setup, "OPAMP", name, val); }
 
         // ---------------------------------------------------------------------
         // Source: ../analog/nld_switches.cpp
@@ -82,12 +83,12 @@ namespace mame
         // usage       : RES(name, R)
         //#define RES(...)                                                   \
         //    NET_REGISTER_DEVEXT(RES, __VA_ARGS__)
-        public static void RES(nlparse_t setup, string name, double val) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "RES", name, val.ToString()); }
+        public static void RES(nlparse_t setup, string name, double val) { NET_REGISTER_DEVEXT(setup, "RES", name, val.ToString()); }
 
         // usage       : POT(name, R)
         //#define POT(...)                                                   \
         //    NET_REGISTER_DEVEXT(POT, __VA_ARGS__)
-        public static void POT(nlparse_t setup, string name, double val) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "POT", name, val.ToString()); }
+        public static void POT(nlparse_t setup, string name, double val) { NET_REGISTER_DEVEXT(setup, "POT", name, val.ToString()); }
 
         // usage       : POT2(name, R)
         //#define POT2(...)                                                   \
@@ -96,7 +97,7 @@ namespace mame
         // usage       : CAP(name, C)
         //#define CAP(...)                                                   \
         //    NET_REGISTER_DEVEXT(CAP, __VA_ARGS__)
-        public static void CAP(nlparse_t setup, string name, double val) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "CAP", name, val.ToString()); }
+        public static void CAP(nlparse_t setup, string name, double val) { NET_REGISTER_DEVEXT(setup, "CAP", name, val.ToString()); }
 
         // usage       : IND(name, L)
         //#define IND(...)                                                   \
@@ -202,7 +203,7 @@ namespace mame
         // usage       : CD4066_GATE(name, )
         //#define CD4066_GATE(...)                                                   \
         //    NET_REGISTER_DEVEXT(CD4066_GATE, __VA_ARGS__)
-        public static void CD4066_GATE(nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "CD4066_GATE", name); }
+        public static void CD4066_GATE(nlparse_t setup, string name) { NET_REGISTER_DEVEXT(setup, "CD4066_GATE", name); }
 
         // ---------------------------------------------------------------------
         // Source: ../devices/nld_4076.cpp
@@ -732,7 +733,7 @@ namespace mame
         // usage       : ANALOG_INPUT(name, IN)
         //#define ANALOG_INPUT(...)                                                   \
         //    NET_REGISTER_DEVEXT(ANALOG_INPUT, __VA_ARGS__)
-        public static void ANALOG_INPUT(nlparse_t setup, string name, double val) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "ANALOG_INPUT", name, val.ToString()); }
+        public static void ANALOG_INPUT(nlparse_t setup, string name, double val) { NET_REGISTER_DEVEXT(setup, "ANALOG_INPUT", name, val.ToString()); }
 
         // usage       : CLOCK(name, FREQ)
         //#define CLOCK(...)                                                   \
@@ -785,7 +786,7 @@ namespace mame
         // usage       : TTL_INPUT(name, IN)
         //#define TTL_INPUT(...)                                                   \
         //    NET_REGISTER_DEVEXT(TTL_INPUT, __VA_ARGS__)
-        public static void TTL_INPUT(nlparse_t setup, string name, double val) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "TTL_INPUT", name, val.ToString()); }
+        public static void TTL_INPUT(nlparse_t setup, string name, double val) { NET_REGISTER_DEVEXT(setup, "TTL_INPUT", name, val.ToString()); }
 
         // ---------------------------------------------------------------------
         // Source: ../devices/nld_tms4800.cpp
@@ -1003,7 +1004,7 @@ namespace mame
         // usage       : UA741_DIP8(name, )
         //#define UA741_DIP8(...)                                                   \
         //    NET_REGISTER_DEVEXT(UA741_DIP8, __VA_ARGS__)
-        public static void UA741_DIP8(nlparse_t setup, string name) { netlist.nl_setup_global.NET_REGISTER_DEVEXT(setup, "UA741_DIP8", name); }
+        public static void UA741_DIP8(nlparse_t setup, string name) { NET_REGISTER_DEVEXT(setup, "UA741_DIP8", name); }
 
         // usage       : UA741_DIP10(name, )
         //#define UA741_DIP10(...)                                                   \

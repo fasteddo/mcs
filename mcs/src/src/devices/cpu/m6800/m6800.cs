@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using int16_t = System.Int16;
@@ -11,6 +10,12 @@ using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 
+using static mame.device_global;
+using static mame.diexec_global;
+using static mame.distate_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
+
 
 namespace mame
 {
@@ -18,7 +23,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(M6800, m6800_cpu_device, "m6800", "Motorola MC6800")
         static device_t device_creator_m6800_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6800_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6800 = g.DEFINE_DEVICE_TYPE(device_creator_m6800_cpu_device, "m6800", "Motorola MC6800");
+        public static readonly device_type M6800 = DEFINE_DEVICE_TYPE(device_creator_m6800_cpu_device, "m6800", "Motorola MC6800");
 
 
         protected class device_execute_interface_m6800 : device_execute_interface
@@ -357,8 +362,8 @@ namespace mame
         protected m6800_cpu_device(machine_config mconfig, device_type type, string tag, device_t owner, uint32_t clock, op_func [] insn, uint8_t [] cycles, address_map_constructor internal_) 
             : base(mconfig, type, tag, owner, clock)
         {
-            m_program_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, 16, 0, internal_);
-            m_decrypted_opcodes_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, 16, 0);
+            m_program_config = new address_space_config("program", ENDIANNESS_BIG, 8, 16, 0, internal_);
+            m_decrypted_opcodes_config = new address_space_config("program", ENDIANNESS_BIG, 8, 16, 0);
             m_insn = insn;
             m_cycles = cycles;
         }
@@ -378,9 +383,9 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_m6800>();
 
 
-            m_dimemory.space(g.AS_PROGRAM).cache(m_cprogram);
-            m_dimemory.space(m_dimemory.has_space(g.AS_OPCODES) ? g.AS_OPCODES : g.AS_PROGRAM).cache(m_copcodes);
-            m_dimemory.space(g.AS_PROGRAM).specific(m_program);
+            m_dimemory.space(AS_PROGRAM).cache(m_cprogram);
+            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(m_copcodes);
+            m_dimemory.space(AS_PROGRAM).specific(m_program);
 
             m_pc.d = 0;
             m_s.d = 0;
@@ -392,16 +397,16 @@ namespace mame
             m_irq_state[1] = 0;
             m_irq_state[2] = 0;
 
-            save_item(g.NAME(new { m_ppc.w.l }));
-            save_item(g.NAME(new { m_pc.w.l }));
-            save_item(g.NAME(new { m_s.w.l }));
-            save_item(g.NAME(new { m_x.w.l }));
-            save_item(g.NAME(new { m_d.w.l }));
-            save_item(g.NAME(new { m_cc }));
-            save_item(g.NAME(new { m_wai_state }));
-            save_item(g.NAME(new { m_nmi_state }));
-            save_item(g.NAME(new { m_nmi_pending }));
-            save_item(g.NAME(new { m_irq_state }));
+            save_item(NAME(new { m_ppc.w.l }));
+            save_item(NAME(new { m_pc.w.l }));
+            save_item(NAME(new { m_s.w.l }));
+            save_item(NAME(new { m_x.w.l }));
+            save_item(NAME(new { m_d.w.l }));
+            save_item(NAME(new { m_cc }));
+            save_item(NAME(new { m_wai_state }));
+            save_item(NAME(new { m_nmi_state }));
+            save_item(NAME(new { m_nmi_pending }));
+            save_item(NAME(new { m_irq_state }));
 
             m_distate.state_add( M6800_A,         "A", m_d.b.h).formatstr("%02X");
             m_distate.state_add( M6800_B,         "B", m_d.b.l).formatstr("%02X");
@@ -411,9 +416,9 @@ namespace mame
             m_distate.state_add( M6800_CC,        "CC", m_cc).formatstr("%02X");
             m_distate.state_add( M6800_WAI_STATE, "WAI", m_wai_state).formatstr("%01X");
 
-            m_distate.state_add( g.STATE_GENPC, "GENPC", m_pc.w.l).noshow();
-            m_distate.state_add( g.STATE_GENPCBASE, "CURPC", m_pc.w.l).noshow();
-            m_distate.state_add( g.STATE_GENFLAGS, "GENFLAGS", m_cc).formatstr("%8s").noshow();
+            m_distate.state_add( STATE_GENPC, "GENPC", m_pc.w.l).noshow();
+            m_distate.state_add( STATE_GENPCBASE, "CURPC", m_pc.w.l).noshow();
+            m_distate.state_add( STATE_GENFLAGS, "GENFLAGS", m_cc).formatstr("%8s").noshow();
 
             set_icountptr(m_icount);
         }
@@ -441,7 +446,7 @@ namespace mame
         //virtual uint32_t execute_min_cycles() const override { return 1; }
         //virtual uint32_t execute_max_cycles() const override { return 12; }
         //virtual uint32_t execute_input_lines() const override { return 2; }
-        bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == g.INPUT_LINE_NMI; }
+        bool device_execute_interface_execute_input_edge_triggered(int inputnum) { return inputnum == INPUT_LINE_NMI; }
 
         void device_execute_interface_execute_run()
         {
@@ -471,8 +476,8 @@ namespace mame
         {
             switch (irqline)
             {
-            case g.INPUT_LINE_NMI:
-                if (m_nmi_state == 0 && state != g.CLEAR_LINE)
+            case INPUT_LINE_NMI:
+                if (m_nmi_state == 0 && state != CLEAR_LINE)
                     m_nmi_pending = 1;
 
                 m_nmi_state = (uint8_t)state;
@@ -489,19 +494,19 @@ namespace mame
         // device_memory_interface overrides
         space_config_vector device_memory_interface_memory_space_config()
         {
-            if (memory().has_configured_map(g.AS_OPCODES))
+            if (memory().has_configured_map(AS_OPCODES))
             {
                 return new space_config_vector
                 {
-                    std.make_pair(g.AS_PROGRAM, m_program_config),
-                    std.make_pair(g.AS_OPCODES, m_decrypted_opcodes_config)
+                    std.make_pair(AS_PROGRAM, m_program_config),
+                    std.make_pair(AS_OPCODES, m_decrypted_opcodes_config)
                 };
             }
             else
             {
                 return new space_config_vector
                 {
-                    std.make_pair(g.AS_PROGRAM, m_program_config)
+                    std.make_pair(AS_PROGRAM, m_program_config)
                 };
             }
         }
@@ -578,7 +583,7 @@ namespace mame
             }
             else
             {
-                if (m_irq_state[M6800_IRQ_LINE] != g.CLEAR_LINE)
+                if (m_irq_state[M6800_IRQ_LINE] != CLEAR_LINE)
                 {
                     /* standard IRQ */
                     if ((m_wai_state & M6800_SLP) != 0)

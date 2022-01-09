@@ -2,12 +2,13 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.device_global;
 
 
 namespace mame
@@ -17,7 +18,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(YM2151, ym2151_device, "ym2151", "YM2151 OPM")
         static device_t device_creator_ym2151_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new ym2151_device(mconfig, tag, owner, clock); }
-        public static readonly device_type YM2151 = g.DEFINE_DEVICE_TYPE(device_creator_ym2151_device, "ym2151", "YM2151 OPM");
+        public static readonly device_type YM2151 = DEFINE_DEVICE_TYPE(device_creator_ym2151_device, "ym2151", "YM2151 OPM");
 
 
         //using parent = ymfm_device_base<ymfm::ym2151>;

@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.cpp_global;
 
 
 namespace mame
@@ -55,7 +56,7 @@ namespace mame
 
         ~debugger_manager()
         {
-            g.assert(m_isDisposed);  // can remove
+            assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;

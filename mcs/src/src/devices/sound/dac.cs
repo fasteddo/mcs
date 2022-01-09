@@ -2,15 +2,21 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using s32 = System.Int32;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u8 = System.Byte;
+using u16 = System.UInt16;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.dac_global;
+using static mame.device_global;
+using static mame.disound_global;
+using static mame.emucore_global;
+using static mame.util;
 
 
 namespace mame
@@ -33,10 +39,6 @@ namespace mame
         public const stream_buffer_sample_t dac_gain_bw = (stream_buffer_sample_t)2.0;
 
 
-        public const UInt32 DAC_VREF_POS_INPUT = 0;
-        public const UInt32 DAC_VREF_NEG_INPUT = 1;
-
-
         //-------------------------------------------------
         //  dac_mapper_unsigned - map an unsigned value of
         //  the given number of bits to a sample value
@@ -49,7 +51,16 @@ namespace mame
         }
 
 
-        //stream_buffer::sample_t dac_mapper_signed(u32 input, u8 bits);
+        //-------------------------------------------------
+        //  dac_mapper_signed - map a signed value of
+        //  the given number of bits to a sample value
+        //-------------------------------------------------
+        public static stream_buffer_sample_t dac_mapper_signed(u32 input, u8 bits)
+        {
+            return dac_mapper_unsigned(input ^ (1U << (bits - 1)), bits);
+        }
+
+
         //stream_buffer::sample_t dac_mapper_ones_complement(u32 input, u8 bits);
         //stream_buffer::sample_t dac_mapper_sign_magnitude(u32 input, u8 bits);
     }
@@ -78,7 +89,11 @@ namespace mame
 
 
     // ======================> dac_word_interface
-    //class dac_word_interface
+    public interface dac_word_interface
+    {
+        void write(u16 data);
+        void data_w(u16 data);
+    }
 
 
     // ======================> dac_device_base
@@ -145,7 +160,7 @@ namespace mame
             m_stream = stream_alloc(inputs, 1, 48000 * 4);
 
             // save data
-            save_item(g.NAME(new { m_curval }));
+            save_item(NAME(new { m_curval }));
         }
 
 
@@ -154,7 +169,7 @@ namespace mame
         protected u32 m_specified_inputs_mask { get { return m_disound.m_specified_inputs_mask; } set { m_disound.m_specified_inputs_mask = value; } }
 
 
-        public device_sound_interface add_route(u32 output, string target, double gain, u32 input = g.AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return m_disound.add_route(output, target, gain, input, mixoutput); }
+        public device_sound_interface add_route(u32 output, string target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return m_disound.add_route(output, target, gain, input, mixoutput); }
 
 
         // stream generation
@@ -172,18 +187,18 @@ namespace mame
                 return;
             }
 
-            var hi = inputs[dac_global.DAC_INPUT_RANGE_HI];
-            var lo = inputs[dac_global.DAC_INPUT_RANGE_LO];
+            var hi = inputs[DAC_INPUT_RANGE_HI];
+            var lo = inputs[DAC_INPUT_RANGE_LO];
 
             // constant lo, streaming hi
-            if (g.BIT(m_specified_inputs_mask, dac_global.DAC_INPUT_RANGE_LO) == 0)
+            if (BIT(m_specified_inputs_mask, DAC_INPUT_RANGE_LO) == 0)
             {
                 for (int sampindex = 0; sampindex < out_.samples(); sampindex++)
                     out_.put(sampindex, m_range_min + m_curval * (hi.get(sampindex) - m_range_min));
             }
 
             // constant hi, streaming lo
-            else if (g.BIT(m_specified_inputs_mask, dac_global.DAC_INPUT_RANGE_HI) == 0)
+            else if (BIT(m_specified_inputs_mask, DAC_INPUT_RANGE_HI) == 0)
             {
                 for (int sampindex = 0; sampindex < out_.samples(); sampindex++)
                     out_.put(sampindex, lo.get(sampindex) + m_curval * (m_range_max - lo.get(sampindex)));
@@ -242,7 +257,17 @@ namespace mame
 
 
     // ======================> dac_word_device_base
-    //class dac_word_device_base : public dac_device_base, public dac_word_interface
+    public class dac_word_device_base : dac_device_base, dac_word_interface
+    {
+        protected dac_word_device_base(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock, u8 bits, dac_mapper_callback mapper, stream_buffer_sample_t gain)
+            : base(mconfig, type, tag, owner, clock, bits, mapper, gain)
+        {
+        }
+
+
+        public void write(u16 data) { this.set_value(data); }
+        public void data_w(u16 data) { this.set_value(data); }
+    }
 
 
     //**************************************************************************
@@ -273,10 +298,23 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(_dac_type, _dac_class, _dac_shortname, _dac_description)
         static device_t device_creator_dac_8bit_r2r_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dac_8bit_r2r_device(mconfig, tag, owner, clock); }
-        public static readonly device_type DAC_8BIT_R2R = g.DEFINE_DEVICE_TYPE(device_creator_dac_8bit_r2r_device, "dac_8bit_r2r", "8-Bit R-2R DAC");
+        public static readonly device_type DAC_8BIT_R2R = DEFINE_DEVICE_TYPE(device_creator_dac_8bit_r2r_device, "dac_8bit_r2r", "8-Bit R-2R DAC");
 
         dac_8bit_r2r_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
-            : base(mconfig, DAC_8BIT_R2R, tag, owner, clock, 8, dac_global.dac_mapper_unsigned, dac_global.dac_gain_r2r)
+            : base(mconfig, DAC_8BIT_R2R, tag, owner, clock, 8, dac_mapper_unsigned, dac_gain_r2r)
+        { }
+    }
+
+
+    //DAC_GENERATOR(DAC_16BIT_R2R_TWOS_COMPLEMENT, dac_16bit_r2r_twos_complement_device, dac_word_device_base, dac_mapper_signed,   16, dac_gain_r2r, "16-Bit R-2R Twos Complement DAC", "dac_16bit_r2r_tc")
+    public class dac_16bit_r2r_twos_complement_device : dac_word_device_base
+    {
+        //DEFINE_DEVICE_TYPE(_dac_type, _dac_class, _dac_shortname, _dac_description)
+        static device_t device_creator_dac_16bit_r2r_twos_complement_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dac_16bit_r2r_twos_complement_device(mconfig, tag, owner, clock); }
+        public static readonly device_type DAC_16BIT_R2R_TWOS_COMPLEMENT = DEFINE_DEVICE_TYPE(device_creator_dac_16bit_r2r_twos_complement_device, "dac_16bit_r2r_tc", "16-Bit R-2R Twos Complement DAC");
+
+        dac_16bit_r2r_twos_complement_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
+            : base(mconfig, DAC_16BIT_R2R_TWOS_COMPLEMENT, tag, owner, clock, 16, dac_mapper_signed, dac_gain_r2r)
         { }
     }
 }

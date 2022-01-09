@@ -2,11 +2,13 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
+
+using static mame.netlist.nl_errstr_global;
+using static mame.nl_factory_global;
 
 
 namespace mame.netlist
@@ -45,7 +47,7 @@ namespace mame.netlist
         class nld_opamp : base_device_t
         {
             //NETLIB_DEVICE_IMPL_NS(analog, opamp, "OPAMP", "MODEL")
-            public static readonly factory.constructor_ptr_t decl_opamp = g.NETLIB_DEVICE_IMPL_NS<nld_opamp>("analog", "OPAMP", "MODEL");
+            public static readonly factory.constructor_ptr_t decl_opamp = NETLIB_DEVICE_IMPL_NS<nld_opamp>("analog", "OPAMP", "MODEL");
 
 
             analog.nld_R_base m_RP;
@@ -89,8 +91,8 @@ namespace mame.netlist
                 m_type = (int)m_modacc.m_TYPE.op();  //m_type = plib::narrow_cast<int>(m_modacc.m_TYPE);
                 if (m_type < 1 || m_type > 3)
                 {
-                    log().fatal.op(nl_errstr_global.MF_OPAMP_UNKNOWN_TYPE(m_type));
-                    throw new nl_exception(nl_errstr_global.MF_OPAMP_UNKNOWN_TYPE(m_type));
+                    log().fatal.op(MF_OPAMP_UNKNOWN_TYPE(m_type));
+                    throw new nl_exception(MF_OPAMP_UNKNOWN_TYPE(m_type));
                 }
 
                 if (m_type == 1)
@@ -194,7 +196,7 @@ namespace mame.netlist
 
                     //printf("OPAMP %s: %g %g %g\n", name().c_str(), CP, RP, G);
                     if (m_modacc.m_SLEW.op() / (nlconst.four() * nlconst.pi() * nlconst.np_VT()) < m_modacc.m_UGF.op())
-                        log().warning.op(nl_errstr_global.MW_OPAMP_FAIL_CONVERGENCE(this.name()));
+                        log().warning.op(MW_OPAMP_FAIL_CONVERGENCE(this.name()));
 
                     m_CP.set_cap_embedded(CP);
                     m_RP.set_R(RP);

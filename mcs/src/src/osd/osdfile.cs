@@ -2,12 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+
+using static mame.cpp_global;
+using static mame.osdfile_global;
 
 
 namespace mame
@@ -60,7 +62,7 @@ namespace mame
     /// This interface is used to access file-like and stream-like
     /// resources.  Examples include plain files, TCP socket, named pipes,
     /// pseudo-terminals, and compressed archive members.
-    public abstract class osd_file
+    public abstract class osd_file : IDisposable
     {
         /// \brief Smart pointer to a file handle
         //typedef std::unique_ptr<osd_file> ptr;
@@ -91,6 +93,22 @@ namespace mame
         ///   named pipes).
         /// \return Result of the operation.
         public abstract std.error_condition open(string path, uint32_t openflags, out osd_file file, out uint64_t filesize);
+
+
+        ~osd_file()
+        {
+            assert(m_isDisposed);  // can remove
+        }
+
+        bool m_isDisposed = false;
+        public virtual void Dispose()
+        {
+            close();
+            m_isDisposed = true;
+        }
+
+
+        public abstract void close();
 
 
         /// \brief Create a new pseudo-terminal (PTY) pair
@@ -148,7 +166,7 @@ namespace mame
         ///
         /// \param [in] offset Desired size of the file.
         /// \return Result of the operation.
-        //virtual std::error_condition truncate(std::uint64_t offset) = 0;
+        public abstract std.error_condition truncate(uint64_t offset);
 
 
         /// \brief Flush file buffers
@@ -156,7 +174,7 @@ namespace mame
         /// This flushes any data cached by the application, but does not
         /// guarantee that all prior writes have reached persistent storage.
         /// \return Result of the operation.
-        //virtual std::error_condition flush() = 0;
+        public abstract std.error_condition flush();
 
 
         /// \brief Delete a file

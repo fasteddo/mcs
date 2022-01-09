@@ -2,51 +2,53 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 
+using static mame.cpp_global;
+using static mame.netlist.nl_errstr_global;
 
-namespace mame.netlist
+
+namespace mame
 {
-    namespace factory
+    public static class nl_factory_global
     {
-        public static class nl_factory_global
+        //#define NETLIB_DEVICE_IMPL_ALIAS(p_alias, chip, p_name, p_def_param) \
+        //    NETLIB_DEVICE_IMPL_BASE(devices, p_alias, chip, p_name, p_def_param) \
+        public static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_ALIAS<chip>(string p_alias, string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_BASE<chip>("devices", p_alias, p_name, p_def_param); }
+
+        //#define NETLIB_DEVICE_IMPL(chip, p_name, p_def_param) \
+        //    NETLIB_DEVICE_IMPL_NS(devices, chip, p_name, p_def_param)
+        public static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL<chip>(string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_NS<chip>("devices", p_name, p_def_param); }
+
+        //#define NETLIB_DEVICE_IMPL_NS(ns, chip, p_name, p_def_param) \
+        //    NETLIB_DEVICE_IMPL_BASE(ns, chip, chip, p_name, p_def_param) \
+        public static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_NS<chip>(string ns, string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_BASE<chip>("devices", "devices", p_name, p_def_param); }
+
+        //#define NETLIB_DEVICE_IMPL_BASE(ns, p_alias, chip, p_name, p_def_param) \
+        //    static factory::element_t::uptr NETLIB_NAME(p_alias ## _c) () \
+        //    { \
+        //        using devtype = factory::device_element_t<ns :: NETLIB_NAME(chip)>; \
+        //        factory::properties sl(p_def_param, PSOURCELOC()); \
+        //        return devtype::create(p_name, std::move(sl)); \
+        //    } \
+        //    \
+        //    extern factory::constructor_ptr_t decl_ ## p_alias; \
+        //    factory::constructor_ptr_t decl_ ## p_alias = NETLIB_NAME(p_alias ## _c);
+        static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_BASE<chip>(string ns, string p_alias, string p_name, string p_def_param)
         {
-            //#define NETLIB_DEVICE_IMPL_ALIAS(p_alias, chip, p_name, p_def_param) \
-            //    NETLIB_DEVICE_IMPL_BASE(devices, p_alias, chip, p_name, p_def_param) \
-            public static factory.constructor_ptr_t NETLIB_DEVICE_IMPL_ALIAS<chip>(string p_alias, string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_BASE<chip>("devices", p_alias, p_name, p_def_param); }
-
-            //#define NETLIB_DEVICE_IMPL(chip, p_name, p_def_param) \
-            //    NETLIB_DEVICE_IMPL_NS(devices, chip, p_name, p_def_param)
-            public static factory.constructor_ptr_t NETLIB_DEVICE_IMPL<chip>(string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_NS<chip>("devices", p_name, p_def_param); }
-
-            //#define NETLIB_DEVICE_IMPL_NS(ns, chip, p_name, p_def_param) \
-            //    NETLIB_DEVICE_IMPL_BASE(ns, chip, chip, p_name, p_def_param) \
-            public static factory.constructor_ptr_t NETLIB_DEVICE_IMPL_NS<chip>(string ns, string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_BASE<chip>("devices", "devices", p_name, p_def_param); }
-
-            //#define NETLIB_DEVICE_IMPL_BASE(ns, p_alias, chip, p_name, p_def_param) \
-            //    static factory::element_t::uptr NETLIB_NAME(p_alias ## _c) () \
-            //    { \
-            //        using devtype = factory::device_element_t<ns :: NETLIB_NAME(chip)>; \
-            //        factory::properties sl(p_def_param, PSOURCELOC()); \
-            //        return devtype::create(p_name, std::move(sl)); \
-            //    } \
-            //    \
-            //    extern factory::constructor_ptr_t decl_ ## p_alias; \
-            //    factory::constructor_ptr_t decl_ ## p_alias = NETLIB_NAME(p_alias ## _c);
-            static factory.constructor_ptr_t NETLIB_DEVICE_IMPL_BASE<chip>(string ns, string p_alias, string p_name, string p_def_param)
+            return () => 
             {
-                return () => 
-                {
-                    properties sl = new properties(p_def_param, plib.pg.PSOURCELOC());
-                    return new factory.device_element_t<chip>(p_name, sl);
-                };
-            }
+                netlist.factory.properties sl = new netlist.factory.properties(p_def_param, plib.pg.PSOURCELOC());
+                return new netlist.factory.device_element_t<chip>(p_name, sl);
+            };
         }
+    }
 
 
+    namespace netlist.factory
+    {
         public enum element_type
         {
             BUILTIN,
@@ -186,16 +188,31 @@ namespace mame.netlist
                 ////return anetlist.make_pool_object<C>(anetlist, name, std::forward<Args>(std::get<Is>(args))...);
 
                 if      (typeof(C) == typeof(analog.nld_C))                   return new analog.nld_C(anetlist, name);
+                else if (typeof(C) == typeof(analog.nld_D))                   return new analog.nld_D(anetlist, name);
                 else if (typeof(C) == typeof(analog.nld_opamp))               return new analog.nld_opamp(anetlist, name);
                 else if (typeof(C) == typeof(analog.nld_POT))                 return new analog.nld_POT(anetlist, name);
+                else if (typeof(C) == typeof(analog.nld_QBJT_switch))         return new analog.nld_QBJT_switch(anetlist, name);
                 else if (typeof(C) == typeof(analog.nld_R))                   return new analog.nld_R(anetlist, name);
+                else if (typeof(C) == typeof(analog.nld_switch2))             return new analog.nld_switch2(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_74107))              return new devices.nld_74107(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_74153))              return new devices.nld_74153(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_7448))               return new devices.nld_7448(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_7450))               return new devices.nld_7450(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_7474))               return new devices.nld_7474(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_7483))               return new devices.nld_7483(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_7490))               return new devices.nld_7490(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_7493))               return new devices.nld_7493(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_9316))               return new devices.nld_9316(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_analog_input))       return new devices.nld_analog_input(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_CD4066_GATE))        return new devices.nld_CD4066_GATE(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_gnd))                return new devices.nld_gnd(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_logic_input))        return new devices.nld_logic_input(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_mainclock))          return new devices.nld_mainclock(anetlist, name);
+                else if (typeof(C) == typeof(devices.nld_NE555))              return new devices.nld_NE555(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_netlistparams))      return new devices.nld_netlistparams(anetlist, name);
                 else if (typeof(C) == typeof(devices.nld_solver))             return new devices.nld_solver(anetlist, name);
-                else if (typeof(C) == typeof(interface_.nld_analog_callback)) { g.assert(args.Length == 2);  return new interface_.nld_analog_callback(anetlist, name, (nl_fptype)args[0], (interface_.nld_analog_callback.FUNC)args[1]); }
+                else if (typeof(C) == typeof(interface_.nld_analog_callback)) { assert(args.Length == 2);  return new interface_.nld_analog_callback(anetlist, name, (nl_fptype)args[0], (interface_.nld_analog_callback.FUNC)args[1]); }
+                else if (typeof(C) == typeof(interface_.nld_logic_callback))  { assert(args.Length == 1);  return new interface_.nld_logic_callback(anetlist, name, (interface_.nld_logic_callback.FUNC)args[0]); }
                 else if (typeof(C) == typeof(nld_sound_in))                   return new nld_sound_in(anetlist, name);
                 else throw new emu_unimplemented();
             }
@@ -221,6 +238,11 @@ namespace mame.netlist
             public static element_t create_nld_analog_callback(string name, properties props, params object [] args)
             {
                 return new device_element_t<interface_.nld_analog_callback>(name, props, args);
+            }
+
+            public static element_t create_nld_logic_callback(string name, properties props, params object [] args)
+            {
+                return new device_element_t<interface_.nld_logic_callback>(name, props, args);
             }
         }
 
@@ -251,13 +273,18 @@ namespace mame.netlist
                 add(device_element_t<interface_.nld_analog_callback>.create_nld_analog_callback(name, props, fp, lb));
             }
 
+            public void add_nld_logic_callback(string name, properties props, netlist.interface_.nld_logic_callback.FUNC lb)
+            {
+                add(device_element_t<interface_.nld_logic_callback>.create_nld_logic_callback(name, props, lb));
+            }
+
 
             public void add(element_t factory)  //void add(element_t::uptr &&factory) noexcept(false);
             {
                 if (exists(factory.name()))
                 {
-                    m_log.fatal.op(nl_errstr_global.MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
-                    throw new nl_exception(nl_errstr_global.MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
+                    m_log.fatal.op(MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
+                    throw new nl_exception(MF_FACTORY_ALREADY_CONTAINS_1(factory.name()));
                 }
 
                 push_back(factory);  //push_back(std::move(factory));
@@ -272,8 +299,8 @@ namespace mame.netlist
                         return e;
                 }
 
-                m_log.fatal.op(nl_errstr_global.MF_CLASS_1_NOT_FOUND(devname));
-                throw new nl_exception(nl_errstr_global.MF_CLASS_1_NOT_FOUND(devname));
+                m_log.fatal.op(MF_CLASS_1_NOT_FOUND(devname));
+                throw new nl_exception(MF_CLASS_1_NOT_FOUND(devname));
             }
 
 
@@ -323,7 +350,8 @@ namespace mame.netlist
         }
     }
 
-    namespace devices
+
+    namespace netlist.devices
     {
         // in net_lib.cs
         //void initialize_factory(factory::list_t &factory);

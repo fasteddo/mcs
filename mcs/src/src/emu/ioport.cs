@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
@@ -19,6 +20,22 @@ using u32 = System.UInt32;
 using u64 = System.UInt64;
 using unsigned = System.UInt32;
 
+using static mame.attotime_global;
+using static mame.cpp_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
+using static mame.emuopts_global;
+using static mame.inpttype_global;
+using static mame.inputdev_global;
+using static mame.ioport_global;
+using static mame.ioport_internal;
+using static mame.osdcomm_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
+using static mame.profiler_global;
+using static mame.unicode_global;
+using static mame.util;
+
 
 namespace mame
 {
@@ -26,10 +43,24 @@ namespace mame
     //typedef u32 ioport_value;
 
 
-    // I/O port callback function delegates
-    public delegate ioport_value ioport_field_read_delegate();  //typedef device_delegate<ioport_value ()> ioport_field_read_delegate;
-    public delegate void ioport_field_write_delegate(ioport_field field, u32 param, ioport_value param1, ioport_value param2);  //typedef device_delegate<void (ioport_field &, u32, ioport_value, ioport_value)> ioport_field_write_delegate;
-    public delegate float ioport_field_crossmap_delegate(float param);  //typedef device_delegate<float (float)> ioport_field_crossmap_delegate;
+    public static partial class ioport_global
+    {
+        // active high/low values for input ports
+        public const ioport_value IP_ACTIVE_HIGH = 0x00000000;
+        public const ioport_value IP_ACTIVE_LOW = 0xffffffff;
+
+
+        // maximum number of players supported
+        public const int MAX_PLAYERS = 10;
+
+        // unicode constants
+        public const char32_t UCHAR_PRIVATE = 0x100000;
+        public const char32_t UCHAR_SHIFT_1 = UCHAR_PRIVATE + 0;
+        public const char32_t UCHAR_SHIFT_2 = UCHAR_PRIVATE + 1;
+        public const char32_t UCHAR_SHIFT_BEGIN = UCHAR_SHIFT_1;
+        public const char32_t UCHAR_SHIFT_END = UCHAR_SHIFT_2;
+        public const char32_t UCHAR_MAMEKEY_BEGIN = UCHAR_PRIVATE + 2;
+    }
 
 
     // sequence types for input_port_seq() call
@@ -345,7 +376,6 @@ namespace mame
             IPT_UI_SHOW_PROFILER,
             IPT_UI_TOGGLE_UI,
             IPT_UI_RELEASE_POINTER,
-            IPT_UI_TOGGLE_DEBUG,
             IPT_UI_PASTE,
             IPT_UI_SAVE_STATE,
             IPT_UI_LOAD_STATE,
@@ -354,8 +384,7 @@ namespace mame
             IPT_UI_DATS,
             IPT_UI_FAVORITES,
             IPT_UI_EXPORT,
-            IPT_UI_AUDIT_FAST,
-            IPT_UI_AUDIT_ALL,
+            IPT_UI_AUDIT,
 
             // additional OSD-specified UI port types (up to 16)
             IPT_OSD_1,
@@ -389,6 +418,13 @@ namespace mame
     //DECLARE_ENUM_INCDEC_OPERATORS(ioport_type)
 
 
+    // aliases for some types
+    //#define IPT_PADDLE_H        IPT_PADDLE
+    //#define IPT_PEDAL1          IPT_PEDAL
+    //#define IPT_POSITIONAL_H    IPT_POSITIONAL
+    //#define IPT_DIAL_H          IPT_DIAL
+
+
     // input type classes
     public enum ioport_type_class
     {
@@ -415,130 +451,130 @@ namespace mame
         INPUT_STRING_Coinage,
         INPUT_STRING_Coin_A,
         INPUT_STRING_Coin_B,
-    //  INPUT_STRING_20C_1C,    //  0.050000
-    //  INPUT_STRING_15C_1C,    //  0.066667
-    //  INPUT_STRING_10C_1C,    //  0.100000
-    //#define __input_string_coinage_start INPUT_STRING_9C_1C
+//      INPUT_STRING_20C_1C,    //  0.050000
+//      INPUT_STRING_15C_1C,    //  0.066667
+//      INPUT_STRING_10C_1C,    //  0.100000
+//#define __input_string_coinage_start INPUT_STRING_9C_1C
         INPUT_STRING_9C_1C,     //  0.111111
         INPUT_STRING_8C_1C,     //  0.125000
         INPUT_STRING_7C_1C,     //  0.142857
         INPUT_STRING_6C_1C,     //  0.166667
-    //  INPUT_STRING_10C_2C,    //  0.200000
+//      INPUT_STRING_10C_2C,    //  0.200000
         INPUT_STRING_5C_1C,     //  0.200000
-    //  INPUT_STRING_9C_2C,     //  0.222222
-    //  INPUT_STRING_8C_2C,     //  0.250000
+//      INPUT_STRING_9C_2C,     //  0.222222
+//      INPUT_STRING_8C_2C,     //  0.250000
         INPUT_STRING_4C_1C,     //  0.250000
-    //  INPUT_STRING_7C_2C,     //  0.285714
-    //  INPUT_STRING_10C_3C,    //  0.300000
-    //  INPUT_STRING_9C_3C,     //  0.333333
-    //  INPUT_STRING_6C_2C,     //  0.333333
+//      INPUT_STRING_7C_2C,     //  0.285714
+//      INPUT_STRING_10C_3C,    //  0.300000
+//      INPUT_STRING_9C_3C,     //  0.333333
+//      INPUT_STRING_6C_2C,     //  0.333333
         INPUT_STRING_3C_1C,     //  0.333333
         INPUT_STRING_8C_3C,     //  0.375000
-    //  INPUT_STRING_10C_4C,    //  0.400000
-    //  INPUT_STRING_7C_3C,     //  0.428571
-    //  INPUT_STRING_9C_4C,     //  0.444444
-    //  INPUT_STRING_10C_5C,    //  0.500000
-    //  INPUT_STRING_8C_4C,     //  0.500000
-    //  INPUT_STRING_6C_3C,     //  0.500000
+//      INPUT_STRING_10C_4C,    //  0.400000
+//      INPUT_STRING_7C_3C,     //  0.428571
+//      INPUT_STRING_9C_4C,     //  0.444444
+//      INPUT_STRING_10C_5C,    //  0.500000
+//      INPUT_STRING_8C_4C,     //  0.500000
+//      INPUT_STRING_6C_3C,     //  0.500000
         INPUT_STRING_4C_2C,     //  0.500000
         INPUT_STRING_5C_2C,     //  0.500000
         INPUT_STRING_2C_1C,     //  0.500000
-    //  INPUT_STRING_9C_5C,     //  0.555556
-    //  INPUT_STRING_7C_4C,     //  0.571429
-    //  INPUT_STRING_10C_6C,    //  0.600000
+//      INPUT_STRING_9C_5C,     //  0.555556
+//      INPUT_STRING_7C_4C,     //  0.571429
+//      INPUT_STRING_10C_6C,    //  0.600000
         INPUT_STRING_5C_3C,     //  0.600000
-    //  INPUT_STRING_8C_5C,     //  0.625000
-    //  INPUT_STRING_9C_6C,     //  0.666667
-    //  INPUT_STRING_6C_4C,     //  0.666667
+//      INPUT_STRING_8C_5C,     //  0.625000
+//      INPUT_STRING_9C_6C,     //  0.666667
+//      INPUT_STRING_6C_4C,     //  0.666667
         INPUT_STRING_3C_2C,     //  0.666667
-    //  INPUT_STRING_10C_7C,    //  0.700000
-    //  INPUT_STRING_7C_5C,     //  0.714286
-    //  INPUT_STRING_8C_6C,     //  0.750000
+//      INPUT_STRING_10C_7C,    //  0.700000
+//      INPUT_STRING_7C_5C,     //  0.714286
+//      INPUT_STRING_8C_6C,     //  0.750000
         INPUT_STRING_4C_3C,     //  0.750000
-    //  INPUT_STRING_9C_7C,     //  0.777778
-    //  INPUT_STRING_10C_8C,    //  0.800000
-    //  INPUT_STRING_5C_4C,     //  0.800000
-    //  INPUT_STRING_6C_5C,     //  0.833333
-    //  INPUT_STRING_7C_6C,     //  0.857143
-    //  INPUT_STRING_8C_7C,     //  0.875000
-    //  INPUT_STRING_9C_8C,     //  0.888889
-    //  INPUT_STRING_10C_9C,    //  0.900000
-    //  INPUT_STRING_10C_10C,   //  1.000000
-    //  INPUT_STRING_9C_9C,     //  1.000000
-    //  INPUT_STRING_8C_8C,     //  1.000000
-    //  INPUT_STRING_7C_7C,     //  1.000000
-    //  INPUT_STRING_6C_6C,     //  1.000000
-    //  INPUT_STRING_5C_5C,     //  1.000000
+//      INPUT_STRING_9C_7C,     //  0.777778
+//      INPUT_STRING_10C_8C,    //  0.800000
+//      INPUT_STRING_5C_4C,     //  0.800000
+//      INPUT_STRING_6C_5C,     //  0.833333
+//      INPUT_STRING_7C_6C,     //  0.857143
+//      INPUT_STRING_8C_7C,     //  0.875000
+//      INPUT_STRING_9C_8C,     //  0.888889
+//      INPUT_STRING_10C_9C,    //  0.900000
+//      INPUT_STRING_10C_10C,   //  1.000000
+//      INPUT_STRING_9C_9C,     //  1.000000
+//      INPUT_STRING_8C_8C,     //  1.000000
+//      INPUT_STRING_7C_7C,     //  1.000000
+//      INPUT_STRING_6C_6C,     //  1.000000
+//      INPUT_STRING_5C_5C,     //  1.000000
         INPUT_STRING_4C_4C,     //  1.000000
         INPUT_STRING_3C_3C,     //  1.000000
         INPUT_STRING_2C_2C,     //  1.000000
         INPUT_STRING_1C_1C,     //  1.000000
-    //  INPUT_STRING_9C_10C,    //  1.111111
-    //  INPUT_STRING_8C_9C,     //  1.125000
-    //  INPUT_STRING_7C_8C,     //  1.142857
-    //  INPUT_STRING_6C_7C,     //  1.166667
-    //  INPUT_STRING_5C_6C,     //  1.200000
-    //  INPUT_STRING_8C_10C,    //  1.250000
+//      INPUT_STRING_9C_10C,    //  1.111111
+//      INPUT_STRING_8C_9C,     //  1.125000
+//      INPUT_STRING_7C_8C,     //  1.142857
+//      INPUT_STRING_6C_7C,     //  1.166667
+//      INPUT_STRING_5C_6C,     //  1.200000
+//      INPUT_STRING_8C_10C,    //  1.250000
         INPUT_STRING_3C_5C,     //  1.250000
         INPUT_STRING_4C_5C,     //  1.250000
-    //  INPUT_STRING_7C_9C,     //  1.285714
-    //  INPUT_STRING_6C_8C,     //  1.333333
+//      INPUT_STRING_7C_9C,     //  1.285714
+//      INPUT_STRING_6C_8C,     //  1.333333
         INPUT_STRING_3C_4C,     //  1.333333
-    //  INPUT_STRING_5C_7C,     //  1.400000
-    //  INPUT_STRING_7C_10C,    //  1.428571
-    //  INPUT_STRING_6C_9C,     //  1.500000
-    //  INPUT_STRING_4C_6C,     //  1.500000
+//      INPUT_STRING_5C_7C,     //  1.400000
+//      INPUT_STRING_7C_10C,    //  1.428571
+//      INPUT_STRING_6C_9C,     //  1.500000
+//      INPUT_STRING_4C_6C,     //  1.500000
         INPUT_STRING_2C_3C,     //  1.500000
-    //  INPUT_STRING_5C_8C,     //  1.600000
-    //  INPUT_STRING_6C_10C,    //  1.666667
-    //  INPUT_STRING_3C_5C,     //  1.666667
+//      INPUT_STRING_5C_8C,     //  1.600000
+//      INPUT_STRING_6C_10C,    //  1.666667
+//      INPUT_STRING_3C_5C,     //  1.666667
         INPUT_STRING_4C_7C,     //  1.750000
-    //  INPUT_STRING_5C_9C,     //  1.800000
-    //  INPUT_STRING_5C_10C,    //  2.000000
-    //  INPUT_STRING_4C_8C,     //  2.000000
-    //  INPUT_STRING_3C_6C,     //  2.000000
+//      INPUT_STRING_5C_9C,     //  1.800000
+//      INPUT_STRING_5C_10C,    //  2.000000
+//      INPUT_STRING_4C_8C,     //  2.000000
+//      INPUT_STRING_3C_6C,     //  2.000000
         INPUT_STRING_2C_4C,     //  2.000000
         INPUT_STRING_1C_2C,     //  2.000000
-    //  INPUT_STRING_4C_9C,     //  2.250000
-    //  INPUT_STRING_3C_7C,     //  2.333333
-    //  INPUT_STRING_4C_10C,    //  2.500000
+//      INPUT_STRING_4C_9C,     //  2.250000
+//      INPUT_STRING_3C_7C,     //  2.333333
+//      INPUT_STRING_4C_10C,    //  2.500000
         INPUT_STRING_2C_5C,     //  2.500000
-    //  INPUT_STRING_3C_8C,     //  2.666667
-    //  INPUT_STRING_3C_9C,     //  3.000000
+//      INPUT_STRING_3C_8C,     //  2.666667
+//      INPUT_STRING_3C_9C,     //  3.000000
         INPUT_STRING_2C_6C,     //  3.000000
         INPUT_STRING_1C_3C,     //  3.000000
-    //  INPUT_STRING_3C_10C,    //  3.333333
+//      INPUT_STRING_3C_10C,    //  3.333333
         INPUT_STRING_2C_7C,     //  3.500000
         INPUT_STRING_2C_8C,     //  4.000000
         INPUT_STRING_1C_4C,     //  4.000000
-    //  INPUT_STRING_2C_9C,     //  4.500000
-    //  INPUT_STRING_2C_10C,    //  5.000000
+//      INPUT_STRING_2C_9C,     //  4.500000
+//      INPUT_STRING_2C_10C,    //  5.000000
         INPUT_STRING_1C_5C,     //  5.000000
         INPUT_STRING_1C_6C,     //  6.000000
         INPUT_STRING_1C_7C,     //  7.000000
         INPUT_STRING_1C_8C,     //  8.000000
         INPUT_STRING_1C_9C,     //  9.000000
-    //#define __input_string_coinage_end INPUT_STRING_1C_9C
-    //  INPUT_STRING_1C_10C,    //  10.000000
-    //  INPUT_STRING_1C_11C,    //  11.000000
-    //  INPUT_STRING_1C_12C,    //  12.000000
-    //  INPUT_STRING_1C_13C,    //  13.000000
-    //  INPUT_STRING_1C_14C,    //  14.000000
-    //  INPUT_STRING_1C_15C,    //  15.000000
-    //  INPUT_STRING_1C_20C,    //  20.000000
-    //  INPUT_STRING_1C_25C,    //  25.000000
-    //  INPUT_STRING_1C_30C,    //  30.000000
-    //  INPUT_STRING_1C_40C,    //  40.000000
-    //  INPUT_STRING_1C_50C,    //  50.000000
-    //  INPUT_STRING_1C_99C,    //  99.000000
-    //  INPUT_STRING_1C_100C,   //  100.000000
-    //  INPUT_STRING_1C_120C,   //  120.000000
-    //  INPUT_STRING_1C_125C,   //  125.000000
-    //  INPUT_STRING_1C_150C,   //  150.000000
-    //  INPUT_STRING_1C_200C,   //  200.000000
-    //  INPUT_STRING_1C_250C,   //  250.000000
-    //  INPUT_STRING_1C_500C,   //  500.000000
-    //  INPUT_STRING_1C_1000C,  //  1000.000000
+//#define __input_string_coinage_end INPUT_STRING_1C_9C
+//      INPUT_STRING_1C_10C,    //  10.000000
+//      INPUT_STRING_1C_11C,    //  11.000000
+//      INPUT_STRING_1C_12C,    //  12.000000
+//      INPUT_STRING_1C_13C,    //  13.000000
+//      INPUT_STRING_1C_14C,    //  14.000000
+//      INPUT_STRING_1C_15C,    //  15.000000
+//      INPUT_STRING_1C_20C,    //  20.000000
+//      INPUT_STRING_1C_25C,    //  25.000000
+//      INPUT_STRING_1C_30C,    //  30.000000
+//      INPUT_STRING_1C_40C,    //  40.000000
+//      INPUT_STRING_1C_50C,    //  50.000000
+//      INPUT_STRING_1C_99C,    //  99.000000
+//      INPUT_STRING_1C_100C,   //  100.000000
+//      INPUT_STRING_1C_120C,   //  120.000000
+//      INPUT_STRING_1C_125C,   //  125.000000
+//      INPUT_STRING_1C_150C,   //  150.000000
+//      INPUT_STRING_1C_200C,   //  200.000000
+//      INPUT_STRING_1C_250C,   //  250.000000
+//      INPUT_STRING_1C_500C,   //  500.000000
+//      INPUT_STRING_1C_1000C,  //  1000.000000
         INPUT_STRING_Free_Play,
         INPUT_STRING_Cabinet,
         INPUT_STRING_Upright,
@@ -604,482 +640,36 @@ namespace mame
         INPUT_STRING_Continues,
         INPUT_STRING_Allow_Continue,
         INPUT_STRING_Level_Select,
-    //  INPUT_STRING_Allow,
-    //  INPUT_STRING_Forbid,
-    //  INPUT_STRING_Enable,
-    //  INPUT_STRING_Disable,
+//      INPUT_STRING_Allow,
+//      INPUT_STRING_Forbid,
+//      INPUT_STRING_Enable,
+//      INPUT_STRING_Disable,
         INPUT_STRING_Infinite,
-    //  INPUT_STRING_Invincibility,
-    //  INPUT_STRING_Invulnerability,
+//      INPUT_STRING_Invincibility,
+//      INPUT_STRING_Invulnerability,
         INPUT_STRING_Stereo,
         INPUT_STRING_Mono,
         INPUT_STRING_Unused,
         INPUT_STRING_Unknown,
-    //  INPUT_STRING_Undefined,
+//      INPUT_STRING_Undefined,
         INPUT_STRING_Standard,
         INPUT_STRING_Reverse,
         INPUT_STRING_Alternate,
-    //  INPUT_STRING_Reserve,
-    //  INPUT_STRING_Spare,
-    //  INPUT_STRING_Invalid,
+//      INPUT_STRING_Reserve,
+//      INPUT_STRING_Spare,
+//      INPUT_STRING_Invalid,
         INPUT_STRING_None,
 
         INPUT_STRING_COUNT
-    };
-
-
-    public delegate void ioport_constructor(device_t owner, ioport_list portlist, ref string errorbuf); // possibly out
-
-
-    public static class ioport_global
-    {
-        // active high/low values for input ports
-        public const ioport_value IP_ACTIVE_HIGH = 0x00000000;
-        public const ioport_value IP_ACTIVE_LOW = 0xffffffff;
-
-        // maximum number of players supported
-        public const int MAX_PLAYERS = 10;
-
-        // unicode constants
-        public const char32_t UCHAR_PRIVATE = 0x100000;
-        public const char32_t UCHAR_SHIFT_1 = UCHAR_PRIVATE + 0;
-        public const char32_t UCHAR_SHIFT_2 = UCHAR_PRIVATE + 1;
-        public const char32_t UCHAR_SHIFT_BEGIN = UCHAR_SHIFT_1;
-        public const char32_t UCHAR_SHIFT_END = UCHAR_SHIFT_2;
-        public const char32_t UCHAR_MAMEKEY_BEGIN = UCHAR_PRIVATE + 2;
-
-
-        public static readonly Dictionary<INPUT_STRING, string> input_port_default_strings = new Dictionary<INPUT_STRING, string>()
-        {
-            { INPUT_STRING.INPUT_STRING_Off, "Off" },
-            { INPUT_STRING.INPUT_STRING_On, "On" },
-            { INPUT_STRING.INPUT_STRING_No, "No" },
-            { INPUT_STRING.INPUT_STRING_Yes, "Yes" },
-            { INPUT_STRING.INPUT_STRING_Lives, "Lives" },
-            { INPUT_STRING.INPUT_STRING_Bonus_Life, "Bonus Life" },
-            { INPUT_STRING.INPUT_STRING_Difficulty, "Difficulty" },
-            { INPUT_STRING.INPUT_STRING_Demo_Sounds, "Demo Sounds" },
-            { INPUT_STRING.INPUT_STRING_Coinage, "Coinage" },
-            { INPUT_STRING.INPUT_STRING_Coin_A, "Coin A" },
-            { INPUT_STRING.INPUT_STRING_Coin_B, "Coin B" },
-            { INPUT_STRING.INPUT_STRING_9C_1C, "9 Coins/1 Credit" },
-            { INPUT_STRING.INPUT_STRING_8C_1C, "8 Coins/1 Credit" },
-            { INPUT_STRING.INPUT_STRING_7C_1C, "7 Coins/1 Credit" },
-            { INPUT_STRING.INPUT_STRING_6C_1C, "6 Coins/1 Credit" },
-            { INPUT_STRING.INPUT_STRING_5C_1C, "5 Coins/1 Credit" },
-            { INPUT_STRING.INPUT_STRING_4C_1C, "4 Coins/1 Credit" },
-            { INPUT_STRING.INPUT_STRING_3C_1C, "3 Coins/1 Credit" },
-            { INPUT_STRING.INPUT_STRING_8C_3C, "8 Coins/3 Credits" },
-            { INPUT_STRING.INPUT_STRING_4C_2C, "4 Coins/2 Credits" },
-            { INPUT_STRING.INPUT_STRING_5C_2C, "5 Coins/2 Credits" },
-            { INPUT_STRING.INPUT_STRING_2C_1C, "2 Coins/1 Credit" },
-            { INPUT_STRING.INPUT_STRING_5C_3C, "5 Coins/3 Credits" },
-            { INPUT_STRING.INPUT_STRING_3C_2C, "3 Coins/2 Credits" },
-            { INPUT_STRING.INPUT_STRING_4C_3C, "4 Coins/3 Credits" },
-            { INPUT_STRING.INPUT_STRING_4C_4C, "4 Coins/4 Credits" },
-            { INPUT_STRING.INPUT_STRING_3C_3C, "3 Coins/3 Credits" },
-            { INPUT_STRING.INPUT_STRING_2C_2C, "2 Coins/2 Credits" },
-            { INPUT_STRING.INPUT_STRING_1C_1C, "1 Coin/1 Credit" },
-            { INPUT_STRING.INPUT_STRING_3C_5C, "3 Coins/5 Credits" },
-            { INPUT_STRING.INPUT_STRING_4C_5C, "4 Coins/5 Credits" },
-            { INPUT_STRING.INPUT_STRING_3C_4C, "3 Coins/4 Credits" },
-            { INPUT_STRING.INPUT_STRING_2C_3C, "2 Coins/3 Credits" },
-            { INPUT_STRING.INPUT_STRING_4C_7C, "4 Coins/7 Credits" },
-            { INPUT_STRING.INPUT_STRING_2C_4C, "2 Coins/4 Credits" },
-            { INPUT_STRING.INPUT_STRING_1C_2C, "1 Coin/2 Credits" },
-            { INPUT_STRING.INPUT_STRING_2C_5C, "2 Coins/5 Credits" },
-            { INPUT_STRING.INPUT_STRING_2C_6C, "2 Coins/6 Credits" },
-            { INPUT_STRING.INPUT_STRING_1C_3C, "1 Coin/3 Credits" },
-            { INPUT_STRING.INPUT_STRING_2C_7C, "2 Coins/7 Credits" },
-            { INPUT_STRING.INPUT_STRING_2C_8C, "2 Coins/8 Credits" },
-            { INPUT_STRING.INPUT_STRING_1C_4C, "1 Coin/4 Credits" },
-            { INPUT_STRING.INPUT_STRING_1C_5C, "1 Coin/5 Credits" },
-            { INPUT_STRING.INPUT_STRING_1C_6C, "1 Coin/6 Credits" },
-            { INPUT_STRING.INPUT_STRING_1C_7C, "1 Coin/7 Credits" },
-            { INPUT_STRING.INPUT_STRING_1C_8C, "1 Coin/8 Credits" },
-            { INPUT_STRING.INPUT_STRING_1C_9C, "1 Coin/9 Credits" },
-            { INPUT_STRING.INPUT_STRING_Free_Play, "Free Play" },
-            { INPUT_STRING.INPUT_STRING_Cabinet, "Cabinet" },
-            { INPUT_STRING.INPUT_STRING_Upright, "Upright" },
-            { INPUT_STRING.INPUT_STRING_Cocktail, "Cocktail" },
-            { INPUT_STRING.INPUT_STRING_Flip_Screen, "Flip Screen" },
-            { INPUT_STRING.INPUT_STRING_Service_Mode, "Service Mode" },
-            { INPUT_STRING.INPUT_STRING_Pause, "Pause" },
-            { INPUT_STRING.INPUT_STRING_Test, "Test" },
-            { INPUT_STRING.INPUT_STRING_Tilt, "Tilt" },
-            { INPUT_STRING.INPUT_STRING_Version, "Version" },
-            { INPUT_STRING.INPUT_STRING_Region, "Region" },
-            { INPUT_STRING.INPUT_STRING_International, "International" },
-            { INPUT_STRING.INPUT_STRING_Japan, "Japan" },
-            { INPUT_STRING.INPUT_STRING_USA, "USA" },
-            { INPUT_STRING.INPUT_STRING_Europe, "Europe" },
-            { INPUT_STRING.INPUT_STRING_Asia, "Asia" },
-            { INPUT_STRING.INPUT_STRING_China, "China" },
-            { INPUT_STRING.INPUT_STRING_Hong_Kong, "Hong Kong" },
-            { INPUT_STRING.INPUT_STRING_Korea, "Korea" },
-            { INPUT_STRING.INPUT_STRING_Southeast_Asia, "Southeast Asia" },
-            { INPUT_STRING.INPUT_STRING_Taiwan, "Taiwan" },
-            { INPUT_STRING.INPUT_STRING_World, "World" },
-            { INPUT_STRING.INPUT_STRING_Language, "Language" },
-            { INPUT_STRING.INPUT_STRING_English, "English" },
-            { INPUT_STRING.INPUT_STRING_Japanese, "Japanese" },
-            { INPUT_STRING.INPUT_STRING_Chinese, "Chinese" },
-            { INPUT_STRING.INPUT_STRING_French, "French" },
-            { INPUT_STRING.INPUT_STRING_German, "German" },
-            { INPUT_STRING.INPUT_STRING_Italian, "Italian" },
-            { INPUT_STRING.INPUT_STRING_Korean, "Korean" },
-            { INPUT_STRING.INPUT_STRING_Spanish, "Spanish" },
-            { INPUT_STRING.INPUT_STRING_Very_Easy, "Very Easy" },
-            { INPUT_STRING.INPUT_STRING_Easiest, "Easiest" },
-            { INPUT_STRING.INPUT_STRING_Easier, "Easier" },
-            { INPUT_STRING.INPUT_STRING_Easy, "Easy" },
-            { INPUT_STRING.INPUT_STRING_Medium_Easy, "Medium Easy" },
-            { INPUT_STRING.INPUT_STRING_Normal, "Normal" },
-            { INPUT_STRING.INPUT_STRING_Medium, "Medium" },
-            { INPUT_STRING.INPUT_STRING_Medium_Hard, "Medium Hard" },
-            { INPUT_STRING.INPUT_STRING_Hard, "Hard" },
-            { INPUT_STRING.INPUT_STRING_Harder, "Harder" },
-            { INPUT_STRING.INPUT_STRING_Hardest, "Hardest" },
-            { INPUT_STRING.INPUT_STRING_Very_Hard, "Very Hard" },
-            { INPUT_STRING.INPUT_STRING_Medium_Difficult, "Medium Difficult" },
-            { INPUT_STRING.INPUT_STRING_Difficult, "Difficult" },
-            { INPUT_STRING.INPUT_STRING_Very_Difficult, "Very Difficult" },
-            { INPUT_STRING.INPUT_STRING_Very_Low, "Very Low" },
-            { INPUT_STRING.INPUT_STRING_Low, "Low" },
-            { INPUT_STRING.INPUT_STRING_High, "High" },
-            { INPUT_STRING.INPUT_STRING_Higher, "Higher" },
-            { INPUT_STRING.INPUT_STRING_Highest, "Highest" },
-            { INPUT_STRING.INPUT_STRING_Very_High, "Very High" },
-            { INPUT_STRING.INPUT_STRING_Players, "Players" },
-            { INPUT_STRING.INPUT_STRING_Controls, "Controls" },
-            { INPUT_STRING.INPUT_STRING_Dual, "Dual" },
-            { INPUT_STRING.INPUT_STRING_Single, "Single" },
-            { INPUT_STRING.INPUT_STRING_Game_Time, "Game Time" },
-            { INPUT_STRING.INPUT_STRING_Continue_Price, "Continue Price" },
-            { INPUT_STRING.INPUT_STRING_Controller, "Controller" },
-            { INPUT_STRING.INPUT_STRING_Light_Gun, "Light Gun" },
-            { INPUT_STRING.INPUT_STRING_Joystick, "Joystick" },
-            { INPUT_STRING.INPUT_STRING_Trackball, "Trackball" },
-            { INPUT_STRING.INPUT_STRING_Continues, "Continues" },
-            { INPUT_STRING.INPUT_STRING_Allow_Continue, "Allow Continue" },
-            { INPUT_STRING.INPUT_STRING_Level_Select, "Level Select" },
-            { INPUT_STRING.INPUT_STRING_Infinite, "Infinite" },
-            { INPUT_STRING.INPUT_STRING_Stereo, "Stereo" },
-            { INPUT_STRING.INPUT_STRING_Mono, "Mono" },
-            { INPUT_STRING.INPUT_STRING_Unused, "Unused" },
-            { INPUT_STRING.INPUT_STRING_Unknown, "Unknown" },
-            { INPUT_STRING.INPUT_STRING_Standard, "Standard" },
-            { INPUT_STRING.INPUT_STRING_Reverse, "Reverse" },
-            { INPUT_STRING.INPUT_STRING_Alternate, "Alternate" },
-            { INPUT_STRING.INPUT_STRING_None, "None" },
-        };
-
-
-        // temporary: set this to 1 to enable the originally defined behavior that
-        // a field specified via PORT_MODIFY which intersects a previously-defined
-        // field completely wipes out the previous definition
-        public const bool INPUT_PORT_OVERRIDE_FULLY_NUKES_PREVIOUS    = true;
-
-
-        public const int SPACE_COUNT = 3;
-
-
-        //**************************************************************************
-        //  MACROS FOR BUILDING INPUT PORTS
-        //**************************************************************************
-
-        // so that "0" can be used for unneeded input ports
-        //#define construct_ioport_0 NULL
-
-        // name of table
-        //#define INPUT_PORTS_NAME(_name) construct_ioport_##_name
-
-        // start of table
-        //define INPUT_PORTS_START(_name)         ATTR_COLD void INPUT_PORTS_NAME(_name)(device_t &owner, ioport_list &portlist, astring &errorbuf)         {             ioport_configurer configurer(owner, portlist, errorbuf);
-        // end of table
-        //define INPUT_PORTS_END         }
-
-        // aliasing
-        //define INPUT_PORTS_EXTERN(_name)             extern void INPUT_PORTS_NAME(_name)(device_t &owner, ioport_list &portlist, astring &errorbuf)
-
-        // including
-        public static void PORT_INCLUDE(ioport_constructor name, device_t owner, ioport_list portlist, ref string errorbuf) { name(owner, portlist, ref errorbuf); }  //INPUT_PORTS_NAME(_name)(owner, portlist, errorbuf);
-        // start of a new input port (with included tag)
-        public static void PORT_START(ioport_configurer configurer, string tag) { configurer.port_alloc(tag); }
-        // modify an existing port
-        public static void PORT_MODIFY(ioport_configurer configurer, string tag) { configurer.port_modify(tag); }
-        // input bit definition
-        public static void PORT_BIT(ioport_configurer configurer, ioport_value mask, ioport_value defval, ioport_type type) { configurer.field_alloc(type, defval, mask); }
-        public static void PORT_SPECIAL_ONOFF(ioport_configurer configurer, ioport_value mask, ioport_value defval, INPUT_STRING strindex) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, defval, strindex, null); }
-
-        static void PORT_SPECIAL_ONOFF_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value defval, INPUT_STRING strindex, string diploc) { configurer.onoff_alloc(DEF_STR(strindex), defval, mask, diploc); }
-        // append a code
-        public static void PORT_CODE(ioport_configurer configurer, input_code code) { configurer.field_add_code(input_seq_type.SEQ_TYPE_STANDARD, code); }
-        //define PORT_CODE_DEC(_code)             configurer.field_add_code(SEQ_TYPE_DECREMENT, _code);
-        //define PORT_CODE_INC(_code)             configurer.field_add_code(SEQ_TYPE_INCREMENT, _code);
-
-        // joystick flags
-        public static void PORT_2WAY(ioport_configurer configurer) { configurer.field_set_way(2); }
-        public static void PORT_4WAY(ioport_configurer configurer) { configurer.field_set_way(4); }
-        public static void PORT_8WAY(ioport_configurer configurer) { configurer.field_set_way(8); }
-        //define PORT_16WAY             configurer.field_set_way(16);
-        //define PORT_ROTATED             configurer.field_set_rotated();
-
-        // general flags
-        public static void PORT_NAME(ioport_configurer configurer, string _name) { configurer.field_set_name(_name); }
-        public static void PORT_PLAYER(ioport_configurer configurer, int player) { configurer.field_set_player(player); }
-        public static void PORT_COCKTAIL(ioport_configurer configurer) { configurer.field_set_cocktail(); }
-        //define PORT_TOGGLE             configurer.field_set_toggle();
-        public static void PORT_IMPULSE(ioport_configurer configurer, u8 duration) { configurer.field_set_impulse(duration); }
-        public static void PORT_REVERSE(ioport_configurer configurer) { configurer.field_set_analog_reverse(); }
-        //define PORT_RESET             configurer.field_set_analog_reset();
-        //#define PORT_OPTIONAL     configurer.field_set_optional();
-
-        // analog settings
-        // if this macro is not used, the minimum defaults to 0 and maximum defaults to the mask value
-        public static void PORT_MINMAX(ioport_configurer configurer, ioport_value _min, ioport_value _max) { configurer.field_set_min_max(_min, _max); }
-        public static void PORT_SENSITIVITY(ioport_configurer configurer, int sensitivity) { configurer.field_set_sensitivity(sensitivity); }
-        public static void PORT_KEYDELTA(ioport_configurer configurer, int delta) { configurer.field_set_delta(delta); }
-        // note that PORT_CENTERDELTA must appear after PORT_KEYDELTA
-        //define PORT_CENTERDELTA(_delta)             configurer.field_set_centerdelta(_delta);
-        //define PORT_CROSSHAIR(axis, scale, offset, altaxis)             configurer.field_set_crosshair(CROSSHAIR_AXIS_##axis, altaxis, scale, offset);
-        //define PORT_CROSSHAIR_MAPPER(_callback)             configurer.field_set_crossmapper(ioport_field_crossmap_delegate(_callback, #_callback, DEVICE_SELF, (device_t *)NULL));
-        //define PORT_CROSSHAIR_MAPPER_MEMBER(_device, _class, _member)             configurer.field_set_crossmapper(ioport_field_crossmap_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)NULL));
-
-        // how many optical counts for 1 full turn of the control
-        public static void PORT_FULL_TURN_COUNT(ioport_configurer configurer, u16 _count) { configurer.field_set_full_turn_count(_count); }
-
-        // positional controls can be binary or 1 of X
-        // 1 of X not completed yet
-        // if it is specified as PORT_REMAP_TABLE then it is binary, but remapped
-        // otherwise it is binary
-        //define PORT_POSITIONS(_positions)             configurer.field_set_min_max(0, _positions);
-
-        // positional control wraps at min/max
-        //define PORT_WRAPS             configurer.field_set_analog_wraps();
-
-        // positional control uses this remap table
-        //define PORT_REMAP_TABLE(_table)             configurer.field_set_remap_table(_table);
-
-        // positional control bits are active low
-        //define PORT_INVERT             configurer.field_set_analog_invert();
-
-        // read callbacks
-        public static void PORT_CUSTOM_MEMBER(ioport_configurer configurer, string device, ioport_field_read_delegate callback) { configurer.field_set_dynamic_read(callback); }  //#define PORT_CUSTOM_MEMBER(_class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate(&_class::_member, #_class "::" #_member, DEVICE_SELF, (_class *)nullptr));
-        //#define PORT_CUSTOM_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate(owner, _device, &_class::_member, #_class "::" #_member));
-
-        // write callbacks
-        //#define PORT_CHANGED_MEMBER(_device, _class, _member, _param) configurer.field_set_dynamic_write(ioport_field_write_delegate(owner, _device, &_class::_member, #_class "::" #_member), (_param));
-
-        // input device handler
-        //#define PORT_READ_LINE_MEMBER(_class, _member) \
-        //    configurer.field_set_dynamic_read( \
-        //            ioport_field_read_delegate( \
-        //                owner, \
-        //                DEVICE_SELF, \
-        //                static_cast<ioport_value (*)(_class &)>([] (_class &device) -> ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; }), \
-        //                #_class "::" #_member));
-        //#define PORT_READ_LINE_DEVICE_MEMBER(_device, _class, _member) \
-        //    configurer.field_set_dynamic_read( \
-        //            ioport_field_read_delegate( \
-        //                owner, \
-        //                _device, \
-        //                static_cast<ioport_value (*)(_class &)>([] (_class &device) -> ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; }), \
-        //                #_class "::" #_member));
-        public static void PORT_READ_LINE_DEVICE_MEMBER(ioport_configurer configurer, string device, Func<int> _member)
-        {
-            configurer.field_set_dynamic_read(() =>
-            {
-                return (_member() & 1) != 0 ? ~(ioport_value)0 : 0;
-            });
-        }
-
-        // output device handler
-        //#define PORT_WRITE_LINE_MEMBER(_class, _member) \
-        //    configurer.field_set_dynamic_write( \
-        //            ioport_field_write_delegate( \
-        //                owner, \
-        //                DEVICE_SELF, \
-        //                static_cast<void (*)(_class &, ioport_field &, u32, ioport_value, ioport_value)>([] (_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }), \
-        //                #_class "::" #_member));
-        //#define PORT_WRITE_LINE_DEVICE_MEMBER(_device, _class, _member) \
-        //    configurer.field_set_dynamic_write( \
-        //            ioport_field_write_delegate( \
-        //                owner, \
-        //                _device, \
-        //                static_cast<void (*)(_class &, ioport_field &, u32, ioport_value, ioport_value)>([] (_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }), \
-        //                #_class "::" #_member));
-
-        // dip switch definition
-        public static void PORT_DIPNAME(ioport_configurer configurer, ioport_value mask, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_DIPSWITCH, default_, mask, name); }
-        public static void PORT_DIPSETTING(ioport_configurer configurer, ioport_value default_, string name) { configurer.setting_alloc(default_, name); }
-        // physical location, of the form: name:[!]sw,[name:][!]sw,...
-        // note that these are specified LSB-first
-        public static void PORT_DIPLOCATION(ioport_configurer configurer, string location) { configurer.field_set_diplocation(location); }
-        // conditionals for dip switch settings
-        public static void PORT_CONDITION(ioport_configurer configurer, string tag, ioport_value mask, ioport_condition.condition_t condition, ioport_value value) { configurer.set_condition(condition, tag, mask, value); }
-        // analog adjuster definition
-        public static void PORT_ADJUSTER(ioport_configurer configurer, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_ADJUSTER, default_, 0xff, name);  configurer.field_set_min_max(0, 100); }
-        // config definition
-        public static void PORT_CONFNAME(ioport_configurer configurer, ioport_value mask, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_CONFIG, default_, mask, name); }
-        public static void PORT_CONFSETTING(ioport_configurer configurer, ioport_value default_, string name) { configurer.setting_alloc(default_, name); }
-
-        // keyboard chars
-        //define PORT_CHAR(...)     configurer.field_add_char({ __VA_ARGS__ });
-
-
-        // name of table
-        //#define DEVICE_INPUT_DEFAULTS_NAME(_name) device_iptdef_##_name
-
-        //#define device_iptdef_0 NULL
-        //#define device_iptdef_0L NULL
-        //#define device_iptdef_0LL NULL
-        //#define device_iptdef___null NULL
-
-        // start of table
-        //define DEVICE_INPUT_DEFAULTS_START(_name)             const input_device_default DEVICE_INPUT_DEFAULTS_NAME(_name)[] = {
-        // end of table
-        //define DEVICE_INPUT_DEFAULTS(_tag,_mask,_defval)             { _tag ,_mask, _defval },
-        // end of table
-        //define DEVICE_INPUT_DEFAULTS_END             {NULL,0,0} };
-
-
-
-        //**************************************************************************
-        //  HELPER MACROS
-        //**************************************************************************
-
-        public static void PORT_DIPUNUSED_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value default_, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Unused, diploc); }
-        public static void PORT_DIPUNUSED(ioport_configurer configurer, ioport_value mask, ioport_value default_) { PORT_SPECIAL_ONOFF(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Unused); }
-        public static void PORT_DIPUNKNOWN_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value default_, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Unknown, diploc); }
-        //define PORT_DIPUNKNOWN(_mask, _default)             PORT_SPECIAL_ONOFF(_mask, _default, Unknown)
-        public static void PORT_SERVICE_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value default_, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Service_Mode, diploc); }
-        public static void PORT_SERVICE(ioport_configurer configurer, ioport_value mask, ioport_value default_) { PORT_SPECIAL_ONOFF(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Service_Mode); }
-        //define PORT_SERVICE_NO_TOGGLE(_mask, _default)             PORT_BIT( _mask, _mask & _default, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ))
-        public static void PORT_VBLANK(ioport_configurer configurer, string screen, screen_device device) { PORT_READ_LINE_DEVICE_MEMBER(configurer, screen, device.vblank); }
-        //define PORT_HBLANK(_screen)             PORT_READ_LINE_DEVICE_MEMBER(_screen, screen_device, hblank)
-
-        public static char32_t UCHAR_MAMEKEY(char32_t code) { return UCHAR_MAMEKEY_BEGIN + code; }  //#define UCHAR_MAMEKEY(code) (UCHAR_MAMEKEY_BEGIN + ITEM_ID_##code)
-
-        // macro for a read callback function (PORT_CUSTOM)
-        //#define CUSTOM_INPUT_MEMBER(name)   ioport_value name()
-        //#define DECLARE_CUSTOM_INPUT_MEMBER(name)   ioport_value name()
-
-        // macro for port write callback functions (PORT_CHANGED)
-        //#define INPUT_CHANGED_MEMBER(name)  void name(ioport_field &field, u32 param, ioport_value oldval, ioport_value newval)
-        //#define DECLARE_INPUT_CHANGED_MEMBER(name)  void name(ioport_field &field, u32 param, ioport_value oldval, ioport_value newval)
-
-        // macro for port changed callback functions (PORT_CROSSHAIR_MAPPER)
-        //#define CROSSHAIR_MAPPER_MEMBER(name)   float name(float linear_value)
-        //#define DECLARE_CROSSHAIR_MAPPER_MEMBER(name)   float name(float linear_value)
-
-        // macro for wrapping a default string
-        public const string DEFAULT_STR_PREFIX = "**DEFAULT_ENUM_";
-        public static string DEF_STR(INPUT_STRING str_num) { return DEFAULT_STR_PREFIX + str_num.ToString(); }  //#define DEF_STR(str_num) ((const char *)INPUT_STRING_##str_num)
-
-
-        //-------------------------------------------------
-        //  compute_scale -- compute an 8.24 scale value
-        //  from a numerator and a denominator
-        //-------------------------------------------------
-        public static s64 compute_scale(s32 num, s32 den)
-        {
-            return ((s64)num << 24) / den;
-        }
-
-        //-------------------------------------------------
-        //  recip_scale -- compute an 8.24 reciprocal of
-        //  an 8.24 scale value
-        //-------------------------------------------------
-        public static s64 recip_scale(s64 scale)
-        {
-            return ((s64)1 << 48) / scale;
-        }
-
-        //-------------------------------------------------
-        //  apply_scale -- apply an 8.24 scale value to
-        //  a 32-bit value
-        //-------------------------------------------------
-        public static s32 apply_scale(s32 value, s64 scale)
-        {
-            return (s32)(((s64)value * scale) / (1 << 24));
-        }
     }
 
 
-    public class construct_ioport_helper
-    {
-        device_t m_owner = null;
-        ioport_configurer m_configurer = null;
-        ioport_list m_portlist = null;
-        bool m_originated_from_port_include = false;
+    public delegate void ioport_constructor(device_t owner, ioport_list portlist, ref string errorbuf);  //typedef void(*ioport_constructor)(device_t &owner, ioport_list &portlist, std::string &errorbuf);
 
-        device_t owner { get { return m_owner; } set { m_owner = value; } }
-        ioport_configurer configurer { get { return m_configurer; } set { m_configurer = value; } }
-        ioport_list portlist { get { return m_portlist; } set { m_portlist = value; } }
-        bool originated_from_port_include { get { return m_originated_from_port_include; } set { m_originated_from_port_include = value; } }
-
-
-        // ioport
-        protected void INPUT_PORTS_START(device_t owner, ioport_list portlist, ref string errorbuf)
-        {
-            // if we're inside PORT_INCLUDE, we already have a configurer, and don't need to create a new one
-            if (!originated_from_port_include)
-            {
-                ioport_configurer configurer = new ioport_configurer(owner, portlist, ref errorbuf);
-                this.configurer = configurer;
-                this.owner = owner;
-                this.portlist = portlist;
-            }
-        }
-        protected void INPUT_PORTS_END()
-        {
-            // if we're inside PORT_INCLUDE, don't null out our helper variables, we need them still
-            if (!originated_from_port_include)
-            {
-                configurer = null;
-                owner = null;
-                portlist = null;
-            }
-        }
-        protected void PORT_INCLUDE(ioport_constructor name, ref string errorbuf)
-        {
-            originated_from_port_include = true;
-            ioport_global.PORT_INCLUDE(name, owner, portlist, ref errorbuf);
-            originated_from_port_include = false;
-        }
-        protected void PORT_START(string tag) { ioport_global.PORT_START(configurer, tag); }
-        protected void PORT_MODIFY(string tag) { ioport_global.PORT_MODIFY(configurer, tag); }
-        protected void PORT_BIT(ioport_value mask, ioport_value default_, ioport_type type) { ioport_global.PORT_BIT(configurer, mask, default_, type); }
-        protected void PORT_CODE(input_code code) { ioport_global.PORT_CODE(configurer, code); }
-        protected void PORT_2WAY() { ioport_global.PORT_2WAY(configurer); }
-        protected void PORT_4WAY() { ioport_global.PORT_4WAY(configurer); }
-        protected void PORT_8WAY() { ioport_global.PORT_8WAY(configurer); }
-        protected void PORT_NAME(string _name) { ioport_global.PORT_NAME(configurer, _name); }
-        protected void PORT_PLAYER(int player) { ioport_global.PORT_PLAYER(configurer, player); }
-        protected void PORT_COCKTAIL() { ioport_global.PORT_COCKTAIL(configurer); }
-        protected void PORT_IMPULSE(u8 duration) { ioport_global.PORT_IMPULSE(configurer, duration); }
-        protected void PORT_REVERSE() { ioport_global.PORT_REVERSE(configurer); }
-        protected void PORT_MINMAX(ioport_value _min, ioport_value _max) { ioport_global.PORT_MINMAX(configurer, _min, _max); }
-        protected void PORT_SENSITIVITY(int sensitivity) { ioport_global.PORT_SENSITIVITY(configurer, sensitivity); }
-        protected void PORT_KEYDELTA(int delta) { ioport_global.PORT_KEYDELTA(configurer, delta); }
-        protected void PORT_FULL_TURN_COUNT(u16 _count) { ioport_global.PORT_FULL_TURN_COUNT(configurer, _count); }
-        protected void PORT_CUSTOM_MEMBER(string device, ioport_field_read_delegate callback) { ioport_global.PORT_CUSTOM_MEMBER(configurer, device, callback); }
-        protected void PORT_READ_LINE_DEVICE_MEMBER(string device, Func<int> _member) { ioport_global.PORT_READ_LINE_DEVICE_MEMBER(configurer, device, _member); }
-        public void PORT_DIPNAME(ioport_value mask, ioport_value default_, string name) { ioport_global.PORT_DIPNAME(configurer, mask, default_, name); }
-        public void PORT_DIPSETTING(ioport_value default_, string name) { ioport_global.PORT_DIPSETTING(configurer, default_, name); }
-        public void PORT_DIPLOCATION(string location) { ioport_global.PORT_DIPLOCATION(configurer, location); }
-        public void PORT_CONDITION(string tag, ioport_value mask, ioport_condition.condition_t condition, ioport_value value) { ioport_global.PORT_CONDITION(configurer, tag, mask, condition, value); }
-        protected void PORT_ADJUSTER(ioport_value default_, string name) { ioport_global.PORT_ADJUSTER(configurer, default_, name); }
-        protected void PORT_CONFNAME(ioport_value mask, ioport_value default_, string name) { ioport_global.PORT_CONFNAME(configurer, mask, default_, name); }
-        protected void PORT_CONFSETTING(ioport_value default_, string name) { ioport_global.PORT_CONFSETTING(configurer, default_, name); }
-        protected void PORT_DIPUNUSED_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_DIPUNUSED_DIPLOC(configurer, mask, default_, diploc); }
-        protected void PORT_DIPUNUSED(ioport_value mask, ioport_value default_) { ioport_global.PORT_DIPUNUSED(configurer, mask, default_); }
-        protected void PORT_DIPUNKNOWN_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_DIPUNKNOWN_DIPLOC(configurer, mask, default_, diploc); }
-        protected void PORT_SERVICE_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_SERVICE_DIPLOC(configurer, mask, default_, diploc); }
-        protected void PORT_SERVICE(ioport_value mask, ioport_value default_) { ioport_global.PORT_SERVICE(configurer, mask, default_); }
-        protected void PORT_VBLANK(string screen) { ioport_global.PORT_VBLANK(configurer, screen, (screen_device)owner.subdevice(screen)); }
-    }
+    // I/O port callback function delegates
+    public delegate ioport_value ioport_field_read_delegate();  //typedef device_delegate<ioport_value ()> ioport_field_read_delegate;
+    public delegate void ioport_field_write_delegate(ioport_field field, u32 param, ioport_value param1, ioport_value param2);  //typedef device_delegate<void (ioport_field &, u32, ioport_value, ioport_value)> ioport_field_write_delegate;
+    public delegate float ioport_field_crossmap_delegate(float param);  //typedef device_delegate<float (float)> ioport_field_crossmap_delegate;
 
 
     // ======================> inp_header
@@ -1105,8 +695,8 @@ namespace mame
         MemoryU8 m_data = new MemoryU8((int)OFFS_END, true);  //u8                              m_data[OFFS_END];
 
 
-        public bool read(emu_file f) { return f.read(new PointerU8(m_data), (UInt32)m_data.Count) == m_data.Count; }
-        public bool write(emu_file f) { return f.write(new PointerU8(m_data), (UInt32)m_data.Count) == m_data.Count; }
+        public bool read(emu_file f) { return f.read(new PointerU8(m_data), (u32)m_data.Count) == m_data.Count; }
+        public bool write(emu_file f) { return f.write(new PointerU8(m_data), (u32)m_data.Count) == m_data.Count; }
 
         public bool check_magic() { return 0 == std.memcmp(new PointerU8(MAGIC), new PointerU8(m_data, (int)OFFS_MAGIC), OFFS_BASETIME - OFFS_MAGIC); }
         public u64 get_basetime()
@@ -1129,14 +719,14 @@ namespace mame
         public void set_magic() { std.memcpy(new PointerU8(m_data, (int)OFFS_MAGIC), new PointerU8(MAGIC), OFFS_BASETIME - OFFS_MAGIC); }  // std::memcpy(m_data + OFFS_MAGIC, MAGIC, OFFS_BASETIME - OFFS_MAGIC); }
         public void set_basetime(u64 time)
         {
-            m_data[OFFS_BASETIME + 0] = (byte)((time >> (0 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 1] = (byte)((time >> (1 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 2] = (byte)((time >> (2 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 3] = (byte)((time >> (3 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 4] = (byte)((time >> (4 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 5] = (byte)((time >> (5 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 6] = (byte)((time >> (6 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 7] = (byte)((time >> (7 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 0] = (u8)((time >> (0 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 1] = (u8)((time >> (1 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 2] = (u8)((time >> (2 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 3] = (u8)((time >> (3 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 4] = (u8)((time >> (4 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 5] = (u8)((time >> (5 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 6] = (u8)((time >> (6 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 7] = (u8)((time >> (7 * 8)) & 0x00ff);
         }
         public void set_version()
         {
@@ -1169,7 +759,7 @@ namespace mame
 
     // ======================> input_device_default
     // device defined default input settings
-    public class input_device_default
+    public struct input_device_default
     {
         public string tag;            // tag of port to update
         public ioport_value mask;           // mask to apply to the port
@@ -1233,7 +823,7 @@ namespace mame
 
         public ioport_type type() { return m_type; }
         public ioport_group group() { return m_group; }
-        public byte player() { return m_player; }
+        public u8 player() { return m_player; }
         //const char *token() const { return m_token; }
         public string name() { return m_name; }
         input_seq defseq(input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD) { return m_defseq[(int)seqtype]; }
@@ -1622,7 +1212,7 @@ namespace mame
 
         // data relevant to other specific types
         public u8 m_way;              // digital joystick 2/4/8-way descriptions
-        char32_t [,] m_chars = new char32_t[1 << (int)(g.UCHAR_SHIFT_END - g.UCHAR_SHIFT_BEGIN + 1), 2];         // unicode key data
+        char32_t [,] m_chars = new char32_t[1 << (int)(UCHAR_SHIFT_END - UCHAR_SHIFT_BEGIN + 1), 2];         // unicode key data
 
 
         // construction/destruction
@@ -1855,57 +1445,57 @@ namespace mame
                 else if (ch == 13) return "Enter";
                 else if (ch == 27) return "Esc";
                 else if (ch == 32) return "Space";
-                else if (ch == g.UCHAR_SHIFT_1) return "Shift";
-                else if (ch == g.UCHAR_SHIFT_2) return "Ctrl";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_ESC)) return "Esc";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_INSERT)) return "Insert";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_DEL)) return "Delete";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_HOME)) return "Home";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_END)) return "End";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PGUP)) return "Page Up";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PGDN)) return "Page Down";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LEFT)) return "Cursor Left";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RIGHT)) return "Cursor Right";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_UP)) return "Cursor Up";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_DOWN)) return "Cursor Down";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_SLASH_PAD)) return "Keypad /";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_ASTERISK)) return "Keypad *";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_MINUS_PAD)) return "Keypad -";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PLUS_PAD)) return "Keypad +";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_DEL_PAD)) return "Keypad .";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_ENTER_PAD)) return "Keypad Enter";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_BS_PAD)) return "Keypad Backspace";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_TAB_PAD)) return "Keypad Tab";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_00_PAD)) return "Keypad 00";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_000_PAD)) return "Keypad 000";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PRTSCR)) return "Print Screen";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PAUSE)) return "Pause";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LSHIFT)) return "Left Shift";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RSHIFT)) return "Right Shift";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LCONTROL)) return "Left Ctrl";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RCONTROL)) return "Right Ctrl";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LALT)) return "Left Alt";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RALT)) return "Right Alt";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_SCRLOCK)) return "Scroll Lock";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_NUMLOCK)) return "Num Lock";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_CAPSLOCK)) return "Caps Lock";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LWIN)) return "Left Win";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RWIN)) return "Right Win";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_MENU)) return "Menu";
-                else if (ch == g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_CANCEL)) return "Break";
+                else if (ch == UCHAR_SHIFT_1) return "Shift";
+                else if (ch == UCHAR_SHIFT_2) return "Ctrl";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_ESC)) return "Esc";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_INSERT)) return "Insert";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_DEL)) return "Delete";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_HOME)) return "Home";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_END)) return "End";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PGUP)) return "Page Up";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PGDN)) return "Page Down";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LEFT)) return "Cursor Left";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RIGHT)) return "Cursor Right";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_UP)) return "Cursor Up";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_DOWN)) return "Cursor Down";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_SLASH_PAD)) return "Keypad /";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_ASTERISK)) return "Keypad *";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_MINUS_PAD)) return "Keypad -";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PLUS_PAD)) return "Keypad +";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_DEL_PAD)) return "Keypad .";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_ENTER_PAD)) return "Keypad Enter";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_BS_PAD)) return "Keypad Backspace";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_TAB_PAD)) return "Keypad Tab";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_00_PAD)) return "Keypad 00";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_000_PAD)) return "Keypad 000";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PRTSCR)) return "Print Screen";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_PAUSE)) return "Pause";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LSHIFT)) return "Left Shift";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RSHIFT)) return "Right Shift";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LCONTROL)) return "Left Ctrl";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RCONTROL)) return "Right Ctrl";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LALT)) return "Left Alt";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RALT)) return "Right Alt";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_SCRLOCK)) return "Scroll Lock";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_NUMLOCK)) return "Num Lock";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_CAPSLOCK)) return "Caps Lock";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_LWIN)) return "Left Win";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_RWIN)) return "Right Win";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_MENU)) return "Menu";
+                else if (ch == UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_CANCEL)) return "Break";
             }
 
             // handle function keys
-            if (ch >= g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_F1) && ch <= g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_F20))
-                return string.Format("F{0}", ch - g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_F1) + 1);
+            if (ch >= UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_F1) && ch <= UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_F20))
+                return util.string_format("F{0}", ch - UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_F1) + 1);
 
             // handle 0-9 on numeric keypad
-            if (ch >= g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_0_PAD) && ch <= g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_9_PAD))
-                return string.Format("Keypad {0}", ch - g.UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_0_PAD));
+            if (ch >= UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_0_PAD) && ch <= UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_9_PAD))
+                return util.string_format("Keypad {0}", ch - UCHAR_MAMEKEY((char32_t)input_item_id.ITEM_ID_0_PAD));
 
             // if that doesn't work, convert to UTF-8
-            if (ch > 0x7F || unicode_global.isprint(ch))
-                return unicode_global.utf8_from_uchar(ch);
+            if (ch > 0x7F || isprint(ch))
+                return utf8_from_uchar(ch);
 
             // otherwise, opt for question marks
             return "???";
@@ -1973,7 +1563,7 @@ namespace mame
         void select_next_setting()
         {
             // only makes sense if we have settings
-            g.assert(!m_settinglist.empty());
+            assert(!m_settinglist.empty());
 
             // scan the list of settings looking for a match on the current value
             int settingIdx = 0;  //auto setting = m_settinglist.begin();
@@ -2104,7 +1694,7 @@ namespace mame
             {
                 // impulse controls: reset the impulse counter
                 if (effective_impulse != 0 && m_live.impulse == 0)
-                    m_live.impulse = (byte)effective_impulse;
+                    m_live.impulse = (u8)effective_impulse;
 
                 // toggle controls: flip the toggle state or advance to the next setting
                 if (m_live.toggle)
@@ -2147,14 +1737,14 @@ namespace mame
                 if (machine().options().coin_lockout())
                 {
                     if (verbose)
-                        machine().ui().popup_time(3, string.Format("Coinlock disabled {0}.", name()));
+                        machine().ui().popup_time(3, "Coinlock disabled {0}.", name());
 
                     curstate = false;
                 }
                 else
                 {
                     if (verbose)
-                        machine().ui().popup_time(3, string.Format("Coinlock disabled, but broken through {0}.", name()));
+                        machine().ui().popup_time(3, "Coinlock disabled, but broken through {0}.", name());
                 }
             }
 
@@ -2231,7 +1821,7 @@ namespace mame
                     // otherwise, just copy the last name
                     if (string.IsNullOrEmpty(lastname))
                     {
-                        errorbuf += string.Format("Switch location '{0}' missing switch name!\n", location);
+                        errorbuf += string_format("Switch location '{0}' missing switch name!\n", location);
                         lastname = "UNK";
                     }
                     name = lastname;
@@ -2248,7 +1838,7 @@ namespace mame
                 // now scan the switch number
                 int swnum = -1;
                 if (!int.TryParse(tempstr.Substring(numberIdx).Split()[0], out swnum))  //if (sscanf(number, "%d", &swnum) != 1)
-                    errorbuf += string.Format("Switch location '{0}' has invalid format!\n", location);
+                    errorbuf += string_format("Switch location '{0}' has invalid format!\n", location);
 
                 // allocate a new entry
                 m_diploclist.emplace_back(new ioport_diplocation(name, (u8)swnum, invert));
@@ -2266,7 +1856,7 @@ namespace mame
             for (bits = 0, temp = m_mask; temp != 0 && bits < 32; bits++)
                 temp &= temp - 1;
             if (bits != entries)
-                errorbuf += string.Format("Switch location '{0}' does not describe enough bits for mask {1}\n", location, m_mask);
+                errorbuf += string_format("Switch location '{0}' does not describe enough bits for mask {1}\n", location, m_mask);
         }
     }
 
@@ -2322,13 +1912,13 @@ namespace mame
             if (field.type_class() == ioport_type_class.INPUT_CLASS_KEYBOARD && field.specific_name() == null)
             {
                 // loop through each character on the field
-                for (int which = 0; which < (1 << (int)(g.UCHAR_SHIFT_END - g.UCHAR_SHIFT_BEGIN + 1)); which++)
+                for (int which = 0; which < (1 << (int)(UCHAR_SHIFT_END - UCHAR_SHIFT_BEGIN + 1)); which++)
                 {
                     std.vector<char32_t> codes = field.keyboard_codes(which);
                     if (codes.empty())
                         break;
 
-                    name += util.string_format("{0}{1} ", std.max(ioport_global.SPACE_COUNT - 1, 0), field.key_name(which));
+                    name += util.string_format("{0}{1} ", std.max(SPACE_COUNT - 1, 0), field.key_name(which));
                 }
 
                 // trim extra spaces
@@ -2468,7 +2058,7 @@ namespace mame
         public void write(ioport_value data, ioport_value mem_mask = ioport_value.MaxValue)// ~0)
         {
             // call device line write handlers
-            g.COMBINE_DATA(ref m_live.outputvalue, data, mem_mask);
+            COMBINE_DATA(ref m_live.outputvalue, data, mem_mask);
             foreach (dynamic_field dynfield in m_live.writelist)
             {
                 if (dynfield.field().type() == ioport_type.IPT_OUTPUT)
@@ -2568,7 +2158,7 @@ namespace mame
             if (newfield.condition().none())
             {
                 if ((newfield.mask() & disallowedbits) != 0)
-                    errorbuf += string.Format("INPUT_TOKEN_FIELD specifies duplicate port bits (port={0} mask={1})\n", tag(), newfield.mask());
+                    errorbuf += string_format("INPUT_TOKEN_FIELD specifies duplicate port bits (port={0} mask={1})\n", tag(), newfield.mask());
                 disallowedbits |= newfield.mask();
             }
 
@@ -2584,7 +2174,7 @@ namespace mame
                     field.reduce_mask(newfield.mask());
 
                     // if the new entry fully overrides the previous one, we nuke
-                    if (ioport_global.INPUT_PORT_OVERRIDE_FULLY_NUKES_PREVIOUS || field.mask() == 0)
+                    if (INPUT_PORT_OVERRIDE_FULLY_NUKES_PREVIOUS || field.mask() == 0)
                         m_fieldlist.remove(field);
                 }
             }
@@ -2678,8 +2268,8 @@ namespace mame
             m_previous = 0;
             m_previousanalog = 0;
             m_prog_analog_value = 0;
-            m_minimum = inputdev_global.INPUT_ABSOLUTE_MIN;
-            m_maximum = inputdev_global.INPUT_ABSOLUTE_MAX;
+            m_minimum = INPUT_ABSOLUTE_MIN;
+            m_maximum = INPUT_ABSOLUTE_MAX;
             m_center = 0;
             m_reverse_val = 0;
             m_scalepos = 0;
@@ -2723,7 +2313,7 @@ namespace mame
                 case ioport_type.IPT_PEDAL:
                 case ioport_type.IPT_PEDAL2:
                 case ioport_type.IPT_PEDAL3:
-                    m_center = inputdev_global.INPUT_ABSOLUTE_MIN;
+                    m_center = INPUT_ABSOLUTE_MIN;
                     m_accum = apply_inverse_sensitivity(m_center);
                     m_absolute = true;
                     m_autocenter = true;
@@ -2742,7 +2332,7 @@ namespace mame
                 // set each position to be 512 units
                 case ioport_type.IPT_POSITIONAL:
                 case ioport_type.IPT_POSITIONAL_V:
-                    m_positionalscale = ioport_global.compute_scale((s32)field.maxval(), inputdev_global.INPUT_ABSOLUTE_MAX - inputdev_global.INPUT_ABSOLUTE_MIN);
+                    m_positionalscale = compute_scale((s32)field.maxval(), INPUT_ABSOLUTE_MAX - INPUT_ABSOLUTE_MIN);
                     m_adjmin = 0;
                     m_adjmax = (int)field.maxval() - 1;
                     m_wraps = field.analog_wraps();
@@ -2778,8 +2368,8 @@ namespace mame
                 if (!m_single_scale)
                 {
                     // unsigned
-                    m_scalepos = ioport_global.compute_scale(m_adjmax - m_adjdefvalue, inputdev_global.INPUT_ABSOLUTE_MAX - 0);
-                    m_scaleneg = ioport_global.compute_scale(m_adjdefvalue - m_adjmin, 0 - inputdev_global.INPUT_ABSOLUTE_MIN);
+                    m_scalepos = compute_scale(m_adjmax - m_adjdefvalue, INPUT_ABSOLUTE_MAX - 0);
+                    m_scaleneg = compute_scale(m_adjdefvalue - m_adjmin, 0 - INPUT_ABSOLUTE_MIN);
 
                     if (m_adjmin > m_adjmax)
                         m_scaleneg = -m_scaleneg;
@@ -2790,7 +2380,7 @@ namespace mame
                 else
                 {
                     // single axis that increases from default
-                    m_scalepos = ioport_global.compute_scale(m_adjmax - m_adjmin, inputdev_global.INPUT_ABSOLUTE_MAX - inputdev_global.INPUT_ABSOLUTE_MIN);
+                    m_scalepos = compute_scale(m_adjmax - m_adjmin, INPUT_ABSOLUTE_MAX - INPUT_ABSOLUTE_MIN);
 
                     // make the scaling the same for easier coding when we need to scale
                     m_scaleneg = m_scalepos;
@@ -2814,11 +2404,11 @@ namespace mame
                 if (m_wraps)
                     m_adjmax++;
 
-                m_minimum = (m_adjmin - m_adjdefvalue) * inputdev_global.INPUT_RELATIVE_PER_PIXEL;
-                m_maximum = (m_adjmax - m_adjdefvalue) * inputdev_global.INPUT_RELATIVE_PER_PIXEL;
+                m_minimum = (m_adjmin - m_adjdefvalue) * INPUT_RELATIVE_PER_PIXEL;
+                m_maximum = (m_adjmax - m_adjdefvalue) * INPUT_RELATIVE_PER_PIXEL;
 
                 // make the scaling the same for easier coding when we need to scale
-                m_scaleneg = m_scalepos = ioport_global.compute_scale(1, inputdev_global.INPUT_RELATIVE_PER_PIXEL);
+                m_scaleneg = m_scalepos = compute_scale(1, INPUT_RELATIVE_PER_PIXEL);
 
                 if (m_field.analog_reset())
                     // delta values reverse from center
@@ -2835,14 +2425,14 @@ namespace mame
                         if(field.type() == ioport_type.IPT_POSITIONAL || field.type() == ioport_type.IPT_POSITIONAL_V)
                             m_reverse_val --;
                         else
-                            m_reverse_val -= inputdev_global.INPUT_RELATIVE_PER_PIXEL;
+                            m_reverse_val -= INPUT_RELATIVE_PER_PIXEL;
                     }
                 }
             }
 
             // compute scale for keypresses
-            m_keyscalepos = ioport_global.recip_scale(m_scalepos);
-            m_keyscaleneg = ioport_global.recip_scale(m_scaleneg);
+            m_keyscalepos = recip_scale(m_scalepos);
+            m_keyscaleneg = recip_scale(m_scaleneg);
         }
 
 
@@ -2946,10 +2536,10 @@ namespace mame
                         // if port is positional, we will take the full analog control and divide it
                         // into positions, that way as the control is moved full scale,
                         // it moves through all the positions
-                        rawvalue = ioport_global.apply_scale(rawvalue - inputdev_global.INPUT_ABSOLUTE_MIN, m_positionalscale) * inputdev_global.INPUT_RELATIVE_PER_PIXEL + m_minimum;
+                        rawvalue = apply_scale(rawvalue - INPUT_ABSOLUTE_MIN, m_positionalscale) * INPUT_RELATIVE_PER_PIXEL + m_minimum;
 
                         // clamp the high value so it does not roll over
-                        rawvalue = Math.Min(rawvalue, m_maximum);
+                        rawvalue = std.min(rawvalue, m_maximum);
                         m_accum = apply_inverse_sensitivity(rawvalue);
                     }
                     else
@@ -2990,12 +2580,12 @@ namespace mame
                 keypressed = true;
                 if (m_delta != 0)
                 {
-                    delta -= ioport_global.apply_scale(m_delta, keyscale);
+                    delta -= apply_scale(m_delta, keyscale);
                 }
                 else if (!m_lastdigital)
                 {
                     // decrement only once when first pressed
-                    delta -= ioport_global.apply_scale(1, keyscale);
+                    delta -= apply_scale(1, keyscale);
                 }
 
                 m_lastdigital = true;
@@ -3007,12 +2597,12 @@ namespace mame
                 keypressed = true;
                 if (m_delta != 0)
                 {
-                    delta += ioport_global.apply_scale(m_delta, keyscale);
+                    delta += apply_scale(m_delta, keyscale);
                 }
                 else if (!m_lastdigital)
                 {
                     // increment only once when first pressed
-                    delta += ioport_global.apply_scale(1, keyscale);
+                    delta += apply_scale(1, keyscale);
                 }
 
                 m_lastdigital = true;
@@ -3039,7 +2629,7 @@ namespace mame
                     // autocenter from positive values
                     if (m_accum >= center)
                     {
-                        m_accum -= ioport_global.apply_scale(m_centerdelta, m_keyscalepos);
+                        m_accum -= apply_scale(m_centerdelta, m_keyscalepos);
                         if (m_accum < center)
                         {
                             m_accum = center;
@@ -3050,7 +2640,7 @@ namespace mame
                     // autocenter from negative values
                     else
                     {
-                        m_accum += ioport_global.apply_scale(m_centerdelta, m_keyscaleneg);
+                        m_accum += apply_scale(m_centerdelta, m_keyscaleneg);
                         if (m_accum > center)
                         {
                             m_accum = center;
@@ -3117,13 +2707,13 @@ namespace mame
             else if (m_single_scale)
                 // it's a pedal or the default value is equal to min/max
                 // so we need to adjust the center to the minimum
-                value -= inputdev_global.INPUT_ABSOLUTE_MIN;
+                value -= INPUT_ABSOLUTE_MIN;
 
             // map differently for positive and negative values
             if (value >= 0)
-                value = ioport_global.apply_scale(value, m_scalepos);
+                value = apply_scale(value, m_scalepos);
             else
-                value = ioport_global.apply_scale(value, m_scaleneg);
+                value = apply_scale(value, m_scaleneg);
             value += m_adjdefvalue;
 
             // for relative devices, wrap around when we go past the edge
@@ -3282,235 +2872,10 @@ namespace mame
     }
 
 
-    // ======================> ioport_configurer
-    // class to wrap helper functions
-    public class ioport_configurer
-    {
-        // internal state
-        device_t m_owner;
-        ioport_list m_portlist;
-        string m_errorbuf;
-
-        ioport_port m_curport;
-        ioport_field m_curfield;
-        ioport_setting m_cursetting;
-
-
-        // construction/destruction
-        //-------------------------------------------------
-        //  ioport_configurer - constructor
-        //-------------------------------------------------
-        public ioport_configurer(device_t owner, ioport_list portlist, ref string errorbuf)
-        {
-            m_owner = owner;
-            m_portlist = portlist;
-            m_errorbuf = errorbuf;
-            m_curport = null;
-            m_curfield = null;
-            m_cursetting = null;
-        }
-
-
-        // static helpers
-
-        //-------------------------------------------------
-        //  string_from_token - convert an
-        //  ioport_token to a default string
-        //-------------------------------------------------
-        public static string string_from_token(string str)
-        {
-            // 0 is an invalid index
-            if (string.IsNullOrEmpty(str))
-                return null;
-
-            // if the index is greater than the count, assume it to be a pointer
-            //if (uintptr_t(string) >= INPUT_STRING_COUNT)
-            //    return string;
-            if (!str.StartsWith(ioport_global.DEFAULT_STR_PREFIX))
-                return str;
-
-#if false // Set TRUE, If you want to take care missing-token or wrong-sorting
-
-            // otherwise, scan the list for a matching string and return it
-            {
-            int index;
-            for (index = 0; index < ARRAY_LENGTH(input_port_default_strings); index++)
-                if (input_port_default_strings[index].id == FPTR(string))
-                    return input_port_default_strings[index].string;
-            }
-            return "(Unknown Default)";
-
-#else
-
-            //return input_port_default_strings[uintptr_t(string)-1].string;
-            var replace_str = str.Replace(ioport_global.DEFAULT_STR_PREFIX, "");
-            INPUT_STRING result;
-            if (Enum.TryParse(replace_str, out result))
-                return ioport_global.input_port_default_strings[result];
-            else
-                throw new emu_unimplemented();
-
-#endif
-        }
-
-
-        // port helpers
-
-        //-------------------------------------------------
-        //  port_alloc - allocate a new port
-        //-------------------------------------------------
-        public ioport_configurer port_alloc(string tag)
-        {
-            // create the full tag
-            string fulltag = m_owner.subtag(tag);
-
-            // add it to the list, and reset current field/setting
-            if (m_portlist.find(fulltag) != null) throw new tag_add_exception(fulltag);
-            m_portlist.emplace(fulltag, new ioport_port(m_owner, fulltag));
-            m_curport = m_portlist.find(fulltag);
-            m_curfield = null;
-            m_cursetting = null;
-            return this;
-        }
-
-
-        //-------------------------------------------------
-        //  port_modify - find an existing port and
-        //  modify it
-        //-------------------------------------------------
-        public ioport_configurer port_modify(string tag)
-        {
-            // create the full tag
-            string fulltag = m_owner.subtag(tag);
-
-            // find the existing port
-            m_curport = m_portlist.find(fulltag);
-            if (m_curport == null)
-                throw new emu_fatalerror("Requested to modify nonexistent port '{0}'", fulltag);
-
-            // bump the modification count, and reset current field/setting
-            m_curport.modcount_set(m_curport.modcount() + 1);  //m_curport.m_modcount++;
-            m_curfield = null;
-            m_cursetting = null;
-            return this;
-        }
-
-
-        // field helpers
-
-        //-------------------------------------------------
-        //  field_alloc - allocate a new field
-        //-------------------------------------------------
-        public ioport_configurer field_alloc(ioport_type type, ioport_value defval, ioport_value mask, string name = null)
-        {
-            // make sure we have a port
-            if (m_curport == null)
-                throw new emu_fatalerror("alloc_field called with no active port (mask={0} defval={1})\n", mask, defval);
-
-            // append the field
-            if (type != ioport_type.IPT_UNKNOWN && type != ioport_type.IPT_UNUSED)
-                m_curport.active_set(m_curport.active() | mask);  //m_curport.m_active |= mask;
-
-            m_curfield = m_curport.fields().append(new ioport_field(m_curport, type, defval, mask, string_from_token(name)));
-
-            // reset the current setting
-            m_cursetting = null;
-            return this;
-        }
-
-        //ioport_configurer& field_add_char(std::initializer_list<char32_t> charlist);
-
-        //-------------------------------------------------
-        //  field_add_code - add a character to a field
-        //-------------------------------------------------
-        public ioport_configurer field_add_code(input_seq_type which, input_code code) { m_curfield.m_seq[(int)which].append_code_to_sequence_or(code); return this; }  //{ m_curfield.m_seq[which] |= code; return this; }
-
-        public ioport_configurer field_set_way(int way) { m_curfield.m_way = (u8)way; return this; }  //{ m_curfield->m_way = way; return *this; }
-        //ioport_configurer field_set_rotated() const { m_curfield->m_flags |= ioport_field::FIELD_FLAG_ROTATED; }
-        public ioport_configurer field_set_name(string name) { g.assert(m_curfield != null); m_curfield.m_name = string_from_token(name); return this; }
-        public ioport_configurer field_set_player(int player) { m_curfield.set_player((byte)(player - 1)); return this; }
-        public ioport_configurer field_set_cocktail() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL;  field_set_player(2); return this; }  //  m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL; field_set_player(2); }
-        ioport_configurer field_set_toggle() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_TOGGLE; return this; }  //{ m_curfield.m_flags |= ioport_field::FIELD_FLAG_TOGGLE; }
-        public ioport_configurer field_set_impulse(u8 impulse) { m_curfield.m_impulse = impulse; return this; }
-        public ioport_configurer field_set_analog_reverse() { m_curfield.m_flags |= ioport_field.ANALOG_FLAG_REVERSE; return this; }
-        //ioport_configurer field_set_analog_reset() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_RESET; }
-        //ioport_configurer field_set_optional() const { m_curfield->m_flags |= ioport_field::FIELD_FLAG_OPTIONAL; }
-        public ioport_configurer field_set_min_max(ioport_value minval, ioport_value maxval) { m_curfield.m_min = minval; m_curfield.m_max = maxval; return this; }
-        public ioport_configurer field_set_sensitivity(s32 sensitivity) { m_curfield.m_sensitivity = sensitivity; return this; }
-        public ioport_configurer field_set_delta(s32 delta) { m_curfield.m_centerdelta = m_curfield.m_delta = delta; return this; }
-        //ioport_configurer field_set_centerdelta(INT32 delta) const { m_curfield->m_centerdelta = delta; }
-        //ioport_configurer field_set_crosshair(crosshair_axis_t axis, double altaxis, double scale, double offset) const { m_curfield->m_crosshair_axis = axis; m_curfield->m_crosshair_altaxis = altaxis; m_curfield->m_crosshair_scale = scale; m_curfield->m_crosshair_offset = offset; }
-        //ioport_configurer field_set_crossmapper(ioport_field_crossmap_delegate callback) const { m_curfield->m_crosshair_mapper = callback; }
-        public ioport_configurer field_set_full_turn_count(u16 count) { m_curfield.m_full_turn_count = count; return this; }
-        //ioport_configurer field_set_analog_wraps() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_WRAPS; }
-        //ioport_configurer field_set_remap_table(const ioport_value *table) { m_curfield->m_remap_table = table; }
-        //ioport_configurer field_set_analog_invert() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_INVERT; }
-        public ioport_configurer field_set_dynamic_read(ioport_field_read_delegate callback) { m_curfield.m_read = callback; return this; }
-        //ioport_configurer& field_set_dynamic_write(ioport_field_write_delegate delegate, u32 param = 0) { m_curfield->m_write = delegate; m_curfield->m_write_param = param; return *this; }
-        public ioport_configurer field_set_diplocation(string location) { m_curfield.expand_diplocation(location, ref m_errorbuf); return this; }
-
-
-        // setting helpers
-        //-------------------------------------------------
-        //  setting_alloc - allocate a new setting
-        //-------------------------------------------------
-        public ioport_configurer setting_alloc(ioport_value value, string name)
-        {
-            // make sure we have a field
-            if (m_curfield == null)
-                throw new emu_fatalerror("alloc_setting called with no active field (value={0} name={1})\n", value, name);
-
-            // append a new setting
-            m_cursetting = new ioport_setting(m_curfield, value & m_curfield.mask(), string_from_token(name));
-            m_curfield.m_settinglist.emplace_back(m_cursetting);
-            return this;
-        }
-
-
-        // misc helpers
-
-        //-------------------------------------------------
-        //  set_condition - set the condition for either
-        //  the current setting or field
-        //-------------------------------------------------
-        public ioport_configurer set_condition(ioport_condition.condition_t condition, string tag, ioport_value mask, ioport_value value)
-        {
-            ioport_condition target = (m_cursetting != null) ? m_cursetting.condition() : m_curfield.condition();
-            target.set(condition, tag, mask, value);
-            return this;
-        }
-
-        //-------------------------------------------------
-        //  onoff_alloc - allocate an on/off DIP switch
-        //-------------------------------------------------
-        public ioport_configurer onoff_alloc(string name, ioport_value defval, ioport_value mask, string diplocation)
-        {
-            // allocate a field normally
-            field_alloc(ioport_type.IPT_DIPSWITCH, defval, mask, name);
-
-            // expand the diplocation
-            if (!string.IsNullOrEmpty(diplocation))
-                field_set_diplocation(diplocation);
-
-            // allocate settings
-            setting_alloc(defval & mask, ioport_global.input_port_default_strings[INPUT_STRING.INPUT_STRING_Off]);
-            setting_alloc(~defval & mask, ioport_global.input_port_default_strings[INPUT_STRING.INPUT_STRING_On]);
-
-            // clear cursettings set by setting_alloc
-            m_cursetting = null;
-            return this;
-        }
-    }
-
-
     // ======================> ioport_manager
     // private input port state
     public class ioport_manager
     {
-        // XML attributes for the different types
-        static readonly string [] seqtypestrings = { "standard", "increment", "decrement" };
-
-
         // internal state
         running_machine m_machine;              // reference to owning machine
         bool m_safe_to_read;         // clear at start; set after state is loaded
@@ -3518,7 +2883,7 @@ namespace mame
 
         // types
         std.vector<input_type_entry> m_typelist = new std.vector<input_type_entry>();       // list of live type states
-        input_type_entry [,] m_type_to_entry = new input_type_entry[(int)ioport_type.IPT_COUNT, ioport_global.MAX_PLAYERS]; // map from type/player to type state
+        input_type_entry [,] m_type_to_entry = new input_type_entry[(int)ioport_type.IPT_COUNT, MAX_PLAYERS]; // map from type/player to type state
 
         // specific special global input states
         std.list<digital_joystick> m_joystick_list = new std.list<digital_joystick>();  // list of digital joysticks
@@ -3553,11 +2918,11 @@ namespace mame
             m_safe_to_read = false;
             m_last_frame_time = attotime.zero;
             m_last_delta_nsec = 0;
-            m_record_file = new emu_file(machine.options().input_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-            m_playback_file = new emu_file(machine.options().input_directory(), g.OPEN_FLAG_READ);
+            m_record_file = new emu_file(machine.options().input_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+            m_playback_file = new emu_file(machine.options().input_directory(), OPEN_FLAG_READ);
             m_playback_accumulated_speed = 0;
             m_playback_accumulated_frames = 0;
-            m_timecode_file = new emu_file(machine.options().input_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
+            m_timecode_file = new emu_file(machine.options().input_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
             m_timecode_count = 0;
             m_timecode_last_time = attotime.zero;
             m_deselected_card_config = null;
@@ -3587,7 +2952,7 @@ namespace mame
                 string errors;
                 m_portlist.append(device, out errors);
                 if (!string.IsNullOrEmpty(errors))
-                    g.osd_printf_error("Input port errors:\n{0}", errors);
+                    osd_printf_error("Input port errors:\n{0}", errors);
             }
 
             // renumber player numbers for controller ports
@@ -3619,14 +2984,14 @@ namespace mame
                 port.Value.init_live_state();
 
             // handle autoselection of devices
-            init_autoselect_devices((int)ioport_type.IPT_AD_STICK_X,  (int)ioport_type.IPT_AD_STICK_Y,   (int)ioport_type.IPT_AD_STICK_Z, emu_options.OPTION_ADSTICK_DEVICE,    "analog joystick");
-            init_autoselect_devices((int)ioport_type.IPT_PADDLE,      (int)ioport_type.IPT_PADDLE_V,     0,                               emu_options.OPTION_PADDLE_DEVICE,     "paddle");
-            init_autoselect_devices((int)ioport_type.IPT_PEDAL,       (int)ioport_type.IPT_PEDAL2,       (int)ioport_type.IPT_PEDAL3,     emu_options.OPTION_PEDAL_DEVICE,      "pedal");
-            init_autoselect_devices((int)ioport_type.IPT_LIGHTGUN_X,  (int)ioport_type.IPT_LIGHTGUN_Y,   0,                               emu_options.OPTION_LIGHTGUN_DEVICE,   "lightgun");
-            init_autoselect_devices((int)ioport_type.IPT_POSITIONAL,  (int)ioport_type.IPT_POSITIONAL_V, 0,                               emu_options.OPTION_POSITIONAL_DEVICE, "positional");
-            init_autoselect_devices((int)ioport_type.IPT_DIAL,        (int)ioport_type.IPT_DIAL_V,       0,                               emu_options.OPTION_DIAL_DEVICE,       "dial");
-            init_autoselect_devices((int)ioport_type.IPT_TRACKBALL_X, (int)ioport_type.IPT_TRACKBALL_Y,  0,                               emu_options.OPTION_TRACKBALL_DEVICE,  "trackball");
-            init_autoselect_devices((int)ioport_type.IPT_MOUSE_X,     (int)ioport_type.IPT_MOUSE_Y,      0,                               emu_options.OPTION_MOUSE_DEVICE,      "mouse");
+            init_autoselect_devices((int)ioport_type.IPT_AD_STICK_X,  (int)ioport_type.IPT_AD_STICK_Y,   (int)ioport_type.IPT_AD_STICK_Z, OPTION_ADSTICK_DEVICE,    "analog joystick");
+            init_autoselect_devices((int)ioport_type.IPT_PADDLE,      (int)ioport_type.IPT_PADDLE_V,     0,                               OPTION_PADDLE_DEVICE,     "paddle");
+            init_autoselect_devices((int)ioport_type.IPT_PEDAL,       (int)ioport_type.IPT_PEDAL2,       (int)ioport_type.IPT_PEDAL3,     OPTION_PEDAL_DEVICE,      "pedal");
+            init_autoselect_devices((int)ioport_type.IPT_LIGHTGUN_X,  (int)ioport_type.IPT_LIGHTGUN_Y,   0,                               OPTION_LIGHTGUN_DEVICE,   "lightgun");
+            init_autoselect_devices((int)ioport_type.IPT_POSITIONAL,  (int)ioport_type.IPT_POSITIONAL_V, 0,                               OPTION_POSITIONAL_DEVICE, "positional");
+            init_autoselect_devices((int)ioport_type.IPT_DIAL,        (int)ioport_type.IPT_DIAL_V,       0,                               OPTION_DIAL_DEVICE,       "dial");
+            init_autoselect_devices((int)ioport_type.IPT_TRACKBALL_X, (int)ioport_type.IPT_TRACKBALL_Y,  0,                               OPTION_TRACKBALL_DEVICE,  "trackball");
+            init_autoselect_devices((int)ioport_type.IPT_MOUSE_X,     (int)ioport_type.IPT_MOUSE_Y,      0,                               OPTION_MOUSE_DEVICE,      "mouse");
 
             // look for 4-way diagonal joysticks and change the default map if we find any
             string joystick_map_default = machine().options().joystick_map();
@@ -3678,7 +3043,7 @@ namespace mame
         //  type_name - return the name for the given
         //  type/player
         //-------------------------------------------------
-        public string type_name(ioport_type type, byte player)
+        public string type_name(ioport_type type, u8 player)
         {
             // if we have a machine, use the live state and quick lookup
             input_type_entry entry = m_type_to_entry[(int)type, player];
@@ -3758,8 +3123,8 @@ namespace mame
                 return newval;
 
             // otherwise, interpolate
-            attoseconds_t nsec_since_last = (machine().time() - m_last_frame_time).as_attoseconds() / attotime.ATTOSECONDS_PER_NANOSECOND;
-            return (int)(oldval + ((Int64)(newval - oldval) * nsec_since_last / m_last_delta_nsec));
+            attoseconds_t nsec_since_last = (machine().time() - m_last_frame_time).as_attoseconds() / ATTOSECONDS_PER_NANOSECOND;
+            return (int)(oldval + ((s64)(newval - oldval) * nsec_since_last / m_last_delta_nsec));
         }
 
 
@@ -3776,7 +3141,7 @@ namespace mame
         void init_port_types()
         {
             // convert the array into a list of type states that can be modified
-            inpttype_global.emplace_core_types(m_typelist);
+            emplace_core_types(m_typelist);
 
             // ask the OSD to customize the list
             machine().osd().customize_input_type_list(m_typelist);
@@ -3817,7 +3182,7 @@ namespace mame
 
             if (autoenable_class == null)
             {
-                g.osd_printf_error("Invalid {0} value {1}; reverting to keyboard\n", option, stemp);
+                osd_printf_error("Invalid {0} value {1}; reverting to keyboard\n", option, stemp);
                 autoenable_class = machine().input().device_class(input_device_class.DEVICE_CLASS_KEYBOARD);
             }
 
@@ -3831,7 +3196,7 @@ namespace mame
                         // if this port type is in use, apply the autoselect criteria
                         if ((type1 != 0 && (int)field.type() == type1) || (type2 != 0 && (int)field.type() == type2) || (type3 != 0 && (int)field.type() == type3))
                         {
-                            g.osd_printf_verbose("Input: Autoenabling {0} due to presence of a {1}\n", autoenable_class.name(), ananame);
+                            osd_printf_verbose("Input: Autoenabling {0} due to presence of a {1}\n", autoenable_class.name(), ananame);
                             autoenable_class.enable();
                             break;
                         }
@@ -3856,7 +3221,7 @@ namespace mame
         //-------------------------------------------------
         void frame_update()
         {
-            profiler_global.g_profiler.start(profile_type.PROFILER_INPUT);
+            g_profiler.start(profile_type.PROFILER_INPUT);
 
 
             // record/playback information about the current frame
@@ -3866,7 +3231,7 @@ namespace mame
             record_frame(curtime);
 
             // track the duration of the previous frame
-            m_last_delta_nsec = (curtime - m_last_frame_time).as_attoseconds() / attotime.ATTOSECONDS_PER_NANOSECOND;
+            m_last_delta_nsec = (curtime - m_last_frame_time).as_attoseconds() / ATTOSECONDS_PER_NANOSECOND;
             m_last_frame_time = curtime;
 
             // update the digital joysticks
@@ -3899,7 +3264,7 @@ namespace mame
             }
 
 
-            profiler_global.g_profiler.stop();
+            g_profiler.stop();
         }
 
 
@@ -3994,11 +3359,11 @@ namespace mame
 
             // return an explicit error if file isn't found in given path
             if (filerr == std.errc.no_such_file_or_directory)
-                g.fatalerror("Input file {0} not found\n", filename);
+                fatalerror("Input file {0} not found\n", filename);
 
             // TODO: bail out any other error laconically for now
             if (filerr)
-                g.fatalerror("Failed to open file {0} for playback ({1}:{2} {3})\n", filename, filerr.category().name(), filerr.value(), filerr.message());
+                fatalerror("Failed to open file {0} for playback ({1}:{2} {3})\n", filename, filerr.category().name(), filerr.value(), filerr.message());
 
             // read the header and verify that it is a modern version; if not, print an error
             inp_header header = new inp_header();
@@ -4010,19 +3375,19 @@ namespace mame
                 throw new emu_fatalerror("Input file format version mismatch\n");
 
             // output info to console
-            g.osd_printf_info("Input file: {0}\n", filename);
-            g.osd_printf_info("INP version {0}.{1}", header.get_majversion(), header.get_minversion());  // %u.%u\n
+            osd_printf_info("Input file: {0}\n", filename);
+            osd_printf_info("INP version {0}.{1}", header.get_majversion(), header.get_minversion());  // %u.%u\n
             time_t basetime = (time_t)header.get_basetime();
-            g.osd_printf_info("Created {0}\n", new DateTime(1970, 1, 1).ToLocalTime().AddSeconds(basetime).ToString());  //ctime(&basetime));
-            g.osd_printf_info("Recorded using {0}\n", header.get_appdesc());
+            osd_printf_info("Created {0}\n", new DateTime(1970, 1, 1).ToLocalTime().AddSeconds(basetime).ToString());  //ctime(&basetime));
+            osd_printf_info("Recorded using {0}\n", header.get_appdesc());
 
             // verify the header against the current game
             string sysname = header.get_sysname();
             if (sysname != machine().system().name)
-                g.osd_printf_info("Input file is for machine '{0}', not for current machine '{1}'\n", sysname, machine().system().name);
+                osd_printf_info("Input file is for machine '{0}', not for current machine '{1}'\n", sysname, machine().system().name);
 
             // enable compression
-            m_playback_stream = util.zlib_read(util.core_file_read(m_playback_file.core_file_get()), 16386);
+            m_playback_stream = util.zlib_read(m_playback_file.core_file_get(), 16386);
             return basetime;
         }
 
@@ -4041,18 +3406,18 @@ namespace mame
 
                 // pop a message
                 if (message != null)
-                    machine().popmessage(string.Format("Playback Ended\nReason: {0}", message));
+                    machine().popmessage("Playback Ended\nReason: {0}", message);
 
                 // display speed stats
                 if (m_playback_accumulated_speed > 0)
                     m_playback_accumulated_speed /= m_playback_accumulated_frames;
-                g.osd_printf_info("Total playback frames: {0}\n", m_playback_accumulated_frames);
-                g.osd_printf_info("Average recorded speed: {0}%%\n", (m_playback_accumulated_speed * 200 + 1) >> 21);
+                osd_printf_info("Total playback frames: {0}\n", m_playback_accumulated_frames);
+                osd_printf_info("Average recorded speed: {0}%%\n", (m_playback_accumulated_speed * 200 + 1) >> 21);
 
                 // close the program at the end of inp file playback
                 if (machine().options().exit_after_playback())
                 {
-                    g.osd_printf_info("Exiting MAME now...\n");
+                    osd_printf_info("Exiting MAME now...\n");
                     machine().schedule_exit();
                 }
             }
@@ -4097,11 +3462,11 @@ namespace mame
             // normalize byte order
             PointerU8 value = new PointerU8(new MemoryU8(8, true));
             if (buffer.Count == 8)  //if (sizeof(value) == 8)
-                value.SetUInt64(0, g.little_endianize_int64(buffer.GetUInt64(0)));  //value = little_endianize_int64(value);
+                value.SetUInt64(0, little_endianize_int64(buffer.GetUInt64(0)));  //value = little_endianize_int64(value);
             else if (buffer.Count == 4)  //else if (sizeof(value) == 4)
-                value.SetUInt32(0, g.little_endianize_int32(buffer.GetUInt32(0)));  //value = little_endianize_int32(value);
+                value.SetUInt32(0, little_endianize_int32(buffer.GetUInt32(0)));  //value = little_endianize_int32(value);
             else if (buffer.Count == 2)  //else if (sizeof(value) == 2)
-                value.SetUInt16(0, g.little_endianize_int16(buffer.GetUInt16(0)));  //value = little_endianize_int16(value);
+                value.SetUInt16(0, little_endianize_int16(buffer.GetUInt16(0)));  //value = little_endianize_int16(value);
             else
                 value[0] = buffer[0];
 
@@ -4134,16 +3499,16 @@ namespace mame
             // fill in the header
             inp_header header = new inp_header();
             header.set_magic();
-            header.set_basetime((UInt64)systime.time);
+            header.set_basetime((u64)systime.time);
             header.set_version();
             header.set_sysname(machine().system().name);
-            header.set_appdesc(string.Format("{0} {1}", emulator_info.get_appname(), emulator_info.get_build_version()));
+            header.set_appdesc(util.string_format("{0} {1}", emulator_info.get_appname(), emulator_info.get_build_version()));
 
             // write it
             header.write(m_record_file);
 
             // enable compression
-            m_record_stream = util.zlib_write(util.core_file_read_write(m_record_file.core_file_get()), 6, 16384);
+            m_record_stream = util.zlib_write(m_record_file.core_file_get(), 6, 16384);
         }
 
 
@@ -4161,7 +3526,7 @@ namespace mame
 
                 // pop a message
                 if (message != null)
-                    machine().popmessage(string.Format("Recording Ended\nReason: {0}", message));
+                    machine().popmessage("Recording Ended\nReason: {0}", message);
             }
         }
 
@@ -4196,36 +3561,36 @@ namespace mame
             {
                 // Display the timecode
                 m_timecode_count++;
-                string current_time_str = string.Format("{0}:{1}:{2}.{3}",  //"%02d:%02d:%02d.%03d",
+                string current_time_str = string_format("{0}:{1}:{2}.{3}",  //"%02d:%02d:%02d.%03d",
                         (int)curtime.seconds() / (60 * 60),
                         (curtime.seconds() / 60) % 60,
                         curtime.seconds() % 60,
-                        (int)(curtime.attoseconds()/attotime.ATTOSECONDS_PER_MILLISECOND));
+                        (int)(curtime.attoseconds() / ATTOSECONDS_PER_MILLISECOND));
 
                 // Elapsed from previous timecode
                 attotime elapsed_time = curtime - m_timecode_last_time;
                 m_timecode_last_time = curtime;
-                string elapsed_time_str = string.Format("{0}:{1}:{2}.{3}",  //"%02d:%02d:%02d.%03d",
+                string elapsed_time_str = string_format("{0}:{1}:{2}.{3}",  //"%02d:%02d:%02d.%03d",
                         elapsed_time.seconds() / (60 * 60),
                         (elapsed_time.seconds() / 60) % 60,
                         elapsed_time.seconds() % 60,
-                        (int)(elapsed_time.attoseconds()/attotime.ATTOSECONDS_PER_MILLISECOND));
+                        (int)(elapsed_time.attoseconds() / ATTOSECONDS_PER_MILLISECOND));
 
                 // Number of ms from beginning of playback
-                int mseconds_start = (int)(curtime.seconds()*1000 + curtime.attoseconds()/attotime.ATTOSECONDS_PER_MILLISECOND);
-                string mseconds_start_str = string.Format("{0}", mseconds_start);  // %015d
+                int mseconds_start = (int)(curtime.seconds()*1000 + curtime.attoseconds() / ATTOSECONDS_PER_MILLISECOND);
+                string mseconds_start_str = string_format("{0}", mseconds_start);  // %015d
 
                 // Number of ms from previous timecode
-                int mseconds_elapsed = (int)(elapsed_time.seconds()*1000 + elapsed_time.attoseconds()/attotime.ATTOSECONDS_PER_MILLISECOND);
-                string mseconds_elapsed_str = string.Format("{0}", mseconds_elapsed);  // "%015d"
+                int mseconds_elapsed = (int)(elapsed_time.seconds()*1000 + elapsed_time.attoseconds() / ATTOSECONDS_PER_MILLISECOND);
+                string mseconds_elapsed_str = string_format("{0}", mseconds_elapsed);  // "%015d"
 
                 // Number of frames from beginning of playback
                 int frame_start = mseconds_start * 60 / 1000;
-                string frame_start_str = string.Format("{0}", frame_start);  // "%015d"
+                string frame_start_str = string_format("{0}", frame_start);  // "%015d"
 
                 // Number of frames from previous timecode
                 int frame_elapsed = mseconds_elapsed * 60 / 1000;
-                string frame_elapsed_str = string.Format("{0}", frame_elapsed);  // "%015d"
+                string frame_elapsed_str = string_format("{0}", frame_elapsed);  // "%015d"
 
                 string message;
                 string timecode_text = "";
@@ -4233,7 +3598,7 @@ namespace mame
                 bool show_timecode_counter = false;
                 if (m_timecode_count==1)
                 {
-                    message = string.Format("TIMECODE: Intro started at {0}", current_time_str);
+                    message = string_format("TIMECODE: Intro started at {0}", current_time_str);
                     timecode_key = "INTRO_START";
                     timecode_text = "INTRO";
                     show_timecode_counter = true;
@@ -4241,38 +3606,38 @@ namespace mame
                 else if (m_timecode_count==2)
                 {
                     machine().video().add_to_total_time(elapsed_time);
-                    message = string.Format("TIMECODE: Intro duration {0}", elapsed_time_str);
+                    message = string_format("TIMECODE: Intro duration {0}", elapsed_time_str);
                     timecode_key = "INTRO_STOP";
                     //timecode_text = "INTRO";
                 }
                 else if (m_timecode_count==3)
                 {
-                    message = string.Format("TIMECODE: Gameplay started at {0}", current_time_str);
+                    message = string_format("TIMECODE: Gameplay started at {0}", current_time_str);
                     timecode_key = "GAMEPLAY_START";
                     timecode_text = "GAMEPLAY";
                     show_timecode_counter = true;
                 }
                 else if (m_timecode_count==4) {
                     machine().video().add_to_total_time(elapsed_time);
-                    message = string.Format("TIMECODE: Gameplay duration {0}", elapsed_time_str);
+                    message = string_format("TIMECODE: Gameplay duration {0}", elapsed_time_str);
                     timecode_key = "GAMEPLAY_STOP";
                     //timecode_text = "GAMEPLAY";
                 }
                 else if (m_timecode_count % 2 == 1)
                 {
-                    message = string.Format("TIMECODE: Extra {0} started at {1}", (m_timecode_count-3)/2, current_time_str);
-                    timecode_key = string.Format("EXTRA_START_{0}", (m_timecode_count-3)/2);  // %03d
-                    timecode_text = string.Format("EXTRA {0}", (m_timecode_count-3)/2);
+                    message = string_format("TIMECODE: Extra {0} started at {1}", (m_timecode_count-3)/2, current_time_str);
+                    timecode_key = string_format("EXTRA_START_{0}", (m_timecode_count-3)/2);  // %03d
+                    timecode_text = string_format("EXTRA {0}", (m_timecode_count-3)/2);
                     show_timecode_counter = true;
                 }
                 else
                 {
                     machine().video().add_to_total_time(elapsed_time);
-                    message = string.Format("TIMECODE: Extra {0} duration {1}", (m_timecode_count-4)/2, elapsed_time_str);
-                    timecode_key = string.Format("EXTRA_STOP_{0}", (m_timecode_count-4)/2);  //%03d
+                    message = string_format("TIMECODE: Extra {0} duration {1}", (m_timecode_count-4)/2, elapsed_time_str);
+                    timecode_key = string_format("EXTRA_STOP_{0}", (m_timecode_count-4)/2);  //%03d
                 }
 
-                g.osd_printf_info("{0} \n", message);
+                osd_printf_info("{0} \n", message);
                 machine().popmessage("{0} \n", message);
 
                 m_timecode_file.printf(
@@ -4328,7 +3693,7 @@ namespace mame
             // open the record file
             string filename;
             filename = record_filename + ".timecode";
-            g.osd_printf_info("Record input timecode file: {0}\n", record_filename);
+            osd_printf_info("Record input timecode file: {0}\n", record_filename);
 
             std.error_condition filerr = m_timecode_file.open(filename);
             if (filerr)
@@ -4363,5 +3728,780 @@ namespace mame
                     machine().popmessage("Recording Timecode Ended\nReason: {0}", message);
             }
         }
+    }
+
+
+    // ======================> ioport_configurer
+    // class to wrap helper functions
+    public class ioport_configurer
+    {
+        // internal state
+        device_t m_owner;
+        ioport_list m_portlist;
+        string m_errorbuf;
+
+        ioport_port m_curport;
+        ioport_field m_curfield;
+        ioport_setting m_cursetting;
+
+
+        // construction/destruction
+        //-------------------------------------------------
+        //  ioport_configurer - constructor
+        //-------------------------------------------------
+        public ioport_configurer(device_t owner, ioport_list portlist, ref string errorbuf)
+        {
+            m_owner = owner;
+            m_portlist = portlist;
+            m_errorbuf = errorbuf;
+            m_curport = null;
+            m_curfield = null;
+            m_cursetting = null;
+        }
+
+
+        // static helpers
+
+        //-------------------------------------------------
+        //  string_from_token - convert an
+        //  ioport_token to a default string
+        //-------------------------------------------------
+        public static string string_from_token(string string_)
+        {
+            // 0 is an invalid index
+            if (string.IsNullOrEmpty(string_))
+                return null;
+
+            // if the index is greater than the count, assume it to be a pointer
+            //if (uintptr_t(string) >= INPUT_STRING_COUNT)
+            //    return string;
+            if (!string_.StartsWith(DEFAULT_STR_PREFIX))
+                return string_;
+
+#if false // Set TRUE, If you want to take care missing-token or wrong-sorting
+
+            // otherwise, scan the list for a matching string and return it
+            {
+            int index;
+            for (index = 0; index < ARRAY_LENGTH(input_port_default_strings); index++)
+                if (input_port_default_strings[index].id == FPTR(string))
+                    return input_port_default_strings[index].string;
+            }
+            return "(Unknown Default)";
+
+#else
+
+            //return input_port_default_strings[uintptr_t(string)-1].string;
+            string replace_str = string_.Replace(DEFAULT_STR_PREFIX, "");
+            if (Enum.TryParse(replace_str, out INPUT_STRING result))
+                return input_port_default_strings[result];
+            else
+                throw new emu_unimplemented();
+#endif
+        }
+
+
+        // port helpers
+
+        //-------------------------------------------------
+        //  port_alloc - allocate a new port
+        //-------------------------------------------------
+        public ioport_configurer port_alloc(string tag)
+        {
+            // create the full tag
+            string fulltag = m_owner.subtag(tag);
+
+            // add it to the list, and reset current field/setting
+            if (m_portlist.find(fulltag) != null) throw new tag_add_exception(fulltag);
+            m_portlist.emplace(fulltag, new ioport_port(m_owner, fulltag));
+            m_curport = m_portlist.find(fulltag);
+            m_curfield = null;
+            m_cursetting = null;
+            return this;
+        }
+
+
+        //-------------------------------------------------
+        //  port_modify - find an existing port and
+        //  modify it
+        //-------------------------------------------------
+        public ioport_configurer port_modify(string tag)
+        {
+            // create the full tag
+            string fulltag = m_owner.subtag(tag);
+
+            // find the existing port
+            m_curport = m_portlist.find(fulltag);
+            if (m_curport == null)
+                throw new emu_fatalerror("Requested to modify nonexistent port '{0}'", fulltag);
+
+            // bump the modification count, and reset current field/setting
+            m_curport.modcount_set(m_curport.modcount() + 1);  //m_curport.m_modcount++;
+            m_curfield = null;
+            m_cursetting = null;
+            return this;
+        }
+
+
+        // field helpers
+
+        //-------------------------------------------------
+        //  field_alloc - allocate a new field
+        //-------------------------------------------------
+        public ioport_configurer field_alloc(ioport_type type, ioport_value defval, ioport_value mask, string name = null)
+        {
+            // make sure we have a port
+            if (m_curport == null)
+                throw new emu_fatalerror("alloc_field called with no active port (mask={0} defval={1})\n", mask, defval);
+
+            // append the field
+            if (type != ioport_type.IPT_UNKNOWN && type != ioport_type.IPT_UNUSED)
+                m_curport.active_set(m_curport.active() | mask);  //m_curport.m_active |= mask;
+
+            m_curfield = m_curport.fields().append(new ioport_field(m_curport, type, defval, mask, string_from_token(name)));
+
+            // reset the current setting
+            m_cursetting = null;
+            return this;
+        }
+
+        //ioport_configurer& field_add_char(std::initializer_list<char32_t> charlist);
+
+        //-------------------------------------------------
+        //  field_add_code - add a character to a field
+        //-------------------------------------------------
+        public ioport_configurer field_add_code(input_seq_type which, input_code code) { m_curfield.m_seq[(int)which].append_code_to_sequence_or(code); return this; }  //{ m_curfield.m_seq[which] |= code; return this; }
+
+        public ioport_configurer field_set_way(int way) { m_curfield.m_way = (u8)way; return this; }  //{ m_curfield->m_way = way; return *this; }
+        //ioport_configurer field_set_rotated() const { m_curfield->m_flags |= ioport_field::FIELD_FLAG_ROTATED; }
+        public ioport_configurer field_set_name(string name) { assert(m_curfield != null); m_curfield.m_name = string_from_token(name); return this; }
+        public ioport_configurer field_set_player(int player) { m_curfield.set_player((u8)(player - 1)); return this; }
+        public ioport_configurer field_set_cocktail() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL;  field_set_player(2); return this; }  //  m_curfield.m_flags |= ioport_field.FIELD_FLAG_COCKTAIL; field_set_player(2); }
+        ioport_configurer field_set_toggle() { m_curfield.m_flags |= ioport_field.FIELD_FLAG_TOGGLE; return this; }  //{ m_curfield.m_flags |= ioport_field::FIELD_FLAG_TOGGLE; }
+        public ioport_configurer field_set_impulse(u8 impulse) { m_curfield.m_impulse = impulse; return this; }
+        public ioport_configurer field_set_analog_reverse() { m_curfield.m_flags |= ioport_field.ANALOG_FLAG_REVERSE; return this; }
+        //ioport_configurer field_set_analog_reset() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_RESET; }
+        //ioport_configurer field_set_optional() const { m_curfield->m_flags |= ioport_field::FIELD_FLAG_OPTIONAL; }
+        public ioport_configurer field_set_min_max(ioport_value minval, ioport_value maxval) { m_curfield.m_min = minval; m_curfield.m_max = maxval; return this; }
+        public ioport_configurer field_set_sensitivity(s32 sensitivity) { m_curfield.m_sensitivity = sensitivity; return this; }
+        public ioport_configurer field_set_delta(s32 delta) { m_curfield.m_centerdelta = m_curfield.m_delta = delta; return this; }
+        public ioport_configurer field_set_centerdelta(s32 delta) { m_curfield.m_centerdelta = delta; return this; }
+        //ioport_configurer field_set_crosshair(crosshair_axis_t axis, double altaxis, double scale, double offset) const { m_curfield->m_crosshair_axis = axis; m_curfield->m_crosshair_altaxis = altaxis; m_curfield->m_crosshair_scale = scale; m_curfield->m_crosshair_offset = offset; }
+        //ioport_configurer field_set_crossmapper(ioport_field_crossmap_delegate callback) const { m_curfield->m_crosshair_mapper = callback; }
+        public ioport_configurer field_set_full_turn_count(u16 count) { m_curfield.m_full_turn_count = count; return this; }
+        //ioport_configurer field_set_analog_wraps() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_WRAPS; }
+        //ioport_configurer field_set_remap_table(const ioport_value *table) { m_curfield->m_remap_table = table; }
+        //ioport_configurer field_set_analog_invert() const { m_curfield->m_flags |= ioport_field::ANALOG_FLAG_INVERT; }
+        public ioport_configurer field_set_dynamic_read(ioport_field_read_delegate delegate_) { m_curfield.m_read = delegate_; return this; }
+        public ioport_configurer field_set_dynamic_write(ioport_field_write_delegate delegate_, u32 param = 0) { m_curfield.m_write = delegate_; m_curfield.m_write_param = param; return this; }
+        public ioport_configurer field_set_diplocation(string location) { m_curfield.expand_diplocation(location, ref m_errorbuf); return this; }
+
+
+        // setting helpers
+        //-------------------------------------------------
+        //  setting_alloc - allocate a new setting
+        //-------------------------------------------------
+        public ioport_configurer setting_alloc(ioport_value value, string name)
+        {
+            // make sure we have a field
+            if (m_curfield == null)
+                throw new emu_fatalerror("alloc_setting called with no active field (value={0} name={1})\n", value, name);
+
+            // append a new setting
+            m_cursetting = new ioport_setting(m_curfield, value & m_curfield.mask(), string_from_token(name));
+            m_curfield.m_settinglist.emplace_back(m_cursetting);
+            return this;
+        }
+
+
+        // misc helpers
+
+        //-------------------------------------------------
+        //  set_condition - set the condition for either
+        //  the current setting or field
+        //-------------------------------------------------
+        public ioport_configurer set_condition(ioport_condition.condition_t condition, string tag, ioport_value mask, ioport_value value)
+        {
+            ioport_condition target = (m_cursetting != null) ? m_cursetting.condition() : m_curfield.condition();
+            target.set(condition, tag, mask, value);
+            return this;
+        }
+
+        //-------------------------------------------------
+        //  onoff_alloc - allocate an on/off DIP switch
+        //-------------------------------------------------
+        public ioport_configurer onoff_alloc(string name, ioport_value defval, ioport_value mask, string diplocation)
+        {
+            // allocate a field normally
+            field_alloc(ioport_type.IPT_DIPSWITCH, defval, mask, name);
+
+            // expand the diplocation
+            if (!string.IsNullOrEmpty(diplocation))
+                field_set_diplocation(diplocation);
+
+            // allocate settings
+            setting_alloc(defval & mask, DEF_STR(INPUT_STRING.INPUT_STRING_Off));
+            setting_alloc(~defval & mask, DEF_STR(INPUT_STRING.INPUT_STRING_On));
+
+            // clear cursettings set by setting_alloc
+            m_cursetting = null;
+            return this;
+        }
+    }
+
+
+    public static partial class ioport_global
+    {
+        public static char32_t UCHAR_MAMEKEY(char32_t code) { return UCHAR_MAMEKEY_BEGIN + code; }  //#define UCHAR_MAMEKEY(code) (UCHAR_MAMEKEY_BEGIN + ITEM_ID_##code)
+
+        // macro for a read callback function (PORT_CUSTOM)
+        //#define CUSTOM_INPUT_MEMBER(name)   ioport_value name()
+        //#define DECLARE_CUSTOM_INPUT_MEMBER(name)   ioport_value name()
+
+        // macro for port write callback functions (PORT_CHANGED)
+        //#define INPUT_CHANGED_MEMBER(name)  void name(ioport_field &field, u32 param, ioport_value oldval, ioport_value newval)
+        //#define DECLARE_INPUT_CHANGED_MEMBER(name)  void name(ioport_field &field, u32 param, ioport_value oldval, ioport_value newval)
+
+        // macro for port changed callback functions (PORT_CROSSHAIR_MAPPER)
+        //#define CROSSHAIR_MAPPER_MEMBER(name)   float name(float linear_value)
+        //#define DECLARE_CROSSHAIR_MAPPER_MEMBER(name)   float name(float linear_value)
+
+        // macro for wrapping a default string
+        public const string DEFAULT_STR_PREFIX = "**DEFAULT_ENUM_";
+        public static string DEF_STR(INPUT_STRING str_num) { return DEFAULT_STR_PREFIX + str_num.ToString(); }  //#define DEF_STR(str_num) ((const char *)INPUT_STRING_##str_num)
+
+
+        //**************************************************************************
+        //  MACROS FOR BUILDING INPUT PORTS
+        //**************************************************************************
+
+        // so that "0" can be used for unneeded input ports
+        //#define construct_ioport_0 NULL
+
+        // name of table
+        //#define INPUT_PORTS_NAME(_name) construct_ioport_##_name
+
+        // start of table
+        //define INPUT_PORTS_START(_name)         ATTR_COLD void INPUT_PORTS_NAME(_name)(device_t &owner, ioport_list &portlist, astring &errorbuf)         {             ioport_configurer configurer(owner, portlist, errorbuf);
+        // end of table
+        //define INPUT_PORTS_END         }
+
+        // aliasing
+        //define INPUT_PORTS_EXTERN(_name)             extern void INPUT_PORTS_NAME(_name)(device_t &owner, ioport_list &portlist, astring &errorbuf)
+
+        // including
+        public static void PORT_INCLUDE(ioport_constructor name, device_t owner, ioport_list portlist, ref string errorbuf) { name(owner, portlist, ref errorbuf); }  //INPUT_PORTS_NAME(_name)(owner, portlist, errorbuf);
+        // start of a new input port (with included tag)
+        public static void PORT_START(ioport_configurer configurer, string tag) { configurer.port_alloc(tag); }
+        // modify an existing port
+        public static void PORT_MODIFY(ioport_configurer configurer, string tag) { configurer.port_modify(tag); }
+        // input bit definition
+        public static void PORT_BIT(ioport_configurer configurer, ioport_value mask, ioport_value defval, ioport_type type) { configurer.field_alloc(type, defval, mask); }
+        public static void PORT_SPECIAL_ONOFF(ioport_configurer configurer, ioport_value mask, ioport_value defval, INPUT_STRING strindex) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, defval, strindex, null); }
+
+        static void PORT_SPECIAL_ONOFF_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value defval, INPUT_STRING strindex, string diploc) { configurer.onoff_alloc(DEF_STR(strindex), defval, mask, diploc); }
+        // append a code
+        public static void PORT_CODE(ioport_configurer configurer, input_code code) { configurer.field_add_code(input_seq_type.SEQ_TYPE_STANDARD, code); }
+        //define PORT_CODE_DEC(_code)             configurer.field_add_code(SEQ_TYPE_DECREMENT, _code);
+        //define PORT_CODE_INC(_code)             configurer.field_add_code(SEQ_TYPE_INCREMENT, _code);
+
+        // joystick flags
+        public static void PORT_2WAY(ioport_configurer configurer) { configurer.field_set_way(2); }
+        public static void PORT_4WAY(ioport_configurer configurer) { configurer.field_set_way(4); }
+        public static void PORT_8WAY(ioport_configurer configurer) { configurer.field_set_way(8); }
+        //define PORT_16WAY             configurer.field_set_way(16);
+        //define PORT_ROTATED             configurer.field_set_rotated();
+
+        // general flags
+        public static void PORT_NAME(ioport_configurer configurer, string _name) { configurer.field_set_name(_name); }
+        public static void PORT_PLAYER(ioport_configurer configurer, int player) { configurer.field_set_player(player); }
+        public static void PORT_COCKTAIL(ioport_configurer configurer) { configurer.field_set_cocktail(); }
+        //define PORT_TOGGLE             configurer.field_set_toggle();
+        public static void PORT_IMPULSE(ioport_configurer configurer, u8 duration) { configurer.field_set_impulse(duration); }
+        public static void PORT_REVERSE(ioport_configurer configurer) { configurer.field_set_analog_reverse(); }
+        //define PORT_RESET             configurer.field_set_analog_reset();
+        //#define PORT_OPTIONAL     configurer.field_set_optional();
+
+        // analog settings
+        // if this macro is not used, the minimum defaults to 0 and maximum defaults to the mask value
+        public static void PORT_MINMAX(ioport_configurer configurer, ioport_value _min, ioport_value _max) { configurer.field_set_min_max(_min, _max); }
+        public static void PORT_SENSITIVITY(ioport_configurer configurer, int sensitivity) { configurer.field_set_sensitivity(sensitivity); }
+        public static void PORT_KEYDELTA(ioport_configurer configurer, int delta) { configurer.field_set_delta(delta); }
+        // note that PORT_CENTERDELTA must appear after PORT_KEYDELTA
+        public static void PORT_CENTERDELTA(ioport_configurer configurer, int delta) { configurer.field_set_centerdelta(delta); }
+        //define PORT_CROSSHAIR(axis, scale, offset, altaxis)             configurer.field_set_crosshair(CROSSHAIR_AXIS_##axis, altaxis, scale, offset);
+        //define PORT_CROSSHAIR_MAPPER(_callback)             configurer.field_set_crossmapper(ioport_field_crossmap_delegate(_callback, #_callback, DEVICE_SELF, (device_t *)NULL));
+        //define PORT_CROSSHAIR_MAPPER_MEMBER(_device, _class, _member)             configurer.field_set_crossmapper(ioport_field_crossmap_delegate(&_class::_member, #_class "::" #_member, _device, (_class *)NULL));
+
+        // how many optical counts for 1 full turn of the control
+        public static void PORT_FULL_TURN_COUNT(ioport_configurer configurer, u16 _count) { configurer.field_set_full_turn_count(_count); }
+
+        // positional controls can be binary or 1 of X
+        // 1 of X not completed yet
+        // if it is specified as PORT_REMAP_TABLE then it is binary, but remapped
+        // otherwise it is binary
+        //define PORT_POSITIONS(_positions)             configurer.field_set_min_max(0, _positions);
+
+        // positional control wraps at min/max
+        //define PORT_WRAPS             configurer.field_set_analog_wraps();
+
+        // positional control uses this remap table
+        //define PORT_REMAP_TABLE(_table)             configurer.field_set_remap_table(_table);
+
+        // positional control bits are active low
+        //define PORT_INVERT             configurer.field_set_analog_invert();
+
+        // read callbacks
+        public static void PORT_CUSTOM_MEMBER(ioport_configurer configurer, string device, ioport_field_read_delegate delegate_) { configurer.field_set_dynamic_read(delegate_); }  //#define PORT_CUSTOM_MEMBER(_class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate(&_class::_member, #_class "::" #_member, DEVICE_SELF, (_class *)nullptr));
+        //#define PORT_CUSTOM_DEVICE_MEMBER(_device, _class, _member) configurer.field_set_dynamic_read(ioport_field_read_delegate(owner, _device, &_class::_member, #_class "::" #_member));
+
+        // write callbacks
+        public static void PORT_CHANGED_MEMBER(ioport_configurer configurer, string device, ioport_field_write_delegate delegate_, u32 param = 0) { configurer.field_set_dynamic_write(delegate_, param); }  //#define PORT_CHANGED_MEMBER(_device, _class, _member, _param) configurer.field_set_dynamic_write(ioport_field_write_delegate(owner, _device, &_class::_member, #_class "::" #_member), (_param));
+
+        // input device handler
+        //#define PORT_READ_LINE_MEMBER(_class, _member) \
+        //    configurer.field_set_dynamic_read( \
+        //            ioport_field_read_delegate( \
+        //                owner, \
+        //                DEVICE_SELF, \
+        //                static_cast<ioport_value (*)(_class &)>([] (_class &device) -> ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; }), \
+        //                #_class "::" #_member));
+        public static void PORT_READ_LINE_MEMBER(ioport_configurer configurer, Func<int> _member)
+        {
+            configurer.field_set_dynamic_read(() =>
+            {
+                return (_member() & 1) != 0 ? ~(ioport_value)0 : 0;
+            });
+        }
+
+        //#define PORT_READ_LINE_DEVICE_MEMBER(_device, _class, _member) \
+        //    configurer.field_set_dynamic_read( \
+        //            ioport_field_read_delegate( \
+        //                owner, \
+        //                _device, \
+        //                static_cast<ioport_value (*)(_class &)>([] (_class &device) -> ioport_value { return (device._member() & 1) ? ~ioport_value(0) : 0; }), \
+        //                #_class "::" #_member));
+        public static void PORT_READ_LINE_DEVICE_MEMBER(ioport_configurer configurer, string device, Func<int> _member)
+        {
+            configurer.field_set_dynamic_read(() =>
+            {
+                return (_member() & 1) != 0 ? ~(ioport_value)0 : 0;
+            });
+        }
+
+        // output device handler
+        //#define PORT_WRITE_LINE_MEMBER(_class, _member) \
+        //    configurer.field_set_dynamic_write( \
+        //            ioport_field_write_delegate( \
+        //                owner, \
+        //                DEVICE_SELF, \
+        //                static_cast<void (*)(_class &, ioport_field &, u32, ioport_value, ioport_value)>([] (_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }), \
+        //                #_class "::" #_member));
+        //#define PORT_WRITE_LINE_DEVICE_MEMBER(_device, _class, _member) \
+        //    configurer.field_set_dynamic_write( \
+        //            ioport_field_write_delegate( \
+        //                owner, \
+        //                _device, \
+        //                static_cast<void (*)(_class &, ioport_field &, u32, ioport_value, ioport_value)>([] (_class &device, ioport_field &field, u32 param, ioport_value oldval, ioport_value newval) { device._member(newval); }), \
+        //                #_class "::" #_member));
+
+        // dip switch definition
+        public static void PORT_DIPNAME(ioport_configurer configurer, ioport_value mask, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_DIPSWITCH, default_, mask, name); }
+        public static void PORT_DIPSETTING(ioport_configurer configurer, ioport_value default_, string name) { configurer.setting_alloc(default_, name); }
+        // physical location, of the form: name:[!]sw,[name:][!]sw,...
+        // note that these are specified LSB-first
+        public static void PORT_DIPLOCATION(ioport_configurer configurer, string location) { configurer.field_set_diplocation(location); }
+        // conditionals for dip switch settings
+        public static void PORT_CONDITION(ioport_configurer configurer, string tag, ioport_value mask, ioport_condition.condition_t condition, ioport_value value) { configurer.set_condition(condition, tag, mask, value); }
+        // analog adjuster definition
+        public static void PORT_ADJUSTER(ioport_configurer configurer, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_ADJUSTER, default_, 0xff, name);  configurer.field_set_min_max(0, 100); }
+        // config definition
+        public static void PORT_CONFNAME(ioport_configurer configurer, ioport_value mask, ioport_value default_, string name) { configurer.field_alloc(ioport_type.IPT_CONFIG, default_, mask, name); }
+        public static void PORT_CONFSETTING(ioport_configurer configurer, ioport_value default_, string name) { configurer.setting_alloc(default_, name); }
+
+        // keyboard chars
+        //define PORT_CHAR(...)     configurer.field_add_char({ __VA_ARGS__ });
+
+
+        // name of table
+        //#define DEVICE_INPUT_DEFAULTS_NAME(_name) device_iptdef_##_name
+
+        //#define device_iptdef_0 NULL
+        //#define device_iptdef_0L NULL
+        //#define device_iptdef_0LL NULL
+        //#define device_iptdef___null NULL
+
+        // start of table
+        //define DEVICE_INPUT_DEFAULTS_START(_name)             const input_device_default DEVICE_INPUT_DEFAULTS_NAME(_name)[] = {
+        // end of table
+        //define DEVICE_INPUT_DEFAULTS(_tag,_mask,_defval)             { _tag ,_mask, _defval },
+        // end of table
+        //define DEVICE_INPUT_DEFAULTS_END             {NULL,0,0} };
+
+
+
+        //**************************************************************************
+        //  HELPER MACROS
+        //**************************************************************************
+
+        public static void PORT_DIPUNUSED_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value default_, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Unused, diploc); }
+        public static void PORT_DIPUNUSED(ioport_configurer configurer, ioport_value mask, ioport_value default_) { PORT_SPECIAL_ONOFF(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Unused); }
+        public static void PORT_DIPUNKNOWN_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value default_, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Unknown, diploc); }
+        //define PORT_DIPUNKNOWN(_mask, _default)             PORT_SPECIAL_ONOFF(_mask, _default, Unknown)
+        public static void PORT_SERVICE_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value default_, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Service_Mode, diploc); }
+        public static void PORT_SERVICE(ioport_configurer configurer, ioport_value mask, ioport_value default_) { PORT_SPECIAL_ONOFF(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Service_Mode); }
+        //define PORT_SERVICE_NO_TOGGLE(_mask, _default)             PORT_BIT( _mask, _mask & _default, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ))
+        public static void PORT_VBLANK(ioport_configurer configurer, string screen, screen_device device) { PORT_READ_LINE_DEVICE_MEMBER(configurer, screen, device.vblank); }
+        //define PORT_HBLANK(_screen)             PORT_READ_LINE_DEVICE_MEMBER(_screen, screen_device, hblank)
+    }
+
+
+    static class ioport_internal
+    {
+        // temporary: set this to 1 to enable the originally defined behavior that
+        // a field specified via PORT_MODIFY which intersects a previously-defined
+        // field completely wipes out the previous definition
+        public const bool INPUT_PORT_OVERRIDE_FULLY_NUKES_PREVIOUS    = true;
+
+
+        public const int SPACE_COUNT = 3;
+
+
+        //-------------------------------------------------
+        //  compute_scale -- compute an 8.24 scale value
+        //  from a numerator and a denominator
+        //-------------------------------------------------
+        public static s64 compute_scale(s32 num, s32 den)
+        {
+            return ((s64)num << 24) / den;
+        }
+
+        //-------------------------------------------------
+        //  recip_scale -- compute an 8.24 reciprocal of
+        //  an 8.24 scale value
+        //-------------------------------------------------
+        public static s64 recip_scale(s64 scale)
+        {
+            return ((s64)1 << 48) / scale;
+        }
+
+        //-------------------------------------------------
+        //  apply_scale -- apply an 8.24 scale value to
+        //  a 32-bit value
+        //-------------------------------------------------
+        public static s32 apply_scale(s32 value, s64 scale)
+        {
+            return (s32)(((s64)value * scale) / (1 << 24));
+        }
+
+
+        //const struct
+        //{
+        //    u32 id;
+        //    const char *string;
+        //} input_port_default_strings[] =
+        public static readonly Dictionary<INPUT_STRING, string> input_port_default_strings = new Dictionary<INPUT_STRING, string>()
+        {
+            { INPUT_STRING.INPUT_STRING_Off, "Off" },
+            { INPUT_STRING.INPUT_STRING_On, "On" },
+            { INPUT_STRING.INPUT_STRING_No, "No" },
+            { INPUT_STRING.INPUT_STRING_Yes, "Yes" },
+            { INPUT_STRING.INPUT_STRING_Lives, "Lives" },
+            { INPUT_STRING.INPUT_STRING_Bonus_Life, "Bonus Life" },
+            { INPUT_STRING.INPUT_STRING_Difficulty, "Difficulty" },
+            { INPUT_STRING.INPUT_STRING_Demo_Sounds, "Demo Sounds" },
+            { INPUT_STRING.INPUT_STRING_Coinage, "Coinage" },
+            { INPUT_STRING.INPUT_STRING_Coin_A, "Coin A" },
+            { INPUT_STRING.INPUT_STRING_Coin_B, "Coin B" },
+            { INPUT_STRING.INPUT_STRING_9C_1C, "9 Coins/1 Credit" },
+            { INPUT_STRING.INPUT_STRING_8C_1C, "8 Coins/1 Credit" },
+            { INPUT_STRING.INPUT_STRING_7C_1C, "7 Coins/1 Credit" },
+            { INPUT_STRING.INPUT_STRING_6C_1C, "6 Coins/1 Credit" },
+            { INPUT_STRING.INPUT_STRING_5C_1C, "5 Coins/1 Credit" },
+            { INPUT_STRING.INPUT_STRING_4C_1C, "4 Coins/1 Credit" },
+            { INPUT_STRING.INPUT_STRING_3C_1C, "3 Coins/1 Credit" },
+            { INPUT_STRING.INPUT_STRING_8C_3C, "8 Coins/3 Credits" },
+            { INPUT_STRING.INPUT_STRING_4C_2C, "4 Coins/2 Credits" },
+            { INPUT_STRING.INPUT_STRING_5C_2C, "5 Coins/2 Credits" },
+            { INPUT_STRING.INPUT_STRING_2C_1C, "2 Coins/1 Credit" },
+            { INPUT_STRING.INPUT_STRING_5C_3C, "5 Coins/3 Credits" },
+            { INPUT_STRING.INPUT_STRING_3C_2C, "3 Coins/2 Credits" },
+            { INPUT_STRING.INPUT_STRING_4C_3C, "4 Coins/3 Credits" },
+            { INPUT_STRING.INPUT_STRING_4C_4C, "4 Coins/4 Credits" },
+            { INPUT_STRING.INPUT_STRING_3C_3C, "3 Coins/3 Credits" },
+            { INPUT_STRING.INPUT_STRING_2C_2C, "2 Coins/2 Credits" },
+            { INPUT_STRING.INPUT_STRING_1C_1C, "1 Coin/1 Credit" },
+            { INPUT_STRING.INPUT_STRING_3C_5C, "3 Coins/5 Credits" },
+            { INPUT_STRING.INPUT_STRING_4C_5C, "4 Coins/5 Credits" },
+            { INPUT_STRING.INPUT_STRING_3C_4C, "3 Coins/4 Credits" },
+            { INPUT_STRING.INPUT_STRING_2C_3C, "2 Coins/3 Credits" },
+            { INPUT_STRING.INPUT_STRING_4C_7C, "4 Coins/7 Credits" },
+            { INPUT_STRING.INPUT_STRING_2C_4C, "2 Coins/4 Credits" },
+            { INPUT_STRING.INPUT_STRING_1C_2C, "1 Coin/2 Credits" },
+            { INPUT_STRING.INPUT_STRING_2C_5C, "2 Coins/5 Credits" },
+            { INPUT_STRING.INPUT_STRING_2C_6C, "2 Coins/6 Credits" },
+            { INPUT_STRING.INPUT_STRING_1C_3C, "1 Coin/3 Credits" },
+            { INPUT_STRING.INPUT_STRING_2C_7C, "2 Coins/7 Credits" },
+            { INPUT_STRING.INPUT_STRING_2C_8C, "2 Coins/8 Credits" },
+            { INPUT_STRING.INPUT_STRING_1C_4C, "1 Coin/4 Credits" },
+            { INPUT_STRING.INPUT_STRING_1C_5C, "1 Coin/5 Credits" },
+            { INPUT_STRING.INPUT_STRING_1C_6C, "1 Coin/6 Credits" },
+            { INPUT_STRING.INPUT_STRING_1C_7C, "1 Coin/7 Credits" },
+            { INPUT_STRING.INPUT_STRING_1C_8C, "1 Coin/8 Credits" },
+            { INPUT_STRING.INPUT_STRING_1C_9C, "1 Coin/9 Credits" },
+            { INPUT_STRING.INPUT_STRING_Free_Play, "Free Play" },
+            { INPUT_STRING.INPUT_STRING_Cabinet, "Cabinet" },
+            { INPUT_STRING.INPUT_STRING_Upright, "Upright" },
+            { INPUT_STRING.INPUT_STRING_Cocktail, "Cocktail" },
+            { INPUT_STRING.INPUT_STRING_Flip_Screen, "Flip Screen" },
+            { INPUT_STRING.INPUT_STRING_Service_Mode, "Service Mode" },
+            { INPUT_STRING.INPUT_STRING_Pause, "Pause" },
+            { INPUT_STRING.INPUT_STRING_Test, "Test" },
+            { INPUT_STRING.INPUT_STRING_Tilt, "Tilt" },
+            { INPUT_STRING.INPUT_STRING_Version, "Version" },
+            { INPUT_STRING.INPUT_STRING_Region, "Region" },
+            { INPUT_STRING.INPUT_STRING_International, "International" },
+            { INPUT_STRING.INPUT_STRING_Japan, "Japan" },
+            { INPUT_STRING.INPUT_STRING_USA, "USA" },
+            { INPUT_STRING.INPUT_STRING_Europe, "Europe" },
+            { INPUT_STRING.INPUT_STRING_Asia, "Asia" },
+            { INPUT_STRING.INPUT_STRING_China, "China" },
+            { INPUT_STRING.INPUT_STRING_Hong_Kong, "Hong Kong" },
+            { INPUT_STRING.INPUT_STRING_Korea, "Korea" },
+            { INPUT_STRING.INPUT_STRING_Southeast_Asia, "Southeast Asia" },
+            { INPUT_STRING.INPUT_STRING_Taiwan, "Taiwan" },
+            { INPUT_STRING.INPUT_STRING_World, "World" },
+            { INPUT_STRING.INPUT_STRING_Language, "Language" },
+            { INPUT_STRING.INPUT_STRING_English, "English" },
+            { INPUT_STRING.INPUT_STRING_Japanese, "Japanese" },
+            { INPUT_STRING.INPUT_STRING_Chinese, "Chinese" },
+            { INPUT_STRING.INPUT_STRING_French, "French" },
+            { INPUT_STRING.INPUT_STRING_German, "German" },
+            { INPUT_STRING.INPUT_STRING_Italian, "Italian" },
+            { INPUT_STRING.INPUT_STRING_Korean, "Korean" },
+            { INPUT_STRING.INPUT_STRING_Spanish, "Spanish" },
+            { INPUT_STRING.INPUT_STRING_Very_Easy, "Very Easy" },
+            { INPUT_STRING.INPUT_STRING_Easiest, "Easiest" },
+            { INPUT_STRING.INPUT_STRING_Easier, "Easier" },
+            { INPUT_STRING.INPUT_STRING_Easy, "Easy" },
+            { INPUT_STRING.INPUT_STRING_Medium_Easy, "Medium Easy" },
+            { INPUT_STRING.INPUT_STRING_Normal, "Normal" },
+            { INPUT_STRING.INPUT_STRING_Medium, "Medium" },
+            { INPUT_STRING.INPUT_STRING_Medium_Hard, "Medium Hard" },
+            { INPUT_STRING.INPUT_STRING_Hard, "Hard" },
+            { INPUT_STRING.INPUT_STRING_Harder, "Harder" },
+            { INPUT_STRING.INPUT_STRING_Hardest, "Hardest" },
+            { INPUT_STRING.INPUT_STRING_Very_Hard, "Very Hard" },
+            { INPUT_STRING.INPUT_STRING_Medium_Difficult, "Medium Difficult" },
+            { INPUT_STRING.INPUT_STRING_Difficult, "Difficult" },
+            { INPUT_STRING.INPUT_STRING_Very_Difficult, "Very Difficult" },
+            { INPUT_STRING.INPUT_STRING_Very_Low, "Very Low" },
+            { INPUT_STRING.INPUT_STRING_Low, "Low" },
+            { INPUT_STRING.INPUT_STRING_High, "High" },
+            { INPUT_STRING.INPUT_STRING_Higher, "Higher" },
+            { INPUT_STRING.INPUT_STRING_Highest, "Highest" },
+            { INPUT_STRING.INPUT_STRING_Very_High, "Very High" },
+            { INPUT_STRING.INPUT_STRING_Players, "Players" },
+            { INPUT_STRING.INPUT_STRING_Controls, "Controls" },
+            { INPUT_STRING.INPUT_STRING_Dual, "Dual" },
+            { INPUT_STRING.INPUT_STRING_Single, "Single" },
+            { INPUT_STRING.INPUT_STRING_Game_Time, "Game Time" },
+            { INPUT_STRING.INPUT_STRING_Continue_Price, "Continue Price" },
+            { INPUT_STRING.INPUT_STRING_Controller, "Controller" },
+            { INPUT_STRING.INPUT_STRING_Light_Gun, "Light Gun" },
+            { INPUT_STRING.INPUT_STRING_Joystick, "Joystick" },
+            { INPUT_STRING.INPUT_STRING_Trackball, "Trackball" },
+            { INPUT_STRING.INPUT_STRING_Continues, "Continues" },
+            { INPUT_STRING.INPUT_STRING_Allow_Continue, "Allow Continue" },
+            { INPUT_STRING.INPUT_STRING_Level_Select, "Level Select" },
+            { INPUT_STRING.INPUT_STRING_Infinite, "Infinite" },
+            { INPUT_STRING.INPUT_STRING_Stereo, "Stereo" },
+            { INPUT_STRING.INPUT_STRING_Mono, "Mono" },
+            { INPUT_STRING.INPUT_STRING_Unused, "Unused" },
+            { INPUT_STRING.INPUT_STRING_Unknown, "Unknown" },
+            { INPUT_STRING.INPUT_STRING_Standard, "Standard" },
+            { INPUT_STRING.INPUT_STRING_Reverse, "Reverse" },
+            { INPUT_STRING.INPUT_STRING_Alternate, "Alternate" },
+            { INPUT_STRING.INPUT_STRING_None, "None" },
+        };
+
+
+        // XML attributes for the different types
+        static readonly string [] seqtypestrings = { "standard", "increment", "decrement" };
+    }
+
+
+    public static class ioport_input_string_helper
+    {
+        public const INPUT_STRING Off = INPUT_STRING.INPUT_STRING_Off;
+        public const INPUT_STRING On = INPUT_STRING.INPUT_STRING_On;
+        public const INPUT_STRING No = INPUT_STRING.INPUT_STRING_No;
+        public const INPUT_STRING Yes = INPUT_STRING.INPUT_STRING_Yes;
+        public const INPUT_STRING Lives = INPUT_STRING.INPUT_STRING_Lives;
+        public const INPUT_STRING Bonus_Life = INPUT_STRING.INPUT_STRING_Bonus_Life;
+        public const INPUT_STRING Difficulty = INPUT_STRING.INPUT_STRING_Difficulty;
+        public const INPUT_STRING Demo_Sounds = INPUT_STRING.INPUT_STRING_Demo_Sounds;
+        public const INPUT_STRING Coinage = INPUT_STRING.INPUT_STRING_Coinage;
+        public const INPUT_STRING Coin_A = INPUT_STRING.INPUT_STRING_Coin_A;
+        public const INPUT_STRING Coin_B = INPUT_STRING.INPUT_STRING_Coin_B;
+        public const INPUT_STRING _9C_1C = INPUT_STRING.INPUT_STRING_9C_1C;
+        public const INPUT_STRING _8C_1C = INPUT_STRING.INPUT_STRING_8C_1C;
+        public const INPUT_STRING _7C_1C = INPUT_STRING.INPUT_STRING_7C_1C;
+        public const INPUT_STRING _6C_1C = INPUT_STRING.INPUT_STRING_6C_1C;
+        public const INPUT_STRING _5C_1C = INPUT_STRING.INPUT_STRING_5C_1C;
+        public const INPUT_STRING _4C_1C = INPUT_STRING.INPUT_STRING_4C_1C;
+        public const INPUT_STRING _3C_1C = INPUT_STRING.INPUT_STRING_3C_1C;
+        public const INPUT_STRING _2C_1C = INPUT_STRING.INPUT_STRING_2C_1C;
+        public const INPUT_STRING _1C_1C = INPUT_STRING.INPUT_STRING_1C_1C;
+        public const INPUT_STRING _2C_3C = INPUT_STRING.INPUT_STRING_2C_3C;
+        public const INPUT_STRING _1C_2C = INPUT_STRING.INPUT_STRING_1C_2C;
+        public const INPUT_STRING _1C_3C = INPUT_STRING.INPUT_STRING_1C_3C;
+        public const INPUT_STRING _1C_4C = INPUT_STRING.INPUT_STRING_1C_4C;
+        public const INPUT_STRING _1C_5C = INPUT_STRING.INPUT_STRING_1C_5C;
+        public const INPUT_STRING _1C_6C = INPUT_STRING.INPUT_STRING_1C_6C;
+        public const INPUT_STRING _1C_7C = INPUT_STRING.INPUT_STRING_1C_7C;
+        public const INPUT_STRING _1C_8C = INPUT_STRING.INPUT_STRING_1C_8C;
+        public const INPUT_STRING Free_Play = INPUT_STRING.INPUT_STRING_Free_Play;
+        public const INPUT_STRING Cabinet = INPUT_STRING.INPUT_STRING_Cabinet;
+        public const INPUT_STRING Upright = INPUT_STRING.INPUT_STRING_Upright;
+        public const INPUT_STRING Cocktail = INPUT_STRING.INPUT_STRING_Cocktail;
+        public const INPUT_STRING Flip_Screen = INPUT_STRING.INPUT_STRING_Flip_Screen;
+        public const INPUT_STRING Language = INPUT_STRING.INPUT_STRING_Language;
+        public const INPUT_STRING English = INPUT_STRING.INPUT_STRING_English;
+        public const INPUT_STRING Japanese = INPUT_STRING.INPUT_STRING_Japanese;
+        public const INPUT_STRING Chinese = INPUT_STRING.INPUT_STRING_Chinese;
+        public const INPUT_STRING French = INPUT_STRING.INPUT_STRING_French;
+        public const INPUT_STRING German = INPUT_STRING.INPUT_STRING_German;
+        public const INPUT_STRING Italian = INPUT_STRING.INPUT_STRING_Italian;
+        public const INPUT_STRING Korean = INPUT_STRING.INPUT_STRING_Korean;
+        public const INPUT_STRING Spanish = INPUT_STRING.INPUT_STRING_Spanish;
+        public const INPUT_STRING Easiest = INPUT_STRING.INPUT_STRING_Easiest;
+        public const INPUT_STRING Easy = INPUT_STRING.INPUT_STRING_Easy;
+        public const INPUT_STRING Normal = INPUT_STRING.INPUT_STRING_Normal;
+        public const INPUT_STRING Medium = INPUT_STRING.INPUT_STRING_Medium;
+        public const INPUT_STRING Medium_Hard = INPUT_STRING.INPUT_STRING_Medium_Hard;
+        public const INPUT_STRING Hard = INPUT_STRING.INPUT_STRING_Hard;
+        public const INPUT_STRING Hardest = INPUT_STRING.INPUT_STRING_Hardest;
+        public const INPUT_STRING Difficult = INPUT_STRING.INPUT_STRING_Difficult;
+        public const INPUT_STRING Very_Difficult = INPUT_STRING.INPUT_STRING_Very_Difficult;
+        public const INPUT_STRING Allow_Continue = INPUT_STRING.INPUT_STRING_Allow_Continue;
+        public const INPUT_STRING Unused = INPUT_STRING.INPUT_STRING_Unused;
+        public const INPUT_STRING Unknown = INPUT_STRING.INPUT_STRING_Unknown;
+        public const INPUT_STRING Alternate = INPUT_STRING.INPUT_STRING_Alternate;
+        public const INPUT_STRING None = INPUT_STRING.INPUT_STRING_None;
+    }
+
+
+    public static class ioport_ioport_type_helper
+    {
+        public const ioport_type IPT_UNUSED = ioport_type.IPT_UNUSED;
+        public const ioport_type IPT_UNKNOWN = ioport_type.IPT_UNKNOWN;
+        public const ioport_type IPT_START1 = ioport_type.IPT_START1;
+        public const ioport_type IPT_START2 = ioport_type.IPT_START2;
+        public const ioport_type IPT_COIN1 = ioport_type.IPT_COIN1;
+        public const ioport_type IPT_COIN2 = ioport_type.IPT_COIN2;
+        public const ioport_type IPT_COIN3 = ioport_type.IPT_COIN3;
+        public const ioport_type IPT_SERVICE1 = ioport_type.IPT_SERVICE1;
+        public const ioport_type IPT_SERVICE = ioport_type.IPT_SERVICE;
+        public const ioport_type IPT_TILT = ioport_type.IPT_TILT;
+        public const ioport_type IPT_JOYSTICK_UP = ioport_type.IPT_JOYSTICK_UP;
+        public const ioport_type IPT_JOYSTICK_DOWN = ioport_type.IPT_JOYSTICK_DOWN;
+        public const ioport_type IPT_JOYSTICK_LEFT = ioport_type.IPT_JOYSTICK_LEFT;
+        public const ioport_type IPT_JOYSTICK_RIGHT = ioport_type.IPT_JOYSTICK_RIGHT;
+        public const ioport_type IPT_BUTTON1 = ioport_type.IPT_BUTTON1;
+        public const ioport_type IPT_BUTTON2 = ioport_type.IPT_BUTTON2;
+        public const ioport_type IPT_BUTTON3 = ioport_type.IPT_BUTTON3;
+        public const ioport_type IPT_BUTTON4 = ioport_type.IPT_BUTTON4;
+        public const ioport_type IPT_BUTTON5 = ioport_type.IPT_BUTTON5;
+        public const ioport_type IPT_AD_STICK_X = ioport_type.IPT_AD_STICK_X;
+        public const ioport_type IPT_AD_STICK_Y = ioport_type.IPT_AD_STICK_Y;
+        public const ioport_type IPT_PADDLE = ioport_type.IPT_PADDLE;
+        public const ioport_type IPT_DIAL = ioport_type.IPT_DIAL;
+        public const ioport_type IPT_DIAL_V = ioport_type.IPT_DIAL_V;
+        public const ioport_type IPT_TRACKBALL_X = ioport_type.IPT_TRACKBALL_X;
+        public const ioport_type IPT_TRACKBALL_Y = ioport_type.IPT_TRACKBALL_Y;
+        public const ioport_type IPT_SPECIAL = ioport_type.IPT_SPECIAL;
+        public const ioport_type IPT_CUSTOM = ioport_type.IPT_CUSTOM;
+    }
+
+
+    public class construct_ioport_helper
+    {
+        device_t m_owner = null;
+        ioport_configurer m_configurer = null;
+        ioport_list m_portlist = null;
+        bool m_originated_from_port_include = false;
+
+        device_t owner { get { return m_owner; } set { m_owner = value; } }
+        protected ioport_configurer configurer { get { return m_configurer; } set { m_configurer = value; } }
+        ioport_list portlist { get { return m_portlist; } set { m_portlist = value; } }
+        bool originated_from_port_include { get { return m_originated_from_port_include; } set { m_originated_from_port_include = value; } }
+
+
+        // ioport
+        protected void INPUT_PORTS_START(device_t owner, ioport_list portlist, ref string errorbuf)
+        {
+            // if we're inside PORT_INCLUDE, we already have a configurer, and don't need to create a new one
+            if (!originated_from_port_include)
+            {
+                ioport_configurer configurer = new ioport_configurer(owner, portlist, ref errorbuf);
+                this.configurer = configurer;
+                this.owner = owner;
+                this.portlist = portlist;
+            }
+        }
+        protected void INPUT_PORTS_END()
+        {
+            // if we're inside PORT_INCLUDE, don't null out our helper variables, we need them still
+            if (!originated_from_port_include)
+            {
+                configurer = null;
+                owner = null;
+                portlist = null;
+            }
+        }
+        protected void PORT_INCLUDE(ioport_constructor name, ref string errorbuf)
+        {
+            originated_from_port_include = true;
+            ioport_global.PORT_INCLUDE(name, owner, portlist, ref errorbuf);
+            originated_from_port_include = false;
+        }
+        protected void PORT_START(string tag) { ioport_global.PORT_START(configurer, tag); }
+        protected void PORT_MODIFY(string tag) { ioport_global.PORT_MODIFY(configurer, tag); }
+        protected void PORT_BIT(ioport_value mask, ioport_value default_, ioport_type type) { ioport_global.PORT_BIT(configurer, mask, default_, type); }
+        protected void PORT_CODE(input_code code) { ioport_global.PORT_CODE(configurer, code); }
+        protected void PORT_2WAY() { ioport_global.PORT_2WAY(configurer); }
+        protected void PORT_4WAY() { ioport_global.PORT_4WAY(configurer); }
+        protected void PORT_8WAY() { ioport_global.PORT_8WAY(configurer); }
+        protected void PORT_NAME(string _name) { ioport_global.PORT_NAME(configurer, _name); }
+        protected void PORT_PLAYER(int player) { ioport_global.PORT_PLAYER(configurer, player); }
+        protected void PORT_COCKTAIL() { ioport_global.PORT_COCKTAIL(configurer); }
+        protected void PORT_IMPULSE(u8 duration) { ioport_global.PORT_IMPULSE(configurer, duration); }
+        protected void PORT_REVERSE() { ioport_global.PORT_REVERSE(configurer); }
+        protected void PORT_MINMAX(ioport_value _min, ioport_value _max) { ioport_global.PORT_MINMAX(configurer, _min, _max); }
+        protected void PORT_SENSITIVITY(int sensitivity) { ioport_global.PORT_SENSITIVITY(configurer, sensitivity); }
+        protected void PORT_KEYDELTA(int delta) { ioport_global.PORT_KEYDELTA(configurer, delta); }
+        protected void PORT_CENTERDELTA(int delta) { ioport_global.PORT_CENTERDELTA(configurer, delta); }
+        protected void PORT_FULL_TURN_COUNT(u16 _count) { ioport_global.PORT_FULL_TURN_COUNT(configurer, _count); }
+        protected void PORT_CUSTOM_MEMBER(string device, ioport_field_read_delegate delegate_) { ioport_global.PORT_CUSTOM_MEMBER(configurer, device, delegate_); }
+        protected void PORT_CHANGED_MEMBER(string device, ioport_field_write_delegate delegate_, u32 param = 0) { ioport_global.PORT_CHANGED_MEMBER(configurer, device, delegate_, param); }
+        protected void PORT_READ_LINE_MEMBER(Func<int> _member) { ioport_global.PORT_READ_LINE_MEMBER(configurer, _member); }
+        protected void PORT_READ_LINE_DEVICE_MEMBER(string device, Func<int> _member) { ioport_global.PORT_READ_LINE_DEVICE_MEMBER(configurer, device, _member); }
+        public void PORT_DIPNAME(ioport_value mask, ioport_value default_, string name) { ioport_global.PORT_DIPNAME(configurer, mask, default_, name); }
+        public void PORT_DIPSETTING(ioport_value default_, string name) { ioport_global.PORT_DIPSETTING(configurer, default_, name); }
+        public void PORT_DIPLOCATION(string location) { ioport_global.PORT_DIPLOCATION(configurer, location); }
+        public void PORT_CONDITION(string tag, ioport_value mask, ioport_condition.condition_t condition, ioport_value value) { ioport_global.PORT_CONDITION(configurer, tag, mask, condition, value); }
+        protected void PORT_ADJUSTER(ioport_value default_, string name) { ioport_global.PORT_ADJUSTER(configurer, default_, name); }
+        protected void PORT_CONFNAME(ioport_value mask, ioport_value default_, string name) { ioport_global.PORT_CONFNAME(configurer, mask, default_, name); }
+        protected void PORT_CONFSETTING(ioport_value default_, string name) { ioport_global.PORT_CONFSETTING(configurer, default_, name); }
+        protected void PORT_DIPUNUSED_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_DIPUNUSED_DIPLOC(configurer, mask, default_, diploc); }
+        protected void PORT_DIPUNUSED(ioport_value mask, ioport_value default_) { ioport_global.PORT_DIPUNUSED(configurer, mask, default_); }
+        protected void PORT_DIPUNKNOWN_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_DIPUNKNOWN_DIPLOC(configurer, mask, default_, diploc); }
+        protected void PORT_SERVICE_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_SERVICE_DIPLOC(configurer, mask, default_, diploc); }
+        protected void PORT_SERVICE(ioport_value mask, ioport_value default_) { ioport_global.PORT_SERVICE(configurer, mask, default_); }
+        protected void PORT_VBLANK(string screen) { ioport_global.PORT_VBLANK(configurer, screen, (screen_device)owner.subdevice(screen)); }
+
+        protected void NETLIST_LOGIC_PORT_CHANGED(string _base, string _tag, ioport_field_write_delegate delegate_) { PORT_CHANGED_MEMBER(_base + ":" + _tag, delegate_ /*netlist_mame_logic_input_device.input_changed*/, 0); }
+        protected void NETLIST_ANALOG_PORT_CHANGED(string _base, string _tag, ioport_field_write_delegate delegate_) { PORT_CHANGED_MEMBER(_base + ":" + _tag, delegate_ /*netlist_mame_analog_input_device.input_changed*/, 0); }
     }
 }

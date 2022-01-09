@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 using psource_collection_t_list_t = mame.std.vector<mame.plib.psource_t>;  //using list_t = std::vector<source_ptr>;
 using unsigned = System.UInt32;
@@ -47,9 +48,9 @@ namespace mame.plib
         //~source_location() = default;
 
 
-        //unsigned line() const noexcept { return m_line; }
+        public unsigned line() { return m_line; }
         //unsigned column() const noexcept { return m_col; }
-        //pstring file_name() const noexcept { return m_file; }
+        public string file_name() { return m_file; }
         //pstring function_name() const noexcept { return m_func; }
 
         //source_location &operator ++() noexcept
@@ -57,6 +58,7 @@ namespace mame.plib
         //    ++m_line;
         //    return *this;
         //}
+        public void inc() { ++m_line; }
     }
 
 
@@ -83,7 +85,30 @@ namespace mame.plib
     /// Will return the given string when name matches.
     /// Is used in preprocessor code to eliminate inclusion of certain files.
     ///
-    //class psource_str_t : public psource_t
+    class psource_str_t : psource_t
+    {
+        string m_name;
+        string m_str;
+
+
+        public psource_str_t(string name, string str)
+            : base()
+        {
+            m_name = name;
+            m_str = str;
+        }
+
+        //PCOPYASSIGNMOVE(psource_str_t, delete)
+        //~psource_str_t() noexcept override = default;
+
+        public override istream_uptr stream(string name)
+        {
+            if (name == m_name)
+                return new istream_uptr(new MemoryStream(Encoding.ASCII.GetBytes(m_str)), name);  //return istream_uptr(std::make_unique<std::stringstream>(putf8string(m_str)), name);
+
+            return new istream_uptr();
+        }
+    }
 
 
     /// \brief Generic sources collection.
@@ -114,20 +139,21 @@ namespace mame.plib
 
 
         //template <typename S = psource_t>
-        //istream_uptr get_stream(pstring name)
-        //{
-        //    for (auto &s : m_collection)
-        //    {
-        //        auto *source(dynamic_cast<S *>(s.get()));
-        //        if (source)
-        //        {
-        //            auto strm = source->stream(name);
-        //            if (!strm.empty())
-        //                return strm;
-        //        }
-        //    }
-        //    return istream_uptr();
-        //}
+        public istream_uptr get_stream(string name)
+        {
+            foreach (var s in m_collection)
+            {
+                var source = (psource_t)s;  //auto *source(dynamic_cast<S *>(s.get()));
+                if (source != null)
+                {
+                    var strm = source.stream(name);
+                    if (!strm.empty())
+                        return strm;
+                }
+            }
+
+            return new istream_uptr();
+        }
 
 
         //template <typename S, typename F>

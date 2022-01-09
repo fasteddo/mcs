@@ -2,14 +2,16 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.noscreens_global;
+using static mame.noscreens_internal;
 
 
 namespace mame
 {
-    public static class noscreens_global
+    static class noscreens_internal
     {
-        static readonly byte [] layout_noscreens_data =
+        public static readonly byte [] layout_noscreens_data =
         {
             120, 156, 109, 144,  81, 110, 131,  48,  12, 134, 223, 123,  10,  43,   7,   0, 218, 137, 169,  15,  33, 220,  96,  87, 152,   2, 184, 128, 148, 196,  85,  98,
              10, 189, 253, 204, 232,  86,  42, 245, 233, 119, 236, 248, 255, 108, 235, 122, 241,  14, 110,  24, 211,  72, 161,  82, 199, 172,  80, 181, 209, 222, 122, 116,
@@ -19,8 +21,11 @@ namespace mame
              95, 127,  53, 142, 253,  32, 153, 211,  89, 226, 134, 152, 201,  11, 187,  44,  86, 200, 219, 181, 190, 121,  97, 233, 194, 203, 126, 209,  23, 243, 114, 231,
             250, 241,  71,  42, 119, 246, 159, 219,  10, 255, 179, 231, 235, 240,  34, 207, 243, 154, 195,  15,   4, 226, 126, 184
         };
+    }
 
 
+    public static class noscreens_global
+    {
         public static readonly internal_layout layout_noscreens = new internal_layout
         (
             385, layout_noscreens_data.Length, internal_layout.compression.ZLIB, layout_noscreens_data

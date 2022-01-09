@@ -2,9 +2,10 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
+using int8_t = System.SByte;
 using uint8_t = System.Byte;
+using uint16_t = System.UInt16;
 
 
 namespace mame
@@ -26,7 +27,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -57,7 +58,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -84,7 +85,7 @@ namespace mame
             if(page_changing(TMP, X)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -95,7 +96,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -124,7 +125,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -134,7 +135,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             //}
@@ -147,7 +148,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -174,7 +175,7 @@ namespace mame
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -185,7 +186,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -214,7 +215,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -224,7 +225,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -237,7 +238,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -264,11 +265,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -303,13 +304,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -341,19 +342,19 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 5; return; }
-            do_adc(read((UInt16)(TMP+Y)));
+            do_adc(read((uint16_t)(TMP+Y)));
             icount--;
 
             if(icount == 0) { inst_substate = 6; return; }
@@ -382,14 +383,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
         //case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -397,7 +398,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -405,7 +406,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            do_adc(read((UInt16)(TMP+Y)));
+            do_adc(read((uint16_t)(TMP+Y)));
             icount--;
 
             if(icount == 0) { inst_substate = 6; return; }
@@ -426,7 +427,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -445,7 +446,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -469,7 +470,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 3; return; }
             prefetch();
@@ -494,7 +495,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -519,10 +520,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((byte)(TMP+X));
+            TMP = read((uint8_t)(TMP+X));
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -550,10 +551,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((byte)(TMP+X));
+            TMP = read((uint8_t)(TMP+X));
             icount--;
 
-            do_adc((byte)TMP);
+            do_adc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -639,7 +640,7 @@ namespace mame
             if(page_changing(TMP, X)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -679,7 +680,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -689,7 +690,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             //}
@@ -729,7 +730,7 @@ namespace mame
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -769,7 +770,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -779,7 +780,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -858,11 +859,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -899,13 +900,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -939,19 +940,19 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 5; return; }
-            A &= read((UInt16)(TMP+Y));
+            A &= read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -982,14 +983,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
         //case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -997,7 +998,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -1005,7 +1006,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            A &= read((UInt16)(TMP+Y));
+            A &= read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -1082,7 +1083,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            A &= read((byte)(TMP+X));
+            A &= read((uint8_t)(TMP+X));
             icount--;
 
             set_nz(A);
@@ -1113,7 +1114,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            A &= read((byte)(TMP+X));
+            A &= read((uint8_t)(TMP+X));
             icount--;
 
             set_nz(A);
@@ -1220,7 +1221,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -1265,7 +1266,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -1420,7 +1421,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -1459,7 +1460,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -1505,15 +1506,15 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -1541,16 +1542,16 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -1560,28 +1561,28 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 //}
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
@@ -1609,15 +1610,15 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -1645,16 +1646,16 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -1664,28 +1665,28 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 //}
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
@@ -1713,15 +1714,15 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -1749,16 +1750,16 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -1768,28 +1769,28 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 //}
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
@@ -1917,15 +1918,15 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -1953,16 +1954,16 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -1972,28 +1973,28 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 //}
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
@@ -2021,15 +2022,15 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -2057,16 +2058,16 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -2076,28 +2077,28 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 //}
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
@@ -2125,15 +2126,15 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -2161,16 +2162,16 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -2180,28 +2181,28 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 //}
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
@@ -2236,19 +2237,19 @@ namespace mame
             }
 
             if(icount == 0) { inst_substate = 3; return; }
-            write(SP, (byte)(PC >> 8));
+            write(SP, (uint8_t)(PC >> 8));
             icount--;
 
             dec_SP();
 
             if(icount == 0) { inst_substate = 4; return; }
-            write(SP, (byte)PC);
+            write(SP, (uint8_t)PC);
             icount--;
 
             dec_SP();
 
             if(icount == 0) { inst_substate = 5; return; }
-            write(SP, irq_taken ? (byte)(P & ~F_B) : P);
+            write(SP, irq_taken ? (uint8_t)(P & ~F_B) : P);
             icount--;
 
             dec_SP();
@@ -2346,7 +2347,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            write(SP, (byte)(PC >> 8));
+            write(SP, (uint8_t)(PC >> 8));
             icount--;
 
             dec_SP();
@@ -2354,7 +2355,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            write(SP, (byte)PC);
+            write(SP, (uint8_t)PC);
             icount--;
 
             dec_SP();
@@ -2362,7 +2363,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            write(SP, irq_taken ? (byte)(P & ~F_B) : P);
+            write(SP, irq_taken ? (uint8_t)(P & ~F_B) : P);
             icount--;
 
             dec_SP();
@@ -2541,15 +2542,15 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -2577,16 +2578,16 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -2596,28 +2597,28 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 //}
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
@@ -2645,15 +2646,15 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -2681,16 +2682,16 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             }
 
@@ -2700,28 +2701,28 @@ namespace mame
                 read_pc_noinc();
             icount--;
 
-                if(page_changing(PC, (sbyte)(TMP))) {
+                if(page_changing(PC, (int8_t)(TMP))) {
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 }
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                    read_arg(set_l(PC, (byte)(PC+(sbyte)(TMP))));
+                    read_arg(set_l(PC, (uint8_t)(PC+(int8_t)(TMP))));
             icount--;
 
                 //}
 
-                PC += (UInt16)(sbyte)(TMP);
+                PC += (uint16_t)(int8_t)(TMP);
 
             //}
 
@@ -2907,7 +2908,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -2938,7 +2939,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -2965,7 +2966,7 @@ namespace mame
             if(page_changing(TMP, X)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -2976,7 +2977,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -3005,7 +3006,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -3015,7 +3016,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             //}
@@ -3028,7 +3029,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -3055,7 +3056,7 @@ namespace mame
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -3066,7 +3067,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -3095,7 +3096,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -3105,7 +3106,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -3118,7 +3119,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -3145,11 +3146,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -3184,13 +3185,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -3222,19 +3223,19 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 5; return; }
-            do_cmp(A, read((UInt16)(TMP+Y)));
+            do_cmp(A, read((uint16_t)(TMP+Y)));
             icount--;
 
             if(icount == 0) { inst_substate = 6; return; }
@@ -3263,14 +3264,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
         //case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -3278,7 +3279,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -3286,7 +3287,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            do_cmp(A, read((UInt16)(TMP+Y)));
+            do_cmp(A, read((uint16_t)(TMP+Y)));
             icount--;
 
             if(icount == 0) { inst_substate = 6; return; }
@@ -3307,7 +3308,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -3326,7 +3327,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -3350,7 +3351,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 3; return; }
             prefetch();
@@ -3375,7 +3376,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -3400,10 +3401,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((byte)(TMP+X));
+            TMP = read((uint8_t)(TMP+X));
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -3431,10 +3432,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((byte)(TMP+X));
+            TMP = read((uint8_t)(TMP+X));
             icount--;
 
-            do_cmp(A, (byte)TMP);
+            do_cmp(A, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -3462,7 +3463,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(X, (byte)TMP);
+            do_cmp(X, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -3493,7 +3494,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(X, (byte)TMP);
+            do_cmp(X, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -3513,7 +3514,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            do_cmp(X, (byte)TMP);
+            do_cmp(X, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -3532,7 +3533,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            do_cmp(X, (byte)TMP);
+            do_cmp(X, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -3556,7 +3557,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(X, (byte)TMP);
+            do_cmp(X, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 3; return; }
             prefetch();
@@ -3581,7 +3582,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(X, (byte)TMP);
+            do_cmp(X, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -3609,7 +3610,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(Y, (byte)TMP);
+            do_cmp(Y, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -3640,7 +3641,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(Y, (byte)TMP);
+            do_cmp(Y, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -3660,7 +3661,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            do_cmp(Y, (byte)TMP);
+            do_cmp(Y, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -3679,7 +3680,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            do_cmp(Y, (byte)TMP);
+            do_cmp(Y, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -3703,7 +3704,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(Y, (byte)TMP);
+            do_cmp(Y, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 3; return; }
             prefetch();
@@ -3728,7 +3729,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_cmp(Y, (byte)TMP);
+            do_cmp(Y, (uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -3836,7 +3837,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -3883,7 +3884,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -4005,7 +4006,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -4046,7 +4047,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -4240,7 +4241,7 @@ namespace mame
             if(page_changing(TMP, X)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -4280,7 +4281,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -4290,7 +4291,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             //}
@@ -4330,7 +4331,7 @@ namespace mame
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -4370,7 +4371,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -4380,7 +4381,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -4420,11 +4421,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -4461,13 +4462,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -4501,19 +4502,19 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 5; return; }
-            A ^= read((UInt16)(TMP+Y));
+            A ^= read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -4544,14 +4545,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
         //case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -4559,7 +4560,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -4567,7 +4568,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            A ^= read((UInt16)(TMP+Y));
+            A ^= read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -4683,7 +4684,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            A ^= read((byte)(TMP+X));
+            A ^= read((uint8_t)(TMP+X));
             icount--;
 
             set_nz(A);
@@ -4714,7 +4715,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            A ^= read((byte)(TMP+X));
+            A ^= read((uint8_t)(TMP+X));
             icount--;
 
             set_nz(A);
@@ -4825,7 +4826,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -4872,7 +4873,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -4994,7 +4995,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -5035,7 +5036,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -5221,7 +5222,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            PC = set_h(PC, read(set_l(TMP, (byte)(TMP+1))));
+            PC = set_h(PC, read(set_l(TMP, (uint8_t)(TMP+1))));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -5256,7 +5257,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            PC = set_h(PC, read(set_l(TMP, (byte)(TMP+1))));
+            PC = set_h(PC, read(set_l(TMP, (uint8_t)(TMP+1))));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -5282,13 +5283,13 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            write(SP, (byte)(PC>>8));
+            write(SP, (uint8_t)(PC>>8));
             icount--;
 
             dec_SP();
 
             if(icount == 0) { inst_substate = 4; return; }
-            write(SP, (byte)PC);
+            write(SP, (uint8_t)PC);
             icount--;
 
             dec_SP();
@@ -5325,7 +5326,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            write(SP, (byte)(PC>>8));
+            write(SP, (uint8_t)(PC>>8));
             icount--;
 
             dec_SP();
@@ -5333,7 +5334,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            write(SP, (byte)PC);
+            write(SP, (uint8_t)PC);
             icount--;
 
             dec_SP();
@@ -5430,13 +5431,13 @@ namespace mame
             if(page_changing(TMP, X)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 4; return; }
-            A = read((UInt16)(TMP + X));
+            A = read((uint16_t)(TMP + X));
             icount--;
 
             set_nz(A);
@@ -5468,7 +5469,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -5476,7 +5477,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             //}
@@ -5484,7 +5485,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            A = read((UInt16)(TMP + X));
+            A = read((uint16_t)(TMP + X));
             icount--;
 
             set_nz(A);
@@ -5514,13 +5515,13 @@ namespace mame
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 4; return; }
-            A = read((UInt16)(TMP + Y));
+            A = read((uint16_t)(TMP + Y));
             icount--;
 
             set_nz(A);
@@ -5552,7 +5553,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -5560,7 +5561,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -5568,7 +5569,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            A = read((UInt16)(TMP + Y));
+            A = read((uint16_t)(TMP + Y));
             icount--;
 
             set_nz(A);
@@ -5598,11 +5599,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -5639,13 +5640,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -5679,19 +5680,19 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 5; return; }
-            A = read((UInt16)(TMP+Y));
+            A = read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -5722,14 +5723,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
         //case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -5737,7 +5738,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -5745,7 +5746,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            A = read((UInt16)(TMP+Y));
+            A = read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -5861,7 +5862,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            A = read((byte)(TMP+X));
+            A = read((uint8_t)(TMP+X));
             icount--;
 
             set_nz(A);
@@ -5892,7 +5893,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            A = read((byte)(TMP+X));
+            A = read((uint8_t)(TMP+X));
             icount--;
 
             set_nz(A);
@@ -5981,13 +5982,13 @@ namespace mame
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 4; return; }
-            X = read((UInt16)(TMP + Y));
+            X = read((uint16_t)(TMP + Y));
             icount--;
 
             set_nz(X);
@@ -6019,7 +6020,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -6027,7 +6028,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -6035,7 +6036,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            X = read((UInt16)(TMP + Y));
+            X = read((uint16_t)(TMP + Y));
             icount--;
 
             set_nz(X);
@@ -6151,7 +6152,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            X = read((byte)(TMP+Y));
+            X = read((uint8_t)(TMP+Y));
             icount--;
 
             set_nz(X);
@@ -6182,7 +6183,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            X = read((byte)(TMP+Y));
+            X = read((uint8_t)(TMP+Y));
             icount--;
 
             set_nz(X);
@@ -6271,7 +6272,7 @@ namespace mame
             if(page_changing(TMP, X)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -6311,7 +6312,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -6321,7 +6322,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             //}
@@ -6447,7 +6448,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            Y = read((byte)(TMP+X));
+            Y = read((uint8_t)(TMP+X));
             icount--;
 
             set_nz(Y);
@@ -6478,7 +6479,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            Y = read((byte)(TMP+X));
+            Y = read((uint8_t)(TMP+X));
             icount--;
 
             set_nz(Y);
@@ -6585,7 +6586,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -6630,7 +6631,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -6785,7 +6786,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -6824,7 +6825,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -6965,7 +6966,7 @@ namespace mame
             if(page_changing(TMP, X)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -7005,7 +7006,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -7015,7 +7016,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             //}
@@ -7055,7 +7056,7 @@ namespace mame
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -7095,7 +7096,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -7105,7 +7106,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -7184,11 +7185,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -7225,13 +7226,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -7265,19 +7266,19 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 5; return; }
-            A |= read((UInt16)(TMP+Y));
+            A |= read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -7308,14 +7309,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
         //case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -7323,7 +7324,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -7331,7 +7332,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            A |= read((UInt16)(TMP+Y));
+            A |= read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -7408,7 +7409,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            A |= read((byte)(TMP+X));
+            A |= read((uint8_t)(TMP+X));
             icount--;
 
             set_nz(A);
@@ -7439,7 +7440,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            A |= read((byte)(TMP+X));
+            A |= read((uint8_t)(TMP+X));
             icount--;
 
             set_nz(A);
@@ -7630,14 +7631,14 @@ namespace mame
             inc_SP();
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = (UInt16)(read(SP) | (F_B | F_E));
+            TMP = (uint16_t)(read(SP) | (F_B | F_E));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
             icount--;
 
-            P = (byte)TMP; // Do *not* move it before the prefetch
+            P = (uint8_t)TMP; // Do *not* move it before the prefetch
 
         }
 
@@ -7663,7 +7664,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = (UInt16)(read(SP) | (F_B | F_E));
+            TMP = (uint16_t)(read(SP) | (F_B | F_E));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
@@ -7672,7 +7673,7 @@ namespace mame
             prefetch();
             icount--;
 
-            P = (byte)TMP; // Do *not* move it before the prefetch
+            P = (uint8_t)TMP; // Do *not* move it before the prefetch
             break;
         }
             inst_substate = 0;
@@ -7770,7 +7771,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -7815,7 +7816,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -7970,7 +7971,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -8009,7 +8010,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -8133,7 +8134,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -8178,7 +8179,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -8333,7 +8334,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -8372,7 +8373,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -8419,7 +8420,7 @@ namespace mame
             inc_SP();
 
             if(icount == 0) { inst_substate = 3; return; }
-            P = (byte)(read(SP) | (F_B | F_E));
+            P = (uint8_t)(read(SP) | (F_B | F_E));
             icount--;
 
             inc_SP();
@@ -8462,7 +8463,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            P = (byte)(read(SP) | (F_B | F_E));
+            P = (uint8_t)(read(SP) | (F_B | F_E));
             icount--;
 
             inc_SP();
@@ -8590,7 +8591,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -8621,7 +8622,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -8648,7 +8649,7 @@ namespace mame
             if(page_changing(TMP, X)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -8659,7 +8660,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -8688,7 +8689,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -8698,7 +8699,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             //}
@@ -8711,7 +8712,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -8738,7 +8739,7 @@ namespace mame
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -8749,7 +8750,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -8778,7 +8779,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -8788,7 +8789,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -8801,7 +8802,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -8828,11 +8829,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -8867,13 +8868,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -8905,19 +8906,19 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 5; return; }
-            do_sbc(read((UInt16)(TMP+Y)));
+            do_sbc(read((uint16_t)(TMP+Y)));
             icount--;
 
             if(icount == 0) { inst_substate = 6; return; }
@@ -8946,14 +8947,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
         //case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -8961,7 +8962,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -8969,7 +8970,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            do_sbc(read((UInt16)(TMP+Y)));
+            do_sbc(read((uint16_t)(TMP+Y)));
             icount--;
 
             if(icount == 0) { inst_substate = 6; return; }
@@ -8990,7 +8991,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 2; return; }
             prefetch();
@@ -9009,7 +9010,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -9033,7 +9034,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 3; return; }
             prefetch();
@@ -9058,7 +9059,7 @@ namespace mame
             TMP = read(TMP);
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -9083,10 +9084,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((byte)(TMP+X));
+            TMP = read((uint8_t)(TMP+X));
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -9114,10 +9115,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((byte)(TMP+X));
+            TMP = read((uint8_t)(TMP+X));
             icount--;
 
-            do_sbc((byte)TMP);
+            do_sbc((uint8_t)TMP);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -9314,11 +9315,11 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            write((UInt16)(TMP+X), A);
+            write((uint16_t)(TMP+X), A);
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -9347,13 +9348,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            write((UInt16)(TMP+X), A);
+            write((uint16_t)(TMP+X), A);
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -9379,11 +9380,11 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            write((UInt16)(TMP+Y), A);
+            write((uint16_t)(TMP+Y), A);
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -9412,13 +9413,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            write((UInt16)(TMP+Y), A);
+            write((uint16_t)(TMP+Y), A);
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -9446,11 +9447,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -9485,13 +9486,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -9523,15 +9524,15 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
-            write((UInt16)(TMP+Y), A);
+            write((uint16_t)(TMP+Y), A);
             icount--;
 
             if(icount == 0) { inst_substate = 6; return; }
@@ -9560,19 +9561,19 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            write((UInt16)(TMP+Y), A);
+            write((uint16_t)(TMP+Y), A);
             icount--;
 
             if(icount == 0) { inst_substate = 6; return; }
@@ -9643,7 +9644,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            write((byte)(TMP+X), A);
+            write((uint8_t)(TMP+X), A);
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
@@ -9672,7 +9673,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            write((byte)(TMP+X), A);
+            write((uint8_t)(TMP+X), A);
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
@@ -9798,7 +9799,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            write((byte)(TMP+Y), X);
+            write((uint8_t)(TMP+Y), X);
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
@@ -9827,7 +9828,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            write((byte)(TMP+Y), X);
+            write((uint8_t)(TMP+Y), X);
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
@@ -9953,7 +9954,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            write((byte)(TMP+X), Y);
+            write((uint8_t)(TMP+X), Y);
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
@@ -9982,7 +9983,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            write((byte)(TMP+X), Y);
+            write((uint8_t)(TMP+X), Y);
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
@@ -10089,7 +10090,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            X = (byte)SP;
+            X = (uint8_t)SP;
 
             set_nz(X);
 
@@ -10110,7 +10111,7 @@ namespace mame
             read_pc_noinc();
             icount--;
 
-            X = (byte)SP;
+            X = (uint8_t)SP;
 
             set_nz(X);
 
@@ -10444,7 +10445,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -10491,7 +10492,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -10541,7 +10542,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -10588,7 +10589,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -10640,11 +10641,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -10691,13 +10692,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -10745,11 +10746,11 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -10796,13 +10797,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -10924,7 +10925,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -10965,7 +10966,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -11095,7 +11096,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -11142,7 +11143,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -11192,7 +11193,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -11239,7 +11240,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -11291,11 +11292,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -11342,13 +11343,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -11396,11 +11397,11 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -11447,13 +11448,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -11575,7 +11576,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -11616,7 +11617,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -11724,13 +11725,13 @@ namespace mame
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 4; return; }
-            A = X = read((UInt16)(TMP+Y));
+            A = X = read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -11762,7 +11763,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -11770,7 +11771,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -11778,7 +11779,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            A = X = read((UInt16)(TMP+Y));
+            A = X = read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -11808,11 +11809,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -11849,13 +11850,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -11889,19 +11890,19 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 5; return; }
-            A = X = read((UInt16)(TMP+Y));
+            A = X = read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -11932,14 +11933,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 4; return; }
         //case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -11947,7 +11948,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 4:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -11955,7 +11956,7 @@ namespace mame
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            A = X = read((UInt16)(TMP+Y));
+            A = X = read((uint16_t)(TMP+Y));
             icount--;
 
             set_nz(A);
@@ -12031,7 +12032,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+Y);
+            TMP = (uint8_t)(TMP+Y);
 
             if(icount == 0) { inst_substate = 3; return; }
             A = X = read(TMP);
@@ -12062,7 +12063,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+Y);
+            TMP = (uint8_t)(TMP+Y);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -12182,7 +12183,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -12231,7 +12232,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -12283,7 +12284,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -12332,7 +12333,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -12386,11 +12387,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -12439,13 +12440,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -12495,11 +12496,11 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -12548,13 +12549,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -12682,7 +12683,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -12725,7 +12726,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -12857,7 +12858,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -12904,7 +12905,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -12954,7 +12955,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -13001,7 +13002,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -13053,11 +13054,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -13104,13 +13105,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -13158,11 +13159,11 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -13209,13 +13210,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -13337,7 +13338,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -13378,7 +13379,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -13424,7 +13425,7 @@ namespace mame
             TMP = set_h(TMP, read_pc());
             icount--;
 
-            TMP2 = (byte)(A & X);
+            TMP2 = (uint8_t)(A & X);
 
             if(icount == 0) { inst_substate = 3; return; }
             write(TMP, TMP2);
@@ -13453,7 +13454,7 @@ namespace mame
             TMP = set_h(TMP, read_pc());
             icount--;
 
-            TMP2 = (byte)(A & X);
+            TMP2 = (uint8_t)(A & X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -13486,14 +13487,14 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
-            TMP2 = (byte)(A & X);
+            TMP2 = (uint8_t)(A & X);
 
             if(icount == 0) { inst_substate = 5; return; }
             write(TMP, TMP2);
@@ -13527,16 +13528,16 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
-            TMP2 = (byte)(A & X);
+            TMP2 = (uint8_t)(A & X);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -13562,7 +13563,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            TMP2 = (byte)(A & X);
+            TMP2 = (uint8_t)(A & X);
 
             if(icount == 0) { inst_substate = 2; return; }
             write(TMP, TMP2);
@@ -13585,7 +13586,7 @@ namespace mame
             TMP = read_pc();
             icount--;
 
-            TMP2 = (byte)(A & X);
+            TMP2 = (uint8_t)(A & X);
 
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
@@ -13615,9 +13616,9 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+Y);
+            TMP = (uint8_t)(TMP+Y);
 
-            TMP2 = (byte)(A & X);
+            TMP2 = (uint8_t)(A & X);
 
             if(icount == 0) { inst_substate = 3; return; }
             write(TMP, TMP2);
@@ -13646,9 +13647,9 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+Y);
+            TMP = (uint8_t)(TMP+Y);
 
-            TMP2 = (byte)(A & X);
+            TMP2 = (uint8_t)(A & X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -13742,14 +13743,14 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
-            TMP2 = (byte)(A & X & ((TMP >> 8)+1));
+            TMP2 = (uint8_t)(A & X & ((TMP >> 8)+1));
 
             if(page_changing(TMP, Y))
 
-                TMP = set_h((UInt16)(TMP+Y), TMP2);
+                TMP = set_h((uint16_t)(TMP+Y), TMP2);
 
             else
 
@@ -13785,14 +13786,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
-            TMP2 = (byte)(A & X & ((TMP >> 8)+1));
+            TMP2 = (uint8_t)(A & X & ((TMP >> 8)+1));
 
             if(page_changing(TMP, Y))
 
-                TMP = set_h((UInt16)(TMP+Y), TMP2);
+                TMP = set_h((uint16_t)(TMP+Y), TMP2);
 
             else
 
@@ -13827,18 +13828,18 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
-            TMP2 = (byte)(A & X & ((TMP >> 8)+1));
+            TMP2 = (uint8_t)(A & X & ((TMP >> 8)+1));
 
             if(page_changing(TMP, Y))
 
-                TMP = set_h((UInt16)(TMP+Y), TMP2);
+                TMP = set_h((uint16_t)(TMP+Y), TMP2);
 
             else
 
@@ -13874,20 +13875,20 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
-            TMP2 = (byte)(A & X & ((TMP >> 8)+1));
+            TMP2 = (uint8_t)(A & X & ((TMP >> 8)+1));
 
             if(page_changing(TMP, Y))
 
-                TMP = set_h((UInt16)(TMP+Y), TMP2);
+                TMP = set_h((uint16_t)(TMP+Y), TMP2);
 
             else
 
@@ -13922,16 +13923,16 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
-            SP = set_l(SP, (byte)(A & X));
+            SP = set_l(SP, (uint8_t)(A & X));
 
-            TMP2 = (byte)(A & X & ((TMP >> 8)+1));
+            TMP2 = (uint8_t)(A & X & ((TMP >> 8)+1));
 
             if(page_changing(TMP, Y))
 
-                TMP = set_h((UInt16)(TMP+Y), TMP2);
+                TMP = set_h((uint16_t)(TMP+Y), TMP2);
 
             else
 
@@ -13967,16 +13968,16 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
-            SP = set_l(SP, (byte)(A & X));
+            SP = set_l(SP, (uint8_t)(A & X));
 
-            TMP2 = (byte)(A & X & ((TMP >> 8)+1));
+            TMP2 = (uint8_t)(A & X & ((TMP >> 8)+1));
 
             if(page_changing(TMP, Y))
 
-                TMP = set_h((UInt16)(TMP+Y), TMP2);
+                TMP = set_h((uint16_t)(TMP+Y), TMP2);
 
             else
 
@@ -14011,14 +14012,14 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
-            TMP2 = (byte)(X & ((TMP >> 8)+1));
+            TMP2 = (uint8_t)(X & ((TMP >> 8)+1));
 
             if(page_changing(TMP, Y))
 
-                TMP = set_h((UInt16)(TMP+Y), TMP2);
+                TMP = set_h((uint16_t)(TMP+Y), TMP2);
 
             else
 
@@ -14054,14 +14055,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
-            TMP2 = (byte)(X & ((TMP >> 8)+1));
+            TMP2 = (uint8_t)(X & ((TMP >> 8)+1));
 
             if(page_changing(TMP, Y))
 
-                TMP = set_h((UInt16)(TMP+Y), TMP2);
+                TMP = set_h((uint16_t)(TMP+Y), TMP2);
 
             else
 
@@ -14096,14 +14097,14 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
-            TMP2 = (byte)(Y & ((TMP >> 8)+1));
+            TMP2 = (uint8_t)(Y & ((TMP >> 8)+1));
 
             if(page_changing(TMP, X))
 
-                TMP = set_h((UInt16)(TMP+X), TMP2);
+                TMP = set_h((uint16_t)(TMP+X), TMP2);
 
             else
 
@@ -14139,14 +14140,14 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
-            TMP2 = (byte)(Y & ((TMP >> 8)+1));
+            TMP2 = (uint8_t)(Y & ((TMP >> 8)+1));
 
             if(page_changing(TMP, X))
 
-                TMP = set_h((UInt16)(TMP+X), TMP2);
+                TMP = set_h((uint16_t)(TMP+X), TMP2);
 
             else
 
@@ -14268,7 +14269,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -14317,7 +14318,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -14369,7 +14370,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -14418,7 +14419,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -14472,11 +14473,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -14525,13 +14526,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -14581,11 +14582,11 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -14634,13 +14635,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -14768,7 +14769,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -14811,7 +14812,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -14947,7 +14948,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -14996,7 +14997,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+X)));
+            read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             TMP += X;
@@ -15048,7 +15049,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -15097,7 +15098,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -15151,11 +15152,11 @@ namespace mame
             TMP2 += X;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -15204,13 +15205,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((UInt16)(TMP2 & 0xff));
+            TMP = read((uint16_t)(TMP2 & 0xff));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -15260,11 +15261,11 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -15313,13 +15314,13 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = set_h(TMP, read((UInt16)((TMP2+1) & 0xff)));
+            TMP = set_h(TMP, read((uint16_t)((TMP2+1) & 0xff)));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            read(set_l(TMP, (byte)(TMP+Y)));
+            read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             TMP += Y;
@@ -15447,7 +15448,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             TMP2 = read(TMP);
@@ -15490,7 +15491,7 @@ namespace mame
             read(TMP);
             icount--;
 
-            TMP = (byte)(TMP+X);
+            TMP = (uint8_t)(TMP+X);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -15589,7 +15590,7 @@ namespace mame
             TMP2 = read_pc();
             icount--;
 
-            A &= (byte)(TMP2 & X);
+            A &= (uint8_t)(TMP2 & X);
 
             set_nz(A);
 
@@ -15610,7 +15611,7 @@ namespace mame
             TMP2 = read_pc();
             icount--;
 
-            A &= (byte)(TMP2 & X);
+            A &= (uint8_t)(TMP2 & X);
 
             set_nz(A);
 
@@ -15717,16 +15718,16 @@ namespace mame
             if(page_changing(TMP, Y)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP2 = read((UInt16)(TMP+Y));
+            TMP2 = read((uint16_t)(TMP+Y));
             icount--;
 
-            A = (byte)(TMP2 | 0x51);
+            A = (uint8_t)(TMP2 | 0x51);
 
             X = 0xff;
 
@@ -15759,7 +15760,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             }
@@ -15767,7 +15768,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+Y)));
+                read(set_l(TMP, (uint8_t)(TMP+Y)));
             icount--;
 
             //}
@@ -15775,10 +15776,10 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP2 = read((UInt16)(TMP+Y));
+            TMP2 = read((uint16_t)(TMP+Y));
             icount--;
 
-            A = (byte)(TMP2 | 0x51);
+            A = (uint8_t)(TMP2 | 0x51);
 
             X = 0xff;
 
@@ -15903,13 +15904,13 @@ namespace mame
             if(page_changing(TMP, X)) {
 
             if(icount == 0) { inst_substate = 3; return; }
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
 
             if(icount == 0) { inst_substate = 4; return; }
-            read((UInt16)(TMP + X));
+            read((uint16_t)(TMP + X));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -15939,7 +15940,7 @@ namespace mame
 
             if(icount == 0) { inst_substate = 3; return; }
         //case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             }
@@ -15947,7 +15948,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 3:
-                read(set_l(TMP, (byte)(TMP+X)));
+                read(set_l(TMP, (uint8_t)(TMP+X)));
             icount--;
 
             //}
@@ -15955,7 +15956,7 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            read((UInt16)(TMP + X));
+            read((uint16_t)(TMP + X));
             icount--;
 
             if(icount == 0) { inst_substate = 5; return; }
@@ -16061,7 +16062,7 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read((byte)(TMP+X));
+            read((uint8_t)(TMP+X));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }
@@ -16090,7 +16091,7 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read((byte)(TMP+X));
+            read((uint8_t)(TMP+X));
             icount--;
 
             if(icount == 0) { inst_substate = 4; return; }

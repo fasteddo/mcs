@@ -2,9 +2,12 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
+
+using static mame.cpp_global;
+using static mame.main_global;
+using static mame.osdfile_global;
 
 
 namespace mame
@@ -73,7 +76,7 @@ namespace mame
                     /* unload all images */
                     unload_all(machine());
 
-                    throw new emu_fatalerror(g.EMU_ERR_DEVICE, "Device {0} load failed: {1}",
+                    throw new emu_fatalerror(EMU_ERR_DEVICE, "Device {0} load failed: {1}",
                         image.device().name(),
                         image_err);
                 }
@@ -148,9 +151,9 @@ namespace mame
                         if (!image.loaded_through_softlist())
                             image_opt = image.filename();
                         else if (image.part_entry() != null && !image.part_entry().name().empty())
-                            image_opt = string.Format("{0}:{1}:{2}", image.software_list_name(), image.full_software_name(), image.part_entry().name());
+                            image_opt = util.string_format("{0}:{1}:{2}", image.software_list_name(), image.full_software_name(), image.part_entry().name());
                         else
-                            image_opt = string.Format("{0}:{1}", image.software_list_name(), image.full_software_name());
+                            image_opt = util.string_format("{0}:{1}", image.software_list_name(), image.full_software_name());
                     }
 
                     // and set the option (provided that it hasn't been removed out from under us)
@@ -176,11 +179,11 @@ namespace mame
 
             if (gamedrv != null)
             {
-                buffer = string.Format("{0}.ini", gamedrv.name);
+                sprintf(out buffer, "{0}.ini", gamedrv.name);
                 filename = buffer;
             }
 
-            emu_file file = new emu_file(options.ini_path(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE);
+            emu_file file = new emu_file(options.ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
             std.error_condition filerr = file.open(filename);
             if (!filerr)
             {

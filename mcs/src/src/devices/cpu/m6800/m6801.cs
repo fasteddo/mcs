@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
@@ -14,6 +13,10 @@ using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
+using static mame.device_global;
+using static mame.diexec_global;
+using static mame.emucore_global;
+
 
 namespace mame
 {
@@ -21,7 +24,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(M6801, m6801_cpu_device, "m6801", "Motorola MC6801")
         static device_t device_creator_m6801_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new m6801_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6801 = g.DEFINE_DEVICE_TYPE(device_creator_m6801_cpu_device, "m6801", "Motorola MC6801");
+        public static readonly device_type M6801 = DEFINE_DEVICE_TYPE(device_creator_m6801_cpu_device, "m6801", "Motorola MC6801");
 
 
         class device_execute_interface_m6801 : device_execute_interface_m6800
@@ -370,41 +373,41 @@ namespace mame
             m_rmcr = 0;
             m_ram_ctrl = 0;
 
-            save_item(g.NAME(new { m_port_ddr }));
-            save_item(g.NAME(new { m_port_data }));
-            save_item(g.NAME(new { m_p3csr }));
-            save_item(g.NAME(new { m_tcsr }));
-            save_item(g.NAME(new { m_pending_tcsr }));
-            save_item(g.NAME(new { m_irq2 }));
-            save_item(g.NAME(new { m_ram_ctrl }));
+            save_item(NAME(new { m_port_ddr }));
+            save_item(NAME(new { m_port_data }));
+            save_item(NAME(new { m_p3csr }));
+            save_item(NAME(new { m_tcsr }));
+            save_item(NAME(new { m_pending_tcsr }));
+            save_item(NAME(new { m_irq2 }));
+            save_item(NAME(new { m_ram_ctrl }));
 
-            save_item(g.NAME(new { m_counter.d }));
-            save_item(g.NAME(new { m_output_compare.d }));
-            save_item(g.NAME(new { m_input_capture }));
-            save_item(g.NAME(new { m_pending_isf_clear }));
-            save_item(g.NAME(new { m_port3_latched }));
-            save_item(g.NAME(new { m_port2_written }));
+            save_item(NAME(new { m_counter.d }));
+            save_item(NAME(new { m_output_compare.d }));
+            save_item(NAME(new { m_input_capture }));
+            save_item(NAME(new { m_pending_isf_clear }));
+            save_item(NAME(new { m_port3_latched }));
+            save_item(NAME(new { m_port2_written }));
 
-            save_item(g.NAME(new { m_trcsr }));
-            save_item(g.NAME(new { m_rmcr }));
-            save_item(g.NAME(new { m_rdr }));
-            save_item(g.NAME(new { m_tdr }));
-            save_item(g.NAME(new { m_rsr }));
-            save_item(g.NAME(new { m_tsr }));
-            save_item(g.NAME(new { m_rxbits }));
-            save_item(g.NAME(new { m_txbits }));
-            save_item(g.NAME(new { m_txstate }));
-            save_item(g.NAME(new { m_trcsr_read_tdre }));
-            save_item(g.NAME(new { m_trcsr_read_orfe }));
-            save_item(g.NAME(new { m_trcsr_read_rdrf }));
-            save_item(g.NAME(new { m_tx }));
-            save_item(g.NAME(new { m_ext_serclock }));
-            save_item(g.NAME(new { m_use_ext_serclock }));
+            save_item(NAME(new { m_trcsr }));
+            save_item(NAME(new { m_rmcr }));
+            save_item(NAME(new { m_rdr }));
+            save_item(NAME(new { m_tdr }));
+            save_item(NAME(new { m_rsr }));
+            save_item(NAME(new { m_tsr }));
+            save_item(NAME(new { m_rxbits }));
+            save_item(NAME(new { m_txbits }));
+            save_item(NAME(new { m_txstate }));
+            save_item(NAME(new { m_trcsr_read_tdre }));
+            save_item(NAME(new { m_trcsr_read_orfe }));
+            save_item(NAME(new { m_trcsr_read_rdrf }));
+            save_item(NAME(new { m_tx }));
+            save_item(NAME(new { m_ext_serclock }));
+            save_item(NAME(new { m_use_ext_serclock }));
 
-            save_item(g.NAME(new { m_latch09 }));
-            save_item(g.NAME(new { m_timer_over.d }));
-            save_item(g.NAME(new { m_timer_next }));
-            save_item(g.NAME(new { m_sc1_state }));
+            save_item(NAME(new { m_latch09 }));
+            save_item(NAME(new { m_timer_over.d }));
+            save_item(NAME(new { m_timer_next }));
+            save_item(NAME(new { m_sc1_state }));
         }
 
 
@@ -459,7 +462,7 @@ namespace mame
             switch (irqline)
             {
             case M6801_SC1_LINE:
-                if (m_sc1_state == 0 && (g.CLEAR_LINE != state))
+                if (m_sc1_state == 0 && (CLEAR_LINE != state))
                 {
                     if (m_port3_latched == 0 && (m_p3csr & M6801_P3CSR_LE) != 0)
                     {
@@ -477,8 +480,8 @@ namespace mame
                     }
                 }
 
-                m_sc1_state = g.ASSERT_LINE == state ? 1 : 0;
-                if (g.CLEAR_LINE != state)
+                m_sc1_state = ASSERT_LINE == state ? 1 : 0;
+                if (CLEAR_LINE != state)
                     standard_irq_callback(M6801_SC1_LINE); // re-entrant - do it after setting m_sc1_state
 
                 break;
@@ -489,7 +492,7 @@ namespace mame
                 if (state != irq_state[M6801_TIN_LINE])
                 {
                     //edge = (state == CLEAR_LINE ) ? 2 : 0;
-                    if (((m_tcsr & TCSR_IEDG) ^ (state == g.CLEAR_LINE ? TCSR_IEDG : 0)) == 0)
+                    if (((m_tcsr & TCSR_IEDG) ^ (state == CLEAR_LINE ? TCSR_IEDG : 0)) == 0)
                         return;
 
                     /* active edge in */
@@ -599,7 +602,7 @@ namespace mame
 
                 if ((m_p3csr & M6801_P3CSR_OSS) == 0)
                 {
-                    set_os3(g.ASSERT_LINE);
+                    set_os3(ASSERT_LINE);
                 }
             }
 
@@ -614,7 +617,7 @@ namespace mame
 
                 if ((m_p3csr & M6801_P3CSR_OSS) == 0)
                 {
-                    set_os3(g.CLEAR_LINE);
+                    set_os3(CLEAR_LINE);
                 }
             }
 
@@ -635,7 +638,7 @@ namespace mame
 
             if ((m_p3csr & M6801_P3CSR_OSS) != 0)
             {
-                set_os3(g.ASSERT_LINE);
+                set_os3(ASSERT_LINE);
             }
 
             m_port_data[2] = data;
@@ -643,7 +646,7 @@ namespace mame
 
             if ((m_p3csr & M6801_P3CSR_OSS) != 0)
             {
-                set_os3(g.CLEAR_LINE);
+                set_os3(CLEAR_LINE);
             }
         }
 
@@ -1153,7 +1156,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(M6803, m6803_cpu_device, "m6803", "Motorola MC6803")
         static device_t device_creator_m6803_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new m6803_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6803 = g.DEFINE_DEVICE_TYPE(device_creator_m6803_cpu_device, "m6803", "Motorola MC6803");
+        public static readonly device_type M6803 = DEFINE_DEVICE_TYPE(device_creator_m6803_cpu_device, "m6803", "Motorola MC6803");
 
 
         class device_disasm_interface_m6803 : device_disasm_interface_m6801

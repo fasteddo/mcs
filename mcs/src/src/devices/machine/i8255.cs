@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
@@ -10,6 +9,10 @@ using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.device_global;
+using static mame.emucore_global;
+using static mame.util;
 
 
 namespace mame
@@ -19,7 +22,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(I8255, i8255_device, "i8255", "Intel 8255 PPI")
         static device_t device_creator_i8255_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8255_device(mconfig, tag, owner, clock); }
-        public static readonly device_type I8255 = g.DEFINE_DEVICE_TYPE(device_creator_i8255_device, "i8255", "Intel 8255 PPI");
+        public static readonly device_type I8255 = DEFINE_DEVICE_TYPE(device_creator_i8255_device, "i8255", "Intel 8255 PPI");
 
         public static readonly device_type I8255A = I8255;  //decltype(I8255) I8255A = I8255;
 
@@ -144,7 +147,7 @@ namespace mame
         //-------------------------------------------------
         public uint8_t read(offs_t offset)
         {
-            byte data = 0;
+            uint8_t data = 0;
 
             switch (offset & 0x03)
             {
@@ -227,7 +230,7 @@ namespace mame
                 else
                 {
                     int bit = (data >> 1) & 0x07;
-                    int state = g.BIT(data, 0);
+                    int state = BIT(data, 0);
 
                     LOG("I8255 {0} Port C Bit {1}\n", state != 0 ? "Set" : "Reset", bit);  // %s %u
 
@@ -272,15 +275,15 @@ namespace mame
         protected override void device_start()
         {
             // register for state saving
-            save_item(g.NAME(new { m_control }));
-            save_item(g.NAME(new { m_output }));
-            save_item(g.NAME(new { m_input }));
-            save_item(g.NAME(new { m_ibf }));
-            save_item(g.NAME(new { m_obf }));
-            save_item(g.NAME(new { m_inte }));
-            save_item(g.NAME(new { m_inte1 }));
-            save_item(g.NAME(new { m_inte2 }));
-            save_item(g.NAME(new { m_intr }));
+            save_item(NAME(new { m_control }));
+            save_item(NAME(new { m_output }));
+            save_item(NAME(new { m_input }));
+            save_item(NAME(new { m_ibf }));
+            save_item(NAME(new { m_obf }));
+            save_item(NAME(new { m_inte }));
+            save_item(NAME(new { m_inte1 }));
+            save_item(NAME(new { m_inte2 }));
+            save_item(NAME(new { m_intr }));
         }
 
 
@@ -465,9 +468,9 @@ namespace mame
         //-------------------------------------------------
         //  read_mode0 -
         //-------------------------------------------------
-        byte read_mode0(int port)
+        uint8_t read_mode0(int port)
         {
-            byte data;
+            uint8_t data;
 
             if (port_mode(port) == MODE_OUTPUT)
             {
@@ -487,7 +490,7 @@ namespace mame
         //-------------------------------------------------
         //  read_mode1 -
         //-------------------------------------------------
-        byte read_mode1(int port)
+        uint8_t read_mode1(int port)
         {
             throw new emu_unimplemented();
         }
@@ -496,7 +499,7 @@ namespace mame
         //-------------------------------------------------
         //  read_mode2 -
         //-------------------------------------------------
-        byte read_mode2()
+        uint8_t read_mode2()
         {
             throw new emu_unimplemented();
         }
@@ -505,11 +508,11 @@ namespace mame
         //-------------------------------------------------
         //  read_pc -
         //-------------------------------------------------
-        byte read_pc()
+        uint8_t read_pc()
         {
-            byte data = 0;
-            byte mask = 0;
-            byte b_mask = 0x0f;
+            uint8_t data = 0;
+            uint8_t mask = 0;
+            uint8_t b_mask = 0x0f;
 
             // PC upper
             switch (group_mode(GROUP_A))
@@ -518,7 +521,7 @@ namespace mame
                 if (port_c_upper_mode() == MODE_OUTPUT)
                 {
                     // read data from output latch
-                    data |= (byte)(m_output[PORT_C] & 0xf0);
+                    data |= (uint8_t)(m_output[PORT_C] & 0xf0);
                 }
                 else
                 {
@@ -528,29 +531,29 @@ namespace mame
                 break;
 
             case MODE_1:
-                data |= m_intr[PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
+                data |= m_intr[PORT_A] != 0 ? (uint8_t)0x08 : (uint8_t)0x00;
 
                 if (port_mode(PORT_A) == MODE_OUTPUT)
                 {
-                    data |= m_obf[PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
-                    data |= m_inte[PORT_A] != 0 ? (byte)0x40 : (byte)0x00;
+                    data |= m_obf[PORT_A] != 0 ? (uint8_t)0x80 : (uint8_t)0x00;
+                    data |= m_inte[PORT_A] != 0 ? (uint8_t)0x40 : (uint8_t)0x00;
                     mask |= 0x30;
                 }
                 else
                 {
-                    data |= m_ibf[PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
-                    data |= m_inte[PORT_A] != 0 ? (byte)0x10 : (byte)0x00;
+                    data |= m_ibf[PORT_A] != 0 ? (uint8_t)0x20 : (uint8_t)0x00;
+                    data |= m_inte[PORT_A] != 0 ? (uint8_t)0x10 : (uint8_t)0x00;
                     mask |= 0xc0;
                 }
                 break;
 
             case MODE_2:
                 b_mask = 0x07;
-                data |= m_intr[PORT_A] != 0 ? (byte)0x08 : (byte)0x00;
-                data |= m_inte2 != 0 ? (byte)0x10 : (byte)0x00;
-                data |= m_ibf[PORT_A] != 0 ? (byte)0x20 : (byte)0x00;
-                data |= m_inte1 != 0 ? (byte)0x40 : (byte)0x00;
-                data |= m_obf[PORT_A] != 0 ? (byte)0x80 : (byte)0x00;
+                data |= m_intr[PORT_A] != 0 ? (uint8_t)0x08 : (uint8_t)0x00;
+                data |= m_inte2 != 0 ? (uint8_t)0x10 : (uint8_t)0x00;
+                data |= m_ibf[PORT_A] != 0 ? (uint8_t)0x20 : (uint8_t)0x00;
+                data |= m_inte1 != 0 ? (uint8_t)0x40 : (uint8_t)0x00;
+                data |= m_obf[PORT_A] != 0 ? (uint8_t)0x80 : (uint8_t)0x00;
                 break;
             }
 
@@ -561,7 +564,7 @@ namespace mame
                 if (port_c_lower_mode() == MODE_OUTPUT)
                 {
                     // read data from output latch
-                    data |= (byte)(m_output[PORT_C] & b_mask);
+                    data |= (uint8_t)(m_output[PORT_C] & b_mask);
                 }
                 else
                 {
@@ -571,16 +574,16 @@ namespace mame
                 break;
 
             case MODE_1:
-                data |= m_inte[PORT_B] != 0 ? (byte)0x04 : (byte)0x00;
-                data |= m_intr[PORT_B] != 0 ? (byte)0x01 : (byte)0x00;
+                data |= m_inte[PORT_B] != 0 ? (uint8_t)0x04 : (uint8_t)0x00;
+                data |= m_intr[PORT_B] != 0 ? (uint8_t)0x01 : (uint8_t)0x00;
 
                 if (port_mode(PORT_B) == MODE_OUTPUT)
                 {
-                    data |= m_obf[PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
+                    data |= m_obf[PORT_B] != 0 ? (uint8_t)0x02 : (uint8_t)0x00;
                 }
                 else
                 {
-                    data |= m_ibf[PORT_B] != 0 ? (byte)0x02 : (byte)0x00;
+                    data |= m_ibf[PORT_B] != 0 ? (uint8_t)0x02 : (uint8_t)0x00;
                 }
                 break;
             }
@@ -588,7 +591,7 @@ namespace mame
             if (mask != 0)
             {
                 // read data from port
-                data |= (byte)(m_in_pc_cb.op_u8(0) & mask);
+                data |= (uint8_t)(m_in_pc_cb.op_u8(0) & mask);
             }
 
             return data;
@@ -598,7 +601,7 @@ namespace mame
         //-------------------------------------------------
         //  write_mode0 -
         //-------------------------------------------------
-        void write_mode0(int port, byte data)
+        void write_mode0(int port, uint8_t data)
         {
             if (port_mode(port) == MODE_OUTPUT)
             {
@@ -619,7 +622,7 @@ namespace mame
         //-------------------------------------------------
         //  write_mode1 -
         //-------------------------------------------------
-        void write_mode1(int port, byte data)
+        void write_mode1(int port, uint8_t data)
         {
             if (port_mode(port) == MODE_OUTPUT)
             {
@@ -817,8 +820,8 @@ namespace mame
         void set_pc_bit(int bit, int state)
         {
             // set output latch bit
-            m_output[PORT_C] &= (byte)(~(1 << bit));
-            m_output[PORT_C] |= (byte)(state << bit);
+            m_output[PORT_C] &= (uint8_t)(~(1 << bit));
+            m_output[PORT_C] |= (uint8_t)(state << bit);
 
             switch (group_mode(GROUP_A))
             {

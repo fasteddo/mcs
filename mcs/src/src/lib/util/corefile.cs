@@ -2,65 +2,49 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 using char16_t = System.UInt16;
 using char32_t = System.UInt32;
 using int64_t = System.Int64;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using size_t = System.UInt64;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
+using static mame.corefile_global;
+using static mame.corefile_internal;
+using static mame.cpp_global;
+using static mame.osdcomm_global;
+using static mame.osdfile_global;
+using static mame.unicode_global;
+
 
 namespace mame
 {
-    public static partial class util
+    public static class corefile_internal
     {
         public const int EOF = -1;  // taken from stdio.h
-
-        /***************************************************************************
-            ADDITIONAL OPEN FLAGS
-        ***************************************************************************/
-
-        //#define OPEN_FLAG_NO_BOM        0x0100      /* don't output BOM */
 
         public const int FILE_BUFFER_SIZE        = 512;
 
         //#define OPEN_FLAG_HAS_CRC       0x10000
+    }
 
 
-        /* ----- filename utilities ----- */
+    public static partial class util
+    {
+        /***************************************************************************
+            ADDITIONAL OPEN FLAGS
+        ***************************************************************************/
 
-        /* extract the base part of a filename (remove extensions and paths) */
-        /*-------------------------------------------------
-            core_filename_extract_base - extract the base
-            name from a filename; note that this makes
-            assumptions about path separators
-        -------------------------------------------------*/
-        public static string core_filename_extract_base(string name, bool strip_extension = false)
-        {
-            if (strip_extension)
-                return Path.GetFileNameWithoutExtension(name);
-            else
-                return Path.GetFileName(name);
-        }
+        public const uint32_t OPEN_FLAG_NO_BOM        = 0x0100;      /* don't output BOM */
 
 
-        // extracts the file extension from a filename
-        //std::string core_filename_extract_extension(const std::string &filename, bool strip_period = false);
-
-
-        /* true if the given filename ends with a particular extension */
-        public static bool core_filename_ends_with(string filename, string extension)
-        {
-            return filename.EndsWith(extension);
-        }
-
-
-        public abstract class core_file
+        public abstract class core_file : random_read_write, IDisposable
         {
             //typedef std::unique_ptr<core_file> ptr;
 
@@ -72,24 +56,17 @@ namespace mame
             {
                 file = null;
 
-                //try
-                {
-                    // attempt to open the file
-                    osd_file f;
-                    uint64_t length = 0;
-                    var filerr = osdfile_global.m_osdfile.open(filename, openflags, out f, out length); // FIXME: allow osd_file to accept std::string_view
-                    if (filerr)
-                        return filerr;
+                // attempt to open the file
+                osd_file f;
+                uint64_t length = 0;
+                var filerr = m_osdfile.open(filename, openflags, out f, out length); // FIXME: allow osd_file to accept std::string_view
+                if (filerr)
+                    return filerr;
 
-                    file = new core_osd_file(openflags, f, length);
-                    return new std.error_condition();
-                }
-#if false
-                catch (Exception)
-                {
-                    return std::errc::not_enough_memory;
-                }
-#endif
+                try { file = new core_osd_file(openflags, f, length); }
+                catch (Exception) { return std.errc.not_enough_memory; }
+
+                return new std.error_condition();
             }
 
 
@@ -103,20 +80,23 @@ namespace mame
                 file = null;
 
                 // can only do this for read access
-                if ((openflags & g.OPEN_FLAG_WRITE) != 0 || (openflags & g.OPEN_FLAG_CREATE) != 0)
+                if ((openflags & OPEN_FLAG_WRITE) != 0 || (openflags & OPEN_FLAG_CREATE) != 0)
                     return std.errc.invalid_argument;
 
-                //try
-                {
-                    file = new core_in_memory_file(openflags, data, length, false);
-                    return new std.error_condition();
-                }
-#if false
-                catch (Exception)
-                {
-                    return std::errc::not_enough_memory;
-                }
-#endif
+                // if length is non-zero, data must be non-null
+                if (length != 0 && data == null)
+                    return std.errc.invalid_argument;
+
+                // platforms where size_t is larger than 64 bits are theoretically possible
+                //if (std::uint64_t(length) != length)
+                //    return std::errc::file_too_large;
+
+                core_file result = new core_in_memory_file(openflags, data, length, false);  //ptr result = new core_in_memory_file(openflags, data, length, false);
+                if (result == null)
+                    return std.errc.not_enough_memory;
+
+                file = result;
+                return new std.error_condition();
             }
 
             // open a RAM-based "file" using the given data and length (read-only), copying the data
@@ -128,26 +108,44 @@ namespace mame
             // close an open file
             //~core_file() { }
 
+            ~core_file()
+            {
+                assert(m_isDisposed);  // can remove
+            }
+
+            bool m_isDisposed = false;
+            public virtual void Dispose()
+            {
+                close();
+                m_isDisposed = true;
+            }
+
+
+            public abstract void close();
+
 
             // ----- file positioning -----
 
-            // adjust the file pointer within the file
-            public abstract int seek(int64_t offset, int whence);
+            public abstract std.error_condition seek(int64_t offset, int whence);
 
-            // return the current file pointer
-            public abstract uint64_t tell();
+            public abstract std.error_condition tell(out uint64_t result);
+
+            public abstract std.error_condition length(out uint64_t result);
+
+            public abstract std.error_condition read(PointerU8 buffer, size_t length, out size_t actual);
+            public abstract std.error_condition read_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual);
+
+            public abstract std.error_condition finalize();
+            public abstract std.error_condition flush();
+            public abstract std.error_condition write(PointerU8 buffer, size_t length, out size_t actual);
+            public abstract std.error_condition write_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual);
+
 
             // return true if we are at the EOF
-            //virtual bool eof() const = 0;
-
-            // return the total size of the file
-            public abstract uint64_t size();
+            protected abstract bool eof();
 
 
             // ----- file read -----
-
-            // standard binary read from a file
-            public abstract uint32_t read(Pointer<uint8_t> buffer, uint32_t length);  //virtual std::uint32_t read(void *buffer, std::uint32_t length) = 0;
 
             // read one character from the file
             public abstract int getc();
@@ -168,47 +166,59 @@ namespace mame
                 filename, read it into memory, and return a
                 pointer
             -------------------------------------------------*/
-            public static std.error_condition load(string filename, out MemoryU8 data)  //std::error_condition load(std::string const &filename, void **data, std::uint32_t &length)
+            public static std.error_condition load(string filename, out MemoryU8 data, out uint32_t length)  //std::error_condition load(std::string const &filename, void **data, std::uint32_t &length)
             {
                 data = new MemoryU8();
+                length = 0;
 
-                core_file file;
+                std.error_condition err;
 
                 // attempt to open the file
-                var err = open(filename, g.OPEN_FLAG_READ, out file);
+                core_file file;  //ptr file;
+                err = open(filename, OPEN_FLAG_READ, out file);
                 if (err)
                     return err;
 
                 // get the size
-                var size = file.size();
-                if ((uint32_t)size != size)
+                uint64_t size;
+                err = file.length(out size);
+                if (err)
+                    return err;
+                else if ((uint32_t)size != size) // TODO: change interface to use size_t rather than uint32_t for output size
                     return std.errc.file_too_large;
 
                 // allocate memory
-                //*data = malloc(size);
-                data.Resize((int)size);
+                data.Resize((int)size);  //*data = std::malloc(std::size_t(size));
                 //if (!*data)
-                //    return std::errc::not_enough_memory;
-                //length = std::uint32_t(size);
+                //    return std.errc.not_enough_memory;
+                length = (uint32_t)size;
 
                 // read the data
-                if (file.read(new Pointer<uint8_t>(data), (UInt32)size) != size)
+                if (size != 0)
                 {
-                    data.Clear();  //free(*data);
-                    return std.errc.io_error; // TODO: revisit this error code
+                    size_t actual;
+                    err = file.read(new PointerU8(data), (size_t)size, out actual);  //err = file->read(*data, std::size_t(size), actual);
+                    if (err || (size != actual))
+                    {
+                        //std::free(*data);
+                        data = new MemoryU8();
+                        length = 0;
+                        if (err)
+                            return err;
+                        else
+                            return std.errc.io_error; // TODO: revisit this error code - either interrupted by an async signal or file truncated out from under us
+                    }
                 }
 
                 // close the file and return data
                 return new std.error_condition();
             }
 
+
             //static std::error_condition load(std::string_view filename, std::vector<uint8_t> &data);
 
 
             // ----- file write -----
-
-            // standard binary write to a file
-            public abstract uint32_t write(Pointer<uint8_t> buffer, uint32_t length);  //virtual std::uint32_t write(const void *buffer, std::uint32_t length) = 0;
 
             // write a line of text to the file
             public abstract int puts(string s);
@@ -219,10 +229,9 @@ namespace mame
             public int printf(string format, params object [] args) { return vprintf(string.Format(format, args)); }
 
             // file truncation
-            //virtual std::error_condition truncate(std::uint64_t offset) = 0;
+            protected abstract std.error_condition truncate(uint64_t offset);
 
-            // flush file buffers
-            public abstract std.error_condition flush();
+            public abstract Stream stream { get; }
         }
 
 
@@ -242,9 +251,12 @@ namespace mame
             }
 
 
+            const int CRLF = 3;  //#error CRLF undefined: must be 1 (CR), 2 (LF) or 3 (CR/LF)
+
+
             uint32_t m_openflags;                    // flags we were opened with
             text_file_type m_text_type;                    // text output format
-            char [] m_back_chars = new char[unicode_global.UTF8_CHAR_MAX];  //char                m_back_chars[UTF8_CHAR_MAX];    // buffer to hold characters for ungetc
+            char [] m_back_chars = new char[UTF8_CHAR_MAX];  //char                m_back_chars[UTF8_CHAR_MAX];    // buffer to hold characters for ungetc
             int m_back_char_head;               // head of ungetc buffer
             int m_back_char_tail;               // tail of ungetc buffer
             string m_printf_buffer;  //ovectorstream       m_printf_buffer;                // persistent buffer for formatted output
@@ -265,112 +277,150 @@ namespace mame
             -------------------------------------------------*/
             public override int getc()
             {
-                int result;
-
                 // refresh buffer, if necessary
                 if (m_back_char_head == m_back_char_tail)
                 {
                     // do we need to check the byte order marks?
-                    if (tell() == 0)
+                    uint64_t pos;
+                    if (!tell(out pos))
                     {
-                        MemoryU8 bom = new MemoryU8(4, true);  //std::uint8_t bom[4];
-                        int pos = 0;
-
-                        if (read(new Pointer<uint8_t>(bom), 4) == 4)
+                        if (pos == 0)
                         {
-                            if (bom[0] == 0xef && bom[1] == 0xbb && bom[2] == 0xbf)
+                            size_t readlen;
+                            MemoryU8 bom = new MemoryU8(4, true);  //std::uint8_t bom[4];
+                            read(new PointerU8(bom), 4, out readlen);
+                            if (readlen == 4)
                             {
-                                m_text_type = text_file_type.UTF8;
-                                pos = 3;
+                                if (bom[0] == 0xef && bom[1] == 0xbb && bom[2] == 0xbf)
+                                {
+                                    m_text_type = text_file_type.UTF8;
+                                    pos = 3;
+                                }
+                                else if (bom[0] == 0x00 && bom[1] == 0x00 && bom[2] == 0xfe && bom[3] == 0xff)
+                                {
+                                    m_text_type = text_file_type.UTF32BE;
+                                    pos = 4;
+                                }
+                                else if (bom[0] == 0xff && bom[1] == 0xfe && bom[2] == 0x00 && bom[3] == 0x00)
+                                {
+                                    m_text_type = text_file_type.UTF32LE;
+                                    pos = 4;
+                                }
+                                else if (bom[0] == 0xfe && bom[1] == 0xff)
+                                {
+                                    m_text_type = text_file_type.UTF16BE;
+                                    pos = 2;
+                                }
+                                else if (bom[0] == 0xff && bom[1] == 0xfe)
+                                {
+                                    m_text_type = text_file_type.UTF16LE;
+                                    pos = 2;
+                                }
+                                else
+                                {
+                                    m_text_type = text_file_type.OSD;
+                                    pos = 0;
+                                }
                             }
-                            else if (bom[0] == 0x00 && bom[1] == 0x00 && bom[2] == 0xfe && bom[3] == 0xff)
-                            {
-                                m_text_type = text_file_type.UTF32BE;
-                                pos = 4;
-                            }
-                            else if (bom[0] == 0xff && bom[1] == 0xfe && bom[2] == 0x00 && bom[3] == 0x00)
-                            {
-                                m_text_type = text_file_type.UTF32LE;
-                                pos = 4;
-                            }
-                            else if (bom[0] == 0xfe && bom[1] == 0xff)
-                            {
-                                m_text_type = text_file_type.UTF16BE;
-                                pos = 2;
-                            }
-                            else if (bom[0] == 0xff && bom[1] == 0xfe)
-                            {
-                                m_text_type = text_file_type.UTF16LE;
-                                pos = 2;
-                            }
-                            else
-                            {
-                                m_text_type = text_file_type.OSD;
-                                pos = 0;
-                            }
+
+                            seek((int64_t)pos, SEEK_SET); // FIXME: don't assume seeking is possible, check for errors
                         }
-                        seek(pos, g.SEEK_SET);
                     }
 
                     // fetch the next character
-                    char16_t [] utf16_buffer = new char16_t[unicode_global.UTF16_CHAR_MAX];
-                    var uchar = char32_t.MaxValue;  //(char32_t)~0;
+                    // FIXME: all of this plays fast and loose with error checking and seeks backwards far too frequently
+                    MemoryU8 utf16_buffer = new MemoryU8(UTF16_CHAR_MAX, true);  //char16_t utf16_buffer[UTF16_CHAR_MAX];
+                    var uchar = char32_t.MaxValue;  //auto uchar = char32_t(~0);
                     switch (m_text_type)
                     {
                     default:
                     case text_file_type.OSD:
                         {
-                            MemoryU8 default_bufferBuf = new MemoryU8(16, true);  //char [] default_buffer = new char[16];
-                            var readlen = read(new Pointer<uint8_t>(default_bufferBuf), (UInt32)default_bufferBuf.Count);
+                            MemoryU8 default_buffer = new MemoryU8(16, true);  //char default_buffer[16];
+                            size_t readlen;
+                            read(new PointerU8(default_buffer), (size_t)default_buffer.Count, out readlen);  //read(default_buffer, sizeof(default_buffer), readlen);
                             if (readlen > 0)
                             {
-                                //var charlen = osd_uchar_from_osdchar(&uchar, default_buffer, readlen / sizeof(default_buffer[0]));
-                                uchar = default_bufferBuf[0];
+                                //auto const charlen = osd_uchar_from_osdchar(&uchar, default_buffer, readlen / sizeof(default_buffer[0]));
+                                uchar = default_buffer[0];
                                 var charlen = 1;
-                                seek((Int64)(charlen * 1) - readlen, g.SEEK_CUR);  // sizeof(default_buffer[0])
+                                seek((int64_t)(charlen * 1) - (int64_t)readlen, SEEK_CUR);  //seek(std::int64_t(charlen * sizeof(default_buffer[0])) - readlen, SEEK_CUR);
                             }
                         }
                         break;
 
                     case text_file_type.UTF8:
                         {
-                            throw new emu_unimplemented();
+                            MemoryU8 utf8_buffer = new MemoryU8(UTF8_CHAR_MAX, true);  //char utf8_buffer[UTF8_CHAR_MAX];
+                            size_t readlen;
+                            read(new PointerU8(utf8_buffer), (size_t)utf8_buffer.Count, out readlen);
+                            if (readlen > 0)
+                            {
+                                //auto const charlen = uchar_from_utf8(&uchar, utf8_buffer, readlen / sizeof(utf8_buffer[0]));
+                                uchar = utf8_buffer[0];
+                                var charlen = 1;
+                                seek((int64_t)(charlen * 1) - (int64_t)readlen, SEEK_CUR);  //seek(std::int64_t(charlen * sizeof(utf8_buffer[0])) - readlen, SEEK_CUR);
+                            }
                         }
                         break;
 
                     case text_file_type.UTF16BE:
                         {
-                            throw new emu_unimplemented();
+                            size_t readlen;
+                            read(new PointerU8(utf16_buffer), (size_t)utf16_buffer.Count, out readlen);  //read(utf16_buffer, sizeof(utf16_buffer), readlen);
+                            if (readlen > 0)
+                            {
+                                throw new emu_unimplemented();
+                            }
                         }
                         break;
 
                     case text_file_type.UTF16LE:
                         {
-                            throw new emu_unimplemented();
+                            size_t readlen;
+                            read(new PointerU8(utf16_buffer), (size_t)utf16_buffer.Count, out readlen);  //read(utf16_buffer, sizeof(utf16_buffer), readlen);
+                            if (readlen > 0)
+                            {
+                                throw new emu_unimplemented();
+                            }
                         }
                         break;
 
                     case text_file_type.UTF32BE:
-                        throw new emu_unimplemented();
+                        {
+                            // FIXME: deal with read returning short
+                            size_t readlen;
+                            MemoryU8 ucharTemp = new MemoryU8(4, true);
+                            read(new PointerU8(ucharTemp), 4, out readlen);  //read(&uchar, sizeof(uchar), readlen);
+                            if (4 == readlen)  //if (sizeof(uchar) == readlen)
+                                throw new emu_unimplemented();
+                        }
                         break;
 
                     case text_file_type.UTF32LE:
-                        throw new emu_unimplemented();
+                        {
+                            // FIXME: deal with read returning short
+                            size_t readlen;
+                            MemoryU8 ucharTemp = new MemoryU8(4, true);
+                            read(new PointerU8(ucharTemp), 4, out readlen);  //read(&uchar, sizeof(uchar), readlen);
+                            if (4 == readlen)  //if (sizeof(uchar) == readlen)
+                                uchar = little_endianize_int32(ucharTemp.GetUInt32());
+                        }
                         break;
                     }
 
-                    if (uchar != char32_t.MaxValue)  // ~0)
+                    if (uchar != char32_t.MaxValue)  //if (uchar != ~0)
                     {
                         // place the new character in the ring buffer
                         m_back_char_head = 0;
-                        string temp;
-                        m_back_char_tail = unicode_global.utf8_from_uchar(out temp, uchar);
-                        m_back_chars = temp.ToCharArray();
+                        m_back_char_tail = utf8_from_uchar(out string back_chars, uchar);  //m_back_char_tail = utf8_from_uchar(m_back_chars, std::size(m_back_chars), uchar);
+                        back_chars.CopyTo(0, m_back_chars, 0, back_chars.Length);
                         //assert(file->back_char_tail != -1);
                     }
                 }
 
                 // now read from the ring buffer
+                int result;
                 if (m_back_char_head == m_back_char_tail)
                 {
                     result = EOF;
@@ -432,7 +482,7 @@ namespace mame
                     }
                     else // otherwise, pop the character in and continue
                     {
-                        curStr += c;  //*cur++ = c;
+                        curStr += (char)c;  //*cur++ = c;
                         n--;
                     }
                 }
@@ -444,6 +494,7 @@ namespace mame
                 /* otherwise, terminate */
                 //if (n > 0)
                 //    *cur++ = 0;
+                s = curStr;
                 return s;
             }
 
@@ -453,7 +504,74 @@ namespace mame
             -------------------------------------------------*/
             public override int puts(string s)
             {
-                throw new emu_unimplemented();
+                // TODO: what to do about write errors or short writes (interrupted)?
+                // The API doesn't lend itself to reporting the error as the return
+                // value includes extra bytes inserted like the UTF-8 marker and
+                // carriage returns.
+                var convbuf = new MemoryU8();  //char convbuf[1024];
+                int pconvbufIdx = 0;  //char *pconvbuf = convbuf;
+                int count = 0;
+
+                // is this the beginning of the file?  if so, write a byte order mark
+                if (!no_bom())
+                {
+                    uint64_t offset;
+                    if (!tell(out offset))
+                    {
+                        if (offset == 0)
+                        {
+                            convbuf.Add(0xef);  //*pconvbuf++ = char(0xef);
+                            convbuf.Add(0xbb);  //*pconvbuf++ = char(0xbb);
+                            convbuf.Add(0xbf);  //*pconvbuf++ = char(0xbf);
+                        }
+                    }
+                }
+
+                // convert '\n' to platform dependant line endings
+                foreach (char ch in s)
+                {
+                    if (ch == '\n')
+                    {
+                        if (CRLF == 1)      // CR only
+                        {
+                            convbuf.Add(13);  //*pconvbuf++ = 13;
+                        }
+                        else if (CRLF == 2) // LF only
+                        {
+                            convbuf.Add(10);  //*pconvbuf++ = 10;
+                        }
+                        else if (CRLF == 3) // CR+LF
+                        {
+                            convbuf.Add(13);  //*pconvbuf++ = 13;
+                            convbuf.Add(10);  //*pconvbuf++ = 10;
+                        }
+                    }
+                    else
+                    {
+                        convbuf.AddRange(Encoding.ASCII.GetBytes(new string(ch, 1)));  //*pconvbuf++ = ch;
+                    }
+
+                    // if we overflow, break into chunks
+                    //if (pconvbuf >= convbuf + std::size(convbuf) - 10)
+                    //{
+                    //    std::size_t written;
+                    //    write(convbuf, pconvbuf - convbuf, written); // FIXME: error ignored here
+                    //    count += written;
+                    //    pconvbuf = convbuf;
+                    //}
+                }
+
+                //var convbufPointer = new Pointer<uint8_t>(convbuf);
+
+                // final flush
+                if (convbuf.Count != 0)  //if (pconvbuf != convbuf)
+                {
+                    size_t written;
+                    write(new PointerU8(convbuf), (size_t)convbuf.Count, out written);  //write(convbuf, pconvbuf - convbuf, written); // FIXME: error ignored here
+                    count += (int)written;
+                }
+
+                return count;
             }
 
 
@@ -466,12 +584,12 @@ namespace mame
             }
 
 
-            protected bool read_access() { return 0U != (m_openflags & g.OPEN_FLAG_READ); }
-            protected bool write_access() { return 0U != (m_openflags & g.OPEN_FLAG_WRITE); }
-            //bool no_bom() { return 0U != (m_openflags & osdcore_global.OPEN_FLAG_NO_BOM); }
+            protected bool read_access() { return 0U != (m_openflags & OPEN_FLAG_READ); }
+            protected bool write_access() { return 0U != (m_openflags & OPEN_FLAG_WRITE); }
+            bool no_bom() { return 0U != (m_openflags & util.OPEN_FLAG_NO_BOM); }
 
 
-            //bool has_putback() const { return m_back_char_head != m_back_char_tail; }
+            protected bool has_putback() { return m_back_char_head != m_back_char_tail; }
             protected void clear_putback() { m_back_char_head = m_back_char_tail = 0; }
         }
 
@@ -503,65 +621,120 @@ namespace mame
 
             //~core_in_memory_file() { purge(); }
 
+            public override void close()
+            {
+                purge();
+            }
 
-            /*-------------------------------------------------
-                seek - seek within a file
-            -------------------------------------------------*/
-            public override int seek(int64_t offset, int whence)
+
+            public override std.error_condition seek(int64_t offset, int whence)  //virtual std::error_condition seek(std::int64_t offset, int whence) noexcept override;
             {
                 // flush any buffered char
-                clear_putback();
+                clear_putback(); // TODO: report errors; also, should the argument check happen before this?
 
                 // switch off the relative location
                 switch (whence)
                 {
-                case g.SEEK_SET:
-                    m_offset = (UInt64)offset;
-                    break;
+                case SEEK_SET:
+                    if (0 > offset)
+                        return std.errc.invalid_argument;
 
-                case g.SEEK_CUR:
-                    m_offset += (UInt64)offset;
-                    break;
+                    m_offset = (uint64_t)offset;
+                    return new std.error_condition();
 
-                case g.SEEK_END:
-                    m_offset = m_length + (UInt64)offset;
-                    break;
+                case SEEK_CUR:
+                    if (0 > offset)
+                    {
+                        if ((uint64_t)(-offset) > m_offset)  //if (std::uint64_t(-offset) > m_offset)
+                            return std.errc.invalid_argument;
+                    }
+                    else if ((uint64_t.MaxValue - (uint64_t)offset) < m_offset)  //else if ((std::numeric_limits<std::uint64_t>::max() - offset) < m_offset)
+                    {
+                        return std.errc.invalid_argument;
+                    }
+
+                    m_offset += (uint64_t)offset;
+                    return new std.error_condition();
+
+                case SEEK_END:
+                    if (0 > offset)
+                    {
+                        if ((uint64_t)(-offset) > m_length)  //if (std::uint64_t(-offset) > m_length)
+                            return std.errc.invalid_argument;
+                    }
+                    else if ((uint64_t.MaxValue - (uint64_t)offset) < m_length)  //else if ((std::numeric_limits<std::uint64_t>::max() - offset) < m_length)
+                    {
+                        return std.errc.invalid_argument;
+                    }
+
+                    m_offset = m_length + (uint64_t)offset;
+                    return new std.error_condition();
+
+                default:
+                    return std.errc.invalid_argument;
                 }
-                return 0;
             }
 
 
-            public override uint64_t tell() { return m_offset; }
+            public override std.error_condition tell(out uint64_t result) { result = m_offset; return new std.error_condition(); }  //virtual std::error_condition tell(std::uint64_t &result) noexcept override { result = m_offset; return std::error_condition(); }
+            public override std.error_condition length(out uint64_t result) { result = m_length; return new std.error_condition(); }  //virtual std::error_condition length(std::uint64_t &result) noexcept override { result = m_length; return std::error_condition(); }
 
-
-            //virtual bool eof() const override;
-
-            public override uint64_t size() { return m_length; }
-
-
-            /*-------------------------------------------------
-                read - read from a file
-            -------------------------------------------------*/
-            public override uint32_t read(Pointer<uint8_t> buffer, uint32_t length)  //std::uint32_t read(void *buffer, std::uint32_t length)
+            public override std.error_condition read(PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition read(void *buffer, std::size_t length, std::size_t &actual) noexcept override;
             {
                 clear_putback();
 
                 // handle RAM-based files
-                var bytes_read = safe_buffer_copy(new Pointer<uint8_t>(m_data), (UInt32)m_offset, (UInt32)m_length, buffer, 0, length);
-                m_offset += bytes_read;
-                return bytes_read;
+                if (m_offset < m_length)
+                    actual = safe_buffer_copy(new PointerU8(m_data), (size_t)m_offset, (size_t)m_length, buffer, 0, length);
+                else
+                    actual = 0U;
+
+                m_offset += actual;
+                return new std.error_condition();
             }
+
+            public override std.error_condition read_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition read_at(std::uint64_t offset, void *buffer, std::size_t length, std::size_t &actual) noexcept override;
+            {
+                clear_putback();
+
+                // handle RAM-based files
+                if (offset < m_length)
+                    actual = safe_buffer_copy(new PointerU8(m_data), (size_t)offset, (size_t)m_length, buffer, 0, length);
+                else
+                    actual = 0U;
+
+                return new std.error_condition();
+            }
+
+            public override std.error_condition finalize() { return new std.error_condition(); }  //virtual std::error_condition finalize() noexcept override { return std::error_condition(); }
+            public override std.error_condition flush() { clear_putback(); return new std.error_condition(); }  //virtual std::error_condition flush() noexcept override { clear_putback(); return std::error_condition(); }
+            public override std.error_condition write(PointerU8 buffer, size_t length, out size_t actual) { actual = 0; return std.errc.bad_file_descriptor; }  //virtual std::error_condition write(void const *buffer, std::size_t length, std::size_t &actual) noexcept override { actual = 0; return std::errc::bad_file_descriptor; }
+            public override std.error_condition write_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual) { actual = 0; return std.errc.bad_file_descriptor; }  //virtual std::error_condition write_at(std::uint64_t offset, void const *buffer, std::size_t length, std::size_t &actual) noexcept override { actual = 0; return std::errc::bad_file_descriptor; }
+
+
+            protected override bool eof()
+            {
+                // check for buffered chars
+                if (has_putback())
+                    return false;
+
+                // if the offset == length, we're at EOF
+                return (m_offset >= m_length);
+            }
+
 
             public override MemoryU8 buffer() { return m_data; }  //virtual void const *buffer() override { return m_data; }
 
 
-            public override uint32_t write(Pointer<uint8_t> buffer, uint32_t length) { return 0; }  //virtual std::uint32_t write(void const *buffer, std::uint32_t length) override { return 0; }
+            protected override std.error_condition truncate(uint64_t offset)
+            {
+                if (m_length < offset)
+                    return std.errc.io_error; // TODO: revisit this error code
 
-
-            //virtual std::error_condition truncate(std::uint64_t offset) override;
-
-
-            public override std.error_condition flush() { clear_putback(); return new std.error_condition(); }
+                // adjust to new length and offset
+                set_length(offset);
+                return new std.error_condition();
+            }
 
 
             protected core_in_memory_file(uint32_t openflags, uint64_t length)
@@ -579,7 +752,7 @@ namespace mame
 
             protected MemoryU8 allocate()  //void *allocate()
             {
-                if (m_data != null)
+                if (m_data != null || (size_t.MaxValue < m_length))  //if (m_data || (std::numeric_limits<std::size_t>::max() < m_length))
                     return null;
 
                 MemoryU8 data = new MemoryU8((int)m_length, true);  //void *data = malloc(m_length);
@@ -604,22 +777,22 @@ namespace mame
 
 
             protected uint64_t offset() { return m_offset; }
-            protected void add_offset(uint32_t increment) { m_offset += increment; m_length = Math.Max(m_length, m_offset); }
+            protected void add_offset(size_t increment) { m_offset += increment; m_length = std.max(m_length, m_offset); }
             protected uint64_t length() { return m_length; }
-            //void set_length(std::uint64_t value) { m_length = value; m_offset = (std::min)(m_offset, m_length); }
+            protected void set_length(uint64_t value) { m_length = value; m_offset = std.min(m_offset, m_length); }
 
 
             /*-------------------------------------------------
                 safe_buffer_copy - copy safely from one
                 bounded buffer to another
             -------------------------------------------------*/
-            protected static UInt32 safe_buffer_copy(  //std::size_t safe_buffer_copy(
-                    Pointer<uint8_t> source, UInt32 sourceoffs, UInt32 sourcelen,  //void const *source, std::size_t sourceoffs, std::size_t sourcelen,
-                    Pointer<uint8_t> dest, UInt32 destoffs, UInt32 destlen)  //void *dest, std::size_t destoffs, std::size_t destlen)
+            protected static size_t safe_buffer_copy(  //std::size_t safe_buffer_copy(
+                    Pointer<uint8_t> source, size_t sourceoffs, size_t sourcelen,  //void const *source, std::size_t sourceoffs, std::size_t sourcelen,
+                    Pointer<uint8_t> dest, size_t destoffs, size_t destlen)  //void *dest, std::size_t destoffs, std::size_t destlen)
             {
                 var sourceavail = sourcelen - sourceoffs;
                 var destavail = destlen - destoffs;
-                var bytes_to_copy = Math.Min(sourceavail, destavail);
+                var bytes_to_copy = std.min(sourceavail, destavail);
                 if (bytes_to_copy > 0)
                 {
                     //std::memcpy(
@@ -634,17 +807,20 @@ namespace mame
 
                 return bytes_to_copy;
             }
+
+
+            public override Stream stream { get { throw new emu_unimplemented(); } }
         }
 
 
-        class core_osd_file : core_in_memory_file
+        sealed class core_osd_file : core_in_memory_file
         {
             const int FILE_BUFFER_SIZE = 512;
 
 
             osd_file m_file;                     //osd_file::ptr   m_file;                     // OSD file handle
-            uint64_t m_bufferbase;               // base offset of internal buffer
-            uint32_t m_bufferbytes;              // bytes currently loaded into buffer
+            uint64_t m_bufferbase = 0;               // base offset of internal buffer
+            uint32_t m_bufferbytes = 0;              // bytes currently loaded into buffer
             MemoryU8 m_buffer = new MemoryU8(FILE_BUFFER_SIZE, true);  //std::uint8_t    m_buffer[FILE_BUFFER_SIZE]; // buffer data
 
 
@@ -652,53 +828,145 @@ namespace mame
                 : base(openmode, length)
             {
                 m_file = file;
-                m_bufferbase = 0;
-                m_bufferbytes = 0;
             }
 
 
-            /*-------------------------------------------------
-                read - read from a file
-            -------------------------------------------------*/
-            public override uint32_t read(Pointer<uint8_t> buffer, uint32_t length)  //std::uint32_t read(void *buffer, std::uint32_t length)
+            public override void close()
+            {
+                m_file.Dispose();
+            }
+
+
+            public override std.error_condition read(PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition read(void *buffer, std::size_t length, std::size_t &actual) noexcept override;
+            {
+                // since osd_file works like pread/pwrite, implement in terms of read_at
+                // core_osd_file is delcared final, so a derived class can't interfere
+                std.error_condition err = read_at(offset(), buffer, length, out actual);
+                add_offset(actual);
+                return err;
+            }
+
+
+            public override std.error_condition read_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition read_at(std::uint64_t offset, void *buffer, std::size_t length, std::size_t &actual) noexcept override;
             {
                 if (m_file == null || is_loaded())
-                    return base.read(buffer, length);
+                    return base.read_at(offset, buffer, length, out actual);
 
                 // flush any buffered char
                 clear_putback();
 
-                uint32_t bytes_read = 0;
+                actual = 0U;
+                std.error_condition err = new std.error_condition();
 
                 // if we're within the buffer, consume that first
-                if (is_buffered())
-                    bytes_read += safe_buffer_copy(new Pointer<uint8_t>(m_buffer), (uint32_t)(offset() - m_bufferbase), m_bufferbytes, buffer, bytes_read, length);
+                if (is_buffered(offset))
+                    actual += safe_buffer_copy(new PointerU8(m_buffer), offset - m_bufferbase, m_bufferbytes, buffer, actual, length);  //actual += safe_buffer_copy(m_buffer, offset - m_bufferbase, m_bufferbytes, buffer, actual, length);
 
                 // if we've got a small amount left, read it into the buffer first
-                if (bytes_read < length)
+                if (actual < length)
                 {
-                    if ((length - bytes_read) < (m_buffer.Count / 2))
+                    if ((length - actual) < (size_t)(m_buffer.Count / 2))  //if ((length - actual) < (sizeof(m_buffer) / 2))
                     {
                         // read as much as makes sense into the buffer
-                        m_bufferbase = offset() + bytes_read;
-                        m_bufferbytes = 0;
-                        m_file.read(new Pointer<uint8_t>(m_buffer), m_bufferbase, (uint32_t)m_buffer.Count, out m_bufferbytes);  //m_file->read(m_buffer, m_bufferbase, sizeof(m_buffer), m_bufferbytes);
+                        m_bufferbase = offset + actual;
+                        err = m_file.read(new PointerU8(m_buffer), m_bufferbase, (uint32_t)m_buffer.Count, out m_bufferbytes);  //err = m_file->read(m_buffer, m_bufferbase, sizeof(m_buffer), m_bufferbytes);
 
-                        // do a bounded copy from the buffer to the destination
-                        bytes_read += safe_buffer_copy(new Pointer<uint8_t>(m_buffer), 0, m_bufferbytes, buffer, bytes_read, length);
+                        // do a bounded copy from the buffer to the destination if it succeeded
+                        if (!err)
+                            actual += safe_buffer_copy(new PointerU8(m_buffer), 0, m_bufferbytes, buffer, actual, length);
+                        else
+                            m_bufferbytes = 0U;
                     }
                     else
                     {
                         // read the remainder directly from the file
-                        uint32_t new_bytes_read = 0;
-                        m_file.read(new Pointer<uint8_t>(buffer, (int)bytes_read), offset() + bytes_read, length - bytes_read, out new_bytes_read);  //m_file->read(reinterpret_cast<std::uint8_t *>(buffer) + bytes_read, offset() + bytes_read, length - bytes_read, new_bytes_read);
-                        bytes_read += new_bytes_read;
+                        do
+                        {
+                            // may need to split into chunks if size_t is larger than 32 bits
+                            uint32_t chunk = std.min(uint32_t.MaxValue, (uint32_t)(length - actual));  //std::uint32_t const chunk = std::min<std::common_type_t<std::uint32_t, std::size_t> >(std::numeric_limits<std::uint32_t>::max(), length - actual);
+                            uint32_t bytes_read;
+                            err = m_file.read(new PointerU8(buffer) + (uint32_t)actual, offset + actual, chunk, out bytes_read);  //err = m_file->read(reinterpret_cast<std::uint8_t *>(buffer) + actual, offset + actual, chunk, bytes_read);
+                            if (err || bytes_read == 0)
+                                break;
+
+                            actual += bytes_read;
+                        }
+                        while (actual < length);
                     }
                 }
 
-                // return the number of bytes read
-                add_offset(bytes_read);
-                return bytes_read;
+                // return any errors
+                return err;
+            }
+
+
+            public override std.error_condition finalize()
+            {
+                if (is_loaded())
+                    return base.finalize();
+
+                return new std.error_condition();
+            }
+
+
+            public override std.error_condition flush()
+            {
+                if (is_loaded())
+                    return base.flush();
+
+                // flush any buffered char
+                clear_putback();
+
+                // invalidate any buffered data
+                m_bufferbytes = 0U;
+
+                return m_file.flush();
+            }
+
+
+            public override std.error_condition write(PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition write(void const *buffer, std::size_t length, std::size_t &actual) noexcept override;
+            {
+                // since osd_file works like pread/pwrite, implement in terms of write_at
+                // core_osd_file is delcared final, so a derived class can't interfere
+                std.error_condition err = write_at(offset(), buffer, length, out actual);
+                add_offset(actual);
+                return err;
+            }
+
+
+            public override std.error_condition write_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition write_at(std::uint64_t offset, void const *buffer, std::size_t length, std::size_t &actual) noexcept override;
+            {
+                // can't write to RAM-based stuff
+                if (is_loaded())
+                    return base.write_at(offset, buffer, length, out actual);
+
+                // flush any buffered char
+                clear_putback();
+
+                // invalidate any buffered data
+                m_bufferbytes = 0U;
+
+                // do the write - may need to split into chunks if size_t is larger than 32 bits
+                actual = 0U;
+                while (length != 0)
+                {
+                    // bytes written not valid on error
+                    uint32_t chunk = std.min(uint32_t.MaxValue, (uint32_t)length);  //std::uint32_t const chunk = std::min<std::common_type_t<std::uint32_t, std::size_t> >(std::numeric_limits<std::uint32_t>::max(), length);
+                    uint32_t bytes_written;
+                    std.error_condition err = m_file.write(buffer, offset, chunk, out bytes_written);
+                    if (err)
+                        return err;
+
+                    assert(chunk >= bytes_written);
+
+                    offset += bytes_written;
+                    buffer = buffer + bytes_written;  //buffer = reinterpret_cast<std::uint8_t const *>(buffer) + bytes_written;
+                    length -= bytes_written;
+                    actual += bytes_written;
+                    set_length(std.max(this.length(), offset));
+                }
+
+                return new std.error_condition();
             }
 
 
@@ -713,53 +981,86 @@ namespace mame
                 if (!is_loaded() && length() != 0)
                 {
                     // allocate some memory
-                    MemoryU8 buf = allocate();  // void *buf = allocate();
+                    MemoryU8 buf = allocate();  //void *const buf = allocate();
                     if (buf == null)
                         return null;
 
                     // read the file
-                    uint32_t read_length = 0;
-                    var filerr = m_file.read(new Pointer<uint8_t>(buf), 0, (uint32_t)length(), out read_length);
-                    if (filerr || (read_length != length()))
-                        purge();
-                    else
-                        m_file = null;  //m_file.reset(); // close the file because we don't need it anymore
+                    uint64_t bytes_read = 0;
+                    uint64_t remaining = length();
+                    PointerU8 ptr = new PointerU8(buf);  //std::uint8_t *ptr = reinterpret_cast<std::uint8_t *>(buf);
+                    while (remaining != 0)
+                    {
+                        uint32_t chunk = std.min(uint32_t.MaxValue, (uint32_t)remaining);  //std::uint32_t const chunk = std::min<std::common_type_t<std::uint32_t, std::size_t> >(std::numeric_limits<std::uint32_t>::max(), remaining);
+                        uint32_t read_length;
+                        std.error_condition filerr = m_file.read(ptr, bytes_read, chunk, out read_length);
+                        if (filerr || read_length == 0)
+                        {
+                            purge();
+                            return base.buffer();
+                        }
+
+                        bytes_read += read_length;
+                        remaining -= read_length;
+                        ptr += read_length;
+                    }
+
+                    m_file.Dispose();  //m_file.reset(); // close the file because we don't need it anymore
+                    m_file = null;
                 }
 
                 return base.buffer();
             }
 
 
-            /*-------------------------------------------------
-                write - write to a file
-            -------------------------------------------------*/
-            public override uint32_t write(Pointer<uint8_t> buffer, uint32_t length)  //std::uint32_t write(void const *buffer, std::uint32_t length)
+            protected override std.error_condition truncate(uint64_t offset)
             {
-                // can't write to RAM-based stuff
                 if (is_loaded())
-                    return base.write(buffer, length);
+                    return base.truncate(offset);
 
-                // flush any buffered char
-                clear_putback();
+                // truncate file
+                std.error_condition err = m_file.truncate(offset);
+                if (err)
+                    return err;
 
-                // invalidate any buffered data
-                m_bufferbytes = 0;
-
-                // do the write
-                uint32_t bytes_written = 0;
-                m_file.write(buffer, offset(), length, out bytes_written);
-
-                // return the number of bytes written
-                add_offset(bytes_written);
-                return bytes_written;
+                // and adjust to new length and offset
+                set_length(offset);
+                return new std.error_condition();
             }
 
 
-            //virtual std::error_condition truncate(std::uint64_t offset) override;
-            //virtual std::error_condition flush() override;
+            bool is_buffered(uint64_t offset) { return (offset >= m_bufferbase) && (offset < (m_bufferbase + m_bufferbytes)); }
+        }
+    }
 
 
-            bool is_buffered() { return (offset() >= m_bufferbase) && (offset() < (m_bufferbase + m_bufferbytes)); }
+    public static class corefile_global
+    {
+        /* ----- filename utilities ----- */
+
+        /* extract the base part of a filename (remove extensions and paths) */
+        /*-------------------------------------------------
+            core_filename_extract_base - extract the base
+            name from a filename; note that this makes
+            assumptions about path separators
+        -------------------------------------------------*/
+        public static string core_filename_extract_base(string name, bool strip_extension = false)
+        {
+            if (strip_extension)
+                return Path.GetFileNameWithoutExtension(name);
+            else
+                return Path.GetFileName(name);
+        }
+
+
+        // extracts the file extension from a filename
+        //std::string core_filename_extract_extension(const std::string &filename, bool strip_period = false);
+
+
+        /* true if the given filename ends with a particular extension */
+        public static bool core_filename_ends_with(string filename, string extension)
+        {
+            return filename.EndsWith(extension);
         }
     }
 }

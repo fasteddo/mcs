@@ -2,7 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Windows.Forms;
 using mame;
@@ -20,9 +20,9 @@ namespace mcsForm
             Application.SetCompatibleTextRenderingDefault(false);
 
 
-            System.Diagnostics.Trace.WriteLine(string.Format("Environment.OSVersion.Platform: {0}", Environment.OSVersion.Platform));
-            System.Diagnostics.Trace.WriteLine(string.Format("Environment.OSVersion.VersionString: {0}", Environment.OSVersion.VersionString));
-            System.Diagnostics.Trace.WriteLine(string.Format("RuntimeInformation.FrameworkDescription: {0}", System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription));
+            Trace.WriteLine(string.Format("Environment.OSVersion.Platform: {0}", Environment.OSVersion.Platform));
+            Trace.WriteLine(string.Format("Environment.OSVersion.VersionString: {0}", Environment.OSVersion.VersionString));
+            Trace.WriteLine(string.Format("RuntimeInformation.FrameworkDescription: {0}", System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription));
 
 
             Form1 form = new Form1();

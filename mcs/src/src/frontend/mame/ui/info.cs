@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using device_t_feature = mame.emu.detail.device_feature;  //using feature = emu::detail::device_feature;
@@ -10,6 +11,13 @@ using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>
 using size_t = System.UInt64;
 using sound_interface_enumerator = mame.device_interface_enumerator<mame.device_sound_interface>;  //typedef device_interface_enumerator<device_sound_interface> sound_interface_enumerator;
 using u32 = System.UInt32;
+
+using static mame.corefile_global;
+using static mame.emucore_global;
+using static mame.language_global;
+using static mame.romload_global;
+using static mame.ui_global;
+using static mame.util;
 
 
 namespace mame.ui
@@ -21,29 +29,29 @@ namespace mame.ui
         protected const machine_flags.type MACHINE_BTANB     = machine_flags.type.NO_SOUND_HW | machine_flags.type.IS_INCOMPLETE;
 
 
-        protected static readonly KeyValuePair<emu.detail.device_feature.type, string> [] FEATURE_NAMES =
+        protected static readonly std.pair<emu.detail.device_feature.type, string> [] FEATURE_NAMES =
         {
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PROTECTION,    "protection"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.TIMING,        "timing"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.GRAPHICS,      "graphics"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PALETTE,       "color palette"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.SOUND,         "sound"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CAPTURE,       "capture hardware"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CAMERA,        "camera"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MICROPHONE,    "microphone"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CONTROLS,      "controls"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.KEYBOARD,      "keyboard"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MOUSE,         "mouse"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MEDIA,         "media"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.DISK,          "disk"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PRINTER,       "printer"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.TAPE,          "magnetic tape"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PUNCH,         "punch tape"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.DRUM,          "magnetic drum"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.ROM,           "solid state storage"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.COMMS,         "communications"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.LAN,           "LAN"),
-            new KeyValuePair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.WAN,           "WAN")
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PROTECTION,    N_p("emulation-feature",    "protection")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.TIMING,        N_p("emulation-feature",    "timing")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.GRAPHICS,      N_p("emulation-feature",    "graphics")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PALETTE,       N_p("emulation-feature",    "color palette")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.SOUND,         N_p("emulation-feature",    "sound")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CAPTURE,       N_p("emulation-feature",    "capture hardware")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CAMERA,        N_p("emulation-feature",    "camera")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MICROPHONE,    N_p("emulation-feature",    "microphone")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.CONTROLS,      N_p("emulation-feature",    "controls")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.KEYBOARD,      N_p("emulation-feature",    "keyboard")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MOUSE,         N_p("emulation-feature",    "mouse")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.MEDIA,         N_p("emulation-feature",    "media")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.DISK,          N_p("emulation-feature",    "disk")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PRINTER,       N_p("emulation-feature",    "printer")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.TAPE,          N_p("emulation-feature",    "magnetic tape")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.PUNCH,         N_p("emulation-feature",    "punch tape")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.DRUM,          N_p("emulation-feature",    "magnetic drum")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.ROM,           N_p("emulation-feature",    "solid state storage")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.COMMS,         N_p("emulation-feature",    "communications")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.LAN,           N_p("emulation-feature",    "LAN")),
+            new std.pair<emu.detail.device_feature.type, string>(emu.detail.device_feature.type.WAN,           N_p("emulation-feature",    "WAN"))
         };
 
 
@@ -105,9 +113,9 @@ namespace mame.ui
                 device_slot_interface slot = device.GetClassInterface<device_slot_interface>();  //device_slot_interface const *const slot(dynamic_cast<device_slot_interface const *>(parent));
                 if (parent == null || (slot != null && (slot.get_card_device() == device)))
                 {
-                    for (Pointer<tiny_rom_entry> rom = device.rom_region(); !m_has_bioses && rom != null && !g.ROMENTRY_ISEND(rom[0]); ++rom)  //for (tiny_rom_entry const *rom = device.rom_region(); !m_has_bioses && rom && !ROMENTRY_ISEND(rom); ++rom)
+                    for (Pointer<tiny_rom_entry> rom = device.rom_region(); !m_has_bioses && rom != null && !ROMENTRY_ISEND(rom.op); ++rom)  //for (tiny_rom_entry const *rom = device.rom_region(); !m_has_bioses && rom && !ROMENTRY_ISEND(rom); ++rom)
                     {
-                        if (g.ROMENTRY_ISSYSTEM_BIOS(rom[0]))
+                        if (ROMENTRY_ISSYSTEM_BIOS(rom.op))
                             m_has_bioses = true;
                     }
                 }
@@ -191,11 +199,11 @@ namespace mame.ui
         public rgb_t status_color()
         {
             if (has_severe_warnings())
-                return g.UI_RED_COLOR;
+                return UI_RED_COLOR;
             else if ((machine_flags_get() & MACHINE_WARNINGS & ~machine_flags.type.REQUIRES_ARTWORK) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
-                return g.UI_YELLOW_COLOR;
+                return UI_YELLOW_COLOR;
             else
-                return g.UI_GREEN_COLOR;
+                return UI_GREEN_COLOR;
         }
 
 
@@ -206,9 +214,9 @@ namespace mame.ui
         public rgb_t warnings_color()
         {
             if (has_severe_warnings())
-                return g.UI_RED_COLOR;
+                return UI_RED_COLOR;
             else if ((machine_flags_get() & MACHINE_WARNINGS) != 0 || unemulated_features() != 0 || imperfect_features() != 0)
-                return g.UI_YELLOW_COLOR;
+                return UI_YELLOW_COLOR;
             else
                 return m_options.background_color();
         }
@@ -242,7 +250,7 @@ namespace mame.ui
 
             // add a warning if any ROMs were loaded with warnings
             if (m_machine.rom_load().warnings() > 0)
-                buf += "One or more ROMs/CHDs for this machine are incorrect. The machine may not run correctly.\n";
+                buf += __("One or more ROMs/CHDs for this machine are incorrect. The machine may not run correctly.\n");
 
             if (!m_machine.rom_load().software_load_warnings_message().empty())
                 buf += m_machine.rom_load().software_load_warnings_message();
@@ -252,23 +260,23 @@ namespace mame.ui
             {
                 if (!buf.empty())
                     buf += "\n";
-                buf += "There are known problems with this machine\n\n";
+                buf += __("There are known problems with this machine\n\n");
             }
 
             // add a warning if any ROMs are flagged BAD_DUMP/NO_DUMP
             if (m_machine.rom_load().knownbad() > 0)
-                buf += "One or more ROMs/CHDs for this machine have not been correctly dumped.\n";
+                buf += __("One or more ROMs/CHDs for this machine have not been correctly dumped.\n");
 
             // add line for unemulated features
             if (unemulated_features() != 0)
             {
-                buf += "Completely unemulated features: ";
+                buf += __("Completely unemulated features: ");
                 bool first = true;
                 foreach (var feature in FEATURE_NAMES)
                 {
-                    if ((unemulated_features() & feature.Key) != 0)
+                    if ((unemulated_features() & feature.first) != 0)
                     {
-                        buf += string.Format(first ? "{0}" : ", {0}", feature.Value);
+                        util.stream_format(ref buf, first ? __("{0}") : __(", {0}"), __("emulation-feature", feature.second));
                         first = false;
                     }
                 }
@@ -278,13 +286,13 @@ namespace mame.ui
             // add line for imperfect features
             if (imperfect_features() != 0)
             {
-                buf += "Imperfectly emulated features: ";
+                buf += __("Imperfectly emulated features: ");
                 bool first = true;
                 foreach (var feature in FEATURE_NAMES)
                 {
-                    if ((imperfect_features() & feature.Key) != 0)
+                    if ((imperfect_features() & feature.first) != 0)
                     {
-                        buf += string.Format(first ? "{0}" : ", {0}", feature.Value);
+                        util.stream_format(ref buf, first ? __("{0}") : __(", {0}"), __("emulation-feature", feature.second));
                         first = false;
                     }
                 }
@@ -293,19 +301,19 @@ namespace mame.ui
 
             // add one line per machine warning flag
             if ((machine_flags_get() & machine_flags.type.NO_COCKTAIL) != 0)
-                buf += "Screen flipping in cocktail mode is not supported.\n";
+                buf += __("Screen flipping in cocktail mode is not supported.\n");
             if ((machine_flags_get() & machine_flags.type.REQUIRES_ARTWORK) != 0)
-                buf += "This machine requires external artwork files.\n";
+                buf += __("This machine requires external artwork files.\n");
             if ((machine_flags_get() & machine_flags.type.IS_INCOMPLETE) != 0)
-                buf += "This machine was never completed. It may exhibit strange behavior or missing elements that are not bugs in the emulation.\n";
+                buf += __("This machine was never completed. It may exhibit strange behavior or missing elements that are not bugs in the emulation.\n");
             if ((machine_flags_get() & machine_flags.type.NO_SOUND_HW) != 0)
-                buf += "This machine has no sound hardware, MAME will produce no sounds, this is expected behaviour.\n";
+                buf += __("This machine has no sound hardware, MAME will produce no sounds, this is expected behaviour.\n");
 
             // these are more severe warnings
             if ((machine_flags_get() & machine_flags.type.NOT_WORKING) != 0)
-                buf += "\nTHIS MACHINE DOESN'T WORK. The emulation for this machine is not yet complete. There is nothing you can do to fix this problem except wait for the developers to improve the emulation.\n";
+                buf += __("\nTHIS MACHINE DOESN'T WORK. The emulation for this machine is not yet complete. There is nothing you can do to fix this problem except wait for the developers to improve the emulation.\n");
             if ((machine_flags_get() & machine_flags.type.MECHANICAL) != 0)
-                buf += "\nElements of this machine cannot be emulated as they require physical interaction or consist of mechanical devices. It is not possible to fully experience this machine.\n";
+                buf += __("\nElements of this machine cannot be emulated as they require physical interaction or consist of mechanical devices. It is not possible to fully experience this machine.\n");
 
             if ((machine_flags_get() & MACHINE_ERRORS) != 0 || ((m_machine.system().type.unemulated_features() | m_machine.system().type.imperfect_features()) & emu.detail.device_feature.type.PROTECTION) != 0)
             {
@@ -327,9 +335,9 @@ namespace mame.ui
                         {
                             // this one works, add a header and display the name of the clone
                             if (!foundworking)
-                                buf += string.Format("\n\nThere are working clones of this machine: {0}", driver.name);
+                                util.stream_format(ref buf, __("\n\nThere are working clones of this machine: {0}"), driver.name);
                             else
-                                buf += string.Format(", {0}", driver.name);
+                                util.stream_format(ref buf, __(", {0}"), driver.name);
 
                             foundworking = true;
                         }
@@ -352,11 +360,11 @@ namespace mame.ui
             string buf = "";  //std::ostringstream buf;
 
             // print description, manufacturer, and CPU:
-            buf += string.Format("{0}\n{1} {2}\nDriver: {3}\n\nCPU:\n",  // %1$s\n%2$s %3$s\nDriver: %4$s\n\nCPU:\n
-                    m_machine.system().type.fullname(),
+            util.stream_format(ref buf, __("{0}\n{1} {2}\nDriver: {3}\n\nCPU:\n"),  //util::stream_format(buf, _("%1$s\n%2$s %3$s\nDriver: %4$s\n\nCPU:\n"),
+                    system_list.instance().systems()[driver_list.find(m_machine.system().name)].description,
                     m_machine.system().year,
                     m_machine.system().manufacturer,
-                    g.core_filename_extract_base(m_machine.system().type.source()));
+                    core_filename_extract_base(m_machine.system().type.source()));
 
             // loop over all CPUs
             execute_interface_enumerator execiter = new execute_interface_enumerator(m_machine.root_device());
@@ -390,12 +398,12 @@ namespace mame.ui
                 }
 
                 // if more than one, prepend a #x in front of the CPU name and display clock
-                buf += string.Format(
+                util.stream_format(ref buf,
                         (count > 1)
                             ? ((clock != 0) ? "{0}X{1} {2} {3}\n" : "{1}x{2}\n")  //? ((clock != 0) ? "%1$d" UTF8_MULTIPLY "%2$s %3$s" UTF8_NBSP "%4$s\n" : "%1$d" UTF8_MULTIPLY "%2$s\n")
                             : ((clock != 0) ? "{1} {2} {3}\n" : "{1}\n"),  //: ((clock != 0) ? "%2$s %3$s" UTF8_NBSP "%4$s\n" : "%2$s\n"),
                         count, name, hz,
-                        (d == 9) ? "GHz" : (d == 6) ? "MHz" : (d == 3) ? "kHz" : "Hz");
+                        (d == 9) ? __("GHz") : (d == 6) ? __("MHz") : (d == 3) ? __("kHz") : __("Hz"));
             }
 
             // loop over all sound chips
@@ -409,7 +417,7 @@ namespace mame.ui
 
                 // append the Sound: string
                 if (!found_sound)
-                    buf += "\nSound:\n";
+                    buf += __("\nSound:\n");
 
                 found_sound = true;
 
@@ -434,21 +442,21 @@ namespace mame.ui
                 }
 
                 // if more than one, prepend a #x in front of the soundchip name and display clock
-                buf += string.Format(
+                util.stream_format(ref buf,
                         (count > 1)
                             ? ((clock != 0) ? "{0}X{1} {2} {3}\n" : "{0}X{1}\n")  //? ((clock != 0) ? "%1$d" UTF8_MULTIPLY "%2$s %3$s" UTF8_NBSP "%4$s\n" : "%1$d" UTF8_MULTIPLY "%2$s\n")
                             : ((clock != 0) ? "{1} {2} {3}\n" : "{1}\n"),  //: ((clock != 0) ? "%2$s %3$s" UTF8_NBSP "%4$s\n" : "%2$s\n"),
                         count, sound.device().name(), hz,
-                        (d == 9) ? "GHz" : (d == 6) ? "MHz" : (d == 3) ? "kHz" : "Hz");
+                        (d == 9) ? __("GHz") : (d == 6) ? __("MHz") : (d == 3) ? __("kHz") : __("Hz"));
             }
 
             // display screen information
-            buf += "\nVideo:\n";
+            buf += __("\nVideo:\n");
             screen_device_enumerator scriter = new screen_device_enumerator(m_machine.root_device());
             int scrcount = scriter.count();
             if (scrcount == 0)
             {
-                buf += "None\n";
+                buf += __("None\n");
             }
             else
             {
@@ -457,7 +465,7 @@ namespace mame.ui
                     string detail;
                     if (screen.screen_type() == screen_type_enum.SCREEN_TYPE_VECTOR)
                     {
-                        detail = "Vector";
+                        detail = __("Vector");
                     }
                     else
                     {
@@ -469,12 +477,12 @@ namespace mame.ui
                         rectangle visarea = screen.visible_area();
                         detail = util.string_format("{0} X {1} ({2}) {3} Hz",  //detail = string_format("%d " UTF8_MULTIPLY " %d (%s) %s" UTF8_NBSP "Hz",
                                 visarea.width(), visarea.height(),
-                                (screen.orientation() & g.ORIENTATION_SWAP_XY) != 0 ? "V" : "H",
+                                (screen.orientation() & ORIENTATION_SWAP_XY) != 0 ? "V" : "H",
                                 hz);
                     }
 
-                    buf += string.Format(
-                            (scrcount > 1) ? "{0}: {1}\n" : "{1}\n",  //(scrcount > 1) ? _("%1$s: %2$s\n") : _("%2$s\n"),
+                    util.stream_format(ref buf,
+                            (scrcount > 1) ? __("{0}: {1}\n") : __("{1}\n"),  //(scrcount > 1) ? _("%1$s: %2$s\n") : _("%2$s\n"),
                             get_screen_desc(screen), detail);
                 }
             }
@@ -490,9 +498,9 @@ namespace mame.ui
         protected string get_screen_desc(screen_device screen)
         {
             if (new screen_device_enumerator(m_machine.root_device()).count() > 1)
-                return string.Format("Screen '{0}'", screen.tag());
+                return string_format(__("Screen '{0}'"), screen.tag());
             else
-                return "Screen";
+                return __("Screen");
         }
     }
 

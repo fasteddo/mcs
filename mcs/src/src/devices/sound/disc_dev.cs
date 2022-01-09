@@ -2,10 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using uint8_t = System.Byte;
+using unsigned = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.discrete_global;
+using static mame.rescap_global;
 
 
 namespace mame
@@ -17,7 +21,7 @@ namespace mame
         const int _maxout = 1;
 
 
-        double DEFAULT_555_BLEED_R { get { return g.RES_M(10); } }
+        double DEFAULT_555_BLEED_R { get { return RES_M(10); } }
 
 
         bool DSD_555_ASTBL__RESET { get { return DISCRETE_INPUT(0) == 0; } }
@@ -32,7 +36,7 @@ namespace mame
         /* charge/discharge constants */
         double DSD_555_ASTBL_T_RC_BLEED { get { return DEFAULT_555_BLEED_R * DSD_555_ASTBL__C; } }
         /* Use quick charge if specified. */
-        double DSD_555_ASTBL_T_RC_CHARGE(discrete_555_desc info) { return (DSD_555_ASTBL__R1 + (((info.options & g.DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) ? 0 : DSD_555_ASTBL__R2)) * DSD_555_ASTBL__C; }
+        double DSD_555_ASTBL_T_RC_CHARGE(discrete_555_desc info) { return (DSD_555_ASTBL__R1 + (((info.options & DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) ? 0 : DSD_555_ASTBL__R2)) * DSD_555_ASTBL__C; }
         double DSD_555_ASTBL_T_RC_DISCHARGE { get { return DSD_555_ASTBL__R2 * DSD_555_ASTBL__C; } }
 
 
@@ -74,18 +78,18 @@ namespace mame
             discrete_555_desc info = (discrete_555_desc)this.custom_data();  //DISCRETE_DECLARE_INFO(discrete_555_desc)
 
             m_use_ctrlv   = (this.input_is_node() >> 4) & 1;
-            m_output_type = info.options & g.DISC_555_OUT_MASK;
+            m_output_type = info.options & DISC_555_OUT_MASK;
 
             /* Use the defaults or supplied values. */
-            m_v_out_high = (info.v_out_high == g.DEFAULT_555_HIGH) ? info.v_pos - 1.2 : info.v_out_high;
+            m_v_out_high = (info.v_out_high == DEFAULT_555_HIGH) ? info.v_pos - 1.2 : info.v_out_high;
 
             /* setup v_charge or node */
             m_v_charge_node = m_device.node_output_ptr((int)info.v_charge);
             if (m_v_charge_node == null)
             {
-                m_v_charge = (info.v_charge == g.DEFAULT_555_CHARGE) ? info.v_pos : info.v_charge;
+                m_v_charge = (info.v_charge == DEFAULT_555_CHARGE) ? info.v_pos : info.v_charge;
 
-                if ((info.options & g.DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) m_v_charge -= 0.5;
+                if ((info.options & DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) m_v_charge -= 0.5;
             }
 
             if ((DSD_555_ASTBL__CTRLV != -1) && m_use_ctrlv == 0)
@@ -117,7 +121,7 @@ namespace mame
                 m_exp_discharge  = RC_CHARGE_EXP(m_t_rc_discharge);
             }
 
-            m_output_is_ac = info.options & g.DISC_555_OUT_AC;
+            m_output_is_ac = info.options & DISC_555_OUT_AC;
             /* Calculate DC shift needed to make squarewave waveform AC */
             m_ac_shift = (m_output_is_ac != 0) ? -m_v_out_high / 2.0 : 0;
 
@@ -193,7 +197,7 @@ namespace mame
             if (m_v_charge_node != null)
             {
                 v_charge = m_v_charge_node[0];  // v_charge = *m_v_charge_node;
-                if ((info.options & g.DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) v_charge -= 0.5;
+                if ((info.options & DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) != 0) v_charge -= 0.5;
             }
             else
             {
@@ -257,7 +261,7 @@ namespace mame
                             /* Oscillation disabled because there is no longer any charge resistor. */
                             /* Bleed the cap due to circuit losses. */
                             if (update_exponent != 0)
-                                exponent = g.RC_CHARGE_EXP_DT(m_t_rc_bleed, dt);
+                                exponent = RC_CHARGE_EXP_DT(m_t_rc_bleed, dt);
                             else
                                 exponent = m_exp_bleed;
                             v_cap_next = v_cap - (v_cap * exponent);
@@ -267,7 +271,7 @@ namespace mame
                         {
                             /* Charging */
                             if (update_exponent != 0)
-                                exponent = g.RC_CHARGE_EXP_DT(m_t_rc_charge, dt);
+                                exponent = RC_CHARGE_EXP_DT(m_t_rc_charge, dt);
                             else
                                 exponent = m_exp_charge;
                             v_cap_next = v_cap + ((v_charge - v_cap) * exponent);
@@ -277,7 +281,7 @@ namespace mame
                             if (v_cap_next >= threshold)
                             {
                                 /* calculate the overshoot time */
-                                dt     = m_t_rc_charge  * Math.Log(1.0 / (1.0 - ((v_cap_next - threshold) / (v_charge - v_cap))));
+                                dt     = m_t_rc_charge  * log(1.0 / (1.0 - ((v_cap_next - threshold) / (v_charge - v_cap))));
                                 x_time = dt;
                                 v_cap_next  = threshold;
                                 flip_flop = 0;
@@ -292,7 +296,7 @@ namespace mame
                         if(DSD_555_ASTBL__R2 != 0)
                         {
                             if (update_exponent != 0)
-                                exponent = g.RC_CHARGE_EXP_DT(m_t_rc_discharge, dt);
+                                exponent = RC_CHARGE_EXP_DT(m_t_rc_discharge, dt);
                             else
                                 exponent = m_exp_discharge;
                             v_cap_next = v_cap - (v_cap * exponent);
@@ -309,7 +313,7 @@ namespace mame
                         {
                             /* calculate the overshoot time */
                             if (v_cap_next < trigger)
-                                dt = m_t_rc_discharge  * Math.Log(1.0 / (1.0 - ((trigger - v_cap_next) / v_cap)));
+                                dt = m_t_rc_discharge  * log(1.0 / (1.0 - ((trigger - v_cap_next) / v_cap)));
                             x_time = dt;
                             v_cap_next  = trigger;
                             flip_flop = 1;
@@ -328,7 +332,7 @@ namespace mame
 
             switch (m_output_type)
             {
-                case g.DISC_555_OUT_SQW:
+                case DISC_555_OUT_SQW:
                     if (count_f + count_r >= 2)
                         /* force at least 1 toggle */
                         v_out =  m_flip_flop != 0 ? 0 : m_v_out_high;
@@ -336,30 +340,30 @@ namespace mame
                         v_out =  flip_flop * m_v_out_high;
                     v_out += m_ac_shift;
                     break;
-                case g.DISC_555_OUT_CAP:
+                case DISC_555_OUT_CAP:
                     v_out =  v_cap;
                     /* Fake it to AC if needed */
                     if (m_output_is_ac != 0)
                         v_out -= threshold * 3.0 /4.0;
                     break;
-                case g.DISC_555_OUT_ENERGY:
+                case DISC_555_OUT_ENERGY:
                     if (x_time == 0) x_time = 1.0;
                     v_out = m_v_out_high * (flip_flop != 0 ? x_time : (1.0 - x_time));
                     v_out += m_ac_shift;
                     break;
-                case g.DISC_555_OUT_LOGIC_X:
+                case DISC_555_OUT_LOGIC_X:
                     v_out =  flip_flop + x_time;
                     break;
-                case g.DISC_555_OUT_COUNT_F_X:
+                case DISC_555_OUT_COUNT_F_X:
                     v_out = count_f != 0 ? count_f + x_time : count_f;
                     break;
-                case g.DISC_555_OUT_COUNT_R_X:
+                case DISC_555_OUT_COUNT_R_X:
                     v_out =  count_r != 0 ? count_r + x_time : count_r;
                     break;
-                case g.DISC_555_OUT_COUNT_F:
+                case DISC_555_OUT_COUNT_F:
                     v_out =  count_f;
                     break;
-                case g.DISC_555_OUT_COUNT_R:
+                case DISC_555_OUT_COUNT_R:
                     v_out =  count_r;
                     break;
             }
@@ -394,7 +398,7 @@ namespace mame
         const int _maxout = 1;
 
 
-        double DEFAULT_555_BLEED_R { get { return g.RES_M(10); } }
+        double DEFAULT_555_BLEED_R { get { return RES_M(10); } }
 
 
         double DSD_555_CC__RESET { get { return (!(DISCRETE_INPUT(0) != 0)) ? 1 : 0; } }
@@ -416,7 +420,7 @@ namespace mame
         double DSD_555_CC_T_RC_DISCHARGE(double r_discharge) { return r_discharge * DSD_555_CC__C; }
 
 
-        UInt32 m_type;                     /* type of 555cc circuit */
+        unsigned m_type;                     /* type of 555cc circuit */
         int             m_output_type;
         int             m_output_is_ac;
         double          m_ac_shift;                 /* DC shift needed to make waveform ac */
@@ -459,17 +463,17 @@ namespace mame
             m_flip_flop   = 1;
             m_cap_voltage = 0;
 
-            m_output_type = info.options & g.DISC_555_OUT_MASK;
+            m_output_type = info.options & DISC_555_OUT_MASK;
 
             /* Use the defaults or supplied values. */
-            m_v_out_high  = (info.v_out_high  == g.DEFAULT_555_HIGH) ? info.v_pos - 1.2 : info.v_out_high;
-            m_v_cc_source = (info.v_cc_source == g.DEFAULT_555_CC_SOURCE) ? info.v_pos : info.v_cc_source;
+            m_v_out_high  = (info.v_out_high  == DEFAULT_555_HIGH) ? info.v_pos - 1.2 : info.v_out_high;
+            m_v_cc_source = (info.v_cc_source == DEFAULT_555_CC_SOURCE) ? info.v_pos : info.v_cc_source;
 
             /* Setup based on v_pos power source */
             m_threshold = info.v_pos * 2.0 / 3.0;
             m_trigger   = info.v_pos / 3.0;
 
-            m_output_is_ac = info.options & g.DISC_555_OUT_AC;
+            m_output_is_ac = info.options & DISC_555_OUT_AC;
             /* Calculate DC shift needed to make squarewave waveform AC */
             m_ac_shift     = (m_output_is_ac != 0) ? -m_v_out_high / 2.0 : 0;
 
@@ -478,7 +482,7 @@ namespace mame
              * the type of circuit at reset, because the ciruit type
              * is constant.  See Below.
              */
-            m_type = (UInt32)(((DSD_555_CC__RDIS > 0) ? 1 : 0) | (((DSD_555_CC__RGND  > 0) ? 1 : 0) << 1) | (((DSD_555_CC__RBIAS  > 0) ? 1 : 0) << 2));
+            m_type = (unsigned)(((DSD_555_CC__RDIS > 0) ? 1 : 0) | (((DSD_555_CC__RGND  > 0) ? 1 : 0) << 1) | (((DSD_555_CC__RBIAS  > 0) ? 1 : 0) << 2));
 
             /* optimization if none of the values are nodes */
             m_has_rc_nodes = 0;
@@ -497,7 +501,7 @@ namespace mame
                     case 0:
                         break;
                     case 3:
-                        r_discharge = g.RES_2_PARALLEL(DSD_555_CC__RDIS, DSD_555_CC__RGND);
+                        r_discharge = RES_2_PARALLEL(DSD_555_CC__RDIS, DSD_555_CC__RGND);
                         goto case 2;  //[[fallthrough]];
                     case 2:
                         r_charge = DSD_555_CC__RGND;
@@ -510,12 +514,12 @@ namespace mame
                         r_discharge = DSD_555_CC__RDIS;
                         break;
                     case 6:
-                        r_charge = g.RES_2_PARALLEL(DSD_555_CC__RBIAS, DSD_555_CC__RGND);
+                        r_charge = RES_2_PARALLEL(DSD_555_CC__RBIAS, DSD_555_CC__RGND);
                         break;
                     case 7:
                         r_temp   = DSD_555_CC__RBIAS + DSD_555_CC__RDIS;
-                        r_charge = g.RES_2_PARALLEL(r_temp, DSD_555_CC__RGND);
-                        r_discharge = g.RES_2_PARALLEL(DSD_555_CC__RGND, DSD_555_CC__RDIS);
+                        r_charge = RES_2_PARALLEL(r_temp, DSD_555_CC__RGND);
+                        r_discharge = RES_2_PARALLEL(DSD_555_CC__RGND, DSD_555_CC__RDIS);
                         break;
                 }
 
@@ -722,7 +726,7 @@ namespace mame
 
             if ( i < 0) i = 0;
 
-            if ((info.options & g.DISCRETE_555_CC_TO_CAP) != 0)
+            if ((info.options & DISCRETE_555_CC_TO_CAP) != 0)
             {
                 vi = i * DSD_555_CC__RDIS;
             }
@@ -736,7 +740,7 @@ namespace mame
                     case 0:
                         break;
                     case 3:
-                        r_discharge = g.RES_2_PARALLEL(DSD_555_CC__RDIS, DSD_555_CC__RGND);
+                        r_discharge = RES_2_PARALLEL(DSD_555_CC__RDIS, DSD_555_CC__RGND);
                         goto case 2;  //[[fallthrough]];
                     case 2:
                         r_charge = DSD_555_CC__RGND;
@@ -754,18 +758,18 @@ namespace mame
                         r_discharge = DSD_555_CC__RDIS;
                         break;
                     case 6:
-                        r_charge = g.RES_2_PARALLEL(DSD_555_CC__RBIAS, DSD_555_CC__RGND);
+                        r_charge = RES_2_PARALLEL(DSD_555_CC__RBIAS, DSD_555_CC__RGND);
                         vi      = i * r_charge;
-                        v_bias  = info.v_pos * g.RES_VOLTAGE_DIVIDER(DSD_555_CC__RGND, DSD_555_CC__RBIAS);
+                        v_bias  = info.v_pos * RES_VOLTAGE_DIVIDER(DSD_555_CC__RGND, DSD_555_CC__RBIAS);
                         break;
                     case 7:
                         r_temp   = DSD_555_CC__RBIAS + DSD_555_CC__RDIS;
-                        r_charge = g.RES_2_PARALLEL(r_temp, DSD_555_CC__RGND);
+                        r_charge = RES_2_PARALLEL(r_temp, DSD_555_CC__RGND);
                         r_temp  += DSD_555_CC__RGND;
                         r_temp   = DSD_555_CC__RGND / r_temp;   /* now has voltage divider ratio, not resistance */
                         vi      = i * DSD_555_CC__RBIAS * r_temp;
                         v_bias  = info.v_pos * r_temp;
-                        r_discharge = g.RES_2_PARALLEL(DSD_555_CC__RGND, DSD_555_CC__RDIS);
+                        r_discharge = RES_2_PARALLEL(DSD_555_CC__RGND, DSD_555_CC__RDIS);
                         break;
                 }
             }
@@ -788,7 +792,7 @@ namespace mame
                             if (update_exponent != 0)
                             {
                                 t_rc     = DSD_555_CC_T_RC_BLEED;
-                                exponent = g.RC_CHARGE_EXP_DT(t_rc, dt);
+                                exponent = RC_CHARGE_EXP_DT(t_rc, dt);
                             }
                             else
                             {
@@ -834,11 +838,11 @@ namespace mame
                             t_rc = m_t_rc_discharge_01;
 
                         if (update_exponent != 0)
-                            exponent = g.RC_CHARGE_EXP_DT(t_rc, dt);
+                            exponent = RC_CHARGE_EXP_DT(t_rc, dt);
                         else
                             exponent = m_exp_discharge_01;
 
-                        if ((info.options & g.DISCRETE_555_CC_TO_CAP) != 0)
+                        if ((info.options & DISCRETE_555_CC_TO_CAP) != 0)
                         {
                             /* Asteroids - Special Case */
                             /* Charging in discharge mode */
@@ -856,7 +860,7 @@ namespace mame
                         /* has it discharged past lower limit? */
                         if (v_cap_next <= m_trigger)
                         {
-                            dt     = t_rc  * Math.Log(1.0 / (1.0 - ((m_trigger - v_cap_next) / v_cap)));
+                            dt     = t_rc  * log(1.0 / (1.0 - ((m_trigger - v_cap_next) / v_cap)));
                             x_time = dt;
                             v_cap_next  = m_trigger;
                             flip_flop = 1;
@@ -888,7 +892,7 @@ namespace mame
                                 t_rc = m_t_rc_discharge_no_i;
 
                             if (update_exponent != 0)
-                                exponent = g.RC_CHARGE_EXP_DT(t_rc, dt);
+                                exponent = RC_CHARGE_EXP_DT(t_rc, dt);
                             else
                                 exponent = m_exp_discharge_no_i;
 
@@ -910,7 +914,7 @@ namespace mame
                                 t_rc = m_t_rc_charge;
 
                             if (update_exponent != 0)
-                                exponent = g.RC_CHARGE_EXP_DT(t_rc, dt);
+                                exponent = RC_CHARGE_EXP_DT(t_rc, dt);
                             else
                                 exponent = m_exp_charge;
 
@@ -921,7 +925,7 @@ namespace mame
                             if (v_cap_next >= m_threshold)
                             {
                                 /* calculate the overshoot time */
-                                dt     = t_rc  * Math.Log(1.0 / (1.0 - ((v_cap_next - m_threshold) / (v - v_cap))));
+                                dt     = t_rc  * log(1.0 / (1.0 - ((v_cap_next - m_threshold) / (v - v_cap))));
                                 x_time = dt;
                                 v_cap_next = m_threshold;
                                 flip_flop = 0;
@@ -938,7 +942,7 @@ namespace mame
                             t_rc = m_t_rc_discharge;
 
                         if (update_exponent != 0)
-                            exponent = g.RC_CHARGE_EXP_DT(t_rc, dt);
+                            exponent = RC_CHARGE_EXP_DT(t_rc, dt);
                         else
                             exponent = m_exp_discharge;
 
@@ -949,7 +953,7 @@ namespace mame
                         if (v_cap_next <= m_trigger)
                         {
                             /* calculate the overshoot time */
-                            dt     = t_rc  * Math.Log(1.0 / (1.0 - ((m_trigger - v_cap_next) / v_cap)));
+                            dt     = t_rc  * log(1.0 / (1.0 - ((m_trigger - v_cap_next) / v_cap)));
                             x_time = dt;
                             v_cap_next = m_trigger;
                             flip_flop = 1;
@@ -977,7 +981,7 @@ namespace mame
 
             switch (m_output_type)
             {
-                case g.DISC_555_OUT_SQW:
+                case DISC_555_OUT_SQW:
                     if (count_f + count_r >= 2)
                         /* force at least 1 toggle */
                         v_out =  (m_flip_flop != 0) ? 0 : m_v_out_high;
@@ -986,27 +990,27 @@ namespace mame
                     /* Fake it to AC if needed */
                     v_out += m_ac_shift;
                     break;
-                case g.DISC_555_OUT_CAP:
+                case DISC_555_OUT_CAP:
                     v_out = v_cap + m_ac_shift;
                     break;
-                case g.DISC_555_OUT_ENERGY:
+                case DISC_555_OUT_ENERGY:
                     if (x_time == 0) x_time = 1.0;
                     v_out = m_v_out_high * ((flip_flop != 0) ? x_time : (1.0 - x_time));
                     v_out += m_ac_shift;
                     break;
-                case g.DISC_555_OUT_LOGIC_X:
+                case DISC_555_OUT_LOGIC_X:
                     v_out = flip_flop + x_time;
                     break;
-                case g.DISC_555_OUT_COUNT_F_X:
+                case DISC_555_OUT_COUNT_F_X:
                     v_out = (count_f != 0) ? count_f + x_time : count_f;
                     break;
-                case g.DISC_555_OUT_COUNT_R_X:
+                case DISC_555_OUT_COUNT_R_X:
                     v_out = (count_r != 0) ? count_r + x_time : count_r;
                     break;
-                case g.DISC_555_OUT_COUNT_F:
+                case DISC_555_OUT_COUNT_F:
                     v_out = count_f;
                     break;
-                case g.DISC_555_OUT_COUNT_R:
+                case DISC_555_OUT_COUNT_R:
                     v_out = count_r;
                     break;
             }

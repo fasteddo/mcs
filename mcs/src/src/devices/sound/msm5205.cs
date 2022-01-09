@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
@@ -13,6 +12,12 @@ using u32 = System.UInt32;
 using u64 = System.UInt64;
 using uint8_t = System.Byte;
 
+using static mame.cpp_global;
+using static mame.device_global;
+using static mame.disound_global;
+using static mame.emucore_global;
+using static mame.util;
+
 
 namespace mame
 {
@@ -21,7 +26,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(MSM5205, msm5205_device, "msm5205", "OKI MSM5205 ADPCM")
         static device_t device_creator_msm5205_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new msm5205_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MSM5205 = g.DEFINE_DEVICE_TYPE(device_creator_msm5205_device, "msm5205", "OKI MSM5205 ADPCM");
+        public static readonly device_type MSM5205 = DEFINE_DEVICE_TYPE(device_creator_msm5205_device, "msm5205", "OKI MSM5205 ADPCM");
 
 
         public class device_sound_interface_msm5205 : device_sound_interface
@@ -97,12 +102,18 @@ namespace mame
 
 
         public device_sound_interface_msm5205 disound { get { return m_disound; } }
+        public device_sound_interface add_route(u32 output, string target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return disound.add_route(output, target, gain, input, mixoutput); }
+        public device_sound_interface add_route(u32 output, device_sound_interface target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return disound.add_route(output, target, gain, input, mixoutput); }
+        public device_sound_interface add_route(u32 output, speaker_device target, double gain, u32 input = AUTO_ALLOC_INPUT, u32 mixoutput = 0) { return disound.add_route(output, target, gain, input, mixoutput); }
+        public device_sound_interface add_route(u32 output, device_t base_, string target, double gain, u32 input, u32 mixoutput) { return disound.add_route(output, base_, target, gain, input, mixoutput); }
+        public sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate) { return disound.stream_alloc(inputs, outputs, sample_rate); }
+        public sound_stream stream_alloc(int inputs, int outputs, u32 sample_rate, sound_stream_flags flags) { return disound.stream_alloc(inputs, outputs, sample_rate, flags); }
 
 
         public void set_prescaler_selector(int select)
         {
-            m_s1 = g.BIT(select, 1) != 0;
-            m_s2 = g.BIT(select, 0) != 0;
+            m_s1 = BIT(select, 1) != 0;
+            m_s2 = BIT(select, 0) != 0;
             m_bitwidth = ((select & 4) != 0) ? (u8)4 : (u8)3;
         }
 
@@ -149,8 +160,8 @@ namespace mame
             {
                 m_stream.update();
 
-                m_s1 = g.BIT(select, 1) != 0;
-                m_s2 = g.BIT(select, 0) != 0;
+                m_s1 = BIT(select, 1) != 0;
+                m_s2 = BIT(select, 0) != 0;
 
                 /* timer set */
                 notify_clock_changed();
@@ -178,19 +189,19 @@ namespace mame
             compute_tables();
 
             /* stream system initialize */
-            m_stream = m_disound.stream_alloc(0, 1, clock());
+            m_stream = stream_alloc(0, 1, clock());
             m_vck_timer = timer_alloc(TIMER_VCK);
             m_capture_timer = timer_alloc(TIMER_ADPCM_CAPTURE);
 
             /* register for save states */
-            save_item(g.NAME(new { m_data }));
-            save_item(g.NAME(new { m_vck }));
-            save_item(g.NAME(new { m_reset }));
-            save_item(g.NAME(new { m_s1 }));
-            save_item(g.NAME(new { m_s2 }));
-            save_item(g.NAME(new { m_bitwidth }));
-            save_item(g.NAME(new { m_signal }));
-            save_item(g.NAME(new { m_step }));
+            save_item(NAME(new { m_data }));
+            save_item(NAME(new { m_vck }));
+            save_item(NAME(new { m_reset }));
+            save_item(NAME(new { m_s1 }));
+            save_item(NAME(new { m_s2 }));
+            save_item(NAME(new { m_bitwidth }));
+            save_item(NAME(new { m_signal }));
+            save_item(NAME(new { m_step }));
         }
 
 
@@ -324,7 +335,7 @@ namespace mame
             for (step = 0; step <= 48; step++)
             {
                 /* compute the step value */
-                int stepval = (int)Math.Floor(16.0 * Math.Pow(11.0 / 10.0, (double)step));
+                int stepval = (int)floor(16.0 * pow(11.0 / 10.0, (double)step));
 
                 /* loop over all nibbles and compute the difference */
                 for (nib = 0; nib < 16; nib++)

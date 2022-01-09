@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using uint8_t = System.Byte;
 
 
 namespace mame
@@ -48,8 +49,8 @@ namespace mame
 
 
         // these constants are returned from the irq_state function
-        const byte Z80_DAISY_INT = 0x01;       // interrupt request mask
-        const byte Z80_DAISY_IEO = 0x02;       // interrupt disable mask (IEO)
+        const uint8_t Z80_DAISY_INT = 0x01;       // interrupt request mask
+        const uint8_t Z80_DAISY_IEO = 0x02;       // interrupt disable mask (IEO)
 
 
         z80_daisy_config m_daisy_config;

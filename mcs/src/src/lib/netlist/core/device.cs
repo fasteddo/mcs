@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.netlist.nl_errstr_global;
 
 
 namespace mame.netlist
@@ -58,7 +59,7 @@ namespace mame.netlist
 
             set_logic_family(state().setup().family_from_model(m_model.op()));
             if (logic_family() == null)
-                throw new nl_exception(nl_errstr_global.MF_NULLPTR_FAMILY(this.name(), m_model.op()));
+                throw new nl_exception(MF_NULLPTR_FAMILY(this.name(), m_model.op()));
         }
 
 
@@ -70,7 +71,7 @@ namespace mame.netlist
 
             set_logic_family(state().setup().family_from_model(m_model.op()));
             if (logic_family() == null)
-                throw new nl_exception(nl_errstr_global.MF_NULLPTR_FAMILY(this.name(), m_model.op()));
+                throw new nl_exception(MF_NULLPTR_FAMILY(this.name(), m_model.op()));
         }
 
 
@@ -83,7 +84,7 @@ namespace mame.netlist
 
             set_logic_family(desc);
             if (logic_family() == null)
-                throw new nl_exception(nl_errstr_global.MF_NULLPTR_FAMILY(this.name(), "<pointer provided by constructor>"));
+                throw new nl_exception(MF_NULLPTR_FAMILY(this.name(), "<pointer provided by constructor>"));
         }
 
 
@@ -95,7 +96,7 @@ namespace mame.netlist
 
             set_logic_family(owner.logic_family());
             if (logic_family() == null)
-                throw new nl_exception(nl_errstr_global.MF_NULLPTR_FAMILY(this.name(), "<owner logic family>"));
+                throw new nl_exception(MF_NULLPTR_FAMILY(this.name(), "<owner logic family>"));
         }
     
     
@@ -108,7 +109,7 @@ namespace mame.netlist
 
             set_logic_family(state().setup().family_from_model(m_model.op()));
             if (logic_family() == null)
-                throw new nl_exception(nl_errstr_global.MF_NULLPTR_FAMILY(this.name(), m_model.op()));
+                throw new nl_exception(MF_NULLPTR_FAMILY(this.name(), m_model.op()));
         }
 
         //PCOPYASSIGNMOVE(device_t, delete)

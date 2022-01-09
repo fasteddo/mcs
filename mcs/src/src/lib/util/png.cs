@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 
@@ -10,12 +11,9 @@ namespace mame
     public static partial class util
     {
         /* Error types */
-        public enum png_error
+        public enum png_error : int
         {
-            NONE,
-            OUT_OF_MEMORY,
-            UNKNOWN_FILTER,
-            FILE_ERROR,
+            UNKNOWN_FILTER = 1,
             BAD_SIGNATURE,
             DECOMPRESS_ERROR,
             FILE_TRUNCATED,
@@ -26,13 +24,16 @@ namespace mame
         }
 
 
-        //png_error png_read_bitmap(core_file &fp, bitmap_argb32 &bitmap);
+        //std::error_category const &png_category() noexcept;
+        //inline std::error_condition make_error_condition(png_error err) noexcept { return std::error_condition(int(err), png_category()); }
 
-        //png_error png_write_bitmap(core_file &fp, png_info *info, bitmap_t &bitmap, int palette_length, const rgb_t *palette);
+        //std::error_condition png_read_bitmap(read_stream &fp, bitmap_argb32 &bitmap);
 
-        //png_error mng_capture_start(core_file &fp, bitmap_t &bitmap, unsigned rate);
-        public static png_error mng_capture_frame(core_file fp, png_info info, bitmap_t bitmap, int palette_length, List<rgb_t> palette) { throw new emu_unimplemented(); }
-        public static png_error mng_capture_stop(core_file fp) { throw new emu_unimplemented(); }
+        //std::error_condition png_write_bitmap(random_write &fp, png_info *info, bitmap_t const &bitmap, int palette_length, const rgb_t *palette);
+
+        //std::error_condition mng_capture_start(random_write &fp, bitmap_t const &bitmap, unsigned rate);
+        //std::error_condition mng_capture_frame(random_write &fp, png_info &info, bitmap_t const &bitmap, int palette_length, rgb_t const *palette);
+        //std::error_condition mng_capture_stop(random_write &fp);
 
 
         public class png_info
@@ -62,16 +63,16 @@ namespace mame
 
             //~png_info() { free_data(); }
 
-            //png_error read_file(core_file &fp);
-            //png_error copy_to_bitmap(bitmap_argb32 &bitmap, bool &hasalpha);
-            //png_error expand_buffer_8bit();
+            //std::error_condition read_file(read_stream &fp);
+            //std::error_condition copy_to_bitmap(bitmap_argb32 &bitmap, bool &hasalpha);
+            //std::error_condition expand_buffer_8bit();
 
-            public png_error add_text(string keyword, string text) { throw new emu_unimplemented(); }
+            //std::error_condition add_text(std::string_view keyword, std::string_view text);
 
             //void free_data();
             //void reset() { free_data(); operator=(png_info()); }
 
-            //static png_error verify_header(core_file &fp);
+            //static std::error_condition verify_header(read_stream &fp);
 
             //png_info &operator=(png_info &&) = default;
         }

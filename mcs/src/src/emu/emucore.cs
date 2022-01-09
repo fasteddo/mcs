@@ -2,8 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -17,9 +15,31 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 
+using static mame.emucore_global;
+using static mame.osdcore_global;
+
 
 namespace mame
 {
+    // explicitly sized integers
+    //using osd::u8;
+    //using osd::u16;
+    //using osd::u32;
+    //using osd::u64;
+    //using osd::s8;
+    //using osd::s16;
+    //using osd::s32;
+    //using osd::s64;
+
+    // useful utility functions
+    //using util::underlying_value;
+    //using util::enum_value;
+    //using util::make_bitmask;
+    //using util::BIT;
+    //using util::bitswap;
+    //using util::iabs;
+    //using util::string_format;
+
     //using endianness_t = util::endianness;
 
     //using util::BYTE_XOR_BE;
@@ -40,7 +60,86 @@ namespace mame
     //typedef u32 pen_t;
 
 
-    public static class emucore_global
+    [StructLayout(LayoutKind.Explicit)]
+    public struct PAIR_B
+    {
+        [FieldOffset(0)]
+        public u8 l;
+        [FieldOffset(1)]
+        public u8 h;
+        [FieldOffset(2)]
+        public u8 h2;
+        [FieldOffset(3)]
+        public u8 h3;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct PAIR_W
+    {
+        [FieldOffset(0)]
+        public u16 l;
+        [FieldOffset(2)]
+        public u16 h;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct PAIR_SB
+    {
+        [FieldOffset(0)]
+        public s8 l;
+        [FieldOffset(1)]
+        public s8 h;
+        [FieldOffset(2)]
+        public s8 h2;
+        [FieldOffset(3)]
+        public s8 h3;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct PAIR_SW
+    {
+        [FieldOffset(0)]
+        public s16 l;
+        [FieldOffset(2)]
+        public s16 h;
+    }
+
+    // PAIR is an endian-safe union useful for representing 32-bit CPU registers
+    [StructLayout(LayoutKind.Explicit)]
+    public struct PAIR  //union PAIR
+    {
+        //#ifdef LSB_FIRST
+        [FieldOffset(0)]
+        public PAIR_B b;    //struct { UINT8 l,h,h2,h3; } b;
+        [FieldOffset(0)]
+        public PAIR_W w;    //struct { UINT16 l,h; } w;
+        [FieldOffset(0)]
+        public PAIR_SB sb;  //struct { INT8 l,h,h2,h3; } sb;
+        [FieldOffset(0)]
+        public PAIR_SW sw;  //struct { INT16 l,h; } sw;
+        //#else
+        //struct { UINT8 h3,h2,h,l; } b;
+        //struct { INT8 h3,h2,h,l; } sb;
+        //struct { UINT16 h,l; } w;
+        //struct { INT16 h,l; } sw;
+        //#endif
+
+        [FieldOffset(0)]
+        public u32 d;
+
+        [FieldOffset(0)]
+        public s32 sd;
+    }
+
+
+    // PAIR16 is a 16-bit extension of a PAIR
+    //union PAIR16
+
+    // PAIR64 is a 64-bit extension of a PAIR
+    //union PAIR64
+
+
+    public static partial class emucore_global
     {
         //**************************************************************************
         //  COMMON CONSTANTS
@@ -49,6 +148,13 @@ namespace mame
         public const endianness_t ENDIANNESS_LITTLE = util.endianness.little;
         public const endianness_t ENDIANNESS_BIG    = util.endianness.big;
         public const endianness_t ENDIANNESS_NATIVE = util.endianness.native;
+
+
+        // M_PI is not part of the C/C++ standards and is not present on
+        // strict ANSI compilers or when compiling under GCC with -ansi
+        //#ifndef M_PI
+        //#define M_PI                            3.14159265358979323846
+        //#endif
 
 
         /// \name Image orientation flags
@@ -150,112 +256,15 @@ namespace mame
         //#define FUNC(x) &x, #x
 
 
-        // standard assertion macros
-        //#undef assert_always
-
-        //#if defined(MAME_DEBUG_FAST)
-        //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("%s\nCaused by assert: %s:%d: %s", msg, __FILE__, __LINE__, #x); } while (0)
-        //#elif defined(MAME_DEBUG)
-        //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("%s\nCaused by assert: %s:%d: %s", msg, __FILE__, __LINE__, #x); } while (0)
-        //#else
-        //#define assert_always(x, msg)   do { if (!(x)) throw emu_fatalerror("%s (%s:%d)", msg, __FILE__, __LINE__); } while (0)
-        //#endif
-
-        [DebuggerHidden]
-        [Conditional("DEBUG")]
-        public static void assert(bool condition, string message = "")
-        {
-            if (string.IsNullOrEmpty(message))
-                Debug.Assert(condition);
-            else
-                Debug.Assert(condition, message);
-        }
-
-
         // macros to convert radians to degrees and degrees to radians
         //template <typename T> constexpr auto RADIAN_TO_DEGREE(T const &x) { return (180.0 / M_PI) * x; }
         //template <typename T> constexpr auto DEGREE_TO_RADIAN(T const &x) { return (M_PI / 180.0) * x; }
-
-
-        [DebuggerHidden]
-        public static void fatalerror(string format, params object [] args)
-        {
-            throw new emu_fatalerror(format, args);
-        }
     }
 
 
-    [StructLayout(LayoutKind.Explicit)]
-    public struct PAIR_B
-    {
-        [FieldOffset(0)]
-        public u8 l;
-        [FieldOffset(1)]
-        public u8 h;
-        [FieldOffset(2)]
-        public u8 h2;
-        [FieldOffset(3)]
-        public u8 h3;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct PAIR_W
-    {
-        [FieldOffset(0)]
-        public u16 l;
-        [FieldOffset(2)]
-        public u16 h;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct PAIR_SB
-    {
-        [FieldOffset(0)]
-        public s8 l;
-        [FieldOffset(1)]
-        public s8 h;
-        [FieldOffset(2)]
-        public s8 h2;
-        [FieldOffset(3)]
-        public s8 h3;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct PAIR_SW
-    {
-        [FieldOffset(0)]
-        public s16 l;
-        [FieldOffset(2)]
-        public s16 h;
-    }
-
-    // PAIR is an endian-safe union useful for representing 32-bit CPU registers
-    [StructLayout(LayoutKind.Explicit)]
-    public struct PAIR
-    {
-        //#ifdef LSB_FIRST
-        [FieldOffset(0)]
-        public PAIR_B b;    //struct { UINT8 l,h,h2,h3; } b;
-        [FieldOffset(0)]
-        public PAIR_W w;    //struct { UINT16 l,h; } w;
-        [FieldOffset(0)]
-        public PAIR_SB sb;  //struct { INT8 l,h,h2,h3; } sb;
-        [FieldOffset(0)]
-        public PAIR_SW sw;  //struct { INT16 l,h; } sw;
-        //#else
-        //struct { UINT8 h3,h2,h,l; } b;
-        //struct { INT8 h3,h2,h,l; } sb;
-        //struct { UINT16 h,l; } w;
-        //struct { INT16 h,l; } sw;
-        //#endif
-
-        [FieldOffset(0)]
-        public u32 d;
-
-        [FieldOffset(0)]
-        public s32 sd;
-    }
-
+    //**************************************************************************
+    //  EXCEPTION CLASSES
+    //**************************************************************************
 
     // emu_exception is the base class for all emu-related exceptions
     public class emu_exception : Exception
@@ -280,10 +289,10 @@ namespace mame
         public emu_fatalerror(int _exitcode, string format, params object [] args)
         {
             code = _exitcode;
-            text = string.Format(format, args);
+            text = util.string_format(format, args);
 
             string error = string.Format("emu_fatalerror: {0}code: {1}\n", text, code);
-            osdcore_global.m_osdcore.osd_break_into_debugger(error);
+            m_osdcore.osd_break_into_debugger(error);
         }
 
 
@@ -301,9 +310,44 @@ namespace mame
     }
 
 
-    public class emu_unimplemented : emu_fatalerror
+    //**************************************************************************
+    //  CASTING TEMPLATES
+    //**************************************************************************
+
+    //[[noreturn]] void report_bad_cast(const std::type_info &src_type, const std::type_info &dst_type);
+    //[[noreturn]] void report_bad_device_cast(const device_t *dev, const std::type_info &src_type, const std::type_info &dst_type);
+
+    //template <typename Dest, typename Source>
+    //inline void report_bad_cast(Source *src)
+
+    // template function for casting from a base class to a derived class that is checked
+    // in debug builds and fast in release builds
+    //template <typename Dest, typename Source>
+    //inline Dest downcast(Source *src)
+
+    //template<class Dest, class Source>
+    //inline Dest downcast(Source &src)
+
+
+    public static partial class emucore_global
     {
         [DebuggerHidden]
-        public emu_unimplemented() : base("Unimplemented") { }
+        public static void fatalerror(string format, params object [] args)
+        {
+            throw new emu_fatalerror(format, args);
+        }
+
+
+        // convert a series of 32 bits into a float
+        //inline float u2f(u32 v)
+
+        // convert a float into a series of 32 bits
+        //inline u32 f2u(float f)
+
+        // convert a series of 64 bits into a double
+        //inline double u2d(u64 v)
+
+        // convert a double into a series of 64 bits
+        //inline u64 d2u(double d)
     }
 }

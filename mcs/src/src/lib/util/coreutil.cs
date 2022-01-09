@@ -2,10 +2,11 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.crc32_global;
 
 
 namespace mame
@@ -14,7 +15,7 @@ namespace mame
     {
         public static uint32_t core_crc32(uint32_t crc, Pointer<uint8_t> buf, uint32_t len)  //uint32_t core_crc32(uint32_t crc, const uint8_t *buf, uint32_t len);
         {
-            return crc32_global.crc32(crc, buf, len);
+            return crc32(crc, buf, len);
         }
     }
 }

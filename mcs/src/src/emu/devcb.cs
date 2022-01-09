@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
@@ -21,6 +20,9 @@ using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.device_global;
 
 
 namespace mame
@@ -229,7 +231,7 @@ namespace mame
             static readonly Type T = new Type_T().value;
             static readonly Type U = new Type_U().value;
 
-            Type intermediate_t { get { return g.sizeof_(T) >= g.sizeof_(U) ? T : U; } }
+            Type intermediate_t { get { return sizeof_(T) >= sizeof_(U) ? T : U; } }
 
             public Type value { get { return devcb_value.make_unsigned(intermediate_t); } }
         }
@@ -599,7 +601,7 @@ namespace mame
 
             ~builder_base()
             {
-                g.assert(m_consumed, string.Format("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name()));
+                assert(m_consumed, string.Format("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name()));
             }
 
 
@@ -617,7 +619,7 @@ namespace mame
                     }
 
                     // free unmanaged resources (unmanaged objects) and override a finalizer below.
-                    g.assert(m_consumed);
+                    assert(m_consumed);
 
                     m_disposedValue = true;
                 }
@@ -632,7 +634,7 @@ namespace mame
 
 
             public void consume() { m_consumed = true; }
-            protected void built() { g.assert(!m_built); m_built = true; }
+            protected void built() { assert(!m_built); m_built = true; }
 
 
             //template <typename T>
@@ -803,7 +805,7 @@ namespace mame
             //template <typename T>
             public override void build(Delegate chain)  //void build(T &&chain)
             {
-                g.assert(this.m_consumed);
+                assert(this.m_consumed);
 
                 var c = chain;
                 var wrap = new Action<func_t>((f) => { this.build(c, f); });  //auto wrap([this, c = std::forward<T>(chain)] (auto &&f) mutable { this->build(std::move(c), std::move(f)); });
@@ -819,7 +821,7 @@ namespace mame
             //template <typename T, typename U>
             void build(Delegate chain, Delegate f)  //void build(T &&chain, U &&f)
             {
-                g.assert(this.m_consumed);
+                assert(this.m_consumed);
                 this.built();
 
                 var src = f;
@@ -929,7 +931,7 @@ namespace mame
             //template <typename T>
             public override void build(Delegate chain)  //void build(T &&chain)
             {
-                g.assert(this.m_consumed);
+                assert(this.m_consumed);
                 this.built();
                 //m_delegate.resolve();
                 var cb = this.m_delegate;
@@ -1019,7 +1021,7 @@ namespace mame
             //template <typename T>
             public override void build(Delegate chain)  //void build(T &&chain)
             {
-                g.assert(this.m_consumed);
+                assert(this.m_consumed);
                 this.built();
                 ioport_port ioport = m_devbase.ioport(m_tag);
                 if (ioport == null)
@@ -1059,7 +1061,7 @@ namespace mame
                 where T : Delegate
             {
                 set_used();
-                return new delegate_builder<T>(m_target, m_append, m_target.owner().mconfig().current_device(), g.DEVICE_SELF, func);
+                return new delegate_builder<T>(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);
             }
 
             public delegate_builder<read8sm_delegate> set(read8sm_delegate func) { return set_internal(func); }
@@ -1190,7 +1192,7 @@ namespace mame
             //auto append_constant(Result val) { return append([val] () { return val; }); }
 
 
-            void set_used() { g.assert(!m_used); m_used = true; }
+            void set_used() { assert(!m_used); m_used = true; }
         }
 
 
@@ -1245,7 +1247,7 @@ namespace mame
         //template <typename Result, std::make_unsigned_t<Result> DefaultMask>
         public void resolve()
         {
-            g.assert(m_functions.empty());
+            assert(m_functions.empty());
             m_functions.reserve(m_creators.size());
             foreach (var c in m_creators)  //for (typename creator::ptr const &c : m_creators)
                 m_functions.emplace_back(c.create());
@@ -1271,7 +1273,7 @@ namespace mame
         //template <typename Result, std::make_unsigned_t<Result> DefaultMask>
         public devcb_value op(offs_t offset, devcb_value mem_mask)  //Result devcb_read<Result, DefaultMask>::operator()(offs_t offset, std::make_unsigned_t<Result> mem_mask)
         {
-            g.assert(m_creators.empty() && !m_functions.empty());
+            assert(m_creators.empty() && !m_functions.empty());
             //typename std::vector<func_t>::const_iterator it(m_functions.begin());
             //std::make_unsigned_t<Result> result((*it)(offset, mem_mask));
             //while (m_functions.end() != ++it)
@@ -1394,7 +1396,7 @@ namespace mame
 
             ~builder_base()
             {
-                g.assert(m_consumed, string.Format("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name()));
+                assert(m_consumed, string.Format("~builder_base() - {0} - {1} - {2}\n", m_target.owner().owner().GetType(), m_target.owner().tag(), m_target.owner().name()));
             }
 
 
@@ -1408,7 +1410,7 @@ namespace mame
                     }
 
                     // free unmanaged resources (unmanaged objects) and override a finalizer below.
-                    g.assert(m_consumed);
+                    assert(m_consumed);
 
                     m_disposedValue = true;
                 }
@@ -1427,7 +1429,7 @@ namespace mame
 
 
             public void consume() { m_consumed = true; }
-            protected void built() { g.assert(!m_built); m_built = true; }
+            protected void built() { assert(!m_built); m_built = true; }
 
 
             //template <typename T>
@@ -1697,7 +1699,7 @@ namespace mame
 
             public override Action<offs_t, devcb_value, devcb_value> build()  //auto build()
             {
-                g.assert(this.m_consumed);
+                assert(this.m_consumed);
                 this.built();
 
                 var sink = m_sink.build();
@@ -1865,7 +1867,7 @@ namespace mame
 
             public override Action<offs_t, devcb_value, devcb_value> build()  //auto build()
             {
-                g.assert(this.m_consumed);
+                assert(this.m_consumed);
                 this.built();
                 //m_delegate.resolve();
                 var cb = this.m_delegate;
@@ -1940,7 +1942,7 @@ namespace mame
 
                 public override Action<offs_t, devcb_value, devcb_value> build()  //auto build()
                 {
-                    g.assert(this.m_consumed);
+                    assert(this.m_consumed);
                     this.built();
                     if (m_exec == null)
                     {
@@ -2049,7 +2051,7 @@ namespace mame
 
             public override Action<offs_t, devcb_value, devcb_value> build()  //auto build()
             {
-                g.assert(this.m_consumed);
+                assert(this.m_consumed);
                 this.built();
                 if (m_exec == null)
                 {
@@ -2078,7 +2080,142 @@ namespace mame
         //class ioport_builder : public builder_base, public transform_base<mask_t<Input, ioport_value>, ioport_builder>
 
 
-        //class membank_builder : public builder_base, public transform_base<mask_t<Input, int>, membank_builder>
+        public class membank_builder :  //class membank_builder : public builder_base, public transform_base<mask_t<Input, int>, membank_builder>
+                    builder_base_with_transform_base<Type_constant_mask_t<Type_Input, Type_constant_s32>, 
+                                                     membank_builder,
+                                                     membank_builder.io_ops_membank_builder, 
+                                                     membank_builder.Type_constant_output_t>,
+                    creator_impl_builder
+        {
+            class wrapped_builder : builder_base
+            {
+                //template <typename T, typename U> friend class first_transform_builder;
+
+                //using input_t = intermediate_t<Input, int>;
+
+
+                device_t m_devbase;
+                string m_tag;
+
+
+                wrapped_builder(membank_builder that)
+                    : base(that)
+                {
+                    m_devbase = that.m_devbase;
+                    m_tag = that.m_tag;
+
+
+                    that.consume();
+                    that.built();
+                }
+
+                wrapped_builder(wrapped_builder that)
+                    : base(that)
+                {
+                    m_devbase = that.m_devbase;
+                    m_tag = that.m_tag;
+
+
+                    that.consume();
+                    that.built();
+                }
+
+
+                //void validity_check(validity_checker &valid) const { }
+
+
+                public override Action<offs_t, devcb_value, devcb_value> build()  //auto build()
+                {
+                    throw new emu_unimplemented();
+#if false
+                    assert(this->m_consumed);
+                    this->built();
+                    memory_bank *const bank(m_devbase.membank(m_tag));
+                    if (!bank)
+                        throw emu_fatalerror("Write callback bound to non-existent memory bank %s of device %s (%s)\n", m_tag, m_devbase.tag(), m_devbase.name());
+                    return
+                            [&membank = *bank] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+                            { membank.set_entry(data); };
+#endif
+                }
+
+
+                //wrapped_builder(wrapped_builder const &) = delete;
+                //wrapped_builder operator=(wrapped_builder const &) = delete;
+                //wrapped_builder operator=(wrapped_builder &&that) = delete;
+            }
+
+
+            //membank_builder(membank_builder const &) = delete;
+            //membank_builder &operator=(membank_builder const &) = delete;
+            //membank_builder &operator=(membank_builder &&that) = delete;
+
+
+            device_t m_devbase;
+            string m_tag;
+
+
+            //using input_t = intermediate_t<Input, int>;
+            public class io_ops_membank_builder : io_operations<membank_builder>
+            {
+                public Type input_t { get { throw new emu_unimplemented(); } }
+                public Type output_t { get { throw new emu_unimplemented(); } }
+                public Type input_mask_t { get { throw new emu_unimplemented(); } }
+
+                public membank_builder cast(builder_base base_) { return (membank_builder)base_; }
+            }
+
+            public class Type_constant_output_t : Type_constant { public Type value { get { throw new emu_unimplemented(); } } }
+
+
+            public membank_builder(devcb_write<Type_Input, devcb_value_const_unsigned_DefaultMask> target, bool append, device_t devbase, string tag)  //membank_builder(devcb_write &target, bool append, device_t &devbase, std::string &&tag)
+                : base(target, append, new devcb_value(new Type_constant_mask_t<Type_Input, Type_constant_s32>().value, DefaultMask))
+            {
+                m_devbase = devbase;
+                m_tag = tag;
+            }
+
+            //membank_builder(membank_builder &&that)
+            //    : builder_base(std::move(that))
+            //    , transform_base<mask_t<Input, int>, membank_builder>(std::move(that))
+            //    , m_devbase(that.m_devbase)
+            //    , m_tag(std::move(that.m_tag))
+            //{
+            //    that.consume();
+            //    that.built();
+            //}
+
+
+            //~membank_builder() { this->template register_creator<membank_builder>(); }
+            protected override void Dispose(bool disposing) { register_creator<membank_builder>(); base.Dispose(disposing); }
+
+
+            //template <typename T>
+            //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
+            //{
+            //    return first_transform_builder<wrapped_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, wrapped_builder(std::move(*this)), std::forward<T>(cb), this->exor(), this->mask(), DefaultMask);
+            //}
+
+
+            //void validity_check(validity_checker &valid) const { }
+
+
+            public override Action<offs_t, devcb_value, devcb_value> build()  //auto build()
+            {
+                assert(this.m_consumed);
+                this.built();
+                memory_bank bank = m_devbase.membank(m_tag);
+                if (bank == null)
+                    throw new emu_fatalerror("Write callback bound to non-existent memory bank {0} of device {1} ({2})\n", m_tag, m_devbase.tag(), m_devbase.name());
+
+                var membank = bank;
+                var exor = this.exor();
+                var mask = this.mask();
+                return
+                        (offs_t offset, devcb_value data, devcb_value mem_mask) =>  //[&membank = *bank, exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+                        { membank.set_entry(((data ^ exor) & mask).s32); };  //{ membank.set_entry((data ^ exor) & mask); };
+            }
+        }
 
 
         public class output_builder :  //class output_builder : public builder_base, public transform_base<mask_t<Input, s32>, output_builder>
@@ -2127,7 +2264,7 @@ namespace mame
 
                 public override Action<offs_t, devcb_value, devcb_value> build()  //auto build()
                 {
-                    g.assert(this.m_consumed);
+                    assert(this.m_consumed);
                     this.built();
 
                     var item = m_devbase.machine().output().find_or_create_item(m_tag, 0);
@@ -2199,7 +2336,7 @@ namespace mame
 
             public override Action<offs_t, devcb_value, devcb_value> build()  //auto build()
             {
-                g.assert(this.m_consumed);
+                assert(this.m_consumed);
                 this.built();
 
                 var item = m_devbase.machine().output().find_or_create_item(m_tag, 0);
@@ -2242,7 +2379,7 @@ namespace mame
                 where T : Delegate
             {
                 set_used();
-                return new delegate_builder<T>(m_target, m_append, m_target.owner().mconfig().current_device(), g.DEVICE_SELF, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
+                return new delegate_builder<T>(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, func);  //return delegate_builder<delegate_type_t<T> >(m_target, m_append, m_target.owner().mconfig().current_device(), DEVICE_SELF, std::forward<T>(func), name);
             }
 
             public delegate_builder<write8sm_delegate> set(write8sm_delegate func) { return set_internal(func); }
@@ -2393,11 +2530,11 @@ namespace mame
             //}
 
             //template <typename... Params>
-            //membank_builder set_membank(Params &&... args)
-            //{
-            //    set_used();
-            //    return membank_builder(m_target, m_append, m_target.owner().mconfig().current_device(), std::string(std::forward<Params>(args)...));
-            //}
+            public membank_builder set_membank(string tag)  //membank_builder set_membank(Params &&... args)
+            {
+                set_used();
+                return new membank_builder(m_target, m_append, m_target.owner().mconfig().current_device(), tag);
+            }
 
             //template <bool R>
             //membank_builder set_membank(memory_bank_finder<R> &finder)
@@ -2416,11 +2553,11 @@ namespace mame
             //}
 
             //template <typename... Params>
-            //membank_builder append_membank(Params &&... args)
-            //{
-            //    m_append = true;
-            //    return set_membank(std::forward<Params>(args)...);
-            //}
+            public membank_builder append_membank(string tag)  //membank_builder append_membank(Params &&... args)
+            {
+                m_append = true;
+                return set_membank(tag);
+            }
 
 
             //template <typename... Params>
@@ -2479,7 +2616,7 @@ namespace mame
             }
 
 
-            void set_used() { g.assert(!m_used); m_used = true; }
+            void set_used() { assert(!m_used); m_used = true; }
         }
 
 
@@ -2531,7 +2668,7 @@ namespace mame
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask>
         public void resolve()
         {
-            g.assert(m_functions.empty());
+            assert(m_functions.empty());
             m_functions.reserve(m_creators.size());
             foreach (creator c in m_creators)  //for (typename creator::ptr const &c : m_creators)
                 m_functions.emplace_back(c.create());
@@ -2555,7 +2692,7 @@ namespace mame
         //template <typename Input, std::make_unsigned_t<Input> DefaultMask>
         public void op(offs_t offset, devcb_value data, devcb_value mem_mask)
         {
-            g.assert(m_creators.empty() && !m_functions.empty());
+            assert(m_creators.empty() && !m_functions.empty());
             //typename std::vector<func_t>::const_iterator it(m_functions.begin());
             //(*it)(offset, data, mem_mask);
             //while (m_functions.end() != ++it)

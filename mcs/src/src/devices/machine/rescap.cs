@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.rescap_global;
 
 
 namespace mame
@@ -13,10 +14,10 @@ namespace mame
         public static double RES_R(double res) { return res; }
         public static double RES_K(double res) { return res * 1e3; }
         public static double RES_M(double res) { return res * 1e6; }
-        //#define RES_INF    (-1)
+        public const double RES_INF = -1;
         public static double CAP_U(double cap) { return cap * 1e-6; }
         public static double CAP_N(double cap) { return cap * 1e-9; }
-        //constexpr double CAP_P(double cap) { return cap * 1e-12; }
+        public static double CAP_P(double cap) { return cap * 1e-12; }
         //constexpr double IND_U(double ind) { return ind * 1e-6; }
         //constexpr double IND_N(double ind) { return ind * 1e-9; }
         //constexpr double IND_P(double ind) { return ind * 1e-12; }

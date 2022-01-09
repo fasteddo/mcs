@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 
@@ -14,7 +13,7 @@ namespace mame
     //**************************************************************************
 
     // ======================> device_video_interface
-    class device_video_interface : device_interface
+    public class device_video_interface : device_interface
     {
         const string s_unconfigured_screen_tag = "!!UNCONFIGURED!!";
 
@@ -71,7 +70,7 @@ namespace mame
 
         // getters
         public screen_device screen() { return m_screen; }
-        //bool has_screen() const { return m_screen != nullptr; }
+        public bool has_screen() { return m_screen != null; }
 
 
         // optional operation overrides

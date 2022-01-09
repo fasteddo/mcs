@@ -2,15 +2,20 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.version_global;
+using static mame.version_internal;
 
 
 namespace mame
 {
+    public static class version_internal
+    {
+        public const string BARE_BUILD_VERSION = "0.237";
+    }
+
     public static class version_global
     {
-        const string BARE_BUILD_VERSION = "0.236";
-
         public const string bare_build_version = BARE_BUILD_VERSION;
         public const string build_version = BARE_BUILD_VERSION + " (mcs)";
     }

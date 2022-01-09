@@ -2,7 +2,9 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.digfx_global;
+using static mame.generic_global;
 
 
 namespace mame
@@ -27,11 +29,11 @@ namespace mame
         public static readonly gfx_layout gfx_8x8x2_planar = new gfx_layout
         (
             8,8,
-            g.RGN_FRAC(1,2),
+            RGN_FRAC(1,2),
             2,
-            g.ArrayCombineUInt32( g.RGN_FRAC(1,2), g.RGN_FRAC(0,2) ),
-            g.ArrayCombineUInt32( g.STEP8(0,1) ),
-            g.ArrayCombineUInt32( g.STEP8(0,8) ),
+            ArrayCombineUInt32( RGN_FRAC(1,2), RGN_FRAC(0,2) ),
+            ArrayCombineUInt32( STEP8(0,1) ),
+            ArrayCombineUInt32( STEP8(0,8) ),
             8*8
         );
     }

@@ -2,11 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using s32 = System.Int32;
 using u32 = System.UInt32;
+
+using static mame.device_global;
+using static mame.emucore_global;
+using static mame.osdcore_global;
 
 
 namespace mame
@@ -16,7 +19,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(TIMER, timer_device, "timer", "Timer")
         static device_t device_creator_timer_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new timer_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TIMER = g.DEFINE_DEVICE_TYPE(device_creator_timer_device, "timer", "Timer");
+        public static readonly device_type TIMER = DEFINE_DEVICE_TYPE(device_creator_timer_device, "timer", "Timer");
 
 
         // a timer callbacks look like this
@@ -174,23 +177,23 @@ namespace mame
             {
                 case timer_type.TIMER_TYPE_GENERIC:
                     if (m_screen.finder_tag() != finder_base.DUMMY_TAG || m_first_vpos != 0 || m_start_delay != attotime.zero)
-                        g.osd_printf_warning("Generic timer specified parameters for a scanline timer\n");
+                        osd_printf_warning("Generic timer specified parameters for a scanline timer\n");
                     if (m_period != attotime.zero || m_start_delay != attotime.zero)
-                        g.osd_printf_warning("Generic timer specified parameters for a periodic timer\n");
+                        osd_printf_warning("Generic timer specified parameters for a periodic timer\n");
                     break;
 
                 case timer_type.TIMER_TYPE_PERIODIC:
                     if (m_screen.finder_tag() != finder_base.DUMMY_TAG || m_first_vpos != 0)
-                        g.osd_printf_warning("Periodic timer specified parameters for a scanline timer\n");
+                        osd_printf_warning("Periodic timer specified parameters for a scanline timer\n");
                     if (m_period <= attotime.zero)
-                        g.osd_printf_error("Periodic timer specified invalid period\n");
+                        osd_printf_error("Periodic timer specified invalid period\n");
                     break;
 
                 case timer_type.TIMER_TYPE_SCANLINE:
                     if (m_period != attotime.zero || m_start_delay != attotime.zero)
-                        g.osd_printf_warning("Scanline timer specified parameters for a periodic timer\n");
+                        osd_printf_warning("Scanline timer specified parameters for a periodic timer\n");
                     if (m_param != 0)
-                        g.osd_printf_warning("Scanline timer specified parameter which is ignored\n");
+                        osd_printf_warning("Scanline timer specified parameter which is ignored\n");
 //          if (m_first_vpos < 0)
 //              osd_printf_error("Scanline timer specified invalid initial position\n");
 //          if (m_increment < 0)
@@ -198,7 +201,7 @@ namespace mame
                     break;
 
                 default:
-                    g.osd_printf_error("Invalid type specified\n");
+                    osd_printf_error("Invalid type specified\n");
                     break;
             }
         }
@@ -219,7 +222,7 @@ namespace mame
 #endif
 
             // register for save states
-            save_item(g.NAME(new { m_first_time }));
+            save_item(NAME(new { m_first_time }));
         }
 
 
@@ -253,7 +256,7 @@ namespace mame
 
                 case timer_type.TIMER_TYPE_SCANLINE:
                     if (m_screen == null)
-                        g.fatalerror("timer '{0}': unable to find screen '{1}'\n", tag(), m_screen.finder_tag());
+                        fatalerror("timer '{0}': unable to find screen '{1}'\n", tag(), m_screen.finder_tag());
 
                     // set the timer to fire immediately
                     m_first_time = true;
@@ -288,18 +291,18 @@ namespace mame
                     if (!m_first_time)
                     {
                         // call the real callback
-                        int vpos = m_screen.op[0].vpos();
+                        int vpos = m_screen.op0.vpos();
                         if (m_callback != null)
                             m_callback(this, m_ptr, vpos);
 
                         // advance by the increment only if we will still be within the screen bounds
-                        if (m_increment != 0 && (vpos + m_increment) < m_screen.op[0].height())
+                        if (m_increment != 0 && (vpos + m_increment) < m_screen.op0.height())
                             next_vpos = vpos + (int)m_increment;
                     }
                     m_first_time = false;
 
                     // adjust the timer
-                    m_timer.adjust(m_screen.op[0].time_until_pos(next_vpos));
+                    m_timer.adjust(m_screen.op0.time_until_pos(next_vpos));
                     break;
                 }
             }

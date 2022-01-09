@@ -2,9 +2,10 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using size_t = System.UInt64;
+
+using static mame.cpp_global;
 
 
 namespace mame.plib
@@ -79,7 +80,7 @@ namespace mame.plib
             size_t i = 0;  //auto i = str.begin();
             while (i != (size_t)str.Length)  //while (i != str.end())
             {
-                size_t p = g.npos;  //auto p = T::npos;
+                size_t p = npos;  //auto p = T::npos;
                 for (size_t j = 0; j < onstrl.size(); j++)  //for (std::size_t j=0; j < onstrl.size(); j++)
                 {
                     if (onstrl[j] == str.Substring((int)i, Math.Min(str.Length - (int)i, onstrl[j].Length)))  //if (std::equal(onstrl[j].begin(), onstrl[j].end(), i))
@@ -89,7 +90,7 @@ namespace mame.plib
                     }
                 }
 
-                if (p != g.npos) //if (p != T::npos)
+                if (p != npos) //if (p != T::npos)
                 {
                     if (col != "")  //if (!col.empty())
                         ret.push_back(col);

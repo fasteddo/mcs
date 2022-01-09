@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using size_t = System.UInt64;
 
@@ -17,6 +16,7 @@ namespace mame
         {
             ___empty.driver____empty,
             _1942.driver_1942,
+            asteroid.driver_asteroid,
             atarisy2.driver_720,
             atarisy2.driver_paperboy,
             centiped.driver_centipede,
@@ -27,10 +27,12 @@ namespace mame
             galaxian.driver_frogger,
             galaxian.driver_galaxian,
             m52.driver_mpatrol,
+            mw8080bw.driver_invaders,
             pacman.driver_mspacman,
             pacman.driver_pacman,
             pacman.driver_pacplus,
             pacman.driver_puckman,
+            pong.driver_pong,
             taitosj.driver_elevator,
             taitosj.driver_jungleh,
             taitosj.driver_junglek,

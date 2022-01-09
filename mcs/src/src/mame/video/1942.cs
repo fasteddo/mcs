@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -12,6 +11,10 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.diexec_global;
+using static mame.tilemap_global;
+using static mame.util;
 
 
 namespace mame
@@ -25,25 +28,25 @@ namespace mame
             for (int i = 0; i < 256; i++)
             {
                 /* red component */
-                int bit0 = g.BIT(color_prom[i + 0 * 256], 0);
-                int bit1 = g.BIT(color_prom[i + 0 * 256], 1);
-                int bit2 = g.BIT(color_prom[i + 0 * 256], 2);
-                int bit3 = g.BIT(color_prom[i + 0 * 256], 3);
+                int bit0 = BIT(color_prom[i + 0 * 256], 0);
+                int bit1 = BIT(color_prom[i + 0 * 256], 1);
+                int bit2 = BIT(color_prom[i + 0 * 256], 2);
+                int bit3 = BIT(color_prom[i + 0 * 256], 3);
                 int r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
                 /* green component */
-                bit0 = g.BIT(color_prom[i + 1 * 256], 0);
-                bit1 = g.BIT(color_prom[i + 1 * 256], 1);
-                bit2 = g.BIT(color_prom[i + 1 * 256], 2);
-                bit3 = g.BIT(color_prom[i + 1 * 256], 3);
+                bit0 = BIT(color_prom[i + 1 * 256], 0);
+                bit1 = BIT(color_prom[i + 1 * 256], 1);
+                bit2 = BIT(color_prom[i + 1 * 256], 2);
+                bit3 = BIT(color_prom[i + 1 * 256], 3);
                 int gr = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
                 /* blue component */
-                bit0 = g.BIT(color_prom[i + 2 * 256], 0);
-                bit1 = g.BIT(color_prom[i + 2 * 256], 1);
-                bit2 = g.BIT(color_prom[i + 2 * 256], 2);
-                bit3 = g.BIT(color_prom[i + 2 * 256], 3);
+                bit0 = BIT(color_prom[i + 2 * 256], 0);
+                bit1 = BIT(color_prom[i + 2 * 256], 1);
+                bit2 = BIT(color_prom[i + 2 * 256], 2);
+                bit3 = BIT(color_prom[i + 2 * 256], 3);
                 int b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-                palette.dipalette.set_indirect_color(i, new rgb_t((u8)r, (u8)gr, (u8)b));
+                palette.set_indirect_color(i, new rgb_t((u8)r, (u8)gr, (u8)b));
             }
         }
 
@@ -57,7 +60,7 @@ namespace mame
             Pointer<uint8_t> charlut_prom = new Pointer<uint8_t>(memregion("charprom").base_());  //const uint8_t *charlut_prom = memregion("charprom")->base();
             for (int i = 0; i < 64 * 4; i++)
             {
-                palette.dipalette.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x80 | charlut_prom[i]));
+                palette.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x80 | charlut_prom[i]));
             }
 
             // background tiles use palette entries 0-63 in four banks
@@ -65,10 +68,10 @@ namespace mame
             Pointer<uint8_t> tilelut_prom = new Pointer<uint8_t>(memregion("tileprom").base_());  //const uint8_t *tilelut_prom = memregion("tileprom")->base();
             for (int i = 0; i < 32 * 8; i++)
             {
-                palette.dipalette.set_pen_indirect((pen_t)(colorbase + 0 * 32 * 8 + i), (indirect_pen_t)(0x00 | tilelut_prom[i]));
-                palette.dipalette.set_pen_indirect((pen_t)(colorbase + 1 * 32 * 8 + i), (indirect_pen_t)(0x10 | tilelut_prom[i]));
-                palette.dipalette.set_pen_indirect((pen_t)(colorbase + 2 * 32 * 8 + i), (indirect_pen_t)(0x20 | tilelut_prom[i]));
-                palette.dipalette.set_pen_indirect((pen_t)(colorbase + 3 * 32 * 8 + i), (indirect_pen_t)(0x30 | tilelut_prom[i]));
+                palette.set_pen_indirect((pen_t)(colorbase + 0 * 32 * 8 + i), (indirect_pen_t)(0x00 | tilelut_prom[i]));
+                palette.set_pen_indirect((pen_t)(colorbase + 1 * 32 * 8 + i), (indirect_pen_t)(0x10 | tilelut_prom[i]));
+                palette.set_pen_indirect((pen_t)(colorbase + 2 * 32 * 8 + i), (indirect_pen_t)(0x20 | tilelut_prom[i]));
+                palette.set_pen_indirect((pen_t)(colorbase + 3 * 32 * 8 + i), (indirect_pen_t)(0x30 | tilelut_prom[i]));
             }
 
             // sprites use palette entries 64-79
@@ -76,7 +79,7 @@ namespace mame
             Pointer<uint8_t> sprlut_prom = new Pointer<uint8_t>(memregion("sprprom").base_());  //const uint8_t *sprlut_prom = memregion("sprprom")->base();
             for (int i = 0; i < 16 * 16; i++)
             {
-                palette.dipalette.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x40 | sprlut_prom[i]));
+                palette.set_pen_indirect((pen_t)(colorbase + i), (indirect_pen_t)(0x40 | sprlut_prom[i]));
             }
         }
 
@@ -108,7 +111,7 @@ namespace mame
             tileinfo.set(1,
                     (u32)(code + ((color & 0x80) << 1)),
                     (u32)((color & 0x1f) + (0x20 * m_palette_bank)),
-                    g.TILE_FLIPYX((color & 0x60) >> 5));
+                    TILE_FLIPYX((color & 0x60) >> 5));
         }
 
 
@@ -119,8 +122,8 @@ namespace mame
         ***************************************************************************/
         protected override void video_start()
         {
-            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_fg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
-            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_COLS, 16, 16, 32, 16);
+            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op0, get_fg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
+            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op0, get_bg_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_COLS, 16, 16, 32, 16);
 
             m_fg_tilemap.set_transparent_pen(0);
 
@@ -176,7 +179,7 @@ namespace mame
 
             machine().bookkeeping().coin_counter_w(0, data & 0x01);
 
-            m_audiocpu.op[0].set_input_line(g.INPUT_LINE_RESET, (data & 0x10) != 0 ? g.ASSERT_LINE : g.CLEAR_LINE);
+            m_audiocpu.op0.set_input_line(INPUT_LINE_RESET, (data & 0x10) != 0 ? ASSERT_LINE : CLEAR_LINE);
 
             flip_screen_set((u32)(data & 0x80));
         }
@@ -215,8 +218,8 @@ namespace mame
                 uint8_t v = flip_screen() != 0 ? (uint8_t)(~(y - 1 - 6)) : (uint8_t)(y - 1 - 6);
                 for (int h = 496; h >= 128; h -= 16)
                 {
-                    bool objcnt4 = g.BIT(h, 8) != g.BIT(~h, 7);
-                    bool objcnt3 = ((g.BIT(v, 7) != 0) && objcnt4) != (g.BIT(~h, 7) != 0);
+                    bool objcnt4 = BIT(h, 8) != BIT(~h, 7);
+                    bool objcnt3 = ((BIT(v, 7) != 0) && objcnt4) != (BIT(~h, 7) != 0);
                     uint8_t obj_idx = (uint8_t)((h >> 4) & 7);
                     obj_idx |= objcnt3 ? (uint8_t)0x08 : (uint8_t)0x00;
                     obj_idx |= objcnt4 ? (uint8_t)0x10 : (uint8_t)0x00;
@@ -240,13 +243,13 @@ namespace mame
                     switch (vlen & 3)
                     {
                     case 0:
-                        vinlen = (g.BIT(lvbeta, 7) != 0) && (g.BIT(lvbeta, 6) != 0) && (g.BIT(lvbeta, 5) != 0) && (g.BIT(lvbeta, 4) != 0);
+                        vinlen = (BIT(lvbeta, 7) != 0) && (BIT(lvbeta, 6) != 0) && (BIT(lvbeta, 5) != 0) && (BIT(lvbeta, 4) != 0);
                         break;
                     case 1:
-                        vinlen = (g.BIT(lvbeta, 7) != 0) && (g.BIT(lvbeta, 6) != 0) && (g.BIT(lvbeta, 5) != 0);
+                        vinlen = (BIT(lvbeta, 7) != 0) && (BIT(lvbeta, 6) != 0) && (BIT(lvbeta, 5) != 0);
                         break;
                     case 2:
-                        vinlen = (g.BIT(lvbeta, 7) != 0) && (g.BIT(lvbeta, 6) != 0);
+                        vinlen = (BIT(lvbeta, 7) != 0) && (BIT(lvbeta, 6) != 0);
                         break;
                     case 3:
                         vinlen = true;
@@ -271,7 +274,7 @@ namespace mame
                         {
                             do
                             {
-                                m_gfxdecode.op[0].digfx.gfx(2).transpen(bitmap, cliprecty, (u32)(code + i), (u32)col, (int)flip_screen(), (int)flip_screen(), sx + 128, sy + 6 + 16 * i * dir, 15);
+                                m_gfxdecode.op0.gfx(2).transpen(bitmap, cliprecty, (u32)(code + i), (u32)col, (int)flip_screen(), (int)flip_screen(), sx + 128, sy + 6 + 16 * i * dir, 15);
                             } while (i-- > 0);
                         }
                     }

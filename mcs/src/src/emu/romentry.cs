@@ -2,9 +2,12 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
+using u8 = System.Byte;
 using u32 = System.UInt32;
+
+using static mame.romentry_global;
+using static mame.util;
 
 
 namespace mame
@@ -12,95 +15,95 @@ namespace mame
     public static class romentry_global
     {
         /* ----- type constants ----- */
-        public const UInt32 ROMENTRY_TYPEMASK           = 0x0000000f;          /* type of entry */
+        public const u32 ROMENTRY_TYPEMASK           = 0x0000000f;          /* type of entry */
         //enum
         //{
-        public const UInt32 ROMENTRYTYPE_ROM          =  0;     /* this entry is an actual ROM definition */
-        public const UInt32 ROMENTRYTYPE_REGION       =  1;     /* this entry marks the start of a region */
-        public const UInt32 ROMENTRYTYPE_END          =  2;     /* this entry marks the end of a region */
-        public const UInt32 ROMENTRYTYPE_RELOAD       =  3;     /* this entry reloads the previous ROM */
-        public const UInt32 ROMENTRYTYPE_CONTINUE     =  4;     /* this entry continues loading the previous ROM */
-        public const UInt32 ROMENTRYTYPE_FILL         =  5;     /* this entry fills an area with a constant value */
-        public const UInt32 ROMENTRYTYPE_COPY         =  6;     /* this entry copies data from another region/offset */
-        const UInt32 ROMENTRYTYPE_CARTRIDGE    =  7;     /* this entry specifies a cartridge (MESS) */
-        public const UInt32 ROMENTRYTYPE_IGNORE       =  8;     /* this entry continues loading the previous ROM but throws the data away */
-        public const UInt32 ROMENTRYTYPE_SYSTEM_BIOS  =  9;     /* this entry specifies a bios */
-        public const UInt32 ROMENTRYTYPE_DEFAULT_BIOS = 10;     /* this entry specifies a default bios */
-        public const UInt32 ROMENTRYTYPE_PARAMETER    = 11;     /* this entry specifies a per-game parameter */
-        const UInt32 ROMENTRYTYPE_COUNT        = 12;
+        public const u32 ROMENTRYTYPE_ROM          =  0;     /* this entry is an actual ROM definition */
+        public const u32 ROMENTRYTYPE_REGION       =  1;     /* this entry marks the start of a region */
+        public const u32 ROMENTRYTYPE_END          =  2;     /* this entry marks the end of a region */
+        public const u32 ROMENTRYTYPE_RELOAD       =  3;     /* this entry reloads the previous ROM */
+        public const u32 ROMENTRYTYPE_CONTINUE     =  4;     /* this entry continues loading the previous ROM */
+        public const u32 ROMENTRYTYPE_FILL         =  5;     /* this entry fills an area with a constant value */
+        public const u32 ROMENTRYTYPE_COPY         =  6;     /* this entry copies data from another region/offset */
+        const u32 ROMENTRYTYPE_CARTRIDGE    =  7;     /* this entry specifies a cartridge (MESS) */
+        public const u32 ROMENTRYTYPE_IGNORE       =  8;     /* this entry continues loading the previous ROM but throws the data away */
+        public const u32 ROMENTRYTYPE_SYSTEM_BIOS  =  9;     /* this entry specifies a bios */
+        public const u32 ROMENTRYTYPE_DEFAULT_BIOS = 10;     /* this entry specifies a default bios */
+        public const u32 ROMENTRYTYPE_PARAMETER    = 11;     /* this entry specifies a per-game parameter */
+        const u32 ROMENTRYTYPE_COUNT        = 12;
         //}
 
 
         /* ----- per-region constants ----- */
-        public const UInt32 ROMREGION_WIDTHMASK         = 0x00000300;          /* native width of region, as power of 2 */
+        public const u32 ROMREGION_WIDTHMASK         = 0x00000300;          /* native width of region, as power of 2 */
         //#define     ROMREGION_8BIT          0x00000000          /*    (non-CPU regions only) */
         //#define     ROMREGION_16BIT         0x00000100
         //#define     ROMREGION_32BIT         0x00000200
         //#define     ROMREGION_64BIT         0x00000300
 
-        public const UInt32 ROMREGION_ENDIANMASK        = 0x00000400;          /* endianness of the region */
+        public const u32 ROMREGION_ENDIANMASK        = 0x00000400;          /* endianness of the region */
         //#define     ROMREGION_LE            0x00000000          /*    (non-CPU regions only) */
-        public const UInt32     ROMREGION_BE            = 0x00000400;
+        public const u32 ROMREGION_BE                = 0x00000400;
 
-        public const UInt32 ROMREGION_INVERTMASK        = 0x00000800;          /* invert the bits of the region */
+        public const u32 ROMREGION_INVERTMASK        = 0x00000800;          /* invert the bits of the region */
         //#define     ROMREGION_NOINVERT      0x00000000
-        public const UInt32     ROMREGION_INVERT        = 0x00000800;
+        public const u32 ROMREGION_INVERT            = 0x00000800;
 
-        public const UInt32 ROMREGION_ERASEMASK         = 0x00002000;          /* erase the region before loading */
+        public const u32 ROMREGION_ERASEMASK         = 0x00002000;          /* erase the region before loading */
         //#define     ROMREGION_NOERASE       0x00000000
-        public const UInt32     ROMREGION_ERASE         = 0x00002000;
+        public const u32 ROMREGION_ERASE             = 0x00002000;
 
-        public const UInt32 ROMREGION_DATATYPEMASK      = 0x00004000;          /* type of region (ROM versus disk) */
-        public const UInt32     ROMREGION_DATATYPEROM   = 0x00000000;
-        public const UInt32     ROMREGION_DATATYPEDISK  = 0x00004000;
+        public const u32 ROMREGION_DATATYPEMASK      = 0x00004000;          /* type of region (ROM versus disk) */
+        public const u32 ROMREGION_DATATYPEROM       = 0x00000000;
+        public const u32 ROMREGION_DATATYPEDISK      = 0x00004000;
 
-        public const UInt32 ROMREGION_ERASEVALMASK      = 0x00ff0000;          /* value to erase the region to */
-        public static UInt32 ROMREGION_ERASEVAL(UInt32 x) { return ((x & 0xff) << 16) | ROMREGION_ERASE; }
-        public static readonly UInt32 ROMREGION_ERASE00 = ROMREGION_ERASEVAL(0);
-        public static readonly UInt32 ROMREGION_ERASEFF = ROMREGION_ERASEVAL(0xff);
+        public const u32 ROMREGION_ERASEVALMASK      = 0x00ff0000;          /* value to erase the region to */
+        public static u32 ROMREGION_ERASEVAL(u32 x) { return ((x & 0xff) << 16) | ROMREGION_ERASE; }
+        public static readonly u32 ROMREGION_ERASE00 = ROMREGION_ERASEVAL(0);
+        public static readonly u32 ROMREGION_ERASEFF = ROMREGION_ERASEVAL(0xff);
 
 
         /* ----- per-ROM constants ----- */
-        public const UInt32 DISK_READONLYMASK           = 0x00000010;          /* is the disk read-only? */
+        public const u32 DISK_READONLYMASK           = 0x00000010;          /* is the disk read-only? */
         //#define     DISK_READWRITE          0x00000000
-        public const UInt32     DISK_READONLY           = 0x00000010;
+        public const u32 DISK_READONLY               = 0x00000010;
 
-        public const UInt32 ROM_OPTIONALMASK            = 0x00000020;          /* optional - won't hurt if it's not there */
+        public const u32 ROM_OPTIONALMASK            = 0x00000020;          /* optional - won't hurt if it's not there */
         //#define     ROM_REQUIRED            0x00000000
-        public const UInt32     ROM_OPTIONAL            = 0x00000020;
+        public const u32 ROM_OPTIONAL                = 0x00000020;
 
-        public const UInt32 ROM_REVERSEMASK             = 0x00000040;          /* reverse the byte order within a group */
+        public const u32 ROM_REVERSEMASK             = 0x00000040;          /* reverse the byte order within a group */
         //#define     ROM_NOREVERSE           0x00000000
-        public const UInt32     ROM_REVERSE             = 0x00000040;
+        public const u32 ROM_REVERSE                 = 0x00000040;
 
-        public const UInt32 ROM_INHERITFLAGSMASK        = 0x00000080;          /* inherit all flags from previous definition */
-        public const UInt32     ROM_INHERITFLAGS        = 0x00000080;
+        public const u32 ROM_INHERITFLAGSMASK        = 0x00000080;          /* inherit all flags from previous definition */
+        public const u32 ROM_INHERITFLAGS            = 0x00000080;
 
-        public const UInt32 ROM_GROUPMASK               = 0x00000f00;          /* load data in groups of this size + 1 */
+        public const u32 ROM_GROUPMASK               = 0x00000f00;          /* load data in groups of this size + 1 */
         //#define     ROM_GROUPSIZE(n)        ((((n) - 1) & 15) << 8)
         //#define     ROM_GROUPBYTE           ROM_GROUPSIZE(1)
         //#define     ROM_GROUPWORD           ROM_GROUPSIZE(2)
         //#define     ROM_GROUPDWORD          ROM_GROUPSIZE(4)
 
-        public const UInt32 ROM_SKIPMASK                = 0x0000f000;          /* skip this many bytes after each group */
-        public static UInt32 ROM_SKIP(UInt32 n) { return (n & 15) << 12; }
+        public const u32 ROM_SKIPMASK                = 0x0000f000;          /* skip this many bytes after each group */
+        public static u32 ROM_SKIP(u32 n) { return (n & 15) << 12; }
         //#define     ROM_NOSKIP              ROM_SKIP(0)
 
-        public const UInt32 ROM_BITWIDTHMASK            = 0x000f0000;          /* width of data in bits */
+        public const u32 ROM_BITWIDTHMASK            = 0x000f0000;          /* width of data in bits */
         //#define     ROM_BITWIDTH(n)         (((n) & 15) << 16)
         //#define     ROM_NIBBLE              ROM_BITWIDTH(4)
         //#define     ROM_FULLBYTE            ROM_BITWIDTH(8)
 
-        public const UInt32 ROM_BITSHIFTMASK            = 0x00f00000;          /* left-shift count for the bits */
+        public const u32 ROM_BITSHIFTMASK            = 0x00f00000;          /* left-shift count for the bits */
         //#define     ROM_BITSHIFT(n)         (((n) & 15) << 20)
         //#define     ROM_NOSHIFT             ROM_BITSHIFT(0)
         //#define     ROM_SHIFT_NIBBLE_LO     ROM_BITSHIFT(0)
         //#define     ROM_SHIFT_NIBBLE_HI     ROM_BITSHIFT(4)
 
-        public const UInt32 ROM_BIOSFLAGSMASK           = 0xff000000;          /* only loaded if value matches device bios value */
+        public const u32 ROM_BIOSFLAGSMASK           = 0xff000000;          /* only loaded if value matches device bios value */
         //#define     ROM_BIOS(n)             ((((n) + 1) & 255) << 24)
 
-        public const UInt32 ROM_INHERITEDFLAGS          = (ROM_GROUPMASK | ROM_SKIPMASK | ROM_REVERSEMASK | ROM_BITWIDTHMASK | ROM_BITSHIFTMASK | ROM_BIOSFLAGSMASK);
+        public const u32 ROM_INHERITEDFLAGS          = (ROM_GROUPMASK | ROM_SKIPMASK | ROM_REVERSEMASK | ROM_BITWIDTHMASK | ROM_BITSHIFTMASK | ROM_BIOSFLAGSMASK);
 
 
         /* ----- start/stop macros ----- */
@@ -110,7 +113,7 @@ namespace mame
 
 
         /* ----- ROM region macros ----- */
-        public static tiny_rom_entry ROM_REGION(UInt32 length, string tag, u32 flags) { return new tiny_rom_entry(tag, null, 0, length, ROMENTRYTYPE_REGION | flags); }
+        public static tiny_rom_entry ROM_REGION(u32 length, string tag, u32 flags) { return new tiny_rom_entry(tag, null, 0, length, ROMENTRYTYPE_REGION | flags); }
         //#define ROM_REGION16_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_16BIT | ROMREGION_LE)
         //#define ROM_REGION16_BE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_16BIT | ROMREGION_BE)
         //#define ROM_REGION32_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_32BIT | ROMREGION_LE)
@@ -148,7 +151,7 @@ namespace mame
         /* ----- additional ROM-related macros ----- */
         public static tiny_rom_entry ROM_CONTINUE(u32 offset, u32 length) { return new tiny_rom_entry(null, null, offset, length, ROMENTRYTYPE_CONTINUE | ROM_INHERITFLAGS); }
         //#define ROM_IGNORE(length)                          { nullptr,  nullptr,                 0,        (length), ROMENTRYTYPE_IGNORE | ROM_INHERITFLAGS },
-        public static tiny_rom_entry ROM_FILL(u32 offset, u32 length, byte value) { return new tiny_rom_entry(null, value.ToString(), offset, length, ROMENTRYTYPE_FILL); }
+        public static tiny_rom_entry ROM_FILL(u32 offset, u32 length, u8 value) { return new tiny_rom_entry(null, value.ToString(), offset, length, ROMENTRYTYPE_FILL); }
         //#define ROMX_FILL(offset,length,value,flags)        { nullptr,  (const char *)(value),   (offset), (length), ROMENTRYTYPE_FILL | flags },
         //#define ROM_COPY(srctag,srcoffs,offset,length)      { (srctag), (const char *)(srcoffs), (offset), (length), ROMENTRYTYPE_COPY },
 
@@ -258,12 +261,12 @@ namespace mame
         static string hashdata_from_tiny_rom_entry(tiny_rom_entry ent)
         {
             string result = "";
-            switch (ent.flags & romentry_global.ROMENTRY_TYPEMASK)
+            switch (ent.flags & ROMENTRY_TYPEMASK)
             {
-                case romentry_global.ROMENTRYTYPE_FILL:
-                case romentry_global.ROMENTRYTYPE_COPY:
+                case ROMENTRYTYPE_FILL:
+                case ROMENTRYTYPE_COPY:
                     // for these types, tiny_rom_entry::hashdata is an integer typecasted to a pointer
-                    result = string.Format("0x{0}", ent.hashdata_);  //(unsigned)(uintptr_t)ent.hashdata);  // 0x%x
+                    result = string_format("0x{0}", ent.hashdata_);  //result = string_format("0x%x", (unsigned)(uintptr_t)ent.hashdata);
                     break;
 
                 default:

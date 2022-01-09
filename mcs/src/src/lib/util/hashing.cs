@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using PointerU8 = mame.Pointer<System.Byte>;
@@ -11,6 +10,9 @@ using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.crc32_global;
+using static mame.util.hashing_global;
 
 
 namespace mame
@@ -148,8 +150,8 @@ namespace mame
                 int stringIdx = 0;
                 for (int i = 0; i < m_raw.Count; i++)  //for (auto & elem : m_raw)
                 {
-                    int upper = hashing_global.char_to_hex(string_[0]);
-                    int lower = hashing_global.char_to_hex(string_[1]);
+                    int upper = char_to_hex(string_[0]);
+                    int lower = char_to_hex(string_[1]);
                     if (upper == -1 || lower == -1)
                         return false;
 
@@ -222,13 +224,13 @@ namespace mame
                     {
                         for (offset = 0U; (offset + residual) < 64U; offset++)
                             m_buf[(offset + residual) ^ swizzle] = data[offset];  //reinterpret_cast<uint8_t *>(m_buf)[(offset + residual) ^ swizzle] = reinterpret_cast<const uint8_t *>(data)[offset];
-                        hashing_global.sha1_process(m_st, new PointerU32(m_buf));
+                        sha1_process(m_st, new PointerU32(m_buf));
                     }
                     while ((length - offset) >= 64U)
                     {
                         for (residual = 0U; residual < 64U; residual++, offset++)
                             m_buf[residual ^ swizzle] = data[offset];  //reinterpret_cast<uint8_t *>(m_buf)[residual ^ swizzle] = reinterpret_cast<const uint8_t *>(data)[offset];
-                        hashing_global.sha1_process(m_st, new PointerU32(m_buf));
+                        sha1_process(m_st, new PointerU32(m_buf));
                     }
                     residual = 0U;
                 }
@@ -319,7 +321,7 @@ namespace mame
                 m_raw = 0;
                 for (int bytenum = 0; bytenum < 4/*sizeof(m_raw)*/ * 2; bytenum++)
                 {
-                    int nibble = hashing_global.char_to_hex(string_[0]);
+                    int nibble = char_to_hex(string_[0]);
                     if (nibble == -1)
                         return false;
 
@@ -360,7 +362,7 @@ namespace mame
             //-------------------------------------------------
             public void append(PointerU8 data, uint32_t length)  //void append(const void *data, uint32_t length);
             {
-                m_accum.op = crc32_global.crc32(m_accum.op, data, length);
+                m_accum.op = crc32(m_accum.op, data, length);
             }
 
             // finalize and compute the final digest

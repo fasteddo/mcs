@@ -2,11 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using u8 = System.Byte;
+using u16 = System.UInt16;
 using u32 = System.UInt32;
+
+using static mame.device_global;
+using static mame.emucore_global;
 
 
 namespace mame
@@ -67,7 +70,7 @@ namespace mame
         protected override void device_start()
         {
             m_data_pending_cb.resolve_safe();
-            save_item(g.NAME(new { m_latch_written }));
+            save_item(NAME(new { m_latch_written }));
 
             // synchronization is needed since other devices may not be initialized yet
             machine().scheduler().synchronize(init_callback);
@@ -115,11 +118,11 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(GENERIC_LATCH_8, generic_latch_8_device, "generic_latch_8", "Generic 8-bit latch")
         static device_t device_creator_generic_latch_8_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new generic_latch_8_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GENERIC_LATCH_8 = g.DEFINE_DEVICE_TYPE(device_creator_generic_latch_8_device, "generic_latch_8", "Generic 8-bit latch");
+        public static readonly device_type GENERIC_LATCH_8 = DEFINE_DEVICE_TYPE(device_creator_generic_latch_8_device, "generic_latch_8", "Generic 8-bit latch");
 
 
 
-        byte m_latched_value;
+        u8 m_latched_value;
 
 
         // construction/destruction
@@ -160,7 +163,7 @@ namespace mame
         {
             // register for state saving
             base.device_start();
-            save_item(g.NAME(new { m_latched_value }));
+            save_item(NAME(new { m_latched_value }));
         }
 
 
@@ -170,7 +173,7 @@ namespace mame
         //-------------------------------------------------
         void sync_callback(object ptr, int param)
         {
-            byte value = (byte)param;
+            u8 value = (u8)param;
 
             // if the latch has been written and the value is changed, log a warning
             if (is_latch_written() && m_latched_value != value)
@@ -188,10 +191,10 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(GENERIC_LATCH_16, generic_latch_16_device, "generic_latch_16", "Generic 16-bit latch")
         static device_t device_creator_generic_latch_16_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new generic_latch_16_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GENERIC_LATCH_16 = g.DEFINE_DEVICE_TYPE(device_creator_generic_latch_16_device, "generic_latch_16", "Generic 16-bit latch");
+        public static readonly device_type GENERIC_LATCH_16 = DEFINE_DEVICE_TYPE(device_creator_generic_latch_16_device, "generic_latch_16", "Generic 16-bit latch");
 
 
-        UInt16 m_latched_value;
+        u16 m_latched_value;
 
 
         // construction/destruction
@@ -221,7 +224,7 @@ namespace mame
         {
             // register for state saving
             base.device_start();
-            save_item(g.NAME(new { m_latched_value }));
+            save_item(NAME(new { m_latched_value }));
         }
 
 

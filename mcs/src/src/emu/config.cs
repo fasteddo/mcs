@@ -2,7 +2,9 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.osdcore_global;
+using static mame.osdfile_global;
 
 
 namespace mame
@@ -93,8 +95,8 @@ namespace mame
             if (!string.IsNullOrEmpty(controller))
             {
                 // open the config file
-                emu_file file = new emu_file(machine().options().ctrlr_path(), g.OPEN_FLAG_READ);
-                g.osd_printf_verbose("Attempting to parse: {0}.cfg\n", controller);
+                emu_file file = new emu_file(machine().options().ctrlr_path(), OPEN_FLAG_READ);
+                osd_printf_verbose("Attempting to parse: {0}.cfg\n", controller);
                 std.error_condition filerr = file.open(controller + ".cfg");
                 if (filerr)
                     throw new emu_fatalerror("Could not open controller file {0}.cfg ({1}:{2} {3})", controller, filerr.category().name(), filerr.value(), filerr.message());
@@ -110,15 +112,15 @@ namespace mame
 
             {
                 // next load the defaults file
-                emu_file file = new emu_file(machine().options().cfg_directory(), g.OPEN_FLAG_READ);
+                emu_file file = new emu_file(machine().options().cfg_directory(), OPEN_FLAG_READ);
                 std.error_condition filerr = file.open("default.cfg");
-                g.osd_printf_verbose("Attempting to parse: default.cfg\n");
+                osd_printf_verbose("Attempting to parse: default.cfg\n");
                 if (!filerr)
                     load_xml(file, config_type.DEFAULT);
 
                 // finally, load the game-specific file
                 filerr = file.open(machine().basename() + ".cfg");
-                g.osd_printf_verbose("Attempting to parse: {0}.cfg\n", machine().basename());
+                osd_printf_verbose("Attempting to parse: {0}.cfg\n", machine().basename());
                 loaded = !filerr && load_xml(file, config_type.SYSTEM);
 
                 file.close();
@@ -141,7 +143,7 @@ namespace mame
                 type.save(config_type.INIT, null);
 
             // save the defaults file
-            emu_file file = new emu_file(machine().options().cfg_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
+            emu_file file = new emu_file(machine().options().cfg_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
             std.error_condition filerr = file.open("default.cfg");
             if (!filerr)
                 save_xml(file, config_type.DEFAULT);

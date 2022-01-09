@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -10,6 +9,10 @@ using s8 = System.SByte;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
+
+using static mame.device_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
 
 
 namespace mame
@@ -19,7 +22,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(ADDRESS_MAP_BANK, address_map_bank_device, "address_map_bank", "Address Map Bank")
         static device_t device_creator_address_map_bank_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new address_map_bank_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ADDRESS_MAP_BANK = g.DEFINE_DEVICE_TYPE(device_creator_address_map_bank_device, "address_map_bank", "Address Map Bank");
+        public static readonly device_type ADDRESS_MAP_BANK = DEFINE_DEVICE_TYPE(device_creator_address_map_bank_device, "address_map_bank", "Address Map Bank");
 
 
         public class device_memory_interface_address_map_bank : device_memory_interface
@@ -53,7 +56,7 @@ namespace mame
             m_dimemory = GetClassInterface<device_memory_interface_address_map_bank>();
 
 
-            m_endianness = g.ENDIANNESS_NATIVE;
+            m_endianness = ENDIANNESS_NATIVE;
             m_data_width = 0;
             m_addr_width = 32;
             m_stride = 1;
@@ -121,9 +124,9 @@ namespace mame
 
         protected override void device_start()
         {
-            m_program = m_dimemory.space(g.AS_PROGRAM);
+            m_program = m_dimemory.space(AS_PROGRAM);
 
-            save_item(g.NAME(new { m_offset }));
+            save_item(NAME(new { m_offset }));
         }
 
 
@@ -139,7 +142,7 @@ namespace mame
         space_config_vector device_memory_interface_memory_space_config()
         {
             return new space_config_vector {
-                std.make_pair(g.AS_PROGRAM, m_program_config)
+                std.make_pair(AS_PROGRAM, m_program_config)
             };
         }
     }

@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
@@ -78,11 +77,12 @@ namespace mame.netlist
         }
 
 
-        //void abort_current_queue_slice() noexcept
-        //{
-        //    qremove(nullptr);
-        //    qpush(m_time, nullptr);
-        //}
+        public void abort_current_queue_slice()
+        {
+            qremove(null);
+            qpush(new queue_t_entry_t(m_time, null));
+        }
+
 
         //const detail::queue_t &queue() const noexcept { return m_queue; }
 
@@ -234,7 +234,7 @@ namespace mame.netlist
 
                     obj.update_devs(KEEP_STATS);
 
-                    throw new emu_unimplemented();
+                    //throw new emu_unimplemented();
 #if false
                     if (KEEP_STATS)
                         m_perf_out_processed.inc();

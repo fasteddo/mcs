@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using char32_t = System.UInt32;
 using natural_keyboard_keycode_map_entries = mame.std.vector<mame.natural_keyboard.keycode_map_entry>; //typedef std::vector<keycode_map_entry> keycode_map_entries;
@@ -10,6 +9,10 @@ using natural_keyboard_keycode_map = mame.std.unordered_map<System.UInt32, mame.
 using size_t = System.UInt64;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
+
+using static mame.emuopts_global;
+using static mame.ioport_global;
+using static mame.util;
 
 
 namespace mame
@@ -34,7 +37,7 @@ namespace mame
 
         //enum
         //{
-        const int SHIFT_COUNT  = (int)(g.UCHAR_SHIFT_END - g.UCHAR_SHIFT_BEGIN + 1);
+        const int SHIFT_COUNT  = (int)(UCHAR_SHIFT_END - UCHAR_SHIFT_BEGIN + 1);
         const int SHIFT_STATES = 1 << SHIFT_COUNT;
         //}
 
@@ -155,7 +158,7 @@ namespace mame
             {
                 // update active usage
                 m_in_use = usage;
-                machine().options().set_value(emu_options.OPTION_NATURAL_KEYBOARD, usage ? 1 : 0, emu_options.OPTION_PRIORITY_CMDLINE);
+                machine().options().set_value(OPTION_NATURAL_KEYBOARD, usage ? 1 : 0, OPTION_PRIORITY_CMDLINE);
 
                 // lock out (or unlock) all keyboard inputs
                 foreach (kbd_dev_info devinfo in m_keyboards)
@@ -280,12 +283,12 @@ namespace mame
                         std.vector<char32_t> codes = field.keyboard_codes(0);
                         foreach (char32_t code in codes)
                         {
-                            if ((code >= g.UCHAR_SHIFT_BEGIN) && (code <= g.UCHAR_SHIFT_END))
+                            if ((code >= UCHAR_SHIFT_BEGIN) && (code <= UCHAR_SHIFT_END))
                             {
-                                mask |= 1U << (int)(code - g.UCHAR_SHIFT_BEGIN);
-                                shift[code - g.UCHAR_SHIFT_BEGIN] = field;
+                                mask |= 1U << (int)(code - UCHAR_SHIFT_BEGIN);
+                                shift[code - UCHAR_SHIFT_BEGIN] = field;
                                 if (LOG_NATURAL_KEYBOARD)
-                                    machine().logerror("natural_keyboard: UCHAR_SHIFT_{0} found\n", code - g.UCHAR_SHIFT_BEGIN + 1);
+                                    machine().logerror("natural_keyboard: UCHAR_SHIFT_{0} found\n", code - UCHAR_SHIFT_BEGIN + 1);
                             }
                         }
                     }
@@ -306,7 +309,7 @@ namespace mame
                                 std.vector<char32_t> codes = field.keyboard_codes((int)curshift);
                                 foreach (char32_t code in codes)
                                 {
-                                    if (((code < g.UCHAR_SHIFT_BEGIN) || (code > g.UCHAR_SHIFT_END)) && (code != 0))
+                                    if (((code < UCHAR_SHIFT_BEGIN) || (code > UCHAR_SHIFT_END)) && (code != 0))
                                     {
                                         m_have_charkeys = true;
                                         var found = devinfo.codemap.find(code);  //keycode_map::iterator const found(devinfo.codemap.find(code));
@@ -318,7 +321,7 @@ namespace mame
                                         unsigned fieldnum = 0;
                                         for (unsigned i = 0, bits = curshift; (i < SHIFT_COUNT) && (bits != 0); ++i, bits >>= 1)
                                         {
-                                            if (g.BIT(bits, 0) != 0)
+                                            if (BIT(bits, 0) != 0)
                                                 newcode.field[fieldnum++] = shift[i];
                                         }
 
@@ -395,7 +398,7 @@ namespace mame
                 // the driver has a queue_chars handler
                 while (!empty() && m_queue_chars(new Pointer<char32_t>(m_buffer, (int)m_bufbegin), 1) != 0)  //while (!empty() && m_queue_chars(&m_buffer[m_bufbegin], 1))
                 {
-                    m_bufbegin = (m_bufbegin + 1) % (UInt32)m_buffer.size();
+                    m_bufbegin = (m_bufbegin + 1) % (u32)m_buffer.size();
                     if (m_current_rate != attotime.zero)
                         break;
                 }
@@ -421,9 +424,9 @@ namespace mame
                         {
                             // special handling for toggle fields
                             if (!field.live().toggle)
-                                field.set_value(!m_status_keydown ? (UInt32)1 : 0);
+                                field.set_value(!m_status_keydown ? 1U : 0U);
                             else if (!m_status_keydown)
-                                field.set_value(!field.digital_value() ? (UInt32)1 : 0);
+                                field.set_value(!field.digital_value() ? 1U : 0U);
                         }
                     }
                     while (code.field[m_fieldnum] != null && (++m_fieldnum < code.field.size()) && m_status_keydown);
@@ -442,7 +445,7 @@ namespace mame
 
                     // proceed to next character when keydown expires
                     if (!m_status_keydown)
-                        m_bufbegin = (m_bufbegin + 1) % (UInt32)m_buffer.size();
+                        m_bufbegin = (m_bufbegin + 1) % (u32)m_buffer.size();
                 }
             }
 
@@ -475,16 +478,16 @@ namespace mame
                         //char temp[2] = { char(ch), 0 };
                         buffer += (char)ch;
                     }
-                    else if (ch >= g.UCHAR_MAMEKEY_BEGIN)
+                    else if (ch >= UCHAR_MAMEKEY_BEGIN)
                     {
                         // try to obtain a codename with code_name(); this can result in an empty string
-                        input_code code = new input_code(input_device_class.DEVICE_CLASS_KEYBOARD, 0, input_item_class.ITEM_CLASS_SWITCH, input_item_modifier.ITEM_MODIFIER_NONE, (input_item_id)(ch - g.UCHAR_MAMEKEY_BEGIN));
+                        input_code code = new input_code(input_device_class.DEVICE_CLASS_KEYBOARD, 0, input_item_class.ITEM_CLASS_SWITCH, input_item_modifier.ITEM_MODIFIER_NONE, (input_item_id)(ch - UCHAR_MAMEKEY_BEGIN));
                         buffer = machine().input().code_name(code);
                     }
 
                     // did we fail to resolve? if so, we have a last resort
                     if (buffer.empty())
-                        buffer = string.Format("U+{0}", (UInt32)ch);  // U+%04X
+                        buffer = string_format("U+{0}", (u32)ch);  // U+%04X
                     break;
             }
 

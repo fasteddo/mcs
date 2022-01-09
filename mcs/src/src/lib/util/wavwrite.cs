@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 using int16_t = System.Int16;
@@ -11,24 +10,25 @@ using size_t = System.UInt64;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 
+using static mame.osdcomm_global;
+
 
 namespace mame
 {
-    public class wav_file
+    partial class util
     {
-        public FileStream file;  // FILE *file;
-        public BinaryWriter writer;
-        public uint32_t total_offs;
-        public uint32_t data_offs;
-    }
+        public class wav_file
+        {
+            public FileStream file;  // FILE *file;
+            public BinaryWriter writer;
+            public uint32_t total_offs;
+            public uint32_t data_offs;
+        }
 
 
-    //struct wav_deleter
+        //struct wav_deleter
 
 
-
-    public static class wavwrite_global
-    {
         public static wav_file wav_open(string filename, int sample_rate, int channels)
         {
             uint32_t temp32;
@@ -54,7 +54,7 @@ namespace mame
 
             // write the total size
             temp32 = 0;
-            wav.total_offs = (UInt32)wav.file.Length;  // ftell(wav.file);
+            wav.total_offs = (uint32_t)wav.file.Length;  // ftell(wav.file);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             // write the 'WAVE' type
@@ -64,33 +64,33 @@ namespace mame
             wav.writer.Write("fmt ".ToCharArray());  //fwrite("fmt ", 1, 4, wav.file);
 
             // write the format length
-            temp32 = (UInt32)g.little_endianize_int32(16);
+            temp32 = (uint32_t)little_endianize_int32(16);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             // write the format (PCM)
-            temp16 = (UInt16)g.little_endianize_int16(1);
+            temp16 = (uint16_t)little_endianize_int16(1);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             // write the channels
-            temp16 = (UInt16)g.little_endianize_int16((Int16)channels);
+            temp16 = (uint16_t)little_endianize_int16((int16_t)channels);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             // write the sample rate
-            temp32 = (UInt32)g.little_endianize_int32(sample_rate);
+            temp32 = (uint32_t)little_endianize_int32(sample_rate);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             // write the bytes/second
-            uint32_t bps = (UInt32)(sample_rate * 2 * channels);
-            temp32 = (UInt32)g.little_endianize_int32((int)bps);
+            uint32_t bps = (uint32_t)(sample_rate * 2 * channels);
+            temp32 = (uint32_t)little_endianize_int32((int)bps);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             // write the block align
-            uint16_t align = (UInt16)(2 * channels);
-            temp16 = (UInt16)g.little_endianize_int16((Int16)align);
+            uint16_t align = (uint16_t)(2 * channels);
+            temp16 = (uint16_t)little_endianize_int16((int16_t)align);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             // write the bits/sample
-            temp16 = (UInt16)g.little_endianize_int16(16);
+            temp16 = (uint16_t)little_endianize_int16(16);
             wav.writer.Write(temp16);  //fwrite(&temp16, 1, 2, wav.file);
 
             // write the 'data' tag
@@ -98,7 +98,7 @@ namespace mame
 
             // write the data length
             temp32 = 0;
-            wav.data_offs = (UInt32)wav.file.Length;  //ftell(wav.file);
+            wav.data_offs = (uint32_t)wav.file.Length;  //ftell(wav.file);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             return wav;
@@ -112,18 +112,18 @@ namespace mame
             if (wav == null)
                 return;
 
-            total = (UInt32)wav.file.Length;  //ftell(wav.file);
+            total = (uint32_t)wav.file.Length;  //ftell(wav.file);
 
             /* update the total file size */
             wav.writer.Seek((int)wav.total_offs, SeekOrigin.Begin);  //fseek(wav.file, wav.total_offs, SEEK_SET);
             temp32 = total - (wav.total_offs + 4);
-            temp32 = (UInt32)g.little_endianize_int32((int)temp32);
+            temp32 = (uint32_t)little_endianize_int32((int)temp32);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             /* update the data size */
             wav.writer.Seek((int)wav.data_offs, SeekOrigin.Begin);  //fseek(wav.file, wav.data_offs, SEEK_SET);
             temp32 = total - (wav.data_offs + 4);
-            temp32 = (UInt32)g.little_endianize_int32((int)temp32);
+            temp32 = (uint32_t)little_endianize_int32((int)temp32);
             wav.writer.Write(temp32);  //fwrite(&temp32, 1, 4, wav.file);
 
             //fclose(wav.file);

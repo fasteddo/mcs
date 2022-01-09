@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -10,6 +11,9 @@ using mame;
 using int32_t = System.Int32;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using uint32_t = System.UInt32;
+
+using static mame.osdcore_global;
+using static mame.osdfile_global;
 
 
 namespace mcsForm
@@ -64,32 +68,43 @@ namespace mcsForm
             file = this;
             try
             {
-                if (File.Exists(path))
+                if ((openflags & OPEN_FLAG_WRITE) != 0)
                 {
-                    m_file = File.OpenRead(path);
+                    FileMode fileMode = FileMode.Open;
+                    if ((openflags & OPEN_FLAG_CREATE) != 0)
+                        fileMode = FileMode.Create;
+
+                    m_file = File.Open(path, fileMode);
                 }
                 else
                 {
-                    // try the path next to the executable
-                    string exePath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);  // path to the exe
-                    string newPath = Path.Combine(exePath, path);
-                    if (File.Exists(newPath))
+                    if (File.Exists(path))
                     {
-                        m_file = File.OpenRead(newPath);
+                        m_file = File.OpenRead(path);
                     }
                     else
                     {
-                        // try the path two folders up, if eg, we're running from the \bin\Release folder
-                        newPath = Path.Combine(exePath, @"..\..\");
-                        newPath = Path.Combine(newPath, path);
+                        // try the path next to the executable
+                        string exePath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);  // path to the exe
+                        string newPath = Path.Combine(exePath, path);
                         if (File.Exists(newPath))
                         {
                             m_file = File.OpenRead(newPath);
                         }
                         else
                         {
-                            filesize = 0;
-                            return std.errc.no_such_file_or_directory;
+                            // try the path two folders up, if eg, we're running from the \bin\Release folder
+                            newPath = Path.Combine(exePath, @"..\..\");
+                            newPath = Path.Combine(newPath, path);
+                            if (File.Exists(newPath))
+                            {
+                                m_file = File.OpenRead(newPath);
+                            }
+                            else
+                            {
+                                filesize = 0;
+                                return std.errc.no_such_file_or_directory;
+                            }
                         }
                     }
                 }
@@ -103,6 +118,14 @@ namespace mcsForm
 
             filesize = (UInt64)m_file.Length;
             return new std.error_condition();
+        }
+
+
+        public override void close()
+        {
+            if (m_file != null)
+                m_file.Dispose();
+            m_file = null;
         }
 
 
@@ -151,15 +174,27 @@ namespace mcsForm
 
             // read until we get to the correct offset (HACK)
             while (offset-- > 0)
-                m_file.ReadByte();
-
-            // read one byte at a time (HACK)
-            for (UInt32 i = 0; i < length; i++)
             {
-                buffer[i] = (byte)m_file.ReadByte();
+                int b = m_file.ReadByte();
+                if (b == -1)
+                {
+                    actual = 0;
+                    return new std.error_condition();
+                }
             }
 
-            actual = length;
+            // read one byte at a time (HACK)
+            UInt32 i;
+            for (i = 0; i < length; i++)
+            {
+                int b = m_file.ReadByte();
+                if (b == -1)
+                    break;
+
+                buffer[i] = (byte)b;
+            }
+
+            actual = i;
             return new std.error_condition();
         }
 
@@ -184,7 +219,38 @@ namespace mcsForm
                 a file_error describing any error that occurred while writing to
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override std.error_condition write(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual) { throw new emu_unimplemented(); }  //virtual std::error_condition write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
+        public override std.error_condition write(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)  //virtual std::error_condition write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
+        {
+            m_file.Position = 0;
+
+            // read until we get to the correct offset (HACK)
+            while (offset-- > 0)
+                m_file.ReadByte();
+
+            // read one byte at a time (HACK)
+            for (UInt32 i = 0; i < length; i++)
+            {
+                m_file.WriteByte(buffer[i]);
+            }
+
+            actual = length;
+            return new std.error_condition();
+        }
+
+
+        /// \brief Change the size of an open file
+        ///
+        /// \param [in] offset Desired size of the file.
+        /// \return Result of the operation.
+        public override std.error_condition truncate(UInt64 offset) { throw new emu_unimplemented(); }
+
+
+        /// \brief Flush file buffers
+        ///
+        /// This flushes any data cached by the application, but does not
+        /// guarantee that all prior writes have reached persistent storage.
+        /// \return Result of the operation.
+        public override std.error_condition flush() { throw new emu_unimplemented(); }
 
 
         /*-----------------------------------------------------------------------------

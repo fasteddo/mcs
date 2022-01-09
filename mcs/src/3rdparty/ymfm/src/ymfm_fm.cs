@@ -2,12 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int16_t = System.Int16;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.ymfm.ymfm_global;
 
 
 namespace mame.ymfm
@@ -40,7 +42,7 @@ namespace mame.ymfm
         {
             // if the top bit is set, we're in the second half of the curve
             // which is a mirror image, so invert the index
-            if (ymfm_global.bitfield(input, 8) != 0)
+            if (bitfield(input, 8) != 0)
                 input = ~input;
 
             // return the value from the table
@@ -289,7 +291,7 @@ namespace mame.ymfm
         // assign operators
         public void assign(uint32_t index, fm_operator<RegisterType, RegisterType_OPS> op)
         {
-            g.assert(index < m_op.Length);
+            assert(index < m_op.Length);
             m_op[index] = op;
             if (op != null)
                 op.set_choffs(m_choffs);
@@ -534,7 +536,7 @@ namespace mame.ymfm
             {
                 for (uint32_t index = 0; index < 4; index++)
                 {
-                    uint32_t opnum = ymfm_global.bitfield(map.chan[chnum], (int)(8 * index), 8);
+                    uint32_t opnum = bitfield(map.chan[chnum], (int)(8 * index), 8);
                     m_channel[chnum].assign(index, (opnum == 0xff) ? null : m_operator[opnum]);
                 }
             }

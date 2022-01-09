@@ -2,9 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using int16_t = System.Int16;
+
+using static mame.cpp_global;
+using static mame.options_global;
+using static mame.osdcore_global;
 
 
 namespace mame
@@ -75,84 +80,84 @@ namespace mame
 
         static readonly options_entry [] s_option_entries = new options_entry []
         {
-            new options_entry(null,                                   null,              g.OPTION_HEADER,    "OSD KEYBOARD MAPPING OPTIONS"),
+            new options_entry(null,                                   null,              OPTION_HEADER,    "OSD KEYBOARD MAPPING OPTIONS"),
 #if false//#if defined(SDLMAME_MACOSX) || defined(OSD_MAC)
-            new options_entry(OSDOPTION_UIMODEKEY,                    "DEL",             g.OPTION_STRING,    "key to enable/disable MAME controls when emulated system has keyboard inputs"),
+            new options_entry(OSDOPTION_UIMODEKEY,                    "DEL",             OPTION_STRING,    "key to enable/disable MAME controls when emulated system has keyboard inputs"),
 #else
-            new options_entry(OSDOPTION_UIMODEKEY,                    "SCRLOCK",         g.OPTION_STRING,    "key to enable/disable MAME controls when emulated system has keyboard inputs"),
+            new options_entry(OSDOPTION_UIMODEKEY,                    "SCRLOCK",         OPTION_STRING,    "key to enable/disable MAME controls when emulated system has keyboard inputs"),
 #endif  // SDLMAME_MACOSX
 
-            new options_entry(null,                                   null,              g.OPTION_HEADER,    "OSD FONT OPTIONS"),
-            new options_entry(font_module.OSD_FONT_PROVIDER,          OSDOPTVAL_AUTO,    g.OPTION_STRING,    "provider for UI font: "),
+            new options_entry(null,                                   null,              OPTION_HEADER,    "OSD FONT OPTIONS"),
+            new options_entry(font_module.OSD_FONT_PROVIDER,          OSDOPTVAL_AUTO,    OPTION_STRING,    "provider for UI font: "),
 
-            new options_entry(null,                                   null,              g.OPTION_HEADER,    "OSD OUTPUT OPTIONS"),
-            new options_entry(output_module.OSD_OUTPUT_PROVIDER,      OSDOPTVAL_AUTO,    g.OPTION_STRING,    "provider for output notifications: "),
+            new options_entry(null,                                   null,              OPTION_HEADER,    "OSD OUTPUT OPTIONS"),
+            new options_entry(output_module.OSD_OUTPUT_PROVIDER,      OSDOPTVAL_AUTO,    OPTION_STRING,    "provider for output notifications: "),
 
-            new options_entry(null,                                   null,              g.OPTION_HEADER,    "OSD INPUT OPTIONS"),
-            new options_entry(input_module.OSD_KEYBOARDINPUT_PROVIDER, OSDOPTVAL_AUTO,   g.OPTION_STRING,    "provider for keyboard input: "),
-            new options_entry(input_module.OSD_MOUSEINPUT_PROVIDER,   OSDOPTVAL_AUTO,    g.OPTION_STRING,    "provider for mouse input: "),
-            new options_entry(input_module.OSD_LIGHTGUNINPUT_PROVIDER, OSDOPTVAL_AUTO,   g.OPTION_STRING,    "provider for lightgun input: "),
-            new options_entry(input_module.OSD_JOYSTICKINPUT_PROVIDER, OSDOPTVAL_AUTO,   g.OPTION_STRING,    "provider for joystick input: "),
+            new options_entry(null,                                   null,              OPTION_HEADER,    "OSD INPUT OPTIONS"),
+            new options_entry(input_module.OSD_KEYBOARDINPUT_PROVIDER, OSDOPTVAL_AUTO,   OPTION_STRING,    "provider for keyboard input: "),
+            new options_entry(input_module.OSD_MOUSEINPUT_PROVIDER,   OSDOPTVAL_AUTO,    OPTION_STRING,    "provider for mouse input: "),
+            new options_entry(input_module.OSD_LIGHTGUNINPUT_PROVIDER, OSDOPTVAL_AUTO,   OPTION_STRING,    "provider for lightgun input: "),
+            new options_entry(input_module.OSD_JOYSTICKINPUT_PROVIDER, OSDOPTVAL_AUTO,   OPTION_STRING,    "provider for joystick input: "),
 
-            new options_entry(null,                                   null,              g.OPTION_HEADER,    "OSD CLI OPTIONS"),
-            new options_entry(OSDCOMMAND_LIST_MIDI_DEVICES + ";mlist", "0",              g.OPTION_COMMAND,   "list available MIDI I/O devices"),
-            new options_entry(OSDCOMMAND_LIST_NETWORK_ADAPTERS + ";nlist", "0",          g.OPTION_COMMAND,   "list available network adapters"),
+            new options_entry(null,                                   null,              OPTION_HEADER,    "OSD CLI OPTIONS"),
+            new options_entry(OSDCOMMAND_LIST_MIDI_DEVICES + ";mlist", "0",              OPTION_COMMAND,   "list available MIDI I/O devices"),
+            new options_entry(OSDCOMMAND_LIST_NETWORK_ADAPTERS + ";nlist", "0",          OPTION_COMMAND,   "list available network adapters"),
 
-            new options_entry(null,                                   null,             g.OPTION_HEADER,     "OSD DEBUGGING OPTIONS"),
-            new options_entry(OSDOPTION_DEBUGGER,                     OSDOPTVAL_AUTO,   g.OPTION_STRING,     "debugger used : "),
-            new options_entry(OSDOPTION_DEBUGGER_PORT,                "23946",          g.OPTION_INTEGER,    "port to use for gdbstub debugger"),
-            new options_entry(OSDOPTION_DEBUGGER_FONT + ";dfont",     OSDOPTVAL_AUTO,   g.OPTION_STRING,     "font to use for debugger views"),
-            new options_entry(OSDOPTION_DEBUGGER_FONT_SIZE + ";dfontsize", "0",         g.OPTION_FLOAT,      "font size to use for debugger views"),
-            new options_entry(OSDOPTION_WATCHDOG + ";wdog",           "0",              g.OPTION_INTEGER,    "force the program to terminate if no updates within specified number of seconds"),
+            new options_entry(null,                                   null,             OPTION_HEADER,     "OSD DEBUGGING OPTIONS"),
+            new options_entry(OSDOPTION_DEBUGGER,                     OSDOPTVAL_AUTO,   OPTION_STRING,     "debugger used : "),
+            new options_entry(OSDOPTION_DEBUGGER_PORT,                "23946",          OPTION_INTEGER,    "port to use for gdbstub debugger"),
+            new options_entry(OSDOPTION_DEBUGGER_FONT + ";dfont",     OSDOPTVAL_AUTO,   OPTION_STRING,     "font to use for debugger views"),
+            new options_entry(OSDOPTION_DEBUGGER_FONT_SIZE + ";dfontsize", "0",         OPTION_FLOAT,      "font size to use for debugger views"),
+            new options_entry(OSDOPTION_WATCHDOG + ";wdog",           "0",              OPTION_INTEGER,    "force the program to terminate if no updates within specified number of seconds"),
 
-            new options_entry(null,                                   null,             g.OPTION_HEADER,     "OSD PERFORMANCE OPTIONS"),
-            new options_entry(OSDOPTION_NUMPROCESSORS + ";np",        OSDOPTVAL_AUTO,   g.OPTION_STRING,     "number of processors; this overrides the number the system reports"),
-            new options_entry(OSDOPTION_BENCH,                        "0",              g.OPTION_INTEGER,    "benchmark for the given number of emulated seconds; implies -video none -sound none -nothrottle"),
+            new options_entry(null,                                   null,             OPTION_HEADER,     "OSD PERFORMANCE OPTIONS"),
+            new options_entry(OSDOPTION_NUMPROCESSORS + ";np",        OSDOPTVAL_AUTO,   OPTION_STRING,     "number of processors; this overrides the number the system reports"),
+            new options_entry(OSDOPTION_BENCH,                        "0",              OPTION_INTEGER,    "benchmark for the given number of emulated seconds; implies -video none -sound none -nothrottle"),
 
-            new options_entry(null,                                   null,             g.OPTION_HEADER,     "OSD VIDEO OPTIONS"),
+            new options_entry(null,                                   null,             OPTION_HEADER,     "OSD VIDEO OPTIONS"),
             // OS X can be trusted to have working hardware OpenGL, so default to it on for the best user experience
-            new options_entry(OSDOPTION_VIDEO,                        OSDOPTVAL_AUTO,   g.OPTION_STRING,     "video output method: "),
-            new options_entry(OSDOPTION_NUMSCREENS + "(1-4)",         "1",              g.OPTION_INTEGER,    "number of output screens/windows to create; usually, you want just one"),
-            new options_entry(OSDOPTION_WINDOW + ";w",                "0",              g.OPTION_BOOLEAN,    "enable window mode; otherwise, full screen mode is assumed"),
-            new options_entry(OSDOPTION_MAXIMIZE + ";max",            "1",              g.OPTION_BOOLEAN,    "default to maximized windows"),
-            new options_entry(OSDOPTION_WAITVSYNC + ";vs",            "0",              g.OPTION_BOOLEAN,    "enable waiting for the start of VBLANK before flipping screens (reduces tearing effects)"),
-            new options_entry(OSDOPTION_SYNCREFRESH + ";srf",         "0",              g.OPTION_BOOLEAN,    "enable using the start of VBLANK for throttling instead of the game time"),
-            new options_entry(monitor_module.OSD_MONITOR_PROVIDER,    OSDOPTVAL_AUTO,   g.OPTION_STRING,     "monitor discovery method: "),
+            new options_entry(OSDOPTION_VIDEO,                        OSDOPTVAL_AUTO,   OPTION_STRING,     "video output method: "),
+            new options_entry(OSDOPTION_NUMSCREENS + "(1-4)",         "1",              OPTION_INTEGER,    "number of output screens/windows to create; usually, you want just one"),
+            new options_entry(OSDOPTION_WINDOW + ";w",                "0",              OPTION_BOOLEAN,    "enable window mode; otherwise, full screen mode is assumed"),
+            new options_entry(OSDOPTION_MAXIMIZE + ";max",            "1",              OPTION_BOOLEAN,    "default to maximized windows"),
+            new options_entry(OSDOPTION_WAITVSYNC + ";vs",            "0",              OPTION_BOOLEAN,    "enable waiting for the start of VBLANK before flipping screens (reduces tearing effects)"),
+            new options_entry(OSDOPTION_SYNCREFRESH + ";srf",         "0",              OPTION_BOOLEAN,    "enable using the start of VBLANK for throttling instead of the game time"),
+            new options_entry(monitor_module.OSD_MONITOR_PROVIDER,    OSDOPTVAL_AUTO,   OPTION_STRING,     "monitor discovery method: "),
 
             // per-window options
-            new options_entry(null,                                   null,             g.OPTION_HEADER,    "OSD PER-WINDOW VIDEO OPTIONS"),
-            new options_entry(OSDOPTION_SCREEN,                       OSDOPTVAL_AUTO,   g.OPTION_STRING,    "explicit name of the first screen; 'auto' here will try to make a best guess"),
-            new options_entry(OSDOPTION_ASPECT + ";screen_aspect",    OSDOPTVAL_AUTO,   g.OPTION_STRING,    "aspect ratio for all screens; 'auto' here will try to make a best guess"),
-            new options_entry(OSDOPTION_RESOLUTION + ";r",            OSDOPTVAL_AUTO,   g.OPTION_STRING,    "preferred resolution for all screens; format is <width>x<height>[@<refreshrate>] or 'auto'"),
-            new options_entry(OSDOPTION_VIEW,                         OSDOPTVAL_AUTO,   g.OPTION_STRING,    "preferred view for all screens"),
+            new options_entry(null,                                   null,             OPTION_HEADER,    "OSD PER-WINDOW VIDEO OPTIONS"),
+            new options_entry(OSDOPTION_SCREEN,                       OSDOPTVAL_AUTO,   OPTION_STRING,    "explicit name of the first screen; 'auto' here will try to make a best guess"),
+            new options_entry(OSDOPTION_ASPECT + ";screen_aspect",    OSDOPTVAL_AUTO,   OPTION_STRING,    "aspect ratio for all screens; 'auto' here will try to make a best guess"),
+            new options_entry(OSDOPTION_RESOLUTION + ";r",            OSDOPTVAL_AUTO,   OPTION_STRING,    "preferred resolution for all screens; format is <width>x<height>[@<refreshrate>] or 'auto'"),
+            new options_entry(OSDOPTION_VIEW,                         OSDOPTVAL_AUTO,   OPTION_STRING,    "preferred view for all screens"),
 
-            new options_entry(OSDOPTION_SCREEN + "0",                 OSDOPTVAL_AUTO,   g.OPTION_STRING,    "explicit name of the first screen; 'auto' here will try to make a best guess"),
-            new options_entry(OSDOPTION_ASPECT + "0",                 OSDOPTVAL_AUTO,   g.OPTION_STRING,    "aspect ratio of the first screen; 'auto' here will try to make a best guess"),
-            new options_entry(OSDOPTION_RESOLUTION + "0;r0",          OSDOPTVAL_AUTO,   g.OPTION_STRING,    "preferred resolution of the first screen; format is <width>x<height>[@<refreshrate>] or 'auto'"),
-            new options_entry(OSDOPTION_VIEW + "0",                   OSDOPTVAL_AUTO,   g.OPTION_STRING,    "preferred view for the first screen"),
+            new options_entry(OSDOPTION_SCREEN + "0",                 OSDOPTVAL_AUTO,   OPTION_STRING,    "explicit name of the first screen; 'auto' here will try to make a best guess"),
+            new options_entry(OSDOPTION_ASPECT + "0",                 OSDOPTVAL_AUTO,   OPTION_STRING,    "aspect ratio of the first screen; 'auto' here will try to make a best guess"),
+            new options_entry(OSDOPTION_RESOLUTION + "0;r0",          OSDOPTVAL_AUTO,   OPTION_STRING,    "preferred resolution of the first screen; format is <width>x<height>[@<refreshrate>] or 'auto'"),
+            new options_entry(OSDOPTION_VIEW + "0",                   OSDOPTVAL_AUTO,   OPTION_STRING,    "preferred view for the first screen"),
 
-            new options_entry(OSDOPTION_SCREEN + "1",                 OSDOPTVAL_AUTO,   g.OPTION_STRING,    "explicit name of the second screen; 'auto' here will try to make a best guess"),
-            new options_entry(OSDOPTION_ASPECT + "1",                 OSDOPTVAL_AUTO,   g.OPTION_STRING,    "aspect ratio of the second screen; 'auto' here will try to make a best guess"),
-            new options_entry(OSDOPTION_RESOLUTION + "1;r1",          OSDOPTVAL_AUTO,   g.OPTION_STRING,    "preferred resolution of the second screen; format is <width>x<height>[@<refreshrate>] or 'auto'"),
-            new options_entry(OSDOPTION_VIEW + "1",                   OSDOPTVAL_AUTO,   g.OPTION_STRING,    "preferred view for the second screen"),
+            new options_entry(OSDOPTION_SCREEN + "1",                 OSDOPTVAL_AUTO,   OPTION_STRING,    "explicit name of the second screen; 'auto' here will try to make a best guess"),
+            new options_entry(OSDOPTION_ASPECT + "1",                 OSDOPTVAL_AUTO,   OPTION_STRING,    "aspect ratio of the second screen; 'auto' here will try to make a best guess"),
+            new options_entry(OSDOPTION_RESOLUTION + "1;r1",          OSDOPTVAL_AUTO,   OPTION_STRING,    "preferred resolution of the second screen; format is <width>x<height>[@<refreshrate>] or 'auto'"),
+            new options_entry(OSDOPTION_VIEW + "1",                   OSDOPTVAL_AUTO,   OPTION_STRING,    "preferred view for the second screen"),
 
-            new options_entry(OSDOPTION_SCREEN + "2",                 OSDOPTVAL_AUTO,   g.OPTION_STRING,    "explicit name of the third screen; 'auto' here will try to make a best guess"),
-            new options_entry(OSDOPTION_ASPECT + "2",                 OSDOPTVAL_AUTO,   g.OPTION_STRING,    "aspect ratio of the third screen; 'auto' here will try to make a best guess"),
-            new options_entry(OSDOPTION_RESOLUTION + "2;r2",          OSDOPTVAL_AUTO,   g.OPTION_STRING,    "preferred resolution of the third screen; format is <width>x<height>[@<refreshrate>] or 'auto'"),
-            new options_entry(OSDOPTION_VIEW + "2",                   OSDOPTVAL_AUTO,   g.OPTION_STRING,    "preferred view for the third screen"),
+            new options_entry(OSDOPTION_SCREEN + "2",                 OSDOPTVAL_AUTO,   OPTION_STRING,    "explicit name of the third screen; 'auto' here will try to make a best guess"),
+            new options_entry(OSDOPTION_ASPECT + "2",                 OSDOPTVAL_AUTO,   OPTION_STRING,    "aspect ratio of the third screen; 'auto' here will try to make a best guess"),
+            new options_entry(OSDOPTION_RESOLUTION + "2;r2",          OSDOPTVAL_AUTO,   OPTION_STRING,    "preferred resolution of the third screen; format is <width>x<height>[@<refreshrate>] or 'auto'"),
+            new options_entry(OSDOPTION_VIEW + "2",                   OSDOPTVAL_AUTO,   OPTION_STRING,    "preferred view for the third screen"),
 
-            new options_entry(OSDOPTION_SCREEN + "3",                 OSDOPTVAL_AUTO,   g.OPTION_STRING,    "explicit name of the fourth screen; 'auto' here will try to make a best guess"),
-            new options_entry(OSDOPTION_ASPECT + "3",                 OSDOPTVAL_AUTO,   g.OPTION_STRING,    "aspect ratio of the fourth screen; 'auto' here will try to make a best guess"),
-            new options_entry(OSDOPTION_RESOLUTION + "3;r3",          OSDOPTVAL_AUTO,   g.OPTION_STRING,    "preferred resolution of the fourth screen; format is <width>x<height>[@<refreshrate>] or 'auto'"),
-            new options_entry(OSDOPTION_VIEW + "3",                   OSDOPTVAL_AUTO,   g.OPTION_STRING,    "preferred view for the fourth screen"),
+            new options_entry(OSDOPTION_SCREEN + "3",                 OSDOPTVAL_AUTO,   OPTION_STRING,    "explicit name of the fourth screen; 'auto' here will try to make a best guess"),
+            new options_entry(OSDOPTION_ASPECT + "3",                 OSDOPTVAL_AUTO,   OPTION_STRING,    "aspect ratio of the fourth screen; 'auto' here will try to make a best guess"),
+            new options_entry(OSDOPTION_RESOLUTION + "3;r3",          OSDOPTVAL_AUTO,   OPTION_STRING,    "preferred resolution of the fourth screen; format is <width>x<height>[@<refreshrate>] or 'auto'"),
+            new options_entry(OSDOPTION_VIEW + "3",                   OSDOPTVAL_AUTO,   OPTION_STRING,    "preferred view for the fourth screen"),
 
             // full screen options
-            new options_entry(null,                                   null,             g.OPTION_HEADER,    "OSD FULL SCREEN OPTIONS"),
-            new options_entry(OSDOPTION_SWITCHRES,                    "0",              g.OPTION_BOOLEAN,   "enable resolution switching"),
+            new options_entry(null,                                   null,             OPTION_HEADER,    "OSD FULL SCREEN OPTIONS"),
+            new options_entry(OSDOPTION_SWITCHRES,                    "0",              OPTION_BOOLEAN,   "enable resolution switching"),
 
-            new options_entry(null,                                   null,             g.OPTION_HEADER,    "OSD ACCELERATED VIDEO OPTIONS"),
-            new options_entry(OSDOPTION_FILTER + ";glfilter;flt",     "1",              g.OPTION_BOOLEAN,   "use bilinear filtering when scaling emulated video"),
-            new options_entry(OSDOPTION_PRESCALE + "(1-8)",           "1",              g.OPTION_INTEGER,   "scale emulated video by this factor before applying filters/shaders"),
+            new options_entry(null,                                   null,             OPTION_HEADER,    "OSD ACCELERATED VIDEO OPTIONS"),
+            new options_entry(OSDOPTION_FILTER + ";glfilter;flt",     "1",              OPTION_BOOLEAN,   "use bilinear filtering when scaling emulated video"),
+            new options_entry(OSDOPTION_PRESCALE + "(1-8)",           "1",              OPTION_INTEGER,   "scale emulated video by this factor before applying filters/shaders"),
 
 #if USE_OPENGL
             new options_entry(null,                                   null,             OPTION_HEADER,    "OpenGL-SPECIFIC OPTIONS"),
@@ -184,9 +189,9 @@ namespace mame
             new options_entry(OSDOPTION_SHADER_SCREEN + "9",          OSDOPTVAL_NONE,   OPTION_STRING,    "custom OpenGL GLSL shader screen bitmap 9"),
 #endif
 
-            new options_entry(null,                                   null,             g.OPTION_HEADER,    "OSD SOUND OPTIONS"),
-            new options_entry(OSDOPTION_SOUND,                        OSDOPTVAL_AUTO,   g.OPTION_STRING,    "sound output method: "),
-            new options_entry(OSDOPTION_AUDIO_LATENCY + "(0-5)",      "2",              g.OPTION_INTEGER,   "set audio latency (increase to reduce glitches, decrease for responsiveness)"),
+            new options_entry(null,                                   null,             OPTION_HEADER,    "OSD SOUND OPTIONS"),
+            new options_entry(OSDOPTION_SOUND,                        OSDOPTVAL_AUTO,   OPTION_STRING,    "sound output method: "),
+            new options_entry(OSDOPTION_AUDIO_LATENCY + "(0-5)",      "2",              OPTION_INTEGER,   "set audio latency (increase to reduce glitches, decrease for responsiveness)"),
 
 #if NO_USE_PORTAUDIO
             { nullptr,                                nullptr,          OPTION_HEADER,    "PORTAUDIO OPTIONS" },
@@ -210,14 +215,14 @@ namespace mame
             new options_entry(OSDOPTION_AUDIO_EFFECT + "9",           OSDOPTVAL_NONE,   OPTION_STRING,    "AudioUnit effect 9"),
 #endif
 
-            new options_entry(null,                                   null,              g.OPTION_HEADER,  "BGFX POST-PROCESSING OPTIONS"),
-            new options_entry(OSDOPTION_BGFX_PATH,                    "bgfx",            g.OPTION_STRING,  "path to BGFX-related files"),
-            new options_entry(OSDOPTION_BGFX_BACKEND,                 "auto",            g.OPTION_STRING,  "BGFX backend to use (d3d9, d3d11, d3d12, metal, opengl, gles, vulkan)"),
-            new options_entry(OSDOPTION_BGFX_DEBUG,                   "0",               g.OPTION_BOOLEAN, "enable BGFX debugging statistics"),
-            new options_entry(OSDOPTION_BGFX_SCREEN_CHAINS,           "default",         g.OPTION_STRING,  "comma-delimited list of screen chain JSON names, colon-delimited per-window"),
-            new options_entry(OSDOPTION_BGFX_SHADOW_MASK,             "slot-mask.png",   g.OPTION_STRING,  "shadow mask texture name"),
-            new options_entry(OSDOPTION_BGFX_LUT,                     "",                g.OPTION_STRING, "LUT texture name"),
-            new options_entry(OSDOPTION_BGFX_AVI_NAME,                OSDOPTVAL_AUTO,    g.OPTION_STRING,  "filename for BGFX output logging"),
+            new options_entry(null,                                   null,              OPTION_HEADER,  "BGFX POST-PROCESSING OPTIONS"),
+            new options_entry(OSDOPTION_BGFX_PATH,                    "bgfx",            OPTION_STRING,  "path to BGFX-related files"),
+            new options_entry(OSDOPTION_BGFX_BACKEND,                 "auto",            OPTION_STRING,  "BGFX backend to use (d3d9, d3d11, d3d12, metal, opengl, gles, vulkan)"),
+            new options_entry(OSDOPTION_BGFX_DEBUG,                   "0",               OPTION_BOOLEAN, "enable BGFX debugging statistics"),
+            new options_entry(OSDOPTION_BGFX_SCREEN_CHAINS,           "default",         OPTION_STRING,  "comma-delimited list of screen chain JSON names, colon-delimited per-window"),
+            new options_entry(OSDOPTION_BGFX_SHADOW_MASK,             "slot-mask.png",   OPTION_STRING,  "shadow mask texture name"),
+            new options_entry(OSDOPTION_BGFX_LUT,                     "",                OPTION_STRING, "LUT texture name"),
+            new options_entry(OSDOPTION_BGFX_AVI_NAME,                OSDOPTVAL_AUTO,    OPTION_STRING,  "filename for BGFX output logging"),
 
             // End of list
             new options_entry(null),
@@ -378,7 +383,7 @@ namespace mame
 
         ~osd_common_t()
         {
-            g.assert(m_isDisposed);  // can remove
+            assert(m_isDisposed);  // can remove
         }
 
         bool m_isDisposed = false;
@@ -752,7 +757,7 @@ namespace mame
                 if (om.probe())
                 {
                     om.init(options());
-                    osdcore_global.m_osdcore.osd_list_network_adapters();
+                    m_osdcore.osd_list_network_adapters();
                     om.exit();
                 }
 
@@ -788,7 +793,7 @@ namespace mame
         //        this INTERFACE but part of the osd IMPLEMENTATION
 
         // getters
-        protected running_machine machine() { g.assert(m_machine != null);  return m_machine; }
+        protected running_machine machine() { assert(m_machine != null);  return m_machine; }
 
 
         protected virtual void debugger_update()
@@ -808,13 +813,13 @@ namespace mame
         {
             // monitors have to be initialized before video init
             m_monitor_module = select_module_options<monitor_module>(options(), monitor_module.OSD_MONITOR_PROVIDER);
-            g.assert(m_monitor_module != null);
+            assert(m_monitor_module != null);
             m_monitor_module.init(options());
 
             if (!video_init())
             {
                 video_exit();
-                g.osd_printf_error("video_init: Initialization failed!\n\n\n");
+                osd_printf_error("video_init: Initialization failed!\n\n\n");
                 //fflush(stderr);
                 //fflush(stdout);
                 throw new emu_fatalerror("video_init: Initialization failed!\n\n\n");  //Environment.Exit(-1);  // exit(-1);
@@ -998,7 +1003,7 @@ namespace mame
             }
             else if (!m_mod_man.type_has_name(opt_name, opt_val))
             {
-                g.osd_printf_warning("Value {0} not supported for option {1} - falling back to auto\n", opt_val, opt_name);
+                osd_printf_warning("Value {0} not supported for option {1} - falling back to auto\n", opt_val, opt_name);
                 opt_val = "";
             }
 

@@ -2,7 +2,10 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.netlist.devices.lib_entries_global;
+using static mame.netlist.devices.net_lib_global;
+using static mame.netlist.nl_setup_global;
 
 
 namespace mame.netlist.devices
@@ -29,8 +32,8 @@ namespace mame.netlist.devices
         //        NET_REGISTER_DEVEXT(SOLVER, name, freq)
         public static void SOLVER(nlparse_t setup, string name, int freq)
         {
-            nl_setup_global.NET_REGISTER_DEV(setup, "SOLVER", name);
-            nl_setup_global.PARAM(setup, name + ".FREQ", freq);
+            NET_REGISTER_DEV(setup, "SOLVER", name);
+            PARAM(setup, name + ".FREQ", freq);
         }
 
 

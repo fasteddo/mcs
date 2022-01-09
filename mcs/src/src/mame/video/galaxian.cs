@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
@@ -12,6 +11,11 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
+
+using static mame.emucore_global;
+using static mame.resnet_global;
+using static mame.tilemap_global;
+using static mame.util;
 
 
 namespace mame
@@ -73,7 +77,7 @@ namespace mame
             double [] rweights = new double[3];
             double [] gweights = new double[3];
             double [] bweights = new double[2];
-            g.compute_resistor_weights(0, RGB_MAXIMUM, -1.0,
+            compute_resistor_weights(0, RGB_MAXIMUM, -1.0,
                     3, rgb_resistances3, out rweights, 470, 0,
                     3, rgb_resistances3, out gweights, 470, 0,
                     2, rgb_resistances2, out bweights, 470, 0);
@@ -87,23 +91,23 @@ namespace mame
                 uint8_t bit2;
 
                 /* red component */
-                bit0 = (uint8_t)g.BIT(color_prom[i], 0);
-                bit1 = (uint8_t)g.BIT(color_prom[i], 1);
-                bit2 = (uint8_t)g.BIT(color_prom[i], 2);
-                int r = g.combine_weights(rweights, bit0, bit1, bit2);
+                bit0 = (uint8_t)BIT(color_prom[i], 0);
+                bit1 = (uint8_t)BIT(color_prom[i], 1);
+                bit2 = (uint8_t)BIT(color_prom[i], 2);
+                int r = combine_weights(rweights, bit0, bit1, bit2);
 
                 /* green component */
-                bit0 = (uint8_t)g.BIT(color_prom[i], 3);
-                bit1 = (uint8_t)g.BIT(color_prom[i], 4);
-                bit2 = (uint8_t)g.BIT(color_prom[i], 5);
-                int gr = g.combine_weights(gweights, bit0, bit1, bit2);
+                bit0 = (uint8_t)BIT(color_prom[i], 3);
+                bit1 = (uint8_t)BIT(color_prom[i], 4);
+                bit2 = (uint8_t)BIT(color_prom[i], 5);
+                int gr = combine_weights(gweights, bit0, bit1, bit2);
 
                 /* blue component */
-                bit0 = (uint8_t)g.BIT(color_prom[i], 6);
-                bit1 = (uint8_t)g.BIT(color_prom[i], 7);
-                int b = g.combine_weights(bweights, bit0, bit1);
+                bit0 = (uint8_t)BIT(color_prom[i], 6);
+                bit1 = (uint8_t)BIT(color_prom[i], 7);
+                int b = combine_weights(bweights, bit0, bit1);
 
-                palette.dipalette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
+                palette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
             }
 
             /*
@@ -141,18 +145,18 @@ namespace mame
                 uint8_t bit1;
 
                 // bit 5 = red @ 150 Ohm, bit 4 = red @ 100 Ohm
-                bit0 = (uint8_t)g.BIT(i,5);
-                bit1 = (uint8_t)g.BIT(i,4);
+                bit0 = (uint8_t)BIT(i,5);
+                bit1 = (uint8_t)BIT(i,4);
                 int r = starmap[(bit1 << 1) | bit0];
 
                 // bit 3 = green @ 150 Ohm, bit 2 = green @ 100 Ohm
-                bit0 = (uint8_t)g.BIT(i,3);
-                bit1 = (uint8_t)g.BIT(i,2);
+                bit0 = (uint8_t)BIT(i,3);
+                bit1 = (uint8_t)BIT(i,2);
                 int gr = starmap[(bit1 << 1) | bit0];
 
                 // bit 1 = blue @ 150 Ohm, bit 0 = blue @ 100 Ohm
-                bit0 = (uint8_t)g.BIT(i,1);
-                bit1 = (uint8_t)g.BIT(i,0);
+                bit0 = (uint8_t)BIT(i,1);
+                bit1 = (uint8_t)BIT(i,0);
                 int b = starmap[(bit1 << 1) | bit0];
 
                 // set the RGB color
@@ -178,13 +182,13 @@ namespace mame
             if (m_sfx_tilemap == 0)
             {
                 /* normal galaxian hardware is row-based and individually scrolling columns */
-                m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, bg_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, GALAXIAN_XSCALE*8,8, 32,32);
+                m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op0, bg_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, GALAXIAN_XSCALE*8,8, 32,32);
                 m_bg_tilemap.set_scroll_cols(32);
             }
             else
             {
                 /* sfx hardware is column-based and individually scrolling rows */
-                m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, bg_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_COLS, GALAXIAN_XSCALE*8,8, 32,32);
+                m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op0, bg_get_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_COLS, GALAXIAN_XSCALE*8,8, 32,32);
                 m_bg_tilemap.set_scroll_rows(32);
             }
             m_bg_tilemap.set_transparent_pen(0);
@@ -208,21 +212,21 @@ namespace mame
 
         void state_save_register()
         {
-            save_item(g.NAME(new { m_flipscreen_x }));
-            save_item(g.NAME(new { m_flipscreen_y }));
-            save_item(g.NAME(new { m_background_enable }));
-            save_item(g.NAME(new { m_background_red }));
-            save_item(g.NAME(new { m_background_green }));
-            save_item(g.NAME(new { m_background_blue }));
+            save_item(NAME(new { m_flipscreen_x }));
+            save_item(NAME(new { m_flipscreen_y }));
+            save_item(NAME(new { m_background_enable }));
+            save_item(NAME(new { m_background_red }));
+            save_item(NAME(new { m_background_green }));
+            save_item(NAME(new { m_background_blue }));
 
-            save_item(g.NAME(new { m_sprites_base }));
-            save_item(g.NAME(new { m_bullets_base }));
-            save_item(g.NAME(new { m_gfxbank }));
+            save_item(NAME(new { m_sprites_base }));
+            save_item(NAME(new { m_bullets_base }));
+            save_item(NAME(new { m_gfxbank }));
 
-            save_item(g.NAME(new { m_stars_enabled }));
-            save_item(g.NAME(new { m_star_rng_origin }));
-            save_item(g.NAME(new { m_star_rng_origin_frame }));
-            save_item(g.NAME(new { m_stars_blink_state }));
+            save_item(NAME(new { m_stars_enabled }));
+            save_item(NAME(new { m_star_rng_origin }));
+            save_item(NAME(new { m_star_rng_origin_frame }));
+            save_item(NAME(new { m_stars_blink_state }));
         }
 
 
@@ -230,7 +234,7 @@ namespace mame
         {
             /* update any video up to the current scanline */
             //m_screen->update_now();
-            m_screen.op[0].update_partial(m_screen.op[0].vpos());
+            m_screen.op0.update_partial(m_screen.op0.vpos());
 
             /* store the data and mark the corresponding tile dirty */
             m_videoram[offset].op = data;
@@ -242,7 +246,7 @@ namespace mame
         {
             /* update any video up to the current scanline */
             //  m_screen->update_now();
-            m_screen.op[0].update_partial(m_screen.op[0].vpos());
+            m_screen.op0.update_partial(m_screen.op0.vpos());
 
             /* store the data */
             m_spriteram[offset].op = data;
@@ -255,7 +259,7 @@ namespace mame
                 {
                     /* Frogger: top and bottom 4 bits swapped entering the adder */
                     if (m_frogger_adjust != 0)
-                        data = (byte)((data >> 4) | (data << 4));
+                        data = (uint8_t)((data >> 4) | (data << 4));
                     if (m_sfx_tilemap == 0)
                         m_bg_tilemap.set_scrolly((int)(offset >> 1), data);
                     else
@@ -375,7 +379,7 @@ namespace mame
                 }
 
                 /* draw */
-                m_gfxdecode.op[0].digfx.gfx(1).transpen(bitmap,clip,
+                m_gfxdecode.op0.gfx(1).transpen(bitmap,clip,
                 code, color,
                 flipx, flipy,
                 m_h0_start + m_x_scale * sx, sy, 0);
@@ -437,7 +441,7 @@ namespace mame
             if (m_flipscreen_x != (data & 0x01))
             {
                 //      m_screen->update_now();
-                m_screen.op[0].update_partial(m_screen.op[0].vpos());
+                m_screen.op0.update_partial(m_screen.op0.vpos());
 
                 /* when the direction changes, we count a different number of clocks */
                 /* per frame, so we need to reset the origin of the stars to the current */
@@ -445,7 +449,7 @@ namespace mame
                 stars_update_origin();
 
                 m_flipscreen_x = (uint8_t)(data & 0x01);
-                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? g.TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? g.TILEMAP_FLIPY : 0));
+                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? TILEMAP_FLIPY : 0));
             }
         }
 
@@ -454,10 +458,10 @@ namespace mame
             if (m_flipscreen_y != (data & 0x01))
             {
                 //m_screen->update_now();
-                m_screen.op[0].update_partial(m_screen.op[0].vpos());
+                m_screen.op0.update_partial(m_screen.op0.vpos());
 
                 m_flipscreen_y = (uint8_t)(data & 0x01);
-                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? g.TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? g.TILEMAP_FLIPY : 0));
+                m_bg_tilemap.set_flip((m_flipscreen_x != 0 ? TILEMAP_FLIPX : 0) | (m_flipscreen_y != 0 ? TILEMAP_FLIPY : 0));
             }
         }
 
@@ -479,7 +483,7 @@ namespace mame
             if (((m_stars_enabled ^ data) & 0x01) != 0)
             {
                 //m_screen->update_now();
-                m_screen.op[0].update_partial(m_screen.op[0].vpos());
+                m_screen.op0.update_partial(m_screen.op0.vpos());
             }
 
             if (m_stars_enabled == 0 && (data & 0x01) != 0)
@@ -487,8 +491,8 @@ namespace mame
                 /* on the rising edge of this, the CLR on the shift registers is released */
                 /* this resets the "origin" of this frame to 0 minus the number of clocks */
                 /* we have counted so far */
-                m_star_rng_origin = (uint32_t)(STAR_RNG_PERIOD - (m_screen.op[0].vpos() * 512 + m_screen.op[0].hpos()));
-                m_star_rng_origin_frame = (uint32_t)m_screen.op[0].frame_number();
+                m_star_rng_origin = (uint32_t)(STAR_RNG_PERIOD - (m_screen.op0.vpos() * 512 + m_screen.op0.hpos()));
+                m_star_rng_origin_frame = (uint32_t)m_screen.op0.frame_number();
             }
 
             m_stars_enabled = (uint8_t)(data & 0x01);
@@ -538,7 +542,7 @@ namespace mame
 
         void stars_update_origin()
         {
-            int curframe = (int)m_screen.op[0].frame_number();
+            int curframe = (int)m_screen.op0.frame_number();
 
             /* only update on a different frame */
             if (curframe != m_star_rng_origin_frame)
@@ -569,7 +573,7 @@ namespace mame
          *
          *************************************/
 
-        void stars_draw_row(bitmap_rgb32 bitmap, int maxx, int y, UInt32 star_offs, byte starmask)
+        void stars_draw_row(bitmap_rgb32 bitmap, int maxx, int y, uint32_t star_offs, uint8_t starmask)
         {
             int x;
 

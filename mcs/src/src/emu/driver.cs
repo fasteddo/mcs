@@ -2,18 +2,19 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using size_t = System.UInt64;
 
+using static mame.diexec_global;
+using static mame.driver_global;
+using static mame.emucore_global;
+using static mame.tilemap_global;
+
 
 namespace mame
 {
-    public delegate void driver_callback_delegate();
-
-
     public static class driver_global
     {
         //**************************************************************************
@@ -28,7 +29,36 @@ namespace mame
         // core video callbacks
         public static void MCFG_VIDEO_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_device.static_set_callback(config.root_device(), driver_device.callback_type.CB_VIDEO_START, func); }  //driver_callback_delegate(&_class::VIDEO_START_NAME(_func), #_class "::video_start_" #_func, downcast<_class *>(owner)));
         //define MCFG_VIDEO_RESET_OVERRIDE(_class, _func)             driver_device::static_set_callback(config.root_device(), driver_device::CB_VIDEO_RESET, driver_callback_delegate(&_class::VIDEO_RESET_NAME(_func), #_class "::video_reset_" #_func, downcast<_class *>(owner)));
+
+
+        //**************************************************************************
+        //  OTHER MACROS
+        //**************************************************************************
+
+        //#define MACHINE_START_NAME(name)    machine_start_##name
+        //#define MACHINE_START_CALL_MEMBER(name) MACHINE_START_NAME(name)()
+        //#define DECLARE_MACHINE_START(name) void MACHINE_START_NAME(name)() ATTR_COLD
+        //#define MACHINE_START_MEMBER(cls,name) void cls::MACHINE_START_NAME(name)()
+
+        //#define MACHINE_RESET_NAME(name)    machine_reset_##name
+        //#define MACHINE_RESET_CALL_MEMBER(name) MACHINE_RESET_NAME(name)()
+        //#define DECLARE_MACHINE_RESET(name) void MACHINE_RESET_NAME(name)()
+        //#define MACHINE_RESET_MEMBER(cls,name) void cls::MACHINE_RESET_NAME(name)()
+
+        //#define VIDEO_START_NAME(name)      video_start_##name
+        //#define VIDEO_START_CALL_MEMBER(name)       VIDEO_START_NAME(name)()
+        //#define DECLARE_VIDEO_START(name)   void VIDEO_START_NAME(name)() ATTR_COLD
+        //#define VIDEO_START_MEMBER(cls,name) void cls::VIDEO_START_NAME(name)()
+
+        //#define VIDEO_RESET_NAME(name)      video_reset_##name
+        //#define VIDEO_RESET_CALL_MEMBER(name)       VIDEO_RESET_NAME(name)()
+        //#define DECLARE_VIDEO_RESET(name)   void VIDEO_RESET_NAME(name)()
+        //#define VIDEO_RESET_MEMBER(cls,name) void cls::VIDEO_RESET_NAME(name)()
     }
+
+
+    // forward declarations
+    public delegate void driver_callback_delegate();  //typedef delegate<void ()> driver_callback_delegate;
 
 
     /// \brief Base class for system device classes
@@ -126,14 +156,14 @@ namespace mame
         //  NMI callbacks
         //-------------------------------------------------
         //INTERRUPT_GEN_MEMBER( driver_device::nmi_line_pulse )   { device.execute().pulse_input_line(INPUT_LINE_NMI, attotime::zero); }
-        public void nmi_line_pulse(device_t device) { device.execute().pulse_input_line(g.INPUT_LINE_NMI, attotime.zero); }
+        public void nmi_line_pulse(device_t device) { device.execute().pulse_input_line(INPUT_LINE_NMI, attotime.zero); }
 
         //INTERRUPT_GEN_MEMBER( driver_device::nmi_line_assert )  { device.execute().set_input_line(INPUT_LINE_NMI, ASSERT_LINE); }
-        void nmi_line_assert(device_t device) { device.execute().set_input_line(g.INPUT_LINE_NMI, g.ASSERT_LINE); }
+        void nmi_line_assert(device_t device) { device.execute().set_input_line(INPUT_LINE_NMI, ASSERT_LINE); }
 
 
         //INTERRUPT_GEN_MEMBER( driver_device::irq0_line_hold )   { device.execute().set_input_line(0, HOLD_LINE); }
-        public void irq0_line_hold(device_t device) { device.execute().set_input_line(0, g.HOLD_LINE); }
+        public void irq0_line_hold(device_t device) { device.execute().set_input_line(0, HOLD_LINE); }
 
         //void irq0_line_assert(device_t &device);
 
@@ -251,8 +281,8 @@ namespace mame
                 video_start();
 
             // save generic states
-            save_item(g.NAME(new { m_flip_screen_x }));
-            save_item(g.NAME(new { m_flip_screen_y }));
+            save_item(NAME(new { m_flip_screen_x }));
+            save_item(NAME(new { m_flip_screen_y }));
         }
 
         //-------------------------------------------------
@@ -293,7 +323,7 @@ namespace mame
             // if something's changed, handle it
             if (m_flip_screen_x != on || m_flip_screen_y != on)
             {
-                m_flip_screen_x = m_flip_screen_y = (byte)on;
+                m_flip_screen_x = m_flip_screen_y = (u8)on;
                 updateflip();
             }
         }
@@ -313,7 +343,7 @@ namespace mame
         void updateflip()
         {
             // push the flip state to all tilemaps
-            machine().tilemap().set_flip_all((g.TILEMAP_FLIPX & m_flip_screen_x) | (g.TILEMAP_FLIPY & m_flip_screen_y));
+            machine().tilemap().set_flip_all((TILEMAP_FLIPX & m_flip_screen_x) | (TILEMAP_FLIPY & m_flip_screen_y));
         }
     }
 }

@@ -1,6 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
+using System;
+
+using static mame.rescap_global;
+
+
 namespace mame
 {
     partial class galaxian_state : driver_device
@@ -16,10 +21,10 @@ namespace mame
             h.PARAM("G1.BASER", 270.0);
             h.CD4066_GATE("G2");
             h.PARAM("G2.BASER", 270.0);
-            h.RES("RI", g.RES_K(1));
-            h.RES("RO", g.RES_K(5));
-            h.CAP("C1", g.CAP_U(0.22));
-            h.CAP("C2", g.CAP_U(0.047));
+            h.RES("RI", RES_K(1));
+            h.RES("RO", RES_K(5));
+            h.CAP("C1", CAP_U(0.22));
+            h.CAP("C2", CAP_U(0.047));
             h.NET_C("RI.2", "RO.1", "G1.R.1", "G2.R.1");
             h.NET_C("G1.R.2", "C1.1");
             h.NET_C("G2.R.2", "C2.1");
@@ -48,11 +53,11 @@ namespace mame
             h.NETLIST_START(setup);
 
             h.UA741_DIP8("X3A");
-            h.RES("R1", g.RES_K(2.2));
-            h.RES("R2", g.RES_K(4.7));
+            h.RES("R1", RES_K(2.2));
+            h.RES("R2", RES_K(4.7));
             h.RES("VR", 200);         // Actually a potentiometer
-            h.CAP("C1", g.CAP_U(0.15));
-            h.RES("RI", g.RES_K(100));
+            h.CAP("C1", CAP_U(0.15));
+            h.RES("RI", RES_K(100));
 
             h.NET_C("X3A.2", "R1.1");
             h.NET_C("X3A.6", "R1.2", "R2.1");

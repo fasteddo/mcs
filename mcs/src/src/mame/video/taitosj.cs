@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int8_t = System.SByte;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -12,15 +11,18 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
+using static mame.drawgfx_global;
+using static mame.resnet_global;
+
 
 namespace mame
 {
     partial class taitosj_state : driver_device
     {
-        bool GLOBAL_FLIP_X { get { return (m_video_mode.op[0] & 0x01) != 0; } }
-        bool GLOBAL_FLIP_Y { get { return (m_video_mode.op[0] & 0x02) != 0; } }
-        int SPRITE_RAM_PAGE_OFFSET { get { return (m_video_mode.op[0] & 0x04) != 0 ? 0x80 : 0x00; } }
-        bool SPRITES_ON { get { return (m_video_mode.op[0] & 0x80) != 0; } }
+        bool GLOBAL_FLIP_X { get { return (m_video_mode.op0 & 0x01) != 0; } }
+        bool GLOBAL_FLIP_Y { get { return (m_video_mode.op0 & 0x02) != 0; } }
+        int SPRITE_RAM_PAGE_OFFSET { get { return (m_video_mode.op0 & 0x04) != 0 ? 0x80 : 0x00; } }
+        bool SPRITES_ON { get { return (m_video_mode.op0 & 0x80) != 0; } }
         const uint32_t TRANSPARENT_PEN         = 0x40;
 
 
@@ -53,7 +55,7 @@ namespace mame
             double [] bweights;
 
             // compute the color output resistor weights
-            g.compute_resistor_weights(0, 255, -1.0,
+            compute_resistor_weights(0, 255, -1.0,
                     3, resistances, out rweights, 0, 0,
                     3, resistances, out gweights, 0, 0,
                     3, resistances, out bweights, 0, 0);
@@ -66,23 +68,23 @@ namespace mame
                 int bit1 = (~val >> 7) & 0x01;
                 val = m_paletteram.op[(i << 1) | 0x00];
                 int bit2 = (~val >> 0) & 0x01;
-                int r = g.combine_weights(rweights, bit0, bit1, bit2);
+                int r = combine_weights(rweights, bit0, bit1, bit2);
 
                 // green component
                 val = m_paletteram.op[(i << 1) | 0x01];
                 bit0 = (~val >> 3) & 0x01;
                 bit1 = (~val >> 4) & 0x01;
                 bit2 = (~val >> 5) & 0x01;
-                int gr = g.combine_weights(gweights, bit0, bit1, bit2);
+                int gr = combine_weights(gweights, bit0, bit1, bit2);
 
                 // blue component
                 val = m_paletteram.op[(i << 1) | 0x01];
                 bit0 = (~val >> 0) & 0x01;
                 bit1 = (~val >> 1) & 0x01;
                 bit2 = (~val >> 2) & 0x01;
-                int b = g.combine_weights(bweights, bit0, bit1, bit2);
+                int b = combine_weights(bweights, bit0, bit1, bit2);
 
-                m_palette.op[0].dipalette.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)gr, (u8)b));
+                m_palette.op0.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)gr, (u8)b));
             }
         }
 
@@ -120,10 +122,10 @@ namespace mame
 
         protected override void device_post_load()
         {
-            m_gfxdecode.op[0].digfx.gfx(0).mark_all_dirty();
-            m_gfxdecode.op[0].digfx.gfx(1).mark_all_dirty();
-            m_gfxdecode.op[0].digfx.gfx(2).mark_all_dirty();
-            m_gfxdecode.op[0].digfx.gfx(3).mark_all_dirty();
+            m_gfxdecode.op0.gfx(0).mark_all_dirty();
+            m_gfxdecode.op0.gfx(1).mark_all_dirty();
+            m_gfxdecode.op0.gfx(2).mark_all_dirty();
+            m_gfxdecode.op0.gfx(3).mark_all_dirty();
         }
 
 
@@ -134,18 +136,18 @@ namespace mame
             for (int i = 0; i < 3; i++)
             {
                 m_layer_bitmap[i] = new bitmap_ind16();
-                m_screen.op[0].register_screen_bitmap(m_layer_bitmap[i]);
+                m_screen.op0.register_screen_bitmap(m_layer_bitmap[i]);
                 m_sprite_layer_collbitmap2[i] = new bitmap_ind16();
-                m_screen.op[0].register_screen_bitmap(m_sprite_layer_collbitmap2[i]);
+                m_screen.op0.register_screen_bitmap(m_sprite_layer_collbitmap2[i]);
             }
 
             m_sprite_sprite_collbitmap1.allocate(32,32);
             m_sprite_sprite_collbitmap2.allocate(32,32);
 
-            m_gfxdecode.op[0].digfx.gfx(0).set_source(new Pointer<uint8_t>(m_characterram.op));
-            m_gfxdecode.op[0].digfx.gfx(1).set_source(new Pointer<uint8_t>(m_characterram.op));
-            m_gfxdecode.op[0].digfx.gfx(2).set_source(new Pointer<uint8_t>(m_characterram.op, 0x1800));
-            m_gfxdecode.op[0].digfx.gfx(3).set_source(new Pointer<uint8_t>(m_characterram.op, 0x1800));
+            m_gfxdecode.op0.gfx(0).set_source(new Pointer<uint8_t>(m_characterram.op));
+            m_gfxdecode.op0.gfx(1).set_source(new Pointer<uint8_t>(m_characterram.op));
+            m_gfxdecode.op0.gfx(2).set_source(new Pointer<uint8_t>(m_characterram.op, 0x1800));
+            m_gfxdecode.op0.gfx(3).set_source(new Pointer<uint8_t>(m_characterram.op, 0x1800));
 
             compute_draw_order();
         }
@@ -177,13 +179,13 @@ namespace mame
             {
                 if (offset < 0x1800)
                 {
-                    m_gfxdecode.op[0].digfx.gfx(0).mark_dirty((offset / 8) & 0xff);
-                    m_gfxdecode.op[0].digfx.gfx(1).mark_dirty((offset / 32) & 0x3f);
+                    m_gfxdecode.op0.gfx(0).mark_dirty((offset / 8) & 0xff);
+                    m_gfxdecode.op0.gfx(1).mark_dirty((offset / 32) & 0x3f);
                 }
                 else
                 {
-                    m_gfxdecode.op[0].digfx.gfx(2).mark_dirty((offset / 8) & 0xff);
-                    m_gfxdecode.op[0].digfx.gfx(3).mark_dirty((offset / 32) & 0x3f);
+                    m_gfxdecode.op0.gfx(2).mark_dirty((offset / 8) & 0xff);
+                    m_gfxdecode.op0.gfx(3).mark_dirty((offset / 32) & 0x3f);
                 }
 
                 m_characterram[offset].op = data;
@@ -215,7 +217,7 @@ namespace mame
         {
             offs_t offs = (offs_t)(which * 4);
 
-            return m_gfxdecode.op[0].digfx.gfx((m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 3] & 0x40) != 0 ? 3 : 1);
+            return m_gfxdecode.op0.gfx((m_spriteram.op[SPRITE_RAM_PAGE_OFFSET + (int)offs + 3] & 0x40) != 0 ? 3 : 1);
         }
 
 
@@ -347,8 +349,8 @@ namespace mame
 
         void calculate_sprite_areas(int [] sprites_on, rectangle [] sprite_areas)
         {
-            int width = m_screen.op[0].width();
-            int height = m_screen.op[0].height();
+            int width = m_screen.op0.width();
+            int height = m_screen.op0.height();
 
             for (int which = 0; which < 0x20; which++)
             {
@@ -402,9 +404,9 @@ namespace mame
             offs_t offs = (offs_t)(which * 4);
             int result = 0;  // no collisions
 
-            int check_layer_1 = m_video_mode.op[0] & layer_enable_mask[0];
-            int check_layer_2 = m_video_mode.op[0] & layer_enable_mask[1];
-            int check_layer_3 = m_video_mode.op[0] & layer_enable_mask[2];
+            int check_layer_1 = m_video_mode.op0 & layer_enable_mask[0];
+            int check_layer_2 = m_video_mode.op0 & layer_enable_mask[1];
+            int check_layer_3 = m_video_mode.op0 & layer_enable_mask[2];
 
             int minx = sprite_areas[which].min_x;
             int miny = sprite_areas[which].min_y;
@@ -474,19 +476,19 @@ namespace mame
                 if (GLOBAL_FLIP_X) sx = 31 - sx;
                 if (GLOBAL_FLIP_Y) sy = 31 - sy;
 
-                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[0] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[0], m_layer_bitmap[0].cliprect(),
+                m_gfxdecode.op0.gfx((m_colorbank.op[0] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[0], m_layer_bitmap[0].cliprect(),
                         m_videoram.op(0).op[offs],
                         (u32)(m_colorbank.op[0] & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
                         8 * sx, 8 * sy, 0);
 
-                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[0] & 0x80) != 0 ? 2 : 0).transpen(m_layer_bitmap[1], m_layer_bitmap[1].cliprect(),
+                m_gfxdecode.op0.gfx((m_colorbank.op[0] & 0x80) != 0 ? 2 : 0).transpen(m_layer_bitmap[1], m_layer_bitmap[1].cliprect(),
                         m_videoram.op(1).op[offs],
                         (u32)((m_colorbank.op[0] >> 4) & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
                         8 * sx, 8 * sy, 0);
 
-                m_gfxdecode.op[0].digfx.gfx((m_colorbank.op[1] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[2], m_layer_bitmap[2].cliprect(),
+                m_gfxdecode.op0.gfx((m_colorbank.op[1] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[2], m_layer_bitmap[2].cliprect(),
                         m_videoram.op(2).op[offs],
                         (u32)(m_colorbank.op[1] & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
@@ -555,7 +557,7 @@ namespace mame
             int [] fudge1 = new int [3] { 3,  1, -1 };
             int [] fudge2 = new int [3] { 8, 10, 12 };
 
-            if ((m_video_mode.op[0] & layer_enable_mask[which]) != 0)
+            if ((m_video_mode.op0 & layer_enable_mask[which]) != 0)
             {
                 int i;
                 int scrollx;
@@ -579,7 +581,7 @@ namespace mame
                         scrolly[i]      = -m_colscrolly.op[32 * which + i] - m_scroll.op[2 * which + 1];
                 }
 
-                g.copyscrollbitmap_trans(bitmap, m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, cliprect, TRANSPARENT_PEN);
+                copyscrollbitmap_trans(bitmap, m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, cliprect, TRANSPARENT_PEN);
 
                 // store parts covered with sprites for sprites/layers collision detection
                 for (i = 0; i < 0x20; i++)
@@ -587,7 +589,7 @@ namespace mame
                     if ((i >= 0x10) && (i <= 0x17)) continue; // no sprites here
 
                     if (sprites_on[i] != 0)
-                        g.copyscrollbitmap(m_sprite_layer_collbitmap2[which], m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, sprite_areas[i]);
+                        copyscrollbitmap(m_sprite_layer_collbitmap2[which], m_layer_bitmap[which], 1, new int [] { scrollx }, 32, scrolly, sprite_areas[i]);
                 }
             }
         }
@@ -609,7 +611,7 @@ namespace mame
 
             for (int i = 0; i < 4; i++)
             {
-                int which = m_draw_order[m_video_priority.op[0] & 0x1f, i];
+                int which = m_draw_order[m_video_priority.op0 & 0x1f, i];
 
                 copy_layer(bitmap, cliprect, copy_layer_func, which, sprites_on, sprite_areas);
             }

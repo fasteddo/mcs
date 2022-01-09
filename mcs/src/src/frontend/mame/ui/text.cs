@@ -2,11 +2,16 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using char32_t = System.UInt32;
 using size_t = System.UInt64;
 using u16 = System.UInt16;
+
+using static mame.cpp_global;
+using static mame.emucore_global;
+using static mame.render_global;
+using static mame.rendertypes_global;
+using static mame.unicode_global;
 
 
 namespace mame.ui
@@ -64,23 +69,23 @@ namespace mame.ui
         // class to represent a line
         class line
         {
+            //using size_type = size_t;
+            //static constexpr size_type npos = ~size_type(0);
+
+
             std.vector<positioned_char> m_characters = new std.vector<positioned_char>();
-            text_layout m_layout;
-            text_justify m_justify;
+            size_t m_center_justify_start = npos;
+            size_t m_right_justify_start = npos;
             float m_yoffset;
-            float m_width;
             float m_height;
+            float m_width = 0.0f;
+            float m_anchor_pos = 0.0f;
+            float m_anchor_target = 0.0f;
 
 
-            //-------------------------------------------------
-            //  line::ctor
-            //-------------------------------------------------
-            public line(text_layout layout, text_justify justify, float yoffset, float height)
+            public line(float yoffset, float height)
             {
-                m_layout = layout;
-                m_justify = justify;
                 m_yoffset = yoffset;
-                m_width = 0;
                 m_height = height;
             }
 
@@ -90,25 +95,17 @@ namespace mame.ui
             //-------------------------------------------------
             //  line::add_character
             //-------------------------------------------------
-            public void add_character(char32_t ch, char_style style, source_info source)
+            public void add_character(text_layout layout, char32_t ch, char_style style, source_info source)
             {
                 // get the width of this character
-                float chwidth = m_layout.get_char_width(ch, style.size);
+                float chwidth = layout.get_char_width(ch, style.size);
 
-                // create the positioned character
-                positioned_char positioned_char;
-                positioned_char.character = ch;
-                positioned_char.xoffset = m_width;
-                positioned_char.xwidth = chwidth;
-                positioned_char.style = style;
-                positioned_char.source = source;
-
-                // append the character
-                m_characters.push_back(positioned_char);
+                // append the positioned character
+                m_characters.emplace_back(new positioned_char() { character = ch, style = style, source = source, xoffset = m_width, xwidth = chwidth });
                 m_width += chwidth;
 
                 // we might be bigger
-                m_height = std.max(m_height, style.size * m_layout.yscale());
+                m_height = std.max(m_height, style.size * layout.yscale());
             }
 
 
@@ -117,7 +114,7 @@ namespace mame.ui
             //-------------------------------------------------
             public void truncate(size_t position)
             {
-                g.assert(position <= m_characters.size());
+                assert(position <= m_characters.size());
 
                 // are we actually truncating?
                 if (position < m_characters.size())
@@ -131,36 +128,121 @@ namespace mame.ui
             }
 
 
-            // accessors
-
-            //-------------------------------------------------
-            //  line::xoffset
-            //-------------------------------------------------
-            public float xoffset()
+            public void set_justification(text_justify justify)
             {
-                float result;
-                switch (justify())
+                switch (justify)
                 {
-                    case text_justify.LEFT:
-                    default:
-                        result = 0;
-                        break;
-                    case text_justify.CENTER:
-                        result = (m_layout.width() - width()) / 2;
-                        break;
-                    case text_justify.RIGHT:
-                        result = m_layout.width() - width();
-                        break;
+                case text_justify.RIGHT:
+                    if (npos == m_right_justify_start)
+                        m_right_justify_start = m_characters.size();
+                    goto case text_justify.CENTER;  //[[fallthrough]];
+                case text_justify.CENTER:
+                    if (npos == m_center_justify_start)
+                        m_center_justify_start = m_characters.size();
+                    break;
+                case text_justify.LEFT:
+                    break;
                 }
-                return result;
             }
 
+
+            public void align_text(text_layout layout)
+            {
+                assert(m_right_justify_start >= m_center_justify_start);
+
+                if (m_characters.empty() || m_center_justify_start != 0)
+                {
+                    // at least some of the text is left-justified - anchor to left
+                    m_anchor_pos = 0.0f;
+                    m_anchor_target = 0.0f;
+                    if ((layout.width() > m_width) && (m_characters.size() > m_center_justify_start))
+                    {
+                        // at least some text is not left-justified
+                        if (m_right_justify_start == m_center_justify_start)
+                        {
+                            // all text that isn't left-justified is right-justified
+                            float right_offset = layout.width() - m_width;
+                            for (size_t i = m_right_justify_start; m_characters.size() > i; ++i)
+                                m_characters[i] = new positioned_char() { character = m_characters[i].character, style = m_characters[i].style, source = m_characters[i].source, xoffset = m_characters[i].xoffset + right_offset, xwidth = m_characters[i].xwidth };  //m_characters[i].xoffset += right_offset;
+
+                            m_width = layout.width();
+                        }
+                        else if (m_characters.size() <= m_right_justify_start)
+                        {
+                            // all text that isn't left-justified is center-justified
+                            float center_width = m_width - m_characters[m_center_justify_start].xoffset;
+                            float center_offset = ((layout.width() - center_width) * 0.5f) - m_characters[m_center_justify_start].xoffset;
+                            if (0.0f < center_offset)
+                            {
+                                for (size_t i = m_center_justify_start; m_characters.size() > i; ++i)
+                                    m_characters[i] = new positioned_char() { character = m_characters[i].character, style = m_characters[i].style, source = m_characters[i].source, xoffset = m_characters[i].xoffset + center_offset, xwidth = m_characters[i].xwidth };  //m_characters[i].xoffset += center_offset;
+
+                                m_width += center_offset;
+                            }
+                        }
+                        else
+                        {
+                            // left, right and center-justified parts
+                            float center_width = m_characters[m_right_justify_start].xoffset - m_characters[m_center_justify_start].xoffset;
+                            float center_offset = ((layout.width() - center_width) * 0.5f) - m_characters[m_center_justify_start].xoffset;
+                            float right_offset = layout.width() - m_width;
+                            if (center_offset > right_offset)
+                            {
+                                // right-justified text pushes centre-justified text to the left
+                                for (size_t i = m_center_justify_start; m_right_justify_start > i; ++i)
+                                    m_characters[i] = new positioned_char() { character = m_characters[i].character, style = m_characters[i].style, source = m_characters[i].source, xoffset = m_characters[i].xoffset + right_offset, xwidth = m_characters[i].xwidth };  //m_characters[i].xoffset += right_offset;
+                            }
+                            else if (0.0f < center_offset)
+                            {
+                                // left-justified text doesn't push centre-justified text to the right
+                                for (size_t i = m_center_justify_start; m_right_justify_start > i; ++i)
+                                    m_characters[i] = new positioned_char() { character = m_characters[i].character, style = m_characters[i].style, source = m_characters[i].source, xoffset = m_characters[i].xoffset + center_offset, xwidth = m_characters[i].xwidth };  //m_characters[i].xoffset += center_offset;
+                            }
+
+                            for (size_t i = m_right_justify_start; m_characters.size() > i; ++i)
+                                m_characters[i] = new positioned_char() { character = m_characters[i].character, style = m_characters[i].style, source = m_characters[i].source, xoffset = m_characters[i].xoffset + right_offset, xwidth = m_characters[i].xwidth };  //m_characters[i].xoffset += right_offset;
+
+                            m_width = layout.width();
+                        }
+                    }
+                }
+                else if (m_characters.size() <= m_right_justify_start)
+                {
+                    // all text is center-justified - anchor to center
+                    m_anchor_pos = 0.5f;
+                    m_anchor_target = 0.5f;
+                }
+                else
+                {
+                    // at least some text is right-justified - anchor to right
+                    m_anchor_pos = 1.0f;
+                    m_anchor_target = 1.0f;
+                    if ((layout.width() > m_width) && (m_right_justify_start > m_center_justify_start))
+                    {
+                        // mixed center-justified and right-justified text
+                        float center_width = m_characters[m_right_justify_start].xoffset;
+                        float center_offset = (layout.width() - m_width + (center_width * 0.5f)) - (layout.width() * 0.5f);
+                        if (0.0f < center_offset)
+                        {
+                            for (size_t i = m_right_justify_start; m_characters.size() > i; ++i)
+                                m_characters[i] = new positioned_char() { character = m_characters[i].character, style = m_characters[i].style, source = m_characters[i].source, xoffset = m_characters[i].xoffset + center_offset, xwidth = m_characters[i].xwidth };  //m_characters[i].xoffset += center_offset;
+
+                            m_width += center_offset;
+                        }
+                    }
+                }
+            }
+
+
+            // accessors
+            public float xoffset(text_layout layout) { return (layout.width() * m_anchor_target) - (m_width * m_anchor_pos); }
             public float yoffset() { return m_yoffset; }
             public float width() { return m_width; }
             public float height() { return m_height; }
-            public text_justify justify() { return m_justify; }
             public size_t character_count() { return m_characters.size(); }
-            public positioned_char character(size_t index) { return m_characters[index]; }
+            public size_t center_justify_start() { return m_center_justify_start; }
+            public size_t right_justify_start() { return m_right_justify_start; }
+            public positioned_char character(size_t index) { return m_characters[index]; }  //positioned_char &character(size_t index) const { return m_characters[index]; }
         }
 
 
@@ -228,7 +310,7 @@ namespace mame.ui
         render_font font() { return m_font; }
         float xscale() { return m_xscale;  }
         float yscale() { return m_yscale; }
-        float width() { return m_width; }
+        public float width() { return m_width; }
         text_justify justify() { return m_justify; }
         word_wrapping wrap() { return m_wrap; }
 
@@ -240,26 +322,22 @@ namespace mame.ui
         //-------------------------------------------------
         public float actual_left()
         {
-            float result;
-
-            if (empty())
+            if (m_current_line != null)
             {
-                // degenerate scenario
-                result = 0;
-            }
-            else
-            {
-                result = 1.0f;
-                foreach (var line in m_lines)
-                {
-                    result = std.min(result, line.xoffset());
-
-                    // take an opportunity to break out easily
-                    if (result <= 0)
-                        break;
-                }
+                // TODO: is there a sane way to allow an open line to be temporarily finalised and rolled back?
+                m_current_line.align_text(this);
+                m_current_line = null;
             }
 
+            if (empty()) // degenerate scenario
+                return 0.0f;
+
+            float result = 1.0f;
+            foreach (var line in m_lines)
+            {
+                if (line.width() != 0)
+                    result = std.min(result, line.xoffset(this));
+            }
             return result;
         }
 
@@ -269,13 +347,20 @@ namespace mame.ui
         //-------------------------------------------------
         public float actual_width()
         {
+            if (m_current_line != null)
+            {
+                // TODO: is there a sane way to allow an open line to be temporarily finalised and rolled back?
+                m_current_line.align_text(this);
+                m_current_line = null;
+            }
+
             // do we need to calculate the width?
             if (m_calculated_actual_width < 0)
             {
                 // calculate the actual width
                 m_calculated_actual_width = 0;
                 foreach (var line in m_lines)
-                    m_calculated_actual_width = Math.Max(m_calculated_actual_width, line.width());
+                    m_calculated_actual_width = std.max(m_calculated_actual_width, line.width());
 
             }
 
@@ -289,117 +374,90 @@ namespace mame.ui
         //-------------------------------------------------
         public float actual_height()
         {
-            line last_line = (m_lines.size() > 0)
-                ? m_lines[m_lines.size() - 1]
-                : null;
-            return last_line != null
-                ? last_line.yoffset() + last_line.height()
-                : 0;
+            if (!m_lines.empty())
+                return m_lines.back().yoffset() + m_lines.back().height();
+            else
+                return 0.0f;
         }
 
 
-        public bool empty() { return m_lines.size() == 0; }
-        //bool hit_test(float x, float y, size_t &start, size_t &span) const;
+        public bool empty() { return m_lines.empty(); }
+        public size_t lines() { return m_lines.size(); }
+        //bool hit_test(float x, float y, size_t &start, size_t &span);
         //void restyle(size_t start, size_t span, rgb_t *fgcolor, rgb_t *bgcolor);
-
-
-        //-------------------------------------------------
-        //  get_wrap_info
-        //-------------------------------------------------
-        public int get_wrap_info(out std.vector<int> xstart, out std.vector<int> xend)
-        {
-            xstart = new std.vector<int>();
-            xend = new std.vector<int>();
-
-            // this is a hacky method (tailored to the need to implement
-            // mame_ui_manager::wrap_text) but so be it
-            int line_count = 0;
-            foreach (var line in m_lines)
-            {
-                int start_pos = 0;
-                int end_pos = 0;
-
-                var line_character_count = line.character_count();
-                if (line_character_count > 0)
-                {
-                    start_pos = (int)line.character(0).source.start;
-                    end_pos = (int)(line.character(line_character_count - 1).source.start
-                        + line.character(line_character_count - 1).source.span);
-                }
-
-                line_count++;
-                xstart.push_back(start_pos);
-                xend.push_back(end_pos);
-            }
-
-            return line_count;
-        }
 
 
         //-------------------------------------------------
         //  emit
         //-------------------------------------------------
+
         public void emit(render_container container, float x, float y)
         {
-            foreach (var line in m_lines)
+            emit(container, 0, m_lines.size(), x, y);
+        }
+
+        public void emit(render_container container, size_t start, size_t lines, float x, float y)
+        {
+            if (m_current_line != null)
             {
-                float line_xoffset = line.xoffset();
+                // TODO: is there a sane way to allow an open line to be temporarily finalised and rolled back?
+                m_current_line.align_text(this);
+                m_current_line = null;
+            }
+
+            float base_y = (m_lines.size() > start) ? m_lines[start].yoffset() : 0.0f;
+            for (size_t l = start; ((start + lines) > l) && (m_lines.size() > l); ++l)
+            {
+                var line = m_lines[l];
+                float line_xoffset = line.xoffset(this);
+                float char_y = y + line.yoffset() - base_y;
+                float char_height = line.height();
 
                 // emit every single character
-                for (UInt32 i = 0; i < line.character_count(); i++)
+                for (size_t i = 0; i < line.character_count(); i++)
                 {
                     var ch = line.character(i);
 
-                    // position this specific character correctly (TODO - this doesn't
-                    // handle differently sized text (yet)
+                    // position this specific character correctly (TODO - this doesn't handle differently sized text (yet)
                     float char_x = x + line_xoffset + ch.xoffset;
-                    float char_y = y + line.yoffset();
                     float char_width = ch.xwidth;
-                    float char_height = line.height();
 
                     // render the background of the character (if present)
                     if (ch.style.bgcolor.a() != 0)
-                        container.add_rect(char_x, char_y, char_x + char_width, char_y + char_height, ch.style.bgcolor, g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                        container.add_rect(char_x, char_y, char_x + char_width, char_y + char_height, ch.style.bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
                     // render the foreground
                     container.add_char(
-                        char_x,
-                        char_y,
-                        char_height,
-                        xscale() / yscale(),
-                        ch.style.fgcolor,
-                        font(),
-                        (u16)ch.character);
+                            char_x,
+                            char_y,
+                            char_height,
+                            xscale() / yscale(),
+                            ch.style.fgcolor,
+                            font(),
+                            (u16)ch.character);
                 }
             }
         }
 
 
-        public void add_text(string text, rgb_t fgcolor = null, rgb_t bgcolor = null, float size = 1.0f)  // fgcolor = rgb_t.white, rgb_t bgcolor = rgb_t.transparent
+        public void add_text(string text) { add_text(text, rgb_t.white()); }
+        public void add_text(string text, rgb_t fgcolor) { add_text(text, fgcolor, rgb_t.transparent()); }
+        public void add_text(string text, rgb_t fgcolor, rgb_t bgcolor, float size = 1.0f)  //void add_text(std::string_view text, rgb_t fgcolor = rgb_t::white(), rgb_t bgcolor = rgb_t::transparent(), float size = 1.0)
         {
-            if (fgcolor == null)
-                fgcolor = rgb_t.white();
-            if (bgcolor == null)
-                bgcolor = rgb_t.transparent();
-
-
-            // create the style
-            char_style style;
-            style.fgcolor = fgcolor;
-            style.bgcolor = bgcolor;
-            style.size = size;
-
-            // and add the text
-            add_text(text, style);
+            add_text(text, justify(), new char_style() { fgcolor = fgcolor, bgcolor = bgcolor, size = size });
+        }
+        public void add_text(string text, text_justify line_justify) { add_text(text, line_justify, rgb_t.white(), rgb_t.transparent()); }
+        public void add_text(string text, text_justify line_justify, rgb_t fgcolor) { add_text(text, line_justify, fgcolor, rgb_t.transparent()); }
+        public void add_text(string text, text_justify line_justify, rgb_t fgcolor, rgb_t bgcolor, float size = 1.0f)  //void add_text(std::string_view text, text_justify line_justify, rgb_t fgcolor = rgb_t::white(), rgb_t bgcolor = rgb_t::transparent(), float size = 1.0)
+        {
+            add_text(text, line_justify, new char_style() { fgcolor = fgcolor, bgcolor = bgcolor, size = size });
         }
 
-
-        // methods
 
         //-------------------------------------------------
         //  add_text
         //-------------------------------------------------
-        void add_text(string text, char_style style)
+        void add_text(string text, text_justify line_justify, char_style style)
         {
             while (!text.empty())
             {
@@ -408,83 +466,65 @@ namespace mame.ui
 
                 // do we need to create a new line?
                 if (m_current_line == null)
+                    start_new_line(style.size);
+
+                m_current_line.set_justification(line_justify);
+
+                // get the current character
+                char ch;  //char32_t ch;
+                int scharcount = uchar_from_utf8(out ch, text);
+                if (scharcount < 0)
+                    break;
+
+                text = text.remove_prefix_((size_t)scharcount);
+
+                // set up source information
+                source_info source = new source_info() { start = 0, span = 0 };
+                source.start = m_text_position;
+                source.span = (size_t)scharcount;
+                m_text_position += (size_t)scharcount;
+
+                // is this an endline?
+                if (ch == '\n')
                 {
-                    // get the current character
-                    char schar;  //char32_t schar;
-                    int scharcount = unicode_global.uchar_from_utf8(out schar, text);  //int const scharcount = uchar_from_utf8(&schar, text);
-                    if (scharcount < 0)
-                        break;
-
-                    // if the line starts with a tab character, center it regardless
-                    text_justify line_justify = justify();
-                    if (schar == '\t')
-                    {
-                        text = text.Substring(scharcount);  //text.remove_prefix(scharcount);
-                        line_justify = text_justify.CENTER;
-                    }
-
-                    // start a new line
-                    start_new_line(line_justify, style.size);
+                    // close up the current line
+                    m_current_line.align_text(this);
+                    m_current_line = null;
                 }
-
+                else if (!m_truncating)
                 {
-                    // get the current character
-                    char ch;  //char32_t ch;
-                    int scharcount = unicode_global.uchar_from_utf8(out ch, text);  //int const scharcount = uchar_from_utf8(&ch, text);
-                    if (scharcount < 0)
-                        break;
-                    text = text.Substring(scharcount);  //text.remove_prefix(scharcount);
+                    // if we hit a space, remember the location and width *without* the space
+                    bool is_space = is_space_character(ch);
+                    if (is_space)
+                        m_last_break = m_current_line.character_count();
 
-                    // set up source information
-                    source_info source;
-                    source.start = m_text_position;
-                    source.span = (UInt32)scharcount;
-                    m_text_position += (UInt32)scharcount;
+                    // append the character
+                    m_current_line.add_character(this, ch, style, source);
 
-                    // is this an endline?
-                    if (ch == '\n')
+                    // do we have to wrap?
+                    if ((wrap() != word_wrapping.NEVER) && (m_current_line.width() > m_width))
                     {
-                        // first, start a line if we have not already
-                        if (m_current_line == null)
-                            start_new_line(text_justify.LEFT, style.size);
+                        switch (wrap())
+                        {
+                        case word_wrapping.TRUNCATE:
+                            truncate_wrap();
+                            break;
 
-                        // and then close up the current line
-                        m_current_line = null;
+                        case word_wrapping.WORD:
+                            word_wrap();
+                            break;
+
+                        case word_wrapping.NEVER:
+                            // can't happen due to if condition, but compile warns about it
+                            break;
+                        }
                     }
-                    else if (!m_truncating)
+                    else
                     {
-                        // if we hit a space, remember the location and width *without* the space
-                        if (is_space_character(ch))
+                        // we didn't wrap - if we hit any non-space breakable character,
+                        // remember the location and width *with* the breakable character
+                        if (!is_space && is_breakable_char(ch))
                             m_last_break = m_current_line.character_count();
-
-                        // append the character
-                        m_current_line.add_character(ch, style, source);
-
-                        // do we have to wrap?
-                        if (wrap() != word_wrapping.NEVER && m_current_line.width() > m_width)
-                        {
-                            switch (wrap())
-                            {
-                                case word_wrapping.TRUNCATE:
-                                    truncate_wrap();
-                                    break;
-
-                                case word_wrapping.WORD:
-                                    word_wrap();
-                                    break;
-
-                                default:
-                                    g.fatalerror("invalid word wrapping value");
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            // we didn't wrap - if we hit any non-space breakable character, remember the location and width
-                            // *with* the breakable character
-                            if (ch != ' ' && is_breakable_char(ch))
-                                m_last_break = m_current_line.character_count();
-                        }
                     }
                 }
             }
@@ -494,18 +534,13 @@ namespace mame.ui
         //-------------------------------------------------
         //  start_new_line
         //-------------------------------------------------
-        void start_new_line(text_layout.text_justify justify, float height)
+        void start_new_line(float height)
         {
-            // create a new line
-            line new_line = new line(this, justify, actual_height(), height * yscale());
-
             // update the current line
-            m_current_line = new_line;
+            m_current_line = new line(actual_height(), height * yscale());  //m_current_line = m_lines.emplace_back(std::make_unique<line>(actual_height(), height * yscale())).get();
+            m_lines.emplace_back(m_current_line);
             m_last_break = 0;
             m_truncating = false;
-
-            // append it
-            m_lines.emplace_back(new_line);
         }
 
 
@@ -537,7 +572,7 @@ namespace mame.ui
             source.start = truncate_char.source.start + truncate_char.source.span;
             source.span = 0;
 
-            // figure out how wide an elipsis is
+            // figure out how wide an ellipsis is
             float elipsis_width = get_char_width(elipsis, style.size);
 
             // where should we really truncate from?
@@ -547,10 +582,10 @@ namespace mame.ui
             // truncate!!!
             m_current_line.truncate(truncate_position);
 
-            // and append the elipsis
-            m_current_line.add_character(elipsis, style, source);
+            // and append the ellipsis
+            m_current_line.add_character(this, elipsis, style, source);
 
-            // take note that we are truncating; supress new characters
+            // take note that we are truncating; suppress new characters
             m_truncating = true;
         }
 
@@ -562,25 +597,37 @@ namespace mame.ui
         {
             // keep track of the last line and break
             line last_line = m_current_line;
-            size_t last_break = m_last_break;
+            size_t last_break = m_last_break != 0 ? m_last_break : (last_line.character_count() - 1);
 
             // start a new line with the same justification
-            start_new_line(last_line.justify(), last_line.character(last_line.character_count() - 1).style.size);
+            start_new_line(last_line.character(last_line.character_count() - 1).style.size);
 
-            // find the begining of the word to wrap
+            // find the beginning of the word to wrap
             size_t position = last_break;
-            while (position + 1 < last_line.character_count() && is_space_character(last_line.character(position).character))
+            while ((last_line.character_count() > position) && is_space_character(last_line.character(position).character))
                 position++;
+
+            // carry over justification
+            if (last_line.right_justify_start() <= position)
+                m_current_line.set_justification(text_justify.RIGHT);
+            else if (last_line.center_justify_start() <= position)
+                m_current_line.set_justification(text_justify.CENTER);
 
             // transcribe the characters
             for (size_t i = position; i < last_line.character_count(); i++)
             {
+                if (last_line.right_justify_start() == i)
+                    m_current_line.set_justification(text_justify.RIGHT);
+                else if (last_line.center_justify_start() == i)
+                    m_current_line.set_justification(text_justify.CENTER);
+
                 var ch = last_line.character(i);
-                m_current_line.add_character(ch.character, ch.style, ch.source);
+                m_current_line.add_character(this, ch.character, ch.style, ch.source);
             }
 
-            // and finally, truncate the last line
+            // and finally, truncate the previous line and adjust spacing
             last_line.truncate(last_break);
+            last_line.align_text(this);
         }
 
 

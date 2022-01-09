@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -12,6 +11,10 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.emucore_global;
+using static mame.tilemap_global;
+using static mame.util;
 
 
 namespace mame
@@ -47,40 +50,40 @@ namespace mame
                 int bit1;
                 int bit2;
 
-                bit0 = g.BIT(color_prom[0], 0);
-                bit1 = g.BIT(color_prom[0], 1);
-                bit2 = g.BIT(color_prom[0], 2);
+                bit0 = BIT(color_prom.op, 0);
+                bit1 = BIT(color_prom.op, 1);
+                bit2 = BIT(color_prom.op, 2);
                 int r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-                bit0 = g.BIT(color_prom[0], 3);
-                bit1 = g.BIT(color_prom[0], 4);
-                bit2 = g.BIT(color_prom[0], 5);
+                bit0 = BIT(color_prom.op, 3);
+                bit1 = BIT(color_prom.op, 4);
+                bit2 = BIT(color_prom.op, 5);
                 int gr = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
                 bit0 = 0;
-                bit1 = g.BIT(color_prom[0], 6);
-                bit2 = g.BIT(color_prom[0], 7);
+                bit1 = BIT(color_prom.op, 6);
+                bit2 = BIT(color_prom.op, 7);
                 int b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r,(byte)gr,(byte)b));
+                palette.set_indirect_color(i, new rgb_t((u8)r,(u8)gr,(u8)b));
                 color_prom++;
             }
 
             // characters - direct mapping
             for (int i = 0; i < 16; i++)
             {
-                palette.dipalette.set_pen_indirect((pen_t)((i << 1) | 0), 0);
-                palette.dipalette.set_pen_indirect((pen_t)((i << 1) | 1), (indirect_pen_t)i);
+                palette.set_pen_indirect((pen_t)((i << 1) | 0), 0);
+                palette.set_pen_indirect((pen_t)((i << 1) | 1), (indirect_pen_t)i);
             }
 
             // sprites
             for (int i = 0; i < 0x100; i++)
             {
-                palette.dipalette.set_pen_indirect((pen_t)(16*2 + i), (indirect_pen_t)((color_prom[0] & 0x0f) | 0x10));
+                palette.set_pen_indirect((pen_t)(16*2 + i), (indirect_pen_t)((color_prom.op & 0x0f) | 0x10));
                 color_prom++;
             }
 
             // bg_select
             for (int i = 0; i < 0x100; i++)
             {
-                palette.dipalette.set_pen_indirect((pen_t)(16*2 + 256 + i), (indirect_pen_t)(color_prom[0] & 0x0f));
+                palette.set_pen_indirect((pen_t)(16*2 + 256 + i), (indirect_pen_t)(color_prom.op & 0x0f));
                 color_prom++;
             }
         }
@@ -151,7 +154,7 @@ namespace mame
             tileinfo.set(0,
                     (u32)((code & 0x7f) | (flip_screen() != 0 ? 0x80 : 0)),
                     (u32)color,
-                    flip_screen() != 0 ? g.TILE_FLIPX : (u8)0);
+                    flip_screen() != 0 ? TILE_FLIPX : (u8)0);
         }
 
 
@@ -165,15 +168,15 @@ namespace mame
             m_bg_disable = 0;
             m_bg_color_bank = 0;
 
-            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, bg_get_tile_info, tilemap_scan, 8,8,36,28);  //m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::bg_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
-            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, tx_get_tile_info, tilemap_scan, 8,8,36,28);  //m_fg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::tx_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
+            m_bg_tilemap = machine().tilemap().create(m_gfxdecode.op0, bg_get_tile_info, tilemap_scan, 8,8,36,28);  //m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::bg_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
+            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op0, tx_get_tile_info, tilemap_scan, 8,8,36,28);  //m_fg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(digdug_state::tx_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(digdug_state::tilemap_scan)), 8, 8, 36, 28);
 
             m_fg_tilemap.set_transparent_pen(0);
 
-            save_item(g.NAME(new { m_bg_select }));
-            save_item(g.NAME(new { m_tx_color_mode }));
-            save_item(g.NAME(new { m_bg_disable }));
-            save_item(g.NAME(new { m_bg_color_bank }));
+            save_item(NAME(new { m_bg_select }));
+            save_item(NAME(new { m_tx_color_mode }));
+            save_item(NAME(new { m_bg_disable }));
+            save_item(NAME(new { m_bg_color_bank }));
         }
 
 
@@ -226,14 +229,14 @@ namespace mame
                 {
                     for (x = 0;x <= size;x++)
                     {
-                        uint32_t transmask =  m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (UInt32)color, 0x1f);
-                        m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,visarea,
+                        uint32_t transmask =  m_palette.op0.transpen_mask(m_gfxdecode.op0.gfx(1), (u32)color, 0x1f);
+                        m_gfxdecode.op0.gfx(1).transmask(bitmap,visarea,
                             (u32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
                             (u32)color,
                             flipx,flipy,
                             ((sx + 16*x) & 0xff), sy + 16*y,transmask);
                         /* wraparound */
-                        m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap,visarea,
+                        m_gfxdecode.op0.gfx(1).transmask(bitmap,visarea,
                             (u32)(sprite + gfx_offs[y ^ (size * flipy), x ^ (size * flipx)]),
                             (u32)color,
                             flipx,flipy,

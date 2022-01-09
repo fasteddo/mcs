@@ -2,9 +2,10 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using uint32_t = System.UInt32;
+
+using static mame.options_global;
 
 
 namespace mame
@@ -34,19 +35,20 @@ namespace mame
         const string OPTION_UI_PATH               = "ui_path";
 
         // core misc options
-        const string OPTION_SKIP_WARNINGS         = "skip_warnings";
-        const string OPTION_REMEMBER_LAST         = "remember_last";
-        const string OPTION_ENLARGE_SNAPS         = "enlarge_snaps";
-        const string OPTION_FORCED4X3             = "forced4x3";
-        const string OPTION_USE_BACKGROUND        = "use_background";
-        const string OPTION_SKIP_BIOS_MENU        = "skip_biosmenu";
-        const string OPTION_SKIP_PARTS_MENU       = "skip_partsmenu";
+        const string OPTION_SYSTEM_NAMES           = "system_names";
+        const string OPTION_SKIP_WARNINGS          = "skip_warnings";
+        const string OPTION_REMEMBER_LAST          = "remember_last";
+        const string OPTION_ENLARGE_SNAPS          = "enlarge_snaps";
+        const string OPTION_FORCED4X3              = "forced4x3";
+        const string OPTION_USE_BACKGROUND         = "use_background";
+        const string OPTION_SKIP_BIOS_MENU         = "skip_biosmenu";
+        const string OPTION_SKIP_PARTS_MENU        = "skip_partsmenu";
         public const string OPTION_LAST_USED_FILTER      = "last_used_filter";
         public const string OPTION_LAST_RIGHT_PANEL      = "last_right_panel";
         public const string OPTION_LAST_USED_MACHINE     = "last_used_machine";
-        const string OPTION_INFO_AUTO_AUDIT       = "info_audit_enabled";
-        const string OPTION_HIDE_ROMLESS          = "hide_romless";
-        const string OPTION_UNTHROTTLE_MUTE       = "unthrottle_mute";
+        const string OPTION_INFO_AUTO_AUDIT        = "info_audit_enabled";
+        const string OPTION_HIDE_ROMLESS           = "hide_romless";
+        const string OPTION_UNTHROTTLE_MUTE        = "unthrottle_mute";
 
         // core UI options
         const string OPTION_INFOS_SIZE            = "infos_text_size";
@@ -77,66 +79,67 @@ namespace mame
         static readonly options_entry [] s_option_entries = new options_entry[]
         {
             // search path options
-            new options_entry(null,                                 null,                          g.OPTION_HEADER,  "UI SEARCH PATH OPTIONS"),
-            new options_entry(OPTION_HISTORY_PATH,                  "history;dats;.",              g.OPTION_STRING,  "path to history files"),
-            new options_entry(OPTION_CATEGORYINI_PATH,              "folders",                     g.OPTION_STRING,  "path to category ini files"),
-            new options_entry(OPTION_CATEGORYINI_PATH,              "folders",                     g.OPTION_STRING,  "path to catagory ini files"),
-            new options_entry(OPTION_CABINETS_PATH,                 "cabinets;cabdevs",            g.OPTION_STRING,  "path to cabinets / devices image"),
-            new options_entry(OPTION_CPANELS_PATH,                  "cpanel",                      g.OPTION_STRING,  "path to control panel image"),
-            new options_entry(OPTION_PCBS_PATH,                     "pcb",                         g.OPTION_STRING,  "path to pcbs image"),
-            new options_entry(OPTION_FLYERS_PATH,                   "flyers",                      g.OPTION_STRING,  "path to flyers image"),
-            new options_entry(OPTION_TITLES_PATH,                   "titles",                      g.OPTION_STRING,  "path to titles image"),
-            new options_entry(OPTION_ENDS_PATH,                     "ends",                        g.OPTION_STRING,  "path to ends image"),
-            new options_entry(OPTION_MARQUEES_PATH,                 "marquees",                    g.OPTION_STRING,  "path to marquees image"),
-            new options_entry(OPTION_ARTPREV_PATH,                  "artwork preview;artpreview",  g.OPTION_STRING,  "path to artwork preview image"),
-            new options_entry(OPTION_BOSSES_PATH,                   "bosses",                      g.OPTION_STRING,  "path to bosses image"),
-            new options_entry(OPTION_LOGOS_PATH,                    "logo",                        g.OPTION_STRING,  "path to logos image"),
-            new options_entry(OPTION_SCORES_PATH,                   "scores",                      g.OPTION_STRING,  "path to scores image"),
-            new options_entry(OPTION_VERSUS_PATH,                   "versus",                      g.OPTION_STRING,  "path to versus image"),
-            new options_entry(OPTION_GAMEOVER_PATH,                 "gameover",                    g.OPTION_STRING,  "path to gameover image"),
-            new options_entry(OPTION_HOWTO_PATH,                    "howto",                       g.OPTION_STRING,  "path to howto image"),
-            new options_entry(OPTION_SELECT_PATH,                   "select",                      g.OPTION_STRING,  "path to select image"),
-            new options_entry(OPTION_ICONS_PATH,                    "icons",                       g.OPTION_STRING,  "path to ICOns image"),
-            new options_entry(OPTION_COVER_PATH,                    "covers",                      g.OPTION_STRING,  "path to software cover image"),
-            new options_entry(OPTION_UI_PATH,                       "ui",                          g.OPTION_STRING,  "path to UI files"),
+            new options_entry(null,                                 null,                          OPTION_HEADER,  "UI SEARCH PATH OPTIONS"),
+            new options_entry(OPTION_HISTORY_PATH,                  "history;dats;.",              OPTION_STRING,  "path to system/software info files"),
+            new options_entry(OPTION_CATEGORYINI_PATH,              "folders",                     OPTION_STRING,  "path to category ini files"),
+            new options_entry(OPTION_CATEGORYINI_PATH,              "folders",                     OPTION_STRING,  "path to catagory ini files"),
+            new options_entry(OPTION_CABINETS_PATH,                 "cabinets;cabdevs",            OPTION_STRING,  "path to cabinets / devices image"),
+            new options_entry(OPTION_CPANELS_PATH,                  "cpanel",                      OPTION_STRING,  "path to control panel image"),
+            new options_entry(OPTION_PCBS_PATH,                     "pcb",                         OPTION_STRING,  "path to pcbs image"),
+            new options_entry(OPTION_FLYERS_PATH,                   "flyers",                      OPTION_STRING,  "path to flyers image"),
+            new options_entry(OPTION_TITLES_PATH,                   "titles",                      OPTION_STRING,  "path to titles image"),
+            new options_entry(OPTION_ENDS_PATH,                     "ends",                        OPTION_STRING,  "path to ends image"),
+            new options_entry(OPTION_MARQUEES_PATH,                 "marquees",                    OPTION_STRING,  "path to marquees image"),
+            new options_entry(OPTION_ARTPREV_PATH,                  "artwork preview;artpreview",  OPTION_STRING,  "path to artwork preview image"),
+            new options_entry(OPTION_BOSSES_PATH,                   "bosses",                      OPTION_STRING,  "path to bosses image"),
+            new options_entry(OPTION_LOGOS_PATH,                    "logo",                        OPTION_STRING,  "path to logos image"),
+            new options_entry(OPTION_SCORES_PATH,                   "scores",                      OPTION_STRING,  "path to scores image"),
+            new options_entry(OPTION_VERSUS_PATH,                   "versus",                      OPTION_STRING,  "path to versus image"),
+            new options_entry(OPTION_GAMEOVER_PATH,                 "gameover",                    OPTION_STRING,  "path to gameover image"),
+            new options_entry(OPTION_HOWTO_PATH,                    "howto",                       OPTION_STRING,  "path to howto image"),
+            new options_entry(OPTION_SELECT_PATH,                   "select",                      OPTION_STRING,  "path to select image"),
+            new options_entry(OPTION_ICONS_PATH,                    "icons",                       OPTION_STRING,  "path to ICOns image"),
+            new options_entry(OPTION_COVER_PATH,                    "covers",                      OPTION_STRING,  "path to software cover image"),
+            new options_entry(OPTION_UI_PATH,                       "ui",                          OPTION_STRING,  "path to UI files"),
 
             // misc options
-            new options_entry(null,                                 null,       g.OPTION_HEADER,      "UI MISC OPTIONS"),
-            new options_entry(OPTION_SKIP_WARNINGS,                 "0",        g.OPTION_BOOLEAN,     "display fewer repeated warnings about imperfect emulation" ),
-            new options_entry(OPTION_REMEMBER_LAST,                 "1",        g.OPTION_BOOLEAN,     "initially select last used system in main menu" ),
-            new options_entry(OPTION_ENLARGE_SNAPS,                 "1",        g.OPTION_BOOLEAN,     "enlarge artwork (snapshot, title, etc.) in right panel (keeping aspect ratio)" ),
-            new options_entry(OPTION_FORCED4X3,                     "1",        g.OPTION_BOOLEAN,     "force the appearance of the snapshot in the list software to 4:3"),
-            new options_entry(OPTION_USE_BACKGROUND,                "1",        g.OPTION_BOOLEAN,     "enable background image in main view"),
-            new options_entry(OPTION_SKIP_BIOS_MENU,                "0",        g.OPTION_BOOLEAN,     "skip bios submenu, start with configured or default"),
-            new options_entry(OPTION_SKIP_PARTS_MENU,               "0",        g.OPTION_BOOLEAN,     "skip parts submenu, start with first part"),
-            new options_entry(OPTION_LAST_USED_FILTER,              "",         g.OPTION_STRING,      "latest used filter"),
-            new options_entry(OPTION_LAST_RIGHT_PANEL + "(0-1)",    "0",        g.OPTION_INTEGER,     "latest right panel focus"),
-            new options_entry(OPTION_LAST_USED_MACHINE,             "",         g.OPTION_STRING,      "latest used machine"),
-            new options_entry(OPTION_INFO_AUTO_AUDIT,               "0",        g.OPTION_BOOLEAN,     "enable auto audit in the general info panel"),
-            new options_entry(OPTION_HIDE_ROMLESS,                  "1",        g.OPTION_BOOLEAN,     "hide romless machine from available list"),
-            new options_entry(OPTION_UNTHROTTLE_MUTE + ";utm",      "0",        g.OPTION_BOOLEAN,     "mute audio when running unthrottled" ),
+            new options_entry(null,                                 null,       OPTION_HEADER,      "UI MISC OPTIONS"),
+            new options_entry(OPTION_SYSTEM_NAMES,                  "",         OPTION_STRING,      "translated system names file" ),
+            new options_entry(OPTION_SKIP_WARNINGS,                 "0",        OPTION_BOOLEAN,     "display fewer repeated warnings about imperfect emulation" ),
+            new options_entry(OPTION_REMEMBER_LAST,                 "1",        OPTION_BOOLEAN,     "initially select last used system in main menu" ),
+            new options_entry(OPTION_ENLARGE_SNAPS,                 "1",        OPTION_BOOLEAN,     "enlarge artwork (snapshot, title, etc.) in right panel (keeping aspect ratio)" ),
+            new options_entry(OPTION_FORCED4X3,                     "1",        OPTION_BOOLEAN,     "force the appearance of the snapshot in the list software to 4:3"),
+            new options_entry(OPTION_USE_BACKGROUND,                "1",        OPTION_BOOLEAN,     "enable background image in main view"),
+            new options_entry(OPTION_SKIP_BIOS_MENU,                "0",        OPTION_BOOLEAN,     "skip bios submenu, start with configured or default"),
+            new options_entry(OPTION_SKIP_PARTS_MENU,               "0",        OPTION_BOOLEAN,     "skip parts submenu, start with first part"),
+            new options_entry(OPTION_LAST_USED_FILTER,              "",         OPTION_STRING,      "latest used filter"),
+            new options_entry(OPTION_LAST_RIGHT_PANEL + "(0-1)",    "0",        OPTION_INTEGER,     "latest right panel focus"),
+            new options_entry(OPTION_LAST_USED_MACHINE,             "",         OPTION_STRING,      "latest used machine"),
+            new options_entry(OPTION_INFO_AUTO_AUDIT,               "0",        OPTION_BOOLEAN,     "enable auto audit in the general info panel"),
+            new options_entry(OPTION_HIDE_ROMLESS,                  "1",        OPTION_BOOLEAN,     "hide romless machine from available list"),
+            new options_entry(OPTION_UNTHROTTLE_MUTE + ";utm",      "0",        OPTION_BOOLEAN,     "mute audio when running unthrottled" ),
 
             // UI options
-            new options_entry(null,                                 null,           g.OPTION_HEADER,      "UI OPTIONS"),
-            new options_entry(OPTION_INFOS_SIZE + "(0.05-1.00)",    "0.75",         g.OPTION_FLOAT,       "UI right panel infos text size (0.05 - 1.00)"),
-            new options_entry(OPTION_FONT_ROWS + "(25-40)",         "30",           g.OPTION_INTEGER,     "UI font lines per screen (25 - 40)"),
-            new options_entry(OPTION_HIDE_PANELS + "(0-3)",         "0",            g.OPTION_INTEGER,     "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both"),
-            new options_entry(OPTION_UI_BORDER_COLOR,               "ffffffff",     g.OPTION_STRING,      "UI border color (ARGB)"),
-            new options_entry(OPTION_UI_BACKGROUND_COLOR,           "ef101030",     g.OPTION_STRING,      "UI background color (ARGB)"),
-            new options_entry(OPTION_UI_CLONE_COLOR,                "ff808080",     g.OPTION_STRING,      "UI clone color (ARGB)"),
-            new options_entry(OPTION_UI_DIPSW_COLOR,                "ffffff00",     g.OPTION_STRING,      "UI dipswitch color (ARGB)"),
-            new options_entry(OPTION_UI_GFXVIEWER_BG_COLOR,         "ef101030",     g.OPTION_STRING,      "UI gfx viewer color (ARGB)"),
-            new options_entry(OPTION_UI_MOUSEDOWN_BG_COLOR,         "b0606000",     g.OPTION_STRING,      "UI mouse down bg color (ARGB)"),
-            new options_entry(OPTION_UI_MOUSEDOWN_COLOR,            "ffffff80",     g.OPTION_STRING,      "UI mouse down color (ARGB)"),
-            new options_entry(OPTION_UI_MOUSEOVER_BG_COLOR,         "70404000",     g.OPTION_STRING,      "UI mouse over bg color (ARGB)"),
-            new options_entry(OPTION_UI_MOUSEOVER_COLOR,            "ffffff80",     g.OPTION_STRING,      "UI mouse over color (ARGB)"),
-            new options_entry(OPTION_UI_SELECTED_BG_COLOR,          "ef808000",     g.OPTION_STRING,      "UI selected bg color (ARGB)"),
-            new options_entry(OPTION_UI_SELECTED_COLOR,             "ffffff00",     g.OPTION_STRING,      "UI selected color (ARGB)"),
-            new options_entry(OPTION_UI_SLIDER_COLOR,               "ffffffff",     g.OPTION_STRING,      "UI slider color (ARGB)"),
-            new options_entry(OPTION_UI_SUBITEM_COLOR,              "ffffffff",     g.OPTION_STRING,      "UI subitem color (ARGB)"),
-            new options_entry(OPTION_UI_TEXT_BG_COLOR,              "ef000000",     g.OPTION_STRING,      "UI text bg color (ARGB)"),
-            new options_entry(OPTION_UI_TEXT_COLOR,                 "ffffffff",     g.OPTION_STRING,      "UI text color (ARGB)"),
-            new options_entry(OPTION_UI_UNAVAILABLE_COLOR,          "ff404040",     g.OPTION_STRING,      "UI unavailable color (ARGB)"),
+            new options_entry(null,                                 null,           OPTION_HEADER,      "UI OPTIONS"),
+            new options_entry(OPTION_INFOS_SIZE + "(0.05-1.00)",    "0.75",         OPTION_FLOAT,       "UI right panel infos text size (0.05 - 1.00)"),
+            new options_entry(OPTION_FONT_ROWS + "(25-40)",         "30",           OPTION_INTEGER,     "UI font lines per screen (25 - 40)"),
+            new options_entry(OPTION_HIDE_PANELS + "(0-3)",         "0",            OPTION_INTEGER,     "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both"),
+            new options_entry(OPTION_UI_BORDER_COLOR,               "ffffffff",     OPTION_STRING,      "UI border color (ARGB)"),
+            new options_entry(OPTION_UI_BACKGROUND_COLOR,           "ef101030",     OPTION_STRING,      "UI background color (ARGB)"),
+            new options_entry(OPTION_UI_CLONE_COLOR,                "ff808080",     OPTION_STRING,      "UI clone color (ARGB)"),
+            new options_entry(OPTION_UI_DIPSW_COLOR,                "ffffff00",     OPTION_STRING,      "UI dipswitch color (ARGB)"),
+            new options_entry(OPTION_UI_GFXVIEWER_BG_COLOR,         "ef101030",     OPTION_STRING,      "UI gfx viewer color (ARGB)"),
+            new options_entry(OPTION_UI_MOUSEDOWN_BG_COLOR,         "b0606000",     OPTION_STRING,      "UI mouse down bg color (ARGB)"),
+            new options_entry(OPTION_UI_MOUSEDOWN_COLOR,            "ffffff80",     OPTION_STRING,      "UI mouse down color (ARGB)"),
+            new options_entry(OPTION_UI_MOUSEOVER_BG_COLOR,         "70404000",     OPTION_STRING,      "UI mouse over bg color (ARGB)"),
+            new options_entry(OPTION_UI_MOUSEOVER_COLOR,            "ffffff80",     OPTION_STRING,      "UI mouse over color (ARGB)"),
+            new options_entry(OPTION_UI_SELECTED_BG_COLOR,          "ef808000",     OPTION_STRING,      "UI selected bg color (ARGB)"),
+            new options_entry(OPTION_UI_SELECTED_COLOR,             "ffffff00",     OPTION_STRING,      "UI selected color (ARGB)"),
+            new options_entry(OPTION_UI_SLIDER_COLOR,               "ffffffff",     OPTION_STRING,      "UI slider color (ARGB)"),
+            new options_entry(OPTION_UI_SUBITEM_COLOR,              "ffffffff",     OPTION_STRING,      "UI subitem color (ARGB)"),
+            new options_entry(OPTION_UI_TEXT_BG_COLOR,              "ef000000",     OPTION_STRING,      "UI text bg color (ARGB)"),
+            new options_entry(OPTION_UI_TEXT_COLOR,                 "ffffffff",     OPTION_STRING,      "UI text color (ARGB)"),
+            new options_entry(OPTION_UI_UNAVAILABLE_COLOR,          "ff404040",     OPTION_STRING,      "UI unavailable color (ARGB)"),
             new options_entry(null),
         };
 
@@ -149,7 +152,7 @@ namespace mame
 
 
         // Search path options
-        //const char *history_path() const { return value(OPTION_HISTORY_PATH); }
+        public string history_path() { return value(OPTION_HISTORY_PATH); }
         public string categoryini_path() { return value(OPTION_CATEGORYINI_PATH); }
         //const char *cabinets_directory() const { return value(OPTION_CABINETS_PATH); }
         //const char *cpanels_directory() const { return value(OPTION_CPANELS_PATH); }
@@ -172,6 +175,7 @@ namespace mame
 
 
         // Misc options
+        public string system_names() { return value(OPTION_SYSTEM_NAMES); }
         public bool skip_warnings() { return bool_value(OPTION_SKIP_WARNINGS); }
         public bool remember_last() { return bool_value(OPTION_REMEMBER_LAST); }
         public bool enlarge_snaps() { return bool_value(OPTION_ENLARGE_SNAPS); }

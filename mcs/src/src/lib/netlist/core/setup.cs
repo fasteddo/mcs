@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using abstract_t_link_t = mame.std.pair<string, string>;  //using link_t = std::pair<pstring, pstring>;
 using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
@@ -12,6 +11,9 @@ using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using psource_t_stream_ptr = mame.std.istream;  //using stream_ptr = plib::unique_ptr<std::istream>;
 using size_t = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.netlist.nl_errstr_global;
 
 
 namespace mame.netlist
@@ -41,10 +43,10 @@ namespace mame.netlist
             public string value_str(string entity)
             {
                 if (entity != plib.pg.ucase(entity))
-                    throw new nl_exception(nl_errstr_global.MF_MODEL_PARAMETERS_NOT_UPPERCASE_1_2(entity, model_string(m_map)));
+                    throw new nl_exception(MF_MODEL_PARAMETERS_NOT_UPPERCASE_1_2(entity, model_string(m_map)));
                 var it = m_map.find(entity);
                 if (it == default)
-                    throw new nl_exception(nl_errstr_global.MF_ENTITY_1_NOT_FOUND_IN_MODEL_2(entity, model_string(m_map)));
+                    throw new nl_exception(MF_ENTITY_1_NOT_FOUND_IN_MODEL_2(entity, model_string(m_map)));
 
                 return it;
             }
@@ -69,7 +71,7 @@ namespace mame.netlist
                     case 'a': factor = nlconst.magic(1e-18); break; // NOLINT
                     default:
                         if (p < '0' || p > '9')
-                            throw new nl_exception(nl_errstr_global.MF_UNKNOWN_NUMBER_FACTOR_IN_2(m_model, entity));
+                            throw new nl_exception(MF_UNKNOWN_NUMBER_FACTOR_IN_2(m_model, entity));
                         break;
                 }
 
@@ -79,13 +81,13 @@ namespace mame.netlist
                 bool err = false;
                 var val = plib.pg.pstonum_ne_nl_fptype(false, tmp, out err);
                 if (err)
-                    throw new nl_exception(nl_errstr_global.MF_MODEL_NUMBER_CONVERSION_ERROR(entity, tmp, "double", m_model));
+                    throw new nl_exception(MF_MODEL_NUMBER_CONVERSION_ERROR(entity, tmp, "double", m_model));
 
                 return val * factor;
             }
 
 
-            //pstring type() const { return value_str("COREMODEL"); }
+            public string type() { return value_str("COREMODEL"); }
 
 
             static string model_string(models_t_map_t map)
@@ -138,12 +140,12 @@ namespace mame.netlist
             while (true)
             {
                 pos = model.find('(');
-                if (pos != g.npos) break;
+                if (pos != npos) break;
 
                 key = plib.pg.ucase(model);
                 var i = m_models.find(key);
                 if (i == default)
-                    throw new nl_exception(nl_errstr_global.MF_MODEL_NOT_FOUND("xx" + model));
+                    throw new nl_exception(MF_MODEL_NOT_FOUND("xx" + model));
                 model = i;
             }
 
@@ -159,12 +161,12 @@ namespace mame.netlist
                 if (i != default)
                     model_parse(xmodel, map);
                 else
-                    throw new nl_exception(nl_errstr_global.MF_MODEL_NOT_FOUND(model_in));
+                    throw new nl_exception(MF_MODEL_NOT_FOUND(model_in));
             }
 
             string remainder = plib.pg.trim(model.substr(pos + 1));
             if (!plib.pg.endsWith(remainder, ")"))
-                throw new nl_exception(nl_errstr_global.MF_MODEL_ERROR_1(model));
+                throw new nl_exception(MF_MODEL_ERROR_1(model));
             // FIMXE: Not optimal
             remainder = plib.pg.left(remainder, remainder.length() - 1);
 
@@ -172,8 +174,8 @@ namespace mame.netlist
             foreach (string pe in pairs)
             {
                 var pose = pe.find('=');
-                if (pose == g.npos)
-                    throw new nl_exception(nl_errstr_global.MF_MODEL_ERROR_ON_PAIR_1(model));
+                if (pose == npos)
+                    throw new nl_exception(MF_MODEL_ERROR_ON_PAIR_1(model));
 
                 map[plib.pg.ucase(plib.pg.left(pe, pose))] = pe.substr(pose + 1);
             }
@@ -287,8 +289,8 @@ namespace mame.netlist
         {
             if (!m_params.insert(param.name(), new param_ref_t(param.device(), param)))
             {
-                log().fatal.op(nl_errstr_global.MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(param.name()));
-                throw new nl_exception(nl_errstr_global.MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(param.name()));
+                log().fatal.op(MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(param.name()));
+                throw new nl_exception(MF_ADDING_PARAMETER_1_TO_PARAMETER_LIST(param.name()));
             }
         }
 
@@ -349,8 +351,8 @@ namespace mame.netlist
             log().debug.op("{0} {1}\n", termtype_as_str(term), term.name());
             if (!m_terminals.insert(term.name(), term))
             {
-                log().fatal.op(nl_errstr_global.MF_ADDING_1_2_TO_TERMINAL_LIST(termtype_as_str(term), term.name()));
-                throw new nl_exception(nl_errstr_global.MF_ADDING_1_2_TO_TERMINAL_LIST(termtype_as_str(term), term.name()));
+                log().fatal.op(MF_ADDING_1_2_TO_TERMINAL_LIST(termtype_as_str(term), term.name()));
+                throw new nl_exception(MF_ADDING_1_2_TO_TERMINAL_LIST(termtype_as_str(term), term.name()));
             }
         }
 
@@ -387,7 +389,7 @@ namespace mame.netlist
             family_model_t modv = new family_model_t(mod);
 
             if (!plib.penum_base.set_from_string(modv.m_TYPE.op(), out ft))  //if (!ft.set_from_string(modv.m_TYPE()))
-                throw new nl_exception(nl_errstr_global.MF_UNKNOWN_FAMILY_TYPE_1(modv.m_TYPE.op(), model));
+                throw new nl_exception(MF_UNKNOWN_FAMILY_TYPE_1(modv.m_TYPE.op(), model));
 
             var it = m_nlstate.family_cache().find(model);
             if (it != default)
@@ -432,8 +434,8 @@ namespace mame.netlist
             var ret = m_params.find(outname);
             if (ret == default)
             {
-                log().fatal.op(nl_errstr_global.MF_PARAMETER_1_2_NOT_FOUND(param_in, outname));
-                throw new nl_exception(nl_errstr_global.MF_PARAMETER_1_2_NOT_FOUND(param_in, outname));
+                log().fatal.op(MF_PARAMETER_1_2_NOT_FOUND(param_in, outname));
+                throw new nl_exception(MF_PARAMETER_1_2_NOT_FOUND(param_in, outname));
             }
 
             return ret;
@@ -458,8 +460,8 @@ namespace mame.netlist
 
             if (ret == default && required)
             {
-                log().fatal.op(nl_errstr_global.MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
-                throw new nl_exception(nl_errstr_global.MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
+                log().fatal.op(MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
+                throw new nl_exception(MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
             }
 
             detail.core_terminal_t term = (ret == default ? null : ret);
@@ -468,8 +470,8 @@ namespace mame.netlist
             {
                 if (required)
                 {
-                    log().fatal.op(nl_errstr_global.MF_OBJECT_1_2_WRONG_TYPE(terminal_in, tname));
-                    throw new nl_exception(nl_errstr_global.MF_OBJECT_1_2_WRONG_TYPE(terminal_in, tname));
+                    log().fatal.op(MF_OBJECT_1_2_WRONG_TYPE(terminal_in, tname));
+                    throw new nl_exception(MF_OBJECT_1_2_WRONG_TYPE(terminal_in, tname));
                 }
 
                 term = null;
@@ -497,8 +499,8 @@ namespace mame.netlist
 
             if (term == null && required)
             {
-                log().fatal.op(nl_errstr_global.MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
-                throw new nl_exception(nl_errstr_global.MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
+                log().fatal.op(MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
+                throw new nl_exception(MF_TERMINAL_1_2_NOT_FOUND(terminal_in, tname));
             }
 
             if (term != null)
@@ -548,8 +550,8 @@ namespace mame.netlist
             {
                 if (t2.has_net() && t2.net().is_rail_net())
                 {
-                    log().fatal.op(nl_errstr_global.MF_INPUT_1_ALREADY_CONNECTED(t2.name()));
-                    throw new nl_exception(nl_errstr_global.MF_INPUT_1_ALREADY_CONNECTED(t2.name()));
+                    log().fatal.op(MF_INPUT_1_ALREADY_CONNECTED(t2.name()));
+                    throw new nl_exception(MF_INPUT_1_ALREADY_CONNECTED(t2.name()));
                 }
 
                 connect_input_output(t2, t1);
@@ -558,8 +560,8 @@ namespace mame.netlist
             {
                 if (t1.has_net() && t1.net().is_rail_net())
                 {
-                    log().fatal.op(nl_errstr_global.MF_INPUT_1_ALREADY_CONNECTED(t1.name()));
-                    throw new nl_exception(nl_errstr_global.MF_INPUT_1_ALREADY_CONNECTED(t1.name()));
+                    log().fatal.op(MF_INPUT_1_ALREADY_CONNECTED(t1.name()));
+                    throw new nl_exception(MF_INPUT_1_ALREADY_CONNECTED(t1.name()));
                 }
 
                 connect_input_output(t1, t2);
@@ -659,7 +661,7 @@ namespace mame.netlist
 
             foreach (var d in m_nlstate.devices())
             {
-                var p = m_abstract.m_hints.find(d.second.name() + nl_errstr_global.sHINT_NO_DEACTIVATE);
+                var p = m_abstract.m_hints.find(d.second.name() + sHINT_NO_DEACTIVATE);
                 if (p != default)
                 {
                     // suspect this is incorrect, need to mark the actual data in the map as 'used'
@@ -676,8 +678,8 @@ namespace mame.netlist
 
             if (errcnt > 0)
             {
-                log().fatal.op(nl_errstr_global.MF_ERRORS_FOUND(errcnt));
-                throw new nl_exception(nl_errstr_global.MF_ERRORS_FOUND(errcnt));
+                log().fatal.op(MF_ERRORS_FOUND(errcnt));
+                throw new nl_exception(MF_ERRORS_FOUND(errcnt));
             }
 
             // resolve inputs
@@ -688,7 +690,7 @@ namespace mame.netlist
             {
                 if (t.N().net().is_rail_net() && t.P().net().is_rail_net())
                 {
-                    log().info.op(nl_errstr_global.MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(
+                    log().info.op(MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(
                         t.name(), t.N().net().name(), t.P().net().name()));
 
                     // The following would remove internal devices in e.g. MOSFETs as well.
@@ -705,8 +707,8 @@ namespace mame.netlist
             {
                 if (!h.second())
                 {
-                    log().fatal.op(nl_errstr_global.MF_UNUSED_HINT_1(h.first()));
-                    throw new nl_exception(nl_errstr_global.MF_UNUSED_HINT_1(h.first()));
+                    log().fatal.op(MF_UNUSED_HINT_1(h.first()));
+                    throw new nl_exception(MF_UNUSED_HINT_1(h.first()));
                 }
             }
 
@@ -718,8 +720,8 @@ namespace mame.netlist
                 {
                     if (p.is_analog())
                     {
-                        log().fatal.op(nl_errstr_global.MF_NO_SOLVER());
-                        throw new nl_exception(nl_errstr_global.MF_NO_SOLVER());
+                        log().fatal.op(MF_NO_SOLVER());
+                        throw new nl_exception(MF_NO_SOLVER());
                     }
                 }
             }
@@ -735,15 +737,15 @@ namespace mame.netlist
                 var f = m_params.find(p.first());
                 if (f == default)
                 {
-                    log().error.op(nl_errstr_global.ME_UNKNOWN_PARAMETER(p.first()));
+                    log().error.op(ME_UNKNOWN_PARAMETER(p.first()));
                     errcnt++;
                 }
             }
 
             if (errcnt > 0)
             {
-                log().fatal.op(nl_errstr_global.MF_ERRORS_FOUND(errcnt));
-                throw new nl_exception(nl_errstr_global.MF_ERRORS_FOUND(errcnt));
+                log().fatal.op(MF_ERRORS_FOUND(errcnt));
+                throw new nl_exception(MF_ERRORS_FOUND(errcnt));
             }
 
             foreach (var n in m_nlstate.nets())
@@ -752,8 +754,8 @@ namespace mame.netlist
                 {
                     if (term.delegate_() == null)  //if (!term->delegate())
                     {
-                        log().fatal.op(nl_errstr_global.MF_DELEGATE_NOT_SET_1(term.name()));
-                        throw new nl_exception(nl_errstr_global.MF_DELEGATE_NOT_SET_1(term.name()));
+                        log().fatal.op(MF_DELEGATE_NOT_SET_1(term.name()));
+                        throw new nl_exception(MF_DELEGATE_NOT_SET_1(term.name()));
                     }
                 }
 
@@ -781,8 +783,8 @@ namespace mame.netlist
             {
                 if (t == terminal)
                 {
-                    log().fatal.op(nl_errstr_global.MF_NET_1_DUPLICATE_TERMINAL_2(net.name(), t.name()));
-                    throw new nl_exception(nl_errstr_global.MF_NET_1_DUPLICATE_TERMINAL_2(net.name(), t.name()));
+                    log().fatal.op(MF_NET_1_DUPLICATE_TERMINAL_2(net.name(), t.name()));
+                    throw new nl_exception(MF_NET_1_DUPLICATE_TERMINAL_2(net.name(), t.name()));
                 }
             }
 
@@ -829,10 +831,10 @@ namespace mame.netlist
             if (tries == 0)
             {
                 foreach (var link in m_abstract.m_links)
-                    log().warning.op(nl_errstr_global.MF_CONNECTING_1_TO_2(de_alias(link.first), de_alias(link.second)));
+                    log().warning.op(MF_CONNECTING_1_TO_2(de_alias(link.first), de_alias(link.second)));
 
-                log().fatal.op(nl_errstr_global.MF_LINK_TRIES_EXCEEDED(m_netlist_params.m_max_link_loops.op()));
-                throw new nl_exception(nl_errstr_global.MF_LINK_TRIES_EXCEEDED(m_netlist_params.m_max_link_loops.op()));
+                log().fatal.op(MF_LINK_TRIES_EXCEEDED(m_netlist_params.m_max_link_loops.op()));
+                throw new nl_exception(MF_LINK_TRIES_EXCEEDED(m_netlist_params.m_max_link_loops.op()));
             }
 
             log().verbose.op("deleting empty nets ...");
@@ -851,7 +853,7 @@ namespace mame.netlist
                 bool is_nc_pin = term.device() is devices.nld_nc_pin;  //bool is_nc_pin(dynamic_cast< devices::NETLIB_NAME(nc_pin) *>(&term->device()) != nullptr);
                 bool is_nc_flagged = false;
 
-                var hnc = m_abstract.m_hints.find(name_da + nl_errstr_global.sHINT_NC);
+                var hnc = m_abstract.m_hints.find(name_da + sHINT_NC);
                 if (hnc != default)
                 {
                     // I suspect this is incorrect, we want to mark the actual data in the map as 'used'
@@ -863,7 +865,7 @@ namespace mame.netlist
 
                 if (term.has_net() && is_nc_pin)
                 {
-                    log().error.op(nl_errstr_global.ME_NC_PIN_1_WITH_CONNECTIONS(name_da));
+                    log().error.op(ME_NC_PIN_1_WITH_CONNECTIONS(name_da));
                     err = true;
                 }
                 else if (is_nc_pin)
@@ -872,28 +874,28 @@ namespace mame.netlist
                 }
                 else if (!term.has_net())
                 {
-                    log().error.op(nl_errstr_global.ME_TERMINAL_1_WITHOUT_NET(name_da));
+                    log().error.op(ME_TERMINAL_1_WITHOUT_NET(name_da));
                     err = true;
                 }
                 else if (nlstate().core_terms(term.net()).empty())
                 {
                     if (term.is_logic_input())
                     {
-                        log().warning.op(nl_errstr_global.MW_LOGIC_INPUT_1_WITHOUT_CONNECTIONS(name_da));
+                        log().warning.op(MW_LOGIC_INPUT_1_WITHOUT_CONNECTIONS(name_da));
                     }
                     else if (term.is_logic_output())
                     {
                         if (!is_nc_flagged)
-                            log().info.op(nl_errstr_global.MI_LOGIC_OUTPUT_1_WITHOUT_CONNECTIONS(name_da));
+                            log().info.op(MI_LOGIC_OUTPUT_1_WITHOUT_CONNECTIONS(name_da));
                     }
                     else if (term.is_analog_output())
                     {
                         if (!is_nc_flagged)
-                            log().info.op(nl_errstr_global.MI_ANALOG_OUTPUT_1_WITHOUT_CONNECTIONS(name_da));
+                            log().info.op(MI_ANALOG_OUTPUT_1_WITHOUT_CONNECTIONS(name_da));
                     }
                     else
                     {
-                        log().warning.op(nl_errstr_global.MW_TERMINAL_1_WITHOUT_CONNECTIONS(name_da));
+                        log().warning.op(MW_TERMINAL_1_WITHOUT_CONNECTIONS(name_da));
                     }
                 }
             }
@@ -911,12 +913,12 @@ namespace mame.netlist
 
                     if (iter_proxy == default && !tri.is_force_logic())
                     {
-                        log().error.op(nl_errstr_global.ME_TRISTATE_NO_PROXY_FOUND_2(term.name(), term.device().name()));
+                        log().error.op(ME_TRISTATE_NO_PROXY_FOUND_2(term.name(), term.device().name()));
                         err = true;
                     }
                     else if (iter_proxy != default && tri.is_force_logic())
                     {
-                        log().error.op(nl_errstr_global.ME_TRISTATE_PROXY_FOUND_2(term.name(), term.device().name()));
+                        log().error.op(ME_TRISTATE_PROXY_FOUND_2(term.name(), term.device().name()));
                         err = true;
                     }
                 }
@@ -924,8 +926,8 @@ namespace mame.netlist
 
             if (err)
             {
-                log().fatal.op(nl_errstr_global.MF_TERMINALS_WITHOUT_NET());
-                throw new nl_exception(nl_errstr_global.MF_TERMINALS_WITHOUT_NET());
+                log().fatal.op(MF_TERMINALS_WITHOUT_NET());
+                throw new nl_exception(MF_TERMINALS_WITHOUT_NET());
             }
         }
 
@@ -953,14 +955,14 @@ namespace mame.netlist
             log().debug.op("merging nets ...\n");
             if (othernet == thisnet)
             {
-                log().warning.op(nl_errstr_global.MW_CONNECTING_1_TO_ITSELF(thisnet.name()));
+                log().warning.op(MW_CONNECTING_1_TO_ITSELF(thisnet.name()));
                 return; // Nothing to do
             }
 
             if (thisnet.is_rail_net() && othernet.is_rail_net())
             {
-                log().fatal.op(nl_errstr_global.MF_MERGE_RAIL_NETS_1_AND_2(thisnet.name(), othernet.name()));
-                throw new nl_exception(nl_errstr_global.MF_MERGE_RAIL_NETS_1_AND_2(thisnet.name(), othernet.name()));
+                log().fatal.op(MF_MERGE_RAIL_NETS_1_AND_2(thisnet.name(), othernet.name()));
+                throw new nl_exception(MF_MERGE_RAIL_NETS_1_AND_2(thisnet.name(), othernet.name()));
             }
 
             if (othernet.is_rail_net())
@@ -1048,7 +1050,7 @@ namespace mame.netlist
                         // Only an info - some ICs (CD4538) connect pins internally to GND
                         // and the schematics again externally. This will cause this warning.
                         // FIXME: Add a hint to suppress the warning.
-                        log().info.op(nl_errstr_global.MI_CONNECTING_1_TO_2_SAME_NET(in_.name(), out_.name(), in_.net().name()));
+                        log().info.op(MI_CONNECTING_1_TO_2_SAME_NET(in_.name(), out_.name(), in_.net().name()));
                     }
                 }
                 else
@@ -1065,8 +1067,8 @@ namespace mame.netlist
             }
             else
             {
-                log().fatal.op(nl_errstr_global.MF_OBJECT_OUTPUT_TYPE_1(out_.name()));
-                throw new nl_exception(nl_errstr_global.MF_OBJECT_OUTPUT_TYPE_1(out_.name()));
+                log().fatal.op(MF_OBJECT_OUTPUT_TYPE_1(out_.name()));
+                throw new nl_exception(MF_OBJECT_OUTPUT_TYPE_1(out_.name()));
             }
         }
 
@@ -1089,8 +1091,8 @@ namespace mame.netlist
             }
             else
             {
-                log().fatal.op(nl_errstr_global.MF_OBJECT_INPUT_TYPE_1(inp.name()));
-                throw new nl_exception(nl_errstr_global.MF_OBJECT_INPUT_TYPE_1(inp.name()));
+                log().fatal.op(MF_OBJECT_INPUT_TYPE_1(inp.name()));
+                throw new nl_exception(MF_OBJECT_INPUT_TYPE_1(inp.name()));
             }
         }
 
@@ -1179,8 +1181,8 @@ namespace mame.netlist
                 p.clear_net(); // de-link from all nets ...
                 if (!connect(new_proxy.proxy_term(), p))
                 {
-                    log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
-                    throw new nl_exception(nl_errstr_global.MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
+                    log().fatal.op(MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
+                    throw new nl_exception(MF_CONNECTING_1_TO_2(new_proxy.proxy_term().name(), p.name()));
                 }
             }
 
@@ -1190,7 +1192,7 @@ namespace mame.netlist
 
             var proxy = new_proxy;
             if (!m_proxies.insert(out_, proxy))
-                throw new nl_exception(nl_errstr_global.MF_DUPLICATE_PROXY_1(out_.name()));
+                throw new nl_exception(MF_DUPLICATE_PROXY_1(out_.name()));
 
             m_nlstate.register_device(new_proxy.name(), new_proxy);
 
@@ -1218,7 +1220,7 @@ namespace mame.netlist
             var ret = new_proxy;
 
             if (!m_proxies.insert(inp, ret))
-                throw new nl_exception(nl_errstr_global.MF_DUPLICATE_PROXY_1(inp.name()));
+                throw new nl_exception(MF_DUPLICATE_PROXY_1(inp.name()));
 
             m_proxy_cnt++;
 
@@ -1235,9 +1237,9 @@ namespace mame.netlist
                         p.clear_net(); // de-link from all nets ...
                         if (!connect(ret.proxy_term(), p))
                         {
-                            log().fatal.op(nl_errstr_global.MF_CONNECTING_1_TO_2(
+                            log().fatal.op(MF_CONNECTING_1_TO_2(
                                     ret.proxy_term().name(), p.name()));
-                            throw new nl_exception(nl_errstr_global.MF_CONNECTING_1_TO_2(
+                            throw new nl_exception(MF_CONNECTING_1_TO_2(
                                     ret.proxy_term().name(), p.name()));
                         }
                     }
@@ -1278,8 +1280,8 @@ namespace mame.netlist
             }
             else
             {
-                log().fatal.op(nl_errstr_global.MF_REMOVE_TERMINAL_1_FROM_NET_2(terminal.name(), net.name()));
-                throw new nl_exception(nl_errstr_global.MF_REMOVE_TERMINAL_1_FROM_NET_2(terminal.name(), net.name()));
+                log().fatal.op(MF_REMOVE_TERMINAL_1_FROM_NET_2(terminal.name(), net.name()));
+                throw new nl_exception(MF_REMOVE_TERMINAL_1_FROM_NET_2(terminal.name(), net.name()));
             }
         }
 

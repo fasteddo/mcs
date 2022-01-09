@@ -2,7 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+using mame.ymfm;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
@@ -13,7 +13,10 @@ using u8 = System.Byte;
 using u64 = System.UInt64;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
-using mame.ymfm;
+
+using static mame.diexec_global;
+using static mame.emucore_global;
+
 
 namespace mame
 {
@@ -140,7 +143,7 @@ namespace mame
         public void ymfm_interface_ymfm_update_irq(bool asserted)
         {
             if (!m_update_irq.isnull())
-                m_update_irq.op_s32(asserted ? g.ASSERT_LINE : g.CLEAR_LINE);
+                m_update_irq.op_s32(asserted ? ASSERT_LINE : CLEAR_LINE);
         }
 
 
@@ -196,7 +199,7 @@ namespace mame
             m_io_write[1].resolve();
 
             // remember the busy end time
-            save_item(g.NAME(new { m_busy_end }));
+            save_item(NAME(new { m_busy_end }));
         }
 
 
@@ -297,7 +300,7 @@ namespace mame
             m_chip.save_restore(state);
 
             // now register the blob for save, on the assumption the size won't change
-            save_item(g.NAME(new { m_save_blob }));
+            save_item(NAME(new { m_save_blob }));
         }
 
 

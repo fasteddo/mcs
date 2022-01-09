@@ -2,8 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using PointerU8 = mame.Pointer<System.Byte>;
@@ -12,6 +10,10 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+
+using static mame.cpp_global;
+using static mame.drawgfxt_global;
+using static mame.profiler_global;
 
 
 namespace mame
@@ -464,13 +466,13 @@ namespace mame
             where BitmapType_PixelType_OPS : PixelType_operators, new()
             where BitmapType_PixelTypePointer : PointerU8
         {
-            profiler_global.g_profiler.start(profile_type.PROFILER_DRAWGFX);
+            g_profiler.start(profile_type.PROFILER_DRAWGFX);
 
 
             do {
-                g.assert(dest.valid());
-                g.assert(dest.cliprect().contains(cliprect));
-                g.assert(code < elements());
+                assert(dest.valid());
+                assert(dest.cliprect().contains(cliprect));
+                assert(code < elements());
 
                 // ignore empty/invalid cliprects
                 if (cliprect.empty())
@@ -731,7 +733,7 @@ namespace mame
                 }
             } while (false);
 
-            profiler_global.g_profiler.stop();
+            g_profiler.stop();
         }
 
 
@@ -794,12 +796,12 @@ namespace mame
             where BitmapType_PixelType_OPS : PixelType_operators, new()
             where BitmapType_PixelTypePointer : PointerU8
         {
-            profiler_global.g_profiler.start(profile_type.PROFILER_COPYBITMAP);
+            g_profiler.start(profile_type.PROFILER_COPYBITMAP);
 
             do {
-                g.assert(dest.valid());
-                g.assert(src.valid());
-                g.assert(dest.cliprect().contains(cliprect));
+                assert(dest.valid());
+                assert(src.valid());
+                assert(dest.cliprect().contains(cliprect));
 
                 // ignore empty/invalid cliprects
                 if (cliprect.empty())
@@ -1110,7 +1112,7 @@ namespace mame
                 }
             } while (false);
 
-            profiler_global.g_profiler.stop();
+            g_profiler.stop();
         }
 
 

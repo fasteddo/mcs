@@ -2,11 +2,13 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
+using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
+
+using static mame.netlist.nl_errstr_global;
 
 
 namespace mame.netlist.devices
@@ -34,7 +36,7 @@ namespace mame.netlist.devices
 
             if (logic_family() == null)
             {
-                throw new nl_exception(nl_errstr_global.MF_NULLPTR_FAMILY_NP("nld_base_proxy"));
+                throw new nl_exception(MF_NULLPTR_FAMILY_NP("nld_base_proxy"));
             }
 
 
@@ -58,7 +60,7 @@ namespace mame.netlist.devices
                     var tn_t = (analog_t)tp_cn;
                     if (f && (tp_t != null && tn_t != null))
                     {
-                        log().warning.op(nl_errstr_global.MI_MULTIPLE_POWER_TERMINALS_ON_DEVICE(inout_proxied.device().name(),
+                        log().warning.op(MI_MULTIPLE_POWER_TERMINALS_ON_DEVICE(inout_proxied.device().name(),
                             m_tp.name(), m_tn.name(),
                             tp_t != null ? tp_t.name() : "",
                             tn_t != null ? tn_t.name() : ""));
@@ -73,7 +75,7 @@ namespace mame.netlist.devices
             }
 
             if (!f)
-                throw new nl_exception(nl_errstr_global.MF_NO_POWER_TERMINALS_ON_DEVICE_2(name, anetlist.setup().de_alias(inout_proxied.device().name())));
+                throw new nl_exception(MF_NO_POWER_TERMINALS_ON_DEVICE_2(name, anetlist.setup().de_alias(inout_proxied.device().name())));
 
             log().verbose.op("D/A Proxy: Found power terminals on device {0}", inout_proxied.device().name());
         }
@@ -129,7 +131,22 @@ namespace mame.netlist.devices
         //NETLIB_HANDLER(a_to_d_proxy, input)
         void input()
         {
-            throw new emu_unimplemented();
+            var v = m_I.Q_Analog();
+            var vn = m_tn.net().Q_Analog();
+            var vp = m_tp.net().Q_Analog();
+
+            if (logic_family().is_above_high_thresh_V(v, vn, vp))
+            {
+                out_().push(1, netlist_time.quantum());
+            }
+            else if (logic_family().is_below_low_thresh_V(v, vn, vp))
+            {
+                out_().push(0, netlist_time.quantum());
+            }
+            else
+            {
+                // do nothing
+            }
         }
     }
 

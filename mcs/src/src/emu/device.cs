@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
@@ -15,25 +16,22 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
+using static mame.attotime_global;
+using static mame.cpp_global;
+using static mame.device_global;
+using static mame.eminline_global;
+using static mame.emucore_global;
+using static mame.gamedrv_global;
+using static mame.logmacro_global;
+using static mame.machine_global;
+using static mame.osdcore_global;
+using static mame.profiler_global;
+using static mame.romload_global;
+
 
 namespace mame
 {
-    // timer IDs for devices
-    //typedef u32 device_timer_id;
-
-    //typedef emu::detail::device_type_impl_base const &device_type;
-    public class device_type : emu.detail.device_type_impl_base
-    {
-        public device_type() : base() { }
-        public device_type(emu.detail.device_tag_struct device_tag) : base(device_tag) { }
-        public device_type(emu.detail.driver_tag_struct driver_tag) : base(driver_tag) { }
-    }
-
-    //typedef device_delegate<void (u32)> clock_update_delegate;
-    public delegate void clock_update_delegate(u32 param);
-
-
-    public static class device_global
+    public static partial class device_global
     {
         // macro for specifying a clock derived from an owning device
         public static u32 DERIVED_CLOCK(u32 num, u32 den) { return 0xff000000 | (num << 12) | (den << 0); }
@@ -60,134 +58,6 @@ namespace mame
 
         // use this to refer to the owning device's owner when providing a device tag
         public const string DEVICE_SELF_OWNER = "^";
-
-
-        public static emu.detail.device_registrar registered_device_types = new emu.detail.device_registrar();
-
-
-        /// \addtogroup machinedef
-        /// \{
-
-        /// \brief Declare a device type
-        ///
-        /// Declares a device type where the exposed device class is in the
-        /// global namespace.  Must be used in the global namespace.
-        ///
-        /// In addition to declaring the device type itself, a forward
-        /// declaration for the exposed device class is generated, and automatic
-        /// instantiation of device finder templates for the exposed device
-        /// class is suppressed.
-        /// \param Type The device type name (an identifier).  By convention,
-        ///   these start with an uppercase letter and consist only of uppercase
-        ///   letters and underscores.
-        /// \param Class The exposed device class name.  Must be the device
-        ///   implementation class, or a public base of it, and must be derived
-        ///   from #device_t or #device_interface.
-        /// \sa DECLARE_DEVICE_TYPE_NS DEFINE_DEVICE_TYPE
-        ///   DEFINE_DEVICE_TYPE_PRIVATE
-        //#define DECLARE_DEVICE_TYPE(Type, Class) \
-        //        class Class; \
-        //        extern emu::detail::device_type_impl<Class> const Type; \
-        //        extern template class device_finder<Class, false>; \
-        //        extern template class device_finder<Class, true>;
-
-        /// \brief Declare a device type for a class in a namespace
-        ///
-        /// Declares a device type where the exposed device class is not in the
-        /// global namespace.  Must be used in the global namespace.
-        ///
-        /// In addition to declaring the device type itself, a forward
-        /// declaration for the exposed device class is generated, and automatic
-        /// instantiation of device finder templates for the exposed device
-        /// class is suppressed.
-        /// \param Type The device type name (an identifier).  By convention,
-        ///   these start with an uppercase letter and consist only of uppercase
-        ///   letters and underscores.
-        /// \param Namespace The fully qualified name of the namespace
-        ///   containing the exposed device class.
-        /// \param Class The exposed device class name, without namespace
-        ///   qualifiers.  Must be the device implementation class, or a public
-        ///   base of it, and must be derived from #device_t or
-        ///   #device_interface.
-        /// \sa DECLARE_DEVICE_TYPE DEFINE_DEVICE_TYPE
-        ///   DEFINE_DEVICE_TYPE_PRIVATE
-        //#define DECLARE_DEVICE_TYPE_NS(Type, Namespace, Class) \
-        //        namespace Namespace { class Class; } \
-        //        extern emu::detail::device_type_impl<Namespace::Class> const Type; \
-        //        extern template class device_finder<Namespace::Class, false>; \
-        //        extern template class device_finder<Namespace::Class, true>;
-
-        /// \brief Define a device type
-        ///
-        /// Defines a device type where the exposed device class is the same as
-        /// the device implementation class.  Must be used in the global
-        /// namespace.
-        ///
-        /// As well as defining the device type, device finder templates are
-        /// instantiated for the device class.
-        /// \param Type The device type name (an identifier).  By convention,
-        ///   these start with an uppercase letter and consist only of uppercase
-        ///   letters and underscores.
-        /// \param Class The device implementation class name.  Must be the same
-        ///   as the exposed device class, and must be derived from #device_t.
-        /// \param ShortName The short name of the device, used for
-        ///   identification, and in filesystem paths for assets and data.  Must
-        ///   be a string no longer than thirty-two characters, containing only
-        ///   ASCII lowercase letters, digits and underscores.  Must be globally
-        ///   unique across systems and devices.
-        /// \param FullName Display name for the device.  Must be a string, and
-        ///   must be globally unique across systems and devices.
-        /// \sa DECLARE_DEVICE_TYPE DECLARE_DEVICE_TYPE_NS
-        ///   DEFINE_DEVICE_TYPE_PRIVATE
-        //#define DEFINE_DEVICE_TYPE(Type, Class, ShortName, FullName) \
-        //        namespace { \
-        //            struct Type##_device_traits { static constexpr char const shortname[] = ShortName, fullname[] = FullName, source[] = __FILE__; }; \
-        //            constexpr char const Type##_device_traits::shortname[], Type##_device_traits::fullname[], Type##_device_traits::source[]; \
-        //        } \
-        //        emu::detail::device_type_impl<Class> const Type = device_creator<Class, (Type##_device_traits::shortname), (Type##_device_traits::fullname), (Type##_device_traits::source)>; \
-        //        template class device_finder<Class, false>; \
-        //        template class device_finder<Class, true>;
-        public static device_type DEFINE_DEVICE_TYPE(device_type.create_func func, string shortname, string fullname)
-        {
-            var traits = new gamedrv_global.game_traits(shortname, fullname);
-
-            return new device_type(new device_creator(func, traits.shortname, traits.fullname, traits.source, device_t.unemulated_features(), device_t.imperfect_features()).device_tag());
-        }
-
-        /// \brief Define a device type with a private implementation class
-        ///
-        /// Defines a device type where the exposed device class is a base of
-        /// the device implementation class.  Must be used in the global
-        /// namespace.
-        ///
-        /// Device finder templates are not instantiated for the exposed device
-        /// class.  This must be done explicitly in a single location for the
-        /// project.
-        /// \param Type The device type name (an identifier).  By convention,
-        ///   these start with an uppercase letter and consist only of uppercase
-        ///   letters and underscores.
-        /// \param Base The fully-qualified exposed device class name.  Must be
-        ///   a public base of the device implementation class, and must be
-        ///   derived from #device_t or #device_interface.
-        /// \param Class The fully-qualified device implementation class name.
-        ///   Must be derived from the exposed device class, and indirectly from
-        ///   #device_t.
-        /// \param ShortName The short name of the device, used for
-        ///   identification, and in filesystem paths for assets and data.  Must
-        ///   be a string no longer than thirty-two characters, containing only
-        ///   ASCII lowercase letters, digits and underscores.  Must be globally
-        ///   unique across systems and devices.
-        /// \param FullName Display name for the device.  Must be a string, and
-        ///   must be globally unique across systems and devices.
-        /// \sa DECLARE_DEVICE_TYPE DECLARE_DEVICE_TYPE_NS DEFINE_DEVICE_TYPE
-        //#define DEFINE_DEVICE_TYPE_PRIVATE(Type, Base, Class, ShortName, FullName) \
-        //        namespace { \
-        //            struct Type##_device_traits { static constexpr char const shortname[] = ShortName, fullname[] = FullName, source[] = __FILE__; }; \
-        //            constexpr char const Type##_device_traits::shortname[], Type##_device_traits::fullname[], Type##_device_traits::source[]; \
-        //        } \
-        //        emu::detail::device_type_impl<Base> const Type = device_creator<Class, (Type##_device_traits::shortname), (Type##_device_traits::fullname), (Type##_device_traits::source)>;
-
-        /// \}
     }
 
 
@@ -197,6 +67,13 @@ namespace mame
 
     namespace emu.detail
     {
+        //template <typename T>
+        //using is_device_implementation = std::bool_constant<std::is_base_of_v<device_t, T> >;
+
+        //template <typename T>
+        //using is_device_interface = std::bool_constant<std::is_base_of_v<device_interface, T> && !is_device_implementation<T>::value>;
+
+
         public struct device_feature
         {
             public enum type : u32
@@ -347,8 +224,11 @@ namespace mame
             { this.m_creator = creator; this.ShortName = ShortName; this.FullName = FullName; this.Source = Source; this.Unemulated = Unemulated; this.Imperfect = Imperfect; this.DriverClass_unemulated_features = DriverClass_unemulated_features; this.DriverClass_imperfect_features = DriverClass_imperfect_features; }
         }
 
-        //template <class DeviceClass, char const *ShortName, char const *FullName, char const *Source> auto device_tag_func() { return device_tag_struct<DeviceClass, ShortName, FullName, Source>{ }; };
-        //template <class DriverClass, char const *ShortName, char const *FullName, char const *Source, device_feature::type Unemulated, device_feature::type Imperfect> auto driver_tag_func() { return driver_tag_struct<DriverClass, ShortName, FullName, Source>{ }; };
+
+        //template <class DeviceClass, char const *ShortName, char const *FullName, char const *Source>
+        //auto device_tag_func() { return device_tag_struct<DeviceClass, ShortName, FullName, Source>{ }; };
+        //template <class DriverClass, char const *ShortName, char const *FullName, char const *Source, device_feature::type Unemulated, device_feature::type Imperfect>
+        //auto driver_tag_func() { return driver_tag_struct<DriverClass, ShortName, FullName, Source, Unemulated, Imperfect>{ }; };
 
 
         public class device_type_impl_base
@@ -506,7 +386,7 @@ namespace mame
                 where bool_Required : bool_const, new()
             {
                 var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
-                g.assert(mconfig.current_device() == target.first);
+                assert(mconfig.current_device() == target.first);
                 DeviceClass result = (DeviceClass)mconfig.device_add(target.second, type, clock);  //DeviceClass &result(dynamic_cast<DeviceClass &>(*mconfig.device_add(target.second, *this, std::forward<Params>(args)...)));
 
                 //return finder = result;
@@ -543,8 +423,22 @@ namespace mame
 
     // device types
     //typedef emu::detail::device_type_impl_base const &device_type;
+    public class device_type : emu.detail.device_type_impl_base
+    {
+        public device_type() : base() { }
+        public device_type(emu.detail.device_tag_struct device_tag) : base(device_tag) { }
+        public device_type(emu.detail.driver_tag_struct driver_tag) : base(driver_tag) { }
+    }
+
+
     //typedef std::add_pointer_t<device_type> device_type_ptr;
-    //extern emu::detail::device_registrar const registered_device_types;
+
+
+    public static partial class device_global
+    {
+        public static emu.detail.device_registrar registered_device_types = new emu.detail.device_registrar();  //extern emu::detail::device_registrar const registered_device_types;
+    }
+
 
     //template <
     //        typename DeviceClass,
@@ -607,6 +501,134 @@ namespace mame
     }
 
 
+    public static partial class device_global
+    {
+        /// \addtogroup machinedef
+        /// \{
+
+        /// \brief Declare a device type
+        ///
+        /// Declares a device type where the exposed device class is in the
+        /// global namespace.  Must be used in the global namespace.
+        ///
+        /// In addition to declaring the device type itself, a forward
+        /// declaration for the exposed device class is generated, and automatic
+        /// instantiation of device finder templates for the exposed device
+        /// class is suppressed.
+        /// \param Type The device type name (an identifier).  By convention,
+        ///   these start with an uppercase letter and consist only of uppercase
+        ///   letters and underscores.
+        /// \param Class The exposed device class name.  Must be the device
+        ///   implementation class, or a public base of it, and must be derived
+        ///   from #device_t or #device_interface.
+        /// \sa DECLARE_DEVICE_TYPE_NS DEFINE_DEVICE_TYPE
+        ///   DEFINE_DEVICE_TYPE_PRIVATE
+        //#define DECLARE_DEVICE_TYPE(Type, Class) \
+        //        class Class; \
+        //        extern emu::detail::device_type_impl<Class> const Type; \
+        //        extern template class device_finder<Class, false>; \
+        //        extern template class device_finder<Class, true>;
+
+        /// \brief Declare a device type for a class in a namespace
+        ///
+        /// Declares a device type where the exposed device class is not in the
+        /// global namespace.  Must be used in the global namespace.
+        ///
+        /// In addition to declaring the device type itself, a forward
+        /// declaration for the exposed device class is generated, and automatic
+        /// instantiation of device finder templates for the exposed device
+        /// class is suppressed.
+        /// \param Type The device type name (an identifier).  By convention,
+        ///   these start with an uppercase letter and consist only of uppercase
+        ///   letters and underscores.
+        /// \param Namespace The fully qualified name of the namespace
+        ///   containing the exposed device class.
+        /// \param Class The exposed device class name, without namespace
+        ///   qualifiers.  Must be the device implementation class, or a public
+        ///   base of it, and must be derived from #device_t or
+        ///   #device_interface.
+        /// \sa DECLARE_DEVICE_TYPE DEFINE_DEVICE_TYPE
+        ///   DEFINE_DEVICE_TYPE_PRIVATE
+        //#define DECLARE_DEVICE_TYPE_NS(Type, Namespace, Class) \
+        //        namespace Namespace { class Class; } \
+        //        extern emu::detail::device_type_impl<Namespace::Class> const Type; \
+        //        extern template class device_finder<Namespace::Class, false>; \
+        //        extern template class device_finder<Namespace::Class, true>;
+
+        /// \brief Define a device type
+        ///
+        /// Defines a device type where the exposed device class is the same as
+        /// the device implementation class.  Must be used in the global
+        /// namespace.
+        ///
+        /// As well as defining the device type, device finder templates are
+        /// instantiated for the device class.
+        /// \param Type The device type name (an identifier).  By convention,
+        ///   these start with an uppercase letter and consist only of uppercase
+        ///   letters and underscores.
+        /// \param Class The device implementation class name.  Must be the same
+        ///   as the exposed device class, and must be derived from #device_t.
+        /// \param ShortName The short name of the device, used for
+        ///   identification, and in filesystem paths for assets and data.  Must
+        ///   be a string no longer than thirty-two characters, containing only
+        ///   ASCII lowercase letters, digits and underscores.  Must be globally
+        ///   unique across systems and devices.
+        /// \param FullName Display name for the device.  Must be a string, and
+        ///   must be globally unique across systems and devices.
+        /// \sa DECLARE_DEVICE_TYPE DECLARE_DEVICE_TYPE_NS
+        ///   DEFINE_DEVICE_TYPE_PRIVATE
+        //#define DEFINE_DEVICE_TYPE(Type, Class, ShortName, FullName) \
+        //        namespace { \
+        //            struct Type##_device_traits { static constexpr char const shortname[] = ShortName, fullname[] = FullName, source[] = __FILE__; }; \
+        //            constexpr char const Type##_device_traits::shortname[], Type##_device_traits::fullname[], Type##_device_traits::source[]; \
+        //        } \
+        //        emu::detail::device_type_impl<Class> const Type = device_creator<Class, (Type##_device_traits::shortname), (Type##_device_traits::fullname), (Type##_device_traits::source)>; \
+        //        template class device_finder<Class, false>; \
+        //        template class device_finder<Class, true>;
+        public static device_type DEFINE_DEVICE_TYPE(device_type.create_func func, string shortname, string fullname)
+        {
+            var traits = new game_traits(shortname, fullname);
+
+            return new device_type(new device_creator(func, traits.shortname, traits.fullname, traits.source, device_t.unemulated_features(), device_t.imperfect_features()).device_tag());
+        }
+
+        /// \brief Define a device type with a private implementation class
+        ///
+        /// Defines a device type where the exposed device class is a base of
+        /// the device implementation class.  Must be used in the global
+        /// namespace.
+        ///
+        /// Device finder templates are not instantiated for the exposed device
+        /// class.  This must be done explicitly in a single location for the
+        /// project.
+        /// \param Type The device type name (an identifier).  By convention,
+        ///   these start with an uppercase letter and consist only of uppercase
+        ///   letters and underscores.
+        /// \param Base The fully-qualified exposed device class name.  Must be
+        ///   a public base of the device implementation class, and must be
+        ///   derived from #device_t or #device_interface.
+        /// \param Class The fully-qualified device implementation class name.
+        ///   Must be derived from the exposed device class, and indirectly from
+        ///   #device_t.
+        /// \param ShortName The short name of the device, used for
+        ///   identification, and in filesystem paths for assets and data.  Must
+        ///   be a string no longer than thirty-two characters, containing only
+        ///   ASCII lowercase letters, digits and underscores.  Must be globally
+        ///   unique across systems and devices.
+        /// \param FullName Display name for the device.  Must be a string, and
+        ///   must be globally unique across systems and devices.
+        /// \sa DECLARE_DEVICE_TYPE DECLARE_DEVICE_TYPE_NS DEFINE_DEVICE_TYPE
+        //#define DEFINE_DEVICE_TYPE_PRIVATE(Type, Base, Class, ShortName, FullName) \
+        //        namespace { \
+        //            struct Type##_device_traits { static constexpr char const shortname[] = ShortName, fullname[] = FullName, source[] = __FILE__; }; \
+        //            constexpr char const Type##_device_traits::shortname[], Type##_device_traits::fullname[], Type##_device_traits::source[]; \
+        //        } \
+        //        emu::detail::device_type_impl<Base> const Type = device_creator<Class, (Type##_device_traits::shortname), (Type##_device_traits::fullname), (Type##_device_traits::source)>;
+
+        /// \}
+    }
+
+
     /// \brief Start order dependencies not satisfied exception
     ///
     /// May be thrown from the start member functions of #device_t and
@@ -615,6 +637,10 @@ namespace mame
     /// reattempting to start the device that threw the exception.
     /// \sa device_t::device_start device_interface::interface_pre_start
     class device_missing_dependencies : emu_exception { }
+
+
+    // timer IDs for devices
+    //typedef u32 device_timer_id;
 
 
     /// \brief Base class for devices
@@ -778,10 +804,6 @@ namespace mame
         public T GetClassInterface<T>() where T : device_interface { foreach (var i in m_class_interfaces) { if (i is T) return (T)i; } return null; }
 
 
-        //using feature = emu::detail::device_feature;
-        //using feature_type = emu::detail::device_feature::type;
-
-
         // core device properties
         device_type m_type;                 // device type
 
@@ -839,7 +861,7 @@ namespace mame
             m_unscaled_clock = clock;
             m_clock = clock;
             m_clock_scale = 1.0f;
-            m_attoseconds_per_clock = (clock == 0) ? 0 : attotime.HZ_TO_ATTOSECONDS(clock);
+            m_attoseconds_per_clock = (clock == 0) ? 0 : HZ_TO_ATTOSECONDS(clock);
 
             m_machine_config = mconfig;
             m_input_defaults = null;
@@ -856,7 +878,7 @@ namespace mame
 
 
             if (owner != null)
-                m_tag = string.Format("{0}:{1}", ((owner.owner() == null) ? "" : owner.tag()), tag);
+                m_tag = ((owner.owner() == null) ? "" : owner.tag()) + ":" + tag;  //m_tag.assign((owner->owner() == nullptr) ? "" : owner->tag()).append(":").append(tag);
             else
                 m_tag = ":";
 
@@ -865,6 +887,9 @@ namespace mame
 
 
         // device flags
+        //using feature = emu::detail::device_feature;
+        //using feature_type = emu::detail::device_feature::type;
+
 
         /// \brief Report unemulated features
         ///
@@ -948,7 +973,7 @@ namespace mame
         {
             if (m_rom_entries.empty())
             {
-                m_rom_entries = g.rom_build_entries(device_rom_region());
+                m_rom_entries = rom_build_entries(device_rom_region());
             }
             return m_rom_entries;
         }
@@ -956,7 +981,7 @@ namespace mame
         public Pointer<tiny_rom_entry> rom_region() { return device_rom_region(); }
         public ioport_constructor input_ports() { return device_input_ports(); }
         //string get_default_bios_tag() { return m_default_bios_tag; }
-        public u8 default_bios() { g.assert(configured());  return m_default_bios; }
+        public u8 default_bios() { assert(configured());  return m_default_bios; }
         public u8 system_bios() { return m_system_bios; }
 
 
@@ -972,8 +997,8 @@ namespace mame
 
         public bool interface_<T>(out T intf) where T : device_interface { intf = GetClassInterface<T>(); return intf != null; }
 
-        public device_execute_interface execute() { g.assert(m_interfaces.m_execute != null);  return m_interfaces.m_execute; }
-        public device_memory_interface memory() { g.assert(m_interfaces.m_memory != null);  return m_interfaces.m_memory; }
+        public device_execute_interface execute() { assert(m_interfaces.m_execute != null);  return m_interfaces.m_execute; }
+        public device_memory_interface memory() { assert(m_interfaces.m_memory != null);  return m_interfaces.m_memory; }
 
 
         // owned object helpers
@@ -989,51 +1014,64 @@ namespace mame
         public string subtag(string tag)
         {
             string result;
-
-            if (!tag.empty() && tag[0] == ':')
+            if (!tag.empty() && (tag[0] == ':'))
             {
                 // if the tag begins with a colon, ignore our path and start from the root
-                tag = tag.Substring(1);  //tag.remove_prefix(1);
-                result = ":";
+                tag = tag.remove_prefix_(1);
+                result = ":";  //result.assign(":");
             }
             else
             {
                 // otherwise, start with our path
-                result = m_tag;
+                result = m_tag;  //result.assign(m_tag);
                 if (result != ":")
-                    result += ":";
+                    result = result.append_(1, ':');
             }
 
             // iterate over the tag, look for special path characters to resolve
-            size_t caret;
-            while ((caret = tag.find('^')) != g.npos)
+            size_t delimiter;
+            while ((delimiter = tag.find_first_of("^:")) != npos)
             {
                 // copy everything up to there
-                result += tag.Substring(0, (int)caret);  //result.append(tag, 0, caret);
-                tag = tag.Substring((int)caret + 1);  //tag.remove_prefix(caret + 1);
+                bool parent = tag[(int)delimiter] == '^';
+                result = result.append_(tag, 0, delimiter);
+                tag = tag.remove_prefix_(delimiter + 1);
 
-                // strip trailing colons
-                int len = result.Length;
-                while (result[--len] == ':')
-                    result = result.substr(0, (size_t)len);
-
-                // remove the last path part, leaving the last colon
-                if (result != ":")
+                if (parent)
                 {
-                    int lastcolon = (int)result.find_last_of(':');
-                    if (lastcolon != -1)
-                        result = result.substr(0, (size_t)lastcolon + 1);
+                    // strip trailing colons
+                    size_t len = result.length();
+                    while ((len > 1) && (result[(int)--len] == ':'))
+                        result = result.resize_(len);
+
+                    // remove the last path part, leaving the last colon
+                    if (result != ":")
+                    {
+                        size_t lastcolon = result.find_last_of(':');
+                        if (lastcolon != npos)
+                            result = result.resize_(lastcolon + 1);
+                    }
+                }
+                else
+                {
+                    // collapse successive colons
+                    if (result.back() != ':')
+                        result = result.append_(1, ':');
+
+                    delimiter = tag.find_first_not_of(':');
+                    if (delimiter != npos)
+                        tag = tag.remove_prefix_(delimiter);
                 }
             }
 
             // copy everything else
-            result += tag;
+            result = result.append_(tag);
 
             {
                 // strip trailing colons up to the root
-                int len = result.Length;
-                while (len > 1 && result[--len] == ':')
-                    result = result.Substring(0, len);
+                size_t len = result.length();
+                while ((len > 1) && (result[(int)--len] == ':'))
+                    result = result.resize_(len);
             }
 
             return result;
@@ -1143,7 +1181,7 @@ namespace mame
         //-------------------------------------------------
         public void add_machine_configuration(machine_config config)
         {
-            g.assert(config == m_machine_config);
+            assert(config == m_machine_config);
             using (machine_config.token tok = config.begin_configuration(this))  // machine_config::token const tok(config.begin_configuration(*this));
             {
                 device_add_mconfig(config);
@@ -1196,22 +1234,22 @@ namespace mame
                 u8 firstbios = 0;
                 {
                     int romIdx = 0;
-                    for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !g.ROMENTRY_ISEND(rom); rom = roms[++romIdx])  //  for (tiny_rom_entry rom = roms; !m_default_bios && !ROMENTRY_ISEND(rom); ++rom)
+                    for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !ROMENTRY_ISEND(rom); rom = roms[++romIdx])  //  for (tiny_rom_entry rom = roms; !m_default_bios && !ROMENTRY_ISEND(rom); ++rom)
                     {
-                        if (g.ROMENTRY_ISSYSTEM_BIOS(rom))
+                        if (ROMENTRY_ISSYSTEM_BIOS(rom))
                         {
                             if (!havebios)
                             {
                                 havebios = true;
-                                firstbios = (u8)g.ROM_GETBIOSFLAGS(rom);
+                                firstbios = (u8)ROM_GETBIOSFLAGS(rom);
                             }
 
                             if (string.IsNullOrEmpty(defbios))
                                 twopass = true;
                             else if (std.strcmp(rom.name_, defbios) == 0)
-                                m_default_bios = (u8)g.ROM_GETBIOSFLAGS(rom);
+                                m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
                         }
-                        else if (string.IsNullOrEmpty(defbios) && g.ROMENTRY_ISDEFAULT_BIOS(rom))
+                        else if (string.IsNullOrEmpty(defbios) && ROMENTRY_ISDEFAULT_BIOS(rom))
                         {
                             defbios = rom.name_;
                         }
@@ -1224,10 +1262,10 @@ namespace mame
                     if (!string.IsNullOrEmpty(defbios) && twopass)
                     {
                         int romIdx = 0;
-                        for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !g.ROMENTRY_ISEND(rom); rom = roms[++romIdx])
+                        for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !ROMENTRY_ISEND(rom); rom = roms[++romIdx])
                         {
-                            if (g.ROMENTRY_ISSYSTEM_BIOS(rom) && std.strcmp(rom.name_, defbios) == 0)
-                                m_default_bios = (u8)g.ROM_GETBIOSFLAGS(rom);
+                            if (ROMENTRY_ISSYSTEM_BIOS(rom) && std.strcmp(rom.name_, defbios) == 0)
+                                m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
                         }
                     }
 
@@ -1298,7 +1336,7 @@ namespace mame
 
             m_unscaled_clock = clock;
             m_clock = (u32)(m_unscaled_clock * m_clock_scale);
-            m_attoseconds_per_clock = (m_clock == 0) ? 0 : attotime.HZ_TO_ATTOSECONDS(m_clock);
+            m_attoseconds_per_clock = (m_clock == 0) ? 0 : HZ_TO_ATTOSECONDS(m_clock);
 
             // recalculate all derived clocks
             foreach (device_t child in subdevices())
@@ -1335,7 +1373,7 @@ namespace mame
             else
             {
                 u32 remainder;
-                u32 quotient = g.divu_64x32_rem(numclocks, m_clock, out remainder);
+                u32 quotient = divu_64x32_rem(numclocks, m_clock, out remainder);
                 return new attotime((seconds_t)quotient, (attoseconds_t)((u64)remainder * (u64)m_attoseconds_per_clock));
             }
         }
@@ -1384,7 +1422,7 @@ namespace mame
         //template <typename ItemType>
         public void save_item<ItemType>(Tuple<ItemType, string> value, int index = 0)
         {
-            g.assert(m_save != null);
+            assert(m_save != null);
             m_save.save_item(this, name(), tag(), index, value.Item1, value.Item2);
         }
 
@@ -1489,13 +1527,13 @@ namespace mame
                     string tag = autodev.finder_tag();
                     if (tag == null)
                     {
-                        g.osd_printf_error("Finder tag is null!\n");
+                        osd_printf_error("Finder tag is null!\n");
                         allfound = false;
                         continue;
                     }
                     if (tag[0] == '^' && tag[1] == ':')
                     {
-                        g.osd_printf_error("Malformed finder tag: {0}\n", tag);
+                        osd_printf_error("Malformed finder tag: {0}\n", tag);
                         allfound = false;
                         continue;
                     }
@@ -1524,7 +1562,7 @@ namespace mame
 
             if (m_machine != null && m_machine.allow_logging())
             {
-                profiler_global.g_profiler.start(profile_type.PROFILER_LOGERROR);
+                g_profiler.start(profile_type.PROFILER_LOGERROR);
 
                 // dump to the buffer
                 //m_string_buffer.clear();
@@ -1536,7 +1574,7 @@ namespace mame
                 string msg = string.Format("[{0}] {1}", tag(), string.Format(format, args));
                 m_machine.strlog(msg);  //m_machine->strlog(&m_string_buffer.vec()[0]);
 
-                profiler_global.g_profiler.stop();
+                g_profiler.stop();
             }
         }
 
@@ -1617,8 +1655,8 @@ namespace mame
                 //throw new emu_unimplemented();
 #if false
                 logerror("Device did not register any state to save!\n");
-                if (((UInt64)machine().system().flags & gamedrv_global.MACHINE_SUPPORTS_SAVE) != 0)
-                    fatalerror("Device '{0}' did not register any state to save!\n", tag());
+                if ((machine().system().flags & MACHINE_SUPPORTS_SAVE) != 0)
+                    fatalerror("Device '%s' did not register any state to save!\n", tag());
 #endif
             }
 
@@ -1630,20 +1668,20 @@ namespace mame
             notify_clock_changed();
 
             // if we're debugging, create a device_debug object
-            if ((machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0)
+            if ((machine().debug_flags & DEBUG_FLAG_ENABLED) != 0)
             {
                 m_debug = new device_debug(this);
                 debug_setup();
             }
 
             // register our save states
-            save_item(g.NAME(new { m_clock }));
-            save_item(g.NAME(new { m_unscaled_clock }));
-            save_item(g.NAME(new { m_clock_scale }));
+            save_item(NAME(new { m_clock }));
+            save_item(NAME(new { m_unscaled_clock }));
+            save_item(NAME(new { m_clock_scale }));
 
             // have the views register their state
             if (!m_viewlist.empty())
-                g.osd_printf_verbose("{0}: Registering {1} views\n", m_tag, (int)m_viewlist.size());
+                osd_printf_verbose("{0}: Registering {1} views\n", m_tag, (int)m_viewlist.size());
             foreach (memory_view view in m_viewlist)
                 view.register_state();
 
@@ -1976,8 +2014,8 @@ namespace mame
 
             // we presume the result is a rooted path; also doubled colons mess up our
             // tree walk, so catch them early
-            g.assert(fulltag[0] == ':');
-            g.assert(fulltag.find("::") == g.npos);
+            assert(fulltag[0] == ':');
+            assert(fulltag.find("::") == npos);
 
             // walk the device list to the final path
             device_t curdevice = mconfig().root_device();
@@ -1985,7 +2023,7 @@ namespace mame
             while (!part.empty() && curdevice != null)
             {
                 size_t end = part.find_first_of(':');
-                if (end == g.npos)
+                if (end == npos)
                 {
                     curdevice = curdevice.subdevices().find(part);
                     part = "";
@@ -2009,14 +2047,14 @@ namespace mame
         {
             if ((m_configured_clock & 0xff000000) == 0xff000000)
             {
-                g.assert(m_owner != null);
+                assert(m_owner != null);
                 set_unscaled_clock(m_owner.m_clock * ((m_configured_clock >> 12) & 0xfff) / ((m_configured_clock >> 0) & 0xfff));
             }
         }
 
 
-        protected void LOGMASKED(int VERBOSE, int mask, string format, params object [] args) { g.LOGMASKED(VERBOSE, mask, this, format, args); }
-        protected void LOG(int VERBOSE, string format, params object [] args) { g.LOG(VERBOSE, this, format, args); }
+        protected void LOGMASKED(int VERBOSE, int mask, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, this, format, args); }
+        protected void LOG(int VERBOSE, string format, params object [] args) { logmacro_global.LOG(VERBOSE, this, format, args); }
     }
 
 
@@ -2678,5 +2716,11 @@ namespace mame
 
             return null;
         }
+    }
+
+
+    public static partial class device_global
+    {
+        public delegate void clock_update_delegate(u32 param);  //typedef device_delegate<void (u32)> clock_update_delegate;
     }
 }

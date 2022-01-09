@@ -2,13 +2,16 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+
+using static mame.cpp_global;
+using static mame.distate_global;
+using static mame.util;
 
 
 namespace mame
@@ -69,14 +72,14 @@ namespace mame
             m_default_format = true;
 
 
-            g.assert(size == 1 || size == 2 || size == 4 || size == 8 || (flags & DSF_FLOATING_POINT) != 0);
+            assert(size == 1 || size == 2 || size == 4 || size == 8 || (flags & DSF_FLOATING_POINT) != 0);
 
             format_from_mask();
 
             // override well-known symbols
-            if (index == g.STATE_GENPCBASE)
+            if (index == STATE_GENPCBASE)
                 m_symbol = "CURPC";
-            else if (index == g.STATE_GENFLAGS)
+            else if (index == STATE_GENFLAGS)
                 m_symbol = "CURFLAGS";
         }
 
@@ -150,7 +153,7 @@ namespace mame
         //-------------------------------------------------
         void set_value(u64 value)
         {
-            g.assert((m_flags & DSF_READONLY) == 0);
+            assert((m_flags & DSF_READONLY) == 0);
 
             // apply the mask
             value &= m_datamask;
@@ -243,7 +246,7 @@ namespace mame
             for (u64 tempmask = m_datamask; tempmask != 0; tempmask >>= 4)
                 width++;
 
-            m_format = string.Format("%%0{0}", width);  // %%0%dX
+            m_format = string_format("%%0{0}", width);  // %%0%dX
         }
 
 
@@ -456,7 +459,7 @@ namespace mame
 
 
         //astring &state_string(int index, astring &dest);
-        public offs_t pc() { return (offs_t)state_int(g.STATE_GENPC); }
+        public offs_t pc() { return (offs_t)state_int(STATE_GENPC); }
         //offs_t pcbase() { return state_int(STATE_GENPCBASE); }
         //u64 flags() { return state_int(STATE_GENFLAGS); }
 
@@ -494,13 +497,14 @@ namespace mame
         public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, ItemType data)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, ItemType &data)
             where ItemType_OPS : device_state_register_operators<ItemType>, new()
         {
-            g.assert(symbol != null);
+            assert(symbol != null);
             return state_add(new device_state_register<ItemType, ItemType_OPS>(index, symbol, data, this));  //return state_add(std::make_unique<device_state_register<ItemType>>(index, symbol, data, this));
         }
 
         public device_state_entry state_add(int index, string symbol, u8 data) { return state_add<u8, device_state_register_operators_u8>(index, symbol, data); }
         public device_state_entry state_add(int index, string symbol, u16 data) { return state_add<u16, device_state_register_operators_u16>(index, symbol, data); }
         public device_state_entry state_add(int index, string symbol, u32 data) { return state_add<u32, device_state_register_operators_u32>(index, symbol, data); }
+        public device_state_entry state_add(int index, string symbol, bool data) { return state_add(index, symbol, data ? (u8)1U : (u8)0); }
 
 
         // add a new state register item using functional setter
@@ -508,7 +512,7 @@ namespace mame
         public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, ItemType data, device_latched_functional_state_register<ItemType, ItemType_OPS>.setter_func setter)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, ItemType &data, typename device_latched_functional_state_register<ItemType>::setter_func &&setter)
             where ItemType_OPS : device_state_register_operators<ItemType>, new()
         {
-            g.assert(symbol != null);
+            assert(symbol != null);
             return state_add(new device_latched_functional_state_register<ItemType, ItemType_OPS>(index, symbol, data, setter, this));  //return state_add(std::make_unique<device_latched_functional_state_register<ItemType>>(index, symbol, data, std::move(setter), this));
         }
 
@@ -518,7 +522,7 @@ namespace mame
         public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, device_functional_state_register<ItemType, ItemType_OPS>.getter_func getter, device_functional_state_register<ItemType, ItemType_OPS>.setter_func setter)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, typename device_functional_state_register<ItemType>::getter_func &&getter, typename device_functional_state_register<ItemType>::setter_func &&setter)
             where ItemType_OPS : device_state_register_operators<ItemType>, new()
         {
-            g.assert(symbol != null);
+            assert(symbol != null);
             return state_add(new device_functional_state_register<ItemType, ItemType_OPS>(index, symbol, getter, setter, this));  //return state_add(std::make_unique<device_functional_state_register<ItemType>>(index, symbol, std::move(getter), std::move(setter), this));
         }
 
@@ -528,7 +532,7 @@ namespace mame
         public device_state_entry state_add<ItemType, ItemType_OPS>(int index, string symbol, device_functional_state_register<ItemType, ItemType_OPS>.getter_func getter)  //template<class ItemType> device_state_entry &state_add(int index, const char *symbol, typename device_functional_state_register<ItemType>::getter_func &&getter)
             where ItemType_OPS : device_state_register_operators<ItemType>, new()
         {
-            g.assert(symbol != null);
+            assert(symbol != null);
             return state_add(new device_functional_state_register<ItemType, ItemType_OPS>(index, symbol, getter, (i) => { }, this)).readonly_();  //return state_add(std::make_unique<device_functional_state_register<ItemType>>(index, symbol, std::move(getter), [](ItemType){}, this)).readonly();
         }
 

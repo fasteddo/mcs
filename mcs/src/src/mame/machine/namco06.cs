@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
@@ -13,6 +12,11 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using unsigned = System.UInt32;
 
+using static mame.diexec_global;
+using static mame.device_global;
+using static mame.emucore_global;
+using static mame.util;
+
 
 namespace mame
 {
@@ -21,7 +25,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NAMCO_06XX, namco_06xx_device, "namco06", "Namco 06xx")
         static device_t device_creator_namco_06xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_06xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NAMCO_06XX = g.DEFINE_DEVICE_TYPE(device_creator_namco_06xx_device, "namco06", "Namco 06xx");
+        public static readonly device_type NAMCO_06XX = DEFINE_DEVICE_TYPE(device_creator_namco_06xx_device, "namco06", "Namco 06xx");
 
 
         const bool VERBOSE = false;
@@ -73,16 +77,16 @@ namespace mame
         {
             uint8_t result = 0xff;
 
-            if (g.BIT(m_control, 4) == 0)
+            if (BIT(m_control, 4) == 0)
             {
                 logerror("{0}: 06XX '{1}' read in write mode {2}\n", machine().describe_context(), tag(), m_control);
                 return 0;
             }
 
-            if (g.BIT(m_control, 0) != 0) result &= m_read[0].op_u8(0);
-            if (g.BIT(m_control, 1) != 0) result &= m_read[1].op_u8(0);
-            if (g.BIT(m_control, 2) != 0) result &= m_read[2].op_u8(0);
-            if (g.BIT(m_control, 3) != 0) result &= m_read[3].op_u8(0);
+            if (BIT(m_control, 0) != 0) result &= m_read[0].op_u8(0);
+            if (BIT(m_control, 1) != 0) result &= m_read[1].op_u8(0);
+            if (BIT(m_control, 2) != 0) result &= m_read[2].op_u8(0);
+            if (BIT(m_control, 3) != 0) result &= m_read[3].op_u8(0);
 
             return result;
         }
@@ -90,16 +94,16 @@ namespace mame
 
         public void data_w(offs_t offset, uint8_t data)
         {
-            if (g.BIT(m_control, 4) != 0)
+            if (BIT(m_control, 4) != 0)
             {
                 logerror("{0}: 06XX '{1}' write in read mode {2}\n", machine().describe_context(), tag(), m_control);
                 return;
             }
 
-            if (g.BIT(m_control, 0) != 0) m_write[0].op_u8(0, data);
-            if (g.BIT(m_control, 1) != 0) m_write[1].op_u8(0, data);
-            if (g.BIT(m_control, 2) != 0) m_write[2].op_u8(0, data);
-            if (g.BIT(m_control, 3) != 0) m_write[3].op_u8(0, data);
+            if (BIT(m_control, 0) != 0) m_write[0].op_u8(0, data);
+            if (BIT(m_control, 1) != 0) m_write[1].op_u8(0, data);
+            if (BIT(m_control, 2) != 0) m_write[2].op_u8(0, data);
+            if (BIT(m_control, 3) != 0) m_write[3].op_u8(0, data);
         }
 
 
@@ -117,11 +121,11 @@ namespace mame
             if ((m_control & 0xe0) == 0)
             {
                 m_nmi_timer.adjust(attotime.never);
-                set_nmi(g.CLEAR_LINE);
-                m_chipsel[0].op_s32(0, g.CLEAR_LINE);
-                m_chipsel[1].op_s32(0, g.CLEAR_LINE);
-                m_chipsel[2].op_s32(0, g.CLEAR_LINE);
-                m_chipsel[3].op_s32(0, g.CLEAR_LINE);
+                set_nmi(CLEAR_LINE);
+                m_chipsel[0].op_s32(0, CLEAR_LINE);
+                m_chipsel[1].op_s32(0, CLEAR_LINE);
+                m_chipsel[2].op_s32(0, CLEAR_LINE);
+                m_chipsel[3].op_s32(0, CLEAR_LINE);
                 // Setting this to true makes the next RW change not stretch.
                 m_next_timer_state = true;
             }
@@ -130,9 +134,9 @@ namespace mame
                 m_rw_stretch = !m_next_timer_state;
                 m_rw_change = true;
                 m_next_timer_state = true;
-                m_nmi_stretch = g.BIT(m_control, 4) != 0;
+                m_nmi_stretch = BIT(m_control, 4) != 0;
                 // NMI is cleared immediately if its to be stretched.
-                if (m_nmi_stretch) set_nmi(g.CLEAR_LINE);
+                if (m_nmi_stretch) set_nmi(CLEAR_LINE);
 
                 uint8_t num_shifts = (uint8_t)((m_control & 0xe0) >> 5);
                 uint8_t divisor = (uint8_t)(1U << num_shifts);
@@ -158,11 +162,11 @@ namespace mame
             /* allocate a timer */
             m_nmi_timer = machine().scheduler().timer_alloc(nmi_generate); //timer_expired_delegate(FUNC(namco_06xx_device::nmi_generate),this));
 
-            save_item(g.NAME(new { m_control }));
-            save_item(g.NAME(new { m_next_timer_state }));
-            save_item(g.NAME(new { m_nmi_stretch }));
-            save_item(g.NAME(new { m_rw_stretch }));
-            save_item(g.NAME(new { m_rw_change }));
+            save_item(NAME(new { m_control }));
+            save_item(NAME(new { m_next_timer_state }));
+            save_item(NAME(new { m_nmi_stretch }));
+            save_item(NAME(new { m_rw_stretch }));
+            save_item(NAME(new { m_rw_change }));
         }
 
         //-------------------------------------------------
@@ -176,9 +180,9 @@ namespace mame
 
         void set_nmi(int state)
         {
-            if (!m_nmicpu.op[0].suspended(g.SUSPEND_REASON_HALT | g.SUSPEND_REASON_RESET | g.SUSPEND_REASON_DISABLE))
+            if (!m_nmicpu.op0.suspended(SUSPEND_REASON_HALT | SUSPEND_REASON_RESET | SUSPEND_REASON_DISABLE))
             {
-                m_nmicpu.op[0].set_input_line(g.INPUT_LINE_NMI, state);
+                m_nmicpu.op0.set_input_line(INPUT_LINE_NMI, state);
             }
         }
 
@@ -198,27 +202,27 @@ namespace mame
             {
                 if (!m_rw_stretch)
                 {
-                    m_rw[0].op_s32(0, g.BIT(m_control, 4));
-                    m_rw[1].op_s32(0, g.BIT(m_control, 4));
-                    m_rw[2].op_s32(0, g.BIT(m_control, 4));
-                    m_rw[3].op_s32(0, g.BIT(m_control, 4));
+                    m_rw[0].op_s32(0, BIT(m_control, 4));
+                    m_rw[1].op_s32(0, BIT(m_control, 4));
+                    m_rw[2].op_s32(0, BIT(m_control, 4));
+                    m_rw[3].op_s32(0, BIT(m_control, 4));
                     m_rw_change = false;
                 }
             }
 
             if (m_next_timer_state && !m_nmi_stretch )
             {
-                set_nmi(g.ASSERT_LINE);
+                set_nmi(ASSERT_LINE);
             }
             else
             {
-                set_nmi(g.CLEAR_LINE);
+                set_nmi(CLEAR_LINE);
             }
 
-            m_chipsel[0].op_s32(0, (g.BIT(m_control, 0) != 0 && m_next_timer_state) ? 1 : 0);
-            m_chipsel[1].op_s32(0, (g.BIT(m_control, 1) != 0 && m_next_timer_state) ? 1 : 0);
-            m_chipsel[2].op_s32(0, (g.BIT(m_control, 2) != 0 && m_next_timer_state) ? 1 : 0);
-            m_chipsel[3].op_s32(0, (g.BIT(m_control, 3) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[0].op_s32(0, (BIT(m_control, 0) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[1].op_s32(0, (BIT(m_control, 1) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[2].op_s32(0, (BIT(m_control, 2) != 0 && m_next_timer_state) ? 1 : 0);
+            m_chipsel[3].op_s32(0, (BIT(m_control, 3) != 0 && m_next_timer_state) ? 1 : 0);
 
             m_next_timer_state = !m_next_timer_state;
             m_nmi_stretch = false;

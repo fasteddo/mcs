@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
@@ -18,6 +17,12 @@ using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.device_global;
+using static mame.diexec_global;
+using static mame.distate_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
 
 
 namespace mame
@@ -652,11 +657,11 @@ namespace mame
             init_s_mcs48_opcodes();
 
 
-            m_program_config = new address_space_config("program", g.ENDIANNESS_LITTLE, 8, (feature_mask & MB_FEATURE) != 0 ? (u8)12 : (u8)11, 0
+            m_program_config = new address_space_config("program", ENDIANNESS_LITTLE, 8, (feature_mask & MB_FEATURE) != 0 ? (u8)12 : (u8)11, 0
                                , (rom_size == 1024) ? program_10bit : (rom_size == 2048) ? program_11bit : (rom_size == 4096) ? program_12bit : (address_map_constructor)null);
-            m_data_config = new address_space_config("data", g.ENDIANNESS_LITTLE, 8, ( ( ram_size == 64 ) ? (u8)6 : ( ( ram_size == 128 ) ? (u8)7 : (u8)8 ) ), 0
+            m_data_config = new address_space_config("data", ENDIANNESS_LITTLE, 8, ( ( ram_size == 64 ) ? (u8)6 : ( ( ram_size == 128 ) ? (u8)7 : (u8)8 ) ), 0
                             , (ram_size == 64) ? data_6bit : (ram_size == 128) ? data_7bit : (address_map_constructor)data_8bit);
-            m_io_config = new address_space_config("io", g.ENDIANNESS_LITTLE, 8, 8, 0);
+            m_io_config = new address_space_config("io", ENDIANNESS_LITTLE, 8, 8, 0);
             m_port_in_cb = new devcb_read8.array<u64_const_2>(this, () => { return new devcb_read8(this); });
             m_port_out_cb = new devcb_write8.array<u64_const_2>(this, () => { return new devcb_write8(this); });
             m_bus_in_cb = new devcb_read8(this);
@@ -673,10 +678,10 @@ namespace mame
 
             // Sanity checks
             if ( ram_size != 64 && ram_size != 128 && ram_size != 256 )
-                g.fatalerror("mcs48: Invalid RAM size\n");
+                fatalerror("mcs48: Invalid RAM size\n");
 
             if ( rom_size != 0 && rom_size != 1024 && rom_size != 2048 && rom_size != 4096 )
-                g.fatalerror("mcs48: Invalid ROM size\n");
+                fatalerror("mcs48: Invalid ROM size\n");
         }
 
 
@@ -788,10 +793,10 @@ namespace mame
             // FIXME: Current implementation suboptimal
             m_ea = m_int_rom_size != 0 ? (uint8_t)0 : (uint8_t)1;
 
-            m_dimemory.space(g.AS_PROGRAM).cache(m_program);
-            m_dimemory.space(g.AS_DATA).specific(m_data);
+            m_dimemory.space(AS_PROGRAM).cache(m_program);
+            m_dimemory.space(AS_DATA).specific(m_data);
             if ((m_feature_mask & EXT_BUS_FEATURE) != 0)
-                m_dimemory.space(g.AS_IO).specific(m_io);
+                m_dimemory.space(AS_IO).specific(m_io);
 
             // resolve callbacks
             m_port_in_cb.resolve_all_safe_u8(0xff);
@@ -807,10 +812,10 @@ namespace mame
             // set up the state table
             {
                 m_distate.state_add(MCS48_PC,          "PC",        m_pc).mask(0xfff);
-                m_distate.state_add(g.STATE_GENPC,     "GENPC",     m_pc).mask(0xfff).noshow();
-                m_distate.state_add(g.STATE_GENPCBASE, "CURPC",     m_prevpc).mask(0xfff).noshow();
+                m_distate.state_add(STATE_GENPC,     "GENPC",     m_pc).mask(0xfff).noshow();
+                m_distate.state_add(STATE_GENPCBASE, "CURPC",     m_prevpc).mask(0xfff).noshow();
                 m_distate.state_add(MCS48_SP,          "SP",        m_psw).mask(0x7).noshow();
-                m_distate.state_add(g.STATE_GENFLAGS,  "GENFLAGS",  m_psw).noshow().formatstr("%11s");
+                m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  m_psw).noshow().formatstr("%11s");
                 m_distate.state_add(MCS48_A,           "A",         m_a);
                 m_distate.state_add(MCS48_TC,          "TC",        m_timer);
                 m_distate.state_add(MCS48_TPRE,        "TPRE",      m_prescaler).mask(0x1f);
@@ -837,34 +842,34 @@ namespace mame
             }
 
             // register for savestates
-            save_item(g.NAME(new { m_prevpc }));
-            save_item(g.NAME(new { m_pc }));
+            save_item(NAME(new { m_prevpc }));
+            save_item(NAME(new { m_pc }));
 
-            save_item(g.NAME(new { m_a }));
-            save_item(g.NAME(new { m_psw }));
-            save_item(g.NAME(new { m_f1 }));
-            save_item(g.NAME(new { m_p1 }));
-            save_item(g.NAME(new { m_p2 }));
-            save_item(g.NAME(new { m_ea }));
-            save_item(g.NAME(new { m_timer }));
-            save_item(g.NAME(new { m_prescaler }));
-            save_item(g.NAME(new { m_t1_history }));
-            save_item(g.NAME(new { m_sts }));
-            save_item(g.NAME(new { m_dbbi }));
-            save_item(g.NAME(new { m_dbbo }));
+            save_item(NAME(new { m_a }));
+            save_item(NAME(new { m_psw }));
+            save_item(NAME(new { m_f1 }));
+            save_item(NAME(new { m_p1 }));
+            save_item(NAME(new { m_p2 }));
+            save_item(NAME(new { m_ea }));
+            save_item(NAME(new { m_timer }));
+            save_item(NAME(new { m_prescaler }));
+            save_item(NAME(new { m_t1_history }));
+            save_item(NAME(new { m_sts }));
+            save_item(NAME(new { m_dbbi }));
+            save_item(NAME(new { m_dbbo }));
 
-            save_item(g.NAME(new { m_irq_state }));
-            save_item(g.NAME(new { m_irq_polled }));
-            save_item(g.NAME(new { m_irq_in_progress }));
-            save_item(g.NAME(new { m_timer_overflow }));
-            save_item(g.NAME(new { m_timer_flag }));
-            save_item(g.NAME(new { m_tirq_enabled }));
-            save_item(g.NAME(new { m_xirq_enabled }));
-            save_item(g.NAME(new { m_timecount_enabled }));
-            save_item(g.NAME(new { m_flags_enabled }));
-            save_item(g.NAME(new { m_dma_enabled }));
+            save_item(NAME(new { m_irq_state }));
+            save_item(NAME(new { m_irq_polled }));
+            save_item(NAME(new { m_irq_in_progress }));
+            save_item(NAME(new { m_timer_overflow }));
+            save_item(NAME(new { m_timer_flag }));
+            save_item(NAME(new { m_tirq_enabled }));
+            save_item(NAME(new { m_xirq_enabled }));
+            save_item(NAME(new { m_timecount_enabled }));
+            save_item(NAME(new { m_flags_enabled }));
+            save_item(NAME(new { m_dma_enabled }));
 
-            save_item(g.NAME(new { m_a11 }));
+            save_item(NAME(new { m_a11 }));
 
             set_icountptr(m_icount);
         }
@@ -951,11 +956,11 @@ namespace mame
             switch (inputnum)
             {
                 case MCS48_INPUT_IRQ:
-                    m_irq_state = (state != g.CLEAR_LINE);
+                    m_irq_state = (state != CLEAR_LINE);
                     break;
 
                 case MCS48_INPUT_EA:
-                    m_ea = (state != g.CLEAR_LINE) ? (uint8_t)1 : (uint8_t)0;
+                    m_ea = (state != CLEAR_LINE) ? (uint8_t)1 : (uint8_t)0;
                     break;
             }
         }
@@ -967,15 +972,15 @@ namespace mame
             if ((feature_mask & EXT_BUS_FEATURE) != 0)
                 return new space_config_vector()
                 {
-                    std.make_pair(g.AS_PROGRAM, m_program_config),
-                    std.make_pair(g.AS_DATA,    m_data_config),
-                    std.make_pair(g.AS_IO,      m_io_config)
+                    std.make_pair(AS_PROGRAM, m_program_config),
+                    std.make_pair(AS_DATA,    m_data_config),
+                    std.make_pair(AS_IO,      m_io_config)
                 };
             else
                 return new space_config_vector()
                 {
-                    std.make_pair(g.AS_PROGRAM, m_program_config),
-                    std.make_pair(g.AS_DATA,    m_data_config)
+                    std.make_pair(AS_PROGRAM, m_program_config),
+                    std.make_pair(AS_DATA,    m_data_config)
                 };
         }
 
@@ -1299,7 +1304,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(MB8884, mb8884_device, "mb8884", "MB8884")
         static device_t device_creator_mb8884_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8884_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8884 = g.DEFINE_DEVICE_TYPE(device_creator_mb8884_device, "mb8884", "MB8884");
+        public static readonly device_type MB8884 = DEFINE_DEVICE_TYPE(device_creator_mb8884_device, "mb8884", "MB8884");
 
         // construction/destruction
         mb8884_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)

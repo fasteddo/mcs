@@ -2,11 +2,13 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
+
+using static mame.emucore_global;
+using static mame.util;
 
 
 namespace mame
@@ -38,7 +40,7 @@ namespace mame
             DIRBYTE(big, out r);
             immbyte(big, out t);
             CLC();
-            if (g.BIT(r, B) != 0) { SEC(); PC = (u16)(PC + SIGNED(t)); }
+            if (BIT(r, B) != 0) { SEC(); PC = (u16)(PC + SIGNED(t)); }
         }
 
         void brset_true_0() { brset(true, 0); }
@@ -67,7 +69,7 @@ namespace mame
             DIRBYTE(big, out r);
             immbyte(big, out t);
             SEC();
-            if (g.BIT(r, B) == 0) { CLC(); PC = (u16)(PC + SIGNED(t)); }
+            if (BIT(r, B) == 0) { CLC(); PC = (u16)(PC + SIGNED(t)); }
         }
 
         void brclr_true_0() { brclr(true, 0); }
@@ -271,7 +273,7 @@ namespace mame
             u8 t;
             ARGBYTE(big, M, out t);
             clr_nzc();
-            CC |= (u8)g.BIT(t, 0);
+            CC |= (u8)BIT(t, 0);
             t >>= 1;
             set_z8(t);
             wm(big, EAD, t);
@@ -296,9 +298,9 @@ namespace mame
         {
             u8 t;
             ARGBYTE(big, M, out t);
-            u8 r = (u8)(g.BIT(CC, 0) << 7);
+            u8 r = (u8)(BIT(CC, 0) << 7);
             clr_nzc();
-            CC |= (u8)g.BIT(t, 0);
+            CC |= (u8)BIT(t, 0);
             r |= (u8)(t >> 1);
             set_nz8(r);
             wm(big, EAD, r);
@@ -320,7 +322,7 @@ namespace mame
             u8 t;
             ARGBYTE(big, M, out t);
             clr_nzc();
-            CC |= (u8)g.BIT(t, 0);
+            CC |= (u8)BIT(t, 0);
             t = (u8)((t >> 1) | (t & 0x80));
             set_nz8(t);
             wm(big, EAD, t);
@@ -362,7 +364,7 @@ namespace mame
         {
             u16 t;
             ARGBYTE(big, M, out t);
-            u16 r = (u16)(g.BIT(CC, 0) | (t << 1));
+            u16 r = (u16)(BIT(CC, 0) | (t << 1));
             clr_nzc();
             set_nzc8(r);
             wm(big, EAD, (u8)r);
@@ -505,7 +507,7 @@ namespace mame
         void lsra()
         {
             clr_nzc();
-            CC |= (u8)g.BIT(A, 0);
+            CC |= (u8)BIT(A, 0);
             A >>= 1;
             set_z8(A);
         }
@@ -519,9 +521,9 @@ namespace mame
         //OP_HANDLER( rora )
         void rora()
         {
-            u8 r = (u8)(g.BIT(CC, 0) << 7);
+            u8 r = (u8)(BIT(CC, 0) << 7);
             clr_nzc();
-            CC |= (u8)g.BIT(A, 0);
+            CC |= (u8)BIT(A, 0);
             r |= (u8)(A >> 1);
             set_nz8(r);
             A = r;
@@ -535,7 +537,7 @@ namespace mame
         void asra()
         {
             clr_nzc();
-            CC |= (u8)g.BIT(A, 0);
+            CC |= (u8)BIT(A, 0);
             A = (u8)((A & 0x80) | (A >> 1));
             set_nz8(A);
         }
@@ -561,7 +563,7 @@ namespace mame
         void rola()
         {
             u16 t = A;
-            u16 r = (u16)(g.BIT(CC, 0) | (t << 1));
+            u16 r = (u16)(BIT(CC, 0) | (t << 1));
             clr_nzc();
             set_nzc8(r);
             A = (u8)r;
@@ -656,7 +658,7 @@ namespace mame
         void lsrx()
         {
             clr_nzc();
-            CC |= (u8)g.BIT(X, 0);
+            CC |= (u8)BIT(X, 0);
             X >>= 1;
             set_z8(X);
         }
@@ -670,9 +672,9 @@ namespace mame
         //OP_HANDLER( rorx )
         void rorx()
         {
-            u8 r = (u8)(g.BIT(CC, 0) << 7);
+            u8 r = (u8)(BIT(CC, 0) << 7);
             clr_nzc();
-            CC |= (u8)g.BIT(X, 0);
+            CC |= (u8)BIT(X, 0);
             r |= (u8)(X >> 1);
             set_nz8(r);
             X = r;
@@ -686,7 +688,7 @@ namespace mame
         void asrx()
         {
             clr_nzc();
-            CC |= (u8)g.BIT(X, 0);
+            CC |= (u8)BIT(X, 0);
             X = (u8)((X & 0x80) | (X >> 1));
             set_nz8(X);
         }
@@ -712,7 +714,7 @@ namespace mame
         void rolx()
         {
             u16 t = X;
-            u16 r = (u16)(g.BIT(CC, 0) | (t << 1));
+            u16 r = (u16)(BIT(CC, 0) | (t << 1));
             clr_nzc();
             set_nzc8(r);
             X = (u8)r;
@@ -837,7 +839,7 @@ namespace mame
         //OP_HANDLER( stop )
         new void stop()
         {
-            g.fatalerror("m6805[{0}]: unimplemented STOP", tag());
+            fatalerror("m6805[{0}]: unimplemented STOP", tag());
         }
 
         void stop_true() { stop(); }
@@ -847,7 +849,7 @@ namespace mame
         //OP_HANDLER( wait )
         void wait()
         {
-            g.fatalerror("m6805[{0}]: unimplemented WAIT", tag());
+            fatalerror("m6805[{0}]: unimplemented WAIT", tag());
         }
 
         void wait_true() { wait(); }
@@ -999,7 +1001,7 @@ namespace mame
         {
             u16 t;
             ARGBYTE(big, M, out t);
-            u16 r = (u16)(A - t - g.BIT(CC, 0));
+            u16 r = (u16)(A - t - BIT(CC, 0));
             clr_nzc();
             set_nzc8(r);
             A = (u8)r;
@@ -1201,7 +1203,7 @@ namespace mame
         {
             u16 t;
             ARGBYTE(big, M, out t);
-            u16 r = (u16)(A + t + g.BIT(CC, 0));
+            u16 r = (u16)(A + t + BIT(CC, 0));
             clr_hnzc();
             set_hnzc8(A, (u8)t, r);
             A = (u8)r;

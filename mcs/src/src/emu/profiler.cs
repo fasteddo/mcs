@@ -2,11 +2,12 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using size_t = System.UInt64;
 using u64 = System.UInt64;
+
+using static mame.eminline_global;
 
 
 namespace mame
@@ -50,16 +51,6 @@ namespace mame
         PROFILER_TOTAL
     }
     //DECLARE_ENUM_INCDEC_OPERATORS(profile_type)
-
-
-    public static class profiler_global
-    {
-#if MAME_PROFILER
-        public static real_profiler_state g_profiler = new real_profiler_state();
-#else
-        public static dummy_profiler_state g_profiler = new dummy_profiler_state();
-#endif
-    }
 
 
     //**************************************************************************
@@ -239,16 +230,16 @@ namespace mame
                 if (computed != 0)
                 {
                     // start with the un-normalized percentage
-                    stream += string.Format("{0}%% ", (int)((computed * 100 + total/2) / total));
+                    util.stream_format(ref stream, "{0}%% ", (int)((computed * 100 + total/2) / total));
 
                     // followed by the normalized percentage for everything but profiler and idle
                     if (curtype < profile_type.PROFILER_PROFILER)
-                        stream += string.Format("{0}%% ", (int)((computed * 100 + normalize/2) / normalize));
+                        util.stream_format(ref stream, "{0}%% ", (int)((computed * 100 + normalize/2) / normalize));
 
                     // and then the text
                     if (curtype >= profile_type.PROFILER_DEVICE_FIRST && curtype <= profile_type.PROFILER_DEVICE_MAX)
                     {
-                        stream += string.Format("'{0}'", iter.byindex(curtype - profile_type.PROFILER_DEVICE_FIRST).tag());
+                        util.stream_format(ref stream, "'{0}'", iter.byindex(curtype - profile_type.PROFILER_DEVICE_FIRST).tag());
                     }
                     else
                     {
@@ -283,7 +274,7 @@ namespace mame
                 throw new emu_fatalerror("Profiler FILO overflow (type = {0})\n", type);
 
             // get current tick count
-            osd_ticks_t curticks = (osd_ticks_t)g.get_profile_ticks();
+            osd_ticks_t curticks = (osd_ticks_t)get_profile_ticks();
 
             // update previous entry
             m_data[m_filo[m_filoptrIdx].type] += curticks - m_filo[m_filoptrIdx].start;
@@ -306,7 +297,7 @@ namespace mame
                 return;
 
             // get current tick count
-            osd_ticks_t curticks = (osd_ticks_t)g.get_profile_ticks();
+            osd_ticks_t curticks = (osd_ticks_t)get_profile_ticks();
 
             // account for the time taken
             m_data[m_filo[m_filoptrIdx].type] += curticks - m_filo[m_filoptrIdx].start;
@@ -339,5 +330,15 @@ namespace mame
         // start/stop
         public void start(profile_type type) { }
         public void stop() { }
+    }
+
+
+    public static class profiler_global
+    {
+#if MAME_PROFILER
+        public static real_profiler_state g_profiler = new real_profiler_state();
+#else
+        public static dummy_profiler_state g_profiler = new dummy_profiler_state();
+#endif
     }
 }

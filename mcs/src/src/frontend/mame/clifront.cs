@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
@@ -13,6 +14,20 @@ using u64 = System.UInt64;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.corefile_global;
+using static mame.corestr_global;
+using static mame.cpp_global;
+using static mame.device_global;
+using static mame.emuopts_global;
+using static mame.gamedrv_global;
+using static mame.language_global;
+using static mame.main_global;
+using static mame.options_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
+using static mame.romload_global;
+using static mame.version_global;
 
 
 namespace mame
@@ -65,40 +80,40 @@ namespace mame
         static readonly options_entry [] cli_option_entries = new options_entry []
         {
             /* core commands */
-            new options_entry(null,                                 null,   g.OPTION_HEADER,     "CORE COMMANDS"),
-            new options_entry(CLICOMMAND_HELP           + ";h;?",   "0",    g.OPTION_COMMAND,    "show help message"),
-            new options_entry(CLICOMMAND_VALIDATE       + ";valid", "0",    g.OPTION_COMMAND,    "perform validation on system drivers and devices"),
+            new options_entry(null,                                 null,   OPTION_HEADER,     "CORE COMMANDS"),
+            new options_entry(CLICOMMAND_HELP           + ";h;?",   "0",    OPTION_COMMAND,    "show help message"),
+            new options_entry(CLICOMMAND_VALIDATE       + ";valid", "0",    OPTION_COMMAND,    "perform validation on system drivers and devices"),
 
             /* configuration commands */
-            new options_entry(null,                                 null,   g.OPTION_HEADER,     "CONFIGURATION COMMANDS"),
-            new options_entry(CLICOMMAND_CREATECONFIG   + ";cc",    "0",    g.OPTION_COMMAND,    "create the default configuration file"),
-            new options_entry(CLICOMMAND_SHOWCONFIG     + ";sc",    "0",    g.OPTION_COMMAND,    "display running parameters"),
-            new options_entry(CLICOMMAND_SHOWUSAGE      + ";su",    "0",    g.OPTION_COMMAND,    "show this help"),
+            new options_entry(null,                                 null,   OPTION_HEADER,     "CONFIGURATION COMMANDS"),
+            new options_entry(CLICOMMAND_CREATECONFIG   + ";cc",    "0",    OPTION_COMMAND,    "create the default configuration file"),
+            new options_entry(CLICOMMAND_SHOWCONFIG     + ";sc",    "0",    OPTION_COMMAND,    "display running parameters"),
+            new options_entry(CLICOMMAND_SHOWUSAGE      + ";su",    "0",    OPTION_COMMAND,    "show this help"),
 
             /* frontend commands */
-            new options_entry(null,                                 null,   g.OPTION_HEADER,     "FRONTEND COMMANDS"),
-            new options_entry(CLICOMMAND_LISTXML        + ";lx",    "0",    g.OPTION_COMMAND,    "all available info on driver in XML format"),
-            new options_entry(CLICOMMAND_LISTFULL       + ";ll",    "0",    g.OPTION_COMMAND,    "short name, full name"),
-            new options_entry(CLICOMMAND_LISTSOURCE     + ";ls",    "0",    g.OPTION_COMMAND,    "driver sourcefile"),
-            new options_entry(CLICOMMAND_LISTCLONES     + ";lc",    "0",    g.OPTION_COMMAND,    "show clones"),
-            new options_entry(CLICOMMAND_LISTBROTHERS   + ";lb",    "0",    g.OPTION_COMMAND,    "show \"brothers\", or other drivers from same sourcefile"),
-            new options_entry(CLICOMMAND_LISTCRC,                   "0",    g.OPTION_COMMAND,    "CRC-32s"),
-            new options_entry(CLICOMMAND_LISTROMS       + ";lr",    "0",    g.OPTION_COMMAND,    "list required ROMs for a driver"),
-            new options_entry(CLICOMMAND_LISTSAMPLES,               "0",    g.OPTION_COMMAND,    "list optional samples for a driver"),
-            new options_entry(CLICOMMAND_VERIFYROMS,                "0",    g.OPTION_COMMAND,    "report romsets that have problems"),
-            new options_entry(CLICOMMAND_VERIFYSAMPLES,             "0",    g.OPTION_COMMAND,    "report samplesets that have problems"),
-            new options_entry(CLICOMMAND_ROMIDENT,                  "0",    g.OPTION_COMMAND,    "compare files with known MAME ROMs"),
-            new options_entry(CLICOMMAND_LISTDEVICES    + ";ld",    "0",    g.OPTION_COMMAND,    "list available devices"),
-            new options_entry(CLICOMMAND_LISTSLOTS      + ";lslot", "0",    g.OPTION_COMMAND,    "list available slots and slot devices"),
-            new options_entry(CLICOMMAND_LISTMEDIA      + ";lm",    "0",    g.OPTION_COMMAND,    "list available media for the system"),
-            new options_entry(CLICOMMAND_LISTSOFTWARE   + ";lsoft", "0",    g.OPTION_COMMAND,    "list known software for the system"),
-            new options_entry(CLICOMMAND_VERIFYSOFTWARE + ";vsoft", "0",    g.OPTION_COMMAND,    "verify known software for the system"),
-            new options_entry(CLICOMMAND_GETSOFTLIST    + ";glist", "0",    g.OPTION_COMMAND,    "retrieve software list by name"),
-            new options_entry(CLICOMMAND_VERIFYSOFTLIST + ";vlist", "0",    g.OPTION_COMMAND,    "verify software list by name"),
-            new options_entry(CLICOMMAND_VERSION,                   "0",    g.OPTION_COMMAND,    "get MAME version"),
+            new options_entry(null,                                 null,   OPTION_HEADER,     "FRONTEND COMMANDS"),
+            new options_entry(CLICOMMAND_LISTXML        + ";lx",    "0",    OPTION_COMMAND,    "all available info on driver in XML format"),
+            new options_entry(CLICOMMAND_LISTFULL       + ";ll",    "0",    OPTION_COMMAND,    "short name, full name"),
+            new options_entry(CLICOMMAND_LISTSOURCE     + ";ls",    "0",    OPTION_COMMAND,    "driver sourcefile"),
+            new options_entry(CLICOMMAND_LISTCLONES     + ";lc",    "0",    OPTION_COMMAND,    "show clones"),
+            new options_entry(CLICOMMAND_LISTBROTHERS   + ";lb",    "0",    OPTION_COMMAND,    "show \"brothers\", or other drivers from same sourcefile"),
+            new options_entry(CLICOMMAND_LISTCRC,                   "0",    OPTION_COMMAND,    "CRC-32s"),
+            new options_entry(CLICOMMAND_LISTROMS       + ";lr",    "0",    OPTION_COMMAND,    "list required ROMs for a driver"),
+            new options_entry(CLICOMMAND_LISTSAMPLES,               "0",    OPTION_COMMAND,    "list optional samples for a driver"),
+            new options_entry(CLICOMMAND_VERIFYROMS,                "0",    OPTION_COMMAND,    "report romsets that have problems"),
+            new options_entry(CLICOMMAND_VERIFYSAMPLES,             "0",    OPTION_COMMAND,    "report samplesets that have problems"),
+            new options_entry(CLICOMMAND_ROMIDENT,                  "0",    OPTION_COMMAND,    "compare files with known MAME ROMs"),
+            new options_entry(CLICOMMAND_LISTDEVICES    + ";ld",    "0",    OPTION_COMMAND,    "list available devices"),
+            new options_entry(CLICOMMAND_LISTSLOTS      + ";lslot", "0",    OPTION_COMMAND,    "list available slots and slot devices"),
+            new options_entry(CLICOMMAND_LISTMEDIA      + ";lm",    "0",    OPTION_COMMAND,    "list available media for the system"),
+            new options_entry(CLICOMMAND_LISTSOFTWARE   + ";lsoft", "0",    OPTION_COMMAND,    "list known software for the system"),
+            new options_entry(CLICOMMAND_VERIFYSOFTWARE + ";vsoft", "0",    OPTION_COMMAND,    "verify known software for the system"),
+            new options_entry(CLICOMMAND_GETSOFTLIST    + ";glist", "0",    OPTION_COMMAND,    "retrieve software list by name"),
+            new options_entry(CLICOMMAND_VERIFYSOFTLIST + ";vlist", "0",    OPTION_COMMAND,    "verify software list by name"),
+            new options_entry(CLICOMMAND_VERSION,                   "0",    OPTION_COMMAND,    "get MAME version"),
 
-            new options_entry(null,                                 null,   g.OPTION_HEADER,     "FRONTEND COMMAND OPTIONS"),
-            new options_entry(CLIOPTION_DTD,                        "1",    g.OPTION_BOOLEAN,    "include DTD in XML output"),
+            new options_entry(null,                                 null,   OPTION_HEADER,     "FRONTEND COMMAND OPTIONS"),
+            new options_entry(CLIOPTION_DTD,                        "1",    OPTION_BOOLEAN,    "include DTD in XML output"),
             new options_entry(null),
         };
 
@@ -130,7 +145,7 @@ namespace mame
         {
             m_options = options;
             m_osd = osd;
-            m_result = g.EMU_ERR_NONE;
+            m_result = EMU_ERR_NONE;
 
 
             m_options.add_entries(cli_option_entries);
@@ -145,7 +160,7 @@ namespace mame
         public int execute(std.vector<string> args)
         {
             // wrap the core execution in a try/catch to field all fatal errors
-            m_result = g.EMU_ERR_NONE;
+            m_result = EMU_ERR_NONE;
             mame_machine_manager manager = mame_machine_manager.instance(m_options, m_osd);
 
             //try
@@ -195,9 +210,9 @@ namespace mame
             {
                 // print the header
                 if (first)
-                    g.osd_printf_info("Name:             Description:\n");
+                    osd_printf_info("Name:             Description:\n");
 
-                g.osd_printf_info("{0} \"{1}\"\n", type.shortname(), type.fullname());
+                osd_printf_info("{0} \"{1}\"\n", type.shortname(), type.fullname());
             };
 
             apply_action(
@@ -216,7 +231,7 @@ namespace mame
 
         void listsource(std.vector<string> args)
         {
-            listsource_list_system_source list_system_source = (type) => { g.osd_printf_info("{0} {1}\n", type.shortname(), g.core_filename_extract_base(type.source())); };
+            listsource_list_system_source list_system_source = (type) => { osd_printf_info("{0} {1}\n", type.shortname(), core_filename_extract_base(type.source())); };
 
             apply_action(
                     args,
@@ -243,7 +258,7 @@ namespace mame
             {
                 // if we have a non-bios clone and it matches, keep it
                 int clone_of = drivlist.clone();
-                if (clone_of >= 0 && ((u64)driver_list.driver((size_t)clone_of).flags & g.MACHINE_IS_BIOS_ROOT) == 0)
+                if (clone_of >= 0 && ((u64)driver_list.driver((size_t)clone_of).flags & MACHINE_IS_BIOS_ROOT) == 0)
                 {
                     if (driver_list.matches(gamename, driver_list.driver((size_t)clone_of).name))
                         drivlist.include();
@@ -255,23 +270,23 @@ namespace mame
             {
                 // see if we match but just weren't a clone
                 if (original_count == 0)
-                    throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
+                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
                 else
-                    g.osd_printf_info("Found {0} match(es) for '{1}' but none were clones\n", drivlist.count(), gamename);
+                    osd_printf_info("Found {0} match(es) for '{1}' but none were clones\n", drivlist.count(), gamename);
 
                 return;
             }
 
             // print the header
-            g.osd_printf_info("Name:            Clone of:\n");
+            osd_printf_info("Name:            Clone of:\n");
 
             // iterate through drivers and output the info
             drivlist.reset();
             while (drivlist.next())
             {
                 int clone_of = drivlist.clone();
-                if (clone_of >= 0 && ((u64)driver_list.driver((size_t)clone_of).flags & g.MACHINE_IS_BIOS_ROOT) == 0)
-                    g.osd_printf_info("{0} {1}\n", drivlist.driver().name, driver_list.driver((size_t)clone_of).name);  // %-16s %-8s\n
+                if (clone_of >= 0 && ((u64)driver_list.driver((size_t)clone_of).flags & MACHINE_IS_BIOS_ROOT) == 0)
+                    osd_printf_info("{0} {1}\n", drivlist.driver().name, driver_list.driver((size_t)clone_of).name);  // %-16s %-8s\n
             }
         }
 
@@ -288,7 +303,7 @@ namespace mame
             // start with a filtered list of drivers; return an error if none found
             driver_enumerator initial_drivlist = new driver_enumerator(m_options, gamename);
             if (initial_drivlist.count() == 0)
-                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // for the final list, start with an empty driver list
             driver_enumerator drivlist = new driver_enumerator(m_options);
@@ -311,7 +326,7 @@ namespace mame
             }
 
             // print the header
-            g.osd_printf_info("{0} {1} {2}\n", "Source file:", "Name:", "Parent:");  // %-20s %-16s %s\n
+            osd_printf_info("{0} {1} {2}\n", "Source file:", "Name:", "Parent:");  // %-20s %-16s %s\n
 
             // output the entries found
             drivlist.reset();
@@ -319,9 +334,9 @@ namespace mame
             {
                 int clone_of = drivlist.clone();
                 if (clone_of != -1)
-                    g.osd_printf_info("{0} {1} {2}\n", g.core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name, (clone_of == -1 ? "" : driver_list.driver((size_t)clone_of).name));  // %-20s %-16s %-16s\n
+                    osd_printf_info("{0} {1} {2}\n", core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name, (clone_of == -1 ? "" : driver_list.driver((size_t)clone_of).name));  // %-20s %-16s %-16s\n
                 else
-                    g.osd_printf_info("{0} {1}\n", g.core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name);  // %-20s %s
+                    osd_printf_info("{0} {1}\n", core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name);  // %-20s %s
             }
         }
 
@@ -339,14 +354,14 @@ namespace mame
                         foreach (device_t device in new device_enumerator(root))
                         {
                             var rom = device.rom_region();
-                            for (int romOffset = 0; rom[romOffset] != null && !g.ROMENTRY_ISEND(rom[romOffset]); ++romOffset)  //for (tiny_rom_entry rom = device.rom_region(); rom != null && !ROMENTRY_ISEND(rom); ++rom)
+                            for (int romOffset = 0; rom[romOffset] != null && !ROMENTRY_ISEND(rom[romOffset]); ++romOffset)  //for (tiny_rom_entry rom = device.rom_region(); rom != null && !ROMENTRY_ISEND(rom); ++rom)
                             {
-                                if (g.ROMENTRY_ISFILE(rom[romOffset]))
+                                if (ROMENTRY_ISFILE(rom[romOffset]))
                                 {
                                     // if we have a CRC, display it
                                     uint32_t crc;
                                     if (new util.hash_collection(rom[romOffset].hashdata_).crc(out crc))
-                                        g.osd_printf_info("{0} {1}\t{2}\t{3}\n", crc, rom[romOffset].name_, device.shortname(), device.name());  //"%08x %-32s\t%-16s\t%s\n"
+                                        osd_printf_info("{0} {1}\t{2}\t{3}\n", crc, rom[romOffset].name_, device.shortname(), device.name());  //"%08x %-32s\t%-16s\t%s\n"
                                 }
                             }
                         }
@@ -366,7 +381,7 @@ namespace mame
                 {
                     // space between items
                     if (!first)
-                        g.osd_printf_info("\n");
+                        osd_printf_info("\n");
 
                     // iterate through ROMs
                     std.list<Tuple<string, int64_t, string>> entries = new std.list<Tuple<string, int64_t, string>>();
@@ -374,9 +389,9 @@ namespace mame
                     foreach (device_t device in new device_enumerator(root))
                     {
                         bool hasroms = false;
-                        for (var region = g.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+                        for (var region = rom_first_region(device); region != null; region = rom_next_region(region))
                         {
-                            for (var rom = g.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
+                            for (var rom = rom_first_file(region); rom != null; rom = rom_next_file(rom))
                             {
                                 if (!hasroms)
                                 {
@@ -387,10 +402,10 @@ namespace mame
 
                                 // accumulate the total length of all chunks
                                 int64_t length = -1;
-                                if (g.ROMREGION_ISROMDATA(region[0]))
-                                    length = g.rom_file_size(rom);
+                                if (ROMREGION_ISROMDATA(region.op))
+                                    length = rom_file_size(rom);
 
-                                entries.emplace_back(new Tuple<string, int64_t, string>(rom[0].name(), length, rom[0].hashdata()));
+                                entries.emplace_back(new Tuple<string, int64_t, string>(rom.op.name(), length, rom.op.hashdata()));
                             }
                         }
                     }
@@ -398,54 +413,54 @@ namespace mame
                     // print results
                     if (entries.empty())
                     {
-                        g.osd_printf_info("No ROMs required for {0} \"{1}\".\n", type, root.shortname());
+                        osd_printf_info("No ROMs required for {0} \"{1}\".\n", type, root.shortname());
                     }
                     else
                     {
                         // print a header
-                        g.osd_printf_info("ROMs required for {0} \"{1}\"", type, root.shortname());
+                        osd_printf_info("ROMs required for {0} \"{1}\"", type, root.shortname());
                         if (!devnames.empty())
                         {
-                            g.osd_printf_info(" (including device{0}", devnames.size() > 1 ? "s" : "");
+                            osd_printf_info(" (including device{0}", devnames.size() > 1 ? "s" : "");
                             bool first2 = true;
                             foreach (string devname in devnames)
                             {
                                 if (first2)
                                     first2 = false;
                                 else
-                                    g.osd_printf_info(",");
+                                    osd_printf_info(",");
 
-                                g.osd_printf_info(" \"{0}\"", devname);
+                                osd_printf_info(" \"{0}\"", devname);
                             }
-                            g.osd_printf_info(")");
+                            osd_printf_info(")");
                         }
-                        g.osd_printf_info(".\n{0} {1} {2}\n", "Name", "Size", "Checksum");  //osd_printf_info(".\n%-32s %10s %s\n", "Name", "Size", "Checksum");
+                        osd_printf_info(".\n{0} {1} {2}\n", "Name", "Size", "Checksum");  //osd_printf_info(".\n%-32s %10s %s\n", "Name", "Size", "Checksum");
 
                         foreach (var entry in entries)
                         {
                             // start with the name
-                            g.osd_printf_info("{0} ", entry.Item1);  //osd_printf_info("%-32s ", std::get<0>(entry));
+                            osd_printf_info("{0} ", entry.Item1);  //osd_printf_info("%-32s ", std::get<0>(entry));
 
                             // output the length next
                             int64_t length = entry.Item2;
                             if (length >= 0)
-                                g.osd_printf_info("{0}", (unsigned)(uint64_t)length);  //osd_printf_info("%10u", unsigned(uint64_t(length)));
+                                osd_printf_info("{0}", (unsigned)(uint64_t)length);  //osd_printf_info("%10u", unsigned(uint64_t(length)));
                             else
-                                g.osd_printf_info("{0}", "");  //osd_printf_info("%10s", "");
+                                osd_printf_info("{0}", "");  //osd_printf_info("%10s", "");
 
                             // output the hash data
                             util.hash_collection hashes = new util.hash_collection(entry.Item3);
                             if (!hashes.flag(util.hash_collection.FLAG_NO_DUMP))
                             {
                                 if (hashes.flag(util.hash_collection.FLAG_BAD_DUMP))
-                                    g.osd_printf_info(" BAD");
-                                g.osd_printf_info(" {0}", hashes.macro_string());
+                                    osd_printf_info(" BAD");
+                                osd_printf_info(" {0}", hashes.macro_string());
                             }
                             else
-                                g.osd_printf_info(" NO GOOD DUMP KNOWN");
+                                osd_printf_info(" NO GOOD DUMP KNOWN");
 
                             // end with a CR
-                            g.osd_printf_info("\n");
+                            osd_printf_info("\n");
                         }
                     }
                 });
@@ -463,7 +478,7 @@ namespace mame
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
             if (drivlist.count() == 0)
-                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // iterate over drivers, looking for SAMPLES devices
             bool first = true;
@@ -476,16 +491,16 @@ namespace mame
 
                 // print a header
                 if (!first)
-                    g.osd_printf_info("\n");
+                    osd_printf_info("\n");
                 first = false;
-                g.osd_printf_info("Samples required for driver \"{0}\".\n", drivlist.driver().name);
+                osd_printf_info("Samples required for driver \"{0}\".\n", drivlist.driver().name);
 
                 // iterate over samples devices and print the samples from each one
                 foreach (samples_device device in iter)
                 {
                     samples_iterator sampiter = new samples_iterator(device);
                     for (string samplename = sampiter.first(); samplename != null; samplename = sampiter.next())
-                        g.osd_printf_info("{0}\n", samplename);
+                        osd_printf_info("{0}\n", samplename);
                 }
             }
         }
@@ -502,7 +517,7 @@ namespace mame
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
             if (drivlist.count() == 0)
-                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // iterate over drivers, looking for SAMPLES devices
             bool first = true;
@@ -510,9 +525,9 @@ namespace mame
             {
                 // print a header
                 if (!first)
-                    g.osd_printf_info("\n");
+                    osd_printf_info("\n");
                 first = false;
-                g.osd_printf_info("Driver {0} ({1}):\n", drivlist.driver().name, drivlist.driver().type.fullname());
+                osd_printf_info("Driver {0} ({1}):\n", drivlist.driver().name, drivlist.driver().type.fullname());
 
                 // build a list of devices
                 std.vector<device_t> device_list = new std.vector<device_t>();
@@ -560,20 +575,20 @@ namespace mame
                             }
                         }
                     }
-                    g.osd_printf_info("   {0}{1} {2} {3}", depth * 2, "", 30 - depth * 2, tag, device.name());  //   %*s%-*s %s
+                    osd_printf_info("   {0}{1} {2} {3}", depth * 2, "", 30 - depth * 2, tag, device.name());  //   %*s%-*s %s
 
                     // add more information
                     uint32_t clock = device.clock();
                     if (clock >= 1000000000)
-                        g.osd_printf_info(" @ {0}.{1} GHz\n", clock / 1000000000, (clock / 10000000) % 100);  //  @ %d.%02d GHz\n
+                        osd_printf_info(" @ {0}.{1} GHz\n", clock / 1000000000, (clock / 10000000) % 100);  //  @ %d.%02d GHz\n
                     else if (clock >= 1000000)
-                        g.osd_printf_info(" @ {0}.{2} MHz\n", clock / 1000000, (clock / 10000) % 100);  //  @ %d.%02d MHz\n
+                        osd_printf_info(" @ {0}.{2} MHz\n", clock / 1000000, (clock / 10000) % 100);  //  @ %d.%02d MHz\n
                     else if (clock >= 1000)
-                        g.osd_printf_info(" @ {0}.{3} kHz\n", clock / 1000, (clock / 10) % 100);  //  @ %d.%02d kHz\n
+                        osd_printf_info(" @ {0}.{3} kHz\n", clock / 1000, (clock / 10) % 100);  //  @ %d.%02d kHz\n
                     else if (clock > 0)
-                        g.osd_printf_info(" @ {0} Hz\n", clock);
+                        osd_printf_info(" @ {0} Hz\n", clock);
                     else
-                        g.osd_printf_info("\n");
+                        osd_printf_info("\n");
                 }
             }
         }
@@ -590,11 +605,11 @@ namespace mame
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
             if (drivlist.count() == 0)
-                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // print header
-            g.osd_printf_info("{0} {1} {2} {3}\n", "SYSTEM", "SLOT NAME", "SLOT OPTIONS", "SLOT DEVICE NAME");  // %-16s %-16s %-16s %s\n
-            g.osd_printf_info("{0} {1} {2} {3}\n", new string('-', 16), new string('-', 16), new string('-', 16), new string('-', 28));
+            osd_printf_info("{0} {1} {2} {3}\n", "SYSTEM", "SLOT NAME", "SLOT OPTIONS", "SLOT DEVICE NAME");  // %-16s %-16s %-16s %s\n
+            osd_printf_info("{0} {1} {2} {3}\n", new string('-', 16), new string('-', 16), new string('-', 16), new string('-', 28));
 
             // iterate over drivers
             while (drivlist.next())
@@ -621,7 +636,7 @@ namespace mame
                     option_list.Sort((opt1, opt2) => { return std.strcmp(opt1.name(), opt2.name()); });
 
                     // output the line, up to the list of extensions
-                    g.osd_printf_info("{0}{1}   ", first ? drivlist.driver().name : "", slot.device().tag().Remove(0, 1));  //+1);  // %-16s%-16s   
+                    osd_printf_info("{0}{1}   ", first ? drivlist.driver().name : "", slot.device().tag().Remove(0, 1));  //+1);  // %-16s%-16s   
 
                     bool first_option = true;
 
@@ -629,24 +644,24 @@ namespace mame
                     foreach (device_slot_interface.slot_option opt in option_list)
                     {
                         if (first_option)
-                            g.osd_printf_info("{0} {1}\n", opt.name(), opt.devtype().fullname());  // %-16s %s\n
+                            osd_printf_info("{0} {1}\n", opt.name(), opt.devtype().fullname());  // %-16s %s\n
                         else
-                            g.osd_printf_info("{0}   {1} {2}\n", "", opt.name(), opt.devtype().fullname());  // %-34s   %-16s %s\n
+                            osd_printf_info("{0}   {1} {2}\n", "", opt.name(), opt.devtype().fullname());  // %-34s   %-16s %s\n
 
                         first_option = false;
                     }
                     if (first_option)
-                        g.osd_printf_info("{0} {1}\n", "[none]","No options available");  // "%-16s %s\n"
+                        osd_printf_info("{0} {1}\n", "[none]","No options available");  // "%-16s %s\n"
 
                     // end the line
-                    g.osd_printf_info("\n");
+                    osd_printf_info("\n");
 
                     first = false;
                 }
 
                 // if we didn't get any at all, just print a none line
                 if (first)
-                    g.osd_printf_info("{0}(none)\n", drivlist.driver().name);  // %-16s(none)\n
+                    osd_printf_info("{0}(none)\n", drivlist.driver().name);  // %-16s(none)\n
             }
         }
 
@@ -662,11 +677,11 @@ namespace mame
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
             if (drivlist.count() == 0)
-                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // print header
-            g.osd_printf_info("{0} {1} {2} {3}\n", "SYSTEM", "MEDIA NAME", "(brief)", "IMAGE FILE EXTENSIONS SUPPORTED");  // %-16s %-16s %-10s %s\n
-            g.osd_printf_info("{0} {1}-{2} {3}\n", new string('-', 16), new string('-', 16), new string('-', 10), new string('-', 31));
+            osd_printf_info("{0} {1} {2} {3}\n", "SYSTEM", "MEDIA NAME", "(brief)", "IMAGE FILE EXTENSIONS SUPPORTED");  // %-16s %-16s %-10s %s\n
+            osd_printf_info("{0} {1}-{2} {3}\n", new string('-', 16), new string('-', 16), new string('-', 10), new string('-', 31));
 
             // iterate over drivers
             while (drivlist.next())
@@ -682,33 +697,42 @@ namespace mame
                     string paren_shortname = string.Format("({0})", imagedev.brief_instance_name());
 
                     // output the line, up to the list of extensions
-                    g.osd_printf_info("{0}{1}{2}   ", drivlist.driver().name, imagedev.instance_name(), paren_shortname);  // %-16s%-16s%-10s   
+                    osd_printf_info("{0}{1}{2}   ", drivlist.driver().name, imagedev.instance_name(), paren_shortname);  // %-16s%-16s%-10s   
 
                     // get the extensions and print them
                     string extensions = imagedev.file_extensions();
                     for (int start = 0, end = extensions.IndexOf(','); ; start = end + 1, end = extensions.IndexOf(',', start))
                     {
                         string curext = extensions.Substring(start, end == -1 ? extensions.Length - start : end - start);  // new astring(extensions, start, (end == -1) ? extensions.len() - start : end - start);
-                        g.osd_printf_info(".{0}", curext);  // .%-5s
+                        osd_printf_info(".{0}", curext);  // .%-5s
                         if (end == -1)
                             break;
                     }
 
                     // end the line
-                    g.osd_printf_info("\n");
+                    osd_printf_info("\n");
                     first = false;
                 }
 
                 // if we didn't get any at all, just print a none line
                 if (first)
-                    g.osd_printf_info("{0}(none)\n", drivlist.driver().name);  // %-16s(none)\n
+                    osd_printf_info("{0}(none)\n", drivlist.driver().name);  // %-16s(none)\n
             }
         }
 
 
-        bool verifyroms_included(std.vector<string> args, ref std.vector<bool> matched, ref UInt32 matchcount, string name)
+        //-------------------------------------------------
+        //  verifyroms - verify the ROM sets of one or
+        //  more games
+        //-------------------------------------------------
+        void verifyroms(std.vector<string> args)
         {
-            //auto const included = [&args, &matched, &matchcount] (char const *name) -> bool
+            bool iswild = ((1U != args.size()) || core_iswildstr(args[0]));
+            std.vector<bool> matched = new std.vector<bool>(args.size());
+            matched.resize(args.size(), false);
+            unsigned matchcount = 0;
+
+            Func<string, bool> included = (name) =>  //auto const included = [&args, &matched, &matchcount] (char const *name) -> bool
             {
                 if (args.empty())
                 {
@@ -721,7 +745,7 @@ namespace mame
                 var itIdx = 0;
                 foreach (string pat in args)
                 {
-                    if (g.core_strwildcmp(pat, name) == 0)
+                    if (core_strwildcmp(pat, name) == 0)
                     {
                         ++matchcount;
                         result = true;
@@ -730,26 +754,11 @@ namespace mame
                     ++itIdx;
                 }
                 return result;
-            }
-        }
+            };
 
-
-        //-------------------------------------------------
-        //  verifyroms - verify the ROM sets of one or
-        //  more games
-        //-------------------------------------------------
-        void verifyroms(std.vector<string> args)
-        {
-            bool iswild = ((1U != args.size()) || g.core_iswildstr(args[0]));
-            std.vector<bool> matched = new std.vector<bool>(args.size());
-            matched.resize(args.size(), false);
-            UInt32 matchcount = 0;
-
-            //auto const included = [&args, &matched, &matchcount] (char const *name) -> bool
-
-            UInt32 correct = 0;
-            UInt32 incorrect = 0;
-            UInt32 notfound = 0;
+            unsigned correct = 0;
+            unsigned incorrect = 0;
+            unsigned notfound = 0;
 
             // iterate over drivers
             driver_enumerator drivlist = new driver_enumerator(m_options);
@@ -757,7 +766,7 @@ namespace mame
             string summary_string;
             while (drivlist.next())
             {
-                if (verifyroms_included(args, ref matched, ref matchcount, drivlist.driver().name))
+                if (included(drivlist.driver().name))
                 {
                     // audit the ROMs in this set
                     media_auditor.summary summary = auditor.audit_media(media_auditor.AUDIT_VALIDATE_FAST);
@@ -780,9 +789,9 @@ namespace mame
                 machine_config config = new machine_config(___empty.driver____empty, m_options);
                 using (machine_config.token tok = config.begin_configuration(config.root_device()))
                 {
-                    foreach (device_type type in device_global.registered_device_types)
+                    foreach (device_type type in registered_device_types)
                     {
-                        if (verifyroms_included(args, ref matched, ref matchcount, type.shortname()))
+                        if (included(type.shortname()))
                         {
                             // audit the ROMs in this set
                             device_t dev = config.device_add("_tmp", type, 0);
@@ -806,31 +815,33 @@ namespace mame
             // clear out any cached files
             util.archive_file.cache_clear();
 
-            // return an error if none found
-            var it = matched.GetEnumerator();
-            foreach (string pat in args)
             {
-                if (!it.Current)
-                    throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", pat);
+                // return an error if none found
+                var it = matched.GetEnumerator();
+                foreach (string pat in args)
+                {
+                    if (!it.Current)
+                        throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", pat);
 
-                it.MoveNext();
-            }
+                    it.MoveNext();
+                }
 
-            if ((1U == args.size()) && (matchcount > 0) && (correct == 0) && (incorrect == 0))
-            {
-                // if we didn't get anything at all, display a generic end message
-                if (notfound > 0)
-                    throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "romset \"{0}\" not found!\n", args[0]);
+                if ((1U == args.size()) && (matchcount > 0) && (correct == 0) && (incorrect == 0))
+                {
+                    // if we didn't get anything at all, display a generic end message
+                    if (notfound > 0)
+                        throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "romset \"{0}\" not found!\n", args[0]);
+                    else
+                        throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "romset \"{0}\" has no roms!\n", args[0]);
+                }
                 else
-                    throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "romset \"{0}\" has no roms!\n", args[0]);
-            }
-            else
-            {
-                // otherwise, print a summary
-                if (incorrect > 0)
-                    throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "{0} romsets found, {1} were OK.\n", correct + incorrect, correct);
-                else
-                    g.osd_printf_info("{0} romsets found, {1} were OK.\n", correct, correct);
+                {
+                    // otherwise, print a summary
+                    if (incorrect > 0)
+                        throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "{0} romsets found, {1} were OK.\n", correct + incorrect, correct);
+                    else
+                        osd_printf_info("{0} romsets found, {1} were OK.\n", correct, correct);
+                }
             }
         }
 
@@ -846,10 +857,10 @@ namespace mame
             // determine which drivers to output; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
 
-            UInt32 correct = 0;
-            UInt32 incorrect = 0;
-            UInt32 notfound = 0;
-            UInt32 matched = 0;
+            unsigned correct = 0;
+            unsigned incorrect = 0;
+            unsigned notfound = 0;
+            unsigned matched = 0;
 
             // iterate over drivers
             media_auditor auditor = new media_auditor(drivlist);
@@ -874,23 +885,23 @@ namespace mame
 
             // return an error if none found
             if (matched == 0)
-                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // if we didn't get anything at all, display a generic end message
             if (matched > 0 && correct == 0 && incorrect == 0)
             {
                 if (notfound > 0)
-                    throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "sampleset \"{0}\" not found!\n", gamename);
+                    throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "sampleset \"{0}\" not found!\n", gamename);
                 else
-                    throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "sampleset \"{0}\" not required!\n", gamename);
+                    throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "sampleset \"{0}\" not required!\n", gamename);
             }
 
             // otherwise, print a summary
             else
             {
                 if (incorrect > 0)
-                    throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "{0} samplesets found, {1} were OK.\n", correct + incorrect, correct);
-                g.osd_printf_info("{0} samplesets found, {1} were OK.\n", correct, correct);
+                    throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "{0} samplesets found, {1} were OK.\n", correct + incorrect, correct);
+                osd_printf_info("{0} samplesets found, {1} were OK.\n", correct, correct);
             }
         }
 
@@ -919,16 +930,16 @@ namespace mame
 
             std.unordered_set<string> list_map = new std.unordered_set<string>();
 
-            int correct = 0;
-            int incorrect = 0;
-            int notfound = 0;
-            int matched = 0;
-            int nrlists = 0;
+            unsigned correct = 0;
+            unsigned incorrect = 0;
+            unsigned notfound = 0;
+            unsigned matched = 0;
+            unsigned nrlists = 0;
 
             // determine which drivers to process; return an error if none found
             driver_enumerator drivlist = new driver_enumerator(m_options, gamename);
             if (drivlist.count() == 0)
-                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             throw new emu_unimplemented();
 #if false
@@ -939,19 +950,19 @@ namespace mame
 
             // return an error if none found
             if (matched == 0)
-                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", gamename);
 
             // if we didn't get anything at all, display a generic end message
             if (matched > 0 && correct == 0 && incorrect == 0)
             {
-                throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "romset \"{0}\" has no software entries defined!\n", gamename);
+                throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "romset \"{0}\" has no software entries defined!\n", gamename);
             }
             // otherwise, print a summary
             else
             {
                 if (incorrect > 0)
-                    throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "{0} romsets found in {1} software lists, {2} were OK.\n", correct + incorrect, nrlists, correct);
-                g.osd_printf_info("{0} romsets found in {1} software lists, {2} romsets were OK.\n", correct, nrlists, correct);
+                    throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "{0} romsets found in {1} software lists, {2} were OK.\n", correct + incorrect, nrlists, correct);
+                osd_printf_info("{0} romsets found in {1} software lists, {2} romsets were OK.\n", correct, nrlists, correct);
             }
         }
 
@@ -973,10 +984,10 @@ namespace mame
             string gamename = args.empty() ? "*" : args[0];
 
             std.unordered_set<string> list_map;
-            int correct = 0;
-            int incorrect = 0;
-            int notfound = 0;
-            int matched = 0;
+            unsigned correct = 0;
+            unsigned incorrect = 0;
+            unsigned notfound = 0;
+            unsigned matched = 0;
 
             driver_enumerator drivlist = new driver_enumerator(m_options);
             media_auditor auditor = new media_auditor(drivlist);
@@ -994,19 +1005,19 @@ namespace mame
 
             // return an error if none found
             if (matched == 0)
-                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching software lists found for '{0}'", gamename);
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching software lists found for '{0}'", gamename);
 
             // if we didn't get anything at all, display a generic end message
             if (matched > 0 && correct == 0 && incorrect == 0)
             {
-                throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "no romsets found for software list \"{1}\"!\n", gamename);
+                throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "no romsets found for software list \"{1}\"!\n", gamename);
             }
             // otherwise, print a summary
             else
             {
                 if (incorrect > 0)
-                    throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "{0} romsets found in {1} software lists, {2} were OK.\n", correct + incorrect, matched, correct);
-                g.osd_printf_info("{0} romsets found in {1} software lists, {2} romsets were OK.\n", correct, matched, correct);
+                    throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "{0} romsets found in {1} software lists, {2} were OK.\n", correct + incorrect, matched, correct);
+                osd_printf_info("{0} romsets found in {1} software lists, {2} romsets were OK.\n", correct, matched, correct);
             }
         }
 
@@ -1016,7 +1027,7 @@ namespace mame
         //-------------------------------------------------
         void version(std.vector<string> args)
         {
-            g.osd_printf_info("{0}", emulator_info.get_build_version());
+            osd_printf_info("{0}", emulator_info.get_build_version());
         }
 
 
@@ -1040,7 +1051,7 @@ namespace mame
         //template <typename T, typename U>
         void apply_action(std.vector<string> args, Action<driver_enumerator, bool> drvact, Action<device_type, bool> devact)  //void cli_frontend::apply_action(const std::vector<std::string> &args, T &&drvact, U &&devact)
         {
-            bool iswild = (1U != args.size()) || g.core_iswildstr(args[0]);
+            bool iswild = (1U != args.size()) || core_iswildstr(args[0]);
             std.vector<bool> matched = new std.vector<bool>(args.size(), false);
             Func<string, bool> included = (name) =>
             {
@@ -1051,7 +1062,7 @@ namespace mame
                 int itIdx = 0;  //auto it = matched.begin();
                 foreach (string pat in args)
                 {
-                    if (g.core_strwildcmp(pat, name) == 0)
+                    if (core_strwildcmp(pat, name) == 0)
                     {
                         result = true;
                         matched[itIdx] = true;  //*it = true;
@@ -1081,7 +1092,7 @@ namespace mame
 
             if (iswild || first)
             {
-                foreach (device_type type in device_global.registered_device_types)
+                foreach (device_type type in registered_device_types)
                 {
                     if (included(type.shortname()))
                     {
@@ -1101,7 +1112,7 @@ namespace mame
                 foreach (string pat in args)
                 {
                     if (!matched[itIdx])  //if (!*it)
-                        throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", pat);
+                        throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "No matching systems found for '{0}'", pat);
 
                     ++itIdx;  //++it;
                 }
@@ -1150,8 +1161,8 @@ namespace mame
             // showusage?
             if (m_options.command() == cli_options.CLICOMMAND_SHOWUSAGE)
             {
-                g.osd_printf_info("Usage:  {0} [machine] [media] [software] [options]", exename);
-                g.osd_printf_info("\n\nOptions:\n{0}", m_options.output_help());
+                osd_printf_info("Usage:  {0} [machine] [media] [software] [options]", exename);
+                osd_printf_info("\n\nOptions:\n{0}", m_options.output_help());
                 return;
             }
 
@@ -1160,7 +1171,7 @@ namespace mame
             {
                 if (m_options.command_arguments().size() > 1)
                 {
-                    g.osd_printf_error("Auxiliary verb -validate takes at most 1 argument\n");
+                    osd_printf_error("Auxiliary verb -validate takes at most 1 argument\n");
                     return;
                 }
 
@@ -1168,7 +1179,7 @@ namespace mame
                 string sysname = m_options.command_arguments().empty() ? null : m_options.command_arguments()[0];
                 bool result = valid.check_all_matching(sysname);
                 if (!result)
-                    throw new emu_fatalerror(g.EMU_ERR_FAILED_VALIDITY, "Validity check failed ({0} errors, {1} warnings in total)\n", valid.errors(), valid.warnings());
+                    throw new emu_fatalerror(EMU_ERR_FAILED_VALIDITY, "Validity check failed ({0} errors, {1} warnings in total)\n", valid.errors(), valid.warnings());
                 valid.Dispose();
 
                 return;
@@ -1178,13 +1189,13 @@ namespace mame
             string option_errors;
             mame_options.parse_standard_inis(m_options, out option_errors);
             if (option_errors.Length > 0)
-                g.osd_printf_error("{0}\n", option_errors);
+                osd_printf_error("{0}\n", option_errors);
 
             // createconfig?
             if (m_options.command() == cli_options.CLICOMMAND_CREATECONFIG)
             {
                 // attempt to open the output file
-                emu_file file = new emu_file(g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
+                emu_file file = new emu_file(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                 if (file.open(emulator_info.get_configname() + ".ini"))
                     throw new emu_fatalerror("Unable to create file {0}.ini\n", emulator_info.get_configname());
 
@@ -1193,7 +1204,7 @@ namespace mame
                 file.close();
 
                 ui_options ui_opts;
-                emu_file file_ui = new emu_file(g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
+                emu_file file_ui = new emu_file(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                 if (file_ui.open("ui.ini"))
                     throw new emu_fatalerror("Unable to create file ui.ini\n");
 
@@ -1208,7 +1219,7 @@ namespace mame
             if (m_options.command() == cli_options.CLICOMMAND_SHOWCONFIG)
             {
                 // print the INI text
-                g.osd_printf_info("{0}\n", m_options.output_ini());
+                osd_printf_info("{0}\n", m_options.output_ini());
                 return;
             }
 
@@ -1226,7 +1237,7 @@ namespace mame
         //-------------------------------------------------
         void display_help(string exename)
         {
-            g.osd_printf_info(
+            osd_printf_info(
                     "{2} v{1}\n" +  //"%3$s v%2$s\n"
                     "{4}\n" +  //"%5$s\n"
                     "\n" +
@@ -1243,7 +1254,7 @@ namespace mame
                     "\n" +
                     "For usage instructions, please visit https://docs.mamedev.org/\n",
                     exename,
-                    version_global.build_version,
+                    build_version,
                     emulator_info.get_appname(),
                     emulator_info.get_configname(),
                     emulator_info.get_copyright_info());
@@ -1264,26 +1275,26 @@ namespace mame
             // parse the command line, adding any system-specific options
             try
             {
-                m_options.parse_command_line(args, emu_options.OPTION_PRIORITY_CMDLINE);
+                m_options.parse_command_line(args, OPTION_PRIORITY_CMDLINE);
             }
             catch (options_warning_exception ex)
             {
-                g.osd_printf_error("{0}", ex.message());
+                osd_printf_error("{0}", ex.message());
             }
             catch (options_exception ex)
             {
                 // if we failed, check for no command and a system name first; in that case error on the name
                 if (m_options.command().empty() && mame_options.system(m_options) == null && !m_options.attempted_system_name().empty())
-                    throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "Unknown system '{0}'", m_options.attempted_system_name());
+                    throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "Unknown system '{0}'", m_options.attempted_system_name());
 
                 // otherwise, error on the options
-                throw new emu_fatalerror(g.EMU_ERR_INVALID_CONFIG, "{0}", ex.message());
+                throw new emu_fatalerror(EMU_ERR_INVALID_CONFIG, "{0}", ex.message());
             }
 
             m_osd.set_verbose(m_options.verbose());
 
             // determine the base name of the EXE
-            string exename = g.core_filename_extract_base(args[0], true);
+            string exename = core_filename_extract_base(args[0], true);
 
             // if we have a command, execute that
             if (!m_options.command().empty())
@@ -1300,19 +1311,19 @@ namespace mame
             }
 
             // otherwise, check for a valid system
-            language_global.load_translation(m_options);
+            load_translation(m_options);
 
             manager.start_http_server();
 
             manager.start_luaengine();
 
             if (option_errors.Length > 0)  //if (option_errors.tellp() > 0)
-                g.osd_printf_error("Error in command line:\n{0}\n", g.strtrimspace(option_errors));
+                osd_printf_error("Error in command line:\n{0}\n", strtrimspace(option_errors));
 
             // if we can't find it, give an appropriate error
             game_driver system = mame_options.system(m_options);
             if (system == null && !string.IsNullOrEmpty(m_options.system_name()))
-                throw new emu_fatalerror(g.EMU_ERR_NO_SUCH_SYSTEM, "Unknown system '{0}'", m_options.system_name());
+                throw new emu_fatalerror(EMU_ERR_NO_SUCH_SYSTEM, "Unknown system '{0}'", m_options.system_name());
 
             // otherwise just run the game
             m_result = manager.execute();
@@ -1325,7 +1336,7 @@ namespace mame
         void print_summary(
                 media_auditor auditor, media_auditor.summary summary, bool record_none_needed,
                 string type, string name, string parent,
-                ref UInt32 correct, ref UInt32 incorrect, ref UInt32 notfound,
+                ref unsigned correct, ref unsigned incorrect, ref unsigned notfound,
                 out string buffer)
         {
             buffer = "";
@@ -1342,39 +1353,39 @@ namespace mame
                 //buffer.seekp(0);
                 auditor.summarize(name, ref buffer);
                 //buffer.put('\0');
-                g.osd_printf_info("{0}", buffer);
+                osd_printf_info("{0}", buffer);
 
                 // output the name of the driver and its parent
-                g.osd_printf_info("{0}set {1} ", type, name);
+                osd_printf_info("{0}set {1} ", type, name);
                 if (parent != null)
-                    g.osd_printf_info("[{0}] ", parent);
+                    osd_printf_info("[{0}] ", parent);
 
                 // switch off of the result
                 switch (summary)
                 {
                 case media_auditor.summary.INCORRECT:
-                    g.osd_printf_info("is bad\n");
+                    osd_printf_info("is bad\n");
                     ++incorrect;
                     return;
 
                 case media_auditor.summary.CORRECT:
-                    g.osd_printf_info("is good\n");
+                    osd_printf_info("is good\n");
                     ++correct;
                     return;
 
                 case media_auditor.summary.BEST_AVAILABLE:
                 case media_auditor.summary.NONE_NEEDED:
-                    g.osd_printf_info("is best available\n");
+                    osd_printf_info("is best available\n");
                     ++correct;
                     return;
 
                 case media_auditor.summary.NOTFOUND:
-                    g.osd_printf_info("not found\n");
+                    osd_printf_info("not found\n");
                     return;
                 }
 
-                g.assert(false);
-                g.osd_printf_error("has unknown status ({0})\n", summary);
+                assert(false);
+                osd_printf_error("has unknown status ({0})\n", summary);
             }
         }
     }

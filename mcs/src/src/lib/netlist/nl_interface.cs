@@ -2,8 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
+using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
@@ -98,7 +98,31 @@ namespace mame.netlist.interface_
     /// analog callback device instead.
 
     //template <typename FUNC>
-    //class NETLIB_NAME(logic_callback) : public device_t
+    public class nld_logic_callback : device_t  //NETLIB_OBJECT(logic_callback)
+    {
+        public delegate void FUNC(device_t device, netlist_sig_t val);
+
+
+        logic_input_t m_in;
+        FUNC m_func;
+
+
+        //NETLIB_CONSTRUCTOR_EX(logic_callback, FUNC &&func)
+        public nld_logic_callback(object owner, string name, FUNC func)
+            : base(owner, name)
+        {
+            m_in = new logic_input_t(this, "IN", in_);
+            m_func = func;
+        }
+
+
+        //NETLIB_HANDLERI(in)
+        void in_()
+        {
+            netlist_sig_t cur = m_in.op();
+            m_func(this, cur);
+        }
+    }
 
 
     /// \brief Set parameters to buffers contents at regular intervals

@@ -2,11 +2,13 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.device_global;
+using static mame.emucore_global;
 
 
 namespace mame
@@ -18,7 +20,7 @@ namespace mame
         // device type definition
         //DEFINE_DEVICE_TYPE(ER2055, er2055_device, "er2055", "ER2055 EAROM (64x8)")
         static device_t device_creator_er2055_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new er2055_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ER2055 = g.DEFINE_DEVICE_TYPE(device_creator_er2055_device, "er2055", "ER2055 EAROM (64x8)");
+        public static readonly device_type ER2055 = DEFINE_DEVICE_TYPE(device_creator_er2055_device, "er2055", "ER2055 EAROM (64x8)");
 
 
         const int VERBOSE = 0;
@@ -59,7 +61,7 @@ namespace mame
         {
             m_class_interfaces.Add(new device_nvram_interface_er2055(mconfig, this));  //device_nvram_interface(mconfig, *this),
 
-            m_default_data = new optional_region_ptr<uint8_t>(this, g.DEVICE_SELF);
+            m_default_data = new optional_region_ptr<uint8_t>(this, DEVICE_SELF);
             m_control_state = 0;
             m_address = 0;
             m_data = 0;
@@ -132,9 +134,9 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            save_item(g.NAME(new { m_control_state }));
-            save_item(g.NAME(new { m_address }));
-            save_item(g.NAME(new { m_data }));
+            save_item(NAME(new { m_control_state }));
+            save_item(NAME(new { m_address }));
+            save_item(NAME(new { m_data }));
 
             m_rom_data = new uint8_t[SIZE_DATA];  // std::make_unique<uint8_t[]>(SIZE_DATA);
 

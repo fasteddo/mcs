@@ -2,11 +2,12 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using cassette_device_enumerator = mame.device_type_enumerator<mame.cassette_image_device>;  //typedef device_type_enumerator<cassette_image_device> cassette_device_enumerator;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
+
+using static mame.device_global;
 
 
 namespace mame
@@ -39,7 +40,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(CASSETTE, cassette_image_device, "cassette_image", "Cassette")
         static device_t device_creator_cassette_image_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new cassette_image_device(mconfig, tag, owner, clock); }
-        public static readonly device_type CASSETTE = g.DEFINE_DEVICE_TYPE(device_creator_cassette_image_device, "cassette_image", "Cassette");
+        public static readonly device_type CASSETTE = DEFINE_DEVICE_TYPE(device_creator_cassette_image_device, "cassette_image", "Cassette");
 
 
         //cassette_image::ptr m_cassette;

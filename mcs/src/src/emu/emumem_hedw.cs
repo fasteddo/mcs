@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using s32 = System.Int32;
@@ -10,6 +9,11 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
 using uX = mame.FlexPrim;
+
+using static mame.emu.detail.emumem_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
+using static mame.util;
 
 
 namespace mame
@@ -53,14 +57,14 @@ namespace mame
         }
 
 
-        static readonly int Level    = emumem_global.handler_entry_dispatch_level(HighBits);
-        static readonly u32 LowBits  = (u32)emumem_global.handler_entry_dispatch_lowbits(HighBits, Width, AddrShift);
+        static readonly int Level    = handler_entry_dispatch_level(HighBits);
+        static readonly u32 LowBits  = (u32)handler_entry_dispatch_lowbits(HighBits, Width, AddrShift);
         static readonly u32 BITCOUNT = (u32)HighBits > LowBits ? (u32)HighBits - LowBits : 0;
         static readonly u32 COUNT    = 1U << (int)BITCOUNT;
-        static readonly offs_t BITMASK  = g.make_bitmask32(BITCOUNT);
-        static readonly offs_t LOWMASK  = g.make_bitmask32(LowBits);
-        static readonly offs_t HIGHMASK = g.make_bitmask32(HighBits) ^ LOWMASK;
-        static readonly offs_t UPMASK   = ~g.make_bitmask32(HighBits);
+        static readonly offs_t BITMASK  = make_bitmask32(BITCOUNT);
+        static readonly offs_t LOWMASK  = make_bitmask32(LowBits);
+        static readonly offs_t HIGHMASK = make_bitmask32(HighBits) ^ LOWMASK;
+        static readonly offs_t UPMASK   = ~make_bitmask32(HighBits);
 
         public class int_const_Level : int_const { public int value { get { return Level; } } }
         public class int_const_LowBits : int_const { public int value { get { return (int)LowBits; } } }
@@ -150,7 +154,7 @@ namespace mame
 
         public override void write(offs_t offset, uX data, uX mem_mask)
         {
-            emumem_global.dispatch_write<int_const_Level, int_Width, int_AddrShift>(HIGHMASK, offset, data, mem_mask, m_a_dispatch);
+            dispatch_write<int_const_Level, int_Width, int_AddrShift>(HIGHMASK, offset, data, mem_mask, m_a_dispatch);
         }
 
 
@@ -475,7 +479,7 @@ namespace mame
         {
             u32 i = (u32)id + 1;
             if (i >= m_dispatch_array.size())
-                g.fatalerror("out-of-range view selection.");
+                fatalerror("out-of-range view selection.");
 
             m_a_ranges = m_ranges_array[i].data();
             m_a_dispatch = m_dispatch_array[i].data();
@@ -487,7 +491,7 @@ namespace mame
             u32 i = (u32)id + 1;
             if (i > m_dispatch_array.size())
             {
-                g.fatalerror("out-of-range view update selection.");
+                fatalerror("out-of-range view update selection.");
             }
             else if (i == m_dispatch_array.size())
             {
@@ -523,7 +527,7 @@ namespace mame
             {
                 offs_t entry = start_entry >> (int)LowBits;
                 if (entry != (end_entry >> (int)LowBits))
-                   g.fatalerror("Recursive init_handlers spanning multiple entries.\n");
+                   fatalerror("Recursive init_handlers spanning multiple entries.\n");
 
                 entry &= BITMASK;
                 handler_entry_write_dispatch<int_const_LowBits, int_Width, int_AddrShift> subdispatch = null;
@@ -533,7 +537,7 @@ namespace mame
                 }
                 else if ((m_u_dispatch[entry].flags() & handler_entry.F_UNMAP) == 0)
                 {
-                    g.fatalerror("Collision on multiple init_handlers calls");
+                    fatalerror("Collision on multiple init_handlers calls");
                 }
                 else
                 {
@@ -561,7 +565,7 @@ namespace mame
                         {
                             offs_t e1 = e0 | e;
                             if ((m_u_dispatch[e1].flags() & handler_entry.F_UNMAP) == 0)
-                                g.fatalerror("Collision on multiple init_handlers calls");
+                                fatalerror("Collision on multiple init_handlers calls");
 
                             m_u_dispatch[e1].unref();
                             m_u_dispatch[e1] = dispatch[entry];
@@ -579,7 +583,7 @@ namespace mame
                         {
                             offs_t e1 = e0 | e;
                             if ((m_u_dispatch[e1].flags() & handler_entry.F_UNMAP) == 0)
-                                g.fatalerror("Collision on multiple init_handlers calls");
+                                fatalerror("Collision on multiple init_handlers calls");
 
                             m_u_dispatch[e1].unref();
                             m_u_dispatch[e1] = dispatch[entry];
@@ -597,7 +601,7 @@ namespace mame
                     for (offs_t entry = start_entry & BITMASK; entry <= (end_entry & BITMASK); entry++)
                     {
                         if ((m_u_dispatch[entry].flags() & handler_entry.F_UNMAP) == 0)
-                            g.fatalerror("Collision on multiple init_handlers calls");
+                            fatalerror("Collision on multiple init_handlers calls");
 
                         m_u_dispatch[entry].unref();
                         m_u_dispatch[entry] = dispatch[entry];
@@ -610,7 +614,7 @@ namespace mame
                     for (offs_t entry = start_entry & BITMASK; entry <= (end_entry & BITMASK); entry++)
                     {
                         if ((m_u_dispatch[entry].flags() & handler_entry.F_UNMAP) == 0)
-                            g.fatalerror("Collision on multiple init_handlers calls");
+                            fatalerror("Collision on multiple init_handlers calls");
 
                         m_u_dispatch[entry].unref();
                         m_u_dispatch[entry] = dispatch[entry];

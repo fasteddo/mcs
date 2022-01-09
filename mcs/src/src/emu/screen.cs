@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using devcb_write32 = mame.devcb_write<mame.Type_constant_u32>;  //using devcb_write32 = devcb_write<u32>;
@@ -18,6 +17,17 @@ using u16 = System.UInt16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.attotime_global;
+using static mame.cpp_global;
+using static mame.device_global;
+using static mame.emucore_global;
+using static mame.osdcore_global;
+using static mame.profiler_global;
+using static mame.render_global;
+using static mame.rendertypes_global;
+using static mame.rendutil_global;
+using static mame.screen_global;
 
 
 namespace mame
@@ -44,12 +54,56 @@ namespace mame
     }
 
 
-    //typedef delegate<void (screen_device &, bool)> vblank_state_delegate;
-    public delegate void vblank_state_delegate(screen_device device, bool vblank_state);
-    //typedef device_delegate<u32 (screen_device &, bitmap_ind16 &, const rectangle &)> screen_update_ind16_delegate;
-    //typedef device_delegate<u32 (screen_device &, bitmap_rgb32 &, const rectangle &)> screen_update_rgb32_delegate;
-    public delegate u32 screen_update_ind16_delegate(screen_device device, bitmap_ind16 bitmap, rectangle rect);
-    public delegate u32 screen_update_rgb32_delegate(screen_device device, bitmap_rgb32 bitmap, rectangle rect);
+    public static class screen_global
+    {
+        public const screen_type_enum SCREEN_TYPE_RASTER = screen_type_enum.SCREEN_TYPE_RASTER;
+        public const screen_type_enum SCREEN_TYPE_VECTOR = screen_type_enum.SCREEN_TYPE_VECTOR;
+        public const screen_type_enum SCREEN_TYPE_LCD = screen_type_enum.SCREEN_TYPE_LCD;
+        public const screen_type_enum SCREEN_TYPE_SVG = screen_type_enum.SCREEN_TYPE_SVG;
+        public const screen_type_enum SCREEN_TYPE_INVALID = screen_type_enum.SCREEN_TYPE_INVALID;
+
+
+        // screen_update callback flags
+        public const u32 UPDATE_HAS_NOT_CHANGED = 0x0001;   // the video has not changed
+
+
+        // ----- flags for video_attributes -----
+
+        /*!
+         @defgroup flags for video_attributes
+         @{
+         @def VIDEO_UPDATE_BEFORE_VBLANK
+         update_video called at the start of the VBLANK period
+         @todo hack, remove me
+
+         @def VIDEO_UPDATE_AFTER_VBLANK
+         update_video called at the end of the VBLANK period
+         @todo hack, remove me
+
+         @def VIDEO_SELF_RENDER
+         indicates VIDEO_UPDATE will add container bits itself
+
+         @def VIDEO_ALWAYS_UPDATE
+         force VIDEO_UPDATE to be called even for skipped frames.
+         @todo in case you need this one for model updating, then you're doing it wrong (read: hack)
+
+         @def VIDEO_UPDATE_SCANLINE
+         calls VIDEO_UPDATE for every visible scanline, even for skipped frames
+
+         @def VIDEO_VARIABLE_WIDTH
+         causes the screen to construct its final bitmap from a composite upscale of individual scanline bitmaps
+
+         @}
+         */
+
+        public const u32 VIDEO_UPDATE_BEFORE_VBLANK      = 0x0000;
+        public const u32 VIDEO_UPDATE_AFTER_VBLANK       = 0x0004;
+
+        public const u32 VIDEO_SELF_RENDER               = 0x0008;
+        public const u32 VIDEO_ALWAYS_UPDATE             = 0x0080;
+        public const u32 VIDEO_UPDATE_SCANLINE           = 0x0100;
+        public const u32 VIDEO_VARIABLE_WIDTH            = 0x0200;
+    }
 
 
     // ======================> screen_bitmap
@@ -135,12 +189,20 @@ namespace mame
     }
 
 
+    // ======================> other delegate types
+
+    public delegate void vblank_state_delegate(screen_device device, bool vblank_state);  //typedef delegate<void (screen_device &, bool)> vblank_state_delegate;
+
+    public delegate u32 screen_update_ind16_delegate(screen_device device, bitmap_ind16 bitmap, rectangle rect);  //typedef device_delegate<u32 (screen_device &, bitmap_ind16 &, const rectangle &)> screen_update_ind16_delegate;
+    public delegate u32 screen_update_rgb32_delegate(screen_device device, bitmap_rgb32 bitmap, rectangle rect);  //typedef device_delegate<u32 (screen_device &, bitmap_rgb32 &, const rectangle &)> screen_update_rgb32_delegate;
+
+
     // ======================> screen_device
     public class screen_device : device_t
     {
         //DEFINE_DEVICE_TYPE(SCREEN, screen_device, "screen", "Video Screen")
         static device_t device_creator_screen_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new screen_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SCREEN = g.DEFINE_DEVICE_TYPE(device_creator_screen_device, "screen", "Video Screen");
+        public static readonly device_type SCREEN = DEFINE_DEVICE_TYPE(device_creator_screen_device, "screen", "Video Screen");
 
 
         const bool VERBOSE = false;
@@ -186,50 +248,10 @@ namespace mame
         const int DEFAULT_FRAME_RATE = 60;
         public static readonly attotime DEFAULT_FRAME_PERIOD = attotime.from_hz(DEFAULT_FRAME_RATE);
 
-        // screen_update callback flags
-        const u32 UPDATE_HAS_NOT_CHANGED = 0x0001;   // the video has not changed
-
-        // ----- flags for video_attributes -----
-
-        /*!
-         @defgroup flags for video_attributes
-         @{
-         @def VIDEO_UPDATE_BEFORE_VBLANK
-         update_video called at the start of the VBLANK period
-         @todo hack, remove me
-
-         @def VIDEO_UPDATE_AFTER_VBLANK
-         update_video called at the end of the VBLANK period
-         @todo hack, remove me
-
-         @def VIDEO_SELF_RENDER
-         indicates VIDEO_UPDATE will add container bits itself
-
-         @def VIDEO_ALWAYS_UPDATE
-         force VIDEO_UPDATE to be called even for skipped frames.
-         @todo in case you need this one for model updating, then you're doing it wrong (read: hack)
-
-         @def VIDEO_UPDATE_SCANLINE
-         calls VIDEO_UPDATE for every visible scanline, even for skipped frames
-
-         @def VIDEO_VARIABLE_WIDTH
-         causes the screen to construct its final bitmap from a composite upscale of individual scanline bitmaps
-
-         @}
-         */
-
-        public const u32 VIDEO_UPDATE_BEFORE_VBLANK      = 0x0000;
-        const u32 VIDEO_UPDATE_AFTER_VBLANK       = 0x0004;
-
-        const u32 VIDEO_SELF_RENDER               = 0x0008;
-        public const u32 VIDEO_ALWAYS_UPDATE             = 0x0080;
-        const u32 VIDEO_UPDATE_SCANLINE           = 0x0100;
-        const u32 VIDEO_VARIABLE_WIDTH            = 0x0200;
-
 
         // static data
-        static UInt32 m_id_counter; // incremented for each constructed screen_device,
-                                    // used as a unique identifier during runtime
+        static u32 m_id_counter; // incremented for each constructed screen_device,
+                                 // used as a unique identifier during runtime
 
 
         // inline configuration data
@@ -308,7 +330,7 @@ namespace mame
             : base(mconfig, SCREEN, tag, owner, clock)
         {
             m_type = screen_type_enum.SCREEN_TYPE_RASTER;
-            m_orientation = g.ROT0;
+            m_orientation = ROT0;
             m_phys_aspect = new std.pair<unsigned, unsigned>(0U, 0U);
             m_oldstyle_vblank_supplied = false;
             m_refresh = 0;
@@ -323,7 +345,7 @@ namespace mame
             m_scanline_cb = new devcb_write32(this);
             m_palette = new optional_device<device_palette_interface>(this, finder_base.DUMMY_TAG);
             m_video_attributes = 0;
-            m_svg_region = new optional_memory_region(this, g.DEVICE_SELF);
+            m_svg_region = new optional_memory_region(this, DEVICE_SELF);
             m_container = null;
             m_max_width = 100;
             m_width = 100;
@@ -386,32 +408,32 @@ namespace mame
 
         // configuration readers
         public screen_type_enum screen_type() { return m_type; }
-        public int orientation() { g.assert(configured()); return m_orientation; }
+        public int orientation() { assert(configured()); return m_orientation; }
 
         //-------------------------------------------------
         //  physical_aspect - determine the physical
         //  aspect ratio to be used for rendering
         //-------------------------------------------------
-        public std.pair<UInt32, UInt32> physical_aspect()  //std::pair<unsigned, unsigned> physical_aspect() const;
+        public std.pair<unsigned, unsigned> physical_aspect()  //std::pair<unsigned, unsigned> physical_aspect() const;
         {
-            g.assert(configured());
+            assert(configured());
 
-            std.pair<UInt32, UInt32> phys_aspect = m_phys_aspect;
+            std.pair<unsigned, unsigned> phys_aspect = m_phys_aspect;
 
             // physical aspect ratio unconfigured
             if (phys_aspect.first == 0 || phys_aspect.second == 0)
             {
                 switch (m_type)
                 {
-                case g.SCREEN_TYPE_RASTER:
-                case g.SCREEN_TYPE_VECTOR:
+                case SCREEN_TYPE_RASTER:
+                case SCREEN_TYPE_VECTOR:
                     phys_aspect = std.make_pair(4U, 3U); // assume standard CRT
                     break;
-                case g.SCREEN_TYPE_LCD:
-                case g.SCREEN_TYPE_SVG:
+                case SCREEN_TYPE_LCD:
+                case SCREEN_TYPE_SVG:
                     phys_aspect = std.make_pair(~0U, ~0U); // assume square pixels
                     break;
-                case g.SCREEN_TYPE_INVALID:
+                case SCREEN_TYPE_INVALID:
                 default:
                     throw new emu_fatalerror("{0}: invalid screen type configured\n", tag());
                 }
@@ -422,14 +444,14 @@ namespace mame
             {
                 //phys_aspect.first = visible_area().width();
                 //phys_aspect.second = visible_area().height();
-                phys_aspect = new std.pair<UInt32, UInt32>((UInt32)visible_area().width(), (UInt32)visible_area().height());
+                phys_aspect = new std.pair<unsigned, unsigned>((unsigned)visible_area().width(), (unsigned)visible_area().height());
             }
 
             // always keep this in reduced form
-            UInt32 tempFirst = phys_aspect.first;
-            UInt32 tempSecond = phys_aspect.second;
-            g.reduce_fraction(ref tempFirst, ref tempSecond);
-            phys_aspect = new std.pair<UInt32, UInt32>(tempFirst, tempSecond);
+            unsigned tempFirst = phys_aspect.first;
+            unsigned tempSecond = phys_aspect.second;
+            util.reduce_fraction(ref tempFirst, ref tempSecond);
+            phys_aspect = new std.pair<unsigned, unsigned>(tempFirst, tempSecond);
 
             return phys_aspect;
         }
@@ -439,19 +461,19 @@ namespace mame
         public rectangle visible_area() { return m_visarea; }
         public rectangle cliprect() { return m_bitmap[0].cliprect(); }
         bool oldstyle_vblank_supplied() { return m_oldstyle_vblank_supplied; }
-        attoseconds_t refresh_attoseconds() { return m_refresh; }
+        public attoseconds_t refresh_attoseconds() { return m_refresh; }
         attoseconds_t vblank_attoseconds() { return m_vblank; }
         public bitmap_format format() { return m_screen_update_ind16 != null ? bitmap_format.BITMAP_FORMAT_IND16 : bitmap_format.BITMAP_FORMAT_RGB32; }
         public float xoffset() { return m_xoffset; }
         public float yoffset() { return m_yoffset; }
         public float xscale() { return m_xscale; }
         public float yscale() { return m_yscale; }
-        //bool has_screen_update() const { return !m_screen_update_ind16.isnull() || !m_screen_update_rgb32.isnull(); }
+        public bool has_screen_update() { return m_screen_update_ind16 != null || m_screen_update_rgb32 != null; }
 
 
         // inline configuration helpers
 
-        public void set_type(screen_type_enum type) { g.assert(!configured()); m_type = type; }
+        public void set_type(screen_type_enum type) { assert(!configured()); m_type = type; }
         //void set_orientation(int orientation) { assert(!configured()); m_orientation = orientation; }
         //void set_physical_aspect(unsigned x, unsigned y) { assert(!configured()); m_phys_aspect = std::make_pair(x, y); }
         //void set_native_aspect() { assert(!configured()); m_phys_aspect = std::make_pair(~0U, ~0U); }
@@ -474,9 +496,9 @@ namespace mame
         /// \return Reference to device for method chaining.
         public screen_device set_raw(u32 pixclock, u16 htotal, u16 hbend, u16 hbstart, u16 vtotal, u16 vbend, u16 vbstart)
         {
-            g.assert(pixclock != 0);
+            assert(pixclock != 0);
             clock_set(pixclock);
-            m_refresh = attotime.HZ_TO_ATTOSECONDS(pixclock) * htotal * vtotal;
+            m_refresh = HZ_TO_ATTOSECONDS(pixclock) * htotal * vtotal;
             m_vblank = m_refresh / vtotal * (vtotal - (vbstart - vbend));
             m_width = htotal;
             m_height = vtotal;
@@ -501,7 +523,8 @@ namespace mame
         /// \param [in] hz Desired refresh rate.
         /// \return Reference to device for method chaining.
         /// 
-        public screen_device set_refresh_hz(s32 hz) { set_refresh(attotime.HZ_TO_ATTOSECONDS(hz)); return this; }  //template <typename T> screen_device &set_refresh_hz(T &&hz) { set_refresh(HZ_TO_ATTOSECONDS(std::forward<T>(hz))); return *this; }
+        public screen_device set_refresh_hz(s32 hz) { set_refresh(HZ_TO_ATTOSECONDS(hz)); return this; }  //template <typename T> screen_device &set_refresh_hz(T &&hz) { set_refresh(HZ_TO_ATTOSECONDS(std::forward<T>(hz))); return *this; }
+        public screen_device set_refresh_hz(XTAL hz) { set_refresh(HZ_TO_ATTOSECONDS(hz)); return this; }  //template <typename T> screen_device &set_refresh_hz(T &&hz) { set_refresh(HZ_TO_ATTOSECONDS(std::forward<T>(hz))); return *this; }
 
         /// \brief Set vertical blanking interval time
         ///
@@ -599,12 +622,14 @@ namespace mame
         //    m_screen_update_rgb32.set(std::forward<T>(target), std::forward<F>(callback), name);
         //}
 
+        public void set_screen_update(string tag, screen_update_ind16_delegate callback) { set_screen_update(callback); }
         public void set_screen_update(screen_update_ind16_delegate callback)
         {
             m_screen_update_ind16 = callback;
             m_screen_update_rgb32 = null;
         }
 
+        public void set_screen_update(string tag, screen_update_rgb32_delegate callback) { set_screen_update(callback); }
         public void set_screen_update(screen_update_rgb32_delegate callback)
         {
             m_screen_update_ind16 = null;
@@ -626,9 +651,9 @@ namespace mame
 
 
         // information getters
-        public render_container container() { g.assert(m_container != null); return m_container; }
+        public render_container container() { assert(m_container != null); return m_container; }
         public bitmap_ind8 priority() { return m_priority; }
-        public device_palette_interface palette() { g.assert(m_palette != null); return m_palette.op[0]; }
+        public device_palette_interface palette() { assert(m_palette != null); return m_palette.op0; }
         public bool has_palette() { return m_palette != null; }
         //screen_bitmap &curbitmap() { return m_bitmap[m_curtexture]; }
 
@@ -638,18 +663,18 @@ namespace mame
         //-------------------------------------------------
         //  configure - configure screen parameters
         //-------------------------------------------------
-        void configure(int width, int height, rectangle visarea, attoseconds_t frame_period)
+        public void configure(int width, int height, rectangle visarea, attoseconds_t frame_period)
         {
             // validate arguments
-            g.assert(width > 0);
-            g.assert(height > 0);
-            g.assert(visarea.left() >= 0);
-            g.assert(visarea.top() >= 0);
+            assert(width > 0);
+            assert(height > 0);
+            assert(visarea.left() >= 0);
+            assert(visarea.top() >= 0);
             //global.assert(visarea.right() < width);
             //global.assert(visarea.bottom() < height);
-            g.assert(m_type == screen_type_enum.SCREEN_TYPE_VECTOR || m_type == screen_type_enum.SCREEN_TYPE_SVG || visarea.left() < width);
-            g.assert(m_type == screen_type_enum.SCREEN_TYPE_VECTOR || m_type == screen_type_enum.SCREEN_TYPE_SVG || visarea.top() < height);
-            g.assert(frame_period > 0);
+            assert(m_type == screen_type_enum.SCREEN_TYPE_VECTOR || m_type == screen_type_enum.SCREEN_TYPE_SVG || visarea.left() < width);
+            assert(m_type == screen_type_enum.SCREEN_TYPE_VECTOR || m_type == screen_type_enum.SCREEN_TYPE_SVG || visarea.top() < height);
+            assert(frame_period > 0);
 
             // fill in the new parameters
             m_max_width = std.max(m_max_width, width);
@@ -694,7 +719,34 @@ namespace mame
             machine().video().update_refresh_speed();
         }
 
-        //void reset_origin(int beamy = 0, int beamx = 0);
+
+        //-------------------------------------------------
+        //  reset_origin - reset the timing such that the
+        //  given (x,y) occurs at the current time
+        //-------------------------------------------------
+        public void reset_origin(int beamy = 0, int beamx = 0)
+        {
+            // compute the effective VBLANK start/end times
+            attotime curtime = machine().time();
+            m_vblank_end_time = curtime - new attotime(0, beamy * m_scantime + beamx * m_pixeltime);
+            m_vblank_start_time = m_vblank_end_time - new attotime(0, m_vblank_period);
+
+            // if we are resetting relative to (0,0) == VBLANK end, call the
+            // scanline 0 timer by hand now; otherwise, adjust it for the future
+            if (beamy == 0 && beamx == 0)
+                reset_partial_updates();
+            else
+                m_scanline0_timer.adjust(time_until_pos(0));
+
+            // if we are resetting relative to (visarea.bottom() + 1, 0) == VBLANK start,
+            // call the VBLANK start timer now; otherwise, adjust it for the future
+            if (beamy == ((m_visarea.bottom() + 1) % m_height) && beamx == 0)
+                vblank_begin();
+            else
+                m_vblank_begin_timer.adjust(time_until_vblank_start());
+        }
+
+
         //void set_visible_area(int min_x, int max_x, int min_y, int max_y);
         //void set_brightness(UINT8 brightness) { m_brightness = brightness; }
 
@@ -757,8 +809,8 @@ namespace mame
         public attotime time_until_pos(int vpos, int hpos = 0)
         {
             // validate arguments
-            g.assert(vpos >= 0);
-            g.assert(hpos >= 0);
+            assert(vpos >= 0);
+            assert(hpos >= 0);
 
             // since we measure time relative to VBLANK, compute the scanline offset from VBLANK
             vpos += m_height - (m_visarea.bottom() + 1);
@@ -808,7 +860,7 @@ namespace mame
 
 
         // updating
-        public UInt32 partial_updates() { return m_partial_updates_this_frame; }
+        public int partial_updates() { return (int)m_partial_updates_this_frame; }
 
 
         public int partial_scan_hpos() { return m_partial_scan_hpos; }
@@ -870,7 +922,7 @@ namespace mame
             }
 
 
-            profiler_global.g_profiler.start(profile_type.PROFILER_VIDEO);
+            g_profiler.start(profile_type.PROFILER_VIDEO);
 
 
             u32 flags = 0;
@@ -895,7 +947,7 @@ namespace mame
             }
             else
             {
-                if (m_type != g.SCREEN_TYPE_SVG)
+                if (m_type != SCREEN_TYPE_SVG)
                 {
                     screen_bitmap curbitmap = m_bitmap[m_curbitmap];
                     switch (curbitmap.format())
@@ -919,7 +971,7 @@ namespace mame
             m_partial_updates_this_frame++;
 
 
-            profiler_global.g_profiler.stop();
+            g_profiler.stop();
 
 
             // if we modified the bitmap, we have to commit
@@ -992,7 +1044,7 @@ namespace mame
                     // if there's something to draw, do it
                     if (!clip.empty())
                     {
-                        profiler_global.g_profiler.start(profile_type.PROFILER_VIDEO);
+                        g_profiler.start(profile_type.PROFILER_VIDEO);
 
                         u32 flags = 0;
                         screen_bitmap curbitmap = m_bitmap[m_curbitmap];
@@ -1016,7 +1068,7 @@ namespace mame
                             }
                         }
 
-                        profiler_global.g_profiler.stop();
+                        g_profiler.stop();
                         m_partial_updates_this_frame++;
 
                         // if we modified the bitmap, we have to commit
@@ -1044,7 +1096,7 @@ namespace mame
             // and if there's something to draw, do it
             if (!clip.empty())
             {
-                profiler_global.g_profiler.start(profile_type.PROFILER_VIDEO);
+                g_profiler.start(profile_type.PROFILER_VIDEO);
 
                 LOG_PARTIAL_UPDATES("doing scanline partial draw: Y {0} X {1}-{2}\n", clip.bottom(), clip.left(), clip.right());
 
@@ -1071,7 +1123,7 @@ namespace mame
                 }
 
                 m_partial_updates_this_frame++;
-                profiler_global.g_profiler.stop();
+                g_profiler.stop();
 
                 // if we modified the bitmap, we have to commit
                 m_changed = ((m_changed ? 1U : 0) | ~flags & UPDATE_HAS_NOT_CHANGED) != 0;  //m_changed |= ~flags & UPDATE_HAS_NOT_CHANGED;
@@ -1129,8 +1181,8 @@ namespace mame
 
             // if allocating now, just do it
             bitmap.allocate(width(), height());
-            if (m_palette != null && m_palette.op != null && m_palette.op[0] != null)
-                bitmap.set_palette(m_palette.op[0].palette());
+            if (m_palette != null && m_palette.op != null && m_palette.op0 != null)
+                bitmap.set_palette(m_palette.op0.palette());
         }
 
 
@@ -1158,15 +1210,15 @@ namespace mame
 
                         m_texture[m_curbitmap].set_bitmap(m_bitmap[m_curbitmap].live(), m_visarea, m_bitmap[m_curbitmap].texformat());
                         m_curtexture = m_curbitmap;
-                        m_curbitmap = (byte)(1 - m_curbitmap);
+                        m_curbitmap = (u8)(1 - m_curbitmap);
                     }
 
                     // brightness adjusted render color
-                    rgb_t color = m_color - new rgb_t(0, (byte)(0xff - m_brightness), (byte)(0xff - m_brightness), (byte)(0xff - m_brightness));
+                    rgb_t color = m_color - new rgb_t(0, (u8)(0xff - m_brightness), (u8)(0xff - m_brightness), (u8)(0xff - m_brightness));
 
                     // create an empty container with a single quad
                     m_container.empty();
-                    m_container.add_quad(0.0f, 0.0f, 1.0f, 1.0f, color, m_texture[m_curtexture], g.PRIMFLAG_BLENDMODE(g.BLENDMODE_NONE) | g.PRIMFLAG_SCREENTEX(1));
+                    m_container.add_quad(0.0f, 0.0f, 1.0f, 1.0f, color, m_texture[m_curtexture], PRIMFLAG_BLENDMODE(BLENDMODE_NONE) | PRIMFLAG_SCREENTEX(1));
                 }
             }
 
@@ -1197,40 +1249,40 @@ namespace mame
         {
             // sanity check dimensions
             if (m_width <= 0 || m_height <= 0)
-                g.osd_printf_error("Invalid display dimensions\n");
+                osd_printf_error("Invalid display dimensions\n");
 
             // sanity check display area
             if (m_type != screen_type_enum.SCREEN_TYPE_VECTOR)
             {
                 if (m_visarea.empty() || m_visarea.right() >= m_width || m_visarea.bottom() >= m_height)
-                    g.osd_printf_error("Invalid display area\n");
+                    osd_printf_error("Invalid display area\n");
 
                 // sanity check screen formats
                 if (m_screen_update_ind16 == null && m_screen_update_rgb32 == null)
-                    g.osd_printf_error("Missing SCREEN_UPDATE function\n");
+                    osd_printf_error("Missing SCREEN_UPDATE function\n");
             }
             else
             {
                 if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
-                    g.osd_printf_error("Non-raster display cannot have a variable width\n");
+                    osd_printf_error("Non-raster display cannot have a variable width\n");
             }
 
             // check for zero frame rate
             if (m_refresh == 0)
-                g.osd_printf_error("Invalid (zero) refresh rate\n");
+                osd_printf_error("Invalid (zero) refresh rate\n");
 
             texture_format texformat = m_screen_update_ind16 != null ? texture_format.TEXFORMAT_PALETTE16 : texture_format.TEXFORMAT_RGB32;
             if (m_palette.finder_tag() != finder_base.DUMMY_TAG)
             {
                 if (m_palette == null)
-                    g.osd_printf_error("Screen references non-existent palette tag {0}\n", m_palette.finder_tag());
+                    osd_printf_error("Screen references non-existent palette tag {0}\n", m_palette.finder_tag());
 
                 if (texformat == texture_format.TEXFORMAT_RGB32)
-                    g.osd_printf_warning("Screen does not need palette defined\n");
+                    osd_printf_warning("Screen does not need palette defined\n");
             }
             else if (texformat == texture_format.TEXFORMAT_PALETTE16)
             {
-                g.osd_printf_error("Screen does not have palette defined\n");
+                osd_printf_error("Screen does not have palette defined\n");
             }
         }
 
@@ -1242,7 +1294,7 @@ namespace mame
         protected override void device_config_complete()
         {
             // combine orientation with machine orientation
-            m_orientation = g.orientation_add(m_orientation, (int)(mconfig().gamedrv().flags & machine_flags.type.MASK_ORIENTATION));
+            m_orientation = orientation_add(m_orientation, (int)(mconfig().gamedrv().flags & machine_flags.type.MASK_ORIENTATION));
         }
 
 
@@ -1263,8 +1315,8 @@ namespace mame
             m_scanline_cb.resolve();
 
             // assign our format to the palette before it starts
-            if (m_palette != null && m_palette.op != null && m_palette.op[0] != null)
-                m_palette.op[0].m_format = format();  //m_palette->m_format = format();
+            if (m_palette != null && m_palette.op != null && m_palette.op0 != null)
+                m_palette.op0.m_format = format();  //m_palette->m_format = format();
         }
 
         //-------------------------------------------------
@@ -1273,7 +1325,7 @@ namespace mame
         protected override void device_start()
         {
             // if we have a palette and it's not started, wait for it
-            if (m_palette != null && m_palette.op != null && m_palette.op[0] != null && !m_palette.op[0].device().started())
+            if (m_palette != null && m_palette.op != null && m_palette.op0 != null && !m_palette.op0.device().started())
                 throw new device_missing_dependencies();
 
             if (m_type == screen_type_enum.SCREEN_TYPE_SVG)
@@ -1349,21 +1401,21 @@ namespace mame
                 load_effect_overlay(overname);
 
             // register items for saving
-            save_item(g.NAME(new { m_width }));
-            save_item(g.NAME(new { m_height }));
-            save_item(g.NAME(new { m_visarea.min_x }));
-            save_item(g.NAME(new { m_visarea.min_y }));
-            save_item(g.NAME(new { m_visarea.max_x }));
-            save_item(g.NAME(new { m_visarea.max_y }));
-            save_item(g.NAME(new { m_last_partial_scan }));
-            save_item(g.NAME(new { m_frame_period }));
-            save_item(g.NAME(new { m_brightness }));
-            save_item(g.NAME(new { m_scantime }));
-            save_item(g.NAME(new { m_pixeltime }));
-            save_item(g.NAME(new { m_vblank_period }));
-            save_item(g.NAME(new { m_vblank_start_time }));
-            save_item(g.NAME(new { m_vblank_end_time }));
-            save_item(g.NAME(new { m_frame_number }));
+            save_item(NAME(new { m_width }));
+            save_item(NAME(new { m_height }));
+            save_item(NAME(new { m_visarea.min_x }));
+            save_item(NAME(new { m_visarea.min_y }));
+            save_item(NAME(new { m_visarea.max_x }));
+            save_item(NAME(new { m_visarea.max_y }));
+            save_item(NAME(new { m_last_partial_scan }));
+            save_item(NAME(new { m_frame_period }));
+            save_item(NAME(new { m_brightness }));
+            save_item(NAME(new { m_scantime }));
+            save_item(NAME(new { m_pixeltime }));
+            save_item(NAME(new { m_vblank_period }));
+            save_item(NAME(new { m_vblank_start_time }));
+            save_item(NAME(new { m_vblank_end_time }));
+            save_item(NAME(new { m_frame_number }));
             if (m_oldstyle_vblank_supplied)
                 logerror("{0}: Deprecated legacy Old Style screen configured (MCFG_SCREEN_VBLANK_TIME), please use MCFG_SCREEN_RAW_PARAMS instead.\n", tag());
 
@@ -1443,7 +1495,7 @@ namespace mame
                     }
 
                     if (m_scanline_cb.bool_)
-                        m_scanline_cb.op_u32((UInt32)param);
+                        m_scanline_cb.op_u32((u32)param);
 
                     // compute the next visible scanline
                     param++;
@@ -1478,10 +1530,10 @@ namespace mame
                 item.m_bitmap.resize(effwidth, effheight);
 
             // re-set up textures
-            if (m_palette != null && m_palette.op != null && m_palette.op[0] != null)
+            if (m_palette != null && m_palette.op != null && m_palette.op0 != null)
             {
-                m_bitmap[0].set_palette(m_palette.op[0].palette());
-                m_bitmap[1].set_palette(m_palette.op[0].palette());
+                m_bitmap[0].set_palette(m_palette.op0.palette());
+                m_bitmap[1].set_palette(m_palette.op0.palette());
             }
             m_texture[0].set_bitmap(m_bitmap[0].live(), m_visarea, m_bitmap[0].texformat());
             m_texture[1].set_bitmap(m_bitmap[1].live(), m_visarea, m_bitmap[1].texformat());

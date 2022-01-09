@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using s16 = System.Int16;
 using size_t = System.UInt64;
@@ -10,9 +9,75 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 
+using static mame.cpp_global;
+using static mame.emucore_global;
+using static mame.osdcore_global;
+using static mame.resnet_global;
+using static mame.resnet_internal;
+
 
 namespace mame
 {
+    public static partial class resnet_global
+    {
+        /* Amplifier stage per channel but may be specified globally as default */
+
+        public const u32 RES_NET_AMP_USE_GLOBAL      = 0x0000;
+        public const u32 RES_NET_AMP_NONE            = 0x0001;      //Out0
+        public const u32 RES_NET_AMP_DARLINGTON      = 0x0002;      //Out1
+        public const u32 RES_NET_AMP_EMITTER         = 0x0003;      //Out2
+        public const u32 RES_NET_AMP_CUSTOM          = 0x0004;      //Out3
+        public const u32 RES_NET_AMP_MASK            = 0x0007;
+
+        /* VCC prebuilds - Global */
+
+        public const u32 RES_NET_VCC_5V              = 0x0000;
+        public const u32 RES_NET_VCC_CUSTOM          = 0x0008;
+        public const u32 RES_NET_VCC_MASK            = 0x0008;
+
+        /* VBias prebuilds - per channel but may be specified globally as default */
+
+        public const u32 RES_NET_VBIAS_USE_GLOBAL    = 0x0000;
+        public const u32 RES_NET_VBIAS_5V            = 0x0010;
+        public const u32 RES_NET_VBIAS_TTL           = 0x0020;
+        public const u32 RES_NET_VBIAS_CUSTOM        = 0x0030;
+        public const u32 RES_NET_VBIAS_MASK          = 0x0030;
+
+        /* Input Voltage levels - Global */
+
+        public const u32 RES_NET_VIN_OPEN_COL        = 0x0000;
+        public const u32 RES_NET_VIN_VCC             = 0x0100;
+        public const u32 RES_NET_VIN_TTL_OUT         = 0x0200;
+        public const u32 RES_NET_VIN_CUSTOM          = 0x0300;
+        public const u32 RES_NET_VIN_MASK            = 0x0300;
+
+        /* Monitor options */
+
+        // Just invert the signal
+        public const u32 RES_NET_MONITOR_INVERT      = 0x1000;
+        // SANYO_EZV20 / Nintendo with inverter circuit
+        public const u32 RES_NET_MONITOR_SANYO_EZV20 = 0x2000;
+        // Electrohome G07 Series
+        // 5.6k input impedance
+        public const u32 RES_NET_MONITOR_ELECTROHOME_G07 = 0x3000;
+
+        public const u32 RES_NET_MONITOR_MASK        = 0x3000;
+
+        /* General defines */
+
+        const int RES_NET_CHAN_RED            = 0x00;
+        const int RES_NET_CHAN_GREEN          = 0x01;
+        const int RES_NET_CHAN_BLUE           = 0x02;
+
+        /* Some aliases */
+
+        //#define RES_NET_VIN_MB7051          RES_NET_VIN_TTL_OUT
+        public const u32 RES_NET_VIN_MB7052          = RES_NET_VIN_TTL_OUT;
+        //#define RES_NET_VIN_MB7053          RES_NET_VIN_TTL_OUT
+        //#define RES_NET_VIN_28S42           RES_NET_VIN_TTL_OUT
+    }
+
+
     /* Structures */
 
     public class res_net_channel_info
@@ -125,92 +190,8 @@ namespace mame
     }
 
 
-    public static class resnet_global
+    public static partial class resnet_global
     {
-        public static bool VERBOSE = false;
-
-
-        /* Amplifier stage per channel but may be specified globally as default */
-
-        public const u32 RES_NET_AMP_USE_GLOBAL      = 0x0000;
-        public const u32 RES_NET_AMP_NONE            = 0x0001;      //Out0
-        public const u32 RES_NET_AMP_DARLINGTON      = 0x0002;      //Out1
-        public const u32 RES_NET_AMP_EMITTER         = 0x0003;      //Out2
-        public const u32 RES_NET_AMP_CUSTOM          = 0x0004;      //Out3
-        public const u32 RES_NET_AMP_MASK            = 0x0007;
-
-        /* VCC prebuilds - Global */
-
-        public const u32 RES_NET_VCC_5V              = 0x0000;
-        public const u32 RES_NET_VCC_CUSTOM          = 0x0008;
-        public const u32 RES_NET_VCC_MASK            = 0x0008;
-
-        /* VBias prebuilds - per channel but may be specified globally as default */
-
-        public const u32 RES_NET_VBIAS_USE_GLOBAL    = 0x0000;
-        public const u32 RES_NET_VBIAS_5V            = 0x0010;
-        public const u32 RES_NET_VBIAS_TTL           = 0x0020;
-        public const u32 RES_NET_VBIAS_CUSTOM        = 0x0030;
-        public const u32 RES_NET_VBIAS_MASK          = 0x0030;
-
-        /* Input Voltage levels - Global */
-
-        public const u32 RES_NET_VIN_OPEN_COL        = 0x0000;
-        public const u32 RES_NET_VIN_VCC             = 0x0100;
-        public const u32 RES_NET_VIN_TTL_OUT         = 0x0200;
-        public const u32 RES_NET_VIN_CUSTOM          = 0x0300;
-        public const u32 RES_NET_VIN_MASK            = 0x0300;
-
-        /* Monitor options */
-
-        // Just invert the signal
-        public const u32 RES_NET_MONITOR_INVERT      = 0x1000;
-        // SANYO_EZV20 / Nintendo with inverter circuit
-        public const u32 RES_NET_MONITOR_SANYO_EZV20 = 0x2000;
-        // Electrohome G07 Series
-        // 5.6k input impedance
-        public const u32 RES_NET_MONITOR_ELECTROHOME_G07 = 0x3000;
-
-        public const u32 RES_NET_MONITOR_MASK        = 0x3000;
-
-        /* General defines */
-
-        const int RES_NET_CHAN_RED            = 0x00;
-        const int RES_NET_CHAN_GREEN          = 0x01;
-        const int RES_NET_CHAN_BLUE           = 0x02;
-
-        /* Some aliases */
-
-        //#define RES_NET_VIN_MB7051          RES_NET_VIN_TTL_OUT
-        public const u32 RES_NET_VIN_MB7052          = RES_NET_VIN_TTL_OUT;
-        //#define RES_NET_VIN_MB7053          RES_NET_VIN_TTL_OUT
-        //#define RES_NET_VIN_28S42           RES_NET_VIN_TTL_OUT
-
-
-        /* this should be moved to one of the core files */
-
-        const int MAX_NETS = 3;
-        const int MAX_RES_PER_NET = 18;
-
-
-        /* Datasheets give a maximum of 0.4V to 0.5V
-         * However in the circuit simulated here this will only
-         * occur if (rBias + rOutn) = 50 Ohm, rBias exists.
-         * This is highly unlikely. With the resistor values used
-         * in such circuits VOL is likely to be around 50mV.
-         */
-
-        const double TTL_VOL         = 0.05;
-
-
-        /* Likely, datasheets give a typical value of 3.4V to 3.6V
-         * for VOH. Modelling the TTL circuit however backs a value
-         * of 4V for typical currents involved in resistor networks.
-         */
-
-        const double TTL_VOH         = 4.0;
-
-
         /* return a single value for one channel */
         public static int compute_res_net(int inputs, int channel, res_net_info di)
         {
@@ -250,7 +231,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    g.fatalerror("compute_res_net: Unknown amplifier type\n");
+                    fatalerror("compute_res_net: Unknown amplifier type\n");
                     break;
             }
 
@@ -263,7 +244,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    g.fatalerror("compute_res_net: Unknown vcc type\n");
+                    fatalerror("compute_res_net: Unknown vcc type\n");
                     break;
             }
 
@@ -282,7 +263,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    g.fatalerror("compute_res_net: Unknown vcc type\n");
+                    fatalerror("compute_res_net: Unknown vcc type\n");
                     break;
             }
 
@@ -310,7 +291,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    g.fatalerror("compute_res_net: Unknown vin type\n");
+                    fatalerror("compute_res_net: Unknown vin type\n");
                     break;
             }
 
@@ -337,7 +318,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    g.fatalerror("compute_res_net: Unknown amplifier type\n");
+                    fatalerror("compute_res_net: Unknown amplifier type\n");
                     break;
             }
 
@@ -356,7 +337,7 @@ namespace mame
                     /* Fall through */
                     break;
                 default:
-                    g.fatalerror("compute_res_net: Unknown vcc type\n");
+                    fatalerror("compute_res_net: Unknown vcc type\n");
                     break;
             }
 
@@ -452,8 +433,8 @@ namespace mame
                     break;
                 case RES_NET_MONITOR_SANYO_EZV20:
                     v = vcc - v;
-                    v = Math.Max((double)0, v-0.7);
-                    v = Math.Min(v, vcc - 2 * 0.7);
+                    v = std.max((double)0, v-0.7);
+                    v = std.min(v, vcc - 2 * 0.7);
                     v = v / (vcc-1.4);
                     v = v * vcc;
                     break;
@@ -493,21 +474,24 @@ namespace mame
                 rgb[i - rdi.start] = new rgb_t(r, g, b);
             }
         }
+    }
 
 
-        /* legacy interface */
+    /* legacy interface */
 
-        //namespace emu { namespace detail {
+    //namespace emu { namespace detail {
 
-        //template <std::size_t I, typename T, std::size_t N, typename U>
-        //constexpr auto combine_weights(T const (&tab)[N], U w) { return tab[I] * w; }
+    //template <std::size_t I, typename T, std::size_t N, typename U>
+    //constexpr auto combine_weights(T const (&tab)[N], U w) { return tab[I] * w; }
 
-        //template <std::size_t I, typename T, std::size_t N, typename U, typename... V>
-        //constexpr auto combine_weights(T const (&tab)[N], U w0, V... w) { return (tab[I] * w0) + combine_weights<I + 1>(tab, w...); }
+    //template <std::size_t I, typename T, std::size_t N, typename U, typename... V>
+    //constexpr auto combine_weights(T const (&tab)[N], U w0, V... w) { return (tab[I] * w0) + combine_weights<I + 1>(tab, w...); }
 
-        //} } // namespace emu::detail
+    //} } // namespace emu::detail
 
 
+    public static partial class resnet_global
+    {
         public static double compute_resistor_weights(
             int minval, int maxval, double scaler,
             int count_1, int [] resistances_1, out double [] weights_1, int pulldown_1, int pullup_1,
@@ -518,7 +502,7 @@ namespace mame
             weights_2 = new double[count_2];
             weights_3 = new double[count_3];
 
-            g.assert(minval < maxval);
+            assert(minval < maxval);
 
             int [] rescount = new int[MAX_NETS];     /* number of resistors in each of the nets */
             double [,] r = new double[MAX_NETS, MAX_RES_PER_NET];        /* resistances */
@@ -666,27 +650,27 @@ namespace mame
             }
 
             /* debug code */
-            if (resnet_global.VERBOSE)
+            if (VERBOSE)
             {
-                g.osd_printf_info("compute_resistor_weights():  scaler = %{0}\n",scale);  // %15.10f
-                g.osd_printf_info("min val :{0}  max val:{1}  Total number of networks :{2}\n", minval, maxval, networks_no);  // %i
+                osd_printf_info("compute_resistor_weights():  scaler = %{0}\n",scale);  // %15.10f
+                osd_printf_info("min val :{0}  max val:{1}  Total number of networks :{2}\n", minval, maxval, networks_no);  // %i
 
                 for (int i = 0; i < networks_no;i++)
                 {
                     double sum = 0.0;
 
-                    g.osd_printf_info(" Network no.{0}=>  resistances: {1}", i, rescount[i]);  // %i
+                    osd_printf_info(" Network no.{0}=>  resistances: {1}", i, rescount[i]);  // %i
                     if (r_pu[i] != 0)
-                        g.osd_printf_info(", pullup resistor: {0} Ohms", r_pu[i]);  // %i
+                        osd_printf_info(", pullup resistor: {0} Ohms", r_pu[i]);  // %i
                     if (r_pd[i] != 0)
-                        g.osd_printf_info(", pulldown resistor: {0} Ohms", r_pd[i]);  // %i
-                    g.osd_printf_info("\n  maximum output of this network:{0} (scaled to {1})\n", max_out[i], max_out[i] * scale);  // :%10.5f (scaled to %15.10f)
+                        osd_printf_info(", pulldown resistor: {0} Ohms", r_pd[i]);  // %i
+                    osd_printf_info("\n  maximum output of this network:{0} (scaled to {1})\n", max_out[i], max_out[i] * scale);  // :%10.5f (scaled to %15.10f)
                     for (int n = 0; n < rescount[i]; n++)
                     {
-                        g.osd_printf_info("   res {0}:{1} Ohms  weight={2} (scaled = {3})\n", n, r[i, n], w[i, n], ws[i, n]);  //    res %2i:%9.1f Ohms  weight=%10.5f (scaled = %15.10f)\n
+                        osd_printf_info("   res {0}:{1} Ohms  weight={2} (scaled = {3})\n", n, r[i, n], w[i, n], ws[i, n]);  //    res %2i:%9.1f Ohms  weight=%10.5f (scaled = %15.10f)\n
                         sum += ws[i, n];
                     }
-                    g.osd_printf_info("                              sum of scaled weights = {0}\n", sum);  // %15.10f
+                    osd_printf_info("                              sum of scaled weights = {0}\n", sum);  // %15.10f
                 }
             }
             /* debug end */
@@ -711,11 +695,41 @@ namespace mame
         public static int combine_weights(double [] tab, int w0)                                                          { return (int)((tab[0] * w0 + 0.5)); }
 
 
+        /* this should be moved to one of the core files */
+
+        const int MAX_NETS = 3;
+        const int MAX_RES_PER_NET = 18;
+
+
         /* for the open collector outputs PROMs */
         //double compute_resistor_net_outputs(
         //    int minval, int maxval, double scaler,
         //    int count_1, const int * resistances_1, double * outputs_1, int pulldown_1, int pullup_1,
         //    int count_2, const int * resistances_2, double * outputs_2, int pulldown_2, int pullup_2,
         //    int count_3, const int * resistances_3, double * outputs_3, int pulldown_3, int pullup_3 );
+    }
+
+
+    static class resnet_internal
+    {
+        public static bool VERBOSE = false;
+
+
+        /* Datasheets give a maximum of 0.4V to 0.5V
+         * However in the circuit simulated here this will only
+         * occur if (rBias + rOutn) = 50 Ohm, rBias exists.
+         * This is highly unlikely. With the resistor values used
+         * in such circuits VOL is likely to be around 50mV.
+         */
+
+        public const double TTL_VOL         = 0.05;
+
+
+        /* Likely, datasheets give a typical value of 3.4V to 3.6V
+         * for VOH. Modelling the TTL circuit however backs a value
+         * of 4V for typical currents involved in resistor networks.
+         */
+
+        public const double TTL_VOH         = 4.0;
     }
 }

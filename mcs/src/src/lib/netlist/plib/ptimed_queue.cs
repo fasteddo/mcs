@@ -2,8 +2,10 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using size_t = System.UInt64;
@@ -51,10 +53,20 @@ namespace mame.plib
 
         //constexpr bool operator <(const pqentry_t &rhs) const noexcept
 
-        public static bool operator ==(pqentry_t<Time, Element> lhs, pqentry_t<Time, Element> rhs) { return lhs.m_object.Equals(rhs.m_object); }
-        public static bool operator !=(pqentry_t<Time, Element> lhs, pqentry_t<Time, Element> rhs) { return !lhs.m_object.Equals(rhs.m_object); }
+        public static bool operator ==(pqentry_t<Time, Element> lhs, pqentry_t<Time, Element> rhs) { return lhs == rhs.m_object; }
+        public static bool operator !=(pqentry_t<Time, Element> lhs, pqentry_t<Time, Element> rhs) { return !(lhs == rhs.m_object); }
 
-        public static bool operator ==(pqentry_t<Time, Element> lhs, Element rhs) { return lhs.m_object.Equals(rhs); }
+        public static bool operator ==(pqentry_t<Time, Element> lhs, Element rhs)
+        {
+            if (lhs.m_object == null && rhs == null)
+                return true;
+            else if (lhs.m_object == null && rhs != null)
+                return false;
+            else if (lhs.m_object != null && rhs == null)
+                return false;
+            else
+                return lhs.m_object.Equals(rhs);
+        }
         public static bool operator !=(pqentry_t<Time, Element> lhs, Element rhs) { return !lhs.m_object.Equals(rhs); }
 
         public static bool operator >(pqentry_t<Time, Element> lhs, pqentry_t<Time, Element> rhs) { return lhs.m_exec_time.CompareTo(rhs.m_exec_time) > 0; }

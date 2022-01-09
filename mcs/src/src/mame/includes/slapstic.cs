@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using optional_address_space = mame.address_space_finder<mame.bool_const_false>;  //using optional_address_space = address_space_finder<false>;
@@ -13,6 +12,10 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
+using static mame.device_global;
+using static mame.emucore_global;
+using static mame.osdcore_global;
+
 
 namespace mame
 {
@@ -20,7 +23,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(SLAPSTIC, atari_slapstic_device, "slapstic", "Atari Slapstic")
         static device_t device_creator_atari_slapstic_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new atari_slapstic_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SLAPSTIC = g.DEFINE_DEVICE_TYPE(device_creator_atari_slapstic_device, "slapstic", "Atari Slapstic");
+        public static readonly device_type SLAPSTIC = DEFINE_DEVICE_TYPE(device_creator_atari_slapstic_device, "slapstic", "Atari Slapstic");
 
 
         struct mask_value
@@ -655,9 +658,9 @@ namespace mame
                 m_range_mask = ~((end - start) | mirror);
                 m_range_value = start;
                 if ((m_range_value & ~m_range_mask) != 0)
-                    g.fatalerror("The slapstic range {0}-{1} mirror {2} is not masking friendly", start, end, mirror);
+                    fatalerror("The slapstic range {0}-{1} mirror {2} is not masking friendly", start, end, mirror);
                 m_shift = data_width == 16 ? 1U : 0U;
-                m_input_mask = g.make_bitmask32(address_lines) << (int)m_shift;
+                m_input_mask = util.make_bitmask32(address_lines) << (int)m_shift;
             }
 
 
@@ -1439,25 +1442,25 @@ namespace mame
         protected override void device_start()
         {
             /* save state */
-            save_item(g.NAME(new { m_current_bank }));
-            save_item(g.NAME(new { m_loaded_bank }));
-            save_item(g.NAME(new { m_saved_state }));
+            save_item(NAME(new { m_current_bank }));
+            save_item(NAME(new { m_loaded_bank }));
+            save_item(NAME(new { m_saved_state }));
 
             /* Address space tap installation */
-            if (m_space.op[0].data_width() == 16)
+            if (m_space.op0.data_width() == 16)
             {
-                m_space.op[0].install_readwrite_tap(0, m_space.op[0].addrmask(), 0, "slapstic",
+                m_space.op0.install_readwrite_tap(0, m_space.op0.addrmask(), 0, "slapstic",
                                                (offs_t offset, ref u16 data, u16 mem_mask) => { if (!machine().side_effects_disabled()) m_state.test(offset); },
                                                (offs_t offset, ref u16 data, u16 mem_mask) => { if (!machine().side_effects_disabled()) m_state.test(offset); });
             }
             else
             {
-                m_space.op[0].install_readwrite_tap(0, m_space.op[0].addrmask(), 0, "slapstic",
+                m_space.op0.install_readwrite_tap(0, m_space.op0.addrmask(), 0, "slapstic",
                                                (offs_t offset, ref u8 data, u8 mem_mask) => { if (!machine().side_effects_disabled()) m_state.test(offset); },
                                                (offs_t offset, ref u8 data, u8 mem_mask) => { if (!machine().side_effects_disabled()) m_state.test(offset); });
             }
 
-            checker check = new checker(m_start, m_end, m_mirror, m_space.op[0].data_width(), m_chipnum == 101 ? 13 : 14);
+            checker check = new checker(m_start, m_end, m_mirror, m_space.op0.data_width(), m_chipnum == 101 ? 13 : 14);
             var info = slapstic_table[m_chipnum - 101];
 
             m_s_idle = new idle(this, check, info);
@@ -1481,9 +1484,9 @@ namespace mame
             }
 
             if (m_chipnum <= 110)
-                m_s_alt_select = new alt_select_101_110(this, check, info, m_space.op[0].data_width() == 16 ? 1 : 0);
+                m_s_alt_select = new alt_select_101_110(this, check, info, m_space.op0.data_width() == 16 ? 1 : 0);
             else
-                m_s_alt_select = new alt_select_111_118(this, check, info, m_space.op[0].data_width() == 16 ? 1 : 0);
+                m_s_alt_select = new alt_select_111_118(this, check, info, m_space.op0.data_width() == 16 ? 1 : 0);
 
             m_s_alt_commit = new alt_commit(this, check, info);
 
@@ -1518,7 +1521,7 @@ namespace mame
         {
             // only a small number of chips are known to exist
             if (m_chipnum < 101 || m_chipnum > 118 || slapstic_table[m_chipnum - 101] == null)
-                g.osd_printf_error("Unknown slapstic number: {0}\n", m_chipnum);
+                osd_printf_error("Unknown slapstic number: {0}\n", m_chipnum);
         }
 
 
@@ -1551,7 +1554,7 @@ namespace mame
             logerror("current bank {0}\n", bank);
             m_current_bank = (u8)bank;
             if (m_bank.bool_)
-                m_bank.op[0].set_entry(m_current_bank);
+                m_bank.op0.set_entry(m_current_bank);
             if (m_view != null)
                 m_view.select(m_current_bank);
         }

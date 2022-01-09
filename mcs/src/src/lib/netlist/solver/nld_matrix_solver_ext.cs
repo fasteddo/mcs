@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
 using matrix_solver_t_fptype = System.Double;  //using fptype = nl_fptype;
@@ -12,6 +11,8 @@ using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using size_t = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.netlist.nl_config_global;
 
 
 namespace mame.netlist
@@ -252,15 +253,12 @@ namespace mame.netlist
                         int other = this.m_terms[k].m_connected_net_idx[j];
                         if (other >= 0)
                         {
-                            throw new emu_unimplemented();
-#if false
-                            m_mat_ptr[k][j] = &(mat[k][(size_t)other]);
+                            m_mat_ptr.op(k)[j] = new Pointer<FT>(mat[k], other);  //m_mat_ptr[k][j] = &(mat[k][(size_t)other]);
                             cnt++;
-#endif
                         }
                     }
 
-                    nl_config_global.nl_assert_always(cnt == this.m_terms[k].railstart(), "Count and railstart mismatch");
+                    nl_assert_always(cnt == this.m_terms[k].railstart(), "Count and railstart mismatch");
                     m_mat_ptr.op(k)[this.m_terms[k].railstart()] = new Pointer<FT>(mat[k], (int)k);  //m_mat_ptr[k][this->m_terms[k].railstart()] = &(mat[k][k]);
                 }
             }

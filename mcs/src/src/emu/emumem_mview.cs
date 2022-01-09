@@ -2,13 +2,17 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
+using size_t = System.UInt64;
 using u64 = System.UInt64;
 using uX = mame.FlexPrim;
+
+using static mame.emu.detail.emumem_global;
+using static mame.emucore_global;
+using static mame.emumem_mview_global;
 
 
 namespace mame
@@ -77,10 +81,18 @@ namespace mame
     //template <> struct handler_width<write64smo_delegate> { static constexpr int value = 3; };
     //} // anonymous namespace
 
-    //address_map_entry &memory_view::memory_view_entry::operator()(offs_t start, offs_t end)
-    //{
-    //    return (*m_map)(start, end);
-    //}
+
+    public partial class memory_view
+    {
+        public abstract partial class memory_view_entry : address_space_installer
+        {
+            //address_map_entry &operator()(offs_t start, offs_t end);
+            public address_map_entry op(offs_t start, offs_t end)  //address_map_entry &memory_view::memory_view_entry::operator()(offs_t start, offs_t end)
+            {
+                return m_map.op(start, end);  //return (*m_map)(start, end);
+            }
+        }
+    }
 
 
     //template<int Level, int Width, int AddrShift>
@@ -625,18 +637,90 @@ namespace mame
     }
 
 
-    //memory_view::memory_view_entry &memory_view::operator[](int slot)
-    //memory_view::memory_view_entry::memory_view_entry(const address_space_config &config, memory_manager &manager, memory_view &view, int id) : address_space_installer(config, manager), m_view(view), m_id(id)
-    //void memory_view::memory_view_entry::prepare_map_generic(address_map &map, bool allow_alloc)
-    //void memory_view::memory_view_entry::prepare_device_map(address_map &map)
-    //template<int Level, int Width, int AddrShift, endianness_t Endian> void memory_view_entry_specific<Level, Width, AddrShift, Endian>::populate_from_map(address_map *map)
-    //std::string memory_view::memory_view_entry::key() const
-    //memory_view::memory_view(device_t &device, std::string name) : m_device(device), m_name(name), m_config(nullptr), m_addrstart(0), m_addrend(0), m_space(nullptr), m_handler_read(nullptr), m_handler_write(nullptr), m_cur_id(-1), m_cur_slot(-1)
-    //void memory_view::register_state()
-    //void memory_view::disable()
-    //void memory_view::select(int slot)
-    //int memory_view::id_to_slot(int id) const
-    //void memory_view::initialize_from_address_map(offs_t addrstart, offs_t addrend, const address_space_config &config)
+    public partial class memory_view
+    {
+        //memory_view_entry &operator[](int slot);
+        public memory_view_entry op(int slot)
+        {
+            if (m_config == null)
+                fatalerror("A view must be in a map or a space before it can be setup.");
+
+            var i = m_entry_mapping.find(slot);
+            if (i == default)
+            {
+                memory_view_entry e;
+                int id = (int)m_entries.size();
+                e = mve_make(handler_entry_dispatch_level(m_config.addr_width()), m_config.data_width(), m_config.addr_shift(), m_config.endianness(),
+                             m_config, m_device.machine().memory(), this, id);
+                m_entries.resize((size_t)id + 1);
+                m_entries[id] = e;  //m_entries[id].reset(e);
+                m_entry_mapping[slot] = id;
+                if (m_handler_read != null)
+                {
+                    m_handler_read.select_u(id);
+                    m_handler_write.select_u(id);
+                }
+                return e;
+            }
+            else
+            {
+                return m_entries[i];
+            }
+        }
+    }
+
+
+    public partial class memory_view
+    {
+        public abstract partial class memory_view_entry : address_space_installer
+        {
+            protected memory_view_entry(address_space_config config, memory_manager manager, memory_view view, int id)
+                 : base(config, manager)
+            {
+                throw new emu_unimplemented();
+            }
+
+
+            //void memory_view::memory_view_entry::prepare_map_generic(address_map &map, bool allow_alloc)
+            //void memory_view::memory_view_entry::prepare_device_map(address_map &map)
+
+            //std::string memory_view::memory_view_entry::key() const
+        }
+    }
+
+
+    public partial class memory_view
+    {
+        public memory_view(device_t device, string name)
+        {
+            m_device = device;
+            m_name = name;
+            m_config = null;
+            m_addrstart = 0;
+            m_addrend = 0;
+            m_space = null;
+            m_handler_read = null;
+            m_handler_write = null;
+            m_cur_id = -1;
+            m_cur_slot = -1;
+
+
+            device.view_register(this);
+        }
+
+
+        //void memory_view::register_state()
+        //void memory_view::disable()
+        //void memory_view::select(int slot)
+        //int memory_view::id_to_slot(int id) const
+        //void memory_view::initialize_from_address_map(offs_t addrstart, offs_t addrend, const address_space_config &config)
+
+
+        public void register_state()
+        {
+            throw new emu_unimplemented();
+        }
+    }
 
 
     //namespace {

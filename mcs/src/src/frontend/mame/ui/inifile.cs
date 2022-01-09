@@ -2,14 +2,22 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
-using categoryindex = mame.std.vector<System.Collections.Generic.KeyValuePair<string, System.Int64>>;
+using categoryindex = mame.std.vector<mame.std.pair<string, System.Int64>>;
 using favorites_set = mame.std.set<mame.ui_software_info>;//, favorite_compare>;
 using int64_t = System.Int64;
 using size_t = System.UInt64;
 using sorted_favorites = mame.std.vector<mame.ui_software_info>;
+using uint8_t = System.Byte;
 using uint64_t = System.UInt64;
+
+using static mame.corefile_global;
+using static mame.corestr_global;
+using static mame.cpp_global;
+using static mame.language_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
+using static mame.utils_global;
 
 
 namespace mame
@@ -47,9 +55,9 @@ namespace mame
             for (osd.directory.entry dir = path.next(); dir != null; dir = path.next())
             {
                 string name = dir.name;
-                if (g.core_filename_ends_with(name, ".ini"))
+                if (core_filename_ends_with(name, ".ini"))
                 {
-                    emu_file file = new emu_file(m_options.categoryini_path(), g.OPEN_FLAG_READ);
+                    emu_file file = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
                     if (!file.open(name))
                     {
                         init_category(name, file);
@@ -59,31 +67,31 @@ namespace mame
             }
 
             //std::stable_sort(m_ini_index.begin(), m_ini_index.end());//, [] (auto const &x, auto const &y) { return 0 > core_stricmp(x.first.c_str(), y.first.c_str()); });
-            m_ini_index.Sort((x, y) => { return g.core_stricmp(x.first, y.first); });
+            m_ini_index.Sort((x, y) => { return core_stricmp(x.first, y.first); });
         }
 
 
         // load games from category
-        public void load_ini_category(UInt32 file, UInt32 category, std.unordered_set<game_driver> result)
+        public void load_ini_category(size_t file, size_t category, std.unordered_set<game_driver> result)
         {
             string filename = m_ini_index[(int)file].first;
-            emu_file fp = new emu_file(m_options.categoryini_path(), g.OPEN_FLAG_READ);
+            emu_file fp = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
             if (fp.open(filename))
             {
-                g.osd_printf_error("Failed to open category file {0} for reading\n", filename);
+                osd_printf_error("Failed to open category file {0} for reading\n", filename);
                 return;
             }
 
-            int64_t offset = m_ini_index[(int)file].second[(int)category].Value;
-            if (fp.seek(offset, g.SEEK_SET) != 0 || (fp.tell() != (uint64_t)offset))
+            int64_t offset = m_ini_index[(int)file].second[(int)category].second;
+            if (fp.seek(offset, SEEK_SET) != 0 || (fp.tell() != (uint64_t)offset))
             {
                 fp.close();
-                g.osd_printf_error("Failed to seek to category offset in file {0}\n", filename);
+                osd_printf_error("Failed to seek to category offset in file {0}\n", filename);
                 return;
             }
 
             string rbuf;  // char rbuf[MAX_CHAR_INFO];
-            while (fp.gets(out rbuf, utils_global.MAX_CHAR_INFO) != null && !string.IsNullOrEmpty(rbuf) && ('[' != rbuf[0]))
+            while (fp.gets(out rbuf, MAX_CHAR_INFO) != null && !string.IsNullOrEmpty(rbuf) && ('[' != rbuf[0]))
             {
                 //var tail = std::find_if(std::begin(rbuf), std::prev(std::end(rbuf)));//, [] (char ch) { return !ch || ('\r' == ch) || ('\n' == ch); });
                 //*tail = '\0';
@@ -102,7 +110,7 @@ namespace mame
         public size_t get_file_count() { return m_ini_index.size(); }
         public string get_file_name(size_t file) { return m_ini_index[(int)file].first; }
         public size_t get_category_count(size_t file) { return m_ini_index[(int)file].second.size(); }
-        public string get_category_name(size_t file, size_t category) { return m_ini_index[(int)file].second[(int)category].Key; }
+        public string get_category_name(size_t file, size_t category) { return m_ini_index[(int)file].second[(int)category].first; }
 
 
         // init category index
@@ -131,7 +139,7 @@ namespace mame
             //bool operator()(game_driver const &lhs, ui_software_info const &rhs) const;
             public static bool op(game_driver lhs, ui_software_info rhs)
             {
-                g.assert(rhs.driver != null);
+                assert(rhs.driver != null);
 
                 if (rhs.startempty == 0)
                     return true;
@@ -169,10 +177,10 @@ namespace mame
             m_need_sort = true;
 
 
-            emu_file file = new emu_file(m_options.ui_path(), g.OPEN_FLAG_READ);
+            emu_file file = new emu_file(m_options.ui_path(), OPEN_FLAG_READ);
             if (!file.open(FAVORITE_FILENAME))
             {
-                string readbuf;
+                string readbuf;  //char readbuf[1024];
                 file.gets(out readbuf, 1024);
 
                 while (readbuf[0] == '[')
@@ -181,43 +189,54 @@ namespace mame
                 while (file.gets(out readbuf, 1024) != null)
                 {
                     ui_software_info tmpmatches = new ui_software_info();
-                    tmpmatches.shortname = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.shortname = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.longname = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.longname = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.parentname = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.parentname = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.year = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.year = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.publisher = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.publisher = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
                     tmpmatches.supported = (software_support)std.atoi(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.part = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.part = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    utils_global.chartrimcarriage(readbuf);
+                    chartrimcarriage(readbuf);
                     var dx = driver_list.find(readbuf);
                     if (0 > dx)
                         continue;
                     tmpmatches.driver = driver_list.driver((size_t)dx);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.listname = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.listname = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.interface_ = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.interface_ = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.instance = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.instance = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.startempty = Convert.ToByte(readbuf);
+                    tmpmatches.startempty = (uint8_t)std.atoi(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.parentlongname = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.parentlongname = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.usage = utils_global.chartrimcarriage(readbuf);
+                    //tmpmatches.usage = chartrimcarriage(readbuf); TODO: recover multi-line info
                     file.gets(out readbuf, 1024);
-                    tmpmatches.devicetype = utils_global.chartrimcarriage(readbuf);
+                    tmpmatches.devicetype = chartrimcarriage(readbuf);
                     file.gets(out readbuf, 1024);
-                    tmpmatches.available = Convert.ToInt32(readbuf) != 0;
+                    tmpmatches.available = std.atoi(readbuf) != 0;
+
+                    // need to populate this, it isn't displayed anywhere else
+                    tmpmatches.infotext = tmpmatches.infotext.append_(tmpmatches.longname);
+                    tmpmatches.infotext = tmpmatches.infotext.append_(1, '\n');
+                    tmpmatches.infotext = tmpmatches.infotext.append_(__("swlist-info", "Software list/item"));
+                    tmpmatches.infotext = tmpmatches.infotext.append_(1, '\n');
+                    tmpmatches.infotext = tmpmatches.infotext.append_(tmpmatches.listname);
+                    tmpmatches.infotext = tmpmatches.infotext.append_(1, ':');
+                    tmpmatches.infotext = tmpmatches.infotext.append_(tmpmatches.shortname);
+
                     m_favorites.emplace(tmpmatches);
                 }
+
                 file.close();
             }
         }

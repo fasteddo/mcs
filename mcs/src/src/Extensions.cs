@@ -2,9 +2,12 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using size_t = System.UInt64;
+
+using static mame.cpp_global;
 
 
 namespace mame
@@ -80,7 +83,9 @@ namespace mame
 
         // extensions to match std::string
 
+        public static string append_(this String str, size_t count, char ch) { return str.PadRight(str.Length + (int)count, ch); }
         public static string append_(this String str, string s) { return str + s; }
+        public static string append_(this String str, string newstr, size_t pos, size_t count = npos) { return str + newstr.Substring((int)pos, (int)count); }
         public static char back(this String str) { return str.Length > 0 ? str[str.Length - 1] : '\0'; }
         public static string clear_(this String str) { return string.Empty; }
         public static int compare(this String str, string s) { return str.CompareTo(s); }
@@ -90,16 +95,59 @@ namespace mame
         public static size_t find(this String str, char c, size_t start) { return (size_t)str.IndexOf(c, (int)start); }
         public static size_t find(this String str, string s) { return (size_t)str.IndexOf(s); }
         public static size_t find(this String str, string s, size_t start) { return (size_t)str.IndexOf(s, (int)start); }
-        public static size_t find_first_of(this String str, string s, size_t pos = 0) { return (size_t)str.IndexOf(s, (int)pos); }
+        public static size_t find_first_not_of(this String str, char c, size_t pos = 0)
+        {
+            for (int i = (int)pos; i < str.Length; i++)
+            {
+                if (str[i] != c)
+                    return (size_t)i;
+            }
+
+            return npos;
+        }
+        public static size_t find_first_of(this String str, string s, size_t pos = 0)
+        {
+            if (s == null) return npos;
+            if (s.Length == 0) return npos;
+
+            for (int i = (int)pos; i < str.Length; i++)
+            {
+                foreach (var c in s)
+                {
+                    if (str[i] == c)
+                        return (size_t)i;
+                }
+            }
+
+            return npos;
+        }
         public static size_t find_first_of(this String str, char c, size_t pos = 0) { return (size_t)str.IndexOf(c, (int)pos); }
         public static size_t find_last_not_of(this String str, char c) { return (size_t)str.FindLastNotOf(c.ToString()); }
-        public static size_t find_last_of(this String str, string s) { return (size_t)str.LastIndexOf(s, (str.Length - 1) > 0 ? str.Length - 1 : 0); }
-        public static size_t find_last_of(this String str, string s, int pos) { return (size_t)str.LastIndexOf(s, pos); }
+        public static size_t find_last_of(this String str, string s, size_t pos = npos)
+        {
+            if (str.Length == 0) return npos;
+            if (s == null) return npos;
+            if (s.Length == 0) return (size_t)str.Length - 1;
+
+            int end = pos >= (size_t)str.Length ? 0 : (int)pos;
+            for (int i = str.Length - 1; i >= end; i--)
+            {
+                foreach (var c in s)
+                {
+                    if (str[i] == c)
+                        return (size_t)i;
+                }
+            }
+
+            return npos;
+        }
         public static size_t find_last_of(this String str, char c) { return (size_t)str.LastIndexOf(c, (str.Length - 1) > 0 ? str.Length - 1 : 0); }
         public static size_t find_last_of(this String str, char c, size_t pos) { return (size_t)str.LastIndexOf(c, (int)pos); }
         public static string insert_(this String str, size_t pos, string s) { return str.Insert((int)pos, s); }
         public static size_t length(this String str) { return (size_t)str.Length; }
+        public static string remove_prefix_(this String str, size_t n) { return str.Remove(0, (int)n); }
         public static void reserve(this String str, size_t n) { }
+        public static string resize_(this String str, size_t count) { return str.Length > (int)count ? str.Substring(0, (int)count) : str.PadRight(str.Length + (int)count, '\0'); }
         public static size_t rfind(this String str, char c) { return (size_t)str.LastIndexOf(c); }
         public static size_t rfind(this String str, string s) { return (size_t)str.LastIndexOf(s); }
         public static size_t size(this String str) { return (size_t)str.Length; }

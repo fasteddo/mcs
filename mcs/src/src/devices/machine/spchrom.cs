@@ -2,11 +2,13 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
+
+using static mame.device_global;
 
 
 namespace mame
@@ -16,12 +18,12 @@ namespace mame
         // device type definition
         //DEFINE_DEVICE_TYPE(SPEECHROM, speechrom_device, "speechrom", "TI Speech ROM")
         static device_t device_creator_speechrom_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new speechrom_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SPEECHROM = g.DEFINE_DEVICE_TYPE(device_creator_speechrom_device, "speechrom", "TI Speech ROM");
+        public static readonly device_type SPEECHROM = DEFINE_DEVICE_TYPE(device_creator_speechrom_device, "speechrom", "TI Speech ROM");
 
 
         object m_speechrom_data;  //uint8_t *m_speechrom_data;           /* pointer to speech ROM data */
-        UInt32 m_speechROMlen;  //unsigned int m_speechROMlen;       /* length of data pointed by speechrom_data, from 0 to 2^18 */
-        UInt32 m_speechROMaddr;  //unsigned int m_speechROMaddr;      /* 18 bit pointer in ROM */
+        unsigned m_speechROMlen;  //unsigned int m_speechROMlen;       /* length of data pointed by speechrom_data, from 0 to 2^18 */
+        unsigned m_speechROMaddr;  //unsigned int m_speechROMaddr;      /* 18 bit pointer in ROM */
         int m_load_pointer;                /* which 4-bit nibble will be affected by load address */
         int m_ROM_bits_count;              /* current bit position in ROM */
         bool m_reverse;

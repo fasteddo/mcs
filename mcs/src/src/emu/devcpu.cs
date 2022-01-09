@@ -2,11 +2,12 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
+
+using static mame.diexec_global;
 
 
 namespace mame
@@ -27,7 +28,7 @@ namespace mame
         //-------------------------------------------------
         //  cpu_device - constructor
         //-------------------------------------------------
-        public cpu_device(machine_config mconfig, device_type type, string tag, device_t owner, UInt32 clock)
+        public cpu_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
             : base(mconfig, type, tag, owner, clock)
         {
 #if false
@@ -56,7 +57,7 @@ namespace mame
         public void set_input_line_vector(int linenum, int vector) { execute().set_input_line_vector(linenum, vector); }
         public void set_input_line_and_vector(int linenum, int state, int vector) { execute().set_input_line_and_vector(linenum, state, vector); }
         public void pulse_input_line(int irqline, attotime duration) { execute().pulse_input_line(irqline, duration); }
-        public bool suspended(u32 reason = device_execute_interface.SUSPEND_ANY_REASON) { return execute().suspended(reason); }
+        public bool suspended(u32 reason = SUSPEND_ANY_REASON) { return execute().suspended(reason); }
         public u64 total_cycles() { return execute().total_cycles(); }
         public void set_icountptr(intref icount) { execute().set_icountptr(icount); }
         public int standard_irq_callback(int irqline) { return execute().standard_irq_callback(irqline); }

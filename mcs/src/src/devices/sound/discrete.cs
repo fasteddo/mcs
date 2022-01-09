@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using discrete_device_node_list_t = mame.std.vector<mame.discrete_base_node>;  //typedef std::vector<std::unique_ptr<discrete_base_node> > node_list_t;
 using discrete_device_node_step_list_t = mame.std.vector<mame.discrete_step_interface>;  //typedef std::vector<discrete_step_interface *> node_step_list_t;
@@ -19,55 +18,557 @@ using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
+using static mame.cpp_global;
+using static mame.device_global;
+using static mame.discrete_global;
+using static mame.discrete_internal;
+using static mame.eminline_global;
+using static mame.emucore_global;
+using static mame.osdcore_global;
+
 
 namespace mame
 {
-    /*************************************
-     *
-     *  Enumerated values for Node types
-     *  in the simulation
-     *
-     *      DSS - Discrete Sound Source
-     *      DST - Discrete Sound Transform
-     *      DSD - Discrete Sound Device
-     *      DSO - Discrete Sound Output
-     *
-     *************************************/
-
-    enum discrete_node_type
+    public static partial class discrete_global
     {
-        DSS_NULL,           /* Nothing, nill, zippo, only to be used as terminating node */
-        DSS_NOP,            /* just do nothing, placeholder for potential DISCRETE_REPLACE in parent block */
+        /*************************************
+         *
+         *  macros
+         *  see also: emu\machine\rescap.h
+         *
+         *************************************/
 
-        /* standard node */
+        /* calculate charge exponent using discrete sample time */
+        public static double RC_CHARGE_EXP(discrete_base_node node, double rc) { return 1.0 - exp(-node.sample_time() / (rc)); }
 
-        DSS_NODE,           /* a standard node */
+        /* calculate charge exponent using given sample time */
+        public static double RC_CHARGE_EXP_DT(double rc, double dt) { return 1.0 - exp(-dt / rc); }
+        //define RC_CHARGE_NEG_EXP_DT(rc, dt)            (1.0 - exp((dt) / (rc)))
 
-        /* Custom */
-        DST_CUSTOM,         /* whatever you want */
+        /* calculate discharge exponent using discrete sample time */
+        public static double RC_DISCHARGE_EXP(discrete_base_node node, double rc) { return exp(-node.sample_time() / rc); }
+        /* calculate discharge exponent using given sample time */
+        //define RC_DISCHARGE_EXP_DT(rc, dt)             (exp(-(dt) / (rc)))
+        //define RC_DISCHARGE_NEG_EXP_DT(rc, dt)         (exp((dt) / (rc)))
 
-        /* Debugging */
-        DSO_CSVLOG,         /* Dump nodes as csv file */
-        DSO_WAVLOG,     /* Dump nodes as wav file */
+        //define FREQ_OF_555(_r1, _r2, _c)   (1.49 / ((_r1 + 2 * _r2) * _c))
 
-        /* Parallel execution */
-        DSO_TASK_START, /* start of parallel task */
-        DSO_TASK_END,   /* end of parallel task */
 
-        /* Output Node -- this must be the last entry in this enum! */
-        DSO_OUTPUT,         /* The final output node */
+        /*************************************
+         *
+         *  Interface & Naming
+         *
+         *************************************/
 
-        /* Import another blocklist */
-        DSO_IMPORT,         /* import from another discrete block */
-        DSO_REPLACE,        /* replace next node */
-        DSO_DELETE,         /* delete nodes */
+        //#define DISCRETE_CLASS_FUNC(_class, _func)      DISCRETE_CLASS_NAME(_class) :: _func
 
-        /* Marks end of this enum -- must be last entry ! */
-        DSO_LAST
+        //#define DISCRETE_STEP(_class)                   void DISCRETE_CLASS_FUNC(_class, step)(void)
+        //#define DISCRETE_RESET(_class)                  void DISCRETE_CLASS_FUNC(_class, reset)(void)
+        //#define DISCRETE_START(_class)                  void DISCRETE_CLASS_FUNC(_class, start)(void)
+        //#define DISCRETE_STOP(_class)                   void DISCRETE_CLASS_FUNC(_class, stop)(void)
+        //#define DISCRETE_DECLARE_INFO(_name)            const _name *info = (const  _name *)this->custom_data();
+
+
+        //#define DISCRETE_INPUT(_num)                  (*(this->m_input[_num]))
+        public static double DISCRETE_INPUT(int num, Func<int, double> input) { return input(num); }  //#define DISCRETE_INPUT(_num)                    (input(_num))
+
+
+        /*************************************
+         *
+         *  Core constants
+         *
+         *************************************/
+
+        public const int DISCRETE_MAX_NODES = 299;  //300;
+        public const int DISCRETE_MAX_INPUTS = 10;
+        public const int DISCRETE_MAX_OUTPUTS = 8;
+
+        public const int DISCRETE_MAX_TASK_GROUPS = 10;
+
+
+        /*************************************
+         *
+         *  Node-specific constants
+         *
+         *************************************/
+
+        public const double DEFAULT_TTL_V_LOGIC_1               = 3.4;
+
+        //#define DISC_LOGADJ                         1.0
+        public const double DISC_LINADJ                         = 0.0;
+
+        /* DISCRETE_COMP_ADDER types */
+        public const int DISC_COMP_P_CAPACITOR               = 0x00;
+        public const int DISC_COMP_P_RESISTOR                = 0x01;
+
+        /* clk types */
+        public const int DISC_CLK_MASK                       = 0x03;
+        public const int DISC_CLK_ON_F_EDGE                  = 0x00;
+        public const int DISC_CLK_ON_R_EDGE                  = 0x01;
+        public const int DISC_CLK_BY_COUNT                   = 0x02;
+        public const int DISC_CLK_IS_FREQ                    = 0x03;
+
+        //#define DISC_COUNT_DOWN                     0
+        public const int DISC_COUNT_UP                       = 1;
+
+        public const int DISC_COUNTER_IS_7492                = 0x08;
+
+        public const int DISC_OUT_MASK                       = 0x30;
+        //#define DISC_OUT_DEFAULT                    0x00
+        public const int DISC_OUT_IS_ENERGY                  = 0x10;
+        public const int DISC_OUT_HAS_XTIME                  = 0x20;
+
+        /* Function possibilities for the LFSR feedback nodes */
+        /* 2 inputs, one output                               */
+        public const int DISC_LFSR_XOR                       = 0;
+        public const int DISC_LFSR_OR                        = 1;
+        public const int DISC_LFSR_AND                       = 2;
+        public const int DISC_LFSR_XNOR                      = 3;
+        public const int DISC_LFSR_NOR                       = 4;
+        public const int DISC_LFSR_NAND                      = 5;
+        public const int DISC_LFSR_IN0                       = 6;
+        public const int DISC_LFSR_IN1                       = 7;
+        public const int DISC_LFSR_NOT_IN0                   = 8;
+        public const int DISC_LFSR_NOT_IN1                   = 9;
+        public const int DISC_LFSR_REPLACE                   = 10;
+        public const int DISC_LFSR_XOR_INV_IN0               = 11;
+        public const int DISC_LFSR_XOR_INV_IN1               = 12;
+
+        /* LFSR Flag Bits */
+        public const int DISC_LFSR_FLAG_OUT_INVERT           = 0x01;
+        //#define DISC_LFSR_FLAG_RESET_TYPE_L         0x00
+        public const int DISC_LFSR_FLAG_RESET_TYPE_H         = 0x02;
+        public const int DISC_LFSR_FLAG_OUTPUT_F0            = 0x04;
+        public const int DISC_LFSR_FLAG_OUTPUT_SR_SN1        = 0x08;
+
+        /* Sample & Hold supported clock types */
+        public const int DISC_SAMPHOLD_REDGE                 = 0;
+        public const int DISC_SAMPHOLD_FEDGE                 = 1;
+        public const int DISC_SAMPHOLD_HLATCH                = 2;
+        public const int DISC_SAMPHOLD_LLATCH                = 3;
+
+        /* Shift options */
+        //#define DISC_LOGIC_SHIFT__RESET_L           0x00
+        //#define DISC_LOGIC_SHIFT__RESET_H           0x10
+        //#define DISC_LOGIC_SHIFT__LEFT              0x00
+        //#define DISC_LOGIC_SHIFT__RIGHT             0x20
+
+        /* Maximum number of resistors in ladder chain */
+        public const int DISC_LADDER_MAXRES = 8;
+
+        /* Filter types */
+        public const int DISC_FILTER_LOWPASS  = 0;
+        public const int DISC_FILTER_HIGHPASS = 1;
+        public const int DISC_FILTER_BANDPASS = 2;
+
+        /* Mixer types */
+        public const int DISC_MIXER_IS_RESISTOR       = 0;
+        public const int DISC_MIXER_IS_OP_AMP         = 1;
+        public const int DISC_MIXER_IS_OP_AMP_WITH_RI = 2;   /* Used only internally.  Use DISC_MIXER_IS_OP_AMP */
+
+
+        /* Triggered Op Amp Functions */
+        //enum
+        //{
+        public const int DISC_OP_AMP_TRIGGER_FUNCTION_NONE = 0;
+        public const int DISC_OP_AMP_TRIGGER_FUNCTION_TRG0 = 1;
+        public const int DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV = 2;
+        public const int DISC_OP_AMP_TRIGGER_FUNCTION_TRG1 = 3;
+        public const int DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV = 4;
+        public const int DISC_OP_AMP_TRIGGER_FUNCTION_TRG2 = 5;
+        public const int DISC_OP_AMP_TRIGGER_FUNCTION_TRG2_INV = 6;
+        public const int DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_AND = 7;
+        public const int DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_NAND = 8;
+        //}
+
+
+        /* Common Op Amp Flags and values */
+        public const int DISC_OP_AMP_IS_NORTON = 0x100;
+        public const double OP_AMP_NORTON_VBE = 0.5;     // This is the norton junction voltage. Used only internally.
+        public const double OP_AMP_VP_RAIL_OFFSET = 1.5;     // This is how close an op-amp can get to the vP rail. Used only internally.
+
+        /* Integrate options */
+        //#define DISC_INTEGRATE_OP_AMP_1             0x00
+        //#define DISC_INTEGRATE_OP_AMP_2             0x10
+
+        /* op amp 1 shot types */
+        public const int DISC_OP_AMP_1SHT_1                  = 0x00;
+
+        /* Op Amp Filter Options */
+        public const int DISC_OP_AMP_FILTER_IS_LOW_PASS_1   = 0x00;
+        public const int DISC_OP_AMP_FILTER_IS_HIGH_PASS_1  = 0x10;
+        public const int DISC_OP_AMP_FILTER_IS_BAND_PASS_1  = 0x20;
+        public const int DISC_OP_AMP_FILTER_IS_BAND_PASS_1M = 0x30;
+        public const int DISC_OP_AMP_FILTER_IS_HIGH_PASS_0  = 0x40;
+        public const int DISC_OP_AMP_FILTER_IS_BAND_PASS_0  = 0x50;
+        public const int DISC_OP_AMP_FILTER_IS_LOW_PASS_1_A = 0x60;
+
+        public const int DISC_OP_AMP_FILTER_TYPE_MASK = 0xf0 | DISC_OP_AMP_IS_NORTON;  // Used only internally.
+
+        /* Sallen-Key filter Opions */
+        public const int DISC_SALLEN_KEY_LOW_PASS            = 0x01;
+        //#define DISC_SALLEN_KEY_HIGH_PASS           0x02
+
+
+        /* Op Amp Oscillator Flags */
+        public const int DISC_OP_AMP_OSCILLATOR_TYPE_MASK    = 0xf0 | DISC_OP_AMP_IS_NORTON;  // Used only internally.
+        public const int DISC_OP_AMP_OSCILLATOR_1            = 0x00;
+        public const int DISC_OP_AMP_OSCILLATOR_2            = 0x10;
+        public const int DISC_OP_AMP_OSCILLATOR_VCO_1        = 0x20;
+        public const int DISC_OP_AMP_OSCILLATOR_VCO_2        = 0x30;
+        public const int DISC_OP_AMP_OSCILLATOR_VCO_3        = 0x40;
+
+        public const int DISC_OP_AMP_OSCILLATOR_OUT_MASK         = 0x07;
+        public const int DISC_OP_AMP_OSCILLATOR_OUT_CAP          = 0x00;
+        public const int DISC_OP_AMP_OSCILLATOR_OUT_SQW          = 0x01;
+        public const int DISC_OP_AMP_OSCILLATOR_OUT_ENERGY       = 0x02;
+        public const int DISC_OP_AMP_OSCILLATOR_OUT_LOGIC_X      = 0x03;
+        public const int DISC_OP_AMP_OSCILLATOR_OUT_COUNT_F_X    = 0x04;
+        public const int DISC_OP_AMP_OSCILLATOR_OUT_COUNT_R_X    = 0x05;
+
+        /* Schmitt Oscillator Options */
+        //#define DISC_SCHMITT_OSC_IN_IS_LOGIC        0x00
+        //#define DISC_SCHMITT_OSC_IN_IS_VOLTAGE      0x01
+
+        //#define DISC_SCHMITT_OSC_ENAB_IS_AND        0x00
+        //#define DISC_SCHMITT_OSC_ENAB_IS_NAND       0x02
+        //#define DISC_SCHMITT_OSC_ENAB_IS_OR         0x04
+        //#define DISC_SCHMITT_OSC_ENAB_IS_NOR        0x06
+
+        //#define DISC_SCHMITT_OSC_ENAB_MASK          0x06    /* Bits that define output enable type. */
+                                                              /* Used only internally in module. */
+
+        /* 555 Common output flags */
+        public const int DISC_555_OUT_DC                     = 0x00;
+        public const int DISC_555_OUT_AC                     = 0x10;
+
+        //#define DISC_555_TRIGGER_IS_LOGIC           0x00
+        //#define DISC_555_TRIGGER_IS_VOLTAGE         0x20
+        //#define DISC_555_TRIGGER_IS_COUNT           0x40
+        //#define DSD_555_TRIGGER_TYPE_MASK           0x60
+        //#define DISC_555_TRIGGER_DISCHARGES_CAP     0x80
+
+        public const int DISC_555_OUT_SQW                    = 0x00;    /* Squarewave */
+        public const int DISC_555_OUT_CAP                    = 0x01;    /* Cap charge waveform */
+        public const int DISC_555_OUT_COUNT_F                = 0x02;    /* Falling count */
+        public const int DISC_555_OUT_COUNT_R                = 0x03;    /* Rising count */
+        public const int DISC_555_OUT_ENERGY                 = 0x04;
+        public const int DISC_555_OUT_LOGIC_X                = 0x05;
+        public const int DISC_555_OUT_COUNT_F_X              = 0x06;
+        public const int DISC_555_OUT_COUNT_R_X              = 0x07;
+
+        public const int DISC_555_OUT_MASK                   = 0x07;    /* Bits that define output type. */
+                                                                        /* Used only internally in module. */
+
+        public const int DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE      = 0x80;
+        //#define DISCRETE_555_CC_TO_DISCHARGE_PIN            0x00
+        public const int DISCRETE_555_CC_TO_CAP                      = 0x80;
+
+        /* 566 output flags */
+        //#define DISC_566_OUT_DC                     0x00
+        //#define DISC_566_OUT_AC                     0x10
+
+        //#define DISC_566_OUT_SQUARE                 0x00    /* Squarewave */
+        //#define DISC_566_OUT_ENERGY                 0x01    /* anti-alaised Squarewave */
+        //#define DISC_566_OUT_TRIANGLE               0x02    /* Triangle waveform */
+        //#define DISC_566_OUT_LOGIC                  0x03    /* 0/1 logic output */
+        //#define DISC_566_OUT_COUNT_F                0x04
+        //#define DISC_566_OUT_COUNT_R                0x05
+        //#define DISC_566_OUT_COUNT_F_X              0x06
+        //#define DISC_566_OUT_COUNT_R_X              0x07
+        //#define DISC_566_OUT_MASK                   0x07    /* Bits that define output type. */
+                                                              /* Used only internally in module. */
+
+        /* LS624 output flags */
+        //#define DISC_LS624_OUT_SQUARE               0x01
+        //#define DISC_LS624_OUT_ENERGY               0x02
+        //#define DISC_LS624_OUT_LOGIC                0x03
+        //#define DISC_LS624_OUT_LOGIC_X              0x04
+        //#define DISC_LS624_OUT_COUNT_F              0x05
+        //#define DISC_LS624_OUT_COUNT_R              0x06
+        //#define DISC_LS624_OUT_COUNT_F_X            0x07
+        //#define DISC_LS624_OUT_COUNT_R_X            0x08
+
+        /* Oneshot types */
+        //#define DISC_ONESHOT_FEDGE                  0x00
+        //#define DISC_ONESHOT_REDGE                  0x01
+
+        //#define DISC_ONESHOT_NORETRIG               0x00
+        //#define DISC_ONESHOT_RETRIG                 0x02
+
+        //#define DISC_OUT_ACTIVE_LOW                 0x04
+        //#define DISC_OUT_ACTIVE_HIGH                0x00
+
+        //#define DISC_CD4066_THRESHOLD               2.75
+
+        /* Integrate */
+
+        public const int DISC_RC_INTEGRATE_TYPE1             = 0x00;
+        public const int DISC_RC_INTEGRATE_TYPE2             = 0x01;
+        public const int DISC_RC_INTEGRATE_TYPE3             = 0x02;
     }
 
 
-    public static class discrete_global
+    /*************************************
+        *
+        *  Classes and structs to handle
+        *  linked lists.
+        *
+        *************************************/
+
+    /*************************************
+     *
+     *  Node-specific struct types
+     *
+     *************************************/
+
+    public class discrete_lfsr_desc
+    {
+        public int clock_type;
+        public int bitlength;
+        public int reset_value;
+
+        public int feedback_bitsel0;
+        public int feedback_bitsel1;
+        public int feedback_function0;         /* Combines bitsel0 & bitsel1 */
+
+        public int feedback_function1;         /* Combines funct0 & infeed bit */
+
+        public int feedback_function2;         /* Combines funct1 & shifted register */
+        public int feedback_function2_mask;    /* Which bits are affected by function 2 */
+
+        public int flags;
+
+        public int output_bit;
+
+        public discrete_lfsr_desc(int clock_type, int bitlength, int reset_value, int feedback_bitsel0, int feedback_bitsel1, int feedback_function0, int feedback_function1, int feedback_function2, int feedback_function2_mask, int flags, int output_bit)
+        { this.clock_type = clock_type; this.bitlength = bitlength; this.reset_value = reset_value; this.feedback_bitsel0 = feedback_bitsel0; this.feedback_bitsel1 = feedback_bitsel1; this.feedback_function0 = feedback_function0; this.feedback_function1 = feedback_function1; this.feedback_function2 = feedback_function2; this.feedback_function2_mask = feedback_function2_mask; this.flags = flags; this.output_bit = output_bit; }
+    }
+
+
+    public class discrete_op_amp_osc_info
+    {
+        public uint32_t type;
+        //double r1;
+        //double r2;
+        //double r3;
+        //double r4;
+        //double r5;
+        //double r6;
+        //double r7;
+        //double r8;
+        public MemoryContainer<double> r = new MemoryContainer<double>(9, true);
+        public double c;
+        public double vP;     // Op amp B+
+
+        public discrete_op_amp_osc_info(uint32_t type, double r1, double r2, double r3, double r4, double r5, double r6, double r7, double r8, double c, double vP)
+        { this.type = type; this.r[1] = r1; this.r[2] = r2; this.r[3] = r3; this.r[4] = r4; this.r[5] = r5; this.r[6] = r6; this.r[7] = r7; this.r[8] = r8; this.c = c; this.vP = vP; }
+    }
+
+
+    public class discrete_comp_adder_table
+    {
+        public int type;
+        public double cDefault;               // Default component.  0 if not used.
+        public int length;
+        public double [] c = new double [DISC_LADDER_MAXRES];  // Component table
+
+        public discrete_comp_adder_table(int type, double cDefault, int length, double [] c)
+        { this.type = type; this.cDefault = cDefault; this.length = length; this.c = c; }
+    }
+
+
+    public class discrete_dac_r1_ladder
+    {
+        public int ladderLength;       // 2 to DISC_LADDER_MAXRES.  1 would be useless.
+        public double [] r = new double[DISC_LADDER_MAXRES];  // Don't use 0 for valid resistors.  That is a short.
+        public double vBias;          // Voltage Bias resistor is tied to (0 = not used)
+        public double rBias;          // Additional resistor tied to vBias (0 = not used)
+        public double rGnd;           // Resistor tied to ground (0 = not used)
+        public double cFilter;        // Filtering cap (0 = not used)
+
+        public discrete_dac_r1_ladder(int ladderLength, double [] r, double vBias, double rBias, double rGnd, double cFilter)
+        { this.ladderLength = ladderLength; Array.Copy(r, this.r, r.Length); this.vBias = vBias; this.rBias = rBias; this.rGnd = rGnd; this.cFilter = cFilter; }
+    }
+
+
+    //struct discrete_integrate_info
+
+
+    public class discrete_mixer_desc
+    {
+        const int DISC_MAX_MIXER_INPUTS = 8;
+
+        public int type;
+        public double [] r = new double[DISC_MAX_MIXER_INPUTS];       /* static input resistance values.  These are in series with rNode, if used. */
+        public int [] r_node = new int[DISC_MAX_MIXER_INPUTS];  /* variable resistance nodes, if needed.  0 if not used. */
+        public double [] c = new double[DISC_MAX_MIXER_INPUTS];
+        public double rI;
+        public double rF;
+        public double cF;
+        public double cAmp;
+        public double vRef;
+        public double gain;               /* Scale value to get output close to +/- 32767 */
+
+        public discrete_mixer_desc(int type, double [] r, int [] r_node, double [] c, double rI, double rF, double cF, double cAmp, double vRef, double gain)
+        { this.type = type; Array.Copy(r, this.r, r.Length); Array.Copy(r_node, this.r_node, r_node.Length); Array.Copy(c, this.c, c.Length); this.rI = rI; this.rF = rF; this.cF = cF; this.cAmp = cAmp; this.vRef = vRef; this.gain = gain; }
+    }
+
+
+    public class discrete_op_amp_info
+    {
+        public uint32_t type;
+        public double r1;
+        public double r2;
+        public double r3;
+        public double r4;
+        public double c;
+        public double vN;     // Op amp B-
+        public double vP;     // Op amp B+
+
+        public discrete_op_amp_info(uint32_t type, double r1, double r2, double r3, double r4, double c, double vN, double vP)
+        { this.type = type; this.r1 = r1; this.r2 = r2; this.r3 = r3; this.r4 = r4; this.c = c; this.vN = vN; this.vP = vP; }
+    }
+
+
+    public class discrete_op_amp_1sht_info
+    {
+        uint32_t type;
+        public double r1;
+        public double r2;
+        public double r3;
+        public double r4;
+        public double r5;
+        public double c1;
+        public double c2;
+        public double vN;     // Op amp B-
+        public double vP;     // Op amp B+
+
+        public discrete_op_amp_1sht_info(uint32_t type, double r1, double r2, double r3, double r4, double r5, double c1, double c2, double vN, double vP)
+        { this.type = type; this.r1 = r1; this.r2 = r2; this.r3 = r3; this.r4 = r4; this.r5 = r5; this.c1 = c1; this.c2 = c2; this.vN = vN; this.vP = vP; }
+    }
+
+
+    public class discrete_op_amp_tvca_info
+    {
+        public double r1;
+        public double r2;     // r2a + r2b
+        public double r3;     // r3a + r3b
+        public double r4;
+        public double r5;
+        public double r6;
+        public double r7;
+        public double r8;
+        public double r9;
+        public double r10;
+        public double r11;
+        public double c1;
+        public double c2;
+        public double c3;
+        public double c4;
+        public double v1;
+        public double v2;
+        public double v3;
+        public double vP;
+        public int f0;
+        public int f1;
+        public int f2;
+        public int f3;
+        public int f4;
+        public int f5;
+
+        public discrete_op_amp_tvca_info(double r1, double r2, double r3, double r4, double r5, double r6, double r7, double r8, double r9, double r10, double r11, double c1, double c2, double c3, double c4, 
+            double v1, double v2, double v3, double vP, int f0, int f1, int f2, int f3, int f4, int f5)
+        { this.r1 = r1; this.r2 = r2; this.r3 = r3; this.r4 = r4; this.r5 = r5; this.r6 = r6; this.r7 = r7; this.r8 = r8; this.r9 = r9; this.r10 = r10; this.r11 = r11; this.c1 = c1; this.c2 = c2; this.c3 = c3; this.c4 = c4;
+            this.v1 = v1; this.v2 = v2; this.v3 = v3; this.vP = vP; this.f0 = f0; this.f1 = f1; this.f2 = f2; this.f3 = f3; this.f4 = f4; this.f5 = f5; }
+    }
+
+
+    public class discrete_op_amp_filt_info
+    {
+        public double r1;
+        public double r2;
+        public double r3;
+        public double r4;
+        public double rF;
+        public double c1;
+        public double c2;
+        public double c3;
+        public double vRef;
+        public double vP;
+        public double vN;
+
+        public discrete_op_amp_filt_info(double r1, double r2, double r3, double r4, double rF, double c1, double c2, double c3, double vRef = 0, double vP = 0, double vN = 0)
+        { this.r1 = r1; this.r2 = r2; this.r3 = r3; this.r4 = r4; this.rF = rF; this.c1 = c1; this.c2 = c2; this.c3 = c3; this.vRef = vRef; this.vP = vP; this.vN = vN;  }
+    }
+
+
+    public static partial class discrete_global
+    {
+        public const int DEFAULT_555_CHARGE      = -1;
+        public const int DEFAULT_555_HIGH        = -1;
+        //#define DEFAULT_555_VALUES      DEFAULT_555_CHARGE, DEFAULT_555_HIGH
+        public const int DEFAULT_555_VALUES_1      = DEFAULT_555_CHARGE;
+        public const int DEFAULT_555_VALUES_2      = DEFAULT_555_HIGH;
+    }
+
+
+    public class discrete_555_desc
+    {
+        public int     options;    /* bit mapped options */
+        public double  v_pos;      /* B+ voltage of 555 */
+        public double  v_charge;   /* voltage to charge circuit  (Defaults to v_pos) */
+        public double  v_out_high; /* High output voltage of 555 (Defaults to v_pos - 1.2V) */
+
+        public discrete_555_desc(int options, double v_pos, double v_charge, double v_out_high)
+        { this.options = options; this.v_pos = v_pos; this.v_charge = v_charge; this.v_out_high = v_out_high; }
+    }
+
+
+    public static partial class discrete_global
+    {
+        public const int DEFAULT_555_CC_SOURCE   = DEFAULT_555_CHARGE;
+    }
+
+
+    public class discrete_555_cc_desc
+    {
+        public int     options;        /* bit mapped options */
+        public double  v_pos;          /* B+ voltage of 555 */
+        public double  v_cc_source;    /* Voltage of the Constant Current source */
+        public double  v_out_high;     /* High output voltage of 555 (Defaults to v_pos - 1.2V) */
+        public double  v_cc_junction;  /* The voltage drop of the Constant Current source transistor (0 if Op Amp) */
+
+        public discrete_555_cc_desc(int options, double v_pos, double v_cc_source, double v_out_high, double v_cc_junction)
+        { this.options = options; this.v_pos = v_pos; this.v_cc_source = v_cc_source; this.v_out_high = v_out_high; this.v_cc_junction = v_cc_junction; }
+    }
+
+#if false
+    struct discrete_555_vco1_desc
+    {
+        int    options;             /* bit mapped options */
+        double r1, r2, r3, r4, c;
+        double v_pos;               /* B+ voltage of 555 */
+        double v_charge;            /* (ignored) */
+        double v_out_high;          /* High output voltage of 555 (Defaults to v_pos - 1.2V) */
+    }
+
+
+    struct discrete_adsr
+    {
+        double attack_time;  /* All times are in seconds */
+        double attack_value;
+        double decay_time;
+        double decay_value;
+        double sustain_time;
+        double sustain_value;
+        double release_time;
+        double release_value;
+    }
+#endif
+
+
+    public static partial class discrete_global
     {
         /*************************************
          *
@@ -129,8 +630,8 @@ namespace mame
         public const int NODE_29 = 0x40000000 + 29 * DISCRETE_MAX_OUTPUTS; const int NODE_29_00 = NODE_29; const int NODE_29_01 = NODE_29 + 1; const int NODE_29_02 = NODE_29 + 2; const int NODE_29_03 = NODE_29 + 3; const int NODE_29_04 = NODE_29 + 4; const int NODE_29_05 = NODE_29 + 5; const int NODE_29_06 = NODE_29 + 6; const int NODE_29_07 = NODE_29 + 7;
 
         public const int NODE_30 = 0x40000000 + 30 * DISCRETE_MAX_OUTPUTS; const int NODE_30_00 = NODE_30; const int NODE_30_01 = NODE_30 + 1; const int NODE_30_02 = NODE_30 + 2; const int NODE_30_03 = NODE_30 + 3; const int NODE_30_04 = NODE_30 + 4; const int NODE_30_05 = NODE_30 + 5; const int NODE_30_06 = NODE_30 + 6; const int NODE_30_07 = NODE_30 + 7;
-        const int NODE_31 = 0x40000000 + 31 * DISCRETE_MAX_OUTPUTS; const int NODE_31_00 = NODE_31; const int NODE_31_01 = NODE_31 + 1; const int NODE_31_02 = NODE_31 + 2; const int NODE_31_03 = NODE_31 + 3; const int NODE_31_04 = NODE_31 + 4; const int NODE_31_05 = NODE_31 + 5; const int NODE_31_06 = NODE_31 + 6; const int NODE_31_07 = NODE_31 + 7;
-        const int NODE_32 = 0x40000000 + 32 * DISCRETE_MAX_OUTPUTS; const int NODE_32_00 = NODE_32; const int NODE_32_01 = NODE_32 + 1; const int NODE_32_02 = NODE_32 + 2; const int NODE_32_03 = NODE_32 + 3; const int NODE_32_04 = NODE_32 + 4; const int NODE_32_05 = NODE_32 + 5; const int NODE_32_06 = NODE_32 + 6; const int NODE_32_07 = NODE_32 + 7;
+        public const int NODE_31 = 0x40000000 + 31 * DISCRETE_MAX_OUTPUTS; const int NODE_31_00 = NODE_31; const int NODE_31_01 = NODE_31 + 1; const int NODE_31_02 = NODE_31 + 2; const int NODE_31_03 = NODE_31 + 3; const int NODE_31_04 = NODE_31 + 4; const int NODE_31_05 = NODE_31 + 5; const int NODE_31_06 = NODE_31 + 6; const int NODE_31_07 = NODE_31 + 7;
+        public const int NODE_32 = 0x40000000 + 32 * DISCRETE_MAX_OUTPUTS; const int NODE_32_00 = NODE_32; const int NODE_32_01 = NODE_32 + 1; const int NODE_32_02 = NODE_32 + 2; const int NODE_32_03 = NODE_32 + 3; const int NODE_32_04 = NODE_32 + 4; const int NODE_32_05 = NODE_32 + 5; const int NODE_32_06 = NODE_32 + 6; const int NODE_32_07 = NODE_32 + 7;
         public const int NODE_33 = 0x40000000 + 33 * DISCRETE_MAX_OUTPUTS; const int NODE_33_00 = NODE_33; const int NODE_33_01 = NODE_33 + 1; const int NODE_33_02 = NODE_33 + 2; const int NODE_33_03 = NODE_33 + 3; const int NODE_33_04 = NODE_33 + 4; const int NODE_33_05 = NODE_33 + 5; const int NODE_33_06 = NODE_33 + 6; const int NODE_33_07 = NODE_33 + 7;
         public const int NODE_34 = 0x40000000 + 34 * DISCRETE_MAX_OUTPUTS; const int NODE_34_00 = NODE_34; const int NODE_34_01 = NODE_34 + 1; const int NODE_34_02 = NODE_34 + 2; const int NODE_34_03 = NODE_34 + 3; const int NODE_34_04 = NODE_34 + 4; const int NODE_34_05 = NODE_34 + 5; const int NODE_34_06 = NODE_34 + 6; const int NODE_34_07 = NODE_34 + 7;
         public const int NODE_35 = 0x40000000 + 35 * DISCRETE_MAX_OUTPUTS; const int NODE_35_00 = NODE_35; const int NODE_35_01 = NODE_35 + 1; const int NODE_35_02 = NODE_35 + 2; const int NODE_35_03 = NODE_35 + 3; const int NODE_35_04 = NODE_35 + 4; const int NODE_35_05 = NODE_35 + 5; const int NODE_35_06 = NODE_35 + 6; const int NODE_35_07 = NODE_35 + 7;
@@ -140,9 +641,9 @@ namespace mame
         public const int NODE_39 = 0x40000000 + 39 * DISCRETE_MAX_OUTPUTS; const int NODE_39_00 = NODE_39; const int NODE_39_01 = NODE_39 + 1; const int NODE_39_02 = NODE_39 + 2; const int NODE_39_03 = NODE_39 + 3; const int NODE_39_04 = NODE_39 + 4; const int NODE_39_05 = NODE_39 + 5; const int NODE_39_06 = NODE_39 + 6; const int NODE_39_07 = NODE_39 + 7;
 
         public const int NODE_40 = 0x40000000 + 40 * DISCRETE_MAX_OUTPUTS; const int NODE_40_00 = NODE_40; const int NODE_40_01 = NODE_40 + 1; const int NODE_40_02 = NODE_40 + 2; const int NODE_40_03 = NODE_40 + 3; const int NODE_40_04 = NODE_40 + 4; const int NODE_40_05 = NODE_40 + 5; const int NODE_40_06 = NODE_40 + 6; const int NODE_40_07 = NODE_40 + 7;
-        const int NODE_41 = 0x40000000 + 41 * DISCRETE_MAX_OUTPUTS; const int NODE_41_00 = NODE_41; const int NODE_41_01 = NODE_41 + 1; const int NODE_41_02 = NODE_41 + 2; const int NODE_41_03 = NODE_41 + 3; const int NODE_41_04 = NODE_41 + 4; const int NODE_41_05 = NODE_41 + 5; const int NODE_41_06 = NODE_41 + 6; const int NODE_41_07 = NODE_41 + 7;
-        const int NODE_42 = 0x40000000 + 42 * DISCRETE_MAX_OUTPUTS; const int NODE_42_00 = NODE_42; const int NODE_42_01 = NODE_42 + 1; const int NODE_42_02 = NODE_42 + 2; const int NODE_42_03 = NODE_42 + 3; const int NODE_42_04 = NODE_42 + 4; const int NODE_42_05 = NODE_42 + 5; const int NODE_42_06 = NODE_42 + 6; const int NODE_42_07 = NODE_42 + 7;
-        const int NODE_43 = 0x40000000 + 43 * DISCRETE_MAX_OUTPUTS; const int NODE_43_00 = NODE_43; const int NODE_43_01 = NODE_43 + 1; const int NODE_43_02 = NODE_43 + 2; const int NODE_43_03 = NODE_43 + 3; const int NODE_43_04 = NODE_43 + 4; const int NODE_43_05 = NODE_43 + 5; const int NODE_43_06 = NODE_43 + 6; const int NODE_43_07 = NODE_43 + 7;
+        public const int NODE_41 = 0x40000000 + 41 * DISCRETE_MAX_OUTPUTS; const int NODE_41_00 = NODE_41; const int NODE_41_01 = NODE_41 + 1; const int NODE_41_02 = NODE_41 + 2; const int NODE_41_03 = NODE_41 + 3; const int NODE_41_04 = NODE_41 + 4; const int NODE_41_05 = NODE_41 + 5; const int NODE_41_06 = NODE_41 + 6; const int NODE_41_07 = NODE_41 + 7;
+        public const int NODE_42 = 0x40000000 + 42 * DISCRETE_MAX_OUTPUTS; const int NODE_42_00 = NODE_42; const int NODE_42_01 = NODE_42 + 1; const int NODE_42_02 = NODE_42 + 2; const int NODE_42_03 = NODE_42 + 3; const int NODE_42_04 = NODE_42 + 4; const int NODE_42_05 = NODE_42 + 5; const int NODE_42_06 = NODE_42 + 6; const int NODE_42_07 = NODE_42 + 7;
+        public const int NODE_43 = 0x40000000 + 43 * DISCRETE_MAX_OUTPUTS; const int NODE_43_00 = NODE_43; const int NODE_43_01 = NODE_43 + 1; const int NODE_43_02 = NODE_43 + 2; const int NODE_43_03 = NODE_43 + 3; const int NODE_43_04 = NODE_43 + 4; const int NODE_43_05 = NODE_43 + 5; const int NODE_43_06 = NODE_43 + 6; const int NODE_43_07 = NODE_43 + 7;
         const int NODE_44 = 0x40000000 + 44 * DISCRETE_MAX_OUTPUTS; const int NODE_44_00 = NODE_44; const int NODE_44_01 = NODE_44 + 1; const int NODE_44_02 = NODE_44 + 2; const int NODE_44_03 = NODE_44 + 3; const int NODE_44_04 = NODE_44 + 4; const int NODE_44_05 = NODE_44 + 5; const int NODE_44_06 = NODE_44 + 6; const int NODE_44_07 = NODE_44 + 7;
         public const int NODE_45 = 0x40000000 + 45 * DISCRETE_MAX_OUTPUTS; const int NODE_45_00 = NODE_45; const int NODE_45_01 = NODE_45 + 1; const int NODE_45_02 = NODE_45 + 2; const int NODE_45_03 = NODE_45 + 3; const int NODE_45_04 = NODE_45 + 4; const int NODE_45_05 = NODE_45 + 5; const int NODE_45_06 = NODE_45 + 6; const int NODE_45_07 = NODE_45 + 7;
         const int NODE_46 = 0x40000000 + 46 * DISCRETE_MAX_OUTPUTS; const int NODE_46_00 = NODE_46; const int NODE_46_01 = NODE_46 + 1; const int NODE_46_02 = NODE_46 + 2; const int NODE_46_03 = NODE_46 + 3; const int NODE_46_04 = NODE_46 + 4; const int NODE_46_05 = NODE_46 + 5; const int NODE_46_06 = NODE_46 + 6; const int NODE_46_07 = NODE_46 + 7;
@@ -153,7 +654,7 @@ namespace mame
         public const int NODE_50 = 0x40000000 + 50 * DISCRETE_MAX_OUTPUTS; const int NODE_50_00 = NODE_50; const int NODE_50_01 = NODE_50 + 1; const int NODE_50_02 = NODE_50 + 2; const int NODE_50_03 = NODE_50 + 3; const int NODE_50_04 = NODE_50 + 4; const int NODE_50_05 = NODE_50 + 5; const int NODE_50_06 = NODE_50 + 6; const int NODE_50_07 = NODE_50 + 7;
         public const int NODE_51 = 0x40000000 + 51 * DISCRETE_MAX_OUTPUTS; const int NODE_51_00 = NODE_51; const int NODE_51_01 = NODE_51 + 1; const int NODE_51_02 = NODE_51 + 2; const int NODE_51_03 = NODE_51 + 3; const int NODE_51_04 = NODE_51 + 4; const int NODE_51_05 = NODE_51 + 5; const int NODE_51_06 = NODE_51 + 6; const int NODE_51_07 = NODE_51 + 7;
         public const int NODE_52 = 0x40000000 + 52 * DISCRETE_MAX_OUTPUTS; const int NODE_52_00 = NODE_52; const int NODE_52_01 = NODE_52 + 1; const int NODE_52_02 = NODE_52 + 2; const int NODE_52_03 = NODE_52 + 3; const int NODE_52_04 = NODE_52 + 4; const int NODE_52_05 = NODE_52 + 5; const int NODE_52_06 = NODE_52 + 6; const int NODE_52_07 = NODE_52 + 7;
-        const int NODE_53 = 0x40000000 + 53 * DISCRETE_MAX_OUTPUTS; const int NODE_53_00 = NODE_53; const int NODE_53_01 = NODE_53 + 1; const int NODE_53_02 = NODE_53 + 2; const int NODE_53_03 = NODE_53 + 3; const int NODE_53_04 = NODE_53 + 4; const int NODE_53_05 = NODE_53 + 5; const int NODE_53_06 = NODE_53 + 6; const int NODE_53_07 = NODE_53 + 7;
+        public const int NODE_53 = 0x40000000 + 53 * DISCRETE_MAX_OUTPUTS; const int NODE_53_00 = NODE_53; const int NODE_53_01 = NODE_53 + 1; const int NODE_53_02 = NODE_53 + 2; const int NODE_53_03 = NODE_53 + 3; const int NODE_53_04 = NODE_53 + 4; const int NODE_53_05 = NODE_53 + 5; const int NODE_53_06 = NODE_53 + 6; const int NODE_53_07 = NODE_53 + 7;
         public const int NODE_54 = 0x40000000 + 54 * DISCRETE_MAX_OUTPUTS; const int NODE_54_00 = NODE_54; const int NODE_54_01 = NODE_54 + 1; const int NODE_54_02 = NODE_54 + 2; const int NODE_54_03 = NODE_54 + 3; const int NODE_54_04 = NODE_54 + 4; const int NODE_54_05 = NODE_54 + 5; const int NODE_54_06 = NODE_54 + 6; const int NODE_54_07 = NODE_54 + 7;
         public const int NODE_55 = 0x40000000 + 55 * DISCRETE_MAX_OUTPUTS; const int NODE_55_00 = NODE_55; const int NODE_55_01 = NODE_55 + 1; const int NODE_55_02 = NODE_55 + 2; const int NODE_55_03 = NODE_55 + 3; const int NODE_55_04 = NODE_55 + 4; const int NODE_55_05 = NODE_55 + 5; const int NODE_55_06 = NODE_55 + 6; const int NODE_55_07 = NODE_55 + 7;
         const int NODE_56 = 0x40000000 + 56 * DISCRETE_MAX_OUTPUTS; const int NODE_56_00 = NODE_56; const int NODE_56_01 = NODE_56 + 1; const int NODE_56_02 = NODE_56 + 2; const int NODE_56_03 = NODE_56 + 3; const int NODE_56_04 = NODE_56 + 4; const int NODE_56_05 = NODE_56 + 5; const int NODE_56_06 = NODE_56 + 6; const int NODE_56_07 = NODE_56 + 7;
@@ -163,9 +664,9 @@ namespace mame
 
         public const int NODE_60 = 0x40000000 + 60 * DISCRETE_MAX_OUTPUTS; const int NODE_60_00 = NODE_60; const int NODE_60_01 = NODE_60 + 1; const int NODE_60_02 = NODE_60 + 2; const int NODE_60_03 = NODE_60 + 3; const int NODE_60_04 = NODE_60 + 4; const int NODE_60_05 = NODE_60 + 5; const int NODE_60_06 = NODE_60 + 6; const int NODE_60_07 = NODE_60 + 7;
         public const int NODE_61 = 0x40000000 + 61 * DISCRETE_MAX_OUTPUTS; const int NODE_61_00 = NODE_61; const int NODE_61_01 = NODE_61 + 1; const int NODE_61_02 = NODE_61 + 2; const int NODE_61_03 = NODE_61 + 3; const int NODE_61_04 = NODE_61 + 4; const int NODE_61_05 = NODE_61 + 5; const int NODE_61_06 = NODE_61 + 6; const int NODE_61_07 = NODE_61 + 7;
-        const int NODE_62 = 0x40000000 + 62 * DISCRETE_MAX_OUTPUTS; const int NODE_62_00 = NODE_62; const int NODE_62_01 = NODE_62 + 1; const int NODE_62_02 = NODE_62 + 2; const int NODE_62_03 = NODE_62 + 3; const int NODE_62_04 = NODE_62 + 4; const int NODE_62_05 = NODE_62 + 5; const int NODE_62_06 = NODE_62 + 6; const int NODE_62_07 = NODE_62 + 7;
-        const int NODE_63 = 0x40000000 + 63 * DISCRETE_MAX_OUTPUTS; const int NODE_63_00 = NODE_63; const int NODE_63_01 = NODE_63 + 1; const int NODE_63_02 = NODE_63 + 2; const int NODE_63_03 = NODE_63 + 3; const int NODE_63_04 = NODE_63 + 4; const int NODE_63_05 = NODE_63 + 5; const int NODE_63_06 = NODE_63 + 6; const int NODE_63_07 = NODE_63 + 7;
-        const int NODE_64 = 0x40000000 + 64 * DISCRETE_MAX_OUTPUTS; const int NODE_64_00 = NODE_64; const int NODE_64_01 = NODE_64 + 1; const int NODE_64_02 = NODE_64 + 2; const int NODE_64_03 = NODE_64 + 3; const int NODE_64_04 = NODE_64 + 4; const int NODE_64_05 = NODE_64 + 5; const int NODE_64_06 = NODE_64 + 6; const int NODE_64_07 = NODE_64 + 7;
+        public const int NODE_62 = 0x40000000 + 62 * DISCRETE_MAX_OUTPUTS; const int NODE_62_00 = NODE_62; const int NODE_62_01 = NODE_62 + 1; const int NODE_62_02 = NODE_62 + 2; const int NODE_62_03 = NODE_62 + 3; const int NODE_62_04 = NODE_62 + 4; const int NODE_62_05 = NODE_62 + 5; const int NODE_62_06 = NODE_62 + 6; const int NODE_62_07 = NODE_62 + 7;
+        public const int NODE_63 = 0x40000000 + 63 * DISCRETE_MAX_OUTPUTS; const int NODE_63_00 = NODE_63; const int NODE_63_01 = NODE_63 + 1; const int NODE_63_02 = NODE_63 + 2; const int NODE_63_03 = NODE_63 + 3; const int NODE_63_04 = NODE_63 + 4; const int NODE_63_05 = NODE_63 + 5; const int NODE_63_06 = NODE_63 + 6; const int NODE_63_07 = NODE_63 + 7;
+        public const int NODE_64 = 0x40000000 + 64 * DISCRETE_MAX_OUTPUTS; const int NODE_64_00 = NODE_64; const int NODE_64_01 = NODE_64 + 1; const int NODE_64_02 = NODE_64 + 2; const int NODE_64_03 = NODE_64 + 3; const int NODE_64_04 = NODE_64 + 4; const int NODE_64_05 = NODE_64 + 5; const int NODE_64_06 = NODE_64 + 6; const int NODE_64_07 = NODE_64 + 7;
         const int NODE_65 = 0x40000000 + 65 * DISCRETE_MAX_OUTPUTS; const int NODE_65_00 = NODE_65; const int NODE_65_01 = NODE_65 + 1; const int NODE_65_02 = NODE_65 + 2; const int NODE_65_03 = NODE_65 + 3; const int NODE_65_04 = NODE_65 + 4; const int NODE_65_05 = NODE_65 + 5; const int NODE_65_06 = NODE_65 + 6; const int NODE_65_07 = NODE_65 + 7;
         const int NODE_66 = 0x40000000 + 66 * DISCRETE_MAX_OUTPUTS; const int NODE_66_00 = NODE_66; const int NODE_66_01 = NODE_66 + 1; const int NODE_66_02 = NODE_66 + 2; const int NODE_66_03 = NODE_66 + 3; const int NODE_66_04 = NODE_66 + 4; const int NODE_66_05 = NODE_66 + 5; const int NODE_66_06 = NODE_66 + 6; const int NODE_66_07 = NODE_66 + 7;
         const int NODE_67 = 0x40000000 + 67 * DISCRETE_MAX_OUTPUTS; const int NODE_67_00 = NODE_67; const int NODE_67_01 = NODE_67 + 1; const int NODE_67_02 = NODE_67 + 2; const int NODE_67_03 = NODE_67 + 3; const int NODE_67_04 = NODE_67 + 4; const int NODE_67_05 = NODE_67 + 5; const int NODE_67_06 = NODE_67 + 6; const int NODE_67_07 = NODE_67 + 7;
@@ -174,7 +675,7 @@ namespace mame
 
         public const int NODE_70 = 0x40000000 + 70 * DISCRETE_MAX_OUTPUTS; const int NODE_70_00 = NODE_70; const int NODE_70_01 = NODE_70 + 1; const int NODE_70_02 = NODE_70 + 2; const int NODE_70_03 = NODE_70 + 3; const int NODE_70_04 = NODE_70 + 4; const int NODE_70_05 = NODE_70 + 5; const int NODE_70_06 = NODE_70 + 6; const int NODE_70_07 = NODE_70 + 7;
         public const int NODE_71 = 0x40000000 + 71 * DISCRETE_MAX_OUTPUTS; const int NODE_71_00 = NODE_71; const int NODE_71_01 = NODE_71 + 1; const int NODE_71_02 = NODE_71 + 2; const int NODE_71_03 = NODE_71 + 3; const int NODE_71_04 = NODE_71 + 4; const int NODE_71_05 = NODE_71 + 5; const int NODE_71_06 = NODE_71 + 6; const int NODE_71_07 = NODE_71 + 7;
-        const int NODE_72 = 0x40000000 + 72 * DISCRETE_MAX_OUTPUTS; const int NODE_72_00 = NODE_72; const int NODE_72_01 = NODE_72 + 1; const int NODE_72_02 = NODE_72 + 2; const int NODE_72_03 = NODE_72 + 3; const int NODE_72_04 = NODE_72 + 4; const int NODE_72_05 = NODE_72 + 5; const int NODE_72_06 = NODE_72 + 6; const int NODE_72_07 = NODE_72 + 7;
+        public const int NODE_72 = 0x40000000 + 72 * DISCRETE_MAX_OUTPUTS; const int NODE_72_00 = NODE_72; const int NODE_72_01 = NODE_72 + 1; const int NODE_72_02 = NODE_72 + 2; const int NODE_72_03 = NODE_72 + 3; const int NODE_72_04 = NODE_72 + 4; const int NODE_72_05 = NODE_72 + 5; const int NODE_72_06 = NODE_72 + 6; const int NODE_72_07 = NODE_72 + 7;
         public const int NODE_73 = 0x40000000 + 73 * DISCRETE_MAX_OUTPUTS; const int NODE_73_00 = NODE_73; const int NODE_73_01 = NODE_73 + 1; const int NODE_73_02 = NODE_73 + 2; const int NODE_73_03 = NODE_73 + 3; const int NODE_73_04 = NODE_73 + 4; const int NODE_73_05 = NODE_73 + 5; const int NODE_73_06 = NODE_73 + 6; const int NODE_73_07 = NODE_73 + 7;
         const int NODE_74 = 0x40000000 + 74 * DISCRETE_MAX_OUTPUTS; const int NODE_74_00 = NODE_74; const int NODE_74_01 = NODE_74 + 1; const int NODE_74_02 = NODE_74 + 2; const int NODE_74_03 = NODE_74 + 3; const int NODE_74_04 = NODE_74 + 4; const int NODE_74_05 = NODE_74 + 5; const int NODE_74_06 = NODE_74 + 6; const int NODE_74_07 = NODE_74 + 7;
         const int NODE_75 = 0x40000000 + 75 * DISCRETE_MAX_OUTPUTS; const int NODE_75_00 = NODE_75; const int NODE_75_01 = NODE_75 + 1; const int NODE_75_02 = NODE_75 + 2; const int NODE_75_03 = NODE_75 + 3; const int NODE_75_04 = NODE_75 + 4; const int NODE_75_05 = NODE_75 + 5; const int NODE_75_06 = NODE_75 + 6; const int NODE_75_07 = NODE_75 + 7;
@@ -183,11 +684,11 @@ namespace mame
         const int NODE_78 = 0x40000000 + 78 * DISCRETE_MAX_OUTPUTS; const int NODE_78_00 = NODE_78; const int NODE_78_01 = NODE_78 + 1; const int NODE_78_02 = NODE_78 + 2; const int NODE_78_03 = NODE_78 + 3; const int NODE_78_04 = NODE_78 + 4; const int NODE_78_05 = NODE_78 + 5; const int NODE_78_06 = NODE_78 + 6; const int NODE_78_07 = NODE_78 + 7;
         const int NODE_79 = 0x40000000 + 79 * DISCRETE_MAX_OUTPUTS; const int NODE_79_00 = NODE_79; const int NODE_79_01 = NODE_79 + 1; const int NODE_79_02 = NODE_79 + 2; const int NODE_79_03 = NODE_79 + 3; const int NODE_79_04 = NODE_79 + 4; const int NODE_79_05 = NODE_79 + 5; const int NODE_79_06 = NODE_79 + 6; const int NODE_79_07 = NODE_79 + 7;
 
-        const int NODE_80 = 0x40000000 + 80 * DISCRETE_MAX_OUTPUTS; const int NODE_80_00 = NODE_80; const int NODE_80_01 = NODE_80 + 1; const int NODE_80_02 = NODE_80 + 2; const int NODE_80_03 = NODE_80 + 3; const int NODE_80_04 = NODE_80 + 4; const int NODE_80_05 = NODE_80 + 5; const int NODE_80_06 = NODE_80 + 6; const int NODE_80_07 = NODE_80 + 7;
-        const int NODE_81 = 0x40000000 + 81 * DISCRETE_MAX_OUTPUTS; const int NODE_81_00 = NODE_81; const int NODE_81_01 = NODE_81 + 1; const int NODE_81_02 = NODE_81 + 2; const int NODE_81_03 = NODE_81 + 3; const int NODE_81_04 = NODE_81 + 4; const int NODE_81_05 = NODE_81 + 5; const int NODE_81_06 = NODE_81 + 6; const int NODE_81_07 = NODE_81 + 7;
-        const int NODE_82 = 0x40000000 + 82 * DISCRETE_MAX_OUTPUTS; const int NODE_82_00 = NODE_82; const int NODE_82_01 = NODE_82 + 1; const int NODE_82_02 = NODE_82 + 2; const int NODE_82_03 = NODE_82 + 3; const int NODE_82_04 = NODE_82 + 4; const int NODE_82_05 = NODE_82 + 5; const int NODE_82_06 = NODE_82 + 6; const int NODE_82_07 = NODE_82 + 7;
-        const int NODE_83 = 0x40000000 + 83 * DISCRETE_MAX_OUTPUTS; const int NODE_83_00 = NODE_83; const int NODE_83_01 = NODE_83 + 1; const int NODE_83_02 = NODE_83 + 2; const int NODE_83_03 = NODE_83 + 3; const int NODE_83_04 = NODE_83 + 4; const int NODE_83_05 = NODE_83 + 5; const int NODE_83_06 = NODE_83 + 6; const int NODE_83_07 = NODE_83 + 7;
-        const int NODE_84 = 0x40000000 + 84 * DISCRETE_MAX_OUTPUTS; const int NODE_84_00 = NODE_84; const int NODE_84_01 = NODE_84 + 1; const int NODE_84_02 = NODE_84 + 2; const int NODE_84_03 = NODE_84 + 3; const int NODE_84_04 = NODE_84 + 4; const int NODE_84_05 = NODE_84 + 5; const int NODE_84_06 = NODE_84 + 6; const int NODE_84_07 = NODE_84 + 7;
+        public const int NODE_80 = 0x40000000 + 80 * DISCRETE_MAX_OUTPUTS; const int NODE_80_00 = NODE_80; const int NODE_80_01 = NODE_80 + 1; const int NODE_80_02 = NODE_80 + 2; const int NODE_80_03 = NODE_80 + 3; const int NODE_80_04 = NODE_80 + 4; const int NODE_80_05 = NODE_80 + 5; const int NODE_80_06 = NODE_80 + 6; const int NODE_80_07 = NODE_80 + 7;
+        public const int NODE_81 = 0x40000000 + 81 * DISCRETE_MAX_OUTPUTS; const int NODE_81_00 = NODE_81; const int NODE_81_01 = NODE_81 + 1; const int NODE_81_02 = NODE_81 + 2; const int NODE_81_03 = NODE_81 + 3; const int NODE_81_04 = NODE_81 + 4; const int NODE_81_05 = NODE_81 + 5; const int NODE_81_06 = NODE_81 + 6; const int NODE_81_07 = NODE_81 + 7;
+        public const int NODE_82 = 0x40000000 + 82 * DISCRETE_MAX_OUTPUTS; const int NODE_82_00 = NODE_82; const int NODE_82_01 = NODE_82 + 1; const int NODE_82_02 = NODE_82 + 2; const int NODE_82_03 = NODE_82 + 3; const int NODE_82_04 = NODE_82 + 4; const int NODE_82_05 = NODE_82 + 5; const int NODE_82_06 = NODE_82 + 6; const int NODE_82_07 = NODE_82 + 7;
+        public const int NODE_83 = 0x40000000 + 83 * DISCRETE_MAX_OUTPUTS; const int NODE_83_00 = NODE_83; const int NODE_83_01 = NODE_83 + 1; const int NODE_83_02 = NODE_83 + 2; const int NODE_83_03 = NODE_83 + 3; const int NODE_83_04 = NODE_83 + 4; const int NODE_83_05 = NODE_83 + 5; const int NODE_83_06 = NODE_83 + 6; const int NODE_83_07 = NODE_83 + 7;
+        public const int NODE_84 = 0x40000000 + 84 * DISCRETE_MAX_OUTPUTS; const int NODE_84_00 = NODE_84; const int NODE_84_01 = NODE_84 + 1; const int NODE_84_02 = NODE_84 + 2; const int NODE_84_03 = NODE_84 + 3; const int NODE_84_04 = NODE_84 + 4; const int NODE_84_05 = NODE_84 + 5; const int NODE_84_06 = NODE_84 + 6; const int NODE_84_07 = NODE_84 + 7;
         const int NODE_85 = 0x40000000 + 85 * DISCRETE_MAX_OUTPUTS; const int NODE_85_00 = NODE_85; const int NODE_85_01 = NODE_85 + 1; const int NODE_85_02 = NODE_85 + 2; const int NODE_85_03 = NODE_85 + 3; const int NODE_85_04 = NODE_85 + 4; const int NODE_85_05 = NODE_85 + 5; const int NODE_85_06 = NODE_85 + 6; const int NODE_85_07 = NODE_85 + 7;
         const int NODE_86 = 0x40000000 + 86 * DISCRETE_MAX_OUTPUTS; const int NODE_86_00 = NODE_86; const int NODE_86_01 = NODE_86 + 1; const int NODE_86_02 = NODE_86 + 2; const int NODE_86_03 = NODE_86 + 3; const int NODE_86_04 = NODE_86 + 4; const int NODE_86_05 = NODE_86 + 5; const int NODE_86_06 = NODE_86 + 6; const int NODE_86_07 = NODE_86 + 7;
         const int NODE_87 = 0x40000000 + 87 * DISCRETE_MAX_OUTPUTS; const int NODE_87_00 = NODE_87; const int NODE_87_01 = NODE_87 + 1; const int NODE_87_02 = NODE_87 + 2; const int NODE_87_03 = NODE_87 + 3; const int NODE_87_04 = NODE_87 + 4; const int NODE_87_05 = NODE_87 + 5; const int NODE_87_06 = NODE_87 + 6; const int NODE_87_07 = NODE_87 + 7;
@@ -195,7 +696,7 @@ namespace mame
         const int NODE_89 = 0x40000000 + 89 * DISCRETE_MAX_OUTPUTS; const int NODE_89_00 = NODE_89; const int NODE_89_01 = NODE_89 + 1; const int NODE_89_02 = NODE_89 + 2; const int NODE_89_03 = NODE_89 + 3; const int NODE_89_04 = NODE_89 + 4; const int NODE_89_05 = NODE_89 + 5; const int NODE_89_06 = NODE_89 + 6; const int NODE_89_07 = NODE_89 + 7;
 
         public const int NODE_90 = 0x40000000 + 90 * DISCRETE_MAX_OUTPUTS; const int NODE_90_00 = NODE_90; const int NODE_90_01 = NODE_90 + 1; const int NODE_90_02 = NODE_90 + 2; const int NODE_90_03 = NODE_90 + 3; const int NODE_90_04 = NODE_90 + 4; const int NODE_90_05 = NODE_90 + 5; const int NODE_90_06 = NODE_90 + 6; const int NODE_90_07 = NODE_90 + 7;
-        const int NODE_91 = 0x40000000 + 91 * DISCRETE_MAX_OUTPUTS; const int NODE_91_00 = NODE_91; const int NODE_91_01 = NODE_91 + 1; const int NODE_91_02 = NODE_91 + 2; const int NODE_91_03 = NODE_91 + 3; const int NODE_91_04 = NODE_91 + 4; const int NODE_91_05 = NODE_91 + 5; const int NODE_91_06 = NODE_91 + 6; const int NODE_91_07 = NODE_91 + 7;
+        public const int NODE_91 = 0x40000000 + 91 * DISCRETE_MAX_OUTPUTS; const int NODE_91_00 = NODE_91; const int NODE_91_01 = NODE_91 + 1; const int NODE_91_02 = NODE_91 + 2; const int NODE_91_03 = NODE_91 + 3; const int NODE_91_04 = NODE_91 + 4; const int NODE_91_05 = NODE_91 + 5; const int NODE_91_06 = NODE_91 + 6; const int NODE_91_07 = NODE_91 + 7;
         const int NODE_92 = 0x40000000 + 92 * DISCRETE_MAX_OUTPUTS; const int NODE_92_00 = NODE_92; const int NODE_92_01 = NODE_92 + 1; const int NODE_92_02 = NODE_92 + 2; const int NODE_92_03 = NODE_92 + 3; const int NODE_92_04 = NODE_92 + 4; const int NODE_92_05 = NODE_92 + 5; const int NODE_92_06 = NODE_92 + 6; const int NODE_92_07 = NODE_92 + 7;
         const int NODE_93 = 0x40000000 + 93 * DISCRETE_MAX_OUTPUTS; const int NODE_93_00 = NODE_93; const int NODE_93_01 = NODE_93 + 1; const int NODE_93_02 = NODE_93 + 2; const int NODE_93_03 = NODE_93 + 3; const int NODE_93_04 = NODE_93 + 4; const int NODE_93_05 = NODE_93 + 5; const int NODE_93_06 = NODE_93 + 6; const int NODE_93_07 = NODE_93 + 7;
         const int NODE_94 = 0x40000000 + 94 * DISCRETE_MAX_OUTPUTS; const int NODE_94_00 = NODE_94; const int NODE_94_01 = NODE_94 + 1; const int NODE_94_02 = NODE_94 + 2; const int NODE_94_03 = NODE_94 + 3; const int NODE_94_04 = NODE_94 + 4; const int NODE_94_05 = NODE_94 + 5; const int NODE_94_06 = NODE_94 + 6; const int NODE_94_07 = NODE_94 + 7;
@@ -461,147 +962,6 @@ namespace mame
         //}
 
 
-        /*************************************
-         *
-         *  Core constants
-         *
-         *************************************/
-
-        public const int DISCRETE_MAX_NODES = 299;  //300;
-        public const int DISCRETE_MAX_INPUTS = 10;
-        public const int DISCRETE_MAX_OUTPUTS = 8;
-
-        public const int DISCRETE_MAX_TASK_GROUPS = 10;
-
-
-        /*************************************
-         *
-         *  macros
-         *  see also: emu\machine\rescap.h
-         *
-         *************************************/
-
-        // moved to discrete_base_node
-        /* calculate charge exponent using discrete sample time */
-        //define RC_CHARGE_EXP(rc)                       (1.0 - exp(-this->sample_time() / (rc)))
-
-        /* calculate charge exponent using given sample time */
-        public static double RC_CHARGE_EXP_DT(double rc, double dt) { return 1.0 - Math.Exp(-dt / rc); }
-        //define RC_CHARGE_NEG_EXP_DT(rc, dt)            (1.0 - exp((dt) / (rc)))
-
-        /* calculate discharge exponent using discrete sample time */
-        //define RC_DISCHARGE_EXP(rc)                    (exp(-this->sample_time() / (rc)))
-        /* calculate discharge exponent using given sample time */
-        //define RC_DISCHARGE_EXP_DT(rc, dt)             (exp(-(dt) / (rc)))
-        //define RC_DISCHARGE_NEG_EXP_DT(rc, dt)         (exp((dt) / (rc)))
-
-        //define FREQ_OF_555(_r1, _r2, _c)   (1.49 / ((_r1 + 2 * _r2) * _c))
-
-
-        /*************************************
-         *
-         *  Interface & Naming
-         *
-         *************************************/
-
-        //#define DISCRETE_CLASS_FUNC(_class, _func)      DISCRETE_CLASS_NAME(_class) :: _func
-
-        //#define DISCRETE_STEP(_class)                   void DISCRETE_CLASS_FUNC(_class, step)(void)
-        //#define DISCRETE_RESET(_class)                  void DISCRETE_CLASS_FUNC(_class, reset)(void)
-        //#define DISCRETE_START(_class)                  void DISCRETE_CLASS_FUNC(_class, start)(void)
-        //#define DISCRETE_STOP(_class)                   void DISCRETE_CLASS_FUNC(_class, stop)(void)
-        //#define DISCRETE_DECLARE_INFO(_name)            const _name *info = (const  _name *)this->custom_data();
-
-
-        /*************************************
-         *
-         *  Node-specific constants
-         *
-         *************************************/
-
-        public const double DEFAULT_TTL_V_LOGIC_1               = 3.4;
-
-        //#define DISC_LOGADJ                         1.0
-        public const double DISC_LINADJ                         = 0.0;
-
-        /* DISCRETE_COMP_ADDER types */
-        //#define DISC_COMP_P_CAPACITOR               0x00
-        //#define DISC_COMP_P_RESISTOR                0x01
-
-        /* clk types */
-        public const int DISC_CLK_MASK                       = 0x03;
-        public const int DISC_CLK_ON_F_EDGE                  = 0x00;
-        public const int DISC_CLK_ON_R_EDGE                  = 0x01;
-        public const int DISC_CLK_BY_COUNT                   = 0x02;
-        public const int DISC_CLK_IS_FREQ                    = 0x03;
-
-        //#define DISC_COUNT_DOWN                     0
-        public const int DISC_COUNT_UP                       = 1;
-
-        public const int DISC_COUNTER_IS_7492                = 0x08;
-
-        public const int DISC_OUT_MASK                       = 0x30;
-        //#define DISC_OUT_DEFAULT                    0x00
-        public const int DISC_OUT_IS_ENERGY                  = 0x10;
-        public const int DISC_OUT_HAS_XTIME                  = 0x20;
-
-        /* Function possibilities for the LFSR feedback nodes */
-        /* 2 inputs, one output                               */
-        public const int DISC_LFSR_XOR                       = 0;
-        public const int DISC_LFSR_OR                        = 1;
-        public const int DISC_LFSR_AND                       = 2;
-        public const int DISC_LFSR_XNOR                      = 3;
-        public const int DISC_LFSR_NOR                       = 4;
-        public const int DISC_LFSR_NAND                      = 5;
-        public const int DISC_LFSR_IN0                       = 6;
-        public const int DISC_LFSR_IN1                       = 7;
-        public const int DISC_LFSR_NOT_IN0                   = 8;
-        public const int DISC_LFSR_NOT_IN1                   = 9;
-        public const int DISC_LFSR_REPLACE                   = 10;
-        public const int DISC_LFSR_XOR_INV_IN0               = 11;
-        public const int DISC_LFSR_XOR_INV_IN1               = 12;
-
-        /* LFSR Flag Bits */
-        public const int DISC_LFSR_FLAG_OUT_INVERT           = 0x01;
-        //#define DISC_LFSR_FLAG_RESET_TYPE_L         0x00
-        public const int DISC_LFSR_FLAG_RESET_TYPE_H         = 0x02;
-        public const int DISC_LFSR_FLAG_OUTPUT_F0            = 0x04;
-        public const int DISC_LFSR_FLAG_OUTPUT_SR_SN1        = 0x08;
-
-        /* Sample & Hold supported clock types */
-        //#define DISC_SAMPHOLD_REDGE                 0
-        //#define DISC_SAMPHOLD_FEDGE                 1
-        //#define DISC_SAMPHOLD_HLATCH                2
-        //#define DISC_SAMPHOLD_LLATCH                3
-
-        /* Shift options */
-        //#define DISC_LOGIC_SHIFT__RESET_L           0x00
-        //#define DISC_LOGIC_SHIFT__RESET_H           0x10
-        //#define DISC_LOGIC_SHIFT__LEFT              0x00
-        //#define DISC_LOGIC_SHIFT__RIGHT             0x20
-
-        /* Maximum number of resistors in ladder chain */
-        public const int DISC_LADDER_MAXRES = 8;
-
-        /* Filter types */
-        public const int DISC_FILTER_LOWPASS  = 0;
-        public const int DISC_FILTER_HIGHPASS = 1;
-        public const int DISC_FILTER_BANDPASS = 2;
-
-        /* Mixer types */
-        public const int DISC_MIXER_IS_RESISTOR       = 0;
-        public const int DISC_MIXER_IS_OP_AMP         = 1;
-        public const int DISC_MIXER_IS_OP_AMP_WITH_RI = 2;   /* Used only internally.  Use DISC_MIXER_IS_OP_AMP */
-
-
-        public static readonly int NODE_SPECIAL = NODE_(DISCRETE_MAX_NODES);
-
-        public const int NODE_START = NODE_00;
-        public static readonly int NODE_END = NODE_SPECIAL;
-
-        const int NODE_NC = NODE_00;
-
-
         /* Some Pre-defined nodes for convenience */
 
         public static int NODE_(int x) { return NODE_00 + x * DISCRETE_MAX_OUTPUTS; }
@@ -617,530 +977,62 @@ namespace mame
 
         public static int NODE_RELATIVE(int x, int y) { return NODE_(NODE_INDEX(x) + y); }
 
+        const int NODE_NC = NODE_00;
+        public static readonly int NODE_SPECIAL = NODE_(DISCRETE_MAX_NODES);
+
+        public const int NODE_START = NODE_00;
+        public static readonly int NODE_END = NODE_SPECIAL;
+
         public static bool IS_VALUE_A_NODE(int val) { return val > (int)NODE_START && val <= (int)NODE_END; }
 
         // Optional node such as used in CR_FILTER
         //#define OPT_NODE(val)   (int) val
         static int OPT_NODE(double val) { return (int)val; }
-
-
-        /* Common Op Amp Flags and values */
-        public const int DISC_OP_AMP_IS_NORTON = 0x100;
-        public const double OP_AMP_NORTON_VBE = 0.5;     // This is the norton junction voltage. Used only internally.
-        public const double OP_AMP_VP_RAIL_OFFSET = 1.5;     // This is how close an op-amp can get to the vP rail. Used only internally.
-
-        /* Integrate options */
-        //#define DISC_INTEGRATE_OP_AMP_1             0x00
-        //#define DISC_INTEGRATE_OP_AMP_2             0x10
-
-        /* op amp 1 shot types */
-        //#define DISC_OP_AMP_1SHT_1                  0x00
-
-        /* Op Amp Filter Options */
-        public const int DISC_OP_AMP_FILTER_IS_LOW_PASS_1   = 0x00;
-        public const int DISC_OP_AMP_FILTER_IS_HIGH_PASS_1  = 0x10;
-        public const int DISC_OP_AMP_FILTER_IS_BAND_PASS_1  = 0x20;
-        public const int DISC_OP_AMP_FILTER_IS_BAND_PASS_1M = 0x30;
-        public const int DISC_OP_AMP_FILTER_IS_HIGH_PASS_0  = 0x40;
-        public const int DISC_OP_AMP_FILTER_IS_BAND_PASS_0  = 0x50;
-        public const int DISC_OP_AMP_FILTER_IS_LOW_PASS_1_A = 0x60;
-
-        public const int DISC_OP_AMP_FILTER_TYPE_MASK = 0xf0 | DISC_OP_AMP_IS_NORTON;  // Used only internally.
-
-        /* Sallen-Key filter Opions */
-        public const int DISC_SALLEN_KEY_LOW_PASS            = 0x01;
-        //#define DISC_SALLEN_KEY_HIGH_PASS           0x02
-
-
-        /* Op Amp Oscillator Flags */
-        //#define DISC_OP_AMP_OSCILLATOR_TYPE_MASK    (0xf0 | DISC_OP_AMP_IS_NORTON)  // Used only internally.
-        //#define DISC_OP_AMP_OSCILLATOR_1            0x00
-        //#define DISC_OP_AMP_OSCILLATOR_2            0x10
-        //#define DISC_OP_AMP_OSCILLATOR_VCO_1        0x20
-        //#define DISC_OP_AMP_OSCILLATOR_VCO_2        0x30
-        //#define DISC_OP_AMP_OSCILLATOR_VCO_3        0x40
-
-        //#define DISC_OP_AMP_OSCILLATOR_OUT_MASK         0x07
-        //#define DISC_OP_AMP_OSCILLATOR_OUT_CAP          0x00
-        //#define DISC_OP_AMP_OSCILLATOR_OUT_SQW          0x01
-        //#define DISC_OP_AMP_OSCILLATOR_OUT_ENERGY       0x02
-        //#define DISC_OP_AMP_OSCILLATOR_OUT_LOGIC_X      0x03
-        //#define DISC_OP_AMP_OSCILLATOR_OUT_COUNT_F_X    0x04
-        //#define DISC_OP_AMP_OSCILLATOR_OUT_COUNT_R_X    0x05
-
-        /* Schmitt Oscillator Options */
-        //#define DISC_SCHMITT_OSC_IN_IS_LOGIC        0x00
-        //#define DISC_SCHMITT_OSC_IN_IS_VOLTAGE      0x01
-
-        //#define DISC_SCHMITT_OSC_ENAB_IS_AND        0x00
-        //#define DISC_SCHMITT_OSC_ENAB_IS_NAND       0x02
-        //#define DISC_SCHMITT_OSC_ENAB_IS_OR         0x04
-        //#define DISC_SCHMITT_OSC_ENAB_IS_NOR        0x06
-
-        //#define DISC_SCHMITT_OSC_ENAB_MASK          0x06    /* Bits that define output enable type. */
-                                                              /* Used only internally in module. */
-
-        /* 555 Common output flags */
-        public const int DISC_555_OUT_DC                     = 0x00;
-        public const int DISC_555_OUT_AC                     = 0x10;
-
-        //#define DISC_555_TRIGGER_IS_LOGIC           0x00
-        //#define DISC_555_TRIGGER_IS_VOLTAGE         0x20
-        //#define DISC_555_TRIGGER_IS_COUNT           0x40
-        //#define DSD_555_TRIGGER_TYPE_MASK           0x60
-        //#define DISC_555_TRIGGER_DISCHARGES_CAP     0x80
-
-        public const int DISC_555_OUT_SQW                    = 0x00;    /* Squarewave */
-        public const int DISC_555_OUT_CAP                    = 0x01;    /* Cap charge waveform */
-        public const int DISC_555_OUT_COUNT_F                = 0x02;    /* Falling count */
-        public const int DISC_555_OUT_COUNT_R                = 0x03;    /* Rising count */
-        public const int DISC_555_OUT_ENERGY                 = 0x04;
-        public const int DISC_555_OUT_LOGIC_X                = 0x05;
-        public const int DISC_555_OUT_COUNT_F_X              = 0x06;
-        public const int DISC_555_OUT_COUNT_R_X              = 0x07;
-
-        public const int DISC_555_OUT_MASK                   = 0x07;    /* Bits that define output type. */
-                                                                        /* Used only internally in module. */
-
-        public const int DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE      = 0x80;
-        //#define DISCRETE_555_CC_TO_DISCHARGE_PIN            0x00
-        public const int DISCRETE_555_CC_TO_CAP                      = 0x80;
-
-        /* 566 output flags */
-        //#define DISC_566_OUT_DC                     0x00
-        //#define DISC_566_OUT_AC                     0x10
-
-        //#define DISC_566_OUT_SQUARE                 0x00    /* Squarewave */
-        //#define DISC_566_OUT_ENERGY                 0x01    /* anti-alaised Squarewave */
-        //#define DISC_566_OUT_TRIANGLE               0x02    /* Triangle waveform */
-        //#define DISC_566_OUT_LOGIC                  0x03    /* 0/1 logic output */
-        //#define DISC_566_OUT_COUNT_F                0x04
-        //#define DISC_566_OUT_COUNT_R                0x05
-        //#define DISC_566_OUT_COUNT_F_X              0x06
-        //#define DISC_566_OUT_COUNT_R_X              0x07
-        //#define DISC_566_OUT_MASK                   0x07    /* Bits that define output type. */
-                                                              /* Used only internally in module. */
-
-        /* LS624 output flags */
-        //#define DISC_LS624_OUT_SQUARE               0x01
-        //#define DISC_LS624_OUT_ENERGY               0x02
-        //#define DISC_LS624_OUT_LOGIC                0x03
-        //#define DISC_LS624_OUT_LOGIC_X              0x04
-        //#define DISC_LS624_OUT_COUNT_F              0x05
-        //#define DISC_LS624_OUT_COUNT_R              0x06
-        //#define DISC_LS624_OUT_COUNT_F_X            0x07
-        //#define DISC_LS624_OUT_COUNT_R_X            0x08
-
-        /* Oneshot types */
-        //#define DISC_ONESHOT_FEDGE                  0x00
-        //#define DISC_ONESHOT_REDGE                  0x01
-
-        //#define DISC_ONESHOT_NORETRIG               0x00
-        //#define DISC_ONESHOT_RETRIG                 0x02
-
-        //#define DISC_OUT_ACTIVE_LOW                 0x04
-        //#define DISC_OUT_ACTIVE_HIGH                0x00
-
-        //#define DISC_CD4066_THRESHOLD               2.75
-
-        /* Integrate */
-
-        public const int DISC_RC_INTEGRATE_TYPE1             = 0x00;
-        public const int DISC_RC_INTEGRATE_TYPE2             = 0x01;
-        public const int DISC_RC_INTEGRATE_TYPE3             = 0x02;
-
-
-        public const int DEFAULT_555_CHARGE      = -1;
-        public const int DEFAULT_555_HIGH        = -1;
-        public const int DEFAULT_555_VALUES_1      = DEFAULT_555_CHARGE;
-        public const int DEFAULT_555_VALUES_2      = DEFAULT_555_HIGH;
-
-
-        public const int DEFAULT_555_CC_SOURCE   = DEFAULT_555_CHARGE;
-
-
-        /*************************************
-         *
-         *  Encapsulation macros for defining
-         *  your simulation
-         *
-         *************************************/
-
-        static discrete_base_node discrete_create_node<C>(discrete_device pdev, discrete_block block) where C : discrete_base_node, new() { return discrete_node_factory<C>.create(pdev, block); }
-
-        //#define DISCRETE_SOUND_EXTERN(name) extern const discrete_block name[]
-        //#define DISCRETE_SOUND_START(name) const discrete_block name[] = {
-        //#define DSC_SND_ENTRY(_nod, _class, _dss, _num, _iact, _iinit, _custom, _name) { _nod,  new discrete_node_factory< DISCRETE_CLASS_NAME(_class) >, _dss, _num, _iact, _iinit, _custom, _name, # _class }
-        public static discrete_block DSC_SND_ENTRY<class_type>(int node, int dss, int num, int [] iact, Pointer<double> iinit, Object custom, string name) where class_type : discrete_base_node, new()
-        { return new discrete_block(node, discrete_create_node<class_type>, dss, num, iact, iinit, custom, name, typeof(class_type).FullName); } // _nod,  &discrete_create_node< DISCRETE_CLASS_NAME(_class) >, _dss, _num, _iact, _iinit, _custom, _name, /* # _class*/ }; }
-
-        public static discrete_block DISCRETE_SOUND_END { get { return DSC_SND_ENTRY<discrete_special_node>( NODE_00, (int)discrete_node_type.DSS_NULL     , 0, DSE( NODE_NC ), DSE( 0.0 ) ,null  ,"DISCRETE_SOUND_END" ); } }
-
-        static int [] DSE(params int [] objects) { return objects; }  //#define DSE( ... ) { __VA_ARGS__ }
-        static Pointer<double> DSE(params double [] objects) { return new Pointer<double>(new MemoryContainer<double>(objects)); }  //#define DSE( ... ) { __VA_ARGS__ }
-
-        /*      Module Name                                                       out,  enum value,      #in,   {variable inputs},              {static inputs},    data pointer,   "name" */
-
-        /* from disc_inp.inc */
-        public static discrete_block DISCRETE_ADJUSTMENT(int NODE, double MIN, double MAX, double LOGLIN, string TAG) { return DSC_SND_ENTRY<discrete_dss_adjustment_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( MIN,MAX,LOGLIN,0   ,0   ,100  ), TAG   , "DISCRETE_ADJUSTMENT" ); }
-        //#define DISCRETE_ADJUSTMENTX(NODE,MIN,MAX,LOGLIN,TAG,PMIN,PMAX)         DSC_SND_ENTRY( NODE, dss_adjustment  , DSS_NODE        , 6, DSE( NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( MIN,MAX,LOGLIN,0   ,PMIN,PMAX ), TAG   , "DISCRETE_ADJUSTMENTX"  ),
-        //#define DISCRETE_CONSTANT(NODE,CONST)                                   DSC_SND_ENTRY( NODE, dss_constant    , DSS_NODE        , 1, DSE( NODE_NC ), DSE( CONST ) ,NULL  ,"DISCRETE_CONSTANT" ),
-        public static discrete_block DISCRETE_INPUT_DATA(int NODE) { return DSC_SND_ENTRY<discrete_dss_input_data_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( 1.0,0,0 ), null, "DISCRETE_INPUT_DATA" ); }
-        public static discrete_block DISCRETE_INPUTX_DATA(int NODE, double GAIN, double OFFSET, double INIT) { return DSC_SND_ENTRY<discrete_dss_input_data_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( GAIN,OFFSET,INIT ), null, "DISCRETE_INPUTX_DATA" ); }
-        public static discrete_block DISCRETE_INPUT_LOGIC(int NODE) { return DSC_SND_ENTRY<discrete_dss_input_logic_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( 1.0,0,0 ), null, "DISCRETE_INPUT_LOGIC" ); }
-        //#define DISCRETE_INPUTX_LOGIC(NODE,GAIN,OFFSET,INIT)                    DSC_SND_ENTRY( NODE, dss_input_logic , DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( GAIN,OFFSET,INIT ), NULL, "DISCRETE_INPUTX_LOGIC" ),
-        public static discrete_block DISCRETE_INPUT_NOT(int NODE) { return DSC_SND_ENTRY<discrete_dss_input_not_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( 1.0,0,0 ), null, "DISCRETE_INPUT_NOT" ); }
-        //#define DISCRETE_INPUTX_NOT(NODE,GAIN,OFFSET,INIT)                      DSC_SND_ENTRY( NODE, dss_input_not   , DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( GAIN,OFFSET,INIT ), NULL, "DISCRETE_INPUTX_NOT" ),
-        //#define DISCRETE_INPUT_PULSE(NODE,INIT)                                 DSC_SND_ENTRY( NODE, dss_input_pulse , DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( 1,0,INIT ), NULL, "DISCRETE_INPUT_PULSE" ),
-
-        //#define DISCRETE_INPUT_STREAM(NODE, NUM)                                DSC_SND_ENTRY( NODE, dss_input_stream, DSS_NODE        , 3, DSE( NUM,NODE_NC,NODE_NC ), DSE( NUM,1,0 ), NULL, "DISCRETE_INPUT_STREAM" ),
-        public static discrete_block DISCRETE_INPUTX_STREAM(int NODE, double NUM, double GAIN, double OFFSET) { return DSC_SND_ENTRY<discrete_dss_input_stream_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)NUM,NODE_NC,NODE_NC ), DSE( NUM,GAIN,OFFSET ), null, "DISCRETE_INPUTX_STREAM" ); }
-
-        public static discrete_block DISCRETE_INPUT_BUFFER(int NODE, double NUM) { return DSC_SND_ENTRY<discrete_dss_input_buffer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)NUM,NODE_NC,NODE_NC ), DSE( NUM,1,0 ), null, "DISCRETE_INPUT_BUFFER" ); }
-
-        /* from disc_wav.inc */
-        /* generic modules */
-        public static discrete_block DISCRETE_COUNTER(int NODE, double ENAB, double RESET, double CLK, double MIN, double MAX, double DIR, double INIT0, double CLKTYPE) { return DSC_SND_ENTRY<discrete_dss_counter_node>( NODE, (int)discrete_node_type.DSS_NODE        , 8, DSE( (int)ENAB,(int)RESET,(int)CLK,NODE_NC,NODE_NC,(int)DIR,(int)INIT0,NODE_NC ), DSE( ENAB,RESET,CLK,MIN,MAX,DIR,INIT0,CLKTYPE ), null, "DISCRETE_COUNTER" ); }
-        //#define DISCRETE_COUNTER_7492(NODE,ENAB,RESET,CLK,CLKTYPE)              DSC_SND_ENTRY( NODE, dss_counter     , DSS_NODE        , 8, DSE( ENAB,RESET,CLK,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,RESET,CLK,CLKTYPE,0,1,0,DISC_COUNTER_IS_7492 ), NULL, "DISCRETE_COUNTER_7492" ),
-        public static discrete_block DISCRETE_LFSR_NOISE(int NODE, double ENAB, double RESET, double CLK, double AMPL, double FEED, double BIAS, discrete_lfsr_desc LFSRTB) { return DSC_SND_ENTRY<discrete_dss_lfsr_noise_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)RESET,(int)CLK,(int)AMPL,(int)FEED,(int)BIAS ), DSE( ENAB,RESET,CLK,AMPL,FEED,BIAS ), LFSRTB, "DISCRETE_LFSR_NOISE" ); }
-        //#define DISCRETE_NOISE(NODE,ENAB,FREQ,AMPL,BIAS)                        DSC_SND_ENTRY( NODE, dss_noise       , DSS_NODE        , 4, DSE( ENAB,FREQ,AMPL,BIAS ), DSE( ENAB,FREQ,AMPL,BIAS ), NULL, "DISCRETE_NOISE" ),
-        public static discrete_block DISCRETE_NOTE(int NODE, double ENAB, double CLK, double DATA, double MAX1, double MAX2, double CLKTYPE) { return DSC_SND_ENTRY<discrete_dss_note_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)CLK,(int)DATA,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,CLK,DATA,MAX1,MAX2,CLKTYPE ), null, "DISCRETE_NOTE" ); }
-        //#define DISCRETE_SAWTOOTHWAVE(NODE,ENAB,FREQ,AMPL,BIAS,GRAD,PHASE)      DSC_SND_ENTRY( NODE, dss_sawtoothwave, DSS_NODE        , 6, DSE( ENAB,FREQ,AMPL,BIAS,NODE_NC,NODE_NC ), DSE( ENAB,FREQ,AMPL,BIAS,GRAD,PHASE ), NULL, "DISCRETE_SAWTOOTHWAVE" ),
-        //#define DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMPL,BIAS,PHASE)               DSC_SND_ENTRY( NODE, dss_sinewave    , DSS_NODE        , 5, DSE( ENAB,FREQ,AMPL,BIAS,NODE_NC ), DSE( ENAB,FREQ,AMPL,BIAS,PHASE ), NULL, "DISCRETE_SINEWAVE" ),
-        //#define DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMPL,DUTY,BIAS,PHASE)        DSC_SND_ENTRY( NODE, dss_squarewave  , DSS_NODE        , 6, DSE( ENAB,FREQ,AMPL,DUTY,BIAS,NODE_NC ), DSE( ENAB,FREQ,AMPL,DUTY,BIAS,PHASE ), NULL, "DISCRETE_SQUAREWAVE" ),
-        public static discrete_block DISCRETE_SQUAREWFIX(int NODE, double ENAB, double FREQ, double AMPL, double DUTY, double BIAS, double PHASE) { return DSC_SND_ENTRY<discrete_dss_squarewfix_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)FREQ,(int)AMPL,(int)DUTY,(int)BIAS,NODE_NC ), DSE( ENAB,FREQ,AMPL,DUTY,BIAS,PHASE ), null, "DISCRETE_SQUAREWFIX" ); }
-        //#define DISCRETE_SQUAREWAVE2(NODE,ENAB,AMPL,T_OFF,T_ON,BIAS,TSHIFT)     DSC_SND_ENTRY( NODE, dss_squarewave2 , DSS_NODE        , 6, DSE( ENAB,AMPL,T_OFF,T_ON,BIAS,NODE_NC ), DSE( ENAB,AMPL,T_OFF,T_ON,BIAS,TSHIFT ), NULL, "DISCRETE_SQUAREWAVE2" ),
-        //#define DISCRETE_TRIANGLEWAVE(NODE,ENAB,FREQ,AMPL,BIAS,PHASE)           DSC_SND_ENTRY( NODE, dss_trianglewave, DSS_NODE        , 5, DSE( ENAB,FREQ,AMPL,BIAS,NODE_NC ), DSE( ENAB,FREQ,AMPL,BIAS,PHASE ), NULL, "DISCRETE_TRIANGLEWAVE" ),
-        /* Component specific */
-        public static discrete_block DISCRETE_INVERTER_OSC(int NODE, double ENAB, double MOD, double RCHARGE, double RP, double C, double R2, discrete_dss_inverter_osc_node.description INFO) { return DSC_SND_ENTRY<discrete_dss_inverter_osc_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)MOD,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,MOD,RCHARGE,RP,C,R2 ), INFO, "DISCRETE_INVERTER_OSC" ); }
-        //#define DISCRETE_OP_AMP_OSCILLATOR(NODE,ENAB,INFO)                      DSC_SND_ENTRY( NODE, dss_op_amp_osc  , DSS_NODE        , 1, DSE( ENAB ), DSE( ENAB ), INFO, "DISCRETE_OP_AMP_OSCILLATOR" ),
-        //#define DISCRETE_OP_AMP_VCO1(NODE,ENAB,VMOD1,INFO)                      DSC_SND_ENTRY( NODE, dss_op_amp_osc  , DSS_NODE        , 2, DSE( ENAB,VMOD1 ), DSE( ENAB,VMOD1 ), INFO, "DISCRETE_OP_AMP_VCO1" ),
-        //#define DISCRETE_OP_AMP_VCO2(NODE,ENAB,VMOD1,VMOD2,INFO)                DSC_SND_ENTRY( NODE, dss_op_amp_osc  , DSS_NODE        , 3, DSE( ENAB,VMOD1,VMOD2 ), DSE( ENAB,VMOD1,VMOD2 ), INFO, "DISCRETE_OP_AMP_VCO2" ),
-        //#define DISCRETE_SCHMITT_OSCILLATOR(NODE,ENAB,INP0,AMPL,TABLE)          DSC_SND_ENTRY( NODE, dss_schmitt_osc , DSS_NODE        , 3, DSE( ENAB,INP0,AMPL ), DSE( ENAB,INP0,AMPL ), TABLE, "DISCRETE_SCHMITT_OSCILLATOR" ),
-        /* Not yet implemented */
-        //#define DISCRETE_ADSR_ENV(NODE,ENAB,TRIGGER,GAIN,ADSRTB)                DSC_SND_ENTRY( NODE, dss_adsr        , DSS_NODE        , 3, DSE( ENAB,TRIGGER,GAIN ), DSE( ENAB,TRIGGER,GAIN ), ADSRTB, "DISCRETE_ADSR_ENV" ),
-
-        /* from disc_mth.inc */
-        /* generic modules */
-        public static discrete_block DISCRETE_ADDER2(int NODE, double ENAB, double INP0, double INP1) { return DSC_SND_ENTRY<discrete_dst_adder_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)INP0,(int)INP1 ), DSE( ENAB,INP0,INP1 ), null, "DISCRETE_ADDER2" ); }
-        //#define DISCRETE_ADDER3(NODE,ENAB,INP0,INP1,INP2)                       DSC_SND_ENTRY( NODE, dst_adder       , DSS_NODE        , 4, DSE( ENAB,INP0,INP1,INP2 ), DSE( ENAB,INP0,INP1,INP2 ), NULL, "DISCRETE_ADDER3" ),
-        //#define DISCRETE_ADDER4(NODE,ENAB,INP0,INP1,INP2,INP3)                  DSC_SND_ENTRY( NODE, dst_adder       , DSS_NODE        , 5, DSE( ENAB,INP0,INP1,INP2,INP3 ), DSE( ENAB,INP0,INP1,INP2,INP3 ), NULL, "DISCRETE_ADDER4" ),
-        public static discrete_block DISCRETE_CLAMP(int NODE, double INP0, double MIN, double MAX) { return DSC_SND_ENTRY<discrete_dst_clamp_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)MIN,(int)MAX ), DSE( INP0,MIN,MAX ), null, "DISCRETE_CLAMP" ); }
-        public static discrete_block DISCRETE_DIVIDE(int NODE, double ENAB, double INP0, double INP1) { return DSC_SND_ENTRY<discrete_dst_divide_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)INP0,(int)INP1 ), DSE( ENAB,INP0,INP1 ), null, "DISCRETE_DIVIDE" ); }
-        //#define DISCRETE_GAIN(NODE,INP0,GAIN)                                   DSC_SND_ENTRY( NODE, dst_gain        , DSS_NODE        , 3, DSE( INP0,NODE_NC,NODE_NC ), DSE( INP0,GAIN,0 ), NULL, "DISCRETE_GAIN" ),
-        //#define DISCRETE_INVERT(NODE,INP0)                                      DSC_SND_ENTRY( NODE, dst_gain        , DSS_NODE        , 3, DSE( INP0,NODE_NC,NODE_NC ), DSE( INP0,-1,0 ), NULL, "DISCRETE_INVERT" ),
-        public static discrete_block DISCRETE_LOGIC_INVERT(int NODE, double INP0) {return DSC_SND_ENTRY<discrete_dst_logic_inv_node>( NODE, (int)discrete_node_type.DSS_NODE        , 1, DSE( (int)INP0 ), DSE( INP0 ), null, "DISCRETE_LOGIC_INVERT" ); }
-
-        //#define DISCRETE_BIT_DECODE(NODE, INP, BIT_N, VOUT)                     DSC_SND_ENTRY( NODE, dst_bits_decode , DSS_NODE        , 4, DSE( INP,NODE_NC,NODE_NC,NODE_NC ), DSE( INP,BIT_N,BIT_N,VOUT ), NULL, "DISCRETE_BIT_DECODE" ),
-        public static discrete_block DISCRETE_BITS_DECODE(int NODE, double INP, double BIT_FROM, double BIT_TO, double VOUT) { return DSC_SND_ENTRY<discrete_dst_bits_decode_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)INP,NODE_NC,NODE_NC,NODE_NC ), DSE( INP,BIT_FROM,BIT_TO,VOUT ), null, "DISCRETE_BITS_DECODE" ); }
-
-        //#define DISCRETE_LOGIC_AND(NODE,INP0,INP1)                              DSC_SND_ENTRY( NODE, dst_logic_and   , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,1.0,1.0 ), NULL, "DISCRETE_LOGIC_AND" ),
-        //#define DISCRETE_LOGIC_AND3(NODE,INP0,INP1,INP2)                        DSC_SND_ENTRY( NODE, dst_logic_and   , DSS_NODE        , 4, DSE( INP0,INP1,INP2,NODE_NC ), DSE( INP0,INP1,INP2,1.0 ), NULL, "DISCRETE_LOGIC_AND3" ),
-        //#define DISCRETE_LOGIC_AND4(NODE,INP0,INP1,INP2,INP3)                   DSC_SND_ENTRY( NODE, dst_logic_and   , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ) ,NULL, "DISCRETE_LOGIC_AND4" ),
-        //#define DISCRETE_LOGIC_NAND(NODE,INP0,INP1)                             DSC_SND_ENTRY( NODE, dst_logic_nand  , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,1.0,1.0 ), NULL, "DISCRETE_LOGIC_NAND" ),
-        //#define DISCRETE_LOGIC_NAND3(NODE,INP0,INP1,INP2)                       DSC_SND_ENTRY( NODE, dst_logic_nand  , DSS_NODE        , 4, DSE( INP0,INP1,INP2,NODE_NC ), DSE( INP0,INP1,INP2,1.0 ), NULL, "DISCRETE_LOGIC_NAND3" ),
-        //#define DISCRETE_LOGIC_NAND4(NODE,INP0,INP1,INP2,INP3)                  DSC_SND_ENTRY( NODE, dst_logic_nand  , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ), NULL, ")DISCRETE_LOGIC_NAND4" ),
-        //#define DISCRETE_LOGIC_OR(NODE,INP0,INP1)                               DSC_SND_ENTRY( NODE, dst_logic_or    , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,0.0,0.0 ), NULL, "DISCRETE_LOGIC_OR" ),
-        //#define DISCRETE_LOGIC_OR3(NODE,INP0,INP1,INP2)                         DSC_SND_ENTRY( NODE, dst_logic_or    , DSS_NODE        , 4, DSE( INP0,INP1,INP2,NODE_NC ), DSE( INP0,INP1,INP2,0.0 ), NULL, "DISCRETE_LOGIC_OR3" ),
-        //#define DISCRETE_LOGIC_OR4(NODE,INP0,INP1,INP2,INP3)                    DSC_SND_ENTRY( NODE, dst_logic_or    , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ), NULL, "DISCRETE_LOGIC_OR4" ),
-        //#define DISCRETE_LOGIC_NOR(NODE,INP0,INP1)                              DSC_SND_ENTRY( NODE, dst_logic_nor   , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,0.0,0.0 ), NULL, "DISCRETE_LOGIC_NOR" ),
-        //#define DISCRETE_LOGIC_NOR3(NODE,INP0,INP1,INP2)                        DSC_SND_ENTRY( NODE, dst_logic_nor   , DSS_NODE        , 4, DSE( INP0,INP1,INP2,NODE_NC ), DSE( INP0,INP1,INP2,0.0 ), NULL, "DISCRETE_LOGIC_NOR3" ),
-        //#define DISCRETE_LOGIC_NOR4(NODE,INP0,INP1,INP2,INP3)                   DSC_SND_ENTRY( NODE, dst_logic_nor   , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ), NULL, "DISCRETE_LOGIC_NOR4" ),
-        //#define DISCRETE_LOGIC_XOR(NODE,INP0,INP1)                              DSC_SND_ENTRY( NODE, dst_logic_xor   , DSS_NODE        , 2, DSE( INP0,INP1 ), DSE( INP0,INP1 ), NULL, "DISCRETE_LOGIC_XOR" ),
-        //#define DISCRETE_LOGIC_XNOR(NODE,INP0,INP1)                             DSC_SND_ENTRY( NODE, dst_logic_nxor  , DSS_NODE        , 2, DSE( INP0,INP1 ), DSE( INP0,INP1 ), NULL, "DISCRETE_LOGIC_XNOR" ),
-        public static discrete_block DISCRETE_LOGIC_DFLIPFLOP(int NODE, double RESET, double SET, double CLK, double INP) { return DSC_SND_ENTRY<discrete_dst_logic_dff_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)RESET,(int)SET,(int)CLK,(int)INP ), DSE( RESET,SET,CLK,INP ), null, "DISCRETE_LOGIC_DFLIPFLOP" ); }
-        //#define DISCRETE_LOGIC_JKFLIPFLOP(NODE,RESET,SET,CLK,J,K)               DSC_SND_ENTRY( NODE, dst_logic_jkff  , DSS_NODE        , 5, DSE( RESET,SET,CLK,J,K ), DSE( RESET,SET,CLK,J,K ), NULL, "DISCRETE_LOGIC_JKFLIPFLOP" ),
-        //#define DISCRETE_LOGIC_SHIFT(NODE,INP0,RESET,CLK,SIZE,OPTIONS)          DSC_SND_ENTRY( NODE, dst_logic_shift , DSS_NODE        , 5, DSE( INP0,RESET,CLK,NODE_NC,NODE_NC ), DSE( INP0,RESET,CLK,SIZE,OPTIONS ), NULL, "DISCRETE_LOGIC_SHIFT" ),
-        //#define DISCRETE_LOOKUP_TABLE(NODE,ADDR,SIZE,TABLE)                     DSC_SND_ENTRY( NODE, dst_lookup_table, DSS_NODE        , 2, DSE( ADDR,NODE_NC ), DSE( ADDR,SIZE ), TABLE, "DISCRETE_LOOKUP_TABLE" ),
-        //#define DISCRETE_MULTIPLEX2(NODE,ADDR,INP0,INP1)                        DSC_SND_ENTRY( NODE, dst_multiplex   , DSS_NODE        , 3, DSE( ADDR,INP0,INP1 ), DSE( ADDR,INP0,INP1 ), NULL, "DISCRETE_MULTIPLEX2" ),
-        //#define DISCRETE_MULTIPLEX4(NODE,ADDR,INP0,INP1,INP2,INP3)              DSC_SND_ENTRY( NODE, dst_multiplex   , DSS_NODE        , 5, DSE( ADDR,INP0,INP1,INP2,INP3 ), DSE( ADDR,INP0,INP1,INP2,INP3 ), NULL, "DISCRETE_MULTIPLEX4" ),
-        //#define DISCRETE_MULTIPLEX8(NODE,ADDR,INP0,INP1,INP2,INP3,INP4,INP5,INP6,INP7) DSC_SND_ENTRY( NODE, dst_multiplex, DSS_NODE    , 9, DSE( ADDR,INP0,INP1,INP2,INP3,INP4,INP5,INP6,INP7 ), DSE( ADDR,INP0,INP1,INP2,INP3,INP4,INP5,INP6,INP7 ), NULL, "DISCRETE_MULTIPLEX8" ),
-        public static discrete_block DISCRETE_MULTIPLY(int NODE, double INP0, double INP1) { return DSC_SND_ENTRY<discrete_dst_gain_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)INP1,NODE_NC ), DSE( INP0,INP1,0 ), null, "DISCRETE_MULTIPLY" ); }
-        public static discrete_block DISCRETE_MULTADD(int NODE, double INP0, double INP1, double INP2) { return DSC_SND_ENTRY<discrete_dst_gain_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)INP1,(int)INP2 ), DSE( INP0,INP1,INP2 ), null, "DISCRETE_MULTADD" ); }
-        //#define DISCRETE_ONESHOT(NODE,TRIG,AMPL,WIDTH,TYPE)                     DSC_SND_ENTRY( NODE, dst_oneshot     , DSS_NODE        , 5, DSE( 0,TRIG,AMPL,WIDTH,NODE_NC ), DSE( 0,TRIG,AMPL,WIDTH,TYPE ), NULL, "DISCRETE_ONESHOT" ),
-        //#define DISCRETE_ONESHOTR(NODE,RESET,TRIG,AMPL,WIDTH,TYPE)              DSC_SND_ENTRY( NODE, dst_oneshot     , DSS_NODE        , 5, DSE( RESET,TRIG,AMPL,WIDTH,NODE_NC ), DSE( RESET,TRIG,AMPL,WIDTH,TYPE ), NULL, "One Shot Resetable" ),
-        //#define DISCRETE_ONOFF(NODE,ENAB,INP0)                                  DSC_SND_ENTRY( NODE, dst_gain        , DSS_NODE        , 3, DSE( ENAB,INP0,NODE_NC ), DSE( 0,1,0 ), NULL, "DISCRETE_ONOFF" ),
-        //#define DISCRETE_RAMP(NODE,ENAB,RAMP,GRAD,START,END,CLAMP)              DSC_SND_ENTRY( NODE, dst_ramp        , DSS_NODE        , 6, DSE( ENAB,RAMP,GRAD,START,END,CLAMP ), DSE( ENAB,RAMP,GRAD,START,END,CLAMP ), NULL, "DISCRETE_RAMP" ),
-        //#define DISCRETE_SAMPLHOLD(NODE,INP0,CLOCK,CLKTYPE)                     DSC_SND_ENTRY( NODE, dst_samphold    , DSS_NODE        , 3, DSE( INP0,CLOCK,NODE_NC ), DSE( INP0,CLOCK,CLKTYPE ), NULL, "DISCRETE_SAMPLHOLD" ),
-        //#define DISCRETE_SWITCH(NODE,ENAB,SWITCH,INP0,INP1)                     DSC_SND_ENTRY( NODE, dst_switch      , DSS_NODE        , 4, DSE( ENAB,SWITCH,INP0,INP1 ), DSE( ENAB,SWITCH,INP0,INP1 ), NULL, "DISCRETE_SWITCH" ),
-        //#define DISCRETE_ASWITCH(NODE,CTRL,INP,THRESHOLD)                       DSC_SND_ENTRY( NODE, dst_aswitch     , DSS_NODE        , 3, DSE( CTRL,INP,THRESHOLD ), DSE( CTRL,INP, THRESHOLD), NULL, "Analog Switch" ),
-        public static discrete_block DISCRETE_TRANSFORM2(int NODE, double INP0, double INP1, string FUNCT) { return DSC_SND_ENTRY<discrete_dst_transform_node>( NODE, (int)discrete_node_type.DSS_NODE        , 2, DSE( (int)INP0,(int)INP1 ), DSE( INP0,INP1 ), FUNCT, "DISCRETE_TRANSFORM2" ); }
-        public static discrete_block DISCRETE_TRANSFORM3(int NODE, double INP0, double INP1, double INP2, string FUNCT) { return DSC_SND_ENTRY<discrete_dst_transform_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)INP1,(int)INP2 ), DSE( INP0,INP1,INP2 ), FUNCT, "DISCRETE_TRANSFORM3" ); }
-        public static discrete_block DISCRETE_TRANSFORM4(int NODE, double INP0, double INP1, double INP2, double INP3, string FUNCT) { return DSC_SND_ENTRY<discrete_dst_transform_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)INP0,(int)INP1,(int)INP2,(int)INP3 ), DSE( INP0,INP1,INP2,INP3 ), FUNCT, "DISCRETE_TRANSFORM4" ); }
-        public static discrete_block DISCRETE_TRANSFORM5(int NODE, double INP0, double INP1, double INP2, double INP3, double INP4, string FUNCT) {return DSC_SND_ENTRY<discrete_dst_transform_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)INP0,(int)INP1,(int)INP2,(int)INP3,(int)INP4 ), DSE( INP0,INP1,INP2,INP3,INP4 ), FUNCT, "DISCRETE_TRANSFORM5" ); }
-        /* Component specific */
-        //#define DISCRETE_COMP_ADDER(NODE,DATA,TABLE)                            DSC_SND_ENTRY( NODE, dst_comp_adder  , DSS_NODE        , 1, DSE( DATA ), DSE( DATA ), TABLE, "DISCRETE_COMP_ADDER" ),
-        public static discrete_block DISCRETE_DAC_R1(int NODE, double DATA, double VDATA, discrete_dac_r1_ladder LADDER) { return DSC_SND_ENTRY<discrete_dst_dac_r1_node>( NODE, (int)discrete_node_type.DSS_NODE        , 2, DSE( (int)DATA,NODE_NC ), DSE( DATA,VDATA ), LADDER, "DISCRETE_DAC_R1" ); }
-        public static discrete_block DISCRETE_DIODE_MIXER2(int NODE, double IN0, double IN1, double [] TABLE) { return DSC_SND_ENTRY<discrete_dst_diode_mix_node>( NODE, (int)discrete_node_type.DSS_NODE        , 2, DSE( (int)IN0,(int)IN1 ), DSE( IN0,IN1 ), TABLE, "DISCRETE_DIODE_MIXER2" ); }
-        //#define DISCRETE_DIODE_MIXER3(NODE,IN0,IN1,IN2,TABLE)                   DSC_SND_ENTRY( NODE, dst_diode_mix   , DSS_NODE        , 3, DSE( IN0,IN1,IN2 ), DSE( IN0,IN1,IN2 ), TABLE, "DISCRETE_DIODE_MIXER3" ),
-        //#define DISCRETE_DIODE_MIXER4(NODE,IN0,IN1,IN2,IN3,TABLE)               DSC_SND_ENTRY( NODE, dst_diode_mix   , DSS_NODE        , 4, DSE( IN0,IN1,IN2,IN3 ), DSE( IN0,IN1,IN2,IN3 ), TABLE, "DISCRETE_DIODE_MIXER4" ),
-        //#define DISCRETE_INTEGRATE(NODE,TRG0,TRG1,INFO)                         DSC_SND_ENTRY( NODE, dst_integrate   , DSS_NODE        , 2, DSE( TRG0,TRG1 ), DSE( TRG0,TRG1 ), INFO, "DISCRETE_INTEGRATE" ),
-        public static discrete_block DISCRETE_MIXER2(int NODE, double ENAB, double IN0, double IN1, discrete_mixer_desc INFO) { return DSC_SND_ENTRY<discrete_dst_mixer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)IN0,(int)IN1 ), DSE( ENAB,IN0,IN1 ), INFO, "DISCRETE_MIXER2" ); }
-        public static discrete_block DISCRETE_MIXER3(int NODE, double ENAB, double IN0, double IN1, double IN2, discrete_mixer_desc INFO) { return DSC_SND_ENTRY<discrete_dst_mixer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)IN0,(int)IN1,(int)IN2 ), DSE( ENAB,IN0,IN1,IN2 ), INFO, "DISCRETE_MIXER3" ); }
-        public static discrete_block DISCRETE_MIXER4(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, discrete_mixer_desc INFO) { return DSC_SND_ENTRY<discrete_dst_mixer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)ENAB,(int)IN0,(int)IN1,(int)IN2,(int)IN3 ), DSE( ENAB,IN0,IN1,IN2,IN3 ), INFO, "DISCRETE_MIXER4" ); }
-        public static discrete_block DISCRETE_MIXER5(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, double IN4, discrete_mixer_desc INFO) { return DSC_SND_ENTRY<discrete_dst_mixer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)IN0,(int)IN1,(int)IN2,(int)IN3,(int)IN4 ), DSE( ENAB,IN0,IN1,IN2,IN3,IN4 ), INFO, "DISCRETE_MIXER5" ); }
-        public static discrete_block DISCRETE_MIXER6(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, double IN4, double IN5, discrete_mixer_desc INFO) { return DSC_SND_ENTRY<discrete_dst_mixer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 7, DSE( (int)ENAB,(int)IN0,(int)IN1,(int)IN2,(int)IN3,(int)IN4,(int)IN5 ), DSE( ENAB,IN0,IN1,IN2,IN3,IN4,IN5 ), INFO, "DISCRETE_MIXER6" ); }
-        //#define DISCRETE_MIXER7(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,INFO)     DSC_SND_ENTRY( NODE, dst_mixer       , DSS_NODE        , 8, DSE( ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6 ), DSE( ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6 ), INFO, "DISCRETE_MIXER7" ),
-        //#define DISCRETE_MIXER8(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,INFO) DSC_SND_ENTRY( NODE, dst_mixer       , DSS_NODE        , 9, DSE( ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7 ), DSE( ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7 ), INFO, "DISCRETE_MIXER8" ),
-        //#define DISCRETE_OP_AMP(NODE,ENAB,IN0,IN1,INFO)                         DSC_SND_ENTRY( NODE, dst_op_amp      , DSS_NODE        , 3, DSE( ENAB,IN0,IN1 ), DSE( ENAB,IN0,IN1 ), INFO, "DISCRETE_OP_AMP" ),
-        //#define DISCRETE_OP_AMP_ONESHOT(NODE,TRIG,INFO)                         DSC_SND_ENTRY( NODE, dst_op_amp_1sht , DSS_NODE        , 1, DSE( TRIG ), DSE( TRIG ), INFO, "DISCRETE_OP_AMP_ONESHOT" ),
-        //#define DISCRETE_OP_AMP_TRIG_VCA(NODE,TRG0,TRG1,TRG2,IN0,IN1,INFO)      DSC_SND_ENTRY( NODE, dst_tvca_op_amp , DSS_NODE        , 5, DSE( TRG0,TRG1,TRG2,IN0,IN1 ), DSE( TRG0,TRG1,TRG2,IN0,IN1 ), INFO, "DISCRETE_OP_AMP_TRIG_VCA" ),
-        //#define DISCRETE_VCA(NODE,ENAB,IN0,CTRL,TYPE)                           DSC_SND_ENTRY( NODE, dst_vca         , DSS_NODE        , 4, DSE( ENAB,IN0,CTRL,NODE_NC ), DSE( ENAB,IN0,CTRL,TYPE ), NULL, "DISCRETE_VCA" ),
-        //#define DISCRETE_XTIME_BUFFER(NODE,IN0,LOW,HIGH)                        DSC_SND_ENTRY( NODE, dst_xtime_buffer, DSS_NODE        , 4, DSE( IN0,LOW,HIGH,NODE_NC ), DSE( IN0,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_BUFFER" ),
-        //#define DISCRETE_XTIME_INVERTER(NODE,IN0,LOW,HIGH)                      DSC_SND_ENTRY( NODE, dst_xtime_buffer, DSS_NODE        , 4, DSE( IN0,LOW,HIGH,NODE_NC ), DSE( IN0,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_INVERTER" ),
-        //#define DISCRETE_XTIME_AND(NODE,IN0,IN1,LOW,HIGH)                       DSC_SND_ENTRY( NODE, dst_xtime_and   , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_AND" ),
-        //#define DISCRETE_XTIME_NAND(NODE,IN0,IN1,LOW,HIGH)                      DSC_SND_ENTRY( NODE, dst_xtime_and   , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_NAND" ),
-        //#define DISCRETE_XTIME_OR(NODE,IN0,IN1,LOW,HIGH)                        DSC_SND_ENTRY( NODE, dst_xtime_or    , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_OR" ),
-        //#define DISCRETE_XTIME_NOR(NODE,IN0,IN1,LOW,HIGH)                       DSC_SND_ENTRY( NODE, dst_xtime_or    , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_NOR" ),
-        //#define DISCRETE_XTIME_XOR(NODE,IN0,IN1,LOW,HIGH)                       DSC_SND_ENTRY( NODE, dst_xtime_xor   , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_XOR" ),
-        //#define DISCRETE_XTIME_XNOR(NODE,IN0,IN1,LOW,HIGH)                      DSC_SND_ENTRY( NODE, dst_xtime_xnor  , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_XNOR" ),
-
-        /* from disc_flt.inc */
-        /* generic modules */
-        //#define DISCRETE_FILTER1(NODE,ENAB,INP0,FREQ,TYPE)                      DSC_SND_ENTRY( NODE, dst_filter1     , DSS_NODE        , 4, DSE( ENAB,INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,FREQ,TYPE ), NULL, "DISCRETE_FILTER1" ),
-        //#define DISCRETE_FILTER2(NODE,ENAB,INP0,FREQ,DAMP,TYPE)                 DSC_SND_ENTRY( NODE, dst_filter2     , DSS_NODE        , 5, DSE( ENAB,INP0,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,FREQ,DAMP,TYPE ), NULL, "DISCRETE_FILTER2" ),
-        /* Component specific */
-        public static discrete_block DISCRETE_SALLEN_KEY_FILTER(int NODE, double ENAB, double INP0, double TYPE, discrete_op_amp_filt_info INFO) { return DSC_SND_ENTRY<discrete_dst_sallen_key_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)INP0,NODE_NC ), DSE( ENAB,INP0,TYPE ), INFO, "DISCRETE_SALLEN_KEY_FILTER" ); }
-        public static discrete_block DISCRETE_CRFILTER(int NODE, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_crfilter_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,OPT_NODE(RVAL),OPT_NODE(CVAL) ), DSE( INP0,RVAL,CVAL ), null, "DISCRETE_CRFILTER" ); }
-        //#define DISCRETE_CRFILTER_VREF(NODE,INP0,RVAL,CVAL,VREF)                DSC_SND_ENTRY( NODE, dst_crfilter    , DSS_NODE        , 4, DSE( INP0,OPT_NODE(RVAL),OPT_NODE(CVAL),VREF ), DSE( INP0,RVAL,CVAL,VREF ), NULL, "DISCRETE_CRFILTER_VREF" ),
-        public static discrete_block DISCRETE_OP_AMP_FILTER(int NODE, double ENAB, double INP0, double INP1, double TYPE, discrete_op_amp_filt_info INFO) { return DSC_SND_ENTRY<discrete_dst_op_amp_filt_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,(int)INP1,NODE_NC ), DSE( ENAB,INP0,INP1,TYPE ), INFO, "DISCRETE_OP_AMP_FILTER" ); }
-        //#define DISCRETE_RC_CIRCUIT_1(NODE,INP0,INP1,RVAL,CVAL)                 DSC_SND_ENTRY( NODE, dst_rc_circuit_1, DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,RVAL,CVAL ), NULL, "DISCRETE_RC_CIRCUIT_1" ),
-        public static discrete_block DISCRETE_RCDISC(int NODE, double ENAB, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcdisc_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL,CVAL ), null, "DISCRETE_RCDISC" ); }
-        public static discrete_block DISCRETE_RCDISC2(int NODE, double SWITCH, double INP0, double RVAL0, double INP1, double RVAL1, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcdisc2_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)SWITCH,(int)INP0,NODE_NC,(int)INP1,NODE_NC,NODE_NC ), DSE( SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL ), null, "DISCRETE_RCDISC2" ); }
-        //#define DISCRETE_RCDISC3(NODE,ENAB,INP0,RVAL0,RVAL1,CVAL,DJV)           DSC_SND_ENTRY( NODE, dst_rcdisc3     , DSS_NODE        , 6, DSE( ENAB,INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL0,RVAL1,CVAL,DJV ), NULL, "DISCRETE_RCDISC3" ),
-        //#define DISCRETE_RCDISC4(NODE,ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE) DSC_SND_ENTRY( NODE, dst_rcdisc4     , DSS_NODE        , 8, DSE( ENAB,INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE ), NULL, "DISCRETE_RCDISC4" ),
-        public static discrete_block DISCRETE_RCDISC5(int NODE, double ENAB, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcdisc5_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL,CVAL ), null, "DISCRETE_RCDISC5" ); }
-        public static discrete_block DISCRETE_RCDISC_MODULATED(int NODE, double INP0, double INP1, double RVAL0, double RVAL1, double RVAL2, double RVAL3, double CVAL, double VP) { return DSC_SND_ENTRY<discrete_dst_rcdisc_mod_node>( NODE, (int)discrete_node_type.DSS_NODE        , 8, DSE( (int)INP0,(int)INP1,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( INP0,INP1,RVAL0,RVAL1,RVAL2,RVAL3,CVAL,VP ), null, "DISCRETE_RCDISC_MODULATED" ); }
-        public static discrete_block DISCRETE_RCFILTER(int NODE, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcfilter_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,OPT_NODE(RVAL),OPT_NODE(CVAL) ), DSE( INP0,RVAL,CVAL ), null, "DISCRETE_RCFILTER" ); }
-        //#define DISCRETE_RCFILTER_VREF(NODE,INP0,RVAL,CVAL,VREF)                DSC_SND_ENTRY( NODE, dst_rcfilter    , DSS_NODE        , 4, DSE( INP0,OPT_NODE(RVAL),OPT_NODE(CVAL),VREF ), DSE( INP0,RVAL,CVAL,VREF ), NULL, "DISCRETE_RCFILTER_VREF" ),
-        public static discrete_block DISCRETE_RCFILTER_SW(int NODE, double ENAB, double INP0, double SW, double RVAL, double CVAL1, double CVAL2, double CVAL3, double CVAL4) { return DSC_SND_ENTRY<discrete_dst_rcfilter_sw_node>( NODE, (int)discrete_node_type.DSS_NODE    , 8, DSE( (int)ENAB,(int)INP0,(int)SW,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,SW,RVAL,CVAL1,CVAL2,CVAL3,CVAL4 ), null, "DISCRETE_RCFILTER_SW" ); }
-        public static discrete_block DISCRETE_RCINTEGRATE(int NODE, double INP0, double RVAL0, double RVAL1, double RVAL2, double CVAL, double vP, double TYPE) { return DSC_SND_ENTRY<discrete_dst_rcintegrate_node>( NODE, (int)discrete_node_type.DSS_NODE        , 7, DSE( (int)INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( INP0,RVAL0,RVAL1,RVAL2,CVAL,vP,TYPE ), null, "DISCRETE_RCINTEGRATE" ); }
-        /* For testing - seem to be buggered.  Use versions not ending in N. */
-        //#define DISCRETE_RCDISCN(NODE,ENAB,INP0,RVAL,CVAL)                      DSC_SND_ENTRY( NODE, dst_rcdiscn     , DSS_NODE        , 4, DSE( ENAB,INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL,CVAL ), NULL, "DISCRETE_RCDISCN" ),
-        //#define DISCRETE_RCDISC2N(NODE,SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL)       DSC_SND_ENTRY( NODE, dst_rcdisc2n    , DSS_NODE        , 6, DSE( SWITCH,INP0,NODE_NC,INP1,NODE_NC,NODE_NC ), DSE( SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL ), NULL, "DISCRETE_RCDISC2N" ),
-        //#define DISCRETE_RCFILTERN(NODE,ENAB,INP0,RVAL,CVAL)                    DSC_SND_ENTRY( NODE, dst_rcfiltern   , DSS_NODE        , 4, DSE( ENAB,INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL,CVAL ), NULL, "DISCRETE_RCFILTERN" ),
-
-        /* from disc_dev.inc */
-        /* generic modules */
-        //#define DISCRETE_CUSTOM1(NODE,CLASS,IN0,INFO)                                 DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 1, DSE( IN0 ), DSE( IN0 ), INFO, "DISCRETE_CUSTOM1" ),
-        //#define DISCRETE_CUSTOM2(NODE,CLASS,IN0,IN1,INFO)                             DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 2, DSE( IN0,IN1 ), DSE( IN0,IN1 ), INFO, "DISCRETE_CUSTOM2" ),
-        //#define DISCRETE_CUSTOM3(NODE,CLASS,IN0,IN1,IN2,INFO)                         DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 3, DSE( IN0,IN1,IN2 ), DSE( IN0,IN1,IN2 ), INFO, "DISCRETE_CUSTOM3" ),
-        //#define DISCRETE_CUSTOM4(NODE,CLASS,IN0,IN1,IN2,IN3,INFO)                     DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 4, DSE( IN0,IN1,IN2,IN3 ), DSE( IN0,IN1,IN2,IN3 ), INFO, "DISCRETE_CUSTOM4" ),
-        //#define DISCRETE_CUSTOM5(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,INFO)                 DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 5, DSE( IN0,IN1,IN2,IN3,IN4 ), DSE( IN0,IN1,IN2,IN3,IN4 ), INFO, "DISCRETE_CUSTOM5" ),
-        //#define DISCRETE_CUSTOM6(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,IN5,INFO)             DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 6, DSE( IN0,IN1,IN2,IN3,IN4,IN5 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5 ), INFO, "DISCRETE_CUSTOM6" ),
-        //#define DISCRETE_CUSTOM7(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,IN5,IN6,INFO)         DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 7, DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6 ), INFO, "DISCRETE_CUSTOM7" ),
-        public static discrete_block DISCRETE_CUSTOM8<CLASS>(int NODE, double IN0, double IN1, double IN2, double IN3, double IN4, double IN5, double IN6, double IN7, object INFO) where CLASS : discrete_base_node, new() { return DSC_SND_ENTRY<CLASS>( NODE, (int)discrete_node_type.DST_CUSTOM      , 8, DSE( (int)IN0,(int)IN1,(int)IN2,(int)IN3,(int)IN4,(int)IN5,(int)IN6,(int)IN7 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7 ), INFO, "DISCRETE_CUSTOM8" ); }
-        //#define DISCRETE_CUSTOM9(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8,INFO) DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 9, DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8 ), INFO, "DISCRETE_CUSTOM9" ),
-
-        /* Component specific */
-        //#define DISCRETE_555_ASTABLE(NODE,RESET,R1,R2,C,OPTIONS)                DSC_SND_ENTRY( NODE, dsd_555_astbl   , DSS_NODE        , 5, DSE( RESET,R1,R2,C,NODE_NC ), DSE( RESET,R1,R2,C,-1 ), OPTIONS, "DISCRETE_555_ASTABLE" ),
-        public static discrete_block DISCRETE_555_ASTABLE_CV(int NODE, double RESET, double R1, double R2, double C, double CTRLV, discrete_555_desc OPTIONS) { return DSC_SND_ENTRY<discrete_dsd_555_astbl_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)RESET,(int)R1,(int)R2,(int)C,(int)CTRLV ), DSE( RESET,R1,R2,C,CTRLV ), OPTIONS, "DISCRETE_555_ASTABLE_CV" ); }
-        //#define DISCRETE_555_MSTABLE(NODE,RESET,TRIG,R,C,OPTIONS)               DSC_SND_ENTRY( NODE, dsd_555_mstbl   , DSS_NODE        , 4, DSE( RESET,TRIG,R,C ), DSE( RESET,TRIG,R,C ), OPTIONS, "DISCRETE_555_MSTABLE" ),
-        public static discrete_block DISCRETE_555_CC(int NODE, double RESET, double VIN, double R, double C, double RBIAS, double RGND, double RDIS, discrete_555_cc_desc OPTIONS) { return DSC_SND_ENTRY<discrete_dsd_555_cc_node>( NODE, (int)discrete_node_type.DSS_NODE        , 7, DSE( (int)RESET,(int)VIN,(int)R,(int)C,(int)RBIAS,(int)RGND,(int)RDIS ), DSE( RESET,VIN,R,C,RBIAS,RGND,RDIS ), OPTIONS, "DISCRETE_555_CC" ); }
-        //#define DISCRETE_555_VCO1(NODE,RESET,VIN,OPTIONS)                       DSC_SND_ENTRY( NODE, dsd_555_vco1    , DSS_NODE        , 3, DSE( RESET,VIN,NODE_NC ), DSE( RESET,VIN,-1 ), OPTIONS, "DISCRETE_555_VCO1" ),
-        //#define DISCRETE_555_VCO1_CV(NODE,RESET,VIN,CTRLV,OPTIONS)              DSC_SND_ENTRY( NODE, dsd_555_vco1    , DSS_NODE        , 3, DSE( RESET,VIN,CTRLV ), DSE( RESET,VIN,CTRLV ), OPTIONS, "DISCRETE_555_VCO1_CV" ),
-        //#define DISCRETE_566(NODE,VMOD,R,C,VPOS,VNEG,VCHARGE,OPTIONS)           DSC_SND_ENTRY( NODE, dsd_566         , DSS_NODE        , 7, DSE( VMOD,R,C,NODE_NC,NODE_NC,VCHARGE,NODE_NC ), DSE( VMOD,R,C,VPOS,VNEG,VCHARGE,OPTIONS ), NULL, "DISCRETE_566" ),
-        //#define DISCRETE_74LS624(NODE,ENAB,VMOD,VRNG,C,R_FREQ_IN,C_FREQ_IN,R_RNG_IN,OUTTYPE) DSC_SND_ENTRY( NODE, dsd_ls624   , DSS_NODE        , 8, DSE( ENAB,VMOD,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,VMOD,VRNG,C,R_FREQ_IN,C_FREQ_IN,R_RNG_IN,OUTTYPE ), NULL, "DISCRETE_74LS624" ),
-
-        /* NOP */
-        //#define DISCRETE_NOP(NODE)                                              DSC_SND_ENTRY( NODE, dss_nop         , DSS_NOP         , 0, DSE( 0 ), DSE( 0 ), NULL, "DISCRETE_NOP" ),
-
-        /* logging */
-        //#define DISCRETE_CSVLOG1(NODE1)                                         DSC_SND_ENTRY( NODE_SPECIAL, dso_csvlog  , DSO_CSVLOG  , 1, DSE( NODE1 ), DSE( NODE1 ), NULL, "DISCRETE_CSVLOG1" ),
-        //#define DISCRETE_CSVLOG2(NODE1,NODE2)                                   DSC_SND_ENTRY( NODE_SPECIAL, dso_csvlog  , DSO_CSVLOG  , 2, DSE( NODE1,NODE2 ), DSE( NODE1,NODE2 ), NULL, "DISCRETE_CSVLOG2" ),
-        //#define DISCRETE_CSVLOG3(NODE1,NODE2,NODE3)                             DSC_SND_ENTRY( NODE_SPECIAL, dso_csvlog  , DSO_CSVLOG  , 3, DSE( NODE1,NODE2,NODE3 ), DSE( NODE1,NODE2,NODE3 ), NULL, "DISCRETE_CSVLOG3" ),
-        //#define DISCRETE_CSVLOG4(NODE1,NODE2,NODE3,NODE4)                       DSC_SND_ENTRY( NODE_SPECIAL, dso_csvlog  , DSO_CSVLOG  , 4, DSE( NODE1,NODE2,NODE3,NODE4 ), DSE( NODE1,NODE2,NODE3,NODE4 ), NULL, "DISCRETE_CSVLOG4" ),
-        //#define DISCRETE_CSVLOG5(NODE1,NODE2,NODE3,NODE4,NODE5)                 DSC_SND_ENTRY( NODE_SPECIAL, dso_csvlog  , DSO_CSVLOG  , 5, DSE( NODE1,NODE2,NODE3,NODE4,NODE5 ), DSE( NODE1,NODE2,NODE3,NODE4,NODE5 ), NULL, "DISCRETE_CSVLOG5" ),
-        //#define DISCRETE_WAVLOG1(NODE1,GAIN1)                                   DSC_SND_ENTRY( NODE_SPECIAL, dso_wavlog  , DSO_WAVLOG  , 2, DSE( NODE1,NODE_NC ), DSE( NODE1,GAIN1 ), NULL, "DISCRETE_WAVLOG1" ),
-        //#define DISCRETE_WAVLOG2(NODE1,GAIN1,NODE2,GAIN2)                       DSC_SND_ENTRY( NODE_SPECIAL, dso_wavlog  , DSO_WAVLOG  , 4, DSE( NODE1,NODE_NC,NODE2,NODE_NC ), DSE( NODE1,GAIN1,NODE2,GAIN2 ), NULL, "DISCRETE_WAVLOG2" ),
-
-        /* import */
-        //#define DISCRETE_IMPORT(INFO)                                           DSC_SND_ENTRY( NODE_SPECIAL, special     , DSO_IMPORT  , 0, DSE( 0 ), DSE( 0 ), &(INFO), "DISCRETE_IMPORT" ),
-        //#define DISCRETE_DELETE(NODE_FROM, NODE_TO)                             DSC_SND_ENTRY( NODE_SPECIAL, special     , DSO_DELETE  , 2, DSE( NODE_FROM, NODE_TO ), DSE( NODE_FROM, NODE_TO ), NULL, "DISCRETE_DELETE" ),
-        //#define DISCRETE_REPLACE                                                DSC_SND_ENTRY( NODE_SPECIAL, special     , DSO_REPLACE , 0, DSE( 0 ), DSE( 0 ), NULL, "DISCRETE_REPLACE" ),
-
-        /* parallel tasks */
-
-        public static discrete_block DISCRETE_TASK_START(double TASK_GROUP) { return DSC_SND_ENTRY<discrete_special_node>( NODE_SPECIAL, (int)discrete_node_type.DSO_TASK_START, 2, DSE( NODE_NC, NODE_NC ), DSE( TASK_GROUP, 0 ), null, "DISCRETE_TASK_START" ); }
-        public static discrete_block DISCRETE_TASK_END() { return DSC_SND_ENTRY<discrete_special_node>( NODE_SPECIAL, (int)discrete_node_type.DSO_TASK_END  , 0, DSE( 0 ), DSE( 0.0 ), null, "DISCRETE_TASK_END" ); }
-        //#define DISCRETE_TASK_SYNC()                                          DSC_SND_ENTRY( NODE_SPECIAL, special     , DSO_TASK_SYNC , 0, DSE( 0 ), DSE( 0 ), NULL, "DISCRETE_TASK_SYNC" ),
-
-        /* output */
-        public static discrete_block DISCRETE_OUTPUT(double OPNODE, double GAIN) { return DSC_SND_ENTRY<discrete_dso_output_node>( NODE_SPECIAL, (int)discrete_node_type.DSO_OUTPUT   ,2, DSE( (int)OPNODE,NODE_NC ), DSE( 0,GAIN ), null, "DISCRETE_OUTPUT" ); }
-
-
-        /*************************************
-         *
-         *  Performance
-         *
-         *************************************/
-
-        /*
-         * Normally, the discrete core processes 960 samples per update.
-         * With the various buffers involved, this on a Core2 is not as
-         * performant as processing 240 samples 4 times.
-         * The setting most probably depends on CPU and which modules are
-         * run and how many tasks are defined.
-         *
-         * Values < 32 exhibit poor performance (too much overhead) while
-         * Values > 500 have a slightly worse performace (too much cache misses?).
-         */
-
-        public const int MAX_SAMPLES_PER_TASK_SLICE = 960 / 4;
-
-        /*************************************
-         *
-         *  Debugging
-         *
-         *************************************/
-
-        public const int DISCRETE_DEBUGLOG = 0;
-
-        /*************************************
-         *
-         *  Use tasks ?
-         *
-         *************************************/
-
-        public const int USE_DISCRETE_TASKS = 1;
     }
 
 
     /*************************************
-        *
-        *  Classes and structs to handle
-        *  linked lists.
-        *
-        *************************************/
-
-    /*************************************
      *
-     *  Node-specific struct types
+     *  Enumerated values for Node types
+     *  in the simulation
+     *
+     *      DSS - Discrete Sound Source
+     *      DST - Discrete Sound Transform
+     *      DSD - Discrete Sound Device
+     *      DSO - Discrete Sound Output
      *
      *************************************/
 
-    public class discrete_lfsr_desc
+    enum discrete_node_type
     {
-        public int clock_type;
-        public int bitlength;
-        public int reset_value;
+        DSS_NULL,           /* Nothing, nill, zippo, only to be used as terminating node */
+        DSS_NOP,            /* just do nothing, placeholder for potential DISCRETE_REPLACE in parent block */
 
-        public int feedback_bitsel0;
-        public int feedback_bitsel1;
-        public int feedback_function0;         /* Combines bitsel0 & bitsel1 */
+        /* standard node */
 
-        public int feedback_function1;         /* Combines funct0 & infeed bit */
+        DSS_NODE,           /* a standard node */
 
-        public int feedback_function2;         /* Combines funct1 & shifted register */
-        public int feedback_function2_mask;    /* Which bits are affected by function 2 */
+        /* Custom */
+        DST_CUSTOM,         /* whatever you want */
 
-        public int flags;
+        /* Debugging */
+        DSO_CSVLOG,         /* Dump nodes as csv file */
+        DSO_WAVLOG,     /* Dump nodes as wav file */
 
-        public int output_bit;
+        /* Parallel execution */
+        DSO_TASK_START, /* start of parallel task */
+        DSO_TASK_END,   /* end of parallel task */
 
-        public discrete_lfsr_desc(int clock_type, int bitlength, int reset_value, int feedback_bitsel0, int feedback_bitsel1, int feedback_function0, int feedback_function1, int feedback_function2, int feedback_function2_mask, int flags, int output_bit)
-        { this.clock_type = clock_type; this.bitlength = bitlength; this.reset_value = reset_value; this.feedback_bitsel0 = feedback_bitsel0; this.feedback_bitsel1 = feedback_bitsel1; this.feedback_function0 = feedback_function0; this.feedback_function1 = feedback_function1; this.feedback_function2 = feedback_function2; this.feedback_function2_mask = feedback_function2_mask; this.flags = flags; this.output_bit = output_bit; }
-    }
+        /* Output Node -- this must be the last entry in this enum! */
+        DSO_OUTPUT,         /* The final output node */
 
+        /* Import another blocklist */
+        DSO_IMPORT,         /* import from another discrete block */
+        DSO_REPLACE,        /* replace next node */
+        DSO_DELETE,         /* delete nodes */
 
-    public class discrete_dac_r1_ladder
-    {
-        public int ladderLength;       // 2 to DISC_LADDER_MAXRES.  1 would be useless.
-        public double [] r = new double[g.DISC_LADDER_MAXRES];  // Don't use 0 for valid resistors.  That is a short.
-        public double vBias;          // Voltage Bias resistor is tied to (0 = not used)
-        public double rBias;          // Additional resistor tied to vBias (0 = not used)
-        public double rGnd;           // Resistor tied to ground (0 = not used)
-        public double cFilter;        // Filtering cap (0 = not used)
-
-        public discrete_dac_r1_ladder(int ladderLength, double [] r, double vBias, double rBias, double rGnd, double cFilter)
-        { this.ladderLength = ladderLength; Array.Copy(r, this.r, r.Length); this.vBias = vBias; this.rBias = rBias; this.rGnd = rGnd; this.cFilter = cFilter; }
-    }
-
-
-    public class discrete_op_amp_filt_info
-    {
-        public double r1;
-        public double r2;
-        public double r3;
-        public double r4;
-        public double rF;
-        public double c1;
-        public double c2;
-        public double c3;
-        public double vRef;
-        public double vP;
-        public double vN;
-
-        public discrete_op_amp_filt_info(double r1, double r2, double r3, double r4, double rF, double c1, double c2, double c3, double vRef = 0, double vP = 0, double vN = 0)
-        { this.r1 = r1; this.r2 = r2; this.r3 = r3; this.r4 = r4; this.rF = rF; this.c1 = c1; this.c2 = c2; this.c3 = c3; this.vRef = vRef; this.vP = vP; this.vN = vN;  }
-    }
-
-
-    public class discrete_555_desc
-    {
-        public int     options;    /* bit mapped options */
-        public double  v_pos;      /* B+ voltage of 555 */
-        public double  v_charge;   /* voltage to charge circuit  (Defaults to v_pos) */
-        public double  v_out_high; /* High output voltage of 555 (Defaults to v_pos - 1.2V) */
-
-        public discrete_555_desc(int options, double v_pos, double v_charge, double v_out_high)
-        { this.options = options; this.v_pos = v_pos; this.v_charge = v_charge; this.v_out_high = v_out_high; }
-    }
-
-
-    public class discrete_555_cc_desc
-    {
-        public int     options;        /* bit mapped options */
-        public double  v_pos;          /* B+ voltage of 555 */
-        public double  v_cc_source;    /* Voltage of the Constant Current source */
-        public double  v_out_high;     /* High output voltage of 555 (Defaults to v_pos - 1.2V) */
-        public double  v_cc_junction;  /* The voltage drop of the Constant Current source transistor (0 if Op Amp) */
-
-        public discrete_555_cc_desc(int options, double v_pos, double v_cc_source, double v_out_high, double v_cc_junction)
-        { this.options = options; this.v_pos = v_pos; this.v_cc_source = v_cc_source; this.v_out_high = v_out_high; this.v_cc_junction = v_cc_junction; }
-    }
-
-#if false
-    struct discrete_555_vco1_desc
-    {
-        int    options;             /* bit mapped options */
-        double r1, r2, r3, r4, c;
-        double v_pos;               /* B+ voltage of 555 */
-        double v_charge;            /* (ignored) */
-        double v_out_high;          /* High output voltage of 555 (Defaults to v_pos - 1.2V) */
-    }
-
-
-    struct discrete_adsr
-    {
-        double attack_time;  /* All times are in seconds */
-        double attack_value;
-        double decay_time;
-        double decay_value;
-        double sustain_time;
-        double sustain_value;
-        double release_time;
-        double release_value;
-    }
-#endif
-
-    public class discrete_mixer_desc
-    {
-        const int DISC_MAX_MIXER_INPUTS = 8;
-
-        public int type;
-        public double [] r = new double[DISC_MAX_MIXER_INPUTS];       /* static input resistance values.  These are in series with rNode, if used. */
-        public int [] r_node = new int[DISC_MAX_MIXER_INPUTS];  /* variable resistance nodes, if needed.  0 if not used. */
-        public double [] c = new double[DISC_MAX_MIXER_INPUTS];
-        public double rI;
-        public double rF;
-        public double cF;
-        public double cAmp;
-        public double vRef;
-        public double gain;               /* Scale value to get output close to +/- 32767 */
-
-        public discrete_mixer_desc(int type, double [] r, int [] r_node, double [] c, double rI, double rF, double cF, double cAmp, double vRef, double gain)
-        { this.type = type; Array.Copy(r, this.r, r.Length); Array.Copy(r_node, this.r_node, r_node.Length); Array.Copy(c, this.c, c.Length); this.rI = rI; this.rF = rF; this.cF = cF; this.cAmp = cAmp; this.vRef = vRef; this.gain = gain; }
+        /* Marks end of this enum -- must be last entry ! */
+        DSO_LAST
     }
 
 
@@ -1156,26 +1048,23 @@ namespace mame
         public Func<discrete_device, discrete_block, discrete_base_node> factory;  //std::unique_ptr<discrete_base_node> (*factory)(discrete_device &pdev, const discrete_block &block);
         public int type;                           /* see defines below */
         public int active_inputs;                  /* Number of active inputs on this node type */
-        public int [] input_node = new int[g.DISCRETE_MAX_INPUTS];/* input/control nodes */
-        public Pointer<double> initial;  //double          initial[DISCRETE_MAX_INPUTS];   /* Initial values */
+        public int [] input_node = new int[DISCRETE_MAX_INPUTS];/* input/control nodes */
+        public MemoryContainer<double> initial = new MemoryContainer<double>(DISCRETE_MAX_INPUTS, true);  //double          initial[DISCRETE_MAX_INPUTS];   /* Initial values */
         public Object custom;  //const void *    custom;                         /* Custom function specific initialisation data */
         string name;                        /* Node Name */
         public string mod_name;                       /* Module / class name */
 
-        public discrete_block(int node, Func<discrete_device, discrete_block, discrete_base_node> factory, int type, int active_inputs, int [] input_node, Pointer<double> initial, Object custom, string name, string mod_name)
+        public discrete_block(int node, Func<discrete_device, discrete_block, discrete_base_node> factory, int type, int active_inputs, int [] input_node, MemoryContainer<double> initial, Object custom, string name, string mod_name)
         {
             this.node = node;
             this.factory = factory;
             this.type = type;
             this.active_inputs = active_inputs;
             Array.Copy(input_node, this.input_node, input_node.Length);
+            initial.CopyTo(0, this.initial, 0, initial.Count);
             this.custom = custom;
             this.name = name;
             this.mod_name = mod_name;
-            MemoryContainer<double> initial_base = new MemoryContainer<double>(g.DISCRETE_MAX_INPUTS);
-            initial_base.Resize(10);
-            this.initial = new Pointer<double>(initial_base);
-            initial.CopyTo(0, this.initial, 0, initial.Count);
         }
     }
 
@@ -1262,7 +1151,7 @@ namespace mame
         //friend class discrete_base_node;
 
         // construction/destruction
-        public discrete_device(machine_config mconfig, device_type type, string tag, device_t owner, UInt32 clock)
+        public discrete_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
             : base(mconfig, type, tag, owner, clock)
         {
             m_intf = null;
@@ -1299,7 +1188,7 @@ namespace mame
         {
             discrete_base_node node = discrete_find_node((int)offset);
 
-            byte data;
+            uint8_t data;
 
             /* Read the node input value if allowed */
             if (node != null)
@@ -1307,11 +1196,11 @@ namespace mame
                 /* Bring the system up to now */
                 update_to_current_time();
 
-                data = (byte)node.m_output[g.NODE_CHILD_NODE_NUM((int)offset)].m_pointer[0];
+                data = (uint8_t)node.m_output[NODE_CHILD_NODE_NUM((int)offset)].m_pointer[0];
             }
             else
             {
-                throw new emu_fatalerror("discrete_sound_r read from non-existent NODE_{0}\n", offset - g.NODE_00);
+                throw new emu_fatalerror("discrete_sound_r read from non-existent NODE_{0}\n", offset - NODE_00);
             }
 
             return data;
@@ -1331,11 +1220,11 @@ namespace mame
                 if (node.interface_get(out intf))
                     intf.input_write(0, data);
                 else
-                    discrete_log("discrete_sound_w write to non-input NODE_{0}\n", offset-g.NODE_00);
+                    discrete_log("discrete_sound_w write to non-input NODE_{0}\n", offset-NODE_00);
             }
             else
             {
-                discrete_log("discrete_sound_w write to non-existent NODE_{0}\n", offset-g.NODE_00);
+                discrete_log("discrete_sound_w write to non-existent NODE_{0}\n", offset-NODE_00);
             }
         }
 
@@ -1383,14 +1272,14 @@ namespace mame
             {
                 /* Fire a work item for each task */
                 //(void)task;
-                osdcore_global.m_osdcore.osd_work_item_queue(m_queue, discrete_task.task_callback, task_list, osdcore_interface.WORK_ITEM_FLAG_AUTO_RELEASE);
+                m_osdcore.osd_work_item_queue(m_queue, discrete_task.task_callback, task_list, osdcore_interface.WORK_ITEM_FLAG_AUTO_RELEASE);
             }
 
-            osdcore_global.m_osdcore.osd_work_queue_wait(m_queue, osdcore_global.m_osdcore.osd_ticks_per_second() * 10);
+            m_osdcore.osd_work_queue_wait(m_queue, m_osdcore.osd_ticks_per_second() * 10);
 
             if (m_profiling != 0)
             {
-                m_total_samples += (UInt64)samples;
+                m_total_samples += (uint64_t)samples;
                 m_total_stream_updates++;
             }
         }
@@ -1401,7 +1290,7 @@ namespace mame
         //-------------------------------------------------
         public void discrete_log(string format, params object [] args)
         {
-            if (discrete_global.DISCRETE_DEBUGLOG != 0)
+            if (DISCRETE_DEBUGLOG != 0)
             {
                 throw new emu_unimplemented();
 #if false
@@ -1430,7 +1319,7 @@ namespace mame
 
             if (node != null)
             {
-                return new Pointer<double>(node.m_output[g.NODE_CHILD_NODE_NUM(onode)].m_pointer);  //&(node->m_output[NODE_CHILD_NODE_NUM(onode)]);
+                return new Pointer<double>(node.m_output[NODE_CHILD_NODE_NUM(onode)].m_pointer);  //&(node->m_output[NODE_CHILD_NODE_NUM(onode)]);
             }
             else
             {
@@ -1446,10 +1335,10 @@ namespace mame
         /* get node */
         public discrete_base_node discrete_find_node(int node)
         {
-            if (node < g.NODE_START || node > g.NODE_END)
+            if (node < NODE_START || node > NODE_END)
                 return null;
 
-            return m_indexed_node[g.NODE_INDEX(node)];
+            return m_indexed_node[NODE_INDEX(node)];
         }
 
         /* are we profiling */
@@ -1485,12 +1374,11 @@ namespace mame
             m_total_stream_updates = 0;
 
             /* create the logfile */
-            name = string.Format("discrete{0}.log", tag());  //sprintf(name, "discrete%s.log", this->tag());
 
             //throw new emu_unimplemented();
 #if false
             if (DISCRETE_DEBUGLOG)
-                m_disclogfile = fopen(name, "w");
+                m_disclogfile = fopen(util::string_format("discrete%s.log", this->tag()).c_str(), "w");
 #endif
 
             /* enable profiling */
@@ -1513,7 +1401,7 @@ namespace mame
             m_node_list.clear();
 
             /* allocate memory to hold pointers to nodes by index */
-            m_indexed_node = new discrete_base_node [g.DISCRETE_MAX_NODES];  //m_indexed_node = make_unique_clear<discrete_base_node * []>(DISCRETE_MAX_NODES);
+            m_indexed_node = new discrete_base_node [DISCRETE_MAX_NODES];  //m_indexed_node = make_unique_clear<discrete_base_node * []>(DISCRETE_MAX_NODES);
 
             /* initialize the node data */
             init_nodes(block_list);
@@ -1525,7 +1413,7 @@ namespace mame
             }
 
             /* allocate a queue */
-            m_queue = osdcore_global.m_osdcore.osd_work_queue_alloc((int)(osdcore_interface.WORK_QUEUE_FLAG_MULTI | osdcore_interface.WORK_QUEUE_FLAG_HIGH_FREQ));
+            m_queue = m_osdcore.osd_work_queue_alloc((int)(osdcore_interface.WORK_QUEUE_FLAG_MULTI | osdcore_interface.WORK_QUEUE_FLAG_HIGH_FREQ));
 
             /* Process nodes which have a start func */
             foreach (var node in m_node_list)
@@ -1548,7 +1436,7 @@ namespace mame
         {
             if (m_queue != null)
             {
-                osdcore_global.m_osdcore.osd_work_queue_free(m_queue);
+                m_osdcore.osd_work_queue_free(m_queue);
             }
 
             if (m_profiling != 0)
@@ -1563,7 +1451,7 @@ namespace mame
                 node.stop();
             }
 
-            if (discrete_global.DISCRETE_DEBUGLOG != 0)
+            if (DISCRETE_DEBUGLOG != 0)
             {
                 throw new emu_unimplemented();
 #if false
@@ -1605,7 +1493,7 @@ namespace mame
                 /* scan imported */
                 if (intf[node_count].type == (int)discrete_node_type.DSO_IMPORT)
                 {
-                    discrete_log("discrete_build_list() - DISCRETE_IMPORT @ NODE_{0}", g.NODE_INDEX(intf[node_count].node));
+                    discrete_log("discrete_build_list() - DISCRETE_IMPORT @ NODE_{0}", NODE_INDEX(intf[node_count].node));
                     discrete_build_list((discrete_block [])intf[node_count].custom, block_list);
                 }
                 else if (intf[node_count].type == (int)discrete_node_type.DSO_REPLACE)
@@ -1619,12 +1507,12 @@ namespace mame
                     {
                         discrete_block block = block_list[i];
 
-                        if (block.type != g.NODE_SPECIAL)
+                        if (block.type != NODE_SPECIAL)
                         {
                             if (block.node == intf[node_count].node)
                             {
                                 block_list[i] = intf[node_count];
-                                discrete_log("discrete_build_list() - DISCRETE_REPLACE @ NODE_{0}", g.NODE_INDEX(intf[node_count].node));
+                                discrete_log("discrete_build_list() - DISCRETE_REPLACE @ NODE_{0}", NODE_INDEX(intf[node_count].node));
                                 found = true;
                                 break;
                             }
@@ -1632,7 +1520,7 @@ namespace mame
                     }
 
                     if (!found)
-                        throw new emu_fatalerror("discrete_build_list: DISCRETE_REPLACE did not found node {0}\n", g.NODE_INDEX(intf[node_count].node));
+                        throw new emu_fatalerror("discrete_build_list: DISCRETE_REPLACE did not found node {0}\n", NODE_INDEX(intf[node_count].node));
 
                 }
                 else if (intf[node_count].type == (int)discrete_node_type.DSO_DELETE)
@@ -1646,7 +1534,7 @@ namespace mame
                         if ((block.node >= intf[node_count].input_node[0]) &&
                                 (block.node <= intf[node_count].input_node[1]))
                         {
-                            discrete_log("discrete_build_list() - DISCRETE_DELETE deleted NODE_{0}", g.NODE_INDEX(block.node));
+                            discrete_log("discrete_build_list() - DISCRETE_DELETE deleted NODE_{0}", NODE_INDEX(block.node));
                             deletethem.push_back(i);
                         }
                     }
@@ -1677,20 +1565,20 @@ namespace mame
                 discrete_block block = block_list[i];
 
                 /* make sure we don't have too many nodes overall */
-                if (node_count > g.DISCRETE_MAX_NODES)
-                    throw new emu_fatalerror("discrete_start() - Upper limit of {0} nodes exceeded, have you terminated the interface block?\n", g.DISCRETE_MAX_NODES);
+                if (node_count > DISCRETE_MAX_NODES)
+                    throw new emu_fatalerror("discrete_start() - Upper limit of {0} nodes exceeded, have you terminated the interface block?\n", DISCRETE_MAX_NODES);
 
                 /* make sure the node number is in range */
-                if (block.node < g.NODE_START || block.node > g.NODE_END)
+                if (block.node < NODE_START || block.node > NODE_END)
                     throw new emu_fatalerror("discrete_start() - Invalid node number on node {0} descriptor\n", block.node);
 
                 /* make sure the node type is valid */
                 if (block.type > (int)discrete_node_type.DSO_OUTPUT)
-                    throw new emu_fatalerror("discrete_start() - Invalid function type on NODE_{0}\n", g.NODE_INDEX(block.node));
+                    throw new emu_fatalerror("discrete_start() - Invalid function type on NODE_{0}\n", NODE_INDEX(block.node));
 
                 /* make sure this is a main node */
-                if (g.NODE_CHILD_NODE_NUM(block.node) > 0)
-                    throw new emu_fatalerror("discrete_start() - Child node number on NODE_{0}\n", g.NODE_INDEX(block.node));
+                if (NODE_CHILD_NODE_NUM(block.node) > 0)
+                    throw new emu_fatalerror("discrete_start() - Child node number on NODE_{0}\n", NODE_INDEX(block.node));
 
                 node_count++;
             }
@@ -1741,15 +1629,15 @@ namespace mame
             total = list_run_time(m_node_list);
             count = (int)m_node_list.size();
             /* print statistics */
-            g.osd_printf_info("Total Samples  : {0}\n", m_total_samples);
+            osd_printf_info("Total Samples  : {0}\n", m_total_samples);
             tresh = total / (uint64_t)count;
-            g.osd_printf_info("Threshold (mean): {0}\n", tresh / m_total_samples);
+            osd_printf_info("Threshold (mean): {0}\n", tresh / m_total_samples);
             foreach (var node in m_node_list)
             {
                 discrete_step_interface step;
                 if (node.interface_get(out step))
                     if (step.run_time > tresh)
-                        g.osd_printf_info("{0}: {1} {2} {3}\n", node.index(), node.module_name(), (double)step.run_time / (double)total * 100.0, ((double)step.run_time) / (double)m_total_samples);
+                        osd_printf_info("{0}: {1} {2} {3}\n", node.index(), node.module_name(), (double)step.run_time / (double)total * 100.0, ((double)step.run_time) / (double)m_total_samples);
             }
 
             /* Task information */
@@ -1757,10 +1645,10 @@ namespace mame
             {
                 double tt = step_list_run_time(task.step_list);
 
-                g.osd_printf_info("Task({0}): {1} {2}\n", task.task_group, tt / (double)total * 100.0, tt / (double)m_total_samples);
+                osd_printf_info("Task({0}): {1} {2}\n", task.task_group, tt / (double)total * 100.0, tt / (double)m_total_samples);
             }
 
-            g.osd_printf_info("Average samples/double->update: {0}\n", (double)m_total_samples / (double)m_total_stream_updates);
+            osd_printf_info("Average samples/double->update: {0}\n", (double)m_total_samples / (double)m_total_stream_updates);
         }
 
         /*************************************
@@ -1775,7 +1663,7 @@ namespace mame
             bool has_tasks = false;
 
             /* check whether we have tasks ... */
-            if (g.USE_DISCRETE_TASKS != 0)
+            if (USE_DISCRETE_TASKS != 0)
             {
                 for (int i = 0; !has_tasks && i < (int)block_list.size(); i++)
                 {
@@ -1802,7 +1690,7 @@ namespace mame
                 m_node_list.push_back(block.factory(this, block));
                 discrete_base_node node = m_node_list.back();
 
-                if (block.node == g.NODE_SPECIAL)
+                if (block.node == NODE_SPECIAL)
                 {
                     // keep track of special nodes
                     switch (block.type)
@@ -1822,7 +1710,7 @@ namespace mame
 
                         /* Task processing */
                         case (int)discrete_node_type.DSO_TASK_START:
-                            if (g.USE_DISCRETE_TASKS != 0)
+                            if (USE_DISCRETE_TASKS != 0)
                             {
                                 if (task != null)
                                     throw new emu_fatalerror("init_nodes() - Nested DISCRETE_START_TASK.\n");
@@ -1830,14 +1718,14 @@ namespace mame
                                 task_list.push_back(new discrete_task(this));
                                 task = task_list.back();
                                 task.task_group = (int)block.initial[0];
-                                if (task.task_group < 0 || task.task_group >= g.DISCRETE_MAX_TASK_GROUPS)
-                                    g.fatalerror("discrete_dso_task: illegal task_group {0}\n", task.task_group);
+                                if (task.task_group < 0 || task.task_group >= DISCRETE_MAX_TASK_GROUPS)
+                                    fatalerror("discrete_dso_task: illegal task_group {0}\n", task.task_group);
                                 //logerror("task group %d\n", task->task_group);
                             }
                             break;
 
                         case (int)discrete_node_type.DSO_TASK_END:
-                            if (g.USE_DISCRETE_TASKS != 0)
+                            if (USE_DISCRETE_TASKS != 0)
                             {
                                 if (task == null)
                                     throw new emu_fatalerror("init_nodes() - NO DISCRETE_START_TASK.\n");
@@ -1852,10 +1740,10 @@ namespace mame
                 {
                     // otherwise, make sure we are not a duplicate, and put ourselves into the indexed list
 
-                    if (m_indexed_node[g.NODE_INDEX(block.node)] != null)
-                        throw new emu_fatalerror("init_nodes() - Duplicate entries for NODE_{0}\n", g.NODE_INDEX(block.node));
+                    if (m_indexed_node[NODE_INDEX(block.node)] != null)
+                        throw new emu_fatalerror("init_nodes() - Duplicate entries for NODE_{0}\n", NODE_INDEX(block.node));
 
-                    m_indexed_node[g.NODE_INDEX(block.node)] = node;
+                    m_indexed_node[NODE_INDEX(block.node)] = node;
                 }
 
                 // our running order just follows the order specified
@@ -1870,7 +1758,7 @@ namespace mame
                         task.step_list.push_back(step);
                 }
 
-                if (g.USE_DISCRETE_TASKS != 0 && block.type == (int)discrete_node_type.DSO_TASK_END)
+                if (USE_DISCRETE_TASKS != 0 && block.type == (int)discrete_node_type.DSO_TASK_END)
                 {
                     task = null;
                 }
@@ -1892,7 +1780,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(DISCRETE, discrete_sound_device, "discrete", "Discrete Sound")
         static device_t device_creator_discrete_sound_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new discrete_sound_device(mconfig, tag, owner, clock); }
-        public static readonly device_type DISCRETE = g.DEFINE_DEVICE_TYPE(device_creator_discrete_sound_device, "discrete", "Discrete Sound");
+        public static readonly device_type DISCRETE = DEFINE_DEVICE_TYPE(device_creator_discrete_sound_device, "discrete", "Discrete Sound");
 
 
         //typedef std::vector<discrete_dss_input_stream_node *> istream_node_list_t;
@@ -2044,19 +1932,20 @@ namespace mame
 
 
         /* calculate charge exponent using discrete sample time */
-        protected double RC_CHARGE_EXP(double rc) { return 1.0 - Math.Exp(-sample_time() / rc); }
+        protected double RC_CHARGE_EXP(double rc) { return discrete_global.RC_CHARGE_EXP(this, rc); }
 
         /* calculate discharge exponent using discrete sample time */
-        protected double RC_DISCHARGE_EXP(double rc) { return Math.Exp(-sample_time() / rc); }
+        protected double RC_DISCHARGE_EXP(double rc) { return discrete_global.RC_DISCHARGE_EXP(this, rc); }
 
 
         //#define DISCRETE_INPUT(_num)                  (*(this->m_input[_num]))
         //#define DISCRETE_INPUT(_num)                    (input(_num))
-        public double DISCRETE_INPUT(int num) { return input(num); }
+        public double DISCRETE_INPUT(int num) { return discrete_global.DISCRETE_INPUT(num, input); }
 
 
-        public PointerRef<double> [] m_output = new PointerRef<double> [g.DISCRETE_MAX_OUTPUTS];  //double                          m_output[DISCRETE_MAX_OUTPUTS];     /* The node's last output value */
-        public PointerRef<double> [] m_input = new PointerRef<double> [g.DISCRETE_MAX_INPUTS];  //const double *                  m_input[DISCRETE_MAX_INPUTS];       /* Addresses of Input values */
+
+        public PointerRef<double> [] m_output = new PointerRef<double> [DISCRETE_MAX_OUTPUTS];  //double                          m_output[DISCRETE_MAX_OUTPUTS];     /* The node's last output value */
+        public PointerRef<double> [] m_input = new PointerRef<double> [DISCRETE_MAX_INPUTS];  //const double *                  m_input[DISCRETE_MAX_INPUTS];       /* Addresses of Input values */
         protected discrete_device m_device;                           /* Points to the parent */
 
 
@@ -2091,9 +1980,9 @@ namespace mame
             //m_output[0][0] = 0.0;
 
 
-            for (int i = 0; i < g.DISCRETE_MAX_OUTPUTS; i++)
+            for (int i = 0; i < DISCRETE_MAX_OUTPUTS; i++)
                 m_output[i] = new PointerRef<double>(new Pointer<double>(new MemoryContainer<double>(new double [] { 0 })));
-            for (int i = 0; i < g.DISCRETE_MAX_INPUTS; i++)
+            for (int i = 0; i < DISCRETE_MAX_INPUTS; i++)
                 m_input[i] = new PointerRef<double>(new Pointer<double>(new MemoryContainer<double>(new double [] { 0 })));
         }
 
@@ -2106,8 +1995,8 @@ namespace mame
 
         public virtual void save_state()
         {
-            if (m_block.node != g.NODE_SPECIAL)
-                m_device.save_item(g.NAME(new { m_output }), m_block.node);
+            if (m_block.node != NODE_SPECIAL)
+                m_device.save_item(NAME(new { m_output }), m_block.node);
         }
 
         protected virtual int max_output() { return 1; }
@@ -2125,7 +2014,7 @@ namespace mame
         public void set_output(int n, double val) { if (m_output[n].m_pointer != null && m_output[n].m_pointer.Buffer != null) m_output[n].m_pointer[0] = val; }
 
         /* Return the node index, i.e. X from NODE(X) */
-        public int index() { return g.NODE_INDEX(m_block.node); }
+        public int index() { return NODE_INDEX(m_block.node); }
 
         /* Return the node number, i.e. NODE(X) */
         public int block_node() { return m_block.node;  }
@@ -2140,7 +2029,7 @@ namespace mame
         /* Bit Flags.  1 in bit location means input_is_node */
         protected int input_is_node() { return m_input_is_node; }
 
-        protected double sample_time() { return m_device.sample_time(); }
+        public double sample_time() { return m_device.sample_time(); }
         public int sample_rate() { return m_device.sample_rate(); }
 
         public string module_name() { return m_block.mod_name; }
@@ -2178,23 +2067,23 @@ namespace mame
                 int inputnode = m_block.input_node[inputnum];
 
                 /* if this input is node-based, find the node in the indexed list */
-                if (g.IS_VALUE_A_NODE(inputnode))
+                if (IS_VALUE_A_NODE(inputnode))
                 {
                     //discrete_base_node *node_ref = m_device->m_indexed_node[NODE_INDEX(inputnode)];
                     discrete_base_node node_ref = m_device.discrete_find_node(inputnode);
                     if (node_ref == null)
-                        throw new emu_fatalerror("discrete_start - NODE_{0} referenced a non existent node NODE_{1}\n", index(), g.NODE_INDEX(inputnode));
+                        throw new emu_fatalerror("discrete_start - NODE_{0} referenced a non existent node NODE_{1}\n", index(), NODE_INDEX(inputnode));
 
-                    if ((g.NODE_CHILD_NODE_NUM(inputnode) >= node_ref.max_output()) /*&& (node_ref->module_type() != DST_CUSTOM)*/)
-                        throw new emu_fatalerror("discrete_start - NODE_{0} referenced non existent output {1} on node NODE_{2}\n", index(), g.NODE_CHILD_NODE_NUM(inputnode), g.NODE_INDEX(inputnode));
+                    if ((NODE_CHILD_NODE_NUM(inputnode) >= node_ref.max_output()) /*&& (node_ref->module_type() != DST_CUSTOM)*/)
+                        throw new emu_fatalerror("discrete_start - NODE_{0} referenced non existent output {1} on node NODE_{2}\n", index(), NODE_CHILD_NODE_NUM(inputnode), NODE_INDEX(inputnode));
 
-                    m_input[inputnum] = node_ref.m_output[g.NODE_CHILD_NODE_NUM(inputnode)];  // m_input[inputnum] = &(node_ref->m_output[NODE_CHILD_NODE_NUM(inputnode)]);  /* Link referenced node out to input */
+                    m_input[inputnum] = node_ref.m_output[NODE_CHILD_NODE_NUM(inputnode)];  // m_input[inputnum] = &(node_ref->m_output[NODE_CHILD_NODE_NUM(inputnode)]);  /* Link referenced node out to input */
                     m_input_is_node |= 1 << inputnum;           /* Bit flag if input is node */
                 }
                 else
                 {
                     /* warn if trying to use a node for an input that can only be static */
-                    if (g.IS_VALUE_A_NODE((int)m_block.initial[inputnum]))
+                    if (IS_VALUE_A_NODE((int)m_block.initial[inputnum]))
                     {
                         m_device.discrete_log("Warning - discrete_start - NODE_{0} trying to use a node on static input {1}", index(), inputnum);
                         /* also report it in the error log so it is not missed */
@@ -2207,7 +2096,7 @@ namespace mame
                 }
             }
 
-            for (inputnum = m_active_inputs; inputnum < g.DISCRETE_MAX_INPUTS; inputnum++)
+            for (inputnum = m_active_inputs; inputnum < DISCRETE_MAX_INPUTS; inputnum++)
             {
                 /* FIXME: Check that no nodes follow ! */
                 m_input[inputnum].m_pointer = new Pointer<double>(m_block.initial, inputnum);  //m_input[inputnum] = &(m_block->initial[inputnum]);
@@ -2227,6 +2116,252 @@ namespace mame
             r.init(pdev, block);
             return r;
         }
+    }
+
+
+    public static partial class discrete_global
+    {
+        static discrete_base_node discrete_create_node<C>(discrete_device pdev, discrete_block block) where C : discrete_base_node, new() { return discrete_node_factory<C>.create(pdev, block); }
+
+
+        //#define DISCRETE_SOUND_EXTERN(name) extern const discrete_block name[]
+        //#define DISCRETE_SOUND_START(name) const discrete_block name[] = {
+        //#define DSC_SND_ENTRY(_nod, _class, _dss, _num, _iact, _iinit, _custom, _name) { _nod,  new discrete_node_factory< DISCRETE_CLASS_NAME(_class) >, _dss, _num, _iact, _iinit, _custom, _name, # _class }
+        public static discrete_block DSC_SND_ENTRY<class_type>(int node, int dss, int num, int [] iact, MemoryContainer<double> iinit, Object custom, string name) where class_type : discrete_base_node, new()
+        { return new discrete_block(node, discrete_create_node<class_type>, dss, num, iact, iinit, custom, name, typeof(class_type).FullName); } // _nod,  &discrete_create_node< DISCRETE_CLASS_NAME(_class) >, _dss, _num, _iact, _iinit, _custom, _name, /* # _class*/ }; }
+
+        public static discrete_block DISCRETE_SOUND_END { get { return DSC_SND_ENTRY<discrete_special_node>( NODE_00, (int)discrete_node_type.DSS_NULL     , 0, DSE( NODE_NC ), DSE( 0.0 ) ,null  ,"DISCRETE_SOUND_END" ); } }
+
+        static int [] DSE(params int [] objects) { return objects; }  //#define DSE( ... ) { __VA_ARGS__ }
+        static MemoryContainer<double> DSE(params double [] objects) { return new MemoryContainer<double>(objects); }  //#define DSE( ... ) { __VA_ARGS__ }
+
+        /*      Module Name                                                       out,  enum value,      #in,   {variable inputs},              {static inputs},    data pointer,   "name" */
+
+        /* from disc_inp.inc */
+        public static discrete_block DISCRETE_ADJUSTMENT(int NODE, double MIN, double MAX, double LOGLIN, string TAG) { return DSC_SND_ENTRY<discrete_dss_adjustment_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( MIN,MAX,LOGLIN,0   ,0   ,100  ), TAG   , "DISCRETE_ADJUSTMENT" ); }
+        //#define DISCRETE_ADJUSTMENTX(NODE,MIN,MAX,LOGLIN,TAG,PMIN,PMAX)         DSC_SND_ENTRY( NODE, dss_adjustment  , DSS_NODE        , 6, DSE( NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( MIN,MAX,LOGLIN,0   ,PMIN,PMAX ), TAG   , "DISCRETE_ADJUSTMENTX"  ),
+        //#define DISCRETE_CONSTANT(NODE,CONST)                                   DSC_SND_ENTRY( NODE, dss_constant    , DSS_NODE        , 1, DSE( NODE_NC ), DSE( CONST ) ,NULL  ,"DISCRETE_CONSTANT" ),
+        public static discrete_block DISCRETE_INPUT_DATA(int NODE) { return DSC_SND_ENTRY<discrete_dss_input_data_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( 1.0,0,0 ), null, "DISCRETE_INPUT_DATA" ); }
+        public static discrete_block DISCRETE_INPUTX_DATA(int NODE, double GAIN, double OFFSET, double INIT) { return DSC_SND_ENTRY<discrete_dss_input_data_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( GAIN,OFFSET,INIT ), null, "DISCRETE_INPUTX_DATA" ); }
+        public static discrete_block DISCRETE_INPUT_LOGIC(int NODE) { return DSC_SND_ENTRY<discrete_dss_input_logic_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( 1.0,0,0 ), null, "DISCRETE_INPUT_LOGIC" ); }
+        public static discrete_block DISCRETE_INPUTX_LOGIC(int NODE, double GAIN, double OFFSET, double INIT) { return DSC_SND_ENTRY<discrete_dss_input_logic_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( GAIN,OFFSET,INIT ), null, "DISCRETE_INPUTX_LOGIC" ); }
+        public static discrete_block DISCRETE_INPUT_NOT(int NODE) { return DSC_SND_ENTRY<discrete_dss_input_not_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( 1.0,0,0 ), null, "DISCRETE_INPUT_NOT" ); }
+        //#define DISCRETE_INPUTX_NOT(NODE,GAIN,OFFSET,INIT)                      DSC_SND_ENTRY( NODE, dss_input_not   , DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( GAIN,OFFSET,INIT ), NULL, "DISCRETE_INPUTX_NOT" ),
+        public static discrete_block DISCRETE_INPUT_PULSE(int NODE, double INIT) { return DSC_SND_ENTRY<discrete_dss_input_pulse_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( NODE_NC,NODE_NC,NODE_NC ), DSE( 1,0,INIT ), null, "DISCRETE_INPUT_PULSE" ); }
+
+        //#define DISCRETE_INPUT_STREAM(NODE, NUM)                                DSC_SND_ENTRY( NODE, dss_input_stream, DSS_NODE        , 3, DSE( NUM,NODE_NC,NODE_NC ), DSE( NUM,1,0 ), NULL, "DISCRETE_INPUT_STREAM" ),
+        public static discrete_block DISCRETE_INPUTX_STREAM(int NODE, double NUM, double GAIN, double OFFSET) { return DSC_SND_ENTRY<discrete_dss_input_stream_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)NUM,NODE_NC,NODE_NC ), DSE( NUM,GAIN,OFFSET ), null, "DISCRETE_INPUTX_STREAM" ); }
+
+        public static discrete_block DISCRETE_INPUT_BUFFER(int NODE, double NUM) { return DSC_SND_ENTRY<discrete_dss_input_buffer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)NUM,NODE_NC,NODE_NC ), DSE( NUM,1,0 ), null, "DISCRETE_INPUT_BUFFER" ); }
+
+        /* from disc_wav.inc */
+        /* generic modules */
+        public static discrete_block DISCRETE_COUNTER(int NODE, double ENAB, double RESET, double CLK, double MIN, double MAX, double DIR, double INIT0, double CLKTYPE) { return DSC_SND_ENTRY<discrete_dss_counter_node>( NODE, (int)discrete_node_type.DSS_NODE        , 8, DSE( (int)ENAB,(int)RESET,(int)CLK,NODE_NC,NODE_NC,(int)DIR,(int)INIT0,NODE_NC ), DSE( ENAB,RESET,CLK,MIN,MAX,DIR,INIT0,CLKTYPE ), null, "DISCRETE_COUNTER" ); }
+        //#define DISCRETE_COUNTER_7492(NODE,ENAB,RESET,CLK,CLKTYPE)              DSC_SND_ENTRY( NODE, dss_counter     , DSS_NODE        , 8, DSE( ENAB,RESET,CLK,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,RESET,CLK,CLKTYPE,0,1,0,DISC_COUNTER_IS_7492 ), NULL, "DISCRETE_COUNTER_7492" ),
+        public static discrete_block DISCRETE_LFSR_NOISE(int NODE, double ENAB, double RESET, double CLK, double AMPL, double FEED, double BIAS, discrete_lfsr_desc LFSRTB) { return DSC_SND_ENTRY<discrete_dss_lfsr_noise_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)RESET,(int)CLK,(int)AMPL,(int)FEED,(int)BIAS ), DSE( ENAB,RESET,CLK,AMPL,FEED,BIAS ), LFSRTB, "DISCRETE_LFSR_NOISE" ); }
+        //#define DISCRETE_NOISE(NODE,ENAB,FREQ,AMPL,BIAS)                        DSC_SND_ENTRY( NODE, dss_noise       , DSS_NODE        , 4, DSE( ENAB,FREQ,AMPL,BIAS ), DSE( ENAB,FREQ,AMPL,BIAS ), NULL, "DISCRETE_NOISE" ),
+        public static discrete_block DISCRETE_NOTE(int NODE, double ENAB, double CLK, double DATA, double MAX1, double MAX2, double CLKTYPE) { return DSC_SND_ENTRY<discrete_dss_note_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)CLK,(int)DATA,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,CLK,DATA,MAX1,MAX2,CLKTYPE ), null, "DISCRETE_NOTE" ); }
+        //#define DISCRETE_SAWTOOTHWAVE(NODE,ENAB,FREQ,AMPL,BIAS,GRAD,PHASE)      DSC_SND_ENTRY( NODE, dss_sawtoothwave, DSS_NODE        , 6, DSE( ENAB,FREQ,AMPL,BIAS,NODE_NC,NODE_NC ), DSE( ENAB,FREQ,AMPL,BIAS,GRAD,PHASE ), NULL, "DISCRETE_SAWTOOTHWAVE" ),
+        //#define DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMPL,BIAS,PHASE)               DSC_SND_ENTRY( NODE, dss_sinewave    , DSS_NODE        , 5, DSE( ENAB,FREQ,AMPL,BIAS,NODE_NC ), DSE( ENAB,FREQ,AMPL,BIAS,PHASE ), NULL, "DISCRETE_SINEWAVE" ),
+        public static discrete_block DISCRETE_SQUAREWAVE(int NODE, double ENAB, double FREQ, double AMPL, double DUTY, double BIAS, double PHASE) { return DSC_SND_ENTRY<discrete_dss_squarewave_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)FREQ,(int)AMPL,(int)DUTY,(int)BIAS,NODE_NC ), DSE( ENAB,FREQ,AMPL,DUTY,BIAS,PHASE ), null, "DISCRETE_SQUAREWAVE" ); }
+        public static discrete_block DISCRETE_SQUAREWFIX(int NODE, double ENAB, double FREQ, double AMPL, double DUTY, double BIAS, double PHASE) { return DSC_SND_ENTRY<discrete_dss_squarewfix_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)FREQ,(int)AMPL,(int)DUTY,(int)BIAS,NODE_NC ), DSE( ENAB,FREQ,AMPL,DUTY,BIAS,PHASE ), null, "DISCRETE_SQUAREWFIX" ); }
+        //#define DISCRETE_SQUAREWAVE2(NODE,ENAB,AMPL,T_OFF,T_ON,BIAS,TSHIFT)     DSC_SND_ENTRY( NODE, dss_squarewave2 , DSS_NODE        , 6, DSE( ENAB,AMPL,T_OFF,T_ON,BIAS,NODE_NC ), DSE( ENAB,AMPL,T_OFF,T_ON,BIAS,TSHIFT ), NULL, "DISCRETE_SQUAREWAVE2" ),
+        public static discrete_block DISCRETE_TRIANGLEWAVE(int NODE, double ENAB, double FREQ, double AMPL, double BIAS, double PHASE) { return DSC_SND_ENTRY<discrete_dss_trianglewave_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)ENAB,(int)FREQ,(int)AMPL,(int)BIAS,NODE_NC ), DSE( ENAB,FREQ,AMPL,BIAS,PHASE ), null, "DISCRETE_TRIANGLEWAVE" ); }
+        /* Component specific */
+        public static discrete_block DISCRETE_INVERTER_OSC(int NODE, double ENAB, double MOD, double RCHARGE, double RP, double C, double R2, discrete_dss_inverter_osc_node.description INFO) { return DSC_SND_ENTRY<discrete_dss_inverter_osc_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)MOD,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,MOD,RCHARGE,RP,C,R2 ), INFO, "DISCRETE_INVERTER_OSC" ); }
+        public static discrete_block DISCRETE_OP_AMP_OSCILLATOR(int NODE, double ENAB, discrete_op_amp_osc_info INFO) { return DSC_SND_ENTRY<discrete_dss_op_amp_osc_node>( NODE, (int)discrete_node_type.DSS_NODE        , 1, DSE( (int)ENAB ), DSE( ENAB ), INFO, "DISCRETE_OP_AMP_OSCILLATOR" ); }
+        public static discrete_block DISCRETE_OP_AMP_VCO1(int NODE, double ENAB, double VMOD1, discrete_op_amp_osc_info INFO) { return DSC_SND_ENTRY<discrete_dss_op_amp_osc_node>( NODE, (int)discrete_node_type.DSS_NODE        , 2, DSE( (int)ENAB,(int)VMOD1 ), DSE( ENAB,VMOD1 ), INFO, "DISCRETE_OP_AMP_VCO1" ); }
+        public static discrete_block DISCRETE_OP_AMP_VCO2(int NODE, double ENAB, double VMOD1, double VMOD2, discrete_op_amp_osc_info INFO) { return DSC_SND_ENTRY<discrete_dss_op_amp_osc_node>( NODE,  (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)VMOD1,(int)VMOD2 ), DSE( ENAB,VMOD1,VMOD2 ), INFO, "DISCRETE_OP_AMP_VCO2" ); }
+        //#define DISCRETE_SCHMITT_OSCILLATOR(NODE,ENAB,INP0,AMPL,TABLE)          DSC_SND_ENTRY( NODE, dss_schmitt_osc , DSS_NODE        , 3, DSE( ENAB,INP0,AMPL ), DSE( ENAB,INP0,AMPL ), TABLE, "DISCRETE_SCHMITT_OSCILLATOR" ),
+        /* Not yet implemented */
+        //#define DISCRETE_ADSR_ENV(NODE,ENAB,TRIGGER,GAIN,ADSRTB)                DSC_SND_ENTRY( NODE, dss_adsr        , DSS_NODE        , 3, DSE( ENAB,TRIGGER,GAIN ), DSE( ENAB,TRIGGER,GAIN ), ADSRTB, "DISCRETE_ADSR_ENV" ),
+
+        /* from disc_mth.inc */
+        /* generic modules */
+        public static discrete_block DISCRETE_ADDER2(int NODE, double ENAB, double INP0, double INP1) { return DSC_SND_ENTRY<discrete_dst_adder_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)INP0,(int)INP1 ), DSE( ENAB,INP0,INP1 ), null, "DISCRETE_ADDER2" ); }
+        //#define DISCRETE_ADDER3(NODE,ENAB,INP0,INP1,INP2)                       DSC_SND_ENTRY( NODE, dst_adder       , DSS_NODE        , 4, DSE( ENAB,INP0,INP1,INP2 ), DSE( ENAB,INP0,INP1,INP2 ), NULL, "DISCRETE_ADDER3" ),
+        public static discrete_block DISCRETE_ADDER4(int NODE, double ENAB, double INP0, double INP1, double INP2, double INP3) { return DSC_SND_ENTRY<discrete_dst_adder_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)ENAB,(int)INP0,(int)INP1,(int)INP2,(int)INP3 ), DSE( ENAB,INP0,INP1,INP2,INP3 ), null, "DISCRETE_ADDER4" ); }
+        public static discrete_block DISCRETE_CLAMP(int NODE, double INP0, double MIN, double MAX) { return DSC_SND_ENTRY<discrete_dst_clamp_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)MIN,(int)MAX ), DSE( INP0,MIN,MAX ), null, "DISCRETE_CLAMP" ); }
+        public static discrete_block DISCRETE_DIVIDE(int NODE, double ENAB, double INP0, double INP1) { return DSC_SND_ENTRY<discrete_dst_divide_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)INP0,(int)INP1 ), DSE( ENAB,INP0,INP1 ), null, "DISCRETE_DIVIDE" ); }
+        public static discrete_block DISCRETE_GAIN(int NODE, double INP0, double GAIN) { return DSC_SND_ENTRY<discrete_dst_gain_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,NODE_NC,NODE_NC ), DSE( INP0,GAIN,0 ), null, "DISCRETE_GAIN" ); }
+        //#define DISCRETE_INVERT(NODE,INP0)                                      DSC_SND_ENTRY( NODE, dst_gain        , DSS_NODE        , 3, DSE( INP0,NODE_NC,NODE_NC ), DSE( INP0,-1,0 ), NULL, "DISCRETE_INVERT" ),
+        public static discrete_block DISCRETE_LOGIC_INVERT(int NODE, double INP0) {return DSC_SND_ENTRY<discrete_dst_logic_inv_node>( NODE, (int)discrete_node_type.DSS_NODE        , 1, DSE( (int)INP0 ), DSE( INP0 ), null, "DISCRETE_LOGIC_INVERT" ); }
+
+        //#define DISCRETE_BIT_DECODE(NODE, INP, BIT_N, VOUT)                     DSC_SND_ENTRY( NODE, dst_bits_decode , DSS_NODE        , 4, DSE( INP,NODE_NC,NODE_NC,NODE_NC ), DSE( INP,BIT_N,BIT_N,VOUT ), NULL, "DISCRETE_BIT_DECODE" ),
+        public static discrete_block DISCRETE_BITS_DECODE(int NODE, double INP, double BIT_FROM, double BIT_TO, double VOUT) { return DSC_SND_ENTRY<discrete_dst_bits_decode_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)INP,NODE_NC,NODE_NC,NODE_NC ), DSE( INP,BIT_FROM,BIT_TO,VOUT ), null, "DISCRETE_BITS_DECODE" ); }
+
+        //#define DISCRETE_LOGIC_AND(NODE,INP0,INP1)                              DSC_SND_ENTRY( NODE, dst_logic_and   , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,1.0,1.0 ), NULL, "DISCRETE_LOGIC_AND" ),
+        public static discrete_block DISCRETE_LOGIC_AND3(int NODE, double INP0, double INP1, double INP2) { return DSC_SND_ENTRY<discrete_dst_logic_and_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)INP0,(int)INP1,(int)INP2,NODE_NC ), DSE( INP0,INP1,INP2,1.0 ), null, "DISCRETE_LOGIC_AND3" ); }
+        //#define DISCRETE_LOGIC_AND4(NODE,INP0,INP1,INP2,INP3)                   DSC_SND_ENTRY( NODE, dst_logic_and   , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ) ,NULL, "DISCRETE_LOGIC_AND4" ),
+        //#define DISCRETE_LOGIC_NAND(NODE,INP0,INP1)                             DSC_SND_ENTRY( NODE, dst_logic_nand  , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,1.0,1.0 ), NULL, "DISCRETE_LOGIC_NAND" ),
+        //#define DISCRETE_LOGIC_NAND3(NODE,INP0,INP1,INP2)                       DSC_SND_ENTRY( NODE, dst_logic_nand  , DSS_NODE        , 4, DSE( INP0,INP1,INP2,NODE_NC ), DSE( INP0,INP1,INP2,1.0 ), NULL, "DISCRETE_LOGIC_NAND3" ),
+        //#define DISCRETE_LOGIC_NAND4(NODE,INP0,INP1,INP2,INP3)                  DSC_SND_ENTRY( NODE, dst_logic_nand  , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ), NULL, ")DISCRETE_LOGIC_NAND4" ),
+        //#define DISCRETE_LOGIC_OR(NODE,INP0,INP1)                               DSC_SND_ENTRY( NODE, dst_logic_or    , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,0.0,0.0 ), NULL, "DISCRETE_LOGIC_OR" ),
+        //#define DISCRETE_LOGIC_OR3(NODE,INP0,INP1,INP2)                         DSC_SND_ENTRY( NODE, dst_logic_or    , DSS_NODE        , 4, DSE( INP0,INP1,INP2,NODE_NC ), DSE( INP0,INP1,INP2,0.0 ), NULL, "DISCRETE_LOGIC_OR3" ),
+        //#define DISCRETE_LOGIC_OR4(NODE,INP0,INP1,INP2,INP3)                    DSC_SND_ENTRY( NODE, dst_logic_or    , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ), NULL, "DISCRETE_LOGIC_OR4" ),
+        //#define DISCRETE_LOGIC_NOR(NODE,INP0,INP1)                              DSC_SND_ENTRY( NODE, dst_logic_nor   , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,0.0,0.0 ), NULL, "DISCRETE_LOGIC_NOR" ),
+        //#define DISCRETE_LOGIC_NOR3(NODE,INP0,INP1,INP2)                        DSC_SND_ENTRY( NODE, dst_logic_nor   , DSS_NODE        , 4, DSE( INP0,INP1,INP2,NODE_NC ), DSE( INP0,INP1,INP2,0.0 ), NULL, "DISCRETE_LOGIC_NOR3" ),
+        //#define DISCRETE_LOGIC_NOR4(NODE,INP0,INP1,INP2,INP3)                   DSC_SND_ENTRY( NODE, dst_logic_nor   , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ), NULL, "DISCRETE_LOGIC_NOR4" ),
+        //#define DISCRETE_LOGIC_XOR(NODE,INP0,INP1)                              DSC_SND_ENTRY( NODE, dst_logic_xor   , DSS_NODE        , 2, DSE( INP0,INP1 ), DSE( INP0,INP1 ), NULL, "DISCRETE_LOGIC_XOR" ),
+        //#define DISCRETE_LOGIC_XNOR(NODE,INP0,INP1)                             DSC_SND_ENTRY( NODE, dst_logic_nxor  , DSS_NODE        , 2, DSE( INP0,INP1 ), DSE( INP0,INP1 ), NULL, "DISCRETE_LOGIC_XNOR" ),
+        public static discrete_block DISCRETE_LOGIC_DFLIPFLOP(int NODE, double RESET, double SET, double CLK, double INP) { return DSC_SND_ENTRY<discrete_dst_logic_dff_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)RESET,(int)SET,(int)CLK,(int)INP ), DSE( RESET,SET,CLK,INP ), null, "DISCRETE_LOGIC_DFLIPFLOP" ); }
+        //#define DISCRETE_LOGIC_JKFLIPFLOP(NODE,RESET,SET,CLK,J,K)               DSC_SND_ENTRY( NODE, dst_logic_jkff  , DSS_NODE        , 5, DSE( RESET,SET,CLK,J,K ), DSE( RESET,SET,CLK,J,K ), NULL, "DISCRETE_LOGIC_JKFLIPFLOP" ),
+        //#define DISCRETE_LOGIC_SHIFT(NODE,INP0,RESET,CLK,SIZE,OPTIONS)          DSC_SND_ENTRY( NODE, dst_logic_shift , DSS_NODE        , 5, DSE( INP0,RESET,CLK,NODE_NC,NODE_NC ), DSE( INP0,RESET,CLK,SIZE,OPTIONS ), NULL, "DISCRETE_LOGIC_SHIFT" ),
+        //#define DISCRETE_LOOKUP_TABLE(NODE,ADDR,SIZE,TABLE)                     DSC_SND_ENTRY( NODE, dst_lookup_table, DSS_NODE        , 2, DSE( ADDR,NODE_NC ), DSE( ADDR,SIZE ), TABLE, "DISCRETE_LOOKUP_TABLE" ),
+        //#define DISCRETE_MULTIPLEX2(NODE,ADDR,INP0,INP1)                        DSC_SND_ENTRY( NODE, dst_multiplex   , DSS_NODE        , 3, DSE( ADDR,INP0,INP1 ), DSE( ADDR,INP0,INP1 ), NULL, "DISCRETE_MULTIPLEX2" ),
+        //#define DISCRETE_MULTIPLEX4(NODE,ADDR,INP0,INP1,INP2,INP3)              DSC_SND_ENTRY( NODE, dst_multiplex   , DSS_NODE        , 5, DSE( ADDR,INP0,INP1,INP2,INP3 ), DSE( ADDR,INP0,INP1,INP2,INP3 ), NULL, "DISCRETE_MULTIPLEX4" ),
+        //#define DISCRETE_MULTIPLEX8(NODE,ADDR,INP0,INP1,INP2,INP3,INP4,INP5,INP6,INP7) DSC_SND_ENTRY( NODE, dst_multiplex, DSS_NODE    , 9, DSE( ADDR,INP0,INP1,INP2,INP3,INP4,INP5,INP6,INP7 ), DSE( ADDR,INP0,INP1,INP2,INP3,INP4,INP5,INP6,INP7 ), NULL, "DISCRETE_MULTIPLEX8" ),
+        public static discrete_block DISCRETE_MULTIPLY(int NODE, double INP0, double INP1) { return DSC_SND_ENTRY<discrete_dst_gain_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)INP1,NODE_NC ), DSE( INP0,INP1,0 ), null, "DISCRETE_MULTIPLY" ); }
+        public static discrete_block DISCRETE_MULTADD(int NODE, double INP0, double INP1, double INP2) { return DSC_SND_ENTRY<discrete_dst_gain_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)INP1,(int)INP2 ), DSE( INP0,INP1,INP2 ), null, "DISCRETE_MULTADD" ); }
+        //#define DISCRETE_ONESHOT(NODE,TRIG,AMPL,WIDTH,TYPE)                     DSC_SND_ENTRY( NODE, dst_oneshot     , DSS_NODE        , 5, DSE( 0,TRIG,AMPL,WIDTH,NODE_NC ), DSE( 0,TRIG,AMPL,WIDTH,TYPE ), NULL, "DISCRETE_ONESHOT" ),
+        //#define DISCRETE_ONESHOTR(NODE,RESET,TRIG,AMPL,WIDTH,TYPE)              DSC_SND_ENTRY( NODE, dst_oneshot     , DSS_NODE        , 5, DSE( RESET,TRIG,AMPL,WIDTH,NODE_NC ), DSE( RESET,TRIG,AMPL,WIDTH,TYPE ), NULL, "One Shot Resetable" ),
+        //#define DISCRETE_ONOFF(NODE,ENAB,INP0)                                  DSC_SND_ENTRY( NODE, dst_gain        , DSS_NODE        , 3, DSE( ENAB,INP0,NODE_NC ), DSE( 0,1,0 ), NULL, "DISCRETE_ONOFF" ),
+        public static discrete_block DISCRETE_RAMP(int NODE, double ENAB, double RAMP, double GRAD, double START, double END, double CLAMP) { return DSC_SND_ENTRY<discrete_dst_ramp_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)RAMP,(int)GRAD,(int)START,(int)END,(int)CLAMP ), DSE( ENAB,RAMP,GRAD,START,END,CLAMP ), null, "DISCRETE_RAMP" ); }
+        public static discrete_block DISCRETE_SAMPLHOLD(int NODE, double INP0, double CLOCK, double CLKTYPE) { return DSC_SND_ENTRY<discrete_dst_samphold_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)CLOCK,NODE_NC ), DSE( INP0,CLOCK,CLKTYPE ), null, "DISCRETE_SAMPLHOLD" ); }
+        //#define DISCRETE_SWITCH(NODE,ENAB,SWITCH,INP0,INP1)                     DSC_SND_ENTRY( NODE, dst_switch      , DSS_NODE        , 4, DSE( ENAB,SWITCH,INP0,INP1 ), DSE( ENAB,SWITCH,INP0,INP1 ), NULL, "DISCRETE_SWITCH" ),
+        //#define DISCRETE_ASWITCH(NODE,CTRL,INP,THRESHOLD)                       DSC_SND_ENTRY( NODE, dst_aswitch     , DSS_NODE        , 3, DSE( CTRL,INP,THRESHOLD ), DSE( CTRL,INP, THRESHOLD), NULL, "Analog Switch" ),
+        public static discrete_block DISCRETE_TRANSFORM2(int NODE, double INP0, double INP1, string FUNCT) { return DSC_SND_ENTRY<discrete_dst_transform_node>( NODE, (int)discrete_node_type.DSS_NODE        , 2, DSE( (int)INP0,(int)INP1 ), DSE( INP0,INP1 ), FUNCT, "DISCRETE_TRANSFORM2" ); }
+        public static discrete_block DISCRETE_TRANSFORM3(int NODE, double INP0, double INP1, double INP2, string FUNCT) { return DSC_SND_ENTRY<discrete_dst_transform_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)INP1,(int)INP2 ), DSE( INP0,INP1,INP2 ), FUNCT, "DISCRETE_TRANSFORM3" ); }
+        public static discrete_block DISCRETE_TRANSFORM4(int NODE, double INP0, double INP1, double INP2, double INP3, string FUNCT) { return DSC_SND_ENTRY<discrete_dst_transform_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)INP0,(int)INP1,(int)INP2,(int)INP3 ), DSE( INP0,INP1,INP2,INP3 ), FUNCT, "DISCRETE_TRANSFORM4" ); }
+        public static discrete_block DISCRETE_TRANSFORM5(int NODE, double INP0, double INP1, double INP2, double INP3, double INP4, string FUNCT) {return DSC_SND_ENTRY<discrete_dst_transform_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)INP0,(int)INP1,(int)INP2,(int)INP3,(int)INP4 ), DSE( INP0,INP1,INP2,INP3,INP4 ), FUNCT, "DISCRETE_TRANSFORM5" ); }
+        /* Component specific */
+        public static discrete_block DISCRETE_COMP_ADDER(int NODE, double DATA, discrete_comp_adder_table TABLE) { return DSC_SND_ENTRY<discrete_dst_comp_adder_node>( NODE, (int)discrete_node_type.DSS_NODE        , 1, DSE( (int)DATA ), DSE( DATA ), TABLE, "DISCRETE_COMP_ADDER" ); }
+        public static discrete_block DISCRETE_DAC_R1(int NODE, double DATA, double VDATA, discrete_dac_r1_ladder LADDER) { return DSC_SND_ENTRY<discrete_dst_dac_r1_node>( NODE, (int)discrete_node_type.DSS_NODE        , 2, DSE( (int)DATA,NODE_NC ), DSE( DATA,VDATA ), LADDER, "DISCRETE_DAC_R1" ); }
+        public static discrete_block DISCRETE_DIODE_MIXER2(int NODE, double IN0, double IN1, double [] TABLE) { return DSC_SND_ENTRY<discrete_dst_diode_mix_node>( NODE, (int)discrete_node_type.DSS_NODE        , 2, DSE( (int)IN0,(int)IN1 ), DSE( IN0,IN1 ), TABLE, "DISCRETE_DIODE_MIXER2" ); }
+        //#define DISCRETE_DIODE_MIXER3(NODE,IN0,IN1,IN2,TABLE)                   DSC_SND_ENTRY( NODE, dst_diode_mix   , DSS_NODE        , 3, DSE( IN0,IN1,IN2 ), DSE( IN0,IN1,IN2 ), TABLE, "DISCRETE_DIODE_MIXER3" ),
+        //#define DISCRETE_DIODE_MIXER4(NODE,IN0,IN1,IN2,IN3,TABLE)               DSC_SND_ENTRY( NODE, dst_diode_mix   , DSS_NODE        , 4, DSE( IN0,IN1,IN2,IN3 ), DSE( IN0,IN1,IN2,IN3 ), TABLE, "DISCRETE_DIODE_MIXER4" ),
+        //#define DISCRETE_INTEGRATE(NODE,TRG0,TRG1,INFO)                         DSC_SND_ENTRY( NODE, dst_integrate   , DSS_NODE        , 2, DSE( TRG0,TRG1 ), DSE( TRG0,TRG1 ), INFO, "DISCRETE_INTEGRATE" ),
+        public static discrete_block DISCRETE_MIXER2(int NODE, double ENAB, double IN0, double IN1, discrete_mixer_desc INFO) { return DSC_SND_ENTRY<discrete_dst_mixer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)IN0,(int)IN1 ), DSE( ENAB,IN0,IN1 ), INFO, "DISCRETE_MIXER2" ); }
+        public static discrete_block DISCRETE_MIXER3(int NODE, double ENAB, double IN0, double IN1, double IN2, discrete_mixer_desc INFO) { return DSC_SND_ENTRY<discrete_dst_mixer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)IN0,(int)IN1,(int)IN2 ), DSE( ENAB,IN0,IN1,IN2 ), INFO, "DISCRETE_MIXER3" ); }
+        public static discrete_block DISCRETE_MIXER4(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, discrete_mixer_desc INFO) { return DSC_SND_ENTRY<discrete_dst_mixer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)ENAB,(int)IN0,(int)IN1,(int)IN2,(int)IN3 ), DSE( ENAB,IN0,IN1,IN2,IN3 ), INFO, "DISCRETE_MIXER4" ); }
+        public static discrete_block DISCRETE_MIXER5(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, double IN4, discrete_mixer_desc INFO) { return DSC_SND_ENTRY<discrete_dst_mixer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)IN0,(int)IN1,(int)IN2,(int)IN3,(int)IN4 ), DSE( ENAB,IN0,IN1,IN2,IN3,IN4 ), INFO, "DISCRETE_MIXER5" ); }
+        public static discrete_block DISCRETE_MIXER6(int NODE, double ENAB, double IN0, double IN1, double IN2, double IN3, double IN4, double IN5, discrete_mixer_desc INFO) { return DSC_SND_ENTRY<discrete_dst_mixer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 7, DSE( (int)ENAB,(int)IN0,(int)IN1,(int)IN2,(int)IN3,(int)IN4,(int)IN5 ), DSE( ENAB,IN0,IN1,IN2,IN3,IN4,IN5 ), INFO, "DISCRETE_MIXER6" ); }
+        //#define DISCRETE_MIXER7(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,INFO)     DSC_SND_ENTRY( NODE, dst_mixer       , DSS_NODE        , 8, DSE( ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6 ), DSE( ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6 ), INFO, "DISCRETE_MIXER7" ),
+        //#define DISCRETE_MIXER8(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,INFO) DSC_SND_ENTRY( NODE, dst_mixer       , DSS_NODE        , 9, DSE( ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7 ), DSE( ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7 ), INFO, "DISCRETE_MIXER8" ),
+        public static discrete_block DISCRETE_OP_AMP(int NODE, double ENAB, double IN0, double IN1, discrete_op_amp_info INFO) { return DSC_SND_ENTRY<discrete_dst_op_amp_node>( NODE,       (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)IN0,(int)IN1 ), DSE( ENAB,IN0,IN1 ), INFO, "DISCRETE_OP_AMP" ); }
+        public static discrete_block DISCRETE_OP_AMP_ONESHOT(int NODE, double TRIG, discrete_op_amp_1sht_info INFO) { return DSC_SND_ENTRY<discrete_dst_op_amp_1sht_node>( NODE, (int)discrete_node_type.DSS_NODE        , 1, DSE( (int)TRIG ), DSE( TRIG ), INFO, "DISCRETE_OP_AMP_ONESHOT" ); }
+        public static discrete_block DISCRETE_OP_AMP_TRIG_VCA(int NODE, double TRG0, double TRG1, double TRG2, double IN0, double IN1, discrete_op_amp_tvca_info INFO) { return DSC_SND_ENTRY<discrete_dst_tvca_op_amp_node>( NODE,  (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)TRG0,(int)TRG1,(int)TRG2,(int)IN0,(int)IN1 ), DSE( TRG0,TRG1,TRG2,IN0,IN1 ), INFO, "DISCRETE_OP_AMP_TRIG_VCA" ); }
+        //#define DISCRETE_VCA(NODE,ENAB,IN0,CTRL,TYPE)                           DSC_SND_ENTRY( NODE, dst_vca         , DSS_NODE        , 4, DSE( ENAB,IN0,CTRL,NODE_NC ), DSE( ENAB,IN0,CTRL,TYPE ), NULL, "DISCRETE_VCA" ),
+        //#define DISCRETE_XTIME_BUFFER(NODE,IN0,LOW,HIGH)                        DSC_SND_ENTRY( NODE, dst_xtime_buffer, DSS_NODE        , 4, DSE( IN0,LOW,HIGH,NODE_NC ), DSE( IN0,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_BUFFER" ),
+        //#define DISCRETE_XTIME_INVERTER(NODE,IN0,LOW,HIGH)                      DSC_SND_ENTRY( NODE, dst_xtime_buffer, DSS_NODE        , 4, DSE( IN0,LOW,HIGH,NODE_NC ), DSE( IN0,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_INVERTER" ),
+        //#define DISCRETE_XTIME_AND(NODE,IN0,IN1,LOW,HIGH)                       DSC_SND_ENTRY( NODE, dst_xtime_and   , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_AND" ),
+        //#define DISCRETE_XTIME_NAND(NODE,IN0,IN1,LOW,HIGH)                      DSC_SND_ENTRY( NODE, dst_xtime_and   , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_NAND" ),
+        //#define DISCRETE_XTIME_OR(NODE,IN0,IN1,LOW,HIGH)                        DSC_SND_ENTRY( NODE, dst_xtime_or    , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_OR" ),
+        //#define DISCRETE_XTIME_NOR(NODE,IN0,IN1,LOW,HIGH)                       DSC_SND_ENTRY( NODE, dst_xtime_or    , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_NOR" ),
+        //#define DISCRETE_XTIME_XOR(NODE,IN0,IN1,LOW,HIGH)                       DSC_SND_ENTRY( NODE, dst_xtime_xor   , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_XOR" ),
+        //#define DISCRETE_XTIME_XNOR(NODE,IN0,IN1,LOW,HIGH)                      DSC_SND_ENTRY( NODE, dst_xtime_xnor  , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_XNOR" ),
+
+        /* from disc_flt.inc */
+        /* generic modules */
+        public static discrete_block DISCRETE_FILTER1(int NODE, double ENAB, double INP0, double FREQ, double TYPE) { return DSC_SND_ENTRY<discrete_dst_filter1_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,FREQ,TYPE ), null, "DISCRETE_FILTER1" ); }
+        public static discrete_block DISCRETE_FILTER2(int NODE, double ENAB, double INP0, double FREQ, double DAMP, double TYPE) { return DSC_SND_ENTRY<discrete_dst_filter2_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)ENAB,(int)INP0,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,FREQ,DAMP,TYPE ), null, "DISCRETE_FILTER2" ); }
+        /* Component specific */
+        public static discrete_block DISCRETE_SALLEN_KEY_FILTER(int NODE, double ENAB, double INP0, double TYPE, discrete_op_amp_filt_info INFO) { return DSC_SND_ENTRY<discrete_dst_sallen_key_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)INP0,NODE_NC ), DSE( ENAB,INP0,TYPE ), INFO, "DISCRETE_SALLEN_KEY_FILTER" ); }
+        public static discrete_block DISCRETE_CRFILTER(int NODE, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_crfilter_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,OPT_NODE(RVAL),OPT_NODE(CVAL) ), DSE( INP0,RVAL,CVAL ), null, "DISCRETE_CRFILTER" ); }
+        //#define DISCRETE_CRFILTER_VREF(NODE,INP0,RVAL,CVAL,VREF)                DSC_SND_ENTRY( NODE, dst_crfilter    , DSS_NODE        , 4, DSE( INP0,OPT_NODE(RVAL),OPT_NODE(CVAL),VREF ), DSE( INP0,RVAL,CVAL,VREF ), NULL, "DISCRETE_CRFILTER_VREF" ),
+        public static discrete_block DISCRETE_OP_AMP_FILTER(int NODE, double ENAB, double INP0, double INP1, double TYPE, discrete_op_amp_filt_info INFO) { return DSC_SND_ENTRY<discrete_dst_op_amp_filt_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,(int)INP1,NODE_NC ), DSE( ENAB,INP0,INP1,TYPE ), INFO, "DISCRETE_OP_AMP_FILTER" ); }
+        //#define DISCRETE_RC_CIRCUIT_1(NODE,INP0,INP1,RVAL,CVAL)                 DSC_SND_ENTRY( NODE, dst_rc_circuit_1, DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,RVAL,CVAL ), NULL, "DISCRETE_RC_CIRCUIT_1" ),
+        public static discrete_block DISCRETE_RCDISC(int NODE, double ENAB, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcdisc_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL,CVAL ), null, "DISCRETE_RCDISC" ); }
+        public static discrete_block DISCRETE_RCDISC2(int NODE, double SWITCH, double INP0, double RVAL0, double INP1, double RVAL1, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcdisc2_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)SWITCH,(int)INP0,NODE_NC,(int)INP1,NODE_NC,NODE_NC ), DSE( SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL ), null, "DISCRETE_RCDISC2" ); }
+        //#define DISCRETE_RCDISC3(NODE,ENAB,INP0,RVAL0,RVAL1,CVAL,DJV)           DSC_SND_ENTRY( NODE, dst_rcdisc3     , DSS_NODE        , 6, DSE( ENAB,INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL0,RVAL1,CVAL,DJV ), NULL, "DISCRETE_RCDISC3" ),
+        //#define DISCRETE_RCDISC4(NODE,ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE) DSC_SND_ENTRY( NODE, dst_rcdisc4     , DSS_NODE        , 8, DSE( ENAB,INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE ), NULL, "DISCRETE_RCDISC4" ),
+        public static discrete_block DISCRETE_RCDISC5(int NODE, double ENAB, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcdisc5_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL,CVAL ), null, "DISCRETE_RCDISC5" ); }
+        public static discrete_block DISCRETE_RCDISC_MODULATED(int NODE, double INP0, double INP1, double RVAL0, double RVAL1, double RVAL2, double RVAL3, double CVAL, double VP) { return DSC_SND_ENTRY<discrete_dst_rcdisc_mod_node>( NODE, (int)discrete_node_type.DSS_NODE        , 8, DSE( (int)INP0,(int)INP1,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( INP0,INP1,RVAL0,RVAL1,RVAL2,RVAL3,CVAL,VP ), null, "DISCRETE_RCDISC_MODULATED" ); }
+        public static discrete_block DISCRETE_RCFILTER(int NODE, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcfilter_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,OPT_NODE(RVAL),OPT_NODE(CVAL) ), DSE( INP0,RVAL,CVAL ), null, "DISCRETE_RCFILTER" ); }
+        //#define DISCRETE_RCFILTER_VREF(NODE,INP0,RVAL,CVAL,VREF)                DSC_SND_ENTRY( NODE, dst_rcfilter    , DSS_NODE        , 4, DSE( INP0,OPT_NODE(RVAL),OPT_NODE(CVAL),VREF ), DSE( INP0,RVAL,CVAL,VREF ), NULL, "DISCRETE_RCFILTER_VREF" ),
+        public static discrete_block DISCRETE_RCFILTER_SW(int NODE, double ENAB, double INP0, double SW, double RVAL, double CVAL1, double CVAL2, double CVAL3, double CVAL4) { return DSC_SND_ENTRY<discrete_dst_rcfilter_sw_node>( NODE, (int)discrete_node_type.DSS_NODE    , 8, DSE( (int)ENAB,(int)INP0,(int)SW,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,SW,RVAL,CVAL1,CVAL2,CVAL3,CVAL4 ), null, "DISCRETE_RCFILTER_SW" ); }
+        public static discrete_block DISCRETE_RCINTEGRATE(int NODE, double INP0, double RVAL0, double RVAL1, double RVAL2, double CVAL, double vP, double TYPE) { return DSC_SND_ENTRY<discrete_dst_rcintegrate_node>( NODE, (int)discrete_node_type.DSS_NODE        , 7, DSE( (int)INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( INP0,RVAL0,RVAL1,RVAL2,CVAL,vP,TYPE ), null, "DISCRETE_RCINTEGRATE" ); }
+        /* For testing - seem to be buggered.  Use versions not ending in N. */
+        //#define DISCRETE_RCDISCN(NODE,ENAB,INP0,RVAL,CVAL)                      DSC_SND_ENTRY( NODE, dst_rcdiscn     , DSS_NODE        , 4, DSE( ENAB,INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL,CVAL ), NULL, "DISCRETE_RCDISCN" ),
+        //#define DISCRETE_RCDISC2N(NODE,SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL)       DSC_SND_ENTRY( NODE, dst_rcdisc2n    , DSS_NODE        , 6, DSE( SWITCH,INP0,NODE_NC,INP1,NODE_NC,NODE_NC ), DSE( SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL ), NULL, "DISCRETE_RCDISC2N" ),
+        //#define DISCRETE_RCFILTERN(NODE,ENAB,INP0,RVAL,CVAL)                    DSC_SND_ENTRY( NODE, dst_rcfiltern   , DSS_NODE        , 4, DSE( ENAB,INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL,CVAL ), NULL, "DISCRETE_RCFILTERN" ),
+
+        /* from disc_dev.inc */
+        /* generic modules */
+        //#define DISCRETE_CUSTOM1(NODE,CLASS,IN0,INFO)                                 DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 1, DSE( IN0 ), DSE( IN0 ), INFO, "DISCRETE_CUSTOM1" ),
+        //#define DISCRETE_CUSTOM2(NODE,CLASS,IN0,IN1,INFO)                             DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 2, DSE( IN0,IN1 ), DSE( IN0,IN1 ), INFO, "DISCRETE_CUSTOM2" ),
+        //#define DISCRETE_CUSTOM3(NODE,CLASS,IN0,IN1,IN2,INFO)                         DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 3, DSE( IN0,IN1,IN2 ), DSE( IN0,IN1,IN2 ), INFO, "DISCRETE_CUSTOM3" ),
+        //#define DISCRETE_CUSTOM4(NODE,CLASS,IN0,IN1,IN2,IN3,INFO)                     DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 4, DSE( IN0,IN1,IN2,IN3 ), DSE( IN0,IN1,IN2,IN3 ), INFO, "DISCRETE_CUSTOM4" ),
+        //#define DISCRETE_CUSTOM5(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,INFO)                 DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 5, DSE( IN0,IN1,IN2,IN3,IN4 ), DSE( IN0,IN1,IN2,IN3,IN4 ), INFO, "DISCRETE_CUSTOM5" ),
+        //#define DISCRETE_CUSTOM6(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,IN5,INFO)             DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 6, DSE( IN0,IN1,IN2,IN3,IN4,IN5 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5 ), INFO, "DISCRETE_CUSTOM6" ),
+        //#define DISCRETE_CUSTOM7(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,IN5,IN6,INFO)         DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 7, DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6 ), INFO, "DISCRETE_CUSTOM7" ),
+        public static discrete_block DISCRETE_CUSTOM8<CLASS>(int NODE, double IN0, double IN1, double IN2, double IN3, double IN4, double IN5, double IN6, double IN7, object INFO) where CLASS : discrete_base_node, new() { return DSC_SND_ENTRY<CLASS>( NODE, (int)discrete_node_type.DST_CUSTOM      , 8, DSE( (int)IN0,(int)IN1,(int)IN2,(int)IN3,(int)IN4,(int)IN5,(int)IN6,(int)IN7 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7 ), INFO, "DISCRETE_CUSTOM8" ); }
+        //#define DISCRETE_CUSTOM9(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8,INFO) DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 9, DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8 ), INFO, "DISCRETE_CUSTOM9" ),
+
+        /* Component specific */
+        public static discrete_block DISCRETE_555_ASTABLE(int NODE, double RESET, double R1, double R2, double C, discrete_555_desc OPTIONS) { return DSC_SND_ENTRY<discrete_dsd_555_astbl_node>( NODE,    (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)RESET,(int)R1,(int)R2,(int)C,NODE_NC ), DSE( RESET,R1,R2,C,-1 ), OPTIONS, "DISCRETE_555_ASTABLE" ); }
+        public static discrete_block DISCRETE_555_ASTABLE_CV(int NODE, double RESET, double R1, double R2, double C, double CTRLV, discrete_555_desc OPTIONS) { return DSC_SND_ENTRY<discrete_dsd_555_astbl_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)RESET,(int)R1,(int)R2,(int)C,(int)CTRLV ), DSE( RESET,R1,R2,C,CTRLV ), OPTIONS, "DISCRETE_555_ASTABLE_CV" ); }
+        //#define DISCRETE_555_MSTABLE(NODE,RESET,TRIG,R,C,OPTIONS)               DSC_SND_ENTRY( NODE, dsd_555_mstbl   , DSS_NODE        , 4, DSE( RESET,TRIG,R,C ), DSE( RESET,TRIG,R,C ), OPTIONS, "DISCRETE_555_MSTABLE" ),
+        public static discrete_block DISCRETE_555_CC(int NODE, double RESET, double VIN, double R, double C, double RBIAS, double RGND, double RDIS, discrete_555_cc_desc OPTIONS) { return DSC_SND_ENTRY<discrete_dsd_555_cc_node>( NODE, (int)discrete_node_type.DSS_NODE        , 7, DSE( (int)RESET,(int)VIN,(int)R,(int)C,(int)RBIAS,(int)RGND,(int)RDIS ), DSE( RESET,VIN,R,C,RBIAS,RGND,RDIS ), OPTIONS, "DISCRETE_555_CC" ); }
+        //#define DISCRETE_555_VCO1(NODE,RESET,VIN,OPTIONS)                       DSC_SND_ENTRY( NODE, dsd_555_vco1    , DSS_NODE        , 3, DSE( RESET,VIN,NODE_NC ), DSE( RESET,VIN,-1 ), OPTIONS, "DISCRETE_555_VCO1" ),
+        //#define DISCRETE_555_VCO1_CV(NODE,RESET,VIN,CTRLV,OPTIONS)              DSC_SND_ENTRY( NODE, dsd_555_vco1    , DSS_NODE        , 3, DSE( RESET,VIN,CTRLV ), DSE( RESET,VIN,CTRLV ), OPTIONS, "DISCRETE_555_VCO1_CV" ),
+        //#define DISCRETE_566(NODE,VMOD,R,C,VPOS,VNEG,VCHARGE,OPTIONS)           DSC_SND_ENTRY( NODE, dsd_566         , DSS_NODE        , 7, DSE( VMOD,R,C,NODE_NC,NODE_NC,VCHARGE,NODE_NC ), DSE( VMOD,R,C,VPOS,VNEG,VCHARGE,OPTIONS ), NULL, "DISCRETE_566" ),
+        //#define DISCRETE_74LS624(NODE,ENAB,VMOD,VRNG,C,R_FREQ_IN,C_FREQ_IN,R_RNG_IN,OUTTYPE) DSC_SND_ENTRY( NODE, dsd_ls624   , DSS_NODE        , 8, DSE( ENAB,VMOD,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,VMOD,VRNG,C,R_FREQ_IN,C_FREQ_IN,R_RNG_IN,OUTTYPE ), NULL, "DISCRETE_74LS624" ),
+
+        /* NOP */
+        //#define DISCRETE_NOP(NODE)                                              DSC_SND_ENTRY( NODE, dss_nop         , DSS_NOP         , 0, DSE( 0 ), DSE( 0 ), NULL, "DISCRETE_NOP" ),
+
+        /* logging */
+        //#define DISCRETE_CSVLOG1(NODE1)                                         DSC_SND_ENTRY( NODE_SPECIAL, dso_csvlog  , DSO_CSVLOG  , 1, DSE( NODE1 ), DSE( NODE1 ), NULL, "DISCRETE_CSVLOG1" ),
+        //#define DISCRETE_CSVLOG2(NODE1,NODE2)                                   DSC_SND_ENTRY( NODE_SPECIAL, dso_csvlog  , DSO_CSVLOG  , 2, DSE( NODE1,NODE2 ), DSE( NODE1,NODE2 ), NULL, "DISCRETE_CSVLOG2" ),
+        //#define DISCRETE_CSVLOG3(NODE1,NODE2,NODE3)                             DSC_SND_ENTRY( NODE_SPECIAL, dso_csvlog  , DSO_CSVLOG  , 3, DSE( NODE1,NODE2,NODE3 ), DSE( NODE1,NODE2,NODE3 ), NULL, "DISCRETE_CSVLOG3" ),
+        //#define DISCRETE_CSVLOG4(NODE1,NODE2,NODE3,NODE4)                       DSC_SND_ENTRY( NODE_SPECIAL, dso_csvlog  , DSO_CSVLOG  , 4, DSE( NODE1,NODE2,NODE3,NODE4 ), DSE( NODE1,NODE2,NODE3,NODE4 ), NULL, "DISCRETE_CSVLOG4" ),
+        //#define DISCRETE_CSVLOG5(NODE1,NODE2,NODE3,NODE4,NODE5)                 DSC_SND_ENTRY( NODE_SPECIAL, dso_csvlog  , DSO_CSVLOG  , 5, DSE( NODE1,NODE2,NODE3,NODE4,NODE5 ), DSE( NODE1,NODE2,NODE3,NODE4,NODE5 ), NULL, "DISCRETE_CSVLOG5" ),
+        //#define DISCRETE_WAVLOG1(NODE1,GAIN1)                                   DSC_SND_ENTRY( NODE_SPECIAL, dso_wavlog  , DSO_WAVLOG  , 2, DSE( NODE1,NODE_NC ), DSE( NODE1,GAIN1 ), NULL, "DISCRETE_WAVLOG1" ),
+        //#define DISCRETE_WAVLOG2(NODE1,GAIN1,NODE2,GAIN2)                       DSC_SND_ENTRY( NODE_SPECIAL, dso_wavlog  , DSO_WAVLOG  , 4, DSE( NODE1,NODE_NC,NODE2,NODE_NC ), DSE( NODE1,GAIN1,NODE2,GAIN2 ), NULL, "DISCRETE_WAVLOG2" ),
+
+        /* import */
+        //#define DISCRETE_IMPORT(INFO)                                           DSC_SND_ENTRY( NODE_SPECIAL, special     , DSO_IMPORT  , 0, DSE( 0 ), DSE( 0 ), &(INFO), "DISCRETE_IMPORT" ),
+        //#define DISCRETE_DELETE(NODE_FROM, NODE_TO)                             DSC_SND_ENTRY( NODE_SPECIAL, special     , DSO_DELETE  , 2, DSE( NODE_FROM, NODE_TO ), DSE( NODE_FROM, NODE_TO ), NULL, "DISCRETE_DELETE" ),
+        //#define DISCRETE_REPLACE                                                DSC_SND_ENTRY( NODE_SPECIAL, special     , DSO_REPLACE , 0, DSE( 0 ), DSE( 0 ), NULL, "DISCRETE_REPLACE" ),
+
+        /* parallel tasks */
+
+        public static discrete_block DISCRETE_TASK_START(double TASK_GROUP) { return DSC_SND_ENTRY<discrete_special_node>( NODE_SPECIAL, (int)discrete_node_type.DSO_TASK_START, 2, DSE( NODE_NC, NODE_NC ), DSE( TASK_GROUP, 0 ), null, "DISCRETE_TASK_START" ); }
+        public static discrete_block DISCRETE_TASK_END() { return DSC_SND_ENTRY<discrete_special_node>( NODE_SPECIAL, (int)discrete_node_type.DSO_TASK_END  , 0, DSE( 0 ), DSE( 0.0 ), null, "DISCRETE_TASK_END" ); }
+        //#define DISCRETE_TASK_SYNC()                                          DSC_SND_ENTRY( NODE_SPECIAL, special     , DSO_TASK_SYNC , 0, DSE( 0 ), DSE( 0 ), NULL, "DISCRETE_TASK_SYNC" ),
+
+        /* output */
+        public static discrete_block DISCRETE_OUTPUT(double OPNODE, double GAIN) { return DSC_SND_ENTRY<discrete_dso_output_node>( NODE_SPECIAL, (int)discrete_node_type.DSO_OUTPUT   ,2, DSE( (int)OPNODE,NODE_NC ), DSE( 0,GAIN ), null, "DISCRETE_OUTPUT" ); }
+    }
+
+
+    static class discrete_internal
+    {
+        /*************************************
+         *
+         *  Performance
+         *
+         *************************************/
+
+        /*
+         * Normally, the discrete core processes 960 samples per update.
+         * With the various buffers involved, this on a Core2 is not as
+         * performant as processing 240 samples 4 times.
+         * The setting most probably depends on CPU and which modules are
+         * run and how many tasks are defined.
+         *
+         * Values < 32 exhibit poor performance (too much overhead) while
+         * Values > 500 have a slightly worse performace (too much cache misses?).
+         */
+
+        public const int MAX_SAMPLES_PER_TASK_SLICE = 960 / 4;
+
+        /*************************************
+         *
+         *  Debugging
+         *
+         *************************************/
+
+        public const int DISCRETE_DEBUGLOG = 0;
+
+        /*************************************
+         *
+         *  Use tasks ?
+         *
+         *************************************/
+
+        public const int USE_DISCRETE_TASKS = 1;
     }
 
 
@@ -2304,13 +2439,13 @@ namespace mame
             }
             else
             {
-                osd_ticks_t last = (osd_ticks_t)g.get_profile_ticks();
+                osd_ticks_t last = (osd_ticks_t)get_profile_ticks();
 
                 foreach (discrete_step_interface node in step_list)
                 {
                     node.run_time -= last;
                     node.step();
-                    last = (osd_ticks_t)g.get_profile_ticks();
+                    last = (osd_ticks_t)get_profile_ticks();
                     node.run_time += last;
                 }
             }
@@ -2358,13 +2493,13 @@ namespace mame
 
         bool process()
         {
-            int samples = std.min(m_samples, g.MAX_SAMPLES_PER_TASK_SLICE);
+            int samples = std.min(m_samples, MAX_SAMPLES_PER_TASK_SLICE);
 
             /* check dependencies */
             foreach (input_buffer sn in source_list)
             {
                 // make sure buffer pointers are equal, so we can perform math operation on the offsets
-                g.assert(sn.linked_outbuf.ptr.Buffer == sn.ptr.Buffer);
+                assert(sn.linked_outbuf.ptr.Buffer == sn.ptr.Buffer);
 
                 int avail = sn.linked_outbuf.ptr.Offset - sn.ptr.Offset;  // avail = sn.linked_outbuf.ptr - sn.ptr;
 
@@ -2418,10 +2553,10 @@ namespace mame
                     for (int inputnum = 0; inputnum < dest_node.active_inputs(); inputnum++)
                     {
                         int inputnode_num = dest_node.input_node(inputnum);
-                        if (g.IS_VALUE_A_NODE(inputnode_num))
+                        if (IS_VALUE_A_NODE(inputnode_num))
                         {
                             /* Fixme: sub nodes ! */
-                            if (g.NODE_DEFAULT_NODE(task_node.block_node()) == g.NODE_DEFAULT_NODE(inputnode_num))
+                            if (NODE_DEFAULT_NODE(task_node.block_node()) == NODE_DEFAULT_NODE(inputnode_num))
                             {
                                 int found = -1;
                                 output_buffer pbuf = null;
@@ -2450,7 +2585,7 @@ namespace mame
                                     pbuf = m_buffers.back();
                                 }
 
-                                m_device.discrete_log("dso_task_start - buffering {0}({1}) in task {2} group {3} referenced by {4} group {5}", g.NODE_INDEX(inputnode_num), g.NODE_CHILD_NODE_NUM(inputnode_num), this, task_group, dest_node.index(), dest_task.task_group);
+                                m_device.discrete_log("dso_task_start - buffering {0}({1}) in task {2} group {3} referenced by {4} group {5}", NODE_INDEX(inputnode_num), NODE_CHILD_NODE_NUM(inputnode_num), this, task_group, dest_node.index(), dest_task.task_group);
 
                                 /* register into source list */
                                 dest_task.source_list.push_back(new input_buffer() { ptr = null, linked_outbuf = pbuf, buffer = new PointerRef<double>(new Pointer<double>(new MemoryContainer<double>(new double [] { 0.0 })))});

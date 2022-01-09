@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 using emu_render_detail_bounds_vector = mame.std.vector<mame.emu.render.detail.bounds_step>;  //using bounds_vector = std::vector<bounds_step>;
@@ -37,6 +36,15 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
 
+using static mame.cpp_global;
+using static mame.emucore_global;
+using static mame.osdcore_global;
+using static mame.rendertypes_global;
+using static mame.rendlay_global;
+using static mame.rendutil_global;
+using static mame.unicode_global;
+using static mame.util;
+
 
 namespace mame
 {
@@ -50,7 +58,7 @@ namespace mame
         ////#define VERBOSE (LOG_GROUP_BOUNDS_RESOLUTION | LOG_INTERACTIVE_ITEMS | LOG_DISK_DRAW | LOG_IMAGE_LOAD)
         public const int VERBOSE = 0;
         //#define LOG_OUTPUT_FUNC osd_printf_verbose
-        public static void LOGMASKED(int mask, string format, params object [] args) { if ((VERBOSE & mask) != 0) g.osd_printf_verbose(format, args); }
+        public static void LOGMASKED(int mask, string format, params object [] args) { if ((VERBOSE & mask) != 0) osd_printf_verbose(format, args); }
 
 
         public const int LAYOUT_VERSION = 2;
@@ -115,7 +123,7 @@ namespace mame
                 return false;
 
             //auto &ins(*steps.emplace(pos, emu::render::detail::bounds_step{ state, { 0.0F, 0.0F, 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F, 0.0F } }));
-            var ins = new emu.render.detail.bounds_step() { state = state, bounds = new render_bounds() { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F }, delta = new render_bounds() { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F } };
+            var ins = new emu.render.detail.bounds_step() { state = state, bounds = { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F }, delta = { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F } };
             if (posIdx == -1) steps.push_back(ins); else steps.emplace(posIdx, ins);  //steps.emplace(posIdx, ins);
 
             env.parse_bounds(node, out ins.bounds);
@@ -127,7 +135,7 @@ namespace mame
         {
             if (steps.empty())
             {
-                steps.emplace_back(new emu.render.detail.bounds_step() { state = 0, bounds = new render_bounds() { x0 = 0.0F, y0 = 0.0F, x1 = 1.0F, y1 = 1.0F }, delta = new render_bounds() { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F } });
+                steps.emplace_back(new emu.render.detail.bounds_step() { state = 0, bounds = { x0 = 0.0F, y0 = 0.0F, x1 = 1.0F, y1 = 1.0F }, delta = { x0 = 0.0F, y0 = 0.0F, x1 = 0.0F, y1 = 0.0F } });
             }
             else
             {
@@ -187,7 +195,7 @@ namespace mame
         {
             var iIdx = 0;  //auto i(steps.begin());
             var i = steps[iIdx];
-            render_bounds result = new render_bounds(i.bounds);
+            render_bounds result = i.bounds;
             while (steps.Count != ++iIdx)  //while (steps.end() != ++i)
                 result |= i.bounds;
 
@@ -205,14 +213,14 @@ namespace mame
             if (0 == posIdx)  //if (steps.begin() == pos)
             {
                 var pos = steps[posIdx];
-                return new render_bounds(pos.bounds);
+                return pos.bounds;
             }
             else
             {
                 //--pos;
                 --posIdx;
                 var pos = steps[posIdx];
-                render_bounds result = new render_bounds(pos.bounds);
+                render_bounds result = pos.bounds;
                 result.x0 += pos.delta.x0 * (state - pos.state);
                 result.x1 += pos.delta.x1 * (state - pos.state);
                 result.y0 += pos.delta.y0 * (state - pos.state);
@@ -234,7 +242,7 @@ namespace mame
             if ((-1 != posIdx) && (state == steps[posIdx].state))  //if ((steps.end() != pos) && (state == pos->state))
                 return false;
 
-            steps.emplace(posIdx, new emu.render.detail.color_step() { state = state, color = env.parse_color(node), delta = new render_color() { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
+            steps.emplace(posIdx, new emu.render.detail.color_step() { state = state, color = env.parse_color(node), delta = { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
             return true;
         }
 
@@ -243,7 +251,7 @@ namespace mame
         {
             if (steps.empty())
             {
-                steps.emplace_back(new emu.render.detail.color_step() { state = 0, color = new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, delta = new render_color() { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
+                steps.emplace_back(new emu.render.detail.color_step() { state = 0, color = { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, delta = { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
             }
             else
             {
@@ -288,7 +296,7 @@ namespace mame
                 --posIdx;
                 var pos = steps[posIdx];
 
-                render_color result = new render_color(pos.color);
+                render_color result = pos.color;
                 result.a += pos.delta.a * (state - pos.state);
                 result.r += pos.delta.r * (state - pos.state);
                 result.g += pos.delta.g * (state - pos.state);
@@ -312,20 +320,27 @@ namespace mame
             public render_bounds delta;
 
 
-            public render_bounds get() { return new render_bounds(bounds); }
+            public bounds_step() { }
+            public bounds_step(bounds_step other) { state = other.state; bounds = other.bounds; delta = other.delta; }
+
+
+            public render_bounds get() { return bounds; }
         }
 
         //using bounds_vector = std::vector<bounds_step>;
 
 
-        public class color_step
+        public struct color_step
         {
             public int state;
             public render_color color;
             public render_color delta;
 
 
-            public render_color get() { return new render_color(color); }
+            public color_step(color_step other) { state = other.state; color = other.color; delta = other.delta; }
+
+
+            public render_color get() { return color; }
         }
 
         //using color_vector = std::vector<color_step>;
@@ -451,7 +466,7 @@ namespace mame
             //-------------------------------------------------
             public render_bounds overall_bounds()
             {
-                return rendlay_global.accumulate_bounds(m_bounds);
+                return accumulate_bounds(m_bounds);
             }
 
 
@@ -460,7 +475,7 @@ namespace mame
             //-------------------------------------------------
             render_bounds bounds(int state)
             {
-                return rendlay_global.interpolate_bounds(m_bounds, state);
+                return interpolate_bounds(m_bounds, state);
             }
 
 
@@ -575,7 +590,7 @@ namespace mame
                 while (!str.empty())
                 {
                     char schar;  //char32_t schar;
-                    int scharcount = unicode_global.uchar_from_utf8(out schar, str);  //int scharcount = uchar_from_utf8(&schar, str);
+                    int scharcount = uchar_from_utf8(out schar, str);  //int scharcount = uchar_from_utf8(&schar, str);
 
                     if (scharcount == -1)
                         break;
@@ -651,7 +666,7 @@ namespace mame
             //-------------------------------------------------
             void draw_segment_horizontal(bitmap_argb32 dest, int minx, int maxx, int midy, int width, rgb_t color)
             {
-                draw_segment_horizontal_caps(dest, minx, maxx, midy, width, rendlay_global.LINE_CAP_START | rendlay_global.LINE_CAP_END, color);
+                draw_segment_horizontal_caps(dest, minx, maxx, midy, width, LINE_CAP_START | LINE_CAP_END, color);
             }
 
             //-------------------------------------------------
@@ -683,7 +698,7 @@ namespace mame
             //-------------------------------------------------
             void draw_segment_vertical(bitmap_argb32 dest, int miny, int maxy, int midx, int width, rgb_t color)
             {
-                draw_segment_vertical_caps(dest, miny, maxy, midx, width, rendlay_global.LINE_CAP_START | rendlay_global.LINE_CAP_END, color);
+                draw_segment_vertical_caps(dest, miny, maxy, midx, width, LINE_CAP_START | LINE_CAP_END, color);
             }
 
             //-------------------------------------------------
@@ -756,22 +771,21 @@ namespace mame
                 float ooradius2 = 1.0f / (float)(width * width);
 
                 // iterate over y
-                for (UInt32 y = 0; y <= width; y++)
+                for (u32 y = 0; y <= width; y++)
                 {
                     throw new emu_unimplemented();
 #if false
                     u32 *const d0 = &dest.pix(midy - y);
                     u32 *const d1 = &dest.pix(midy + y);
-                    float xval = width * Math.Sqrt(1.0f - (float)(y * y) * ooradius2);
-                    int left;
-                    int right;
+                    float xval = width * sqrt(1.0f - (float)(y * y) * ooradius2);
+                    s32 left, right;
 
                     // compute left/right coordinates
-                    left = midx - (int)(xval + 0.5f);
-                    right = midx + (int)(xval + 0.5f);
+                    left = midx - s32(xval + 0.5f);
+                    right = midx + s32(xval + 0.5f);
 
                     // draw this scanline
-                    for (UInt32 x = left; x < right; x++)
+                    for (u32 x = left; x < right; x++)
                         d0[x] = d1[x] = color;
 #endif
                 }
@@ -825,7 +839,7 @@ namespace mame
 
             ~texture()
             {
-                g.assert(m_isDisposed);  // can remove
+                assert(m_isDisposed);  // can remove
             }
 
             bool m_isDisposed = false;
@@ -908,8 +922,8 @@ namespace mame
 
 
             //void load_image_data()
-            //bool load_bitmap(util::core_file &file)
-            //void load_svg(util::core_file &file)
+            //bool load_bitmap(util::random_read &file)
+            //void load_svg(util::random_read &file)
             //void parse_svg(char *svgdata)
 
 
@@ -1202,7 +1216,7 @@ namespace mame
 
                 // split out position names from string and figure out our number of symbols
                 m_numstops = 0;
-                for (var location = symbollist.find(','); g.npos != location; location = symbollist.find(','))  //for (std::string::size_type location = symbollist.find(','); std::string::npos != location; location = symbollist.find(','))
+                for (var location = symbollist.find(','); npos != location; location = symbollist.find(','))  //for (std::string::size_type location = symbollist.find(','); std::string::npos != location; location = symbollist.find(','))
                 {
                     m_stopnames[m_numstops] = symbollist.substr(0, location);
                     symbollist = symbollist.Substring((int)location + 1);  //symbollist.remove_prefix(location + 1);
@@ -1214,7 +1228,7 @@ namespace mame
                 for (int i = 0; i < m_numstops; i++)
                 {
                     var location = m_stopnames[i].find(':');  //std::string::size_type const location = m_stopnames[i].find(':');
-                    if (location != g.npos)
+                    if (location != npos)
                     {
                         m_imagefile[i] = m_stopnames[i].substr(location + 1);
                         m_stopnames[i] = m_stopnames[i].Remove((int)location, 1);  //m_stopnames[i].erase(location);
@@ -1358,7 +1372,7 @@ namespace mame
             else
                 state &= m_statemask;
 
-            g.assert((int)m_elemtex.size() > state);
+            assert((int)m_elemtex.size() > state);
 
             if (m_elemtex[state].m_texture == null)
             {
@@ -1473,31 +1487,31 @@ namespace mame
         //-------------------------------------------------
         public layout_group_transform make_transform(int orientation, render_bounds dest)
         {
-            g.assert(m_bounds_resolved);
+            assert(m_bounds_resolved);
 
             // make orientation matrix
             layout_group_transform result = new layout_group_transform(new std.array<float, u64_const_3>(1.0F, 0.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 1.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 0.0F, 1.0F));  //transform result{{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
-            if ((orientation & g.ORIENTATION_SWAP_XY) != 0)
+            if ((orientation & ORIENTATION_SWAP_XY) != 0)
             {
                 var temp1 = result[0][0]; result[0][0] = result[0][1];  result[0][1] = temp1;  //std::swap(result[0][0], result[0][1]);
                 var temp2 = result[1][0]; result[1][0] = result[1][1];  result[1][1] = temp2;  //std::swap(result[1][0], result[1][1]);
             }
 
-            if ((orientation & g.ORIENTATION_FLIP_X) != 0)
+            if ((orientation & ORIENTATION_FLIP_X) != 0)
             {
                 result[0][0] = -result[0][0];
                 result[0][1] = -result[0][1];
             }
 
-            if ((orientation & g.ORIENTATION_FLIP_Y) != 0)
+            if ((orientation & ORIENTATION_FLIP_Y) != 0)
             {
                 result[1][0] = -result[1][0];
                 result[1][1] = -result[1][1];
             }
 
             // apply to bounds and force into destination rectangle
-            render_bounds bounds = new render_bounds(m_bounds);
-            rendlay_global.render_bounds_transform(ref bounds, result);
+            render_bounds bounds = m_bounds;
+            render_bounds_transform(ref bounds, result);
             result[0][0] *= (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0);
             result[0][1] *= (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0);
             result[0][2] = dest.x0 - (std.min(bounds.x0, bounds.x1) * (dest.x1 - dest.x0) / std.fabs(bounds.x1 - bounds.x0));
@@ -1510,14 +1524,14 @@ namespace mame
 
         public layout_group_transform make_transform(int orientation, layout_group_transform trans)  //layout_group::transform layout_group::make_transform(int orientation, transform const &trans) const
         {
-            g.assert(m_bounds_resolved);
+            assert(m_bounds_resolved);
 
             render_bounds dest = new render_bounds()
             {
                 x0 = m_bounds.x0,
                 y0 = m_bounds.y0,
-                x1 = (orientation & g.ORIENTATION_SWAP_XY) != 0 ? (m_bounds.x0 + m_bounds.y1 - m_bounds.y0) : m_bounds.x1,
-                y1 = (orientation & g.ORIENTATION_SWAP_XY) != 0 ? (m_bounds.y0 + m_bounds.x1 - m_bounds.x0) : m_bounds.y1
+                x1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (m_bounds.x0 + m_bounds.y1 - m_bounds.y0) : m_bounds.x1,
+                y1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (m_bounds.y0 + m_bounds.x1 - m_bounds.x0) : m_bounds.y1
             };
             return make_transform(orientation, dest, trans);
         }
@@ -1590,7 +1604,7 @@ namespace mame
                 bool repeat,
                 bool init)
         {
-            rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Group '{0}' resolve bounds empty={1} vistoggle={2} repeat={3} init={4}\n",
+            LOGMASKED(LOG_GROUP_BOUNDS_RESOLUTION, "Group '{0}' resolve bounds empty={1} vistoggle={2} repeat={3} init={4}\n",
                 parentnode.get_attribute_string("name", ""), empty, vistoggle, repeat, init);
 
             bool envaltered = false;
@@ -1608,7 +1622,7 @@ namespace mame
                     envaltered = true;
                     if (!unresolved)
                     {
-                        rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Environment altered{0}, unresolving groups\n", envaltered ? " again" : "");
+                        LOGMASKED(LOG_GROUP_BOUNDS_RESOLUTION, "Environment altered{0}, unresolving groups\n", envaltered ? " again" : "");
                         unresolved = true;
                         foreach (var group in groupmap)
                             group.second().set_bounds_unresolved();
@@ -1648,7 +1662,7 @@ namespace mame
 
                     empty = false;
 
-                    rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Accumulate item bounds ({0} {1} {2} {3}) -> ({4} {5} {6} {7})\n",
+                    LOGMASKED(LOG_GROUP_BOUNDS_RESOLUTION, "Accumulate item bounds ({0} {1} {2} {3}) -> ({4} {5} {6} {7})\n",
                         itembounds.x0, itembounds.y0, itembounds.x1, itembounds.y1,
                         m_bounds.x0, m_bounds.y0, m_bounds.x1, m_bounds.y1);
                 }
@@ -1666,7 +1680,7 @@ namespace mame
 
                         empty = false;
 
-                        rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Accumulate group '{0}' reference explicit bounds ({1} {2} {3} {4}) -> ({5} {6} {7} {8})\n",
+                        LOGMASKED(LOG_GROUP_BOUNDS_RESOLUTION, "Accumulate group '{0}' reference explicit bounds ({1} {2} {3} {4}) -> ({5} {6} {7} {8})\n",
                             itemnode.get_attribute_string("ref", ""),
                             itembounds.x0, itembounds.y0, itembounds.x1, itembounds.y1,
                             m_bounds.x0, m_bounds.y0, m_bounds.x1, m_bounds.y1);
@@ -1688,8 +1702,8 @@ namespace mame
                         {
                             x0 = found.m_bounds.x0,
                             y0 = found.m_bounds.y0,
-                            x1 = (orientation & g.ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.x0 + found.m_bounds.y1 - found.m_bounds.y0) : found.m_bounds.x1,
-                            y1 = (orientation & g.ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.y0 + found.m_bounds.x1 - found.m_bounds.x0) : found.m_bounds.y1
+                            x1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.x0 + found.m_bounds.y1 - found.m_bounds.y0) : found.m_bounds.x1,
+                            y1 = (orientation & ORIENTATION_SWAP_XY) != 0 ? (found.m_bounds.y0 + found.m_bounds.x1 - found.m_bounds.x0) : found.m_bounds.y1
                         };
 
                         if (empty)
@@ -1700,7 +1714,7 @@ namespace mame
                         empty = false;
 
                         unresolved = false;
-                        rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Accumulate group '{0}' reference computed bounds ({1} {2} {3} {4}) -> ({5} {6} {7} {8})\n",
+                        LOGMASKED(LOG_GROUP_BOUNDS_RESOLUTION, "Accumulate group '{0}' reference computed bounds ({1} {2} {3} {4}) -> ({5} {6} {7} {8})\n",
                             itemnode.get_attribute_string("ref", ""),
                             itembounds.x0, itembounds.y0, itembounds.x1, itembounds.y1,
                             m_bounds.x0, m_bounds.y0, m_bounds.x1, m_bounds.y1);
@@ -1734,7 +1748,7 @@ namespace mame
 
             if (envaltered && !unresolved)
             {
-                rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Environment was altered, marking groups unresolved\n");
+                LOGMASKED(LOG_GROUP_BOUNDS_RESOLUTION, "Environment was altered, marking groups unresolved\n");
                 bool resolved = m_bounds_resolved;
                 foreach (var group in groupmap)
                     group.second().set_bounds_unresolved();
@@ -1743,7 +1757,7 @@ namespace mame
 
             if (!vistoggle && !repeat)
             {
-                rendlay_global.LOGMASKED(rendlay_global.LOG_GROUP_BOUNDS_RESOLUTION, "Marking group '{0}' bounds resolved\n", parentnode.get_attribute_string("name", ""));
+                LOGMASKED(LOG_GROUP_BOUNDS_RESOLUTION, "Marking group '{0}' bounds resolved\n", parentnode.get_attribute_string("name", ""));
                 m_bounds_resolved = true;
             }
         }
@@ -2069,7 +2083,7 @@ namespace mame
             //-------------------------------------------------
             int get_output()
             {
-                g.assert(m_have_output);
+                assert(m_have_output);
                 return (int)(s32)m_output.op.op;
             }
 
@@ -2079,7 +2093,7 @@ namespace mame
             //-------------------------------------------------
             int get_input_raw()
             {
-                g.assert(m_input_port != null);
+                assert(m_input_port != null);
                 return (int)(s32)((m_input_port.read() & m_input_mask) >> m_input_shift);  //return int(std::make_signed_t<ioport_value>((m_input_port->read() & m_input_mask) >> m_input_shift));
             }
 
@@ -2089,8 +2103,8 @@ namespace mame
             //-------------------------------------------------
             int get_input_field_cached()
             {
-                g.assert(m_input_port != null);
-                g.assert(m_input_field != null);
+                assert(m_input_port != null);
+                assert(m_input_field != null);
                 return ((m_input_port.read() ^ m_input_field.defvalue()) & m_input_mask) != 0 ? 1 : 0;
             }
 
@@ -2100,8 +2114,8 @@ namespace mame
             //-------------------------------------------------
             int get_input_field_conditional()
             {
-                g.assert(m_input_port != null);
-                g.assert(m_input_field == null);
+                assert(m_input_port != null);
+                assert(m_input_field == null);
                 ioport_field field = m_input_port.field(m_input_mask);
                 return (field != null && ((m_input_port.read() ^ field.defvalue()) & m_input_mask) != 0) ? 1 : 0;
             }
@@ -2112,7 +2126,7 @@ namespace mame
             //-------------------------------------------------
             int get_anim_output()
             {
-                g.assert(m_have_animoutput);
+                assert(m_have_animoutput);
                 return (int)(unsigned)((u32)((s32)m_animoutput.op.op & m_animmask) >> m_animshift);
             }
 
@@ -2122,7 +2136,7 @@ namespace mame
             //-------------------------------------------------
             int get_anim_input()
             {
-                g.assert(m_animinput_port != null);
+                assert(m_animinput_port != null);
                 return (int)(s32)((m_animinput_port.read() & m_animmask) >> m_animshift);  //return int(std::make_signed_t<ioport_value>((m_animinput_port->read() & m_animmask) >> m_animshift));
             }
 
@@ -2132,8 +2146,8 @@ namespace mame
             //-------------------------------------------------
             render_bounds get_interpolated_bounds()
             {
-                g.assert(m_bounds.size() > 1U);
-                return rendlay_global.interpolate_bounds(m_bounds, m_get_anim_state());
+                assert(m_bounds.size() > 1U);
+                return interpolate_bounds(m_bounds, m_get_anim_state());
             }
 
 
@@ -2142,8 +2156,8 @@ namespace mame
             //-------------------------------------------------
             render_color get_interpolated_color()
             {
-                g.assert(m_color.size() > 1U);
-                return rendlay_global.interpolate_color(m_color, m_get_anim_state());
+                assert(m_color.size() > 1U);
+                return interpolate_color(m_color, m_get_anim_state());
             }
 
 
@@ -2176,7 +2190,7 @@ namespace mame
                 layout_view_item_bounds_vector result = new emu_render_detail_bounds_vector();
                 for (util.xml.data_node bounds = itemnode.get_child("bounds"); bounds != null; bounds = bounds.get_next_sibling("bounds"))
                 {
-                    if (!rendlay_global.add_bounds_step(env, result, bounds))
+                    if (!add_bounds_step(env, result, bounds))
                     {
                         throw new layout_syntax_error(
                                 util.string_format(
@@ -2185,16 +2199,16 @@ namespace mame
                     }
                 }
 
-                foreach (emu.render.detail.bounds_step step in result)
+                foreach (emu.render.detail.bounds_step step in result)  //for (emu::render::detail::bounds_step &step : result)
                 {
-                    rendlay_global.render_bounds_transform(ref step.bounds, trans);
+                    render_bounds_transform(ref step.bounds, trans);
                     if (step.bounds.x0 > step.bounds.x1)
                         std.swap(ref step.bounds.x0, ref step.bounds.x1);
                     if (step.bounds.y0 > step.bounds.y1)
                         std.swap(ref step.bounds.y0, ref step.bounds.y1);
                 }
 
-                rendlay_global.set_bounds_deltas(result);
+                set_bounds_deltas(result);
                 return result;
             }
 
@@ -2210,7 +2224,7 @@ namespace mame
                 layout_view_item_color_vector result = new emu_render_detail_color_vector();
                 for (util.xml.data_node color = itemnode.get_child("color"); color != null; color = color.get_next_sibling("color"))
                 {
-                    if (!rendlay_global.add_color_step(env, result, color))
+                    if (!add_color_step(env, result, color))
                     {
                         throw new layout_syntax_error(
                                 util.string_format(
@@ -2221,14 +2235,20 @@ namespace mame
 
                 if (result.empty())
                 {
-                    result.emplace_back(new emu.render.detail.color_step() { state = 0, color = mult, delta = new render_color() { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
+                    result.emplace_back(new emu.render.detail.color_step() { state = 0, color = mult, delta = { a = 0.0F, r = 0.0F, g = 0.0F, b = 0.0F } });
                 }
                 else
                 {
-                    foreach (emu.render.detail.color_step step in result)
+                    for (int i = 0; i < result.Count; i++)  //for (emu::render::detail::color_step &step : result)
+                    {
+                        var step = result[i];
+
                         step.color *= mult;
 
-                    rendlay_global.set_color_deltas(result);
+                        result[i] = new emu.render.detail.color_step(step);
+                    }
+
+                    set_color_deltas(result);
                 }
 
                 return result;
@@ -2299,13 +2319,13 @@ namespace mame
                 if (mode != null)
                 {
                     if (mode == "none")
-                        return g.BLENDMODE_NONE;
+                        return BLENDMODE_NONE;
                     else if (mode == "alpha")
-                        return g.BLENDMODE_ALPHA;
+                        return BLENDMODE_ALPHA;
                     else if (mode == "multiply")
-                        return g.BLENDMODE_RGB_MULTIPLY;
+                        return BLENDMODE_RGB_MULTIPLY;
                     else if (mode == "add")
-                        return g.BLENDMODE_ADD;
+                        return BLENDMODE_ADD;
                     else
                         throw new layout_syntax_error(util.string_format("unknown blend mode {0}", mode));
                 }
@@ -2314,9 +2334,9 @@ namespace mame
                 if (std.strcmp(itemnode.get_name(), "screen") == 0)
                     return -1; // magic number recognised by render.cpp to allow per-element blend mode
                 else if (std.strcmp(itemnode.get_name(), "overlay") == 0)
-                    return g.BLENDMODE_RGB_MULTIPLY;
+                    return BLENDMODE_RGB_MULTIPLY;
                 else
-                    return g.BLENDMODE_ALPHA;
+                    return BLENDMODE_ALPHA;
             }
 
 
@@ -2326,7 +2346,7 @@ namespace mame
             static unsigned get_state_shift(ioport_value mask)
             {
                 unsigned result = 0;
-                while (mask != 0 && g.BIT(mask, 0) == 0)
+                while (mask != 0 && BIT(mask, 0) == 0)
                 {
                     ++result;
                     mask >>= 1;
@@ -2368,7 +2388,7 @@ namespace mame
                 m_mask = mask;
 
 
-                g.assert(mask != 0);
+                assert(mask != 0);
             }
 
             //visibility_toggle(visibility_toggle const &) = default;
@@ -2469,7 +2489,7 @@ namespace mame
             layout_view_view_environment local = new layout_view_view_environment(env, m_name);
             layer_lists layers = new layer_lists();
             local.set_parameter("viewname", m_name);
-            add_items(layers, local, viewnode, elemmap, groupmap, g.ROT0, rendlay_global.identity_transform, new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, true, false, true);
+            add_items(layers, local, viewnode, elemmap, groupmap, ROT0, identity_transform, new render_color() { a = 1.0F, r = 1.0F, g = 1.0F, b = 1.0F }, true, false, true);
 
             // can't support legacy layers and modern visibility toggles at the same time
             if (!m_vistoggles.empty() && (!layers.backdrops.empty() || !layers.overlays.empty() || !layers.bezels.empty() || !layers.cpanels.empty() || !layers.marquees.empty()))
@@ -2527,7 +2547,7 @@ namespace mame
             {
                 // screens (-1) + overlays (RGB multiply) + backdrop (add) + bezels (alpha) + cpanels (alpha) + marquees (alpha)
                 foreach (item backdrop in layers.backdrops)
-                    backdrop.m_blend_mode = g.BLENDMODE_ADD;
+                    backdrop.m_blend_mode = BLENDMODE_ADD;
 
                 foreach (var item in layers.screens) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.screens);
                 foreach (var item in layers.overlays) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.overlays);
@@ -2543,7 +2563,7 @@ namespace mame
                 foreach (item screen in layers.screens)
                 {
                     if (screen.blend_mode() == -1)
-                        screen.m_blend_mode = g.BLENDMODE_ADD;
+                        screen.m_blend_mode = BLENDMODE_ADD;
                 }
 
                 foreach (var item in layers.backdrops) m_items.push_back(item);  //m_items.splice(m_items.end(), layers.backdrops);
@@ -2649,7 +2669,7 @@ namespace mame
             {
                 if ((visibility_mask & curitem.visibility_mask()) == curitem.visibility_mask())
                 {
-                    render_bounds rawbounds = rendlay_global.accumulate_bounds(curitem.m_rawbounds);
+                    render_bounds rawbounds = accumulate_bounds(curitem.m_rawbounds);
 
                     // accumulate bounds
                     m_visible_items.emplace_back(curitem);
@@ -2712,25 +2732,25 @@ namespace mame
             // normalize all the item bounds
             foreach (item curitem in items())
             {
-                g.assert(curitem.m_rawbounds.size() == curitem.m_bounds.size());
+                assert(curitem.m_rawbounds.size() == curitem.m_bounds.size());
 
                 //std::copy(curitem.m_rawbounds.begin(), curitem.m_rawbounds.end(), curitem.m_bounds.begin());
                 curitem.m_bounds = new emu_render_detail_bounds_vector();
                 foreach (var it in curitem.m_rawbounds)
                     curitem.m_bounds.Add(it);
 
-                rendlay_global.normalize_bounds(curitem.m_bounds, target_bounds.x0, target_bounds.y0, xoffs, yoffs, xscale, yscale);
+                normalize_bounds(curitem.m_bounds, target_bounds.x0, target_bounds.y0, xoffs, yoffs, xscale, yscale);
             }
 
             // sort edges of interactive items
-            rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "Recalculated view '{0}' with {1} interactive items\n", name(), m_interactive_items.size());
+            LOGMASKED(LOG_INTERACTIVE_ITEMS, "Recalculated view '{0}' with {1} interactive items\n", name(), m_interactive_items.size());
             m_interactive_edges_x.reserve(m_interactive_items.size() * 2);
             m_interactive_edges_y.reserve(m_interactive_items.size() * 2);
             for (unsigned i = 0; m_interactive_items.size() > i; ++i)
             {
                 item curitem = m_interactive_items[i];
-                render_bounds curbounds = rendlay_global.accumulate_bounds(curitem.m_bounds);
-                rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "{0}: ({1} {2} {3} {4}) hasinput={5} clickthrough={6}\n",
+                render_bounds curbounds = accumulate_bounds(curitem.m_bounds);
+                LOGMASKED(LOG_INTERACTIVE_ITEMS, "{0}: ({1} {2} {3} {4}) hasinput={5} clickthrough={6}\n",
                         i, curbounds.x0, curbounds.y0, curbounds.x1, curbounds.y1, curitem.has_input(), curitem.clickthrough());
                 m_interactive_edges_x.emplace_back(new edge(i, curbounds.x0, false));
                 m_interactive_edges_x.emplace_back(new edge(i, curbounds.x1, true));
@@ -2741,12 +2761,12 @@ namespace mame
             m_interactive_edges_x.Sort();  //std::sort(m_interactive_edges_x.begin(), m_interactive_edges_x.end());
             m_interactive_edges_y.Sort();  //std::sort(m_interactive_edges_y.begin(), m_interactive_edges_y.end());
 
-            if ((rendlay_global.VERBOSE & rendlay_global.LOG_INTERACTIVE_ITEMS) != 0)
+            if ((VERBOSE & LOG_INTERACTIVE_ITEMS) != 0)
             {
                 foreach (edge e in m_interactive_edges_x)
-                    rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "x={0} {1}{2}\n", e.position(), e.trailing() ? ']' : '[', e.index());
+                    LOGMASKED(LOG_INTERACTIVE_ITEMS, "x={0} {1}{2}\n", e.position(), e.trailing() ? ']' : '[', e.index());
                 foreach (edge e in m_interactive_edges_y)
-                    rendlay_global.LOGMASKED(rendlay_global.LOG_INTERACTIVE_ITEMS, "y={0} {1}{2}\n", e.position(), e.trailing() ? ']' : '[', e.index());
+                    LOGMASKED(LOG_INTERACTIVE_ITEMS, "y={0} {1}{2}\n", e.position(), e.trailing() ? ']' : '[', e.index());
             }
 
             // additional actions typically supplied by script
@@ -2837,21 +2857,21 @@ namespace mame
                 else if (std.strcmp(itemnode.get_name(), "backdrop") == 0)
                 {
                     if (layers.backdrops.empty())
-                        g.osd_printf_warning("Warning: layout view '{0}' contains deprecated backdrop element\n", name());
+                        osd_printf_warning("Warning: layout view '{0}' contains deprecated backdrop element\n", name());
                     layers.backdrops.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (std.strcmp(itemnode.get_name(), "overlay") == 0)
                 {
                     if (layers.overlays.empty())
-                        g.osd_printf_warning("Warning: layout view '{0}' contains deprecated overlay element\n", name());
+                        osd_printf_warning("Warning: layout view '{0}' contains deprecated overlay element\n", name());
                     layers.overlays.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
                 }
                 else if (std.strcmp(itemnode.get_name(), "bezel") == 0)
                 {
                     if (layers.bezels.empty())
-                        g.osd_printf_warning("Warning: layout view '{0}' contains deprecated bezel element\n", name());
+                        osd_printf_warning("Warning: layout view '{0}' contains deprecated bezel element\n", name());
 
                     layers.bezels.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
@@ -2859,7 +2879,7 @@ namespace mame
                 else if (std.strcmp(itemnode.get_name(), "cpanel") == 0)
                 {
                     if (layers.cpanels.empty())
-                        g.osd_printf_warning("Warning: layout view '{0}' contains deprecated cpanel element\n", name());
+                        osd_printf_warning("Warning: layout view '{0}' contains deprecated cpanel element\n", name());
 
                     layers.cpanels.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
@@ -2867,7 +2887,7 @@ namespace mame
                 else if (std.strcmp(itemnode.get_name(), "marquee") == 0)
                 {
                     if (layers.marquees.empty())
-                        g.osd_printf_warning("Warning: layout view '{0}' contains deprecated marquee element\n", name());
+                        osd_printf_warning("Warning: layout view '{0}' contains deprecated marquee element\n", name());
 
                     layers.marquees.emplace_back(new item(env, itemnode, elemmap, orientation, trans, color));
                     m_has_art = true;
@@ -2912,7 +2932,7 @@ namespace mame
                             found.get_groupnode(),
                             elemmap,
                             groupmap,
-                            g.orientation_add(grouporient, orientation),
+                            orientation_add(grouporient, orientation),
                             grouptrans,
                             env.parse_color(itemnode.get_child("color")) * color,
                             false,
@@ -3029,7 +3049,7 @@ namespace mame
 
                 // validate the config data version
                 int version = (int)mamelayoutnode.get_attribute_int("version", 0);
-                if (version != rendlay_global.LAYOUT_VERSION)
+                if (version != LAYOUT_VERSION)
                     throw new layout_syntax_error(util.string_format("unsupported version {0}", version));
 
                 // parse all the parameters, elements and groups
@@ -3049,7 +3069,7 @@ namespace mame
                     }
                     catch (layout_reference_error err)
                     {
-                        g.osd_printf_warning("Error instantiating layout view {0}: {1}\n", env.get_attribute_string(viewnode, "name"), err);
+                        osd_printf_warning("Error instantiating layout view {0}: {1}\n", env.get_attribute_string(viewnode, "name"), err);
                     }
                 }
 
@@ -3378,7 +3398,7 @@ namespace mame
 
                 // search for candidate variable references
                 size_t start = 0;
-                for (size_t pos = str.find_first_of(variable_start_char); pos != g.npos; )
+                for (size_t pos = str.find_first_of(variable_start_char); pos != npos; )
                 {
                     string new_str = str.Substring((int)pos + 1);
                     int termIdx = new_str.IndexOf(c => !is_variable_char(c));  //auto term = std::find_if_not(str.begin() + pos + 1, str.end(), is_variable_char);
@@ -3396,7 +3416,7 @@ namespace mame
                             // variable found
                             if (start == 0)
                                 m_buffer = "";  //m_buffer.seekp(0);
-                            g.assert(start < str.length());
+                            assert(start < str.length());
                             m_buffer += str.Substring((int)start, (int)pos - (int)start);  //m_buffer.write(&str[start], pos - start);
                             m_buffer += text.first;  //m_buffer.write(text.first.data(), text.first.length());
                             start = (size_t)termIdx + 1;  //start = term - str.begin() + 1;
@@ -3574,7 +3594,7 @@ namespace mame
                         string expanded = expand(increment);
                         unsigned hexprefix = hex_prefix(expanded);
                         unsigned decprefix = dec_prefix(expanded);
-                        bool floatchars = expanded.find_first_of(".eE") != g.npos;
+                        bool floatchars = expanded.find_first_of(".eE") != npos;
                         string stream = expanded.Substring((int)(hexprefix + decprefix));  //std::istringstream stream(std::string(expanded.substr(hexprefix + decprefix)));
                         //stream.imbue(std::locale::classic());
                         bool success = true;
@@ -3612,7 +3632,7 @@ namespace mame
                         //            name,
                         //            [] (entry const &lhs, auto const &rhs) { return lhs.name() < rhs; }));
                         //if ((m_entries.end() != pos) && (pos->name() == name))
-                        //    throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
+                        //    throw new layout_syntax_error("generator parameters must be defined exactly once per scope");
                         int pos = 0;
                         for (; pos < m_entries.Count; pos++)
                         {
@@ -3647,7 +3667,7 @@ namespace mame
                     //if ((m_entries.end() == pos) || (pos->name() != name))
                     //    m_entries.emplace(pos, std::move(name), std::string(expanded.first, expanded.second));
                     //else if (pos->is_generator())
-                    //    throw new rendlay_global.layout_syntax_error("generator parameters must be defined exactly once per scope");
+                    //    throw new layout_syntax_error("generator parameters must be defined exactly once per scope");
                     //else
                     //    pos->set(std::string(expanded.first, expanded.second));
                     int pos = 0;
@@ -3812,26 +3832,26 @@ namespace mame
             {
                 // default to no transform
                 if (node == null)
-                    return g.ROT0;
+                    return ROT0;
 
                 // parse attributes
                 int result;
                 int rotate = get_attribute_int(node, "rotate", 0);
                 switch (rotate)
                 {
-                    case 0:     result = g.ROT0;      break;
-                    case 90:    result = g.ROT90;     break;
-                    case 180:   result = g.ROT180;    break;
-                    case 270:   result = g.ROT270;    break;
+                    case 0:     result = ROT0;      break;
+                    case 90:    result = ROT90;     break;
+                    case 180:   result = ROT180;    break;
+                    case 270:   result = ROT270;    break;
                     default:    throw new layout_syntax_error(util.string_format("invalid rotate attribute {0}", rotate));
                 }
 
                 if (get_attribute_bool(node, "swapxy", false))
-                    result ^= g.ORIENTATION_SWAP_XY;
+                    result ^= ORIENTATION_SWAP_XY;
                 if (get_attribute_bool(node, "flipx", false))
-                    result ^= g.ORIENTATION_FLIP_X;
+                    result ^= ORIENTATION_FLIP_X;
                 if (get_attribute_bool(node, "flipy", false))
-                    result ^= g.ORIENTATION_FLIP_Y;
+                    result ^= ORIENTATION_FLIP_Y;
 
                 return result;
             }

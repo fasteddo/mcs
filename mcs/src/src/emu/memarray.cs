@@ -2,13 +2,16 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
 
 
 namespace mame
@@ -36,7 +39,7 @@ namespace mame
             m_base = null;
             m_bytes = 0;
             m_membits = 0;
-            m_endianness = g.ENDIANNESS_LITTLE;
+            m_endianness = ENDIANNESS_LITTLE;
             m_bytes_per_entry = 0;
             m_read_entry = null;
             m_write_entry = null;
@@ -57,10 +60,10 @@ namespace mame
         public void set(PointerU8 base_, u32 bytes, int membits, endianness_t endianness, int bpe)  //void set(void *base, u32 bytes, int membits, endianness_t endianness, int bpe);
         {
             // validate inputs
-            g.assert(base_ != null);
-            g.assert(bytes > 0);
-            g.assert(membits == 8 || membits == 16 || membits == 32 || membits == 64);
-            g.assert(bpe == 1 || bpe == 2 || bpe == 4);
+            assert(base_ != null);
+            assert(bytes > 0);
+            assert(membits == 8 || membits == 16 || membits == 32 || membits == 64);
+            assert(bpe == 1 || bpe == 2 || bpe == 4);
 
             // populate direct data
             m_base = base_;
@@ -70,7 +73,7 @@ namespace mame
             m_bytes_per_entry = bpe;
 
             // derive data
-            switch (bpe * 1000 + membits * 10 + (endianness == g.ENDIANNESS_LITTLE ? 0 : 1))
+            switch (bpe * 1000 + membits * 10 + (endianness == ENDIANNESS_LITTLE ? 0 : 1))
             {
                 case 1 * 1000 +  8 * 10 + 0:    m_read_entry = read8_from_8;       m_write_entry = write8_to_8;        break;
                 case 1 * 1000 +  8 * 10 + 1:    m_read_entry = read8_from_8;       m_write_entry = write8_to_8;        break;
@@ -109,7 +112,7 @@ namespace mame
         //-------------------------------------------------
         //template <typename _Type> void set(std::vector<_Type> &array, endianness_t endianness, int bpe) { set(&array[0], array.size(), 8*sizeof(_Type), endianness, bpe); }
         public void set(address_space space, PointerU8 base_, u32 bytes, int bpe) { set(base_, bytes, space.data_width(), space.endianness(), bpe); }  //void set(const address_space &space, void *base, u32 bytes, int bpe);
-        public void set(memory_share share, int bpe) { set(share.ptr(), (UInt32)share.bytes(), share.bitwidth(), share.endianness(), bpe); }
+        public void set(memory_share share, int bpe) { set(share.ptr(), (u32)share.bytes(), share.bitwidth(), share.endianness(), bpe); }
         public void set(memory_array array) { set(array.base_(), array.bytes(), array.membits(), array.endianness(), array.bytes_per_entry()); }
 
 
@@ -140,7 +143,7 @@ namespace mame
         //u32 read32(offs_t offset) const { return reinterpret_cast<u32 *>(m_base)[offset]; }
         //u64 read64(offs_t offset) const { return reinterpret_cast<u64 *>(m_base)[offset]; }
         //void write8(offs_t offset, u8 data) { reinterpret_cast<u8 *>(m_base)[offset] = data; }
-        public void write16(offs_t offset, u16 data, u16 mem_mask = 0xffff) { var temp = m_base.GetUInt16((int)offset); g.COMBINE_DATA(ref temp, data, mem_mask); m_base.SetUInt16((int)offset, temp); }  //{ COMBINE_DATA(&reinterpret_cast<u16 *>(m_base)[offset]); }
+        public void write16(offs_t offset, u16 data, u16 mem_mask = 0xffff) { var temp = m_base.GetUInt16((int)offset); COMBINE_DATA(ref temp, data, mem_mask); m_base.SetUInt16((int)offset, temp); }  //{ COMBINE_DATA(&reinterpret_cast<u16 *>(m_base)[offset]); }
         //void write32(offs_t offset, u32 data, u32 mem_mask = 0xffffffff) { COMBINE_DATA(&reinterpret_cast<u32 *>(m_base)[offset]); }
         //void write64(offs_t offset, u64 data, u64 mem_mask = 0xffffffffffffffffU) { COMBINE_DATA(&reinterpret_cast<u64 *>(m_base)[offset]); }
 

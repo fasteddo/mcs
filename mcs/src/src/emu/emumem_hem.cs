@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
@@ -180,18 +179,24 @@ namespace mame
 
         public override void write(offs_t offset, uX data, uX mem_mask)
         {
-            throw new emu_unimplemented();
-#if false
-            template<> void handler_entry_write_memory_bank<0, 0, ENDIANNESS_LITTLE>::write(offs_t offset, u8 data, u8 mem_mask)
-            static_cast<uX *>(m_bank.base())[(offset - inh::m_address_base) & inh::m_address_mask] = data;
-
-            template<> void handler_entry_write_memory_bank<0, 0, ENDIANNESS_BIG>::write(offs_t offset, u8 data, u8 mem_mask)
-            static_cast<uX *>(m_bank.base())[(offset - inh::m_address_base) & inh::m_address_mask] = data;
-
-            template<int Width, int AddrShift, int Endian> void handler_entry_write_memory_bank<Width, AddrShift, Endian>::write(offs_t offset, uX data, uX mem_mask)
-            offs_t off = ((offset - inh::m_address_base) & inh::m_address_mask) >> (Width + AddrShift);
-            static_cast<uX *>(m_bank.base())[off] = (static_cast<uX *>(m_bank.base())[off] & ~mem_mask) | (data & mem_mask);
-#endif
+            if (Width == 0 && AddrShift == 0 && data.width == 0 && mem_mask == 0)
+            {
+                //template<> void handler_entry_write_memory_bank<0, 0>::write(offs_t offset, u8 data, u8 mem_mask) const
+                m_bank.base_().m_pointer[(offset - this.m_address_base) & this.m_address_mask] = data.u8;  //static_cast<uX *>(m_bank.base())[(offset - this->m_address_base) & this->m_address_mask] = data;
+            }
+            else
+            {
+                offs_t off = ((offset - this.m_address_base) & this.m_address_mask) >> (Width + AddrShift);
+                //static_cast<uX *>(m_bank.base())[off] = (static_cast<uX *>(m_bank.base())[off] & ~mem_mask) | (data & mem_mask);
+                switch (Width)
+                {
+                    case 0: m_bank.base_().m_pointer[off] = (u8)((m_bank.base_().m_pointer[off] & ~mem_mask.u8) | (data.u8 & mem_mask.u8)); break;
+                    case 1: var pointerU16 = new PointerU16(m_bank.base_().m_pointer); pointerU16[off] = (u16)((pointerU16[off] & ~mem_mask.u16) | (data.u16 & mem_mask.u16)); break;
+                    case 2: throw new emu_unimplemented();
+                    case 3: throw new emu_unimplemented();
+                    default: throw new emu_unimplemented();
+                }
+            }
         }
 
 

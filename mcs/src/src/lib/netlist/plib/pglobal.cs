@@ -2,11 +2,11 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using size_t = System.UInt64;
+using unsigned = System.UInt32;
 
 
 namespace mame.plib
@@ -30,6 +30,7 @@ namespace mame.plib
         public static nl_fptype log(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.log(v); }
         //public static T floor<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.floor(v); }
         public static nl_fptype floor(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.floor(v); }
+        public static nl_fptype log1p(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.log1p(v); }
         //public static T sin<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.sin(v); }
         public static nl_fptype sin(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.sin(v); }
         //public static T cos<T, OPS>(T v) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.cos(v); }
@@ -38,10 +39,13 @@ namespace mame.plib
         public static nl_fptype trunc(nl_fptype v) { return pmath_global<nl_fptype, nl_fptype_ops>.trunc(v); }
         //public static T pow<T, OPS>(T v, T p) where OPS : constants_operators<T>, new() { return pmath_global<T, OPS>.pow(v, p); }
         public static nl_fptype pow(nl_fptype v, nl_fptype p) { return pmath_global<nl_fptype, nl_fptype_ops>.pow(v, p); }
+        public static nl_fptype clamp(nl_fptype v, nl_fptype low, nl_fptype high) { return pmath_global<nl_fptype, nl_fptype_ops>.clamp(v, low, high); } 
 
 
         // pstonum
         public static int pstonum_ne_int(bool CLOCALE, string arg, out bool err) { return pstonum_global.pstonum_ne_int(CLOCALE, arg, out err); }
+        public static UInt32 pstonum_ne_unsigned(bool CLOCALE, string arg, out bool err) { return pstonum_global.pstonum_ne_unsigned(CLOCALE, arg, out err); }
+        public static Int64 pstonum_ne_int64(bool CLOCALE, string arg, out bool err) { return pstonum_global.pstonum_ne_int64(CLOCALE, arg, out err); }
         public static double pstonum_ne_nl_fptype(bool CLOCALE, string arg, out bool err) { return pstonum_global.pstonum_ne_nl_fptype(CLOCALE, arg, out err); }
 
 
@@ -56,6 +60,10 @@ namespace mame.plib
         public static string left(string str, size_t len) { return pstrutil_global.left(str, len); }
         public static string right(string str, size_t nlen) { return pstrutil_global.right(str, nlen); }
         public static string replace_all(string str, string search, string replace) { return pstrutil_global.replace_all(str, search, replace); }
+
+
+        // ptypes
+        public static Type fast_type_for_bits(unsigned bits) { return ptypes_global.fast_type_for_bits(bits); }
 
 
         // putil

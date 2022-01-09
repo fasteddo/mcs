@@ -2,12 +2,11 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 
 namespace mame
 {
-    public static class mame_global_emulator_info
+    public static partial class emulator_info
     {
         const string APPNAME                 = "MAME";
         const string APPNAME_LOWER           = "mame";

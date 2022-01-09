@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -15,6 +14,12 @@ using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 using unsigned = System.UInt32;
 
+using static mame.diexec_global;
+using static mame.distate_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
+using static mame.m6805_global;
+using static mame.util;
 
 namespace mame
 {
@@ -341,7 +346,7 @@ namespace mame
 
 
             m_params = params_;
-            m_program_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, (u8)params_.m_addr_width);
+            m_program_config = new address_space_config("program", ENDIANNESS_BIG, 8, (u8)params_.m_addr_width);
         }
 
 
@@ -368,14 +373,14 @@ namespace mame
 
 
             m_params = params_;
-            m_program_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, (u8)params_.m_addr_width, 0, internal_map);
+            m_program_config = new address_space_config("program", ENDIANNESS_BIG, 8, (u8)params_.m_addr_width, 0, internal_map);
         }
 
 
         // this function is needed when passing in a non-static address_map_constructor in the ctor.  'this' isn't available
         protected void m6805_base_device_after_ctor(address_map_constructor internal_map)
         {
-            m_program_config = new address_space_config("program", g.ENDIANNESS_BIG, 8, (u8)m_params.m_addr_width, 0, internal_map);
+            m_program_config = new address_space_config("program", ENDIANNESS_BIG, 8, (u8)m_params.m_addr_width, 0, internal_map);
         }
 
 
@@ -388,13 +393,13 @@ namespace mame
         {
             if (m_params.m_addr_width > 13)
             {
-                m_dimemory.space(g.AS_PROGRAM).cache(m_cprogram16);
-                m_dimemory.space(g.AS_PROGRAM).specific(m_program16);
+                m_dimemory.space(AS_PROGRAM).cache(m_cprogram16);
+                m_dimemory.space(AS_PROGRAM).specific(m_program16);
             }
             else
             {
-                m_dimemory.space(g.AS_PROGRAM).cache(m_cprogram13);
-                m_dimemory.space(g.AS_PROGRAM).specific(m_program13);
+                m_dimemory.space(AS_PROGRAM).cache(m_cprogram13);
+                m_dimemory.space(AS_PROGRAM).specific(m_program13);
             }
 
             // get the minimum not including the zero placeholders for illegal instructions
@@ -416,9 +421,9 @@ namespace mame
             set_icountptr(m_icount);
 
             // register our state for the debugger
-            m_distate.state_add(g.STATE_GENPC,     "GENPC",     m_pc.w.l).noshow();
-            m_distate.state_add(g.STATE_GENPCBASE, "CURPC",     m_pc.w.l).noshow();
-            m_distate.state_add(g.STATE_GENFLAGS,  "GENFLAGS",  m_cc).callimport().callexport().formatstr("%8s").noshow();
+            m_distate.state_add(STATE_GENPC,     "GENPC",     m_pc.w.l).noshow();
+            m_distate.state_add(STATE_GENPCBASE, "CURPC",     m_pc.w.l).noshow();
+            m_distate.state_add(STATE_GENFLAGS,  "GENFLAGS",  m_cc).callimport().callexport().formatstr("%8s").noshow();
             m_distate.state_add(M6805_A,           "A",         m_a).mask(0xff);
             m_distate.state_add(M6805_PC,          "PC",        m_pc.w.l).mask(0xffff);
             m_distate.state_add(M6805_S,           "S",         m_s.w.l).mask(0xff);
@@ -426,17 +431,17 @@ namespace mame
             m_distate.state_add(M6805_CC,          "CC",        m_cc).mask(0xff);
 
             // register for savestates
-            save_item(g.NAME(new { EA }));
-            save_item(g.NAME(new { A }));
-            save_item(g.NAME(new { PC }));
-            save_item(g.NAME(new { S }));
-            save_item(g.NAME(new { X }));
-            save_item(g.NAME(new { CC }));
-            save_item(g.NAME(new { m_pending_interrupts }));
-            save_item(g.NAME(new { m_irq_state }));
-            save_item(g.NAME(new { m_nmi_state }));
+            save_item(NAME(new { EA }));
+            save_item(NAME(new { A }));
+            save_item(NAME(new { PC }));
+            save_item(NAME(new { S }));
+            save_item(NAME(new { X }));
+            save_item(NAME(new { CC }));
+            save_item(NAME(new { m_pending_interrupts }));
+            save_item(NAME(new { m_irq_state }));
+            save_item(NAME(new { m_nmi_state }));
 
-            std.fill(m_irq_state, g.CLEAR_LINE);
+            std.fill(m_irq_state, CLEAR_LINE);
         }
 
 
@@ -504,7 +509,7 @@ namespace mame
         {
             return new space_config_vector()
             {
-                std.make_pair(g.AS_PROGRAM, m_program_config)
+                std.make_pair(AS_PROGRAM, m_program_config)
             };
         }
 
@@ -516,7 +521,7 @@ namespace mame
 
 
         // for devices with timing-sensitive peripherals
-        protected virtual void burn_cycles(UInt32 count) { }
+        protected virtual void burn_cycles(unsigned count) { }
 
 
         void clr_nz()   { m_cc = (u8)(m_cc & ~(NFLAG | ZFLAG)); }
@@ -529,7 +534,7 @@ namespace mame
         void set_z8(u8 a)                       { if (a == 0) m_cc |= ZFLAG; }
         void set_n8(u8 a)                       { m_cc |= (u8)((a & 0x80) >> 5); }
         void set_h(u8 a, u8 b, u8 r)            { m_cc |= (u8)((a ^ b ^ r) & 0x10); }
-        void set_c8(u16 a)                      { m_cc |= (u8)g.BIT(a, 8); }
+        void set_c8(u16 a)                      { m_cc |= (u8)BIT(a, 8); }
 
         // combos
         void set_nz8(u8 a)                      { set_n8(a); set_z8(a); }
@@ -552,6 +557,6 @@ namespace mame
         protected virtual void interrupt_vector() { throw new emu_unimplemented(); }
 
 
-        protected virtual bool test_il() { return g.CLEAR_LINE != m_irq_state[m6805_global.M6805_IRQ_LINE]; }
+        protected virtual bool test_il() { return CLEAR_LINE != m_irq_state[M6805_IRQ_LINE]; }
     }
 }

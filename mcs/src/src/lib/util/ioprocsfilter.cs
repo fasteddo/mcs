@@ -29,6 +29,36 @@ namespace mame
         //class filter_base
 
 
+        // helper for forwarding to a read stream
+        //template <typename T>
+        //class read_stream_proxy : public virtual read_stream, public T
+
+
+        // helper for forwarding to a write stream
+        //template <typename T>
+        //class write_stream_proxy : public virtual write_stream, public T
+
+
+        // helper for forwarding to random-access storage
+        //template <typename T>
+        //class random_access_proxy : public virtual random_access, public T
+
+
+        // helper for forwarding to random-access read storage
+        //template <typename T>
+        //class random_read_proxy : public virtual random_read, public read_stream_proxy<T>
+
+
+        // helper for forwarding to random-access write storage
+        //template <typename T>
+        //class random_write_proxy : public virtual random_write, public write_stream_proxy<T>
+
+
+        // helper for forwarding to random-access read/write storage
+        //template <typename T>
+        //class random_read_write_proxy : public random_read_write, protected random_write_proxy<random_read_proxy<T> >
+
+
         // filter for decompressing deflated data
         //template <typename Stream>
         class zlib_read_filter<Stream_> : read_stream//, filter_base<Stream>, inflate_data  //class zlib_read_filter : public read_stream, protected filter_base<Stream>, protected inflate_data
@@ -88,6 +118,18 @@ namespace mame
                 throw new emu_unimplemented();
             }
         }
+
+
+        //std::unique_ptr<read_stream> read_stream_fill(std::unique_ptr<read_stream> &&stream, std::uint8_t filler) noexcept;
+        //std::unique_ptr<random_read> random_read_fill(std::unique_ptr<random_read> &&stream, std::uint8_t filler) noexcept;
+        //std::unique_ptr<read_stream> read_stream_fill(read_stream &stream, std::uint8_t filler) noexcept;
+        //std::unique_ptr<random_read> random_read_fill(random_read &stream, std::uint8_t filler) noexcept;
+
+        //std::unique_ptr<random_write> random_write_fill(std::unique_ptr<random_write> &&stream, std::uint8_t filler) noexcept;
+        //std::unique_ptr<random_write> random_write_fill(random_write &stream, std::uint8_t filler) noexcept;
+
+        //std::unique_ptr<random_read_write> random_read_write_fill(std::unique_ptr<random_read_write> &&stream, std::uint8_t filler) noexcept;
+        //std::unique_ptr<random_read_write> random_read_write_fill(random_read_write &stream, std::uint8_t filler) noexcept;
 
 
         // creating decompressing filters

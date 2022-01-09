@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using size_t = System.UInt64;
@@ -26,6 +25,7 @@ namespace mame.plib
         T cos(T a);
         T exp(T a);
         T floor(T a);
+        T log1p(T a);
         T log(T a);
         T pow(T a, T b);
         T sin(T a);
@@ -67,6 +67,7 @@ namespace mame.plib
         public u16 cos(u16 a) { throw new emu_unimplemented(); }
         public u16 exp(u16 a) { throw new emu_unimplemented(); }
         public u16 floor(u16 a) { throw new emu_unimplemented(); }
+        public u16 log1p(u16 a) { throw new emu_unimplemented(); }
         public u16 log(u16 a) { throw new emu_unimplemented(); }
         public u16 pow(u16 a, u16 b) { throw new emu_unimplemented(); }
         public u16 sin(u16 a) { throw new emu_unimplemented(); }
@@ -108,6 +109,7 @@ namespace mame.plib
         public float cos(float a) { return std.cos(a); }
         public float exp(float a) { return std.exp(a); }
         public float floor(float a) { return std.floor(a); }
+        public float log1p(float a) { throw new emu_unimplemented(); }
         public float log(float a) { return std.log(a); }
         public float pow(float a, float b) { return std.pow(a, b); }
         public float sin(float a) { return std.sin(a); }
@@ -149,6 +151,7 @@ namespace mame.plib
         public double cos(double a) { return std.cos(a); }
         public double exp(double a) { return std.exp(a); }
         public double floor(double a) { return std.floor(a); }
+        public double log1p(double a) { return std.log1p(a); }
         public double log(double a) { return std.log(a); }
         public double pow(double a, double b) { return std.pow(a, b); }
         public double sin(double a) { return std.sin(a); }
@@ -367,10 +370,10 @@ namespace mame.plib
         ///
         //template <typename T>
         //static inline constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type
-        //log1p(T v) noexcept
-        //{
-        //    return std::log1p(v);
-        //}
+        public static T log1p(T v)  //log1p(T v) noexcept
+        {
+            return ops.log1p(v);  //return std::log1p(v);
+        }
 
         /// \brief sin function
         ///
@@ -519,6 +522,101 @@ namespace mame.plib
                 return powq(v, static_cast<__float128>(p));
         }
 #endif
+
+        /// \brief is argument a power of two?
+        ///
+        /// \tparam T type of the argument
+        /// \param  v argument to be checked
+        /// \return true if argument is a power of two
+        ///
+        //template <typename T>
+        //constexpr bool is_pow2(T v) noexcept
+        //{
+        //    static_assert(is_integral<T>::value, "is_pow2 needs integer arguments");
+        //    return !(v & (v-1));
+        //}
+
+        /// \brief return absolute value of signed argument
+        ///
+        /// \tparam T type of the argument
+        /// \param  v argument
+        /// \return absolute value of argument
+        ///
+        //template<typename T>
+        //constexpr
+        //std::enable_if_t<plib::is_integral<T>::value && plib::is_signed<T>::value, T>
+        //abs(T v) noexcept
+        //{
+        //    return v < 0 ? -v : v;
+        //}
+
+        /// \brief return absolute value of unsigned argument
+        ///
+        /// \tparam T type of the argument
+        /// \param  v argument
+        /// \return argument since it has no sign
+        ///
+        //template<typename T>
+        //constexpr
+        //std::enable_if_t<plib::is_integral<T>::value && plib::is_unsigned<T>::value, T>
+        //abs(T v) noexcept
+        //{
+        //    return v;
+        //}
+
+        /// \brief return greatest common denominator
+        ///
+        /// Function returns the greatest common denominator of m and n. For known
+        /// arguments, this function also works at compile time.
+        ///
+        /// \tparam M type of the first argument
+        /// \tparam N type of the second argument
+        /// \param  m first argument
+        /// \param  n first argument
+        /// \return greatest common denominator of m and n
+        ///
+        //template<typename M, typename N>
+        //constexpr typename std::common_type<M, N>::type
+        //gcd(M m, N n) noexcept //NOLINT(misc-no-recursion)
+        //{
+        //    static_assert(plib::is_integral<M>::value, "gcd: M must be an integer");
+        //    static_assert(plib::is_integral<N>::value, "gcd: N must be an integer");
+        //
+        //    return m == 0 ? plib::abs(n)
+        //         : n == 0 ? plib::abs(m)
+        //         : gcd(n, m % n);
+        //}
+
+        /// \brief return least common multiple
+        ///
+        /// Function returns the least common multiple of m and n. For known
+        /// arguments, this function also works at compile time.
+        ///
+        /// \tparam M type of the first argument
+        /// \tparam N type of the second argument
+        /// \param  m first argument
+        /// \param  n first argument
+        /// \return least common multiple of m and n
+        ///
+        //template<typename M, typename N>
+        //constexpr typename std::common_type<M, N>::type
+        //lcm(M m, N n) noexcept
+        //{
+        //    static_assert(plib::is_integral<M>::value, "lcm: M must be an integer");
+        //    static_assert(plib::is_integral<N>::value, "lcm: N must be an integer");
+        //
+        //    return (m != 0 && n != 0) ? (plib::abs(m) / gcd(m, n)) * plib::abs(n) : 0;
+        //}
+
+        //template<class T>
+        public static T clamp(T v, T low, T high)  //constexpr const T& clamp( const T& v, const T& low, const T& high)
+        {
+            //throw new emu_unimplemented();
+#if false
+            gsl_Expects(high >= low);
+#endif
+            return ops.less_than(v, low) ? low : (ops.less_than(high, v)) ? high : v;  //return (v < low) ? low : (high < v) ? high : v;
+        }
 
         //static_assert(noexcept(constants<double>::one()) == true, "Not evaluated as constexpr");
     }

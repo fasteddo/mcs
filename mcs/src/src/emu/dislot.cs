@@ -2,10 +2,11 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using slot_interface_enumerator = mame.device_interface_enumerator<mame.device_slot_interface>;  //typedef device_interface_enumerator<device_slot_interface> slot_interface_enumerator;
 using u32 = System.UInt32;
+
+using static mame.device_global;
 
 
 namespace mame
@@ -59,7 +60,7 @@ namespace mame
         protected device_slot_interface(machine_config mconfig, device_t device)
             : base(device, "slot")
         {
-            m_default_clock = g.DERIVED_CLOCK(1, 1);
+            m_default_clock = DERIVED_CLOCK(1, 1);
             m_default_option = null;
             m_fixed = false;
             m_card_device = null;

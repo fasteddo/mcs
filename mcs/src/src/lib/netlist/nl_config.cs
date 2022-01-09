@@ -2,11 +2,13 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int64_t = System.Int64;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using size_t = System.UInt64;
+
+using static mame.cpp_global;
+using static mame.netlist.nl_config_global;
 
 
 namespace mame.netlist
@@ -183,7 +185,7 @@ namespace mame.netlist
         ///  |  63  |   100,000,000,000 |    92,233,720 |   1,068|   2.9 |
         ///  |  63  | 1,000,000,000,000 |     9,223,372 |     107|   0.3 |
         ///
-        public const int64_t INTERNAL_RES = 10000000000L;  //using INTERNAL_RES = std::integral_constant<long long int, 10'000'000'000LL>; // NOLINT
+        public const int64_t INTERNAL_RES = 10_000_000_000L;  //using INTERNAL_RES = std::integral_constant<long long int, 10'000'000'000LL>; // NOLINT
 
         /// \brief Recommended clock to be used
         ///
@@ -191,7 +193,7 @@ namespace mame.netlist
         /// to 32 bit clock resolution. The MAME code (netlist.cpp) contains code
         /// illustrating how to deal with remainders if \ref INTERNAL_RES is bigger than
         /// NETLIST_CLOCK.
-        //using DEFAULT_CLOCK = std::integral_constant<int, 1'000'000'000>; // NOLINT
+        public static int DEFAULT_CLOCK() { return 1_000_000_000; }  //using DEFAULT_CLOCK = std::integral_constant<int, 1'000'000'000>; // NOLINT
 
 
         /// \brief Default logic family
@@ -209,8 +211,8 @@ namespace mame.netlist
         public const size_t MAX_SOLVER_QUEUE_SIZE = 512;  //using MAX_SOLVER_QUEUE_SIZE = std::integral_constant<std::size_t, 512>; // NOLINT
 
 
-        public const bool use_float_matrix = nl_config_global.NL_USE_FLOAT_MATRIX;  //using use_float_matrix = std::integral_constant<bool, NL_USE_FLOAT_MATRIX>;
-        public const bool use_long_double_matrix = nl_config_global.NL_USE_LONG_DOUBLE_MATRIX;  //using use_long_double_matrix = std::integral_constant<bool, NL_USE_LONG_DOUBLE_MATRIX>;
+        public const bool use_float_matrix = NL_USE_FLOAT_MATRIX;  //using use_float_matrix = std::integral_constant<bool, NL_USE_FLOAT_MATRIX>;
+        public const bool use_long_double_matrix = NL_USE_LONG_DOUBLE_MATRIX;  //using use_long_double_matrix = std::integral_constant<bool, NL_USE_LONG_DOUBLE_MATRIX>;
         //using use_float128_matrix = std::integral_constant<bool, NL_USE_FLOAT128>;
 
         //using use_mempool = std::integral_constant<bool, NL_USE_MEMPOOL>;
@@ -255,10 +257,10 @@ namespace mame.netlist
         //============================================================
 
         //#if defined(MAME_DEBUG) || (NL_DEBUG == true)
-        public static void nl_assert(bool x) { g.assert(x); }  //#define nl_assert(x)    passert_always(x)  //#define nl_assert(x)    passert_always(x)
+        public static void nl_assert(bool x) { assert(x); }  //#define nl_assert(x)    passert_always(x)  //#define nl_assert(x)    passert_always(x)
         //#else
         //#define nl_assert(x)    do { } while (0)
         //#endif
-        public static void nl_assert_always(bool x, string msg) { g.assert(x, msg); }  //#define nl_assert_always(x, msg) passert_always_msg(x, msg)
+        public static void nl_assert_always(bool x, string msg) { assert(x, msg); }  //#define nl_assert_always(x, msg) passert_always_msg(x, msg)
     }
 }

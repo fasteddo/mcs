@@ -2,11 +2,16 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.discrete_global;
+using static mame.emucore_global;
+using static mame.rescap_global;
 
 
 namespace mame
@@ -56,7 +61,7 @@ namespace mame
         //DISCRETE_RESET(dss_counter)
         public override void reset()
         {
-            if (((int)DSS_COUNTER__CLOCK_TYPE & g.DISC_COUNTER_IS_7492) != 0)
+            if (((int)DSS_COUNTER__CLOCK_TYPE & DISC_COUNTER_IS_7492) != 0)
             {
                 m_is_7492    = 1;
                 m_clock_type = (int)DSS_7492__CLOCK_TYPE;
@@ -75,10 +80,10 @@ namespace mame
 
 
             if (m_is_7492 == 0 && (DSS_COUNTER__MAX < DSS_COUNTER__MIN))
-                g.fatalerror("MAX < MIN in NODE_{0}\n", this.index());
+                fatalerror("MAX < MIN in NODE_{0}\n", this.index());
 
-            m_out_type    = m_clock_type & g.DISC_OUT_MASK;
-            m_clock_type &= g.DISC_CLK_MASK;
+            m_out_type    = m_clock_type & DISC_OUT_MASK;
+            m_clock_type &= DISC_CLK_MASK;
 
             m_t_left = 0;
             m_last_count = 0;
@@ -108,7 +113,7 @@ namespace mame
             uint32_t count = last_count;
 
             ds_clock = DSS_COUNTER__CLOCK;
-            if (m_clock_type == g.DISC_CLK_IS_FREQ)
+            if (m_clock_type == DISC_CLK_IS_FREQ)
             {
                 /* We need to keep clocking the internal clock even if disabled. */
                 cycles = (m_t_left + this.sample_time()) * ds_clock;
@@ -142,8 +147,8 @@ namespace mame
 
                 switch (m_clock_type)
                 {
-                    case g.DISC_CLK_ON_F_EDGE:
-                    case g.DISC_CLK_ON_R_EDGE:
+                    case DISC_CLK_ON_F_EDGE:
+                    case DISC_CLK_ON_R_EDGE:
                         /* See if the clock has toggled to the proper edge */
                         clock = (clock != 0) ? 1 : 0;
                         if (m_last_clock != clock)
@@ -157,7 +162,7 @@ namespace mame
                         }
                         break;
 
-                    case g.DISC_CLK_BY_COUNT:
+                    case DISC_CLK_BY_COUNT:
                         /* Clock number of times specified. */
                         inc = clock;
                         break;
@@ -189,10 +194,10 @@ namespace mame
                     /* the x_time is only output if the output changed. */
                     switch (m_out_type)
                     {
-                        case g.DISC_OUT_HAS_XTIME:
+                        case DISC_OUT_HAS_XTIME:
                             v_out += x_time;
                             break;
-                        case g.DISC_OUT_IS_ENERGY:
+                        case DISC_OUT_IS_ENERGY:
                             if (x_time == 0) x_time = 1.0;
                             v_out = last_count;
                             if (count > last_count)
@@ -234,7 +239,7 @@ namespace mame
         double DSS_LFSR_NOISE__BIAS { get { return DISCRETE_INPUT(5); } }
 
 
-        UInt32 m_lfsr_reg;  //unsigned int    m_lfsr_reg;
+        unsigned m_lfsr_reg;  //unsigned int    m_lfsr_reg;
         int m_last;                 /* Last clock state */
         double m_t_clock;              /* fixed counter clock in seconds */
         double m_t_left;               /* time unused during last sample in seconds */
@@ -265,19 +270,19 @@ namespace mame
             int fbresult;
             double v_out;
 
-            m_reset_on_high = ((info.flags & g.DISC_LFSR_FLAG_RESET_TYPE_H) != 0) ? (uint8_t)1 : (uint8_t)0;
-            m_invert_output = (uint8_t)(info.flags & g.DISC_LFSR_FLAG_OUT_INVERT);
-            m_out_is_f0 = ((info.flags & g.DISC_LFSR_FLAG_OUTPUT_F0) != 0) ? (uint8_t)1 : (uint8_t)0;
-            m_out_lfsr_reg = ((info.flags & g.DISC_LFSR_FLAG_OUTPUT_SR_SN1) != 0) ? (uint8_t)1 : (uint8_t)0;
+            m_reset_on_high = ((info.flags & DISC_LFSR_FLAG_RESET_TYPE_H) != 0) ? (uint8_t)1 : (uint8_t)0;
+            m_invert_output = (uint8_t)(info.flags & DISC_LFSR_FLAG_OUT_INVERT);
+            m_out_is_f0 = ((info.flags & DISC_LFSR_FLAG_OUTPUT_F0) != 0) ? (uint8_t)1 : (uint8_t)0;
+            m_out_lfsr_reg = ((info.flags & DISC_LFSR_FLAG_OUTPUT_SR_SN1) != 0) ? (uint8_t)1 : (uint8_t)0;
 
-            if ((info.clock_type < g.DISC_CLK_ON_F_EDGE) || (info.clock_type > g.DISC_CLK_IS_FREQ))
+            if ((info.clock_type < DISC_CLK_ON_F_EDGE) || (info.clock_type > DISC_CLK_IS_FREQ))
                 m_device.discrete_log("Invalid clock type passed in NODE_{0}\n", this.index());
 
             m_last = (DSS_COUNTER__CLOCK != 0) ? 1 : 0;
-            if (info.clock_type == g.DISC_CLK_IS_FREQ) m_t_clock = 1.0 / DSS_LFSR_NOISE__CLOCK;
+            if (info.clock_type == DISC_CLK_IS_FREQ) m_t_clock = 1.0 / DSS_LFSR_NOISE__CLOCK;
             m_t_left = 0;
 
-            m_lfsr_reg = (UInt32)info.reset_value;
+            m_lfsr_reg = (unsigned)info.reset_value;
 
             /* Now get and store the new feedback result */
             /* Fetch the feedback bits */
@@ -285,13 +290,13 @@ namespace mame
             fb1 = (int)((m_lfsr_reg >> info.feedback_bitsel1) & 0x01);
             /* Now do the combo on them */
             fbresult = dss_lfsr_function(m_device, info.feedback_function0, fb0, fb1, 0x01);
-            m_lfsr_reg = (UInt32)dss_lfsr_function(m_device, g.DISC_LFSR_REPLACE, (int)m_lfsr_reg, fbresult << info.bitlength, (2 << info.bitlength ) - 1);
+            m_lfsr_reg = (unsigned)dss_lfsr_function(m_device, DISC_LFSR_REPLACE, (int)m_lfsr_reg, fbresult << info.bitlength, (2 << info.bitlength ) - 1);
 
             /* Now select and setup the output bit */
             v_out = (m_lfsr_reg >> info.output_bit) & 0x01;
 
             /* Final inversion if required */
-            if ((info.flags & g.DISC_LFSR_FLAG_OUT_INVERT) != 0) v_out = (v_out != 0) ? 0 : 1;
+            if ((info.flags & DISC_LFSR_FLAG_OUT_INVERT) != 0) v_out = (v_out != 0) ? 0 : 1;
 
             /* Gain stage */
             v_out = (v_out != 0) ? DSS_LFSR_NOISE__AMP / 2 : -DSS_LFSR_NOISE__AMP / 2;
@@ -325,7 +330,7 @@ namespace mame
             int fbresult = 0;
             int noise_feed;
 
-            if (info.clock_type == g.DISC_CLK_IS_FREQ)
+            if (info.clock_type == DISC_CLK_IS_FREQ)
             {
                 /* We need to keep clocking the internal clock even if disabled. */
                 cycles = (m_t_left + this.sample_time()) / m_t_clock;
@@ -342,8 +347,8 @@ namespace mame
 
             switch (info.clock_type)
             {
-                case g.DISC_CLK_ON_F_EDGE:
-                case g.DISC_CLK_ON_R_EDGE:
+                case DISC_CLK_ON_F_EDGE:
+                case DISC_CLK_ON_R_EDGE:
                     /* See if the clock has toggled to the proper edge */
                     clock = (DSS_LFSR_NOISE__CLOCK != 0) ? 1 : 0;
                     if (m_last != clock)
@@ -357,7 +362,7 @@ namespace mame
                     }
                     break;
 
-                case g.DISC_CLK_BY_COUNT:
+                case DISC_CLK_BY_COUNT:
                     /* Clock number of times specified. */
                     inc = (int)DSS_LFSR_NOISE__CLOCK;
                     break;
@@ -381,7 +386,7 @@ namespace mame
                     /* Then we left shift the register, */
                     m_lfsr_reg = m_lfsr_reg << 1;
                     /* Now move the fbresult into the shift register and mask it to the bitlength */
-                    m_lfsr_reg = (UInt32)dss_lfsr_function(m_device, info.feedback_function2, fbresult, (int)m_lfsr_reg, (1 << info.bitlength) - 1 );
+                    m_lfsr_reg = (unsigned)dss_lfsr_function(m_device, info.feedback_function2, fbresult, (int)m_lfsr_reg, (1 << info.bitlength) - 1 );
 
                     /* Now get and store the new feedback result */
                     /* Fetch the feedback bits */
@@ -389,7 +394,7 @@ namespace mame
                     fb1 = (int)((m_lfsr_reg >> info.feedback_bitsel1) & 0x01);
                     /* Now do the combo on them */
                     fbresult = dss_lfsr_function(m_device, info.feedback_function0, fb0, fb1, 0x01);
-                    m_lfsr_reg = (UInt32)dss_lfsr_function(m_device, g.DISC_LFSR_REPLACE, (int)m_lfsr_reg, fbresult << info.bitlength, (2 << info.bitlength) - 1);
+                    m_lfsr_reg = (unsigned)dss_lfsr_function(m_device, DISC_LFSR_REPLACE, (int)m_lfsr_reg, fbresult << info.bitlength, (2 << info.bitlength) - 1);
 
                 }
                 /* Now select the output bit */
@@ -429,48 +434,48 @@ namespace mame
 
             switch (myfunc)
             {
-                case g.DISC_LFSR_XOR:
+                case DISC_LFSR_XOR:
                     retval = in0 ^ in1;
                     break;
-                case g.DISC_LFSR_OR:
+                case DISC_LFSR_OR:
                     retval = in0 | in1;
                     break;
-                case g.DISC_LFSR_AND:
+                case DISC_LFSR_AND:
                     retval = in0 & in1;
                     break;
-                case g.DISC_LFSR_XNOR:
+                case DISC_LFSR_XNOR:
                     retval = in0 ^ in1;
                     retval = retval ^ bitmask;  /* Invert output */
                     break;
-                case g.DISC_LFSR_NOR:
+                case DISC_LFSR_NOR:
                     retval = in0 | in1;
                     retval = retval ^ bitmask;  /* Invert output */
                     break;
-                case g.DISC_LFSR_NAND:
+                case DISC_LFSR_NAND:
                     retval = in0 & in1;
                     retval = retval ^ bitmask;  /* Invert output */
                     break;
-                case g.DISC_LFSR_IN0:
+                case DISC_LFSR_IN0:
                     retval = in0;
                     break;
-                case g.DISC_LFSR_IN1:
+                case DISC_LFSR_IN1:
                     retval = in1;
                     break;
-                case g.DISC_LFSR_NOT_IN0:
+                case DISC_LFSR_NOT_IN0:
                     retval = in0 ^ bitmask;
                     break;
-                case g.DISC_LFSR_NOT_IN1:
+                case DISC_LFSR_NOT_IN1:
                     retval = in1 ^ bitmask;
                     break;
-                case g.DISC_LFSR_REPLACE:
+                case DISC_LFSR_REPLACE:
                     retval = in0 & ~in1;
                     retval = retval | in1;
                     break;
-                case g.DISC_LFSR_XOR_INV_IN0:
+                case DISC_LFSR_XOR_INV_IN0:
                     retval = in0 ^ bitmask; /* invert in0 */
                     retval = retval ^ in1;  /* xor in1 */
                     break;
-                case g.DISC_LFSR_XOR_INV_IN1:
+                case DISC_LFSR_XOR_INV_IN1:
                     retval = in1 ^ bitmask; /* invert in1 */
                     retval = retval ^ in0;  /* xor in0 */
                     break;
@@ -530,8 +535,8 @@ namespace mame
         //DISCRETE_RESET(dss_note)
         public override void reset()
         {
-            m_clock_type = (int)DSS_NOTE__CLOCK_TYPE & g.DISC_CLK_MASK;
-            m_out_type   = (int)DSS_NOTE__CLOCK_TYPE & g.DISC_OUT_MASK;
+            m_clock_type = (int)DSS_NOTE__CLOCK_TYPE & DISC_CLK_MASK;
+            m_out_type   = (int)DSS_NOTE__CLOCK_TYPE & DISC_OUT_MASK;
 
             m_last    = (DSS_NOTE__CLOCK != 0) ? 1 : 0;
             m_t_left  = 0;
@@ -564,7 +569,7 @@ namespace mame
             double  x_time = 0;
             double  v_out;
 
-            if (m_clock_type == g.DISC_CLK_IS_FREQ)
+            if (m_clock_type == DISC_CLK_IS_FREQ)
             {
                 /* We need to keep clocking the internal clock even if disabled. */
                 cycles = (m_t_left + this.sample_time()) / m_t_clock;
@@ -585,8 +590,8 @@ namespace mame
 
                 switch (m_clock_type)
                 {
-                    case g.DISC_CLK_ON_F_EDGE:
-                    case g.DISC_CLK_ON_R_EDGE:
+                    case DISC_CLK_ON_F_EDGE:
+                    case DISC_CLK_ON_R_EDGE:
                         /* See if the clock has toggled to the proper edge */
                         clock = (clock != 0) ? 1 : 0;
                         if (m_last != clock)
@@ -600,7 +605,7 @@ namespace mame
                         }
                         break;
 
-                    case g.DISC_CLK_BY_COUNT:
+                    case DISC_CLK_BY_COUNT:
                         /* Clock number of times specified. */
                         inc = clock;
                         break;
@@ -628,7 +633,7 @@ namespace mame
                     /* the x_time is only output if the output changed. */
                     switch (m_out_type)
                     {
-                        case g.DISC_OUT_IS_ENERGY:
+                        case DISC_OUT_IS_ENERGY:
                             if (x_time == 0) x_time = 1.0;
                             v_out = last_count2;
                             if (m_count2 > last_count2)
@@ -636,7 +641,7 @@ namespace mame
                             else
                                 v_out -= (last_count2 - m_count2) * x_time;
                             break;
-                        case g.DISC_OUT_HAS_XTIME:
+                        case DISC_OUT_HAS_XTIME:
                             v_out += x_time;
                             break;
                     }
@@ -647,6 +652,87 @@ namespace mame
             {
                 set_output(0, 0);
             }
+        }
+    }
+
+
+    //DISCRETE_CLASS_STEP_RESET(dss_squarewave, 1,
+    class discrete_dss_squarewave_node : discrete_base_node,
+                                         discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DSS_SQUAREWAVE__ENABLE { get { return DISCRETE_INPUT(0); } }
+        double DSS_SQUAREWAVE__FREQ { get { return DISCRETE_INPUT(1); } }
+        double DSS_SQUAREWAVE__AMP { get { return DISCRETE_INPUT(2); } }
+        double DSS_SQUAREWAVE__DUTY { get { return DISCRETE_INPUT(3); } }
+        double DSS_SQUAREWAVE__BIAS { get { return DISCRETE_INPUT(4); } }
+        double DSS_SQUAREWAVE__PHASE { get { return DISCRETE_INPUT(5); } }
+
+
+        double m_phase;
+        double m_trigger;
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dss_squarewave_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+
+
+        //DISCRETE_RESET(dss_squarewave)
+        public override void reset()
+        {
+            double start;
+
+            /* Establish starting phase, convert from degrees to radians */
+            start = (DSS_SQUAREWAVE__PHASE / 360.0) * (2.0 * M_PI);
+            /* Make sure its always mod 2Pi */
+            m_phase = fmod(start, 2.0 * M_PI);
+
+            /* Step the output */
+            this.step();
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dss_squarewave)
+        public void step()
+        {
+            /* Establish trigger phase from duty */
+            m_trigger = ((100 - DSS_SQUAREWAVE__DUTY) / 100) * (2.0 * M_PI);
+
+            /* Set the output */
+            if (DSS_SQUAREWAVE__ENABLE != 0)
+            {
+                if(m_phase>m_trigger)
+                    set_output(0, DSS_SQUAREWAVE__AMP / 2.0 + DSS_SQUAREWAVE__BIAS);
+                else
+                    set_output(0, - DSS_SQUAREWAVE__AMP / 2.0 + DSS_SQUAREWAVE__BIAS);
+                /* Add DC Bias component */
+            }
+            else
+            {
+                set_output(0, 0);
+            }
+
+            /* Work out the phase step based on phase/freq & sample rate */
+            /* The enable input only curtails output, phase rotation     */
+            /* still occurs                                              */
+            /*     phase step = 2Pi/(output period/sample period)        */
+            /*                    boils out to                           */
+            /*     phase step = (2Pi*output freq)/sample freq)           */
+            /* Also keep the new phasor in the 2Pi range.                */
+            m_phase = fmod(m_phase + ((2.0 * M_PI * DSS_SQUAREWAVE__FREQ) / this.sample_rate()), 2.0 * M_PI);
         }
     }
 
@@ -750,6 +836,91 @@ namespace mame
     }
 
 
+    //DISCRETE_CLASS_STEP_RESET(dss_squarewave2, 1,
+    //    double          m_phase;
+    //    double          m_trigger;
+    //);
+
+
+    //DISCRETE_CLASS_STEP_RESET(dss_trianglewave, 1,
+    class discrete_dss_trianglewave_node : discrete_base_node,
+                                           discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DSS_TRIANGLEWAVE__ENABLE { get { return DISCRETE_INPUT(0); } }
+        double DSS_TRIANGLEWAVE__FREQ { get { return DISCRETE_INPUT(1); } }
+        double DSS_TRIANGLEWAVE__AMP { get { return DISCRETE_INPUT(2); } }
+        double DSS_TRIANGLEWAVE__BIAS { get { return DISCRETE_INPUT(3); } }
+        double DSS_TRIANGLEWAVE__PHASE { get { return DISCRETE_INPUT(4); } }
+
+
+        double m_phase;
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dss_trianglewave_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dss_squarewfix_node() { }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dss_trianglewave)
+        public override void reset()
+        {
+            double start;
+
+            /* Establish starting phase, convert from degrees to radians */
+            start = (DSS_TRIANGLEWAVE__PHASE / 360.0) * (2.0 * M_PI);
+            /* Make sure its always mod 2Pi */
+            m_phase = fmod(start, 2.0 * M_PI);
+
+            /* Step to set the output */
+            this.step();
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dss_trianglewave)
+        public void step()
+        {
+            if (DSS_TRIANGLEWAVE__ENABLE != 0)
+            {
+                double v_out = m_phase < M_PI ? (DSS_TRIANGLEWAVE__AMP * (m_phase / (M_PI / 2.0) - 1.0)) / 2.0 :
+                                                (DSS_TRIANGLEWAVE__AMP * (3.0 - m_phase / (M_PI / 2.0))) / 2.0;
+
+                /* Add DC Bias component */
+                v_out += DSS_TRIANGLEWAVE__BIAS;
+                set_output(0, v_out);
+            }
+            else
+            {
+                set_output(0, 0);
+            }
+
+            /* Work out the phase step based on phase/freq & sample rate */
+            /* The enable input only curtails output, phase rotation     */
+            /* still occurs                                              */
+            /*     phase step = 2Pi/(output period/sample period)        */
+            /*                    boils out to                           */
+            /*     phase step = (2Pi*output freq)/sample freq)           */
+            /* Also keep the new phasor in the 2Pi range.                */
+            m_phase = fmod((m_phase + ((2.0 * M_PI * DSS_TRIANGLEWAVE__FREQ) / this.sample_rate())), 2.0 * M_PI);
+        }
+    }
+
+
     /* Component specific modules */
 
     //class DISCRETE_CLASS_NAME(dss_inverter_osc): public discrete_base_node, public discrete_step_interface
@@ -773,7 +944,7 @@ namespace mame
 
             public description(double [] values, int options)
             {
-                g.assert(values.Length == 6);
+                assert(values.Length == 6);
                 this.vB       = values[0];
                 this.vOutLow  = values[1];
                 this.vOutHigh = values[2];
@@ -834,8 +1005,8 @@ namespace mame
             int i;
 
             /* exponent */
-            mc_w  = Math.Exp(-this.sample_time() / (I_RC() * I_C()));
-            mc_wc = Math.Exp(-this.sample_time() / ((I_RC() * I_RP()) / (I_RP() + I_RC()) * I_C()));
+            mc_w  = exp(-this.sample_time() / (I_RC() * I_C()));
+            mc_wc = exp(-this.sample_time() / ((I_RC() * I_RP()) / (I_RP() + I_RC()) * I_C()));
             set_output(0, 0);
             mc_v_cap    = 0;
             mc_v_g2_old = 0;
@@ -843,9 +1014,9 @@ namespace mame
             mc_r1   = I_RC();
             mc_r2   = I_R2();
             mc_c    = I_C();
-            mc_tf_b = (Math.Log(0.0 - Math.Log(info.vOutLow/info.vB)) - Math.Log(0.0 - Math.Log((info.vOutHigh/info.vB))) ) / Math.Log(info.vInRise / info.vInFall);
-            mc_tf_a = Math.Log(0.0 - Math.Log(info.vOutLow/info.vB)) - mc_tf_b * Math.Log(info.vInRise/info.vB);
-            mc_tf_a = Math.Exp(mc_tf_a);
+            mc_tf_b = (log(0.0 - log(info.vOutLow/info.vB)) - log(0.0 - log((info.vOutHigh/info.vB))) ) / log(info.vInRise / info.vInFall);
+            mc_tf_a = log(0.0 - log(info.vOutLow/info.vB)) - mc_tf_b * log(info.vInRise/info.vB);
+            mc_tf_a = exp(mc_tf_a);
 
             for (i = 0; i < DSS_INV_TAB_SIZE; i++)
             {
@@ -891,19 +1062,19 @@ namespace mame
                     vG2 = this.tf(vG3);
                     break;
                 case IS_TYPE4:
-                    vI  = Math.Min(I_ENABLE(), vI + 0.7);
+                    vI  = std.min(I_ENABLE(), vI + 0.7);
                     vG1 = 0;
                     vG3 = this.tf(vI);
                     vG2 = this.tf(vG3);
                     break;
                 case IS_TYPE5:
-                    vI  = Math.Max(I_ENABLE(), vI - 0.7);
+                    vI  = std.max(I_ENABLE(), vI - 0.7);
                     vG1 = 0;
                     vG3 = this.tf(vI);
                     vG2 = this.tf(vG3);
                     break;
                 default:
-                    g.fatalerror("DISCRETE_INVERTER_OSC - Wrong type on NODE_{0}\n", this.index());
+                    fatalerror("DISCRETE_INVERTER_OSC - Wrong type on NODE_{0}\n", this.index());
                     break;
             }
 
@@ -953,7 +1124,7 @@ namespace mame
                                 + (vI - 0.7 - vG2) / mc_rp);
                     }
                     diff = vMix - mc_v_cap;
-                    diff = diff - diff * Math.Exp(-this.sample_time() / (mc_c * rMix));
+                    diff = diff - diff * exp(-this.sample_time() / (mc_c * rMix));
                     break;
                 case IS_TYPE5:
                     /*  FIXME handle r2 = 0  */
@@ -967,10 +1138,10 @@ namespace mame
                                 + (vI + 0.7 - vG2) / mc_rp);
                     }
                     diff = vMix - mc_v_cap;
-                    diff = diff - diff * Math.Exp(-this.sample_time()/(mc_c * rMix));
+                    diff = diff - diff * exp(-this.sample_time()/(mc_c * rMix));
                     break;
                 default:
-                    g.fatalerror("DISCRETE_INVERTER_OSC - Wrong type on NODE_{0}\n", this.index());
+                    fatalerror("DISCRETE_INVERTER_OSC - Wrong type on NODE_{0}\n", this.index());
                     break;
             }
 
@@ -996,7 +1167,7 @@ namespace mame
 
             x = x / info.vB;
             if (x > 0)
-                return info.vB * Math.Exp(-mc_tf_a * Math.Pow(x, mc_tf_b));
+                return info.vB * exp(-mc_tf_a * pow(x, mc_tf_b));
             else
                 return info.vB;
         }
@@ -1015,4 +1186,519 @@ namespace mame
                 return mc_tf_tab[DSS_INV_TAB_SIZE - 1];
         }
     }
+
+
+    //DISCRETE_CLASS_STEP_RESET(dss_op_amp_osc, 1,
+    class discrete_dss_op_amp_osc_node : discrete_base_node,
+                                         discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DSS_OP_AMP_OSC__ENABLE { get { return DISCRETE_INPUT(0); } }
+        double DSS_OP_AMP_OSC__VMOD1 { get { return DISCRETE_INPUT(1); } }
+        double DSS_OP_AMP_OSC__VMOD2 { get { return DISCRETE_INPUT(2); } }
+
+
+        /* The inputs on a norton op-amp are (info->vP - OP_AMP_NORTON_VBE) */
+        /* which is the same as the output high voltage.  We will define them */
+        /* the same to save a calculation step */
+        double DSS_OP_AMP_OSC_NORTON_VP_IN { get { return m_v_out_high; } }
+
+
+        const double DIODE_DROP  = 0.7;
+
+
+        Pointer<double> [] m_r = new Pointer<double> [8];  //const double *  m_r[8];                 /* pointers to resistor values */
+        int m_type;
+        uint8_t m_flip_flop;            /* flip/flop output state */
+        uint8_t m_flip_flop_xor;        /* flip_flop ^ flip_flop_xor, 0 = discharge, 1 = charge */
+        uint8_t m_output_type;
+        uint8_t m_has_enable;
+        double m_v_out_high;
+        double m_threshold_low;        /* falling threshold */
+        double m_threshold_high;       /* rising threshold */
+        double m_v_cap;                /* current capacitor voltage */
+        double m_r_total;              /* all input resistors in parallel */
+        double m_i_fixed;              /* fixed current at the input */
+        double m_i_enable;             /* fixed current at the input if enabled */
+        double m_temp1;                /* Multi purpose */
+        double m_temp2;                /* Multi purpose */
+        double m_temp3;                /* Multi purpose */
+        double m_is_linear_charge;
+        double [] m_charge_rc = new double [2];
+        double [] m_charge_exp = new double [2];
+        double [] m_charge_v = new double [2];
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dss_op_amp_osc_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dss_op_amp_osc_node() { }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dss_op_amp_osc)
+        public override void reset()
+        {
+            //DISCRETE_DECLARE_INFO(discrete_op_amp_osc_info)
+            discrete_op_amp_osc_info info = (discrete_op_amp_osc_info)custom_data();
+
+            Pointer<double> r_info_ptr;  //const double *r_info_ptr;
+            int loop;
+
+            double i1 = 0;  /* inverting input current */
+            double i2 = 0;  /* non-inverting input current */
+
+            /* link to resistor static or node values */
+            r_info_ptr = new Pointer<double>(info.r);  //r_info_ptr = &info->r1;
+            for (loop = 0; loop < 8; loop ++)
+            {
+                m_r[loop] = m_device.node_output_ptr((int)r_info_ptr.op);  //m_r[loop] = m_device->node_output_ptr(*r_info_ptr);
+                if (m_r[loop] == null)
+                    m_r[loop] = new Pointer<double>(r_info_ptr);
+                r_info_ptr++;
+            }
+
+            m_is_linear_charge = 1;
+            m_output_type = (uint8_t)(info.type & DISC_OP_AMP_OSCILLATOR_OUT_MASK);
+            m_type        = (int)info.type & DISC_OP_AMP_OSCILLATOR_TYPE_MASK;
+            m_charge_rc[0] = 0;
+            m_charge_rc[1] = 0;
+            m_charge_v[0] = 0;
+            m_charge_v[1] = 0;
+            m_i_fixed = 0;
+            m_has_enable = 0;
+
+            switch (m_type)
+            {
+                case DISC_OP_AMP_OSCILLATOR_VCO_1:
+                    /* The charge rates vary depending on vMod so they are not precalculated. */
+                    /* Charges while FlipFlop High */
+                    m_flip_flop_xor = 0;
+                    /* Work out the Non-inverting Schmitt thresholds. */
+                    m_temp1 = (info.vP / 2) / info.r[4];
+                    m_temp2 = (info.vP - OP_AMP_VP_RAIL_OFFSET) / info.r[3];
+                    m_temp3 = 1.0 / (1.0 / info.r[3] + 1.0 / info.r[4]);
+                    m_threshold_low  =  m_temp1 * m_temp3;
+                    m_threshold_high = (m_temp1 + m_temp2) * m_temp3;
+                    /* There is no charge on the cap so the schmitt goes high at init. */
+                    m_flip_flop = 1;
+                    /* Setup some commonly used stuff */
+                    m_temp1 = info.r[5] / (info.r[2] + info.r[5]);         /* voltage ratio across r5 */
+                    m_temp2 = info.r[6] / (info.r[1] + info.r[6]);         /* voltage ratio across r6 */
+                    m_temp3 = 1.0 / (1.0 / info.r[1] + 1.0 / info.r[6]);  /* input resistance when r6 switched in */
+                    break;
+
+                case DISC_OP_AMP_OSCILLATOR_1 | DISC_OP_AMP_IS_NORTON:
+                    /* Charges while FlipFlop High */
+                    m_flip_flop_xor = 0;
+                    /* There is no charge on the cap so the schmitt inverter goes high at init. */
+                    m_flip_flop = 1;
+                    /* setup current if using real enable */
+                    if (info.r[6] > 0)
+                    {
+                        m_has_enable = 1;
+                        m_i_enable = (info.vP - OP_AMP_NORTON_VBE) / (info.r[6] + RES_K(1));
+                    }
+                    break;
+
+                case DISC_OP_AMP_OSCILLATOR_2 | DISC_OP_AMP_IS_NORTON:
+                    m_is_linear_charge = 0;
+                    /* First calculate the parallel charge resistors and volatges. */
+                    /* We can cheat and just calcuate the charges in the working area. */
+                    /* The thresholds are well past the effect of the voltage drop */
+                    /* and the component tolerances far exceed the .5V charge difference */
+                    if (info.r[1] != 0)
+                    {
+                        m_charge_rc[0] = 1.0 / info.r[1];
+                        m_charge_rc[1] = 1.0 / info.r[1];
+                        m_charge_v[1] = (info.vP - OP_AMP_NORTON_VBE) / info.r[1];
+                    }
+                    if (info.r[5] != 0)
+                    {
+                        m_charge_rc[0] += 1.0 / info.r[5];
+                        m_charge_v[0] = DIODE_DROP / info.r[5];
+                    }
+                    if (info.r[6] != 0)
+                    {
+                        m_charge_rc[1] += 1.0 / info.r[6];
+                        m_charge_v[1] += (info.vP - OP_AMP_NORTON_VBE - DIODE_DROP) / info.r[6];
+                    }
+                    m_charge_rc[0] += 1.0 / info.r[2];
+                    m_charge_rc[0] = 1.0 / m_charge_rc[0];
+                    m_charge_v[0] += OP_AMP_NORTON_VBE / info.r[2];
+                    m_charge_v[0] *= m_charge_rc[0];
+                    m_charge_rc[1] += 1.0 / info.r[2];
+                    m_charge_rc[1] = 1.0 / m_charge_rc[1];
+                    m_charge_v[1] += OP_AMP_NORTON_VBE / info.r[2];
+                    m_charge_v[1] *= m_charge_rc[1];
+
+                    m_charge_rc[0] *= info.c;
+                    m_charge_rc[1] *= info.c;
+                    m_charge_exp[0] = RC_CHARGE_EXP(m_charge_rc[0]);
+                    m_charge_exp[1] = RC_CHARGE_EXP(m_charge_rc[1]);
+                    m_threshold_low  = (info.vP - OP_AMP_NORTON_VBE) / info.r[4];
+                    m_threshold_high = m_threshold_low + (info.vP - 2 * OP_AMP_NORTON_VBE) / info.r[3];
+                    m_threshold_low  = m_threshold_low * info.r[2] + OP_AMP_NORTON_VBE;
+                    m_threshold_high = m_threshold_high * info.r[2] + OP_AMP_NORTON_VBE;
+
+                    /* There is no charge on the cap so the schmitt inverter goes high at init. */
+                    m_flip_flop = 1;
+                    break;
+
+                case DISC_OP_AMP_OSCILLATOR_VCO_1 | DISC_OP_AMP_IS_NORTON:
+                    /* Charges while FlipFlop Low */
+                    m_flip_flop_xor = 1;
+                    /* There is no charge on the cap so the schmitt goes low at init. */
+                    m_flip_flop = 0;
+                    /* The charge rates vary depending on vMod so they are not precalculated. */
+                    /* But we can precalculate the fixed currents. */
+                    if (info.r[6] != 0) m_i_fixed += info.vP / info.r[6];
+                    m_i_fixed += OP_AMP_NORTON_VBE / info.r[1];
+                    m_i_fixed += OP_AMP_NORTON_VBE / info.r[2];
+                    /* Work out the input resistance to be used later to calculate the Millman voltage. */
+                    m_r_total = 1.0 / info.r[1] + 1.0 / info.r[2] + 1.0 / info.r[7];
+                    if (info.r[6] != 0) m_r_total += 1.0 / info.r[6];
+                    if (info.r[8] != 0) m_r_total += 1.0 / info.r[8];
+                    m_r_total = 1.0 / m_r_total;
+                    /* Work out the Non-inverting Schmitt thresholds. */
+                    i1 = (info.vP - OP_AMP_NORTON_VBE) / info.r[5];
+                    i2 = (info.vP - OP_AMP_NORTON_VBE - OP_AMP_NORTON_VBE) / info.r[4];
+                    m_threshold_low = (i1 - i2) * info.r[3] + OP_AMP_NORTON_VBE;
+                    i2 = (0.0 - OP_AMP_NORTON_VBE) / info.r[4];
+                    m_threshold_high = (i1 - i2) * info.r[3] + OP_AMP_NORTON_VBE;
+                    break;
+
+                case DISC_OP_AMP_OSCILLATOR_VCO_2 | DISC_OP_AMP_IS_NORTON:
+                    /* Charges while FlipFlop High */
+                    m_flip_flop_xor = 0;
+                    /* There is no charge on the cap so the schmitt inverter goes high at init. */
+                    m_flip_flop = 1;
+                    /* Work out the charge rates. */
+                    m_temp1 = (info.vP - OP_AMP_NORTON_VBE) / info.r[2];
+                    m_temp2 = (info.vP - OP_AMP_NORTON_VBE) * (1.0 / info.r[2] + 1.0 / info.r[6]);
+                    /* Work out the Inverting Schmitt thresholds. */
+                    i1 = (info.vP - OP_AMP_NORTON_VBE) / info.r[5];
+                    i2 = (0.0 - OP_AMP_NORTON_VBE) / info.r[4];
+                    m_threshold_low = (i1 + i2) * info.r[3] + OP_AMP_NORTON_VBE;
+                    i2 = (info.vP - OP_AMP_NORTON_VBE - OP_AMP_NORTON_VBE) / info.r[4];
+                    m_threshold_high = (i1 + i2) * info.r[3] + OP_AMP_NORTON_VBE;
+                    break;
+
+                case DISC_OP_AMP_OSCILLATOR_VCO_3 | DISC_OP_AMP_IS_NORTON:
+                    /* Charges while FlipFlop High */
+                    m_flip_flop_xor = 0;
+                    /* There is no charge on the cap so the schmitt inverter goes high at init. */
+                    m_flip_flop = 1;
+                    /* setup current if using real enable */
+                    if (info.r[8] > 0)
+                    {
+                        m_has_enable = 1;
+                        m_i_enable = (info.vP - OP_AMP_NORTON_VBE) / (info.r[8] + RES_K(1));
+                    }
+                    /* Work out the charge rates. */
+                    /* The charge rates vary depending on vMod so they are not precalculated. */
+                    /* But we can precalculate the fixed currents. */
+                    if (info.r[7] != 0) m_i_fixed = (info.vP - OP_AMP_NORTON_VBE) / info.r[7];
+                    m_temp1 = (info.vP - OP_AMP_NORTON_VBE - OP_AMP_NORTON_VBE) / info.r[2];
+                    /* Work out the Inverting Schmitt thresholds. */
+                    i1 = (info.vP - OP_AMP_NORTON_VBE) / info.r[5];
+                    i2 = (0.0 - OP_AMP_NORTON_VBE) / info.r[4];
+                    m_threshold_low = (i1 + i2) * info.r[3] + OP_AMP_NORTON_VBE;
+                    i2 = (info.vP - OP_AMP_NORTON_VBE - OP_AMP_NORTON_VBE) / info.r[4];
+                    m_threshold_high = (i1 + i2) * info.r[3] + OP_AMP_NORTON_VBE;
+                    break;
+            }
+
+            m_v_out_high = info.vP - ((m_type & DISC_OP_AMP_IS_NORTON) != 0 ? OP_AMP_NORTON_VBE : OP_AMP_VP_RAIL_OFFSET);
+            m_v_cap      = 0;
+
+            this.step();
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+        //DISCRETE_STEP(dss_op_amp_osc)
+        public void step()
+        {
+            //DISCRETE_DECLARE_INFO(discrete_op_amp_osc_info)
+            discrete_op_amp_osc_info info = (discrete_op_amp_osc_info)custom_data();
+
+            double i = 0;               /* Charging current created by vIn */
+            double v = 0;           /* all input voltages mixed */
+            double dt;              /* change in time */
+            double v_cap;           /* Current voltage on capacitor, before dt */
+            double v_cap_next = 0;  /* Voltage on capacitor, after dt */
+            double [] charge = new double [2] {0, 0};
+            double x_time  = 0;     /* time since change happened */
+            double exponent;
+            uint8_t force_charge = 0;
+            uint8_t enable = (uint8_t)DSS_OP_AMP_OSC__ENABLE;
+            uint8_t update_exponent = 0;
+            uint8_t flip_flop = m_flip_flop;
+            int count_f = 0;
+            int count_r = 0;
+
+            double v_out = 0;
+
+            dt = this.sample_time();   /* Change in time */
+            v_cap = m_v_cap;    /* Set to voltage before change */
+
+            /* work out the charge currents/voltages. */
+            switch (m_type)
+            {
+                case DISC_OP_AMP_OSCILLATOR_VCO_1:
+                    /* Work out the charge rates. */
+                    /* i is not a current.  It is being used as a temp variable. */
+                    i = DSS_OP_AMP_OSC__VMOD1 * m_temp1;
+                    charge[0] = (DSS_OP_AMP_OSC__VMOD1 - i) / info.r[1];
+                    charge[1] = (i - (DSS_OP_AMP_OSC__VMOD1 * m_temp2)) / m_temp3;
+                    break;
+
+                case DISC_OP_AMP_OSCILLATOR_1 | DISC_OP_AMP_IS_NORTON:
+                {
+                    /* resistors can be nodes, so everything needs updating */
+                    double i1;
+                    double i2;
+                    /* add in enable current if using real enable */
+                    if (m_has_enable != 0)
+                    {
+                        if (enable != 0)
+                            i = m_i_enable;
+                        enable = 1;
+                    }
+                    /* Work out the charge rates. */
+                    charge[0] = DSS_OP_AMP_OSC_NORTON_VP_IN / m_r[1 - 1].op - i;
+                    charge[1] = (m_v_out_high - OP_AMP_NORTON_VBE) / m_r[2 - 1].op - charge[0];
+                    /* Work out the Inverting Schmitt thresholds. */
+                    i1 = DSS_OP_AMP_OSC_NORTON_VP_IN / m_r[5 - 1].op;
+                    i2 = (0.0 - OP_AMP_NORTON_VBE) / m_r[4 - 1].op;
+                    m_threshold_low  = (i1 + i2) * m_r[3 - 1].op + OP_AMP_NORTON_VBE;
+                    i2 = (m_v_out_high - OP_AMP_NORTON_VBE) / m_r[4 - 1].op;
+                    m_threshold_high = (i1 + i2) * m_r[3 - 1].op + OP_AMP_NORTON_VBE;
+                    break;
+                }
+
+                case DISC_OP_AMP_OSCILLATOR_VCO_1 | DISC_OP_AMP_IS_NORTON:
+                    /* Millman the input voltages. */
+                    if (info.r[7] == 0)
+                    {
+                        /* No r7 means that the modulation circuit is fed directly into the circuit. */
+                        v = DSS_OP_AMP_OSC__VMOD1;
+                    }
+                    else
+                    {
+                        /* we need to mix any bias and all modulation voltages together. */
+                        i  = m_i_fixed;
+                        i += DSS_OP_AMP_OSC__VMOD1 / info.r[7];
+                        if (info.r[8] != 0)
+                            i += DSS_OP_AMP_OSC__VMOD2 / info.r[8];
+                        v  = i * m_r_total;
+                    }
+
+                    /* Work out the charge rates. */
+                    v -= OP_AMP_NORTON_VBE;
+                    charge[0] = v / info.r[1];
+                    charge[1] = v / info.r[2] - charge[0];
+
+                    /* use the real enable circuit */
+                    force_charge = enable == 0 ? (uint8_t)1 : (uint8_t)0;
+                    enable = 1;
+                    break;
+
+                case DISC_OP_AMP_OSCILLATOR_VCO_2 | DISC_OP_AMP_IS_NORTON:
+                    /* Work out the charge rates. */
+                    i = DSS_OP_AMP_OSC__VMOD1 / info.r[1];
+                    charge[0] = i - m_temp1;
+                    charge[1] = m_temp2 - i;
+                    /* if the negative pin current is less then the positive pin current, */
+                    /* then the osc is disabled and the cap keeps charging */
+                    if (charge[0] < 0)
+                    {
+                        force_charge =  1;
+                        charge[0]  *= -1;
+                    }
+                    break;
+
+                case DISC_OP_AMP_OSCILLATOR_VCO_3 | DISC_OP_AMP_IS_NORTON:
+                    /* start with fixed bias */
+                    charge[0] = m_i_fixed;
+                    /* add in enable current if using real enable */
+                    if (m_has_enable != 0)
+                    {
+                        if (enable != 0)
+                            charge[0] -= m_i_enable;
+                        enable = 1;
+                    }
+                    /* we need to mix any bias and all modulation voltages together. */
+                    v = DSS_OP_AMP_OSC__VMOD1 - OP_AMP_NORTON_VBE;
+                    if (v < 0) v = 0;
+                    charge[0] += v / info.r[1];
+                    if (info.r[6] != 0)
+                    {
+                        v = DSS_OP_AMP_OSC__VMOD2 - OP_AMP_NORTON_VBE;
+                        charge[0] += v / info.r[6];
+                    }
+                    charge[1] = m_temp1 - charge[0];
+                    break;
+            }
+
+            if (enable == 0)
+            {
+                /* we will just output 0 for oscillators that have no real enable. */
+                set_output(0, 0);
+                return;
+            }
+
+            /* Keep looping until all toggling in time sample is used up. */
+            do
+            {
+                if (m_is_linear_charge != 0)
+                {
+                    if ((flip_flop ^ m_flip_flop_xor) != 0 || force_charge != 0)
+                    {
+                        /* Charging */
+                        /* iC=C*dv/dt  works out to dv=iC*dt/C */
+                        v_cap_next = v_cap + (charge[1] * dt / info.c);
+                        dt = 0;
+
+                        /* has it charged past upper limit? */
+                        if (v_cap_next > m_threshold_high)
+                        {
+                            flip_flop = m_flip_flop_xor;
+                            if (flip_flop != 0)
+                                count_r++;
+                            else
+                                count_f++;
+
+                            if (force_charge != 0)
+                            {
+                                /* we need to keep charging the cap to the max thereby disabling the circuit */
+                                if (v_cap_next > m_v_out_high)
+                                    v_cap_next = m_v_out_high;
+                            }
+                            else
+                            {
+                                /* calculate the overshoot time */
+                                dt = info.c * (v_cap_next - m_threshold_high) / charge[1];
+                                x_time = dt;
+                                v_cap_next = m_threshold_high;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        /* Discharging */
+                        v_cap_next = v_cap - (charge[0] * dt / info.c);
+                        dt     = 0;
+
+                        /* has it discharged past lower limit? */
+                        if (v_cap_next < m_threshold_low)
+                        {
+                            flip_flop = m_flip_flop_xor == 0 ? (uint8_t)1 : (uint8_t)0;
+                            if (flip_flop != 0)
+                                count_r++;
+                            else
+                                count_f++;
+                            /* calculate the overshoot time */
+                            dt = info.c * (m_threshold_low - v_cap_next) / charge[0];
+                            x_time = dt;
+                            v_cap_next = m_threshold_low;
+                        }
+                    }
+                }
+                else    /* non-linear charge */
+                {
+                    if (update_exponent != 0)
+                        exponent = RC_CHARGE_EXP_DT(m_charge_rc[flip_flop], dt);
+                    else
+                        exponent = m_charge_exp[flip_flop];
+
+                    v_cap_next = v_cap + ((m_charge_v[flip_flop] - v_cap) * exponent);
+                    dt = 0;
+
+                    if (flip_flop != 0)
+                    {
+                        /* Has it charged past upper limit? */
+                        if (v_cap_next > m_threshold_high)
+                        {
+                            dt = m_charge_rc[1]  * log(1.0 / (1.0 - ((v_cap_next - m_threshold_high) / (m_v_out_high - v_cap))));
+                            x_time = dt;
+                            v_cap_next = m_threshold_high;
+                            flip_flop = 0;
+                            count_f++;
+                            update_exponent = 1;
+                        }
+                    }
+                    else
+                    {
+                        /* has it discharged past lower limit? */
+                        if (v_cap_next < m_threshold_low)
+                        {
+                            dt = m_charge_rc[0] * log(1.0 / (1.0 - ((m_threshold_low - v_cap_next) / v_cap)));
+                            x_time = dt;
+                            v_cap_next = m_threshold_low;
+                            flip_flop = 1;
+                            count_r++;
+                            update_exponent = 1;
+                        }
+                    }
+                }
+                v_cap = v_cap_next;
+            } while(dt != 0);
+
+            if (v_cap > m_v_out_high)
+                v_cap = m_v_out_high;
+            if (v_cap < 0)
+                v_cap = 0;
+            m_v_cap = v_cap;
+
+            x_time = dt / this.sample_time();
+
+            switch (m_output_type)
+            {
+                case DISC_OP_AMP_OSCILLATOR_OUT_CAP:
+                    v_out = v_cap;
+                    break;
+                case DISC_OP_AMP_OSCILLATOR_OUT_ENERGY:
+                    if (x_time == 0) x_time = 1.0;
+                    v_out = m_v_out_high * (flip_flop != 0 ? x_time : (1.0 - x_time));
+                    break;
+                case DISC_OP_AMP_OSCILLATOR_OUT_SQW:
+                    if (count_f + count_r >= 2)
+                        /* force at least 1 toggle */
+                        v_out = m_flip_flop != 0 ? 0 : m_v_out_high;
+                    else
+                        v_out = flip_flop * m_v_out_high;
+                    break;
+                case DISC_OP_AMP_OSCILLATOR_OUT_COUNT_F_X:
+                    v_out = count_f != 0 ? count_f + x_time : count_f;
+                    break;
+                case DISC_OP_AMP_OSCILLATOR_OUT_COUNT_R_X:
+                    v_out =  count_r != 0 ? count_r + x_time : count_r;
+                    break;
+                case DISC_OP_AMP_OSCILLATOR_OUT_LOGIC_X:
+                    v_out = m_flip_flop + x_time;
+                    break;
+            }
+
+            set_output(0, v_out);
+            m_flip_flop = flip_flop;
+        }
+    }
+
+
+    //DISCRETE_CLASS_STEP_RESET(dss_schmitt_osc, 1,
+
+    //DISCRETE_CLASS_STEP_RESET(dss_adsrenv,  1,
 }

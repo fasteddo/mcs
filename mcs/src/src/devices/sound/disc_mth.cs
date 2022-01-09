@@ -2,9 +2,15 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
+using uint8_t = System.Byte;
+
+using static mame.cpp_global;
+using static mame.disc_mth_global;
+using static mame.discrete_global;
+using static mame.emucore_global;
+using static mame.rescap_global;
 
 
 namespace mame
@@ -194,6 +200,44 @@ namespace mame
     }
 
 
+    static class disc_mth_global
+    {
+        public static int dst_trigger_function(int trig0, int trig1, int trig2, int function)
+        {
+            int result = 1;
+            switch (function)
+            {
+                case DISC_OP_AMP_TRIGGER_FUNCTION_TRG0:
+                    result = trig0;
+                    break;
+                case DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV:
+                    result = trig0 == 0 ? 1 : 0;
+                    break;
+                case DISC_OP_AMP_TRIGGER_FUNCTION_TRG1:
+                    result = trig1;
+                    break;
+                case DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV:
+                    result = trig1 == 0 ? 1 : 0;
+                    break;
+                case DISC_OP_AMP_TRIGGER_FUNCTION_TRG2:
+                    result = trig2;
+                    break;
+                case DISC_OP_AMP_TRIGGER_FUNCTION_TRG2_INV:
+                    result = trig2 == 0 ? 1 : 0;
+                    break;
+                case DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_AND:
+                    result = trig0 != 0 && trig1 != 0 ? 1 : 0;
+                    break;
+                case DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_NAND:
+                    result = (!(trig0 != 0 && trig1 != 0)) ? 1 : 0;
+                    break;
+            }
+
+            return result;
+        }
+    }
+
+
     //DISCRETE_CLASS_STEP(dst_logic_inv, 1, /* no context */ );
     class discrete_dst_logic_inv_node : discrete_base_node,
                                         discrete_step_interface
@@ -354,6 +398,57 @@ namespace mame
     }
 
 
+    //DISCRETE_CLASS_STEP(dst_logic_and, 1, /* no context */ );
+    class discrete_dst_logic_and_node : discrete_base_node,
+                                        discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_LOGIC_AND__IN0 { get { return DISCRETE_INPUT(0); } }
+        double DST_LOGIC_AND__IN1 { get { return DISCRETE_INPUT(1); } }
+        double DST_LOGIC_AND__IN2 { get { return DISCRETE_INPUT(2); } }
+        double DST_LOGIC_AND__IN3 { get { return DISCRETE_INPUT(3); } }
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dst_logic_and_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dst_logic_and_node() { }
+
+
+        // discrete_base_node
+
+        public override void reset() { step(); }
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_logic_and)
+        public void step()
+        {
+            set_output(0, (DST_LOGIC_AND__IN0 != 0 && DST_LOGIC_AND__IN1 != 0 && DST_LOGIC_AND__IN2 != 0 && DST_LOGIC_AND__IN3 != 0) ? 1.0 : 0.0);
+        }
+    }
+
+
+    //DISCRETE_CLASS_STEP(dst_logic_nand, 1, /* no context */ );
+
+    //DISCRETE_CLASS_STEP(dst_logic_or, 1, /* no context */ );
+
+    //DISCRETE_CLASS_STEP(dst_logic_nor, 1, /* no context */ );
+
+    //DISCRETE_CLASS_STEP(dst_logic_xor, 1, /* no context */ );
+
+    //DISCRETE_CLASS_STEP(dst_logic_nxor, 1, /* no context */ );
+
+
     //DISCRETE_CLASS_STEP_RESET(dst_logic_dff, 1,
     class discrete_dst_logic_dff_node : discrete_base_node,
                                         discrete_step_interface
@@ -413,6 +508,198 @@ namespace mame
     }
 
 
+    //DISCRETE_CLASS_STEP_RESET(dst_logic_jkff, 1,
+    //    double          m_v_out;
+    //    int             m_last_clk;
+    //);
+
+    //DISCRETE_CLASS_STEP_RESET(dst_logic_shift, 1,
+    //    double          m_t_left;                   /* time unused during last sample in seconds */
+    //    uint32_t          m_shift_data;
+    //    uint32_t          m_bit_mask;
+    //    uint8_t           m_clock_type;
+    //    uint8_t           m_reset_on_high;
+    //    uint8_t           m_shift_r;
+    //    uint8_t           m_last;
+    //);
+
+    //DISCRETE_CLASS_STEP(dst_lookup_table, 1, /* no context */ );
+
+    //DISCRETE_CLASS_STEP_RESET(dst_multiplex, 1,
+    //    int             m_size;
+    //);
+
+    //DISCRETE_CLASS_STEP_RESET(dst_oneshot, 1,
+    //    double          m_countdown;
+    //    int             m_state;
+    //    int             m_last_trig;
+    //    int             m_type;
+    //);
+
+
+    //DISCRETE_CLASS_STEP_RESET(dst_ramp, 1,
+    class discrete_dst_ramp_node : discrete_base_node,
+                                   discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_RAMP__ENABLE { get { return DISCRETE_INPUT(0); } }
+        double DST_RAMP__DIR { get { return DISCRETE_INPUT(1); } }
+        double DST_RAMP__GRAD { get { return DISCRETE_INPUT(2); } }
+        double DST_RAMP__START { get { return DISCRETE_INPUT(3); } }
+        double DST_RAMP__END { get { return DISCRETE_INPUT(4); } }
+        double DST_RAMP__CLAMP { get { return DISCRETE_INPUT(5); } }
+
+
+        double          m_v_out;
+        double          m_step;
+        int             m_dir;                  /* 1 if End is higher then Start */
+        int             m_last_en;              /* Keep track of the last enable value */
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dst_ramp_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dst_ramp_node() { }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dst_ramp)
+        public override void reset()
+        {
+            m_v_out = DST_RAMP__CLAMP;
+            m_step = DST_RAMP__GRAD / this.sample_rate();
+            m_dir = ((DST_RAMP__END - DST_RAMP__START) == fabs(DST_RAMP__END - DST_RAMP__START)) ? 1 : 0;
+            m_last_en = 0;
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_ramp)
+        public void step()
+        {
+            if (DST_RAMP__ENABLE != 0)
+            {
+                if (m_last_en == 0)
+                {
+                    m_last_en = 1;
+                    m_v_out = DST_RAMP__START;
+                }
+
+                if (m_dir != 0 ? DST_RAMP__DIR != 0 : DST_RAMP__DIR == 0) m_v_out += m_step;
+                else m_v_out -= m_step;
+
+                /* Clamp to min/max */
+                if (m_dir != 0 ? (m_v_out < DST_RAMP__START)
+                               : (m_v_out > DST_RAMP__START)) m_v_out = DST_RAMP__START;
+                if (m_dir != 0 ? (m_v_out > DST_RAMP__END)
+                               : (m_v_out < DST_RAMP__END)) m_v_out = DST_RAMP__END;
+            }
+            else
+            {
+                m_last_en = 0;
+                /* Disabled so clamp to output */
+                m_v_out = DST_RAMP__CLAMP;
+            }
+
+            set_output(0, m_v_out);
+        }
+    }
+
+
+    //DISCRETE_CLASS_STEP_RESET(dst_samphold, 1,
+    class discrete_dst_samphold_node : discrete_base_node,
+                                       discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_SAMPHOLD__IN0 { get { return DISCRETE_INPUT(0); } }
+        double DST_SAMPHOLD__CLOCK { get { return DISCRETE_INPUT(1); } }
+        double DST_SAMPHOLD__TYPE { get { return DISCRETE_INPUT(2); } }
+
+
+        double          m_last_input;
+        int             m_clocktype;
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dst_samphold_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dst_logic_dff_node() { }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dst_samphold)
+        public override void reset()
+        {
+            set_output(0, 0);
+            m_last_input = -1;
+            /* Only stored in here to speed up and save casting in the step function */
+            m_clocktype = (int)DST_SAMPHOLD__TYPE;
+            this.step();
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_samphold)
+        public void step()
+        {
+            switch (m_clocktype)
+            {
+                case DISC_SAMPHOLD_REDGE:
+                    /* Clock the whole time the input is rising */
+                    if (DST_SAMPHOLD__CLOCK > m_last_input) set_output(0,  DST_SAMPHOLD__IN0);
+                    break;
+                case DISC_SAMPHOLD_FEDGE:
+                    /* Clock the whole time the input is falling */
+                    if(DST_SAMPHOLD__CLOCK < m_last_input) set_output(0,  DST_SAMPHOLD__IN0);
+                    break;
+                case DISC_SAMPHOLD_HLATCH:
+                    /* Output follows input if clock != 0 */
+                    if (DST_SAMPHOLD__CLOCK != 0) set_output(0,  DST_SAMPHOLD__IN0);
+                    break;
+                case DISC_SAMPHOLD_LLATCH:
+                    /* Output follows input if clock == 0 */
+                    if (DST_SAMPHOLD__CLOCK == 0) set_output(0,  DST_SAMPHOLD__IN0);
+                    break;
+                default:
+                    m_device.discrete_log("dst_samphold_step - Invalid clocktype passed");
+                    break;
+            }
+
+            /* Save the last value */
+            m_last_input = DST_SAMPHOLD__CLOCK;
+        }
+    }
+
+
+    //DISCRETE_CLASS_STEP(dst_switch, 1, /* no context */ );
+
+    //DISCRETE_CLASS_STEP(dst_aswitch, 1, /* no context */ );
+
+
     //class DISCRETE_CLASS_NAME(dst_transform): public discrete_base_node, public discrete_step_interface
     class discrete_dst_transform_node : discrete_base_node,
                                         discrete_step_interface
@@ -433,14 +720,14 @@ namespace mame
             public void push(double v)
             {
                 //Store THEN increment
-                g.assert(pIdx <= MAX_TRANS_STACK - 1);  //p <= &stk[MAX_TRANS_STACK-1]);
+                assert(pIdx <= MAX_TRANS_STACK - 1);  //p <= &stk[MAX_TRANS_STACK-1]);
                 stk[pIdx++] = v;  //*p++ = v;
             }
             
             public double pop()
             {
                 //decrement THEN read
-                g.assert(pIdx > 0);  //assert(p > &stk[0]);
+                assert(pIdx > 0);  //assert(p > &stk[0]);
                 pIdx--;  //p--;
                 return stk[pIdx];  //return *p;
             }
@@ -526,7 +813,7 @@ namespace mame
                     default:
                         m_device.discrete_log("dst_transform_step - Invalid function type/variable passed: {0}", (string)this.custom_data());
                         /* that is enough to fatalerror */
-                        g.fatalerror("dst_transform_step - Invalid function type/variable passed: {0}\n", (string)this.custom_data());
+                        fatalerror("dst_transform_step - Invalid function type/variable passed: {0}\n", (string)this.custom_data());
                         break;
                 }
 
@@ -571,12 +858,12 @@ namespace mame
                     case token.TOK_3:         stack.push(top); top = I_IN3();             break;
                     case token.TOK_4:         stack.push(top); top = I_IN4();             break;
                     case token.TOK_DUP:       stack.push(top);                            break;
-                    case token.TOK_ABS:       top = Math.Abs(top);                            break;  /* absolute value */
+                    case token.TOK_ABS:       top = fabs(top);                            break;  /* absolute value */
                     case token.TOK_NEG:       top = -top;                                 break;  /* * -1 */
-                    case token.TOK_NOT:       top = top == 0 ? 1 : 0;                                 break;  /* Logical NOT of Last Value */
-                    case token.TOK_EQUAL:     top = (int)stack.pop() == (int)top ? 1 : 0;         break;  /* Logical = */
-                    case token.TOK_GREATER:   top = (stack.pop() > top) ? 1 : 0;                  break;  /* Logical > */
-                    case token.TOK_LESS:      top = (stack.pop() < top) ? 1 : 0;                  break;  /* Logical < */
+                    case token.TOK_NOT:       top = top == 0 ? 1 : 0;                     break;  /* Logical NOT of Last Value */
+                    case token.TOK_EQUAL:     top = (int)stack.pop() == (int)top ? 1 : 0; break;  /* Logical = */
+                    case token.TOK_GREATER:   top = (stack.pop() > top) ? 1 : 0;          break;  /* Logical > */
+                    case token.TOK_LESS:      top = (stack.pop() < top) ? 1 : 0;          break;  /* Logical < */
                     case token.TOK_AND:       top = (int)stack.pop() & (int)top;          break;  /* Bitwise AND */
                     case token.TOK_OR:        top = (int)stack.pop() | (int)top;          break;  /* Bitwise OR */
                     case token.TOK_XOR:       top = (int)stack.pop() ^ (int)top;          break;  /* Bitwise XOR */
@@ -591,11 +878,91 @@ namespace mame
 
     /* Component specific */
 
-#if false
-    DISCRETE_CLASS_STEP_RESET(dst_comp_adder, 1,
-        double          m_total[256];
-    );
-#endif
+    //DISCRETE_CLASS_STEP_RESET(dst_comp_adder, 1,
+    class discrete_dst_comp_adder_node : discrete_base_node,
+                                         discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_COMP_ADDER__SELECT { get { return DISCRETE_INPUT(0); } }
+
+
+        double [] m_total = new double[256];
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)
+        public discrete_dst_comp_adder_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)
+        //~discrete_dst_comp_adder_node() { }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dst_comp_adder)
+        public override void reset()
+        {
+            //DISCRETE_DECLARE_INFO(discrete_comp_adder_table)
+            discrete_comp_adder_table info = (discrete_comp_adder_table)custom_data();
+
+            int i;
+            int bit;
+            int bit_length = info.length;
+
+            assert(bit_length <= 8);
+
+            /* pre-calculate all possible values to speed up step routine */
+            for (i = 0; i < 256; i++)
+            {
+                switch (info.type)
+                {
+                    case DISC_COMP_P_CAPACITOR:
+                        m_total[i] = info.cDefault;
+                        for(bit = 0; bit < bit_length; bit++)
+                        {
+                            if ((i & (1 << bit)) != 0)
+                                m_total[i] += info.c[bit];
+                        }
+                        break;
+                    case DISC_COMP_P_RESISTOR:
+                        m_total[i] = (info.cDefault != 0) ? 1.0 / info.cDefault : 0;
+                        for(bit = 0; bit < bit_length; bit++)
+                        {
+                            if (((i & (1 << bit)) != 0) && (info.c[bit] != 0))
+                                m_total[i] += 1.0 / info.c[bit];
+                        }
+
+                        if (m_total[i] != 0)
+                            m_total[i] = 1.0 / m_total[i];
+
+                        break;
+                }
+            }
+
+            set_output(0, m_total[0]);
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_comp_adder)
+        public void step()
+        {
+            int select;
+
+            select = (int)DST_COMP_ADDER__SELECT;
+            assert(select < 256);
+            set_output(0, m_total[select]);
+        }
+    }
 
 
     //DISCRETE_CLASS_STEP_RESET(dst_dac_r1, 1,
@@ -670,7 +1037,7 @@ namespace mame
                 m_device.discrete_log("dst_dac_r1_reset - Ladder length too small");
             }
 
-            if (ladderLength > g.DISC_LADDER_MAXRES)
+            if (ladderLength > DISC_LADDER_MAXRES)
             {
                 m_device.discrete_log("dst_dac_r1_reset - Ladder length exceeds DISC_LADDER_MAXRES");
             }
@@ -757,7 +1124,7 @@ namespace mame
             {
                 double v_diff = v - m_v_out;
                 /* optimization - if charged close enough to voltage */
-                if (Math.Abs(v_diff) < 0.000001)
+                if (fabs(v_diff) < 0.000001)
                 {
                     m_v_out = v;
                 }
@@ -809,7 +1176,7 @@ namespace mame
             int     addr;
 
             m_size = this.active_inputs() - DST_DIODE_MIX_INP_OFFSET;
-            g.assert(m_size <= 8);
+            assert(m_size <= 8);
 
             for (addr = 0; addr < m_size; addr++)
             {
@@ -994,8 +1361,8 @@ namespace mame
              */
 
             m_type = info.type;
-            if ((info.type == g.DISC_MIXER_IS_OP_AMP) && (info.rI != 0))
-                m_type = g.DISC_MIXER_IS_OP_AMP_WITH_RI;
+            if ((info.type == DISC_MIXER_IS_OP_AMP) && (info.rI != 0))
+                m_type = DISC_MIXER_IS_OP_AMP_WITH_RI;
 
             /*
              * Calculate the total of all resistors in parallel.
@@ -1016,7 +1383,7 @@ namespace mame
                 {
                     switch (m_type)
                     {
-                        case g.DISC_MIXER_IS_RESISTOR:
+                        case DISC_MIXER_IS_RESISTOR:
                             /* is there an rF? */
                             if (info.rF != 0)
                             {
@@ -1024,13 +1391,13 @@ namespace mame
                                 break;
                             }
                             /* else, fall through and just use the resistor value */
-                            goto case g.DISC_MIXER_IS_OP_AMP;  //[[fallthrough]];
+                            goto case DISC_MIXER_IS_OP_AMP;  //[[fallthrough]];
 
-                        case g.DISC_MIXER_IS_OP_AMP:
+                        case DISC_MIXER_IS_OP_AMP:
                             rTemp = info.r[bit];
                             break;
 
-                        case g.DISC_MIXER_IS_OP_AMP_WITH_RI:
+                        case DISC_MIXER_IS_OP_AMP_WITH_RI:
                             rTemp = info.r[bit] + info.rI;
                             break;
                     }
@@ -1042,17 +1409,17 @@ namespace mame
 
             if (info.rF != 0)
             {
-                if (m_type == g.DISC_MIXER_IS_RESISTOR) m_r_total += 1.0 / info.rF;
+                if (m_type == DISC_MIXER_IS_RESISTOR) m_r_total += 1.0 / info.rF;
             }
 
-            if (m_type == g.DISC_MIXER_IS_OP_AMP_WITH_RI) m_r_total += 1.0 / info.rI;
+            if (m_type == DISC_MIXER_IS_OP_AMP_WITH_RI) m_r_total += 1.0 / info.rI;
 
             m_v_cap_f      = 0;
             m_exponent_c_f = 0;
             if (info.cF != 0)
             {
                 /* Setup filter constants */
-                m_exponent_c_f = RC_CHARGE_EXP(((info.type == g.DISC_MIXER_IS_OP_AMP) ? info.rF : (1.0 / m_r_total)) * info.cF);
+                m_exponent_c_f = RC_CHARGE_EXP(((info.type == DISC_MIXER_IS_OP_AMP) ? info.rF : (1.0 / m_r_total)) * info.cF);
             }
 
             m_v_cap_amp      = 0;
@@ -1062,10 +1429,10 @@ namespace mame
                 /* Setup filter constants */
                 /* We will use 100k ohms as an average final stage impedance. */
                 /* Your amp/speaker system will have more effect on incorrect filtering then any value used here. */
-                m_exponent_c_amp = RC_CHARGE_EXP(g.RES_K(100) * info.cAmp);
+                m_exponent_c_amp = RC_CHARGE_EXP(RES_K(100) * info.cAmp);
             }
 
-            if (m_type == g.DISC_MIXER_IS_OP_AMP_WITH_RI) m_gain = info.rF / info.rI;
+            if (m_type == DISC_MIXER_IS_OP_AMP_WITH_RI) m_gain = info.rF / info.rI;
 
             set_output(0, 0);
         }
@@ -1138,21 +1505,21 @@ namespace mame
                                 {
                                     switch (type)
                                     {
-                                        case g.DISC_MIXER_IS_RESISTOR:
+                                        case DISC_MIXER_IS_RESISTOR:
                                             /* is there an rF? */
                                             if (has_rF != 0)
                                             {
-                                                rTemp2 = g.RES_2_PARALLEL(rTemp, info.rF);
+                                                rTemp2 = RES_2_PARALLEL(rTemp, info.rF);
                                                 break;
                                             }
                                             /* else, fall through and just use the resistor value */
-                                            goto case g.DISC_MIXER_IS_OP_AMP;  //[[fallthrough]];
+                                            goto case DISC_MIXER_IS_OP_AMP;  //[[fallthrough]];
 
-                                        case g.DISC_MIXER_IS_OP_AMP:
+                                        case DISC_MIXER_IS_OP_AMP:
                                             rTemp2 = rTemp;
                                             break;
 
-                                        case g.DISC_MIXER_IS_OP_AMP_WITH_RI:
+                                        case DISC_MIXER_IS_OP_AMP_WITH_RI:
                                             rTemp2 = rTemp + rI;
                                             break;
                                     }
@@ -1177,7 +1544,7 @@ namespace mame
                                 vTemp -= m_v_cap[bit];
                             }
 
-                            i += ((type == g.DISC_MIXER_IS_OP_AMP) ? v_ref - vTemp : vTemp) / rTemp;
+                            i += ((type == DISC_MIXER_IS_OP_AMP) ? v_ref - vTemp : vTemp) / rTemp;
                         }
 
                         bit_mask = bit_mask << 1;
@@ -1197,13 +1564,13 @@ namespace mame
                             vTemp -= m_v_cap[bit];
                         }
 
-                        i += ((type == g.DISC_MIXER_IS_OP_AMP) ? v_ref - vTemp : vTemp) / info.r[bit];
+                        i += ((type == DISC_MIXER_IS_OP_AMP) ? v_ref - vTemp : vTemp) / info.r[bit];
                     }
                 }
                 else
                 {
                     /* no r_nodes or c_nodes, mixing only */
-                    if (type == g.DISC_MIXER_IS_OP_AMP)
+                    if (type == DISC_MIXER_IS_OP_AMP)
                     {
                         for (bit = 0; bit < m_size; bit++)
                             i += ( v_ref - DST_MIXER__IN(bit) ) / info.r[bit];
@@ -1215,16 +1582,16 @@ namespace mame
                     }
                 }
 
-                if (type == g.DISC_MIXER_IS_OP_AMP_WITH_RI)
+                if (type == DISC_MIXER_IS_OP_AMP_WITH_RI)
                     i += v_ref / rI;
 
                 r_total = 1.0 / r_total;
 
                 /* If resistor network or has rI then Millman is used.
                  * If op-amp then summing formula is used. */
-                v = i * ((type == g.DISC_MIXER_IS_OP_AMP) ? info.rF : r_total);
+                v = i * ((type == DISC_MIXER_IS_OP_AMP) ? info.rF : r_total);
 
-                if (type == g.DISC_MIXER_IS_OP_AMP_WITH_RI)
+                if (type == DISC_MIXER_IS_OP_AMP_WITH_RI)
                     v = v_ref + (m_gain * (v_ref - v));
 
                 /* Do the low pass filtering for cF */
@@ -1255,4 +1622,487 @@ namespace mame
             }
         }
     }
+
+
+    //DISCRETE_CLASS_STEP_RESET(dst_op_amp, 1,
+    class discrete_dst_op_amp_node : discrete_base_node,
+                                     discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_OP_AMP__ENABLE { get { return DISCRETE_INPUT(0); } }
+        double DST_OP_AMP__INP0 { get { return DISCRETE_INPUT(1); } }
+        double DST_OP_AMP__INP1 { get { return DISCRETE_INPUT(2); } }
+
+
+        uint8_t m_has_cap;
+        uint8_t m_has_r1;
+        uint8_t m_has_r4;
+        double m_v_max;
+        double m_i_fixed;
+        double m_v_cap;
+        double m_exponent;
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)
+        public discrete_dst_op_amp_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)
+        //~discrete_dst_op_amp_node() { }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dst_op_amp)
+        public override void reset()
+        {
+            //DISCRETE_DECLARE_INFO(discrete_op_amp_info)
+            discrete_op_amp_info info = (discrete_op_amp_info)custom_data();
+
+            m_has_r1 = info.r1 > 0 ? (uint8_t)1 : (uint8_t)0;
+            m_has_r4 = info.r4 > 0 ? (uint8_t)1 : (uint8_t)0;
+
+            m_v_max = info.vP - OP_AMP_NORTON_VBE;
+
+            m_v_cap = 0;
+            if (info.c > 0)
+            {
+                m_has_cap = 1;
+                /* Setup filter constants */
+                if (m_has_r4 != 0)
+                {
+                    /* exponential charge */
+                    m_exponent = RC_CHARGE_EXP(info.r4 * info.c);
+                }
+                else
+                {
+                    /* linear charge */
+                    m_exponent = this.sample_rate() * info.c;
+                }
+            }
+
+            if (info.r3 > 0)
+                m_i_fixed = (info.vP - OP_AMP_NORTON_VBE) / info.r3;
+            else
+                m_i_fixed = 0;
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_op_amp)
+        public void step()
+        {
+            //DISCRETE_DECLARE_INFO(discrete_op_amp_info)
+            discrete_op_amp_info info = (discrete_op_amp_info)custom_data();
+
+            double i_pos = 0;
+            double i_neg = 0;
+            double i     = 0;
+            double v_out;
+
+            if (DST_OP_AMP__ENABLE != 0)
+            {
+                switch (info.type)
+                {
+                    case DISC_OP_AMP_IS_NORTON:
+                        /* work out neg pin current */
+                        if (m_has_r1 != 0)
+                        {
+                            i_neg = (DST_OP_AMP__INP0 - OP_AMP_NORTON_VBE) / info.r1;
+                            if (i_neg < 0) i_neg = 0;
+                        }
+                        i_neg += m_i_fixed;
+
+                        /* work out neg pin current */
+                        i_pos = (DST_OP_AMP__INP1 - OP_AMP_NORTON_VBE) / info.r2;
+                        if (i_pos < 0) i_pos = 0;
+
+                        /* work out current across r4 */
+                        i = i_pos - i_neg;
+
+                        if (m_has_cap != 0)
+                        {
+                            if (m_has_r4 != 0)
+                            {
+                                /* voltage across r4 charging cap */
+                                i *= info.r4;
+                                /* exponential charge */
+                                m_v_cap += (i - m_v_cap) * m_exponent;
+                            }
+                            else
+                            {
+                                /* linear charge */
+                                m_v_cap += i / m_exponent;
+                            }
+
+                            v_out = m_v_cap;
+                        }
+                        else
+                        {
+                            if (m_has_r4 != 0)
+                            {
+                                v_out = i * info.r4;
+                            }
+                            else
+                            {
+                                /* output just swings to rail when there is no r4 */
+                                if (i > 0)
+                                    v_out = m_v_max;
+                                else
+                                    v_out = 0;
+                            }
+                        }
+
+                        /* clamp output */
+                        if (v_out > m_v_max) v_out = m_v_max;
+                        else if (v_out < info.vN) v_out = info.vN;
+
+                        m_v_cap = v_out;
+
+                        set_output(0, v_out);
+                        break;
+
+                    default:
+                        set_output(0, 0);
+                        break;
+                }
+            }
+            else
+            {
+                set_output(0, 0);
+            }
+        }
+    }
+
+
+    //DISCRETE_CLASS_STEP_RESET(dst_op_amp_1sht, 1,
+    class discrete_dst_op_amp_1sht_node : discrete_base_node,
+                                          discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_OP_AMP_1SHT__TRIGGER { get { return DISCRETE_INPUT(0); } }
+
+
+        double m_v_out;
+        double m_i_fixed;
+        double m_v_max;
+        double m_r34ratio;
+        double m_v_cap1;
+        double m_v_cap2;
+        double m_exponent1c;
+        double m_exponent1d;
+        double m_exponent2;
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)
+        public discrete_dst_op_amp_1sht_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)
+        //~discrete_dst_op_amp_1sht_node() { }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dst_op_amp_1sht)
+        public override void reset()
+        {
+            //DISCRETE_DECLARE_INFO(discrete_op_amp_1sht_info)
+            discrete_op_amp_1sht_info info = (discrete_op_amp_1sht_info)custom_data();
+
+            m_exponent1c = RC_CHARGE_EXP(RES_2_PARALLEL(info.r3, info.r4) * info.c1);
+            m_exponent1d = RC_CHARGE_EXP(info.r4 * info.c1);
+            m_exponent2  = RC_CHARGE_EXP(info.r2 * info.c2);
+            m_i_fixed  = (info.vP - OP_AMP_NORTON_VBE) / info.r1;
+            m_v_cap1   = m_v_cap2 = 0;
+            m_v_max    = info.vP - OP_AMP_NORTON_VBE;
+            m_r34ratio = info.r3 / (info.r3 + info.r4);
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_op_amp_1sht)
+        public void step()
+        {
+            //DISCRETE_DECLARE_INFO(discrete_op_amp_1sht_info)
+            discrete_op_amp_1sht_info info = (discrete_op_amp_1sht_info)custom_data();
+
+            double i_pos;
+            double i_neg;
+            double v;
+
+            /* update trigger circuit */
+            i_pos  = (DST_OP_AMP_1SHT__TRIGGER - m_v_cap2) / info.r2;
+            i_pos += m_v_out / info.r5;
+            m_v_cap2 += (DST_OP_AMP_1SHT__TRIGGER - m_v_cap2) * m_exponent2;
+
+            /* calculate currents and output */
+            i_neg = (m_v_cap1 - OP_AMP_NORTON_VBE) / info.r3;
+            if (i_neg < 0) i_neg = 0;
+            i_neg += m_i_fixed;
+
+            if (i_pos > i_neg) m_v_out = m_v_max;
+            else m_v_out = info.vN;
+
+            /* update c1 */
+            /* rough value of voltage at anode of diode if discharging */
+            v = m_v_out + 0.6;
+            if (m_v_cap1 > m_v_out)
+            {
+                /* discharge */
+                if (m_v_cap1 > v)
+                    /* immediate discharge through diode */
+                    m_v_cap1 = v;
+                else
+                    /* discharge through r4 */
+                    m_v_cap1 += (m_v_out - m_v_cap1) * m_exponent1d;
+            }
+            else
+            {
+                /* charge */
+                m_v_cap1 += ((m_v_out - OP_AMP_NORTON_VBE) * m_r34ratio + OP_AMP_NORTON_VBE - m_v_cap1) * m_exponent1c;
+            }
+
+            set_output(0, m_v_out);
+        }
+    }
+
+
+    //DISCRETE_CLASS_STEP_RESET(dst_tvca_op_amp, 1,
+    class discrete_dst_tvca_op_amp_node : discrete_base_node,
+                                          discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_TVCA_OP_AMP__TRG0 { get { return DISCRETE_INPUT(0); } }
+        double DST_TVCA_OP_AMP__TRG1 { get { return DISCRETE_INPUT(1); } }
+        double DST_TVCA_OP_AMP__TRG2 { get { return DISCRETE_INPUT(2); } }
+        double DST_TVCA_OP_AMP__INP0 { get { return DISCRETE_INPUT(3); } }
+        double DST_TVCA_OP_AMP__INP1 { get { return DISCRETE_INPUT(4); } }
+
+
+        double m_v_out_max;            /* Maximum output voltage */
+        double [] m_v_trig = new double [2];            /* Voltage used to charge cap1 based on function F3 */
+        double m_v_trig2;              /* Voltage used to charge cap2 */
+        double m_v_trig3;              /* Voltage used to charge cap3 */
+        double m_i_fixed;              /* Fixed current going into - input */
+        double [] m_exponent_c = new double [2];        /* Charge exponents based on function F3 */
+        double [] m_exponent_d = new double [2];        /* Discharge exponents based on function F3 */
+        double [] m_exponent2 = new double [2];         /* Discharge/charge exponents based on function F4 */
+        double [] m_exponent3 = new double [2];         /* Discharge/charge exponents based on function F5 */
+        double m_exponent4;            /* Discharge/charge exponents for c4 */
+        double m_v_cap1;               /* charge on cap c1 */
+        double m_v_cap2;               /* charge on cap c2 */
+        double m_v_cap3;               /* charge on cap c3 */
+        double m_v_cap4;               /* charge on cap c4 */
+        double m_r67;                  /* = r6 + r7 (for easy use later) */
+        uint8_t m_has_c4;
+        uint8_t m_has_r4;
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)
+        public discrete_dst_tvca_op_amp_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)
+        //~discrete_dst_tvca_op_amp_node() { }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dst_tvca_op_amp)
+        public override void reset()
+        {
+            //DISCRETE_DECLARE_INFO(discrete_op_amp_tvca_info)
+            discrete_op_amp_tvca_info info = (discrete_op_amp_tvca_info)custom_data();
+
+            m_r67 = info.r6 + info.r7;
+
+            m_v_out_max = info.vP - OP_AMP_NORTON_VBE;
+            /* This is probably overkill because R5 is usually much lower then r6 or r7,
+             * but it is better to play it safe. */
+            m_v_trig[0] = (info.v1 - 0.6) * RES_VOLTAGE_DIVIDER(info.r5, info.r6);
+            m_v_trig[1] = (info.v1 - 0.6 - OP_AMP_NORTON_VBE) * RES_VOLTAGE_DIVIDER(info.r5, m_r67) + OP_AMP_NORTON_VBE;
+            m_i_fixed   = m_v_out_max / info.r1;
+
+            m_v_cap1 = 0;
+            /* Charge rate through r5 */
+            /* There can be a different charge rates depending on function F3. */
+            m_exponent_c[0] = RC_CHARGE_EXP(RES_2_PARALLEL(info.r5, info.r6) * info.c1);
+            m_exponent_c[1] = RC_CHARGE_EXP(RES_2_PARALLEL(info.r5, m_r67) * info.c1);
+            /* Discharge rate through r6 + r7 */
+            m_exponent_d[1] = RC_CHARGE_EXP(m_r67 * info.c1);
+            /* Discharge rate through r6 */
+            if (info.r6 != 0)
+            {
+                m_exponent_d[0] = RC_CHARGE_EXP(info.r6 * info.c1);
+            }
+
+            m_v_cap2       = 0;
+            m_v_trig2      = (info.v2 - 0.6 - OP_AMP_NORTON_VBE) * RES_VOLTAGE_DIVIDER(info.r8, info.r9);
+            m_exponent2[0] = RC_CHARGE_EXP(info.r9 * info.c2);
+            m_exponent2[1] = RC_CHARGE_EXP(RES_2_PARALLEL(info.r8, info.r9) * info.c2);
+            m_v_cap3       = 0;
+            m_v_trig3      = (info.v3 - 0.6 - OP_AMP_NORTON_VBE) * RES_VOLTAGE_DIVIDER(info.r10, info.r11);
+            m_exponent3[0] = RC_CHARGE_EXP(info.r11 * info.c3);
+            m_exponent3[1] = RC_CHARGE_EXP(RES_2_PARALLEL(info.r10, info.r11) * info.c3);
+            m_v_cap4       = 0;
+
+            if (info.r4 != 0) m_has_r4 = 1;
+            if (info.c4 != 0) m_has_c4 = 1;
+            if (m_has_r4 != 0 && m_has_c4 != 0)
+                m_exponent4    = RC_CHARGE_EXP(info.r4 * info.c4);
+
+            this.step();
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_tvca_op_amp)
+        public void step()
+        {
+            //DISCRETE_DECLARE_INFO(discrete_op_amp_tvca_info)
+            discrete_op_amp_tvca_info info = (discrete_op_amp_tvca_info)custom_data();
+
+            int trig0;
+            int trig1;
+            int trig2;
+            int f3;
+            double i2 = 0;     /* current through r2 */
+            double i3 = 0;     /* current through r3 */
+            double i_neg = 0;  /* current into - input */
+            double i_pos = 0;  /* current into + input */
+            double i_out = 0;  /* current at output */
+
+            double v_out;
+
+            trig0 = (int)DST_TVCA_OP_AMP__TRG0;
+            trig1 = (int)DST_TVCA_OP_AMP__TRG1;
+            trig2 = (int)DST_TVCA_OP_AMP__TRG2;
+            f3 = dst_trigger_function(trig0, trig1, trig2, info.f3);
+
+            if ((info.r2 != 0) && dst_trigger_function(trig0, trig1, trig2, info.f0) != 0)
+            {
+                /* r2 is present, so we assume Input 0 is connected and valid. */
+                i2 = (DST_TVCA_OP_AMP__INP0 - OP_AMP_NORTON_VBE) / info.r2;
+                if ( i2 < 0) i2 = 0;
+            }
+
+            if ((info.r3 != 0) && dst_trigger_function(trig0, trig1, trig2, info.f1) != 0)
+            {
+                /* r2 is present, so we assume Input 1 is connected and valid. */
+                /* Function F1 is not grounding the circuit. */
+                i3 = (DST_TVCA_OP_AMP__INP1 - OP_AMP_NORTON_VBE) / info.r3;
+                if ( i3 < 0) i3 = 0;
+            }
+
+            /* Calculate current going in to - input. */
+            i_neg = m_i_fixed + i2 + i3;
+
+            /* Update the c1 cap voltage. */
+            if (dst_trigger_function(trig0, trig1, trig2, info.f2) != 0)
+            {
+                /* F2 is not grounding the circuit so we charge the cap. */
+                m_v_cap1 += (m_v_trig[f3] - m_v_cap1) * m_exponent_c[f3];
+            }
+            else
+            {
+                /* F2 is at ground.  The diode blocks this so F2 and r5 are out of circuit.
+                 * So now the discharge rate is dependent upon F3.
+                 * If F3 is at ground then we discharge to 0V through r6.
+                 * If F3 is out of circuit then we discharge to OP_AMP_NORTON_VBE through r6+r7. */
+                m_v_cap1 += ((f3 != 0 ? OP_AMP_NORTON_VBE : 0.0) - m_v_cap1) * m_exponent_d[f3];
+            }
+
+            /* Calculate c1 current going in to + input. */
+            i_pos = (m_v_cap1 - OP_AMP_NORTON_VBE) / m_r67;
+            if ((i_pos < 0) || f3 == 0) i_pos = 0;
+
+            /* Update the c2 cap voltage and current. */
+            if (info.r9 != 0)
+            {
+                f3 = dst_trigger_function(trig0, trig1, trig2, info.f4);
+                m_v_cap2 += ((f3 != 0 ? m_v_trig2 : 0) - m_v_cap2) * m_exponent2[f3];
+                i_pos += m_v_cap2 / info.r9;
+            }
+
+            /* Update the c3 cap voltage and current. */
+            if (info.r11 != 0)
+            {
+                f3 = dst_trigger_function(trig0, trig1, trig2, info.f5);
+                m_v_cap3 += ((f3 != 0 ? m_v_trig3 : 0) - m_v_cap3) * m_exponent3[f3];
+                i_pos += m_v_cap3 / info.r11;
+            }
+
+            /* Calculate output current. */
+            i_out = i_pos - i_neg;
+            if (i_out < 0) i_out = 0;
+
+            /* Convert to voltage for final output. */
+            if (m_has_c4 != 0)
+            {
+                if (m_has_r4 != 0)
+                {
+                    /* voltage across r4 charging cap */
+                    i_out *= info.r4;
+                    /* exponential charge */
+                    m_v_cap4 += (i_out - m_v_cap4) * m_exponent4;
+                }
+                else
+                {
+                    /* linear charge */
+                    m_v_cap4 += i_out / m_exponent4;
+                }
+
+                if (m_v_cap4 < 0)
+                    m_v_cap4 = 0;
+
+                v_out = m_v_cap4;
+            }
+            else
+            {
+                v_out = i_out * info.r4;
+            }
+
+            /* Clip the output if needed. */
+            if (v_out > m_v_out_max) v_out = m_v_out_max;
+
+            set_output(0, v_out);
+        }
+    }
+
+
+    //DISCRETE_CLASS_STEP(dst_xtime_buffer, 1, /* no context */ );
+
+    //DISCRETE_CLASS_STEP(dst_xtime_and, 1, /* no context */ );
+
+    //DISCRETE_CLASS_STEP(dst_xtime_or, 1, /* no context */ );
+
+    //DISCRETE_CLASS_STEP(dst_xtime_xor, 1, /* no context */ );
 }

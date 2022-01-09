@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.netlist.devices.lib_entries_global;
 
 
 namespace mame.netlist.devices
@@ -25,7 +26,7 @@ namespace mame.netlist.devices
             //LIB_ENTRY(2102A)
             //LIB_ENTRY(2716)
             //LIB_ENTRY(4538)
-            //LIB_ENTRY(74107)
+            LIB_ENTRY("74107", nld_74107.decl_74107);
             //LIB_ENTRY(74107A)
             //LIB_ENTRY(74113)
             //LIB_ENTRY(74113A)
@@ -33,7 +34,7 @@ namespace mame.netlist.devices
             //LIB_ENTRY(74123)
             //LIB_ENTRY(74125)
             //LIB_ENTRY(74126)
-            //LIB_ENTRY(74153)
+            LIB_ENTRY("74153", nld_74153.decl_74153);
             //LIB_ENTRY(74161)
             //LIB_ENTRY(74161_fixme)
             //LIB_ENTRY(74163)
@@ -48,18 +49,18 @@ namespace mame.netlist.devices
             //LIB_ENTRY(74365)
             //LIB_ENTRY(74377_GATE)
             //LIB_ENTRY(74393)
-            //LIB_ENTRY(7448)
-            //LIB_ENTRY(7450)
+            LIB_ENTRY("7448", nld_7448.decl_7448);
+            LIB_ENTRY("7450", nld_7450.decl_7450);
             //LIB_ENTRY(7473)
             //LIB_ENTRY(7473A)
-            //LIB_ENTRY(7474)
+            LIB_ENTRY("7474", nld_7474.decl_7474);
             //LIB_ENTRY(7475_GATE)
             //LIB_ENTRY(7477_GATE)
-            //LIB_ENTRY(7483)
+            LIB_ENTRY("7483", nld_7483.decl_7483);
             //LIB_ENTRY(7485)
-            //LIB_ENTRY(7490)
+            LIB_ENTRY("7490", nld_7490.decl_7490);
             //LIB_ENTRY(7492)
-            //LIB_ENTRY(7493)
+            LIB_ENTRY("7493", nld_7493.decl_7493);
             //LIB_ENTRY(7497)
             //LIB_ENTRY(74S287)
             //LIB_ENTRY(8277)
@@ -69,7 +70,7 @@ namespace mame.netlist.devices
             //LIB_ENTRY(82S16)
             //LIB_ENTRY(9310)
             //LIB_ENTRY(9314)
-            //LIB_ENTRY(9316)
+            LIB_ENTRY("9316", nld_9316.decl_9316);
             //LIB_ENTRY(9321)
             //LIB_ENTRY(9322)
             //LIB_ENTRY(9334)
@@ -91,7 +92,7 @@ namespace mame.netlist.devices
             //LIB_ENTRY(CD4076)
             //LIB_ENTRY(CD4316_GATE)
             //LIB_ENTRY(CS)
-            //LIB_ENTRY(D)
+            LIB_ENTRY("D", analog.nld_D.decl_D);
             //LIB_ENTRY(L)
             //LIB_ENTRY(LVCCS)
             //LIB_ENTRY(MC1455P)
@@ -99,11 +100,11 @@ namespace mame.netlist.devices
             //LIB_ENTRY(MK28000)
             //LIB_ENTRY(MM5837)
             //LIB_ENTRY(MOSFET)
-            //LIB_ENTRY(NE555)
+            LIB_ENTRY("NE555", nld_NE555.decl_NE555);
             LIB_ENTRY("POT", analog.nld_POT.decl_POT);
             //LIB_ENTRY(POT2)
             //LIB_ENTRY(QBJT_EB)
-            //LIB_ENTRY(QBJT_switch)
+            LIB_ENTRY("QBJT_switch", analog.nld_QBJT_switch.decl_QBJT_switch);
             LIB_ENTRY("R", analog.nld_R.decl_R);
             //LIB_ENTRY(SN74LS629)
             //LIB_ENTRY(TMS4800)
@@ -122,7 +123,7 @@ namespace mame.netlist.devices
             //LIB_ENTRY(logic_input)
             //LIB_ENTRY(logic_input8)
             LIB_ENTRY("logic_input_ttl", nld_logic_input.decl_logic_input_ttl);
-            //LIB_ENTRY(mainclock)
+            LIB_ENTRY("mainclock", nld_mainclock.decl_mainclock);
             //LIB_ENTRY(nc_pin)
             LIB_ENTRY("netlistparams", nld_netlistparams.decl_netlistparams);
             //LIB_ENTRY(nicDelay)
@@ -132,7 +133,7 @@ namespace mame.netlist.devices
             //LIB_ENTRY(schmitt_trigger)
             LIB_ENTRY("solver", nld_solver.decl_solver);
             //LIB_ENTRY(switch1)
-            //LIB_ENTRY(switch2)
+            LIB_ENTRY("switch2", analog.nld_switch2.decl_switch2);
             //LIB_ENTRY(sys_compd)
             //LIB_ENTRY(sys_dsw1)
             //LIB_ENTRY(sys_dsw2)

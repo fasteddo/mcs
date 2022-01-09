@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -12,6 +11,10 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
+
+using static mame.emucore_global;
+using static mame.tilemap_global;
+using static mame.util;
 
 
 namespace mame
@@ -49,20 +52,20 @@ namespace mame
                 int bit1;
                 int bit2;
 
-                bit0 = g.BIT(color_prom[0], 0);
-                bit1 = g.BIT(color_prom[0], 1);
-                bit2 = g.BIT(color_prom[0], 2);
+                bit0 = BIT(color_prom.op, 0);
+                bit1 = BIT(color_prom.op, 1);
+                bit2 = BIT(color_prom.op, 2);
                 int r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-                bit0 = g.BIT(color_prom[0], 3);
-                bit1 = g.BIT(color_prom[0], 4);
-                bit2 = g.BIT(color_prom[0], 5);
+                bit0 = BIT(color_prom.op, 3);
+                bit1 = BIT(color_prom.op, 4);
+                bit2 = BIT(color_prom.op, 5);
                 int gr = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
                 bit0 = 0;
-                bit1 = g.BIT(color_prom[0], 6);
-                bit2 = g.BIT(color_prom[0], 7);
+                bit1 = BIT(color_prom.op, 6);
+                bit2 = BIT(color_prom.op, 7);
                 int b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-                palette.dipalette.set_indirect_color(i, new rgb_t((byte)r, (byte)gr, (byte)b));
+                palette.set_indirect_color(i, new rgb_t((u8)r, (u8)gr, (u8)b));
                 color_prom++;
             }
 
@@ -75,26 +78,26 @@ namespace mame
                 int g = map[(i >> 2) & 0x03];
                 int b = map[(i >> 4) & 0x03];
 
-                palette.dipalette.set_indirect_color(32 + i, new rgb_t((byte)r, (byte)g, (byte)b));
+                palette.set_indirect_color(32 + i, new rgb_t((u8)r, (u8)g, (u8)b));
             }
 
             // characters
             for (int i = 0; i < 64*4; i++)
             {
-                palette.dipalette.set_pen_indirect((pen_t)i, (indirect_pen_t)((color_prom[0] & 0x0f) | 0x10));
+                palette.set_pen_indirect((pen_t)i, (indirect_pen_t)((color_prom.op & 0x0f) | 0x10));
                 color_prom++;
             }
 
             // sprites
             for (int i = 0; i < 64*4; i++)
             {
-                palette.dipalette.set_pen_indirect((pen_t)(64*4 + i), (indirect_pen_t)((color_prom[0] & 0x0f)));
+                palette.set_pen_indirect((pen_t)(64*4 + i), (indirect_pen_t)((color_prom.op & 0x0f)));
                 color_prom++;
             }
 
             // now the stars
             for (int i = 0; i < 64; i++)
-                palette.dipalette.set_pen_indirect((pen_t)(64*4 + 64*4 + i), (indirect_pen_t)(32 + i));
+                palette.set_pen_indirect((pen_t)(64*4 + 64*4 + i), (indirect_pen_t)(32 + i));
         }
 
 
@@ -132,7 +135,7 @@ namespace mame
             tileinfo.set(0,
                     (u32)(m_videoram.op[tile_index] & 0x7f) | (flip_screen() != 0 ? 0x80 : 0U) | (m_galaga_gfxbank << 8),
                     (u32)color,
-                    flip_screen() != 0 ? g.TILE_FLIPX : (u8)0);
+                    flip_screen() != 0 ? TILE_FLIPX : (u8)0);
 
             tileinfo.group = (u8)color;
         }
@@ -145,12 +148,12 @@ namespace mame
         ***************************************************************************/
         protected override void video_start()
         {
-            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op[0].digfx, get_tile_info, tilemap_scan, 8, 8, 36, 28);  //tilemap_get_info_delegate(FUNC(galaga_state::get_tile_info),this),tilemap_mapper_delegate(FUNC(galaga_state::tilemap_scan),this),8,8,36,28);
-            m_fg_tilemap.configure_groups(m_gfxdecode.op[0].digfx.gfx(0), 0x1f);
+            m_fg_tilemap = machine().tilemap().create(m_gfxdecode.op0, get_tile_info, tilemap_scan, 8, 8, 36, 28);  //tilemap_get_info_delegate(FUNC(galaga_state::get_tile_info),this),tilemap_mapper_delegate(FUNC(galaga_state::tilemap_scan),this),8,8,36,28);
+            m_fg_tilemap.configure_groups(m_gfxdecode.op0.gfx(0), 0x1f);
 
             m_galaga_gfxbank = 0;
 
-            save_item(g.NAME(new { m_galaga_gfxbank }));
+            save_item(NAME(new { m_galaga_gfxbank }));
         }
 
 
@@ -204,12 +207,12 @@ namespace mame
                 {
                     for (int x = 0; x <= sizex; x++)
                     {
-                        m_gfxdecode.op[0].digfx.gfx(1).transmask(bitmap, cliprect,
+                        m_gfxdecode.op0.gfx(1).transmask(bitmap, cliprect,
                             (u32)(sprite + gfx_offs[y ^ (sizey * flipy), x ^ (sizex * flipx)]),
                             (u32)color,
                             flipx,flipy,
                             sx + 16 * x, sy + 16 * y,
-                            m_palette.op[0].dipalette.transpen_mask(m_gfxdecode.op[0].digfx.gfx(1), (u32)color, 0x0f));
+                            m_palette.op0.transpen_mask(m_gfxdecode.op0.gfx(1), (u32)color, 0x0f));
                     }
                 }
             }
@@ -218,8 +221,8 @@ namespace mame
 
         u32 screen_update_galaga(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
-            bitmap.fill(m_palette.op[0].dipalette.black_pen(), cliprect);
-            m_starfield.op[0].draw_starfield(bitmap, cliprect, 0);
+            bitmap.fill(m_palette.op0.black_pen(), cliprect);
+            m_starfield.op0.draw_starfield(bitmap, cliprect, 0);
             draw_sprites(bitmap,cliprect);
             m_fg_tilemap.draw(screen, bitmap, cliprect);
             return 0;
@@ -231,14 +234,14 @@ namespace mame
         {
             // Galaga only scrolls in X direction - the SCROLL_Y pins
             // of the 05XX chip are tied to ground.
-            uint8_t speed_index_X = (uint8_t)((m_videolatch.op[0].q2_r() << 2) | (m_videolatch.op[0].q1_r() << 1) | (m_videolatch.op[0].q0_r() << 0));
+            uint8_t speed_index_X = (uint8_t)((m_videolatch.op0.q2_r() << 2) | (m_videolatch.op0.q1_r() << 1) | (m_videolatch.op0.q0_r() << 0));
             uint8_t speed_index_Y = 0;
-            m_starfield.op[0].set_scroll_speed(speed_index_X,speed_index_Y);
+            m_starfield.op0.set_scroll_speed(speed_index_X,speed_index_Y);
 
-            m_starfield.op[0].set_active_starfield_sets((uint8_t)m_videolatch.op[0].q3_r(), (uint8_t)(m_videolatch.op[0].q4_r() | 2));
+            m_starfield.op0.set_active_starfield_sets((uint8_t)m_videolatch.op0.q3_r(), (uint8_t)(m_videolatch.op0.q4_r() | 2));
 
             // _STARCLR signal enables/disables starfield
-            m_starfield.op[0].enable_starfield((uint8_t)m_videolatch.op[0].q5_r());
+            m_starfield.op0.enable_starfield((uint8_t)m_videolatch.op0.q5_r());
         }
     }
 }

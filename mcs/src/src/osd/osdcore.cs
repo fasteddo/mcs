@@ -2,8 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 
 using int32_t = System.Int32;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
@@ -11,82 +11,13 @@ using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
+using static mame.osdcore_global;
+
 
 namespace mame
 {
-    // output channel callback
-    //typedef delegate<void (const char *, va_list)> output_delegate;
-    public delegate void output_delegate(string format, params object [] args);
-
-
-    // output channels
-    public enum osd_output_channel
-    {
-        OSD_OUTPUT_CHANNEL_ERROR,
-        OSD_OUTPUT_CHANNEL_WARNING,
-        OSD_OUTPUT_CHANNEL_INFO,
-        OSD_OUTPUT_CHANNEL_DEBUG,
-        OSD_OUTPUT_CHANNEL_VERBOSE,
-        OSD_OUTPUT_CHANNEL_LOG,
-        OSD_OUTPUT_CHANNEL_COUNT
-    }
-
-
-    public static class osdcore_global
-    {
-        public static osdcore_interface m_osdcore;
-
-        public static void set_osdcore(osdcore_interface osdcore) { m_osdcore = osdcore; }
-    }
-
-
-    /* osd_work_queue is an opaque type which represents a queue of work items */
-    // defined in osdsync.cs
-    //public abstract class osd_work_queue { }
-
-    /* osd_work_item is an opaque type which represents a single work item */
-    // defined in osdsync.cs
-    //public abstract class osd_work_item { }
-
-    /* osd_work_callback is a callback function that does work */
-    //typedef void *(*osd_work_callback)(void *param, int threadid);
-    public delegate Object osd_work_callback(Object param, int threadid);
-
-
     public abstract class osdcore_interface
     {
-        /* a osd_ticks_t is a 64-bit unsigned integer that is used as a core type in timing interfaces */
-        //typedef uint64_t osd_ticks_t;
-
-
-        /***************************************************************************
-            WORK ITEM INTERFACES
-        ***************************************************************************/
-
-        /* this is the maximum number of supported threads for a single work queue */
-        /* threadid values are expected to range from 0..WORK_MAX_THREADS-1 */
-        public const int WORK_MAX_THREADS            = 16;
-
-        /* these flags can be set when creating a queue to give hints to the code about
-           how to configure the queue */
-        public const UInt32 WORK_QUEUE_FLAG_IO        = 0x0001;
-        public const UInt32 WORK_QUEUE_FLAG_MULTI     = 0x0002;
-        public const UInt32 WORK_QUEUE_FLAG_HIGH_FREQ = 0x0004;
-
-        /* these flags can be set when queueing a work item to indicate how to handle
-           its deconstruction */
-        public const UInt32 WORK_ITEM_FLAG_AUTO_RELEASE = 0x0001;
-
-
-        /****************************************************************************
-
-            The prototypes in this file describe the interfaces that the MAME core
-            and various tools rely upon to interact with the outside world. They are
-            broken out into several categories.
-
-        ***************************************************************************/
-
-
         /// \brief Get environment variable value
         ///
         /// \param [in] name Name of the environment variable as a
@@ -127,27 +58,12 @@ namespace mame
 
 
         /***************************************************************************
-            DIRECTORY INTERFACES
-        ***************************************************************************/
-
-        /*-----------------------------------------------------------------------------
-            osd_is_absolute_path: returns whether the specified path is absolute
-
-            Parameters:
-
-                path - the path in question
-
-            Return value:
-
-                non-zero if the path is absolute, zero otherwise
-        -----------------------------------------------------------------------------*/
-        //bool osd_is_absolute_path(const char *path);
-
-
-
-        /***************************************************************************
             TIMING INTERFACES
         ***************************************************************************/
+
+        /* a osd_ticks_t is a 64-bit unsigned integer that is used as a core type in timing interfaces */
+        //typedef uint64_t osd_ticks_t;
+
 
         /*-----------------------------------------------------------------------------
             osd_ticks: return the current running tick counter
@@ -210,10 +126,24 @@ namespace mame
         public abstract void osd_sleep(osd_ticks_t duration);
 
 
-
         /***************************************************************************
             WORK ITEM INTERFACES
         ***************************************************************************/
+
+        /* this is the maximum number of supported threads for a single work queue */
+        /* threadid values are expected to range from 0..WORK_MAX_THREADS-1 */
+        public const int WORK_MAX_THREADS            = 16;
+
+        /* these flags can be set when creating a queue to give hints to the code about
+           how to configure the queue */
+        public const uint32_t WORK_QUEUE_FLAG_IO        = 0x0001;
+        public const uint32_t WORK_QUEUE_FLAG_MULTI     = 0x0002;
+        public const uint32_t WORK_QUEUE_FLAG_HIGH_FREQ = 0x0004;
+
+        /* these flags can be set when queueing a work item to indicate how to handle
+           its deconstruction */
+        public const uint32_t WORK_ITEM_FLAG_AUTO_RELEASE = 0x0001;
+
 
         /*-----------------------------------------------------------------------------
             osd_work_queue_alloc: create a new work queue
@@ -397,7 +327,6 @@ namespace mame
         //void osd_work_item_release(osd_work_item *item);
 
 
-
         /***************************************************************************
             MISCELLANEOUS INTERFACES
         ***************************************************************************/
@@ -463,6 +392,127 @@ namespace mame
         public abstract void osd_subst_env(out string dst, string src);
 
 
+        //class osd_gpu
+
+
+        // returns command line arguments as an std::vector<std::string> in UTF-8
+        //std::vector<std::string> osd_get_command_line(int argc, char *argv[]);
+
+        // specifies "aggressive focus" - should MAME capture input for any windows co-habiting a MAME window?
+        //void osd_set_aggressive_input_focus(bool aggressive_focus);
+
+
+        /***************************************************************************
+            DIRECTORY INTERFACES
+        ***************************************************************************/
+
+        /*-----------------------------------------------------------------------------
+            osd_is_absolute_path: returns whether the specified path is absolute
+
+            Parameters:
+
+                path - the path in question
+
+            Return value:
+
+                non-zero if the path is absolute, zero otherwise
+        -----------------------------------------------------------------------------*/
+        //bool osd_is_absolute_path(const char *path);
+    }
+
+
+    /* osd_work_queue is an opaque type which represents a queue of work items */
+    // defined in osdsync.cs
+    //struct osd_work_queue;
+
+    /* osd_work_item is an opaque type which represents a single work item */
+    // defined in osdsync.cs
+    //struct osd_work_item;
+
+    /* osd_work_callback is a callback function that does work */
+    public delegate Object osd_work_callback(Object param, int threadid);  //typedef void *(*osd_work_callback)(void *param, int threadid);
+
+
+    // output channels
+    public enum osd_output_channel
+    {
+        OSD_OUTPUT_CHANNEL_ERROR,
+        OSD_OUTPUT_CHANNEL_WARNING,
+        OSD_OUTPUT_CHANNEL_INFO,
+        OSD_OUTPUT_CHANNEL_DEBUG,
+        OSD_OUTPUT_CHANNEL_VERBOSE,
+        OSD_OUTPUT_CHANNEL_LOG,
+        OSD_OUTPUT_CHANNEL_COUNT
+    }
+
+
+    public abstract class osd_output
+    {
+        const int MAXSTACK = 10;
+
+
+        static osd_output [] m_stack = new osd_output[MAXSTACK];
+        static int m_ptr = -1;
+
+
+        osd_output m_chain;
+
+
+        public osd_output() { }
+
+
+        public static int ptr() { return m_ptr; }
+        public static osd_output stack(int index) { return m_stack[index]; }
+
+
+        public abstract void output_callback(osd_output_channel channel, string format, params object [] args);  //virtual void output_callback(osd_output_channel channel, util::format_argument_pack<std::ostream> const &args) = 0;
+
+
+        public static void push(osd_output callback)
+        {
+            if (m_ptr < MAXSTACK)
+            {
+                callback.m_chain = (m_ptr >= 0 ? m_stack[m_ptr] : null);
+                m_ptr++;
+                m_stack[m_ptr] = callback;
+            }
+        }
+
+        public static void pop(osd_output callback)
+        {
+            int f = -1;
+            for (int i=0; i<=m_ptr; i++)
+            {
+                if (m_stack[i] == callback)
+                {
+                    f = i;
+                    break;
+                }
+            }
+
+            if (f >= 0)
+            {
+                if (f < m_ptr)
+                {
+                    m_stack[f+1].m_chain = m_stack[f].m_chain;
+                }
+                m_ptr--;
+                for (int i = f; i <= m_ptr; i++)
+                    m_stack[i] = m_stack[i+1];
+            }
+        }
+
+
+        protected void chain_output(osd_output_channel channel, string format, params object [] args)  //void chain_output(osd_output_channel channel, util::format_argument_pack<std::ostream> const &args) const
+        {
+            if (m_chain != null)
+                m_chain.output_callback(channel, format, args);
+        }
+    }
+
+
+    public static class osdcore_global
+    {
         /*-------------------------------------------------
             osd_vprintf_error - output an error to the
             appropriate callback
@@ -472,7 +522,7 @@ namespace mame
 #if false //defined(SDLMAME_ANDROID)
             SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR, "%s", util::string_format(args).c_str());
 #else
-            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, string.Format(format, args));  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_ERROR, args);
+            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_ERROR, format, args);  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_ERROR, args);
 #endif
         }
 
@@ -485,7 +535,7 @@ namespace mame
 #if false //defined(SDLMAME_ANDROID)
             SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR, "%s", util::string_format(args).c_str());
 #else
-            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_WARNING, string.Format(format, args));  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_WARNING, args);
+            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_WARNING, format, args);  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_WARNING, args);
 #endif
         }
 
@@ -498,7 +548,7 @@ namespace mame
 #if false //defined(SDLMAME_ANDROID)
             SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, "%s", util::string_format(args).c_str());
 #else
-            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_INFO, string.Format(format, args));  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_INFO, args);
+            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_INFO, format, args);  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_INFO, args);
 #endif
         }
 
@@ -511,7 +561,7 @@ namespace mame
 #if false //defined(SDLMAME_ANDROID)
             SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE, "%s", util::string_format(args).c_str());
 #else
-            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_VERBOSE, string.Format(format, args));  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_VERBOSE, args);
+            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_VERBOSE, format, args);  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_VERBOSE, args);
 #endif
         }
 
@@ -524,7 +574,7 @@ namespace mame
 #if false //defined(SDLMAME_ANDROID)
             SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_DEBUG, "%s", util::string_format(args).c_str());
 #else
-            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_DEBUG, string.Format(format, args));  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_DEBUG, args);
+            if (osd_output.ptr() >= 0) osd_output.stack(osd_output.ptr()).output_callback(osd_output_channel.OSD_OUTPUT_CHANNEL_DEBUG, format, args);  //if (m_ptr >= 0) m_stack[m_ptr]->output_callback(OSD_OUTPUT_CHANNEL_DEBUG, args);
 #endif
         }
 
@@ -595,76 +645,8 @@ namespace mame
         }
 
 
-        // returns command line arguments as an std::vector<std::string> in UTF-8
-        //std::vector<std::string> osd_get_command_line(int argc, char *argv[]);
+        public static osdcore_interface m_osdcore;
 
-        // specifies "aggressive focus" - should MAME capture input for any windows co-habiting a MAME window?
-        //void osd_set_aggressive_input_focus(bool aggressive_focus);
-    }
-
-
-    /* ----- output management ----- */
-    public abstract class osd_output
-    {
-        const int MAXSTACK = 10;
-
-
-        static osd_output [] m_stack = new osd_output[MAXSTACK];
-        static int m_ptr = -1;
-
-
-        osd_output m_chain;
-
-
-        public osd_output() { }
-
-
-        public static int ptr() { return m_ptr; }
-        public static osd_output stack(int index) { return m_stack[index]; }
-
-
-        public abstract void output_callback(osd_output_channel channel, string format, params object [] args);  //virtual void output_callback(osd_output_channel channel, util::format_argument_pack<std::ostream> const &args) = 0;
-
-
-        public static void push(osd_output callback)
-        {
-            if (m_ptr < MAXSTACK)
-            {
-                callback.m_chain = (m_ptr >= 0 ? m_stack[m_ptr] : null);
-                m_ptr++;
-                m_stack[m_ptr] = callback;
-            }
-        }
-
-        public static void pop(osd_output callback)
-        {
-            int f = -1;
-            for (int i=0; i<=m_ptr; i++)
-            {
-                if (m_stack[i] == callback)
-                {
-                    f = i;
-                    break;
-                }
-            }
-
-            if (f >= 0)
-            {
-                if (f < m_ptr)
-                {
-                    m_stack[f+1].m_chain = m_stack[f].m_chain;
-                }
-                m_ptr--;
-                for (int i = f; i <= m_ptr; i++)
-                    m_stack[i] = m_stack[i+1];
-            }
-        }
-
-
-        protected void chain_output(osd_output_channel channel, string format, params object [] args)  //void chain_output(osd_output_channel channel, util::format_argument_pack<std::ostream> const &args) const
-        {
-            if (m_chain != null)
-                m_chain.output_callback(channel, format, args);
-        }
+        public static void set_osdcore(osdcore_interface osdcore) { m_osdcore = osdcore; }
     }
 }

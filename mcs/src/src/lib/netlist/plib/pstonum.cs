@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 
@@ -42,6 +41,7 @@ namespace mame.plib
         }
         public static int pstonum_ne_int(bool CLOCALE, string arg, out bool err) { int ret; err = !int.TryParse(arg, out ret); return ret; }
         public static UInt32 pstonum_ne_unsigned(bool CLOCALE, string arg, out bool err) { UInt32 ret; err = !UInt32.TryParse(arg, out ret); return ret; }
+        public static Int64 pstonum_ne_int64(bool CLOCALE, string arg, out bool err) { Int64 ret; err = !Int64.TryParse(arg, out ret); return ret; }
         public static float pstonum_ne_float(bool CLOCALE, string arg, out bool err) { float ret; err = !float.TryParse(arg, out ret); return ret; }
         public static double pstonum_ne_nl_fptype(bool CLOCALE, string arg, out bool err) { nl_fptype ret; err = !nl_fptype.TryParse(arg, out ret); return ret; }
     }

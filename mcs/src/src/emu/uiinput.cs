@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using char32_t = System.UInt32;
 using ioport_value = System.UInt32;  //typedef u32 ioport_value;
@@ -10,6 +9,10 @@ using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using s32 = System.Int32;
 using size_t = System.UInt64;
 using u8 = System.Byte;
+
+using static mame.cpp_global;
+using static mame.osdcore_global;
+using static mame.profiler_global;
 
 
 namespace mame
@@ -38,7 +41,7 @@ namespace mame
         public int mouse_y;
         //input_item_id       key;
         public char32_t ch;
-        public Int16 zdelta;
+        public short zdelta;
         public int num_lines;
 
         public ui_event(type type) { event_type = type; }
@@ -243,7 +246,7 @@ namespace mame
             find_mouse - retrieves the current
             location of the mouse
         -------------------------------------------------*/
-        public render_target find_mouse(out int x, out int y, out bool button)
+        public render_target find_mouse(out s32 x, out s32 y, out bool button)
         {
             //if (x != nullptr)
                 x = m_current_mouse_x;
@@ -306,24 +309,24 @@ namespace mame
         {
             bool pressed;
 
-            profiler_global.g_profiler.start(profile_type.PROFILER_INPUT);
+            g_profiler.start(profile_type.PROFILER_INPUT);
 
             /* get the status of this key (assumed to be only in the defaults) */
-            g.assert(code >= (int)ioport_type.IPT_UI_CONFIGURE && code <= (int)ioport_type.IPT_OSD_16);
+            assert(code >= (int)ioport_type.IPT_UI_CONFIGURE && code <= (int)ioport_type.IPT_OSD_16);
             pressed = m_seqpressed[code] == SEQ_PRESSED_TRUE;
 
             /* if down, handle it specially */
             if (pressed)
             {
-                osd_ticks_t tps = osdcore_global.m_osdcore.osd_ticks_per_second();
+                osd_ticks_t tps = m_osdcore.osd_ticks_per_second();
 
                 /* if this is the first press, set a 3x delay and leave pressed = 1 */
                 if (m_next_repeat[code] == 0)
                 {
-                    m_next_repeat[code] = osdcore_global.m_osdcore.osd_ticks() + 3 * (osd_ticks_t)speed * tps / 60;
+                    m_next_repeat[code] = m_osdcore.osd_ticks() + 3 * (osd_ticks_t)speed * tps / 60;
                 }
                 /* if this is an autorepeat case, set a 1x delay and leave pressed = 1 */
-                else if (speed > 0 && (osdcore_global.m_osdcore.osd_ticks() + tps - m_next_repeat[code]) >= tps)
+                else if (speed > 0 && (m_osdcore.osd_ticks() + tps - m_next_repeat[code]) >= tps)
                 {
                     // In the autorepeatcase, we need to double check the key is still pressed
                     // as there can be a delay between the key polling and our processing of the event
@@ -343,7 +346,7 @@ namespace mame
             else
                 m_next_repeat[code] = 0;
 
-            profiler_global.g_profiler.stop();
+            g_profiler.stop();
 
             return pressed;
         }
@@ -363,7 +366,7 @@ namespace mame
             push_mouse_move_event - pushes a mouse
             move event to the specified render_target
         -------------------------------------------------*/
-        public void push_mouse_move_event(render_target target, int x, int y)
+        public void push_mouse_move_event(render_target target, s32 x, s32 y)
         {
             ui_event evt = new ui_event(ui_event.type.NONE);
             evt.event_type = ui_event.type.MOUSE_MOVE;
@@ -389,7 +392,7 @@ namespace mame
             push_mouse_down_event - pushes a mouse
             down event to the specified render_target
         -------------------------------------------------*/
-        public void push_mouse_down_event(render_target target, int x, int y)
+        public void push_mouse_down_event(render_target target, s32 x, s32 y)
         {
             ui_event evt = new ui_event(ui_event.type.NONE);
             evt.event_type = ui_event.type.MOUSE_DOWN;
@@ -403,7 +406,7 @@ namespace mame
             push_mouse_down_event - pushes a mouse
             down event to the specified render_target
         -------------------------------------------------*/
-        public void push_mouse_up_event(render_target target, int x, int y)
+        public void push_mouse_up_event(render_target target, s32 x, s32 y)
         {
             ui_event evt = new ui_event(ui_event.type.NONE);
             evt.event_type = ui_event.type.MOUSE_UP;
@@ -424,7 +427,7 @@ namespace mame
             a mouse double-click event to the specified
             render_target
         -------------------------------------------------*/
-        public void push_mouse_double_click_event(render_target target, int x, int y)
+        public void push_mouse_double_click_event(render_target target, s32 x, s32 y)
         {
             ui_event evt = new ui_event(ui_event.type.NONE);
             evt.event_type = ui_event.type.MOUSE_DOUBLE_CLICK;
@@ -447,7 +450,21 @@ namespace mame
             push_event(evt);
         }
 
-        //void push_mouse_wheel_event(render_target *target, INT32 x, INT32 y, short delta, int ucNumLines);
+        /*-------------------------------------------------
+            push_mouse_wheel_event - pushes a mouse
+            wheel event to the specified render_target
+        -------------------------------------------------*/
+        public void push_mouse_wheel_event(render_target target, s32 x, s32 y, short delta, int ucNumLines)
+        {
+            ui_event event_ = new ui_event(ui_event.type.NONE);
+            event_.event_type = ui_event.type.MOUSE_WHEEL;
+            event_.target = target;
+            event_.mouse_x = x;
+            event_.mouse_y = y;
+            event_.zdelta = delta;
+            event_.num_lines = ucNumLines;
+            push_event(event_);
+        }
 
         //void mark_all_as_pressed();
     }

@@ -1,8 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
+#define NL_USE_BACKWARD_EULER
+
 using System;
-using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
@@ -100,8 +101,7 @@ namespace mame.netlist.analog
     }
 
 
-//#if (NL_USE_BACKWARD_EULER)
-#if true
+#if (NL_USE_BACKWARD_EULER)
     // Constant model for constant capacitor model
     // Backward Euler
     // "Circuit simulation", page 274

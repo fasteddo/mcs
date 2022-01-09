@@ -2,8 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
+using state_var_u8 = mame.netlist.state_var<System.Byte>;  //using state_var_u8 = state_var<std::uint8_t>;
 using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s32 = state_var<std::int32_t>;
 
 

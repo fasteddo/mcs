@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 
 namespace mame
@@ -19,7 +18,7 @@ namespace mame
         //std::unordered_map<const char *, std::function<std::tuple<std::string, int, std::string>(std::string)>> m_handlers;
 
 
-        public http_manager(bool active, Int16 port, string root)
+        public http_manager(bool active, short port, string root)
         {
             //throw new emu_unimplemented();
         }

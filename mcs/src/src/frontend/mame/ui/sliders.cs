@@ -2,10 +2,14 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int32_t = System.Int32;
 using uint32_t = System.UInt32;
+
+using static mame.input_global;
+using static mame.render_global;
+using static mame.rendertypes_global;
+using static mame.ui_global;
 
 
 namespace mame.ui
@@ -111,12 +115,11 @@ namespace mame.ui
                 if (menu_event.itemref != null && menu_event.type == menu_item_type.SLIDER)
                 {
                     slider_state slider = (slider_state)menu_event.itemref;
-                    string unused;
-                    int curvalue = slider.update(out unused, slider_state.SLIDER_NOCHANGE);
+                    int curvalue = slider.update(out _, slider_state.SLIDER_NOCHANGE);
                     int increment = 0;
-                    bool alt_pressed = machine().input().code_pressed(g.KEYCODE_LALT) || machine().input().code_pressed(g.KEYCODE_RALT);
-                    bool ctrl_pressed = machine().input().code_pressed(g.KEYCODE_LCONTROL) || machine().input().code_pressed(g.KEYCODE_RCONTROL);
-                    bool shift_pressed = machine().input().code_pressed(g.KEYCODE_LSHIFT) || machine().input().code_pressed(g.KEYCODE_RSHIFT);
+                    bool alt_pressed = machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(KEYCODE_RALT);
+                    bool ctrl_pressed = machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(KEYCODE_RCONTROL);
+                    bool shift_pressed = machine().input().code_pressed(KEYCODE_LSHIFT) || machine().input().code_pressed(KEYCODE_RSHIFT);
 
                     switch (menu_event.iptkey)
                     {
@@ -174,7 +177,7 @@ namespace mame.ui
                             newvalue = slider.maxval;
 
                         /* update the slider and recompute the menu */
-                        slider.update(out unused, newvalue);
+                        slider.update(out _, newvalue);
                         reset(reset_options.REMEMBER_REF);
                     }
                 }
@@ -246,7 +249,7 @@ namespace mame.ui
                 default_percentage = (float)(curslider.defval - curslider.minval) / (float)(curslider.maxval - curslider.minval);
 
                 // assemble the text
-                tempstring = string.Format("{0} ", curslider.description);  //.ins(0, " ").ins(0, curslider.description);
+                tempstring = string.Format("{0} ", curslider.description);  //tempstring.insert(0, " ").insert(0, curslider->description);
 
                 // move us to the bottom of the screen, and expand to full width
                 float lr_border = ui().box_lr_border() * machine().render().ui_aspect(container());
@@ -260,9 +263,12 @@ namespace mame.ui
                 y1 += ui().box_tb_border();
 
                 // determine the text height
-                float unused;
-                ui().draw_text_full(container(), tempstring, 0, 0, x2 - x1 - 2.0f * lr_border,
-                            text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE, mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out unused, out text_height);
+                ui().draw_text_full(
+                        container(),
+                        tempstring,
+                        0, 0, x2 - x1 - 2.0f * lr_border,
+                        text_layout.text_justify.CENTER, text_layout.word_wrapping.TRUNCATE,
+                        mame_ui_manager.draw_mode.NONE, rgb_t.white(), rgb_t.black(), out _, out text_height);
 
                 // draw the thermometer
                 bar_left = x1 + lr_border;
@@ -277,19 +283,23 @@ namespace mame.ui
                 current_x = bar_left + bar_width * percentage;
 
                 // fill in the percentage
-                container().add_rect(bar_left, bar_top, current_x, bar_bottom, ui().colors().slider_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                container().add_rect(bar_left, bar_top, current_x, bar_bottom, ui().colors().slider_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
                 // draw the top and bottom lines
-                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_top, bar_left + bar_width, bar_top, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_line(bar_left, bar_bottom, bar_left + bar_width, bar_bottom, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
                 // draw default marker
-                container().add_line(default_x, bar_area_top, default_x, bar_top, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
-                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, g.UI_LINE_WIDTH, ui().colors().border_color(), g.PRIMFLAG_BLENDMODE(g.BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_area_top, default_x, bar_top, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+                container().add_line(default_x, bar_bottom, default_x, bar_area_top + bar_area_height, UI_LINE_WIDTH, ui().colors().border_color(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
                 // draw the actual text
-                ui().draw_text_full(container(), tempstring, x1 + lr_border, y1 + line_height, x2 - x1 - 2.0f * lr_border,
-                            text_layout.text_justify.CENTER, text_layout.word_wrapping.WORD, mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(), out unused, out text_height);
+                ui().draw_text_full(
+                        container(),
+                        tempstring,
+                        x1 + lr_border, y1 + line_height, x2 - x1 - 2.0f * lr_border,
+                        text_layout.text_justify.CENTER, text_layout.word_wrapping.WORD,
+                        mame_ui_manager.draw_mode.NORMAL, ui().colors().text_color(), ui().colors().text_bg_color(), out _, out text_height);
             }
         }
 
@@ -299,9 +309,9 @@ namespace mame.ui
          menu on the stack and hands off to the
          standard menu handler
          -------------------------------------------------*/
-        public static new UInt32 ui_handler(render_container container, mame_ui_manager mui)
+        public static new uint32_t ui_handler(render_container container, mame_ui_manager mui)
         {
-            UInt32 result;
+            uint32_t result;
 
             throw new emu_unimplemented();
         }

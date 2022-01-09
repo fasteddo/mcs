@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int8_t = System.SByte;
 using uint8_t = System.Byte;

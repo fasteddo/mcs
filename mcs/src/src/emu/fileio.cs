@@ -2,18 +2,25 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 using emu_file_searchpath_vector = mame.std.vector<mame.std.pair<mame.path_iterator, string>>;  //using searchpath_vector = std::vector<std::pair<path_iterator, std::string> >;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using s64 = System.Int64;
 using size_t = System.UInt64;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 using uint32_t = System.UInt32;
+using uint64_t = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.logmacro_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
 
 
 namespace mame
@@ -49,6 +56,19 @@ namespace mame
             m_separator = that.m_separator;
             m_is_first = that.m_is_first;
         }
+
+
+        //template <typename T>
+        //path_iterator(T &&searchpath, std::enable_if_t<std::is_constructible<std::string, T>::value, int> = 0)
+        //    : path_iterator(std::string(std::forward<T>(searchpath)))
+        //{ }
+
+
+        // TODO: this doesn't work with C arrays (only vector, std::array, etc.)
+        //template <typename T>
+        public path_iterator(IReadOnlyList<string> paths)  //path_iterator(T &&paths, std::enable_if_t<std::is_constructible<std::string, typename std::remove_reference_t<T>::value_type>::value, int> = 0)
+            : this(concatenate_paths(paths))  //: this(concatenate_paths(std::forward<T>(paths)))
+        { m_separator = '|'; }  //{ m_separator = '\0'; }
 
 
         // getters
@@ -95,7 +115,23 @@ namespace mame
 
         // helpers
         //template <typename T>
-        //static std::string concatenate_paths(T &&paths)
+        static string concatenate_paths(IReadOnlyList<string> paths)  //static std::string concatenate_paths(T &&paths)
+        {
+            string result = "";
+            var itIdx = 0;  //auto it(std::begin(paths));
+            if (paths.Count != itIdx)  //if (std::end(paths) != it)
+            {
+                result = result.append_(paths[itIdx]);  //result.append(*it);
+                ++itIdx;  //++it;
+            }
+            while (paths.Count != itIdx)  //while (std::end(paths) != it)
+            {
+                result += '|';  //result.append(1, '\0');
+                result = result.append_(paths[itIdx]);  //result.append(*it);
+                ++itIdx;  //++it;
+            }
+            return result;
+        }
     }
 
 
@@ -137,7 +173,7 @@ namespace mame
                         return null;
 
                     // open the path
-                    m_curdir = osdfile_global.m_osddirectory.open(m_pathbuffer);  //m_curdir = osd::directory::open(m_pathbuffer);
+                    m_curdir = m_osddirectory.open(m_pathbuffer);  //m_curdir = osd::directory::open(m_pathbuffer);
                 }
 
                 // get the next entry from the current directory
@@ -156,8 +192,8 @@ namespace mame
     public class emu_file : IDisposable
     {
         const int VERBOSE = 0;  //#define VERBOSE 1
-        static void LOG_OUTPUT_FUNC_fileio(device_t device, string format, params object [] args) { g.osd_printf_verbose(format, args); }  //#define LOG_OUTPUT_FUNC osd_printf_verbose
-        public static void LOG(string format, params object [] args) { g.LOG(VERBOSE, null, LOG_OUTPUT_FUNC_fileio, format, args); }
+        static void LOG_OUTPUT_FUNC_fileio(device_t device, string format, params object [] args) { osd_printf_verbose(format, args); }  //#define LOG_OUTPUT_FUNC osd_printf_verbose
+        public static void LOG(string format, params object [] args) { logmacro_global.LOG(VERBOSE, null, LOG_OUTPUT_FUNC_fileio, format, args); }
 
 
         enum empty_t { EMPTY }
@@ -201,7 +237,7 @@ namespace mame
         { }
 
         //template <typename T, typename U, typename V, typename... W>
-        public emu_file(string searchpath1, IEnumerable<string> searchpath2, u32 openflags)  //emu_file(T &&searchpath, U &&x, V &&y, W &&... z)
+        public emu_file(string searchpath1, IReadOnlyList<string> searchpath2, u32 openflags)  //emu_file(T &&searchpath, U &&x, V &&y, W &&... z)
             : this(0U, empty_t.EMPTY)
         {
             //m_iterator.reserve(sizeof...(W) + 1);
@@ -226,7 +262,7 @@ namespace mame
 
 
             // sanity check the open flags
-            if ((m_openflags & OPEN_FLAG_HAS_CRC) != 0 && (m_openflags & g.OPEN_FLAG_WRITE) != 0)
+            if ((m_openflags & OPEN_FLAG_HAS_CRC) != 0 && (m_openflags & OPEN_FLAG_WRITE) != 0)
                 throw new emu_fatalerror("Attempted to open a file for write with OPEN_FLAG_HAS_CRC");
         }
 
@@ -283,7 +319,7 @@ namespace mame
             // determine which hashes we need
             string needed = "";
             foreach (char scan in types)
-                if (already_have.find_first_of(scan) == g.npos)
+                if (already_have.find_first_of(scan) == npos)
                     needed += scan;
 
             // if we need nothing, skip it
@@ -310,7 +346,9 @@ namespace mame
                 return m_hashes;
 
             // compute the hash
-            m_hashes.compute(new Pointer<u8>(filedata), (UInt32)m_file.size(), needed);
+            uint64_t length;
+            if (m_file.length(out length) == 0)
+                m_hashes.compute(new PointerU8(filedata), (uint32_t)length, needed);
 
             return m_hashes;
         }
@@ -423,7 +461,7 @@ namespace mame
                 {
                     m_fullpath = m_fullpath.append_(path.second);
                     if (!m_fullpath.empty() && !util.is_directory_separator(m_fullpath.back()))
-                        m_fullpath = m_fullpath.append_(g.PATH_SEPARATOR);
+                        m_fullpath = m_fullpath.append_(PATH_SEPARATOR);
                 }
                 m_fullpath = m_fullpath.append_(m_filename);
 
@@ -432,7 +470,7 @@ namespace mame
                 filerr = util.core_file.open(m_fullpath, m_openflags, out m_file);
 
                 // if we're opening for read-only we have other options
-                if (filerr && ((m_openflags & (g.OPEN_FLAG_READ | g.OPEN_FLAG_WRITE)) == g.OPEN_FLAG_READ))
+                if (filerr && ((m_openflags & (OPEN_FLAG_READ | OPEN_FLAG_WRITE)) == OPEN_FLAG_READ))
                 {
                     LOG(null, "emu_file: attempting to open '{0}' from archives\n", m_fullpath);
                     filerr = attempt_zipped();
@@ -468,12 +506,15 @@ namespace mame
             if (m_zipfile != null)
                 m_zipfile.Dispose();
             m_zipfile = null;
+
+            if (m_file != null)
+                m_file.Dispose();
             m_file = null;
 
             m_zipdata.clear();
 
             if (m_remove_on_close)
-                osdfile_global.m_osdfile.remove(m_fullpath);
+                m_osdfile.remove(m_fullpath);
 
             m_remove_on_close = false;
 
@@ -488,17 +529,18 @@ namespace mame
         //-------------------------------------------------
         //  seek - seek within a file
         //-------------------------------------------------
-        public int seek(s64 offset, int whence)
+        public std.error_condition seek(s64 offset, int whence)
         {
             // load the ZIP file now if we haven't yet
-            if (compressed_file_ready())
-                return 1;
+            std.error_condition err = compressed_file_ready();
+            if (err)
+                return err;
 
             // seek if we can
             if (m_file != null)
                 return m_file.seek(offset, whence);
 
-            return 1;
+            return std.errc.bad_file_descriptor; // TODO: revisit this error condition
         }
 
 
@@ -507,13 +549,15 @@ namespace mame
         //-------------------------------------------------
         public u64 tell()
         {
+            // FIXME: need better interface to report errors
             // load the ZIP file now if we haven't yet
             if (compressed_file_ready())
                 return 0;
 
             // tell if we can
-            if (m_file != null)
-                return m_file.tell();
+            u64 result;
+            if (m_file != null && m_file.tell(out result) == 0)
+                return result;
 
             return 0;
         }
@@ -526,13 +570,15 @@ namespace mame
         //-------------------------------------------------
         public u64 size()
         {
+            // FIXME: need better interface to report errors
             // use the ZIP length if present
             if (m_zipfile != null)
                 return m_ziplength;
 
             // return length if we can
-            if (m_file != null)
-                return m_file.size();
+            u64 result;
+            if (m_file != null && m_file.length(out result) == 0)
+                return result;
 
             return 0;
         }
@@ -545,15 +591,17 @@ namespace mame
         //-------------------------------------------------
         public u32 read(Pointer<u8> buffer, u32 length)  //u32 read(void *buffer, u32 length)
         {
+            // FIXME: need better interface to report errors
             // load the ZIP file now if we haven't yet
             if (compressed_file_ready())
                 return 0;
 
             // read the data if we can
+            size_t actual = 0;
             if (m_file != null)
-                return m_file.read(buffer, length);
+                m_file.read(buffer, length, out actual);
 
-            return 0;
+            return (u32)actual;
         }
 
 
@@ -587,11 +635,13 @@ namespace mame
         //-------------------------------------------------
         public u32 write(Pointer<u8> buffer, u32 length)  //u32 write(const void *buffer, u32 length)
         {
+            // FIXME: need better interface to report errors
             // write the data if we can
+            size_t actual = 0;
             if (m_file != null)
-                return m_file.write(buffer, length);
+                m_file.write(buffer, length, out actual);
 
-            return 0;
+            return (u32)actual;
         }
 
         //-------------------------------------------------
@@ -646,21 +696,18 @@ namespace mame
         //    m_mediapaths.emplace_back(std::forward<T>(searchpath), "");
         //    set_searchpaths(std::forward<U>(x), std::forward<V>(y), std::forward<W>(z)...);
         //}
-        void set_searchpaths(string searchpath1, IEnumerable<string> searchpath2, u32 openflags)
+        void set_searchpaths(IReadOnlyList<string> searchpath, u32 openflags)
         {
-            List<string> searchpath = new List<string>();
-            searchpath.Add(searchpath1);
-            searchpath.AddRange(searchpath2);
-            set_searchpaths(searchpath, openflags);
-        }
-        void set_searchpaths(IEnumerable<string> searchpath, u32 openflags)
-        {
-            foreach (var path in searchpath)
-            {
-                m_iterator.emplace_back(new std.pair<path_iterator, string>(new path_iterator(path), ""));
-                m_mediapaths.emplace_back(new std.pair<path_iterator, string>(new path_iterator(path), ""));
-            }
+            m_iterator.emplace_back(new std.pair<path_iterator, string>(new path_iterator(searchpath), ""));  //m_iterator.emplace_back(searchpath, "");
+            m_mediapaths.emplace_back(new std.pair<path_iterator, string>(new path_iterator(searchpath), ""));  //m_mediapaths.emplace_back(std::forward<T>(searchpath), "");
             m_openflags = openflags;
+        }
+
+        void set_searchpaths(string searchpath1, IReadOnlyList<string> searchpath2, u32 openflags)
+        {
+            m_iterator.emplace_back(new std.pair<path_iterator, string>(new path_iterator(searchpath1), ""));  //m_iterator.emplace_back(searchpath, "");
+            m_mediapaths.emplace_back(new std.pair<path_iterator, string>(new path_iterator(searchpath1), ""));  //m_mediapaths.emplace_back(std::forward<T>(searchpath), "");
+            set_searchpaths(searchpath2, openflags);  //set_searchpaths(std::forward<U>(x), std::forward<V>(y), std::forward<W>(z)...);
         }
 
 
@@ -693,7 +740,7 @@ namespace mame
                 {
                     mediapath = mediapath.append_(m_mediapaths[i].second);
                     if (!mediapath.empty() && !util.is_directory_separator(mediapath.back()))
-                        mediapath = mediapath.append_(g.PATH_SEPARATOR);
+                        mediapath = mediapath.append_(PATH_SEPARATOR);
                 }
 
                 if (path.compare(0, mediapath.size(), mediapath) == 0)
@@ -778,8 +825,8 @@ namespace mame
                     //if (dirsepiter == m_fullpath.rend())
                     //    break;
                     //std::string::size_type const dirsep(std::distance(m_fullpath.begin(), dirsepiter.base()) - 1);
-                    var dirsep = m_fullpath.find_last_of(g.PATH_SEPARATOR[0]);
-                    if (dirsep == g.npos)
+                    var dirsep = m_fullpath.find_last_of(PATH_SEPARATOR[0]);
+                    if (dirsep == npos)
                         break;
 
                     // insert the part from the right of the separator into the head of the filename
@@ -832,7 +879,7 @@ namespace mame
                         m_hashes.reset();
                         m_hashes.add_crc(m_zipfile.current_crc());
                         m_fullpath = savepath;
-                        return (m_openflags & g.OPEN_FLAG_NO_PRELOAD) != 0 ? new std.error_condition() : load_zipped_file();
+                        return (m_openflags & OPEN_FLAG_NO_PRELOAD) != 0 ? new std.error_condition() : load_zipped_file();
                     }
 
                     // close up the archive file and try the next level
@@ -850,15 +897,15 @@ namespace mame
         //-------------------------------------------------
         std.error_condition load_zipped_file()
         {
-            g.assert(m_file == null);
-            g.assert(m_zipdata.empty());
-            g.assert(m_zipfile != null);
+            assert(m_file == null);
+            assert(m_zipdata.empty());
+            assert(m_zipfile != null);
 
             // allocate some memory
             m_zipdata.resize(m_ziplength);
 
             // read the data into our buffer and return
-            var ziperr = m_zipfile.decompress(m_zipdata, (UInt32)m_zipdata.size());
+            var ziperr = m_zipfile.decompress(m_zipdata, (uint32_t)m_zipdata.size());
             if (ziperr)
             {
                 m_zipdata.clear();

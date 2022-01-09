@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using matrix_solver_t_fptype = System.Double;  //using fptype = nl_fptype;
 using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
@@ -16,6 +15,9 @@ using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_op
 using param_num_t_operators_size_t = mame.netlist.param_num_t_operators_uint64;
 using size_t = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.netlist.nl_config_global;
+using static mame.netlist.nl_errstr_global;
 
 
 namespace mame.netlist
@@ -627,7 +629,7 @@ namespace mame.netlist
                                     if (net_proxy_output == null)
                                     {
                                         string nname = this.name() + "." + new plib.pfmt("m{0}").op(m_inps.size());
-                                        nl_config_global.nl_assert(p.net().is_analog());
+                                        nl_assert(p.net().is_analog());
                                         var net_proxy_output_u = new proxied_analog_output_t(this, nname, (analog_net_t)p.net());  //auto net_proxy_output_u = state().make_pool_object<proxied_analog_output_t>(*this, nname, &dynamic_cast<analog_net_t &>(p->net()));
                                         net_proxy_output = net_proxy_output_u;
                                         m_inps.emplace_back(net_proxy_output_u);
@@ -643,8 +645,8 @@ namespace mame.netlist
                                 break;
 
                             case detail.terminal_type.OUTPUT:
-                                log().fatal.op(nl_errstr_global.MF_UNHANDLED_ELEMENT_1_FOUND(p.name()));
-                                throw new nl_exception(nl_errstr_global.MF_UNHANDLED_ELEMENT_1_FOUND(p.name()));
+                                log().fatal.op(MF_UNHANDLED_ELEMENT_1_FOUND(p.name()));
+                                throw new nl_exception(MF_UNHANDLED_ELEMENT_1_FOUND(p.name()));
                         }
                     }
                 }
@@ -711,12 +713,12 @@ namespace mame.netlist
                 }
 
                 if (m_stat_newton_raphson.op % 100 == 0)
-                    log().warning.op(nl_errstr_global.MW_NEWTON_LOOPS_EXCEEDED_INVOCATION_3(100, this.name(), exec().time().as_double() * 1e6));
+                    log().warning.op(MW_NEWTON_LOOPS_EXCEEDED_INVOCATION_3(100, this.name(), exec().time().as_double() * 1e6));
 
                 if (resched)
                 {
                     // reschedule ....
-                    log().warning.op(nl_errstr_global.MW_NEWTON_LOOPS_EXCEEDED_ON_NET_2(this.name(), exec().time().as_double() * 1e6));
+                    log().warning.op(MW_NEWTON_LOOPS_EXCEEDED_ON_NET_2(this.name(), exec().time().as_double() * 1e6));
                     return netlist_time.from_fp(m_params.m_nr_recalc_delay.op());
                 }
                 if (m_params.m_dynamic_ts.op())
@@ -940,8 +942,8 @@ namespace mame.netlist
                     }
                     else
                     {
-                        log().fatal.op(nl_errstr_global.MF_FOUND_TERM_WITH_MISSING_OTHERNET(term.name()));
-                        throw new nl_exception(nl_errstr_global.MF_FOUND_TERM_WITH_MISSING_OTHERNET(term.name()));
+                        log().fatal.op(MF_FOUND_TERM_WITH_MISSING_OTHERNET(term.name()));
+                        throw new nl_exception(MF_FOUND_TERM_WITH_MISSING_OTHERNET(term.name()));
                     }
                 }
             }
@@ -950,12 +952,12 @@ namespace mame.netlist
             // calculate matrix
             void setup_matrix()
             {
-                UInt32 iN = (UInt32)m_terms.size();
+                size_t iN = m_terms.size();
 
-                for (UInt32 k = 0; k < iN; k++)
+                for (size_t k = 0; k < iN; k++)
                 {
                     m_terms[k].set_railstart(m_terms[k].count());
-                    for (UInt32 i = 0; i < m_rails_temp[k].count(); i++)
+                    for (size_t i = 0; i < m_rails_temp[k].count(); i++)
                         this.m_terms[k].add_terminal(m_rails_temp[k].terms()[i], m_rails_temp[k].m_connected_net_idx[i], false);
                 }
 
@@ -967,7 +969,7 @@ namespace mame.netlist
                 this.set_pointers();
 
                 // create a list of non zero elements.
-                for (UInt32 k = 0; k < iN; k++)
+                for (unsigned k = 0; k < iN; k++)
                 {
                     terms_for_net_t t = m_terms[k];
                     // pretty brutal
@@ -975,10 +977,10 @@ namespace mame.netlist
 
                     t.m_nz.clear();
 
-                    for (UInt32 i = 0; i < t.railstart(); i++)
+                    for (size_t i = 0; i < t.railstart(); i++)
                     {
-                        if (!t.m_nz.Contains((UInt32)other[i]))  //if (!plib::container::contains(t->m_nz, static_cast<unsigned>(other[i])))
-                            t.m_nz.push_back((UInt32)other[i]);
+                        if (!t.m_nz.Contains((unsigned)other[i]))  //if (!plib::container::contains(t->m_nz, static_cast<unsigned>(other[i])))
+                            t.m_nz.push_back((unsigned)other[i]);
                     }
 
                     t.m_nz.push_back(k);     // add diagonal
@@ -990,7 +992,7 @@ namespace mame.netlist
                 // create a list of non zero elements right of the diagonal
                 // These list anticipate the population of array elements by
                 // Gaussian elimination.
-                for (UInt32 k = 0; k < iN; k++)
+                for (size_t k = 0; k < iN; k++)
                 {
                     terms_for_net_t t = m_terms[k];
                     // pretty brutal
@@ -1014,10 +1016,10 @@ namespace mame.netlist
                         }
                     }
 
-                    for (UInt32 i = 0; i < t.railstart(); i++)
+                    for (size_t i = 0; i < t.railstart(); i++)
                     {
-                        if (!t.m_nzrd.Contains((UInt32)other[i]) && other[i] >= (int)(k + 1))  //if (!plib::container::contains(t->m_nzrd, static_cast<unsigned>(other[i])) && other[i] >= static_cast<int>(k + 1))
-                            t.m_nzrd.push_back((UInt32)other[i]);
+                        if (!t.m_nzrd.Contains((unsigned)other[i]) && other[i] >= (int)(k + 1))  //if (!plib::container::contains(t->m_nzrd, static_cast<unsigned>(other[i])) && other[i] >= static_cast<int>(k + 1))
+                            t.m_nzrd.push_back((unsigned)other[i]);
                     }
 
                     // and sort
@@ -1029,23 +1031,23 @@ namespace mame.netlist
 
                 //std::vector<std::vector<bool>> touched(iN, std::vector<bool>(iN));
                 std.vector<std.vector<bool>> touched = new std.vector<std.vector<bool>>();
-                for (int i = 0; i < iN; i++)
+                for (size_t i = 0; i < iN; i++)
                     touched.Add(new std.vector<bool>(iN));
 
-                for (UInt32 k = 0; k < iN; k++)
+                for (size_t k = 0; k < iN; k++)
                 {
-                    for (UInt32 j = 0; j < iN; j++)
+                    for (size_t j = 0; j < iN; j++)
                         touched[k][j] = false;
 
-                    for (UInt32 j = 0; j < m_terms[k].m_nz.size(); j++)
+                    for (size_t j = 0; j < m_terms[k].m_nz.size(); j++)
                         touched[k][m_terms[k].m_nz[j]] = true;
                 }
 
                 m_ops = 0;
-                for (UInt32 k = 0; k < iN; k++)
+                for (unsigned k = 0; k < iN; k++)
                 {
                     m_ops++; // 1/A(k,k)
-                    for (UInt32 row = k + 1; row < iN; row++)
+                    for (unsigned row = k + 1; row < iN; row++)
                     {
                         if (touched[row][k])
                         {
@@ -1053,7 +1055,7 @@ namespace mame.netlist
                             if (!m_terms[k].m_nzbd.Contains(row))  //if (!plib::container::contains(m_terms[k]->m_nzbd, row))
                                 m_terms[k].m_nzbd.push_back(row);
 
-                            for (UInt32 col = k + 1; col < iN; col++)
+                            for (size_t col = k + 1; col < iN; col++)
                             {
                                 if (touched[k][col])
                                 {
@@ -1081,7 +1083,7 @@ namespace mame.netlist
                 //
                 // save states
                 //
-                for (UInt32 k = 0; k < iN; k++)
+                for (size_t k = 0; k < iN; k++)
                 {
                     string num = new plib.pfmt("{0}").op(k);
 

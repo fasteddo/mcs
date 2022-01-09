@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int8_t = System.SByte;
 using int16_t = System.Int16;
@@ -11,6 +10,10 @@ using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using ym2151_fm_engine = mame.ymfm.fm_engine_base<mame.ymfm.opm_registers, mame.ymfm.fm_engine_base_operators_opm_registers>;  //using fm_engine = fm_engine_base<opm_registers>;
 using ym2151_output_data = mame.ymfm.fm_engine_base<mame.ymfm.opm_registers, mame.ymfm.fm_engine_base_operators_opm_registers>.output_data;  //using output_data = fm_engine::output_data;
+
+using static mame.cpp_global;
+using static mame.ymfm.ymfm_fm_global;
+using static mame.ymfm.ymfm_global;
 
 
 namespace mame.ymfm
@@ -83,7 +86,7 @@ namespace mame.ymfm
 
             // create the waveforms
             for (uint32_t index = 0; index < WAVEFORM_LENGTH; index++)
-                m_waveform[0, index] = (uint16_t)(ymfm_fm_global.abs_sin_attenuation(index) | (ymfm_global.bitfield(index, 9) << 15));
+                m_waveform[0, index] = (uint16_t)(abs_sin_attenuation(index) | (bitfield(index, 9) << 15));
 
             // create the LFO waveforms; AM in the low 8 bits, PM in the upper 8
             // waveforms are adjusted to match the pictures in the application manual
@@ -95,13 +98,13 @@ namespace mame.ymfm
                 m_lfo_waveform[0, index] = (int16_t)(am | (pm << 8));
 
                 // waveform 1 is a square wave
-                am = ymfm_global.bitfield(index, 7) != 0 ? (uint8_t)0 : (uint8_t)0xff;
+                am = bitfield(index, 7) != 0 ? (uint8_t)0 : (uint8_t)0xff;
                 pm = (int8_t)(am ^ 0x80);
                 m_lfo_waveform[1, index] = (int16_t)(am | (pm << 8));
 
                 // waveform 2 is a triangle wave
-                am = ymfm_global.bitfield(index, 7) != 0 ? (uint8_t)(index << 1) : (uint8_t)((index ^ 0xff) << 1);
-                pm = (int8_t)(ymfm_global.bitfield(index, 6) != 0 ? am : ~am);
+                am = bitfield(index, 7) != 0 ? (uint8_t)(index << 1) : (uint8_t)((index ^ 0xff) << 1);
+                pm = (int8_t)(bitfield(index, 6) != 0 ? am : ~am);
                 m_lfo_waveform[2, index] = (int16_t)(am | (pm << 8));
 
                 // waveform 3 is noise; it is filled in dynamically
@@ -118,14 +121,14 @@ namespace mame.ymfm
         // map channel number to register offset
         public static uint32_t channel_offset(uint32_t chnum)
         {
-            g.assert(chnum < CHANNELS);
+            assert(chnum < CHANNELS);
             return chnum;
         }
 
         // map operator number to register offset
         public static uint32_t operator_offset(uint32_t opnum)
         {
-            g.assert(opnum < OPERATORS);
+            assert(opnum < OPERATORS);
             return opnum;
         }
 

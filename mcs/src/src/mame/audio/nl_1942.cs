@@ -1,6 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Edward Fast
 
+using System;
+
+
 namespace mame
 {
     partial class _1942_state : driver_device

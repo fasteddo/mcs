@@ -2,7 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.osdcore_global;
 
 
 namespace mame
@@ -23,7 +24,7 @@ namespace mame
         public override void exit() { }
 
         //public override osd_midi_device create_midi_device() { return new osd_midi_device_none(); }
-        public override void list_midi_devices() { g.osd_printf_warning("\nMIDI is not supported in this build\n"); }
+        public override void list_midi_devices() { osd_printf_warning("\nMIDI is not supported in this build\n"); }
     }
 
 

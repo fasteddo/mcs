@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int16_t = System.Int16;
 using int32_t = System.Int32;
@@ -10,6 +9,9 @@ using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.device_global;
+using static mame.namco_global;
 
 
 namespace mame
@@ -52,12 +54,12 @@ namespace mame
         }
 
 
-        const UInt32 MAX_VOICES = 8;
-        const UInt32 MAX_VOLUME = 16;
+        const uint32_t MAX_VOICES = 8;
+        const uint32_t MAX_VOLUME = 16;
 
 
         /* stream output level */
-        int16_t OUTPUT_LEVEL(int n) { return (int16_t)(n * namco_global.MIXLEVEL / m_voices); }
+        int16_t OUTPUT_LEVEL(int n) { return (int16_t)(n * MIXLEVEL / m_voices); }
 
         /* a position of waveform sample */
         int WAVEFORM_POSITION(int n) { return (n >> m_f_fracbits) & 0x1f; }
@@ -90,13 +92,13 @@ namespace mame
         MemoryContainer<int16_t> [] m_waveform = new MemoryContainer<int16_t>[MAX_VOLUME];  //std::unique_ptr<int16_t[]> m_waveform[MAX_VOLUME];
 
 
-        public namco_audio_device(machine_config mconfig, device_type type, string tag, device_t owner, UInt32 clock)
+        public namco_audio_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
             : base(mconfig, type, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_sound_interface_namco_audio(mconfig, this));  //device_sound_interface(mconfig, *this),
             m_disound = GetClassInterface<device_sound_interface_namco_audio>();
 
-            m_wave_ptr = new optional_region_ptr<uint8_t>(this, g.DEVICE_SELF);
+            m_wave_ptr = new optional_region_ptr<uint8_t>(this, DEVICE_SELF);
             m_last_channel = null;
             m_wavedata = null;
             m_wave_size = 0;
@@ -198,7 +200,7 @@ namespace mame
 
             /* adjust internal clock */
             m_namco_clock = (int)clock();
-            for (clock_multiple = 0; m_namco_clock < namco_global.INTERNAL_RATE; clock_multiple++)
+            for (clock_multiple = 0; m_namco_clock < INTERNAL_RATE; clock_multiple++)
                 m_namco_clock *= 2;
 
             m_f_fracbits = clock_multiple + 15;
@@ -246,7 +248,7 @@ namespace mame
         }
 
         /* update the decoded waveform data */
-        void update_namco_waveform(int offset, byte data)
+        void update_namco_waveform(int offset, uint8_t data)
         {
             if (m_wave_size == 1)
             {
@@ -482,7 +484,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(NAMCO,       namco_device,       "namco",       "Namco")
         static device_t device_creator_namco_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NAMCO = g.DEFINE_DEVICE_TYPE(device_creator_namco_device, "namco",       "Namco");
+        public static readonly device_type NAMCO = DEFINE_DEVICE_TYPE(device_creator_namco_device, "namco",       "Namco");
 
 
         uint8_t [] m_soundregs;  //std::unique_ptr<uint8_t[]> m_soundregs;

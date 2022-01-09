@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -17,10 +16,10 @@ namespace mame.netlist
     // FIXME: belongs into detail namespace
     public class core_device_t : detail.netlist_object_t
     {
-        //using activate_delegate = plib::pmfp<void, bool>;
+        protected delegate void activate_delegate(bool param);  //using activate_delegate = plib::pmfp<void, bool>;
 
 
-        //activate_delegate m_activate;
+        protected activate_delegate m_activate;
 
         bool m_hint_deactivate;
         state_var_s32 m_active_outputs;
@@ -66,9 +65,45 @@ namespace mame.netlist
         //virtual ~core_device_t() noexcept = default;
 
 
-        //void do_inc_active() noexcept
+        public void do_inc_active()
+        {
+            //throw new emu_unimplemented();
+#if false
+            gsl_Expects(m_active_outputs >= 0);
+#endif
 
-        //void do_dec_active() noexcept
+            if (m_activate != null && m_hint_deactivate)
+            {
+                if (++m_active_outputs.op == 1)
+                {
+                    //throw new emu_unimplemented();
+#if false
+                    if (m_stats)
+                        m_stats->m_stat_inc_active.inc();
+#endif
+
+                    m_activate(true);//inc_active();
+                }
+            }
+        }
+
+
+
+        public void do_dec_active()
+        {
+            //throw new emu_unimplemented();
+#if false
+            gsl_Expects(m_active_outputs >= 1);
+#endif
+
+            if (m_activate != null && m_hint_deactivate)
+            {
+                if (--m_active_outputs.op == 0)
+                {
+                    m_activate(false); //dec_active();
+                }
+            }
+        }
 
 
         public void set_hint_deactivate(bool v) { m_hint_deactivate = v; }
@@ -78,7 +113,7 @@ namespace mame.netlist
 
 
         // Has to be set in device reset
-        //void set_active_outputs(int n) noexcept { m_active_outputs = n; }
+        protected void set_active_outputs(int n) { m_active_outputs.op = n; }
 
 
         // stats

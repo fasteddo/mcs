@@ -2,12 +2,15 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using notify_vector = mame.std.vector<mame.output_manager.output_notify>;
 using s32 = System.Int32;
+using size_t = System.UInt64;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.osdcore_global;
 
 
 namespace mame
@@ -101,7 +104,7 @@ namespace mame
             //**************************************************************************
             public void resolve(device_t device, string name)
             {
-                g.assert(m_item == null);
+                assert(m_item == null);
                 m_item = device.machine().output().find_or_create_item(name, 0);
             }
 
@@ -172,7 +175,7 @@ namespace mame
             {
                 for (int i = 0; i < N; i++)
                 {
-                    m_proxies[i].resolve(m_device, string.Format(m_format, m_start + i));
+                    m_proxies[i].resolve(m_device, util.string_format(m_format, m_start + i));
                 }
             }
 
@@ -241,8 +244,8 @@ namespace mame
         -------------------------------------------------*/
         public void register_save()
         {
-            g.assert(m_save_order.empty());
-            g.assert(m_save_data == null);
+            assert(m_save_order.empty());
+            assert(m_save_data == null);
 
             // make space for the data
             m_save_order.clear();
@@ -261,7 +264,7 @@ namespace mame
 #endif
 
             if (OUTPUT_VERBOSE)
-                g.osd_printf_verbose("Registered {0} outputs for save states\n", m_itemtable.size());
+                osd_printf_verbose("Registered {0} outputs for save states\n", m_itemtable.size());
         }
 
 
@@ -357,14 +360,14 @@ namespace mame
         output_item create_new_item(string outname, int value)
         {
             if (OUTPUT_VERBOSE)
-                g.osd_printf_verbose("Creating output {0} = {1}{2}\n", outname, value, m_save_data != null ? " (will not be saved)" : "");
+                osd_printf_verbose("Creating output {0} = {1}{2}\n", outname, value, m_save_data != null ? " (will not be saved)" : "");
 
             var output_item = new output_item(this, outname, m_uniqueid++, value);
             var ins = m_itemtable.emplace(
                     //std::piecewise_construct,
                     outname,  //std::forward_as_tuple(outname),
                     output_item);  // std::forward_as_tuple(this, outname, m_uniqueid++, value));
-            g.assert(ins);  //ins.second);
+            assert(ins);  //ins.second);
             return output_item;  //ins.first.second;
         }
 
@@ -395,7 +398,7 @@ namespace mame
         -------------------------------------------------*/
         void presave()
         {
-            for (UInt32 i = 0; m_save_order.size() > i; ++i)
+            for (size_t i = 0; m_save_order.size() > i; ++i)
                 m_save_data[i] = m_save_order[i].get();
         }
 
@@ -405,7 +408,7 @@ namespace mame
         -------------------------------------------------*/
         void postload()
         {
-            for (UInt32 i = 0; m_save_order.size() > i; ++i)
+            for (size_t i = 0; m_save_order.size() > i; ++i)
                  m_save_order[i].set(m_save_data[i]);
         }
     }

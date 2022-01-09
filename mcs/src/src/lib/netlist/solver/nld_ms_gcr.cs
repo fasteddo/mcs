@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
 using mat_index_type = System.UInt16;  //using mat_index_type = typename plib::matrix_compressed_rows_t<FT, SIZE>::index_type;
@@ -12,6 +11,8 @@ using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using size_t = System.UInt64;
 using uint16_t = System.UInt16;
 using unsigned = System.UInt32;
+
+using static mame.netlist.nl_config_global;
 
 
 namespace mame.netlist
@@ -83,7 +84,7 @@ namespace mame.netlist
                         }
                     }
 
-                    nl_config_global.nl_assert(cnt == this.m_terms[k].railstart());
+                    nl_assert(cnt == this.m_terms[k].railstart());
                     this.m_mat_ptr.op(k)[this.m_terms[k].railstart()] = new Pointer<FT>(mat.A, mat.diag[k]);  //this->m_mat_ptr[k][this->m_terms[k].railstart()] = &mat.A[mat.diag[k]];
                 }
 

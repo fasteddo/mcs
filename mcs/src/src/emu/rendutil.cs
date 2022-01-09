@@ -2,15 +2,22 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
+using static mame.cpp_global;
+using static mame.emucore_global;
+using static mame.rendutil_global;
+
 
 namespace mame
 {
+    /* ----- image formats ----- */
+    //enum ru_imgformat
+
+
     public static class rendutil_global
     {
         /* ----- render utilities ----- */
@@ -49,7 +56,7 @@ namespace mame
         /*-------------------------------------------------
             render_clip_line - clip a line to a rectangle
         -------------------------------------------------*/
-        public static bool render_clip_line(render_bounds bounds, render_bounds clip)
+        public static bool render_clip_line(ref render_bounds bounds, render_bounds clip)
         {
             /* loop until we get a final result */
             while (true)
@@ -136,11 +143,11 @@ namespace mame
         /*-------------------------------------------------
             render_clip_quad - clip a quad to a rectangle
         -------------------------------------------------*/
-        public static bool render_clip_quad(render_bounds bounds, render_bounds clip, render_quad_texuv texcoords)
+        public static bool render_clip_quad(ref render_bounds bounds, render_bounds clip, ref render_quad_texuv texcoords, bool use_texcoords)
         {
             /* ensure our assumptions about the bounds are correct */
-            g.assert(bounds.x0 <= bounds.x1);
-            g.assert(bounds.y0 <= bounds.y1);
+            assert(bounds.x0 <= bounds.x1);
+            assert(bounds.y0 <= bounds.y1);
 
             /* trivial reject */
             if (bounds.y1 < clip.y0)
@@ -157,7 +164,7 @@ namespace mame
             {
                 float frac = (clip.y0 - bounds.y0) / (bounds.y1 - bounds.y0);
                 bounds.y0 = clip.y0;
-                if (texcoords != null)
+                if (use_texcoords)  //if (texcoords != nullptr)
                 {
                     texcoords.tl.u += (texcoords.bl.u - texcoords.tl.u) * frac;
                     texcoords.tl.v += (texcoords.bl.v - texcoords.tl.v) * frac;
@@ -171,7 +178,7 @@ namespace mame
             {
                 float frac = (bounds.y1 - clip.y1) / (bounds.y1 - bounds.y0);
                 bounds.y1 = clip.y1;
-                if (texcoords != null)
+                if (use_texcoords)  //if (texcoords != nullptr)
                 {
                     texcoords.bl.u -= (texcoords.bl.u - texcoords.tl.u) * frac;
                     texcoords.bl.v -= (texcoords.bl.v - texcoords.tl.v) * frac;
@@ -185,7 +192,7 @@ namespace mame
             {
                 float frac = (clip.x0 - bounds.x0) / (bounds.x1 - bounds.x0);
                 bounds.x0 = clip.x0;
-                if (texcoords != null)
+                if (use_texcoords)  //if (texcoords != nullptr)
                 {
                     texcoords.tl.u += (texcoords.tr.u - texcoords.tl.u) * frac;
                     texcoords.tl.v += (texcoords.tr.v - texcoords.tl.v) * frac;
@@ -199,7 +206,7 @@ namespace mame
             {
                 float frac = (bounds.x1 - clip.x1) / (bounds.x1 - bounds.x0);
                 bounds.x1 = clip.x1;
-                if (texcoords != null)
+                if (use_texcoords)  //if (texcoords != nullptr)
                 {
                     texcoords.tr.u -= (texcoords.tr.u - texcoords.tl.u) * frac;
                     texcoords.tr.v -= (texcoords.tr.v - texcoords.tl.v) * frac;
@@ -219,13 +226,8 @@ namespace mame
             render_load_msdib - load a Microsoft DIB file
             into a bitmap
         -------------------------------------------------*/
-        public static void render_load_msdib(out bitmap_argb32 bitmap, util.core_file file)
+        public static void render_load_msdib(out bitmap_argb32 bitmap, util.random_read file)
         {
-            bitmap = new bitmap_argb32();
-
-            // deallocate previous bitmap
-            bitmap.reset();
-
             throw new emu_unimplemented();
 #if false
 #endif
@@ -236,13 +238,8 @@ namespace mame
             render_load_jpeg - load a JPEG file into a
             bitmap
         -------------------------------------------------*/
-        public static void render_load_jpeg(out bitmap_argb32 bitmap, util.core_file file)
+        public static void render_load_jpeg(out bitmap_argb32 bitmap, util.random_read file)
         {
-            bitmap = new bitmap_argb32();
-
-            // deallocate previous bitmap
-            bitmap.reset();
-
             throw new emu_unimplemented();
 #if false
 #endif
@@ -253,21 +250,15 @@ namespace mame
             render_load_png - load a PNG file into a
             bitmap
         -------------------------------------------------*/
-        public static bool render_load_png(out bitmap_argb32 bitmap, util.core_file file, bool load_as_alpha_to_existing = false)
+        public static bool render_load_png(out bitmap_argb32 bitmap, util.random_read file, bool load_as_alpha_to_existing = false)
         {
-            bitmap = new bitmap_argb32();
-
-            // deallocate if we're not overlaying alpha
-            if (!load_as_alpha_to_existing)
-                bitmap.reset();
-
             throw new emu_unimplemented();
 #if false
 #endif
         }
 
 
-        //ru_imgformat render_detect_image(util::core_file &file);
+        //ru_imgformat render_detect_image(util::random_read &file);
 
 
         /*-------------------------------------------------
@@ -283,9 +274,9 @@ namespace mame
         -------------------------------------------------*/
         public static int orientation_swap_flips(int orientation)
         {
-            return (int)((orientation & g.ORIENTATION_SWAP_XY) |
-                        ((orientation & g.ORIENTATION_FLIP_X) != 0 ? g.ORIENTATION_FLIP_Y : 0) |
-                        ((orientation & g.ORIENTATION_FLIP_Y) != 0 ? g.ORIENTATION_FLIP_X : 0));
+            return (int)((orientation & ORIENTATION_SWAP_XY) |
+                        ((orientation & ORIENTATION_FLIP_X) != 0 ? ORIENTATION_FLIP_Y : 0) |
+                        ((orientation & ORIENTATION_FLIP_Y) != 0 ? ORIENTATION_FLIP_X : 0));
         }
 
 
@@ -296,7 +287,7 @@ namespace mame
         public static int orientation_reverse(int orientation)
         {
             /* if not swapping X/Y, then just apply the same transform to reverse */
-            if ((orientation & g.ORIENTATION_SWAP_XY) == 0)
+            if ((orientation & ORIENTATION_SWAP_XY) == 0)
                 return orientation;
 
             /* if swapping X/Y, then swap X/Y flip bits to get the reverse */
@@ -312,7 +303,7 @@ namespace mame
         public static int orientation_add(int orientation1, int orientation2)
         {
             /* if the 2nd transform doesn't swap, just XOR together */
-            if ((orientation2 & g.ORIENTATION_SWAP_XY) == 0)
+            if ((orientation2 & ORIENTATION_SWAP_XY) == 0)
                 return orientation1 ^ orientation2;
 
             /* otherwise, we need to effectively swap the flip bits on the first transform */

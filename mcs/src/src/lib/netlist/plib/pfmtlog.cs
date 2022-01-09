@@ -2,7 +2,9 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
+
+using static mame.cpp_global;
+using static mame.plib.pfmtlog_global;
 
 
 namespace mame.plib
@@ -16,7 +18,7 @@ namespace mame.plib
         //        : plib::perrmsg(str, std::forward<Args>(args)...) \
         //        { static_assert(narg == sizeof...(args), "Argument count mismatch"); } \
         //    };
-        public static string PERRMSGV(int narg, string format, params object [] args) { g.static_assert(narg == args.Length, "Argument count mismatch"); return String.Format(format, args); }
+        public static string PERRMSGV(int narg, string format, params object [] args) { static_assert(narg == args.Length, "Argument count mismatch"); return String.Format(format, args); }
     }
 
 

@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int32_t = System.Int32;
 using int64_t = System.Int64;
@@ -10,6 +9,9 @@ using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 using unsigned = System.UInt32;
+
+using static mame.eminline_global;
+using static mame.osdcore_global;
 
 
 namespace mame
@@ -115,7 +117,7 @@ namespace mame
         //#ifndef get_profile_ticks
         public static int64_t get_profile_ticks()
         {
-            return (int64_t)osdcore_global.m_osdcore.osd_ticks();
+            return (int64_t)m_osdcore.osd_ticks();
         }
         //#endif
     }

@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 
@@ -36,18 +35,18 @@ namespace mame.netlist
         public abstract devices.nld_base_a_to_d_proxy create_a_d_proxy(netlist_state_t anetlist, string name, logic_input_t proxied);  //virtual device_arena::unique_ptr<devices::nld_base_a_to_d_proxy> create_a_d_proxy(netlist_state_t &anetlist, const pstring &name, const logic_input_t *proxied) const = 0;
 
 
-        //nl_fptype low_thresh_V(nl_fptype VN, nl_fptype VP) const noexcept{ return VN + (VP - VN) * m_low_thresh_PCNT; }
-        //nl_fptype high_thresh_V(nl_fptype VN, nl_fptype VP) const noexcept{ return VN + (VP - VN) * m_high_thresh_PCNT; }
+        nl_fptype low_thresh_V(nl_fptype VN, nl_fptype VP) { return VN + (VP - VN) * m_low_thresh_PCNT; }
+        nl_fptype high_thresh_V(nl_fptype VN, nl_fptype VP) { return VN + (VP - VN) * m_high_thresh_PCNT; }
         public nl_fptype low_offset_V() { return m_low_VO; }
         public nl_fptype high_offset_V() { return m_high_VO; }
         public nl_fptype R_low() { return m_R_low; }
         public nl_fptype R_high() { return m_R_high; }
 
-        //bool is_above_high_thresh_V(nl_fptype V, nl_fptype VN, nl_fptype VP) const noexcept
-        //{ return V > high_thresh_V(VN, VP); }
+        public bool is_above_high_thresh_V(nl_fptype V, nl_fptype VN, nl_fptype VP)
+        { return V > high_thresh_V(VN, VP); }
 
-        //bool is_below_low_thresh_V(nl_fptype V, nl_fptype VN, nl_fptype VP) const noexcept
-        //{ return V < low_thresh_V(VN, VP); }
+        public bool is_below_low_thresh_V(nl_fptype V, nl_fptype VN, nl_fptype VP)
+        { return V < low_thresh_V(VN, VP); }
 
         public string vcc_pin() { return m_vcc; }
         public string gnd_pin() { return m_gnd; }

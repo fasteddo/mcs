@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
@@ -12,7 +11,18 @@ using s32 = System.Int32;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using u8 = System.Byte;
 using u32 = System.UInt32;
+using uint32_t = System.UInt32;
 using unsigned = System.UInt32;
+
+using static mame.attotime_global;
+using static mame.cpp_global;
+using static mame.eminline_global;
+using static mame.machine_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
+using static mame.profiler_global;
+using static mame.render_global;
+using static mame.util;
 
 
 namespace mame
@@ -43,7 +53,7 @@ namespace mame
             { false, true , true , true , true , true , true , true , true , true , true , true  }
         };
 
-        const attoseconds_t ATTOSECONDS_PER_SPEED_UPDATE = attotime.ATTOSECONDS_PER_SECOND / 4;
+        const attoseconds_t ATTOSECONDS_PER_SPEED_UPDATE = ATTOSECONDS_PER_SECOND / 4;
         const int PAUSED_REFRESH_RATE = 30;
 
 
@@ -132,9 +142,9 @@ namespace mame
             m_throttled = true;
             m_throttle_rate = 1.0f;
             m_fastforward = false;
-            m_seconds_to_run = (UInt32)machine.options().seconds_to_run();
+            m_seconds_to_run = (u32)machine.options().seconds_to_run();
             m_auto_frameskip = machine.options().auto_frameskip();
-            m_speed = (UInt32)original_speed_setting();
+            m_speed = (u32)original_speed_setting();
             m_low_latency = machine.options().low_latency();
             m_empty_skip_count = 0;
             m_frameskip_max = m_auto_frameskip ? (u8)machine.options().frameskip() : (u8)0;
@@ -176,7 +186,7 @@ namespace mame
             else
             {
                 // other targets select the specified view and turn off effects
-                m_snap_target = machine.render().target_alloc(null, g.RENDER_CREATE_HIDDEN);
+                m_snap_target = machine.render().target_alloc(null, RENDER_CREATE_HIDDEN);
                 m_snap_target.set_view(m_snap_target.configured_view(viewname, 0, 1));
                 m_snap_target.set_screen_overlay_enabled(false);
             }
@@ -254,7 +264,9 @@ namespace mame
         }
 
 
-        //std::error_condition open_next(emu_file &file, const char *extension, uint32_t index = 0);
+        std.error_condition open_next(emu_file file, string extension, uint32_t index = 0) { throw new emu_unimplemented(); }
+
+
         //void compute_snapshot_size(s32 &width, s32 &height);
         //void pixels(u32 *buffer);
 
@@ -296,11 +308,11 @@ namespace mame
 
             // ask the OSD to update
 
-            profiler_global.g_profiler.start(profile_type.PROFILER_BLIT);
+            g_profiler.start(profile_type.PROFILER_BLIT);
 
             machine().osd().update(!from_debugger && skipped_it);
 
-            profiler_global.g_profiler.stop();
+            g_profiler.stop();
 
             // we synchronize after rendering instead of before, if low latency mode is enabled
             if (!from_debugger && !skipped_it && phase > machine_phase.INIT && m_low_latency && effective_throttle())
@@ -331,7 +343,7 @@ namespace mame
             {
                 // reset partial updates if we're paused or if the debugger is active
                 screen_device screen = new screen_device_enumerator(machine().root_device()).first();
-                bool debugger_enabled = (machine().debug_flags & g.DEBUG_FLAG_ENABLED) != 0;
+                bool debugger_enabled = (machine().debug_flags & DEBUG_FLAG_ENABLED) != 0;
                 bool within_instruction_hook = debugger_enabled && machine().debugger().within_instruction_hook();
                 if (screen != null && ((machine().paused() && machine().options().update_in_pause()) || from_debugger || within_instruction_hook))
                     screen.reset_partial_updates();
@@ -360,23 +372,23 @@ namespace mame
 
             // if we're auto frameskipping, display that plus the level
             else if (effective_autoframeskip())
-                str += string.Format("auto{0}/{1}", effective_frameskip(), m_frameskip_max != 0 ? m_frameskip_max : MAX_FRAMESKIP);
+                util.stream_format(ref str, "auto{0}/{1}", effective_frameskip(), m_frameskip_max != 0 ? m_frameskip_max : MAX_FRAMESKIP);
 
             // otherwise, just display the frameskip plus the level
             else
-                str += string.Format("skip {0}/{1}", effective_frameskip(), MAX_FRAMESKIP);
+                util.stream_format(ref str, "skip {0}/{1}", effective_frameskip(), MAX_FRAMESKIP);
 
             // append the speed for all cases except paused
             if (!paused)
-                str += string.Format("  {0:f2}%", (int)(100 * m_speed_percent + 0.5));  //%4d%%
+                util.stream_format(ref str, "  {0:f2}%", (int)(100 * m_speed_percent + 0.5));  //%4d%%
 
             // display the number of partial updates as well
-            UInt32 partials = 0;
+            int partials = 0;
             foreach (screen_device screen in new screen_device_enumerator(machine().root_device()))
                 partials += screen.partial_updates();
 
             if (partials > 1)
-                str += string.Format("  {0} partial updates", partials);
+                util.stream_format(ref str, "  {0} partial updates", partials);
 
             return str;
         }
@@ -466,9 +478,9 @@ namespace mame
         public string timecode_text(out string str)
         {
             attotime elapsed_time = machine().time() - m_timecode_start;
-            str = string.Format(" {0}{1}{2}:{3} {4}",  //" %s%s%02d:%02d %s",
+            str = string_format(" {0}{1}{2}:{3} {4}",  //" %s%s%02d:%02d %s",
                     m_timecode_text,
-                    string.IsNullOrEmpty(m_timecode_text) ? "" : " ",
+                    m_timecode_text.empty() ? "" : " ",
                     (elapsed_time.m_seconds / 60) % 60,
                     elapsed_time.m_seconds % 60,
                     machine().paused() ? "[paused] " : "");
@@ -482,7 +494,7 @@ namespace mame
             if (machine().ui().show_timecode_counter())
                 elapsed_time += machine().time() - m_timecode_start;
 
-            str = string.Format("TOTAL {0}:{1} ",  // "TOTAL %02d:%02d "
+            str = string_format("TOTAL {0}:{1} ",  // "TOTAL %02d:%02d "
                     (elapsed_time.m_seconds / 60) % 60,
                     elapsed_time.m_seconds % 60);
             return str;
@@ -506,10 +518,10 @@ namespace mame
             // print a final result if we have at least 2 seconds' worth of data
             if (!emulator_info.standalone() && m_overall_emutime.seconds() >= 1)
             {
-                osd_ticks_t tps = osdcore_global.m_osdcore.osd_ticks_per_second();
+                osd_ticks_t tps = m_osdcore.osd_ticks_per_second();
                 double final_real_time = (double)m_overall_real_seconds + (double)m_overall_real_ticks / (double)tps;
                 double final_emu_time = m_overall_emutime.as_double();
-                g.osd_printf_info("Average speed: {0}%% ({1} seconds)\n", 100 * final_emu_time / final_real_time, (m_overall_emutime + new attotime(0, attotime.ATTOSECONDS_PER_SECOND / 2)).seconds());  // %.2f%% (%d seconds)\n
+                osd_printf_info("Average speed: {0}%% ({1} seconds)\n", 100 * final_emu_time / final_real_time, (m_overall_emutime + new attotime(0, ATTOSECONDS_PER_SECOND / 2)).seconds());  // %.2f%% (%d seconds)\n
             }
         }
 
@@ -699,8 +711,8 @@ namespace mame
                 }
 
                 // compute conversion factors up front
-                osd_ticks_t ticks_per_second = osdcore_global.m_osdcore.osd_ticks_per_second();
-                attoseconds_t attoseconds_per_tick = (attoseconds_t)(attotime.ATTOSECONDS_PER_SECOND / ticks_per_second * m_throttle_rate);
+                osd_ticks_t ticks_per_second = m_osdcore.osd_ticks_per_second();
+                attoseconds_t attoseconds_per_tick = (attoseconds_t)(ATTOSECONDS_PER_SECOND / ticks_per_second * m_throttle_rate);
 
                 // if we're paused, emutime will not advance; instead, we subtract a fixed
                 // amount of time (1/60th of a second) from the emulated time that was passed in,
@@ -709,7 +721,7 @@ namespace mame
                 // ago, and was in sync in both real and emulated time
                 if (machine().paused())
                 {
-                    m_throttle_emutime = emutime - new attotime(0, attotime.ATTOSECONDS_PER_SECOND / PAUSED_REFRESH_RATE);
+                    m_throttle_emutime = emutime - new attotime(0, ATTOSECONDS_PER_SECOND / PAUSED_REFRESH_RATE);
                     m_throttle_realtime = m_throttle_emutime;
                 }
 
@@ -718,7 +730,7 @@ namespace mame
                 // between 0 and 1/10th of a second ... anything outside of this range is obviously
                 // wrong and requires a resync
                 attoseconds_t emu_delta_attoseconds = (emutime - m_throttle_emutime).as_attoseconds();
-                if (emu_delta_attoseconds < 0 || emu_delta_attoseconds > attotime.ATTOSECONDS_PER_SECOND / 10)
+                if (emu_delta_attoseconds < 0 || emu_delta_attoseconds > ATTOSECONDS_PER_SECOND / 10)
                 {
                     if (LOG_THROTTLE)
                         machine().logerror("Resync due to weird emutime delta: {0}\n", new attotime(0, emu_delta_attoseconds).as_string(18));
@@ -728,7 +740,7 @@ namespace mame
                 // now determine the current real time in OSD-specified ticks; we have to be careful
                 // here because counters can wrap, so we only use the difference between the last
                 // read value and the current value in our computations
-                osd_ticks_t diff_ticks = osdcore_global.m_osdcore.osd_ticks() - m_throttle_last_ticks;
+                osd_ticks_t diff_ticks = m_osdcore.osd_ticks() - m_throttle_last_ticks;
                 m_throttle_last_ticks += diff_ticks;
 
                 // if it has been more than a full second of real time since the last call to this
@@ -749,7 +761,7 @@ namespace mame
 
                 // keep a history of whether or not emulated time beat real time over the last few
                 // updates; this can be used for future heuristics
-                m_throttle_history = (UInt32)((m_throttle_history << 1) | ((emu_delta_attoseconds > real_delta_attoseconds) ? 1U : 0));
+                m_throttle_history = (u32)((m_throttle_history << 1) | ((emu_delta_attoseconds > real_delta_attoseconds) ? 1U : 0));
 
                 // determine how far ahead real time is versus emulated time; note that we use the
                 // accumulated times for this instead of the deltas for the current update because
@@ -758,8 +770,8 @@ namespace mame
 
                 // if we're more than 1/10th of a second out, or if we are behind at all and emulation
                 // is taking longer than the real frame, we just need to resync
-                if (real_is_ahead_attoseconds < -attotime.ATTOSECONDS_PER_SECOND / 10 ||
-                    (real_is_ahead_attoseconds < 0 && g.population_count_32(m_throttle_history & 0xff) < 6))
+                if (real_is_ahead_attoseconds < -ATTOSECONDS_PER_SECOND / 10 ||
+                    (real_is_ahead_attoseconds < 0 && population_count_32(m_throttle_history & 0xff) < 6))
                 {
                     if (LOG_THROTTLE)
                         machine().logerror("Resync due to being behind: {0} (history={1})\n", new attotime(0, -real_is_ahead_attoseconds).as_string(18), m_throttle_history);
@@ -797,9 +809,9 @@ namespace mame
             bool allowed_to_sleep = (machine().options().sleep() && (!effective_autoframeskip() || effective_frameskip() == 0)) || machine().paused();
 
             // loop until we reach our target
-            profiler_global.g_profiler.start(profile_type.PROFILER_IDLE);
+            g_profiler.start(profile_type.PROFILER_IDLE);
 
-            osd_ticks_t current_ticks = osdcore_global.m_osdcore.osd_ticks();
+            osd_ticks_t current_ticks = m_osdcore.osd_ticks();
             while (current_ticks < target_ticks)
             {
                 // compute how much time to sleep for, taking into account the average oversleep
@@ -812,10 +824,10 @@ namespace mame
                 // see if we can sleep
                 bool slept = allowed_to_sleep && delta != 0;
                 if (slept)
-                    osdcore_global.m_osdcore.osd_sleep(delta);
+                    m_osdcore.osd_sleep(delta);
 
                 // read the new value
-                osd_ticks_t new_ticks = osdcore_global.m_osdcore.osd_ticks();
+                osd_ticks_t new_ticks = m_osdcore.osd_ticks();
 
                 // keep some metrics on the sleeping patterns of the OSD layer
                 if (slept)
@@ -835,7 +847,7 @@ namespace mame
                 current_ticks = new_ticks;
             }
 
-            profiler_global.g_profiler.stop();
+            g_profiler.stop();
 
             return current_ticks;
         }
@@ -883,7 +895,7 @@ namespace mame
             }
 
             // increment the frameskip counter and determine if we will skip the next frame
-            m_frameskip_counter = (byte)((m_frameskip_counter + 1) % FRAMESKIP_LEVELS);
+            m_frameskip_counter = (u8)((m_frameskip_counter + 1) % FRAMESKIP_LEVELS);
             m_skipping_this_frame = s_skiptable[effective_frameskip(), m_frameskip_counter];
         }
 
@@ -901,7 +913,7 @@ namespace mame
                 {
                     // find the screen with the shortest frame period (max refresh rate)
                     // note that we first check the token since this can get called before all screens are created
-                    attoseconds_t min_frame_period = attotime.ATTOSECONDS_PER_SECOND;
+                    attoseconds_t min_frame_period = ATTOSECONDS_PER_SECOND;
                     foreach (screen_device screen in new screen_device_enumerator(machine().root_device()))
                     {
                         attoseconds_t period = screen.frame_period().attoseconds();
@@ -912,14 +924,14 @@ namespace mame
                     // compute a target speed as an integral percentage
                     // note that we lop 0.25Hz off of the minrefresh when doing the computation to allow for
                     // the fact that most refresh rates are not accurate to 10 digits...
-                    u32 target_speed = (u32)std.floor((minrefresh - 0.25) * 1000.0 / attotime.ATTOSECONDS_TO_HZ(min_frame_period));
+                    u32 target_speed = (u32)std.floor((minrefresh - 0.25) * 1000.0 / ATTOSECONDS_TO_HZ(min_frame_period));
                     u32 original_speed = (u32)original_speed_setting();
                     target_speed = std.min(target_speed, original_speed);
 
                     // if we changed, log that verbosely
                     if (target_speed != m_speed)
                     {
-                        g.osd_printf_verbose("Adjusting target speed to {0}%% (hw={1}Hz, game={2}Hz, adjusted={3}Hz)\n", target_speed / 10.0, minrefresh, attotime.ATTOSECONDS_TO_HZ(min_frame_period), attotime.ATTOSECONDS_TO_HZ((attoseconds_t)(min_frame_period * 1000.0 / target_speed)));
+                        osd_printf_verbose("Adjusting target speed to {0}%% (hw={1}Hz, game={2}Hz, adjusted={3}Hz)\n", target_speed / 10.0, minrefresh, ATTOSECONDS_TO_HZ(min_frame_period), ATTOSECONDS_TO_HZ((attoseconds_t)(min_frame_period * 1000.0 / target_speed)));
                         m_speed = target_speed;
                     }
                 }
@@ -936,7 +948,7 @@ namespace mame
             // if we don't have a starting time yet, or if we're paused, reset our starting point
             if (m_speed_last_realtime == 0 || machine().paused())
             {
-                m_speed_last_realtime = osdcore_global.m_osdcore.osd_ticks();
+                m_speed_last_realtime = m_osdcore.osd_ticks();
                 m_speed_last_emutime = emutime;
             }
 
@@ -945,9 +957,9 @@ namespace mame
             if (delta_emutime > new attotime(0, ATTOSECONDS_PER_SPEED_UPDATE))
             {
                 // convert from ticks to attoseconds
-                osd_ticks_t realtime = osdcore_global.m_osdcore.osd_ticks();
+                osd_ticks_t realtime = m_osdcore.osd_ticks();
                 osd_ticks_t delta_realtime = realtime - m_speed_last_realtime;
-                osd_ticks_t tps = osdcore_global.m_osdcore.osd_ticks_per_second();
+                osd_ticks_t tps = m_osdcore.osd_ticks_per_second();
                 m_speed_percent = delta_emutime.as_double() * (double)tps / (double)delta_realtime;
 
                 // remember the last times
@@ -977,8 +989,8 @@ namespace mame
             if (m_seconds_to_run != 0 && emutime.seconds() >= m_seconds_to_run)
             {
                 // create a final screenshot
-                emu_file file = new emu_file(machine().options().snapshot_directory(), g.OPEN_FLAG_WRITE | g.OPEN_FLAG_CREATE | g.OPEN_FLAG_CREATE_PATHS);
-                std.error_condition filerr = file.open(machine().basename() + g.PATH_SEPARATOR + "final.png");
+                emu_file file = new emu_file(machine().options().snapshot_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+                std.error_condition filerr = open_next(file, "png");
                 if (!filerr)
                     save_snapshot(null, file);
 
@@ -1009,7 +1021,7 @@ namespace mame
             {
                 screen_device_enumerator iter = new screen_device_enumerator(machine().root_device());
                 int view_index = iter.indexof(screen);
-                g.assert(view_index != -1);
+                assert(view_index != -1);
                 m_snap_target.set_view((unsigned)view_index);
             }
 
@@ -1064,7 +1076,7 @@ namespace mame
                 return;
 
             // start the profiler and get the current time
-            profiler_global.g_profiler.start(profile_type.PROFILER_MOVIE_REC);
+            g_profiler.start(profile_type.PROFILER_MOVIE_REC);
             attotime curtime = machine().time();
 
             throw new emu_unimplemented();

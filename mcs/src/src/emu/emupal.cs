@@ -2,15 +2,19 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using indirect_pen_t = System.UInt16;  //typedef u16 indirect_pen_t;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using optional_memory_region = mame.memory_region_finder<mame.bool_const_false>;  //using optional_memory_region = memory_region_finder<false>;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
+using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
+
+using static mame.cpp_global;
+using static mame.device_global;
+using static mame.emucore_global;
 
 
 namespace mame
@@ -111,7 +115,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(PALETTE, palette_device, "palette", "palette")
         static device_t device_creator_palette_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new palette_device(mconfig, tag, owner); }
-        public static readonly device_type PALETTE = g.DEFINE_DEVICE_TYPE(device_creator_palette_device, "palette", "palette");
+        public static readonly device_type PALETTE = DEFINE_DEVICE_TYPE(device_creator_palette_device, "palette", "palette");
 
 
         //typedef device_delegate<void (palette_device &)> init_delegate;
@@ -252,7 +256,7 @@ namespace mame
             m_enable_hilights = false;
             m_membits = 0;
             m_membits_supplied = false;
-            m_endianness = g.ENDIANNESS_BIG;
+            m_endianness = ENDIANNESS_BIG;
             m_endianness_supplied = false;
             m_prom_region = new optional_memory_region(this, finder_base.DUMMY_TAG);
             m_init = null;
@@ -289,6 +293,15 @@ namespace mame
 
 
         public device_palette_interface_palette_device dipalette { get { return m_dipalette; } }
+        public palette_t palette() { return dipalette.palette(); }
+        public Pointer<rgb_t> pens() { return dipalette.pens(); }
+        public pen_t black_pen() { return dipalette.black_pen(); }
+        public void set_pen_color(pen_t pen, rgb_t rgb) { dipalette.set_pen_color(pen, rgb); }
+        public void set_pen_color(pen_t pen, u8 r, u8 g, u8 b) { dipalette.set_pen_color(pen, r, g, b); }
+        public void set_pen_colors(pen_t color_base, std.vector<rgb_t> colors) { dipalette.set_pen_colors(color_base, colors); }
+        public void set_indirect_color(int index, rgb_t rgb) { dipalette.set_indirect_color(index, rgb); }
+        public void set_pen_indirect(pen_t pen, indirect_pen_t index) { dipalette.set_pen_indirect(pen, index); }
+        public u32 transpen_mask(gfx_element gfx, u32 color, indirect_pen_t transcolor) { return dipalette.transpen_mask(gfx, color, transcolor); }
 
 
         // configuration
@@ -508,11 +521,11 @@ namespace mame
         //-------------------------------------------------
         void update_for_write(offs_t byte_offset, int bytes_modified, bool indirect = false)
         {
-            g.assert((m_indirect_entries != 0) == indirect);
+            assert((m_indirect_entries != 0) == indirect);
 
             // determine how many entries were modified
             int bpe = m_paletteram.bytes_per_entry();
-            g.assert(bpe != 0);
+            assert(bpe != 0);
             int count = (bytes_modified + bpe - 1) / bpe;
 
             // for each entry modified, fetch the palette data and set the pen color or indirect color
@@ -520,9 +533,9 @@ namespace mame
             for (int index = 0; index < count; index++)
             {
                 if (indirect)
-                    dipalette.set_indirect_color((int)base_ + index, m_raw_to_rgb.op(read_entry(base_ + (offs_t)index)));
+                    set_indirect_color((int)base_ + index, m_raw_to_rgb.op(read_entry(base_ + (offs_t)index)));
                 else
-                    dipalette.set_pen_color(base_ + (offs_t)index, m_raw_to_rgb.op(read_entry(base_ + (offs_t)index)));
+                    set_pen_color(base_ + (offs_t)index, m_raw_to_rgb.op(read_entry(base_ + (offs_t)index)));
             }
         }
     }

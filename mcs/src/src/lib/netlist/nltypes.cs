@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using int64_t = System.Int64;
 using models_t_map_t = mame.std.unordered_map<string, string>;  //using map_t = std::unordered_map<pstring, pstring>;
@@ -10,6 +9,10 @@ using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
+using size_t = System.UInt64;
+using unsigned = System.UInt32;
+
+using static mame.netlist.nltypes_global;
 
 
 namespace mame.netlist
@@ -125,15 +128,80 @@ namespace mame.netlist
     //static_assert(noexcept(netlist_time::from_nsec(1)), "Not evaluated as constexpr");
 
 
-    //============================================================
-    //  MACROS
-    //============================================================
-    //template <typename T> inline constexpr netlist_time NLTIME_FROM_NS(T &&t) noexcept { return netlist_time::from_nsec(t); }
-    //template <typename T> inline constexpr netlist_time NLTIME_FROM_US(T &&t) noexcept { return netlist_time::from_usec(t); }
-    //template <typename T> inline constexpr netlist_time NLTIME_FROM_MS(T &&t) noexcept { return netlist_time::from_msec(t); }
+    class nltypes_global
+    {
+        //============================================================
+        //  MACROS
+        //============================================================
+        public static netlist_time NLTIME_FROM_NS(Int64 t) { return netlist_time.from_nsec(t); }  //template <typename T> inline constexpr netlist_time NLTIME_FROM_NS(T &&t) noexcept { return netlist_time::from_nsec(t); }
+        //template <typename T> inline constexpr netlist_time NLTIME_FROM_US(T &&t) noexcept { return netlist_time::from_usec(t); }
+        //template <typename T> inline constexpr netlist_time NLTIME_FROM_MS(T &&t) noexcept { return netlist_time::from_msec(t); }
+    }
 
 
-    //struct desc_base
+    abstract class desc_base
+    {
+        /// \brief: used to hold one static netlist_time value
+        ///
+        //template<netlist_time::internal_type value0>
+        protected static class times_ns1
+        {
+            public static netlist_time value(Int64 value0, size_t N = 0)
+            {
+                //plib::unused_var(N);
+                return NLTIME_FROM_NS(value0);
+            }
+        }
+
+        //template <netlist_time::internal_type value0>
+        //using time_ns = times_ns1<value0>;
+
+        /// \brief: used to hold two static netlist_time values
+        ///
+        //template<netlist_time::internal_type value0,
+        //    netlist_time::internal_type  value1>
+        protected static class times_ns2
+        {
+            public static netlist_time value(Int64 value0, Int64 value1, size_t N)
+            {
+                return N == 0 ? NLTIME_FROM_NS(value0) : NLTIME_FROM_NS(value1);
+            }
+        }
+
+        /// \brief: used to hold three static netlist_time values
+        ///
+        //template<netlist_time::internal_type value0,
+        //    netlist_time::internal_type value1,
+        //    netlist_time::internal_type value2>
+        //struct times_ns3
+        //{
+        //    static constexpr netlist_time value(std::size_t N)
+        //    {
+        //        return N == 0 ? NLTIME_FROM_NS(value0) :
+        //               N == 1 ? NLTIME_FROM_NS(value1) :
+        //                        NLTIME_FROM_NS(value2);
+        //    }
+        //};
+
+        /// \brief: used to define a constant in device description struct
+        ///
+        /// See the 74125 implementation
+        ///
+        //template <std::size_t V>
+        //using desc_const =  std::integral_constant<const std::size_t, V>;
+
+        //template <typename T, T V>
+        //using desc_const_t =  std::integral_constant<const T, V>;
+
+
+        public abstract netlist_time delay(size_t N);
+
+        public abstract bool ASYNC { get; }
+        public abstract unsigned MAXCNT { get; }
+        public abstract netlist_time tRC(size_t N);
+        public abstract netlist_time tCLR(size_t N);
+        public abstract netlist_time tLDCNT(size_t N);
+    }
 
 
     //============================================================

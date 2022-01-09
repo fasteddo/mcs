@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 
@@ -42,7 +41,7 @@ namespace mame.plib
     //class dynlib : dynlib_base
 
 
-    struct dynlib_static_sym
+    public struct dynlib_static_sym
     {
         public string name;
         public Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> addr;

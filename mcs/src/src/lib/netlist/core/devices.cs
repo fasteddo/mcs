@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
@@ -10,6 +9,8 @@ using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
 using unsigned = System.UInt32;
+
+using static mame.nl_factory_global;
 
 
 namespace mame.netlist
@@ -22,13 +23,17 @@ namespace mame.netlist
         //NETLIB_OBJECT(mainclock)
         class nld_mainclock : device_t
         {
+            //NETLIB_DEVICE_IMPL(mainclock,           "MAINCLOCK",              "FREQ")
+            public static readonly factory.constructor_ptr_t decl_mainclock = NETLIB_DEVICE_IMPL_ALIAS<nld_mainclock>("mainclock", "MAINCLOCK", "FREQ");
+
+
             public logic_output_t m_Q; // NOLINT: needed in core
             public netlist_time m_inc; // NOLINT: needed in core
             param_fp_t m_freq;
 
 
             //NETLIB_CONSTRUCTOR(mainclock)
-            nld_mainclock(object owner, string name)
+            public nld_mainclock(object owner, string name)
                 : base(owner, name)
             {
                 m_Q = new logic_output_t(this, "Q");
@@ -123,7 +128,7 @@ namespace mame.netlist
         public class nld_netlistparams : device_t
         {
             //NETLIB_DEVICE_IMPL(netlistparams,       "PARAMETER",              "")
-            public static readonly factory.constructor_ptr_t decl_netlistparams = g.NETLIB_DEVICE_IMPL<nld_netlistparams>("PARAMETER", "");
+            public static readonly factory.constructor_ptr_t decl_netlistparams = NETLIB_DEVICE_IMPL<nld_netlistparams>("PARAMETER", "");
 
 
             public param_logic_t m_use_deactivate;
@@ -177,7 +182,7 @@ namespace mame.netlist
         class nld_gnd : device_t
         {
             //NETLIB_DEVICE_IMPL(gnd,                 "GNDA",                   "")
-            public static readonly factory.constructor_ptr_t decl_gnd = g.NETLIB_DEVICE_IMPL<nld_gnd>("GNDA", "");
+            public static readonly factory.constructor_ptr_t decl_gnd = NETLIB_DEVICE_IMPL<nld_gnd>("GNDA", "");
 
 
             analog_output_t m_Q;

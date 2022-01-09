@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
@@ -11,276 +12,73 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
+using static mame.corestr_global;
+using static mame.cpp_global;
+using static mame.emucore_global;
+using static mame.main_global;
+using static mame.osdcore_global;
+using static mame.osdfile_global;
+using static mame.romentry_global;
+using static mame.romload_global;
+using static mame.romload_internal;
+using static mame.util;
+
 
 namespace mame
 {
-    public static class romload_global
+    public static partial class romload_global
     {
-        public const UInt32 TEMPBUFFER_MAX_SIZE     = 1024 * 1024 * 1024;
-
-
         //template <typename T> inline std::enable_if_t<!std::is_pointer<T>::value, T const &> ROMENTRY_UNWRAP(T const &r) { return r; }
         //template <typename T> inline T const &ROMENTRY_UNWRAP(T const *r) { return *r; }
 
 
         /* ----- per-entry macros ----- */
-        public static UInt32 ROMENTRY_GETTYPE(rom_entry_interface r) { return r.get_flags() & romentry_global.ROMENTRY_TYPEMASK; }
+        public static u32 ROMENTRY_GETTYPE(rom_entry_interface r) { return r.get_flags() & ROMENTRY_TYPEMASK; }
         //#define ROMENTRY_ISSPECIAL(r)       (ROMENTRY_GETTYPE(r) != ROMENTRYTYPE_ROM)
-        public static bool ROMENTRY_ISFILE(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_ROM; }
-        public static bool ROMENTRY_ISREGION(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_REGION; }
-        public static bool ROMENTRY_ISEND(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_END; }
-        public static bool ROMENTRY_ISRELOAD(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_RELOAD; }
-        public static bool ROMENTRY_ISCONTINUE(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_CONTINUE; }
-        public static bool ROMENTRY_ISFILL(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_FILL; }
-        public static bool ROMENTRY_ISCOPY(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_COPY; }
-        public static bool ROMENTRY_ISIGNORE(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_IGNORE; }
-        public static bool ROMENTRY_ISSYSTEM_BIOS(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_SYSTEM_BIOS; }
-        public static bool ROMENTRY_ISDEFAULT_BIOS(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_DEFAULT_BIOS; }
-        public static bool ROMENTRY_ISPARAMETER(rom_entry_interface r) {return ROMENTRY_GETTYPE(r) == romentry_global.ROMENTRYTYPE_PARAMETER; }
+        public static bool ROMENTRY_ISFILE(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_ROM; }
+        public static bool ROMENTRY_ISREGION(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_REGION; }
+        public static bool ROMENTRY_ISEND(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_END; }
+        public static bool ROMENTRY_ISRELOAD(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_RELOAD; }
+        public static bool ROMENTRY_ISCONTINUE(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_CONTINUE; }
+        public static bool ROMENTRY_ISFILL(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_FILL; }
+        public static bool ROMENTRY_ISCOPY(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_COPY; }
+        public static bool ROMENTRY_ISIGNORE(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_IGNORE; }
+        public static bool ROMENTRY_ISSYSTEM_BIOS(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_SYSTEM_BIOS; }
+        public static bool ROMENTRY_ISDEFAULT_BIOS(rom_entry_interface r) { return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_DEFAULT_BIOS; }
+        public static bool ROMENTRY_ISPARAMETER(rom_entry_interface r) {return ROMENTRY_GETTYPE(r) == ROMENTRYTYPE_PARAMETER; }
         public static bool ROMENTRY_ISREGIONEND(rom_entry_interface r) { return ROMENTRY_ISREGION(r) || ROMENTRY_ISPARAMETER(r) || ROMENTRY_ISEND(r); }
 
         /* ----- per-region macros ----- */
-        public static UInt32 ROMREGION_GETLENGTH(rom_entry_interface r) { return r.get_length(); }
-        public static UInt32 ROMREGION_GETFLAGS(rom_entry_interface r) { return r.get_flags(); }
-        public static UInt32 ROMREGION_GETWIDTH(rom_entry_interface r) { return 8u << (int)((ROMREGION_GETFLAGS(r) & romentry_global.ROMREGION_WIDTHMASK) >> 8); }
+        public static u32 ROMREGION_GETLENGTH(rom_entry_interface r) { return r.get_length(); }
+        public static u32 ROMREGION_GETFLAGS(rom_entry_interface r) { return r.get_flags(); }
+        public static u32 ROMREGION_GETWIDTH(rom_entry_interface r) { return 8u << (int)((ROMREGION_GETFLAGS(r) & ROMREGION_WIDTHMASK) >> 8); }
         //#define ROMREGION_ISLITTLEENDIAN(r) ((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_LE)
-        public static bool ROMREGION_ISBIGENDIAN(rom_entry_interface r) { return (ROMREGION_GETFLAGS(r) & romentry_global.ROMREGION_ENDIANMASK) == romentry_global.ROMREGION_BE; }
-        public static bool ROMREGION_ISINVERTED(rom_entry_interface r) { return (ROMREGION_GETFLAGS(r) & romentry_global.ROMREGION_INVERTMASK) == romentry_global.ROMREGION_INVERT; }
-        public static bool ROMREGION_ISERASE(rom_entry_interface r) { return (ROMREGION_GETFLAGS(r) & romentry_global.ROMREGION_ERASEMASK) == romentry_global.ROMREGION_ERASE; }
-        public static UInt32 ROMREGION_GETERASEVAL(rom_entry_interface r) { return ((ROMREGION_GETFLAGS(r) & romentry_global.ROMREGION_ERASEVALMASK) >> 16); }
-        public static UInt32 ROMREGION_GETDATATYPE(rom_entry_interface r) { return ROMREGION_GETFLAGS(r) & romentry_global.ROMREGION_DATATYPEMASK; }
-        public static bool ROMREGION_ISROMDATA(rom_entry_interface r) { return ROMREGION_GETDATATYPE(r) == romentry_global.ROMREGION_DATATYPEROM; }
-        public static bool ROMREGION_ISDISKDATA(rom_entry_interface r) { return ROMREGION_GETDATATYPE(r) == romentry_global.ROMREGION_DATATYPEDISK; }
+        public static bool ROMREGION_ISBIGENDIAN(rom_entry_interface r) { return (ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_BE; }
+        public static bool ROMREGION_ISINVERTED(rom_entry_interface r) { return (ROMREGION_GETFLAGS(r) & ROMREGION_INVERTMASK) == ROMREGION_INVERT; }
+        public static bool ROMREGION_ISERASE(rom_entry_interface r) { return (ROMREGION_GETFLAGS(r) & ROMREGION_ERASEMASK) == ROMREGION_ERASE; }
+        public static u32 ROMREGION_GETERASEVAL(rom_entry_interface r) { return ((ROMREGION_GETFLAGS(r) & ROMREGION_ERASEVALMASK) >> 16); }
+        public static u32 ROMREGION_GETDATATYPE(rom_entry_interface r) { return ROMREGION_GETFLAGS(r) & ROMREGION_DATATYPEMASK; }
+        public static bool ROMREGION_ISROMDATA(rom_entry_interface r) { return ROMREGION_GETDATATYPE(r) == ROMREGION_DATATYPEROM; }
+        public static bool ROMREGION_ISDISKDATA(rom_entry_interface r) { return ROMREGION_GETDATATYPE(r) == ROMREGION_DATATYPEDISK; }
 
         /* ----- per-ROM macros ----- */
         public static string ROM_GETNAME(rom_entry_interface r) { return r.name(); }
         //#define ROM_SAFEGETNAME(r)          (ROMENTRY_ISFILL(r) ? "fill" : ROMENTRY_ISCOPY(r) ? "copy" : ROM_GETNAME(r))
-        public static UInt32 ROM_GETOFFSET(rom_entry_interface r) { return r.get_offset(); }
-        public static UInt32 ROM_GETLENGTH(rom_entry_interface r) { return r.get_length(); }
-        public static UInt32 ROM_GETFLAGS(rom_entry_interface r) { return r.get_flags(); }
-        public static bool ROM_ISOPTIONAL(rom_entry_interface r) { return (ROM_GETFLAGS(r) & romentry_global.ROM_OPTIONALMASK) == romentry_global.ROM_OPTIONAL; }
-        public static UInt32 ROM_GETGROUPSIZE(rom_entry_interface r) { return ((ROM_GETFLAGS(r) & romentry_global.ROM_GROUPMASK) >> 8) + 1; }
-        public static UInt32 ROM_GETSKIPCOUNT(rom_entry_interface r) {return (ROM_GETFLAGS(r) & romentry_global.ROM_SKIPMASK) >> 12; }
-        public static bool ROM_ISREVERSED(rom_entry_interface r) { return (ROM_GETFLAGS(r) & romentry_global.ROM_REVERSEMASK) == romentry_global.ROM_REVERSE; }
-        public static UInt32 ROM_GETBITWIDTH(rom_entry_interface r) { return (((ROM_GETFLAGS(r) & romentry_global.ROM_BITWIDTHMASK) >> 16) + 8U * (((ROM_GETFLAGS(r) & romentry_global.ROM_BITWIDTHMASK) == 0) ? 1U : 0U)); }
-        public static UInt32 ROM_GETBITSHIFT(rom_entry_interface r) { return (ROM_GETFLAGS(r) & romentry_global.ROM_BITSHIFTMASK) >> 20; }
-        public static bool ROM_INHERITSFLAGS(rom_entry_interface r) { return (ROM_GETFLAGS(r) & romentry_global.ROM_INHERITFLAGSMASK) == romentry_global.ROM_INHERITFLAGS; }
-        public static UInt32 ROM_GETBIOSFLAGS(rom_entry_interface r) { return (ROM_GETFLAGS(r) & romentry_global.ROM_BIOSFLAGSMASK) >> 24; }
+        public static u32 ROM_GETOFFSET(rom_entry_interface r) { return r.get_offset(); }
+        public static u32 ROM_GETLENGTH(rom_entry_interface r) { return r.get_length(); }
+        public static u32 ROM_GETFLAGS(rom_entry_interface r) { return r.get_flags(); }
+        public static bool ROM_ISOPTIONAL(rom_entry_interface r) { return (ROM_GETFLAGS(r) & ROM_OPTIONALMASK) == ROM_OPTIONAL; }
+        public static u32 ROM_GETGROUPSIZE(rom_entry_interface r) { return ((ROM_GETFLAGS(r) & ROM_GROUPMASK) >> 8) + 1; }
+        public static u32 ROM_GETSKIPCOUNT(rom_entry_interface r) {return (ROM_GETFLAGS(r) & ROM_SKIPMASK) >> 12; }
+        public static bool ROM_ISREVERSED(rom_entry_interface r) { return (ROM_GETFLAGS(r) & ROM_REVERSEMASK) == ROM_REVERSE; }
+        public static u32 ROM_GETBITWIDTH(rom_entry_interface r) { return (((ROM_GETFLAGS(r) & ROM_BITWIDTHMASK) >> 16) + 8U * (((ROM_GETFLAGS(r) & ROM_BITWIDTHMASK) == 0) ? 1U : 0U)); }
+        public static u32 ROM_GETBITSHIFT(rom_entry_interface r) { return (ROM_GETFLAGS(r) & ROM_BITSHIFTMASK) >> 20; }
+        public static bool ROM_INHERITSFLAGS(rom_entry_interface r) { return (ROM_GETFLAGS(r) & ROM_INHERITFLAGSMASK) == ROM_INHERITFLAGS; }
+        public static u32 ROM_GETBIOSFLAGS(rom_entry_interface r) { return (ROM_GETFLAGS(r) & ROM_BIOSFLAGSMASK) >> 24; }
 
         /* ----- per-disk macros ----- */
-        public static UInt32 DISK_GETINDEX(rom_entry_interface r) { return r.get_offset(); }
-        public static bool DISK_ISREADONLY(rom_entry_interface r) { return (ROM_GETFLAGS(r) & romentry_global.DISK_READONLYMASK) == romentry_global.DISK_READONLY; }
-
-
-        /* load the ROMs and open the disk images associated with the given machine */
-
-
-        /* ----- Helpers ----- */
-
-        /***************************************************************************
-            HELPERS
-         ***************************************************************************/
-
-        public static Func<rom_entry> next_parent_system(game_driver system)  //auto next_parent_system(game_driver const &system)
-        {
-            return
-                    () =>  //[sys = &system, roms = std::vector<rom_entry>()] () mutable -> rom_entry const *
-                    {
-                        var sys = system;
-                        var roms = new std.vector<rom_entry>();
-
-                        if (sys == null)
-                            return null;
-                        int parent = driver_list.find(sys.parent);
-                        if (0 > parent)
-                        {
-                            sys = null;
-                            return null;
-                        }
-                        else
-                        {
-                            sys = driver_list.driver((size_t)parent);
-                            roms = rom_build_entries(sys.rom);
-                            return roms[0];
-                        }
-                    };
-        }
-
-
-        //auto next_parent_software(std::vector<software_info const *> const &parents)
-        //std::vector<std::string> make_software_searchpath(software_list_device &swlist, software_info const &swinfo, std::vector<software_info const *> &parents)
-
-
-        public static std.error_condition do_open_disk(emu_options options, std.vector<string> [] searchpath, Pointer<rom_entry> romp, chd_file chd, Func<rom_entry> next_parent)  //std::error_condition do_open_disk(const emu_options &options, std::initializer_list<std::reference_wrapper<const std::vector<std::string> > > searchpath, const rom_entry *romp, chd_file &chd, std::function<const rom_entry * ()> next_parent)
-        {
-            throw new emu_unimplemented();
-        }
-
-
-        /* ----- ROM iteration ----- */
-
-        /***************************************************************************
-            ROM LOADING
-        ***************************************************************************/
-
-        /* return pointer to the first ROM region within a source */
-        /*-------------------------------------------------
-            rom_first_region - return pointer to first ROM
-            region
-        -------------------------------------------------*/
-        public static Pointer<rom_entry> rom_first_region(device_t device)  //const rom_entry *rom_first_region(const device_t &device);
-        {
-            return rom_first_region(new Pointer<rom_entry>(device.rom_region_vector()));
-        }
-
-
-        public static Pointer<rom_entry> rom_first_region(Pointer<rom_entry> rompIn)  //const rom_entry *rom_first_region(const rom_entry *romp);
-        {
-            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
-
-            while (ROMENTRY_ISPARAMETER(romp[0]) || ROMENTRY_ISSYSTEM_BIOS(romp[0]) || ROMENTRY_ISDEFAULT_BIOS(romp[0]))
-                romp++;
-            return !ROMENTRY_ISEND(romp[0]) ? romp : null;
-        }
-
-
-        /* return pointer to the next ROM region within a source */
-        /*-------------------------------------------------
-            rom_next_region - return pointer to next ROM
-            region
-        -------------------------------------------------*/
-        public static Pointer<rom_entry> rom_next_region(Pointer<rom_entry> rompIn)  //const rom_entry *rom_next_region(const rom_entry *romp);
-        {
-            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
-
-            romp++;
-            while (!ROMENTRY_ISREGIONEND(romp[0]))
-                romp++;
-            while (ROMENTRY_ISPARAMETER(romp[0]))
-                romp++;
-            return ROMENTRY_ISEND(romp[0]) ? null : romp;
-        }
-
-        /* return pointer to the first ROM file within a region */
-        /*-------------------------------------------------
-            rom_first_file - return pointer to first ROM
-            file
-        -------------------------------------------------*/
-        public static Pointer<rom_entry> rom_first_file(Pointer<rom_entry> rompIn)  //const rom_entry *rom_first_file(const rom_entry *romp);
-        {
-            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
-
-            romp++;
-            while (!ROMENTRY_ISFILE(romp[0]) && !ROMENTRY_ISREGIONEND(romp[0]))
-                romp++;
-            return ROMENTRY_ISREGIONEND(romp[0]) ? null : romp;
-        }
-
-        /* return pointer to the next ROM file within a region */
-        /*-------------------------------------------------
-            rom_next_file - return pointer to next ROM
-            file
-        -------------------------------------------------*/
-        public static Pointer<rom_entry> rom_next_file(Pointer<rom_entry> rompIn)  //const rom_entry *rom_next_file(const rom_entry *romp);
-        {
-            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
-
-            romp++;
-            while (!ROMENTRY_ISFILE(romp[0]) && !ROMENTRY_ISREGIONEND(romp[0]))
-                romp++;
-            return ROMENTRY_ISREGIONEND(romp[0]) ? null : romp;
-        }
-
-        /* return the expected size of a file given the ROM description */
-        /*-------------------------------------------------
-            rom_file_size - return the expected size of a
-            file given the ROM description
-        -------------------------------------------------*/
-        public static u32 rom_file_size(Pointer<rom_entry> rompIn)  //u32 rom_file_size(const rom_entry *romp);
-        {
-            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
-
-            u32 maxlength = 0;
-
-            /* loop until we run out of reloads */
-            do
-            {
-                /* loop until we run out of continues/ignores */
-                u32 curlength = ROM_GETLENGTH(romp[0]);
-                romp++;
-                while (ROMENTRY_ISCONTINUE(romp[0]) || ROMENTRY_ISIGNORE(romp[0]))
-                {
-                    curlength += ROM_GETLENGTH(romp[0]);
-                    romp++;
-                }
-
-                /* track the maximum length */
-                maxlength = std.max(maxlength, curlength);
-            }
-            while (ROMENTRY_ISRELOAD(romp[0]));
-
-            return maxlength;
-        }
-
-
-        /* return pointer to the first per-game parameter */
-        /*-------------------------------------------------
-            rom_first_parameter - return pointer to the first
-            per-game parameter
-        -------------------------------------------------*/
-        public static Pointer<rom_entry> rom_first_parameter(device_t device)
-        {
-            Pointer<rom_entry> romp = new Pointer<rom_entry>(device.rom_region_vector());
-            while (romp != null && romp.Count > 0 && !ROMENTRY_ISEND(romp[0]) && !ROMENTRY_ISPARAMETER(romp[0]))
-                romp++;
-
-            return (romp != null && romp.Count > 0 && !ROMENTRY_ISEND(romp[0])) ? romp : null;
-        } 
-
-
-        /* return pointer to the next per-game parameter */
-        /*-------------------------------------------------
-            rom_next_parameter - return pointer to the next
-            per-game parameter
-        -------------------------------------------------*/
-        public static Pointer<rom_entry> rom_next_parameter(Pointer<rom_entry> rompIn)
-        {
-            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
-
-            romp++;
-            while (!ROMENTRY_ISREGIONEND(romp[0]) && !ROMENTRY_ISPARAMETER(romp[0]))
-                romp++;
-
-            return ROMENTRY_ISEND(romp[0]) ? null : romp;
-        }
-
-
-        // builds a rom_entry vector from a tiny_rom_entry array
-        // -------------------------------------------------
-        // rom_build_entries - builds a rom_entry vector
-        // from a tiny_rom_entry array
-        // -------------------------------------------------
-        public static std.vector<rom_entry> rom_build_entries(Pointer<tiny_rom_entry> tinyentries)
-        {
-            std.vector<rom_entry> result = new std.vector<rom_entry>();
-
-            if (tinyentries != null)
-            {
-                int i = 0;
-                do
-                {
-                    result.emplace_back(new rom_entry(tinyentries[i]));
-                }
-                while (!ROMENTRY_ISEND(tinyentries[i++]));
-            }
-            else
-            {
-                tiny_rom_entry end_entry = new tiny_rom_entry(null, null, 0, 0, romentry_global.ROMENTRYTYPE_END);
-                result.emplace_back(new rom_entry(end_entry));
-            }
-
-            return result;
-        }
+        public static u32 DISK_GETINDEX(rom_entry_interface r) { return r.get_offset(); }
+        public static bool DISK_ISREADONLY(rom_entry_interface r) { return (ROM_GETFLAGS(r) & DISK_READONLYMASK) == DISK_READONLY; }
     }
 
 
@@ -412,9 +210,9 @@ namespace mame
             //constexpr bool        is_inverted()     const { return (flags & ROMREGION_INVERTMASK) == ROMREGION_INVERT; }
             //constexpr bool        is_erase()        const { return (flags & ROMREGION_ERASEMASK) == ROMREGION_ERASE; }
             //constexpr u32         get_eraseval()    const { return (flags & ROMREGION_ERASEVALMASK) >> 16; }
-            static UInt32 get_datatype(tiny_rom_entry rom) { return rom.flags & romentry_global.ROMREGION_DATATYPEMASK; }
+            static u32 get_datatype(tiny_rom_entry rom) { return rom.flags & ROMREGION_DATATYPEMASK; }
             //constexpr bool        is_romdata()      const { return get_datatype() == ROMREGION_DATATYPEROM; }
-            public static bool is_diskdata(tiny_rom_entry rom) { return get_datatype(rom) == romentry_global.ROMREGION_DATATYPEDISK; }
+            public static bool is_diskdata(tiny_rom_entry rom) { return get_datatype(rom) == ROMREGION_DATATYPEDISK; }
 
             //files get_files() const { return files(static_cast<tiny_rom_entry const *>(this) + 1); }
         }
@@ -454,9 +252,9 @@ namespace mame
                     while (m_data != null && m_data[m_dataOffset] != null)
                     {
                         ++m_dataOffset;
-                        if (romload_global.ROMENTRY_ISREGION(m_data[m_dataOffset]))
+                        if (ROMENTRY_ISREGION(m_data[m_dataOffset]))
                             break;
-                        else if (romload_global.ROMENTRY_ISEND(m_data[m_dataOffset]))
+                        else if (ROMENTRY_ISEND(m_data[m_dataOffset]))
                             m_data = null;
                     }
                     //return *this;
@@ -478,9 +276,9 @@ namespace mame
 
 
                 m_dataOffset = 0;
-                while (m_data[m_dataOffset] != null && !romload_global.ROMENTRY_ISREGION(m_data[m_dataOffset]))
+                while (m_data[m_dataOffset] != null && !ROMENTRY_ISREGION(m_data[m_dataOffset]))
                 {
-                    if (romload_global.ROMENTRY_ISEND(m_data[m_dataOffset]))
+                    if (ROMENTRY_ISEND(m_data[m_dataOffset]))
                         m_data = null;
                     else
                         ++m_dataOffset;
@@ -751,21 +549,20 @@ namespace mame
         void determine_bios_rom(device_t device, string specbios)
         {
             // default is applied by the device at config complete time
-            if (!string.IsNullOrEmpty(specbios) && g.core_stricmp(specbios, "default") != 0)  // (specbios && *specbios && core_stricmp(specbios, "default"))
+            if (!string.IsNullOrEmpty(specbios) && core_stricmp(specbios, "default") != 0)  // (specbios && *specbios && core_stricmp(specbios, "default"))
             {
                 bool found = false;
                 foreach (rom_entry rom in device.rom_region_vector())
                 {
-                    if (romload_global.ROMENTRY_ISSYSTEM_BIOS(rom))
+                    if (ROMENTRY_ISSYSTEM_BIOS(rom))
                     {
-                        string biosname = romload_global.ROM_GETNAME(rom);
-                        int bios_flags = (int)romload_global.ROM_GETBIOSFLAGS(rom);
+                        string biosname = ROM_GETNAME(rom);
+                        int bios_flags = (int)ROM_GETBIOSFLAGS(rom);
                         string bios_number;
 
                         // Allow '-bios n' to still be used
-                        //sprintf(bios_number, "%d", bios_flags - 1);
-                        bios_number = string.Format("{0}", bios_flags - 1);
-                        if (g.core_stricmp(bios_number, specbios) == 0 || g.core_stricmp(biosname, specbios) == 0)
+                        sprintf(out bios_number, "{0}", bios_flags - 1);
+                        if (core_stricmp(bios_number, specbios) == 0 || core_stricmp(biosname, specbios) == 0)
                         {
                             found = true;
                             device.set_system_bios((u8)bios_flags);
@@ -803,14 +600,14 @@ namespace mame
             /* loop over regions, then over files */
             foreach (device_t device in new device_enumerator(machine().config().root_device()))
             {
-                for (region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+                for (region = rom_first_region(device); region != null; region = rom_next_region(region))
                 {
-                    for (rom = romload_global.rom_first_file(region); rom != null; rom = romload_global.rom_next_file(rom))
+                    for (rom = rom_first_file(region); rom != null; rom = rom_next_file(rom))
                     {
-                        if (romload_global.ROM_GETBIOSFLAGS(rom[0]) == 0 || romload_global.ROM_GETBIOSFLAGS(rom[0]) == device.system_bios())
+                        if (ROM_GETBIOSFLAGS(rom.op) == 0 || ROM_GETBIOSFLAGS(rom.op) == device.system_bios())
                         {
                             m_romstotal++;
-                            m_romstotalsize += romload_global.rom_file_size(rom);
+                            m_romstotalsize += rom_file_size(rom);
                         }
                     }
                 }
@@ -826,7 +623,7 @@ namespace mame
         {
             while (length-- > 0)
             {
-                base_[0] = (byte)machine().rand();
+                base_[0] = (u8)machine().rand();
                 base_++;
             }
         }
@@ -855,27 +652,27 @@ namespace mame
 
             bool is_chd_error = is_chd && chderr != std.errc.no_such_file_or_directory;
             if (is_chd_error)
-                m_errorstring += g.string_format("{0} CHD ERROR: {1}\n", name, chderr.message());
+                m_errorstring += string_format("{0} CHD ERROR: {1}\n", name, chderr.message());
 
-            if (romload_global.ROM_ISOPTIONAL(romp))
+            if (ROM_ISOPTIONAL(romp))
             {
                 // optional files are okay
                 if (!is_chd_error)
-                    m_errorstring += string.Format("OPTIONAL {0} NOT FOUND{1}\n", name, tried);
+                    m_errorstring += string_format("OPTIONAL {0} NOT FOUND{1}\n", name, tried);
                 m_warnings++;
             }
             else if (new util.hash_collection(romp.hashdata()).flag(util.hash_collection.FLAG_NO_DUMP))
             {
                 // no good dumps are okay
                 if (!is_chd_error)
-                    m_errorstring += string.Format("{0} NOT FOUND (NO GOOD DUMP KNOWN){1}\n", name, tried);
+                    m_errorstring += string_format("{0} NOT FOUND (NO GOOD DUMP KNOWN){1}\n", name, tried);
                 m_knownbad++;
             }
             else
             {
                 // anything else is bad
                 if (!is_chd_error)
-                    m_errorstring += string.Format("{0} NOT FOUND{1}\n", name, tried);
+                    m_errorstring += string_format("{0} NOT FOUND{1}\n", name, tried);
                 m_errors++;
             }
         }
@@ -888,8 +685,8 @@ namespace mame
         -------------------------------------------------*/
         void dump_wrong_and_correct_checksums(util.hash_collection hashes, util.hash_collection acthashes)
         {
-            m_errorstring += string.Format("    EXPECTED: {0}\n", hashes.macro_string());
-            m_errorstring += string.Format("       FOUND: {0}\n", acthashes.macro_string());
+            m_errorstring += string_format("    EXPECTED: {0}\n", hashes.macro_string());
+            m_errorstring += string_format("       FOUND: {0}\n", acthashes.macro_string());
         }
 
 
@@ -907,14 +704,14 @@ namespace mame
             u64 actlength = file.size();
             if (explength != actlength)
             {
-                m_errorstring += string.Format("{0} WRONG LENGTH (expected: {1} found: {2})\n", name, explength, actlength);  // %08x found: %08x
+                m_errorstring += string_format("{0} WRONG LENGTH (expected: {1} found: {2})\n", name, explength, actlength);  // %08x found: %08x
                 m_warnings++;
             }
 
             if (hashes.flag(util.hash_collection.FLAG_NO_DUMP))
             {
                 // If there is no good dump known, write it
-                m_errorstring += string.Format("{0} NO GOOD DUMP KNOWN\n", name);
+                m_errorstring += string_format("{0} NO GOOD DUMP KNOWN\n", name);
                 m_knownbad++;
             }
             else
@@ -927,14 +724,14 @@ namespace mame
                     util.hash_collection all_acthashes = (acthashes.hash_types() == util.hash_collection.HASH_TYPES_ALL)
                             ? acthashes
                             : file.hashes(util.hash_collection.HASH_TYPES_ALL);
-                    m_errorstring += util.string_format("{0} WRONG CHECKSUMS:\n", name);
+                    m_errorstring += string_format("{0} WRONG CHECKSUMS:\n", name);
                     dump_wrong_and_correct_checksums(hashes, all_acthashes);
                     m_warnings++;
                 }
                 else if (hashes.flag(util.hash_collection.FLAG_BAD_DUMP))
                 {
                     // If it matches, but it is actually a bad dump, write it
-                    m_errorstring += util.string_format("{0} ROM NEEDS REDUMP\n", name);
+                    m_errorstring += string_format("{0} ROM NEEDS REDUMP\n", name);
                     m_knownbad++;
                 }
             }
@@ -972,15 +769,15 @@ namespace mame
             if (m_errors != 0)
             {
                 /* create the error message and exit fatally */
-                g.osd_printf_error("{0}", m_errorstring);
-                throw new emu_fatalerror(g.EMU_ERR_MISSING_FILES, "Required files are missing, the machine cannot be run.");
+                osd_printf_error("{0}", m_errorstring);
+                throw new emu_fatalerror(EMU_ERR_MISSING_FILES, "Required files are missing, the machine cannot be run.");
             }
 
             /* if we had warnings, output them, but continue */
             if (m_warnings != 0 || m_knownbad != 0)
             {
                 m_errorstring += "WARNING: the machine might not run correctly.";
-                g.osd_printf_warning("{0}\n", m_errorstring);
+                osd_printf_warning("{0}\n", m_errorstring);
             }
         }
 
@@ -996,7 +793,7 @@ namespace mame
                 return;
 
             LOG("+ datawidth={0}bit endian={1}\n", region.bitwidth(),
-                    region.endianness() == g.ENDIANNESS_LITTLE ? "little" : "big");
+                    region.endianness() == ENDIANNESS_LITTLE ? "little" : "big");
 
             /* if the region is inverted, do that now */
             if (invert)
@@ -1010,7 +807,7 @@ namespace mame
             }
 
             /* swap the endianness if we need to */
-            if (region.bytewidth() > 1 && region.endianness() != g.ENDIANNESS_NATIVE)
+            if (region.bytewidth() > 1 && region.endianness() != ENDIANNESS_NATIVE)
             {
                 LOG("+ Byte swapping region\n");
                 int datawidth = region.bytewidth();
@@ -1018,7 +815,7 @@ namespace mame
                 for (int i = 0; i < region.bytes(); i += datawidth)
                 {
                     MemoryU8 temp = new MemoryU8(8, true);  //u8 temp[8];
-                    std.memcpy(new Pointer<u8>(temp), base_, (UInt32)datawidth);  //memcpy(temp, base, datawidth);
+                    std.memcpy(new Pointer<u8>(temp), base_, (u32)datawidth);  //memcpy(temp, base, datawidth);
                     for (int j = datawidth - 1; j >= 0; j--)
                     {
                         base_[0] = temp[j];  base_++;  //*base++ = temp[j];
@@ -1035,22 +832,22 @@ namespace mame
         emu_file open_rom_file(std.vector<string> [] searchpath, Pointer<rom_entry> romp, std.vector<string> tried_file_names, bool from_list)  //std::unique_ptr<emu_file> rom_load_manager::open_rom_file(std::initializer_list<std::reference_wrapper<const std::vector<std::string> > > searchpath, const rom_entry *romp, std::vector<std::string> &tried_file_names, bool from_list)
         {
             std.error_condition filerr = std.errc.no_such_file_or_directory;
-            u32 romsize = romload_global.rom_file_size(romp);
+            u32 romsize = rom_file_size(romp);
             tried_file_names.clear();
 
             // update status display
-            display_loading_rom_message(romload_global.ROM_GETNAME(romp[0]), from_list);
+            display_loading_rom_message(ROM_GETNAME(romp.op), from_list);
 
             // extract CRC to use for searching
             u32 crc = 0;
-            bool has_crc = new util.hash_collection(romp[0].hashdata()).crc(out crc);
+            bool has_crc = new util.hash_collection(romp.op.hashdata()).crc(out crc);
 
             // attempt reading up the chain through the parents
             // it also automatically attempts any kind of load by checksum supported by the archives.
             emu_file result = null;
             foreach (std.vector<string> paths in searchpath)
             {
-                result = open_rom_file(paths, tried_file_names, has_crc, crc, g.ROM_GETNAME(romp[0]), out filerr);
+                result = open_rom_file(paths, tried_file_names, has_crc, crc, ROM_GETNAME(romp.op), out filerr);
                 if (result != null)
                     break;
             }
@@ -1073,7 +870,7 @@ namespace mame
             tried.AddRange(paths);  //tried.insert(tried.end(), paths.begin(), paths.end());
 
             // attempt to open the file
-            emu_file result = new emu_file(machine().options().media_path(), paths, g.OPEN_FLAG_READ);
+            emu_file result = new emu_file(machine().options().media_path(), paths, OPEN_FLAG_READ);
             result.set_restrict_to_mediapath(1);
             if (has_crc)
                 filerr = result.open(name, crc);
@@ -1095,10 +892,10 @@ namespace mame
         int rom_fread(emu_file file, Pointer<u8> buffer, int length, rom_entry parent_region)  //int rom_fread(emu_file *file, u8 *buffer, int length, const rom_entry *parent_region);
         {
             if (file != null) // files just pass through
-                return (int)file.read(buffer, (UInt32)length);
+                return (int)file.read(buffer, (u32)length);
 
-            if (!romload_global.ROMREGION_ISERASE(parent_region)) // otherwise, fill with randomness unless it was already specifically erased
-                fill_random(buffer, (UInt32)length);
+            if (!ROMREGION_ISERASE(parent_region)) // otherwise, fill with randomness unless it was already specifically erased
+                fill_random(buffer, (u32)length);
 
             return length;
         }
@@ -1110,26 +907,26 @@ namespace mame
         -------------------------------------------------*/
         int read_rom_data(emu_file file, rom_entry parent_region, rom_entry romp)
         {
-            int datashift = (int)romload_global.ROM_GETBITSHIFT(romp);
-            int datamask = ((1 << (int)romload_global.ROM_GETBITWIDTH(romp)) - 1) << datashift;
-            int numbytes = (int)romload_global.ROM_GETLENGTH(romp);
-            int groupsize = (int)romload_global.ROM_GETGROUPSIZE(romp);
-            int skip = (int)romload_global.ROM_GETSKIPCOUNT(romp);
-            int reversed = romload_global.ROM_ISREVERSED(romp) ? 1 : 0;
+            int datashift = (int)ROM_GETBITSHIFT(romp);
+            int datamask = ((1 << (int)ROM_GETBITWIDTH(romp)) - 1) << datashift;
+            int numbytes = (int)ROM_GETLENGTH(romp);
+            int groupsize = (int)ROM_GETGROUPSIZE(romp);
+            int skip = (int)ROM_GETSKIPCOUNT(romp);
+            int reversed = ROM_ISREVERSED(romp) ? 1 : 0;
             int numgroups = (numbytes + groupsize - 1) / groupsize;
-            Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
+            Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
 
             u32 tempbufsize;
             int i;
 
-            LOG("Loading ROM data: offs={0} len={1} mask={2} group={3} skip={4} reverse={5}\n", romload_global.ROM_GETOFFSET(romp), numbytes, datamask, groupsize, skip, reversed);  // %X len=%X mask=%02X group=%d skip=%d reverse=%d\n
+            LOG("Loading ROM data: offs={0} len={1} mask={2} group={3} skip={4} reverse={5}\n", ROM_GETOFFSET(romp), numbytes, datamask, groupsize, skip, reversed);  // %X len=%X mask=%02X group=%d skip=%d reverse=%d\n
 
             /* make sure the length was an even multiple of the group size */
             if (numbytes % groupsize != 0)
-                g.osd_printf_warning("Warning in RomModule definition: {0} length not an even multiple of group size\n", romp.name());
+                osd_printf_warning("Warning in RomModule definition: {0} length not an even multiple of group size\n", romp.name());
 
             /* make sure we only fill within the region space */
-            if (romload_global.ROM_GETOFFSET(romp) + numgroups * groupsize + (numgroups - 1) * skip > m_region.bytes())
+            if (ROM_GETOFFSET(romp) + numgroups * groupsize + (numgroups - 1) * skip > m_region.bytes())
                 throw new emu_fatalerror("Error in RomModule definition: {0} out of memory region space\n", romp.name());
 
             /* make sure the length was valid */
@@ -1141,7 +938,7 @@ namespace mame
                 return rom_fread(file, base_, numbytes, parent_region);
 
             /* use a temporary buffer for complex loads */
-            tempbufsize = Math.Min(romload_global.TEMPBUFFER_MAX_SIZE, (UInt32)numbytes);
+            tempbufsize = std.min(TEMPBUFFER_MAX_SIZE, (u32)numbytes);
             MemoryU8 tempbuf = new MemoryU8((int)tempbufsize, true);
 
             /* chunky reads for complex loads */
@@ -1250,7 +1047,7 @@ namespace mame
             }
 
             LOG("  All done\n");
-            return (int)romload_global.ROM_GETLENGTH(romp);
+            return (int)ROM_GETLENGTH(romp);
         }
 
 
@@ -1259,12 +1056,12 @@ namespace mame
         -------------------------------------------------*/
         void fill_rom_data(rom_entry romp)
         {
-            u32 numbytes = romload_global.ROM_GETLENGTH(romp);
-            int skip = (int)romload_global.ROM_GETSKIPCOUNT(romp);
-            Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
+            u32 numbytes = ROM_GETLENGTH(romp);
+            int skip = (int)ROM_GETSKIPCOUNT(romp);
+            Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
 
             // make sure we fill within the region space
-            if (romload_global.ROM_GETOFFSET(romp) + numbytes > m_region.bytes())
+            if (ROM_GETOFFSET(romp) + numbytes > m_region.bytes())
                 throw new emu_fatalerror("Error in RomModule definition: FILL out of memory region space\n");
 
             // make sure the length was valid
@@ -1272,7 +1069,7 @@ namespace mame
                 throw new emu_fatalerror("Error in RomModule definition: FILL has an invalid length\n");
 
             // for fill bytes, the byte that gets filled is the first byte of the hashdata string
-            u8 fill_byte = (u8)Convert.ToInt64(romp.hashdata());  //u8 fill_byte = u8(strtol(romp->hashdata().c_str(), nullptr, 0));
+            u8 fill_byte = romp.hashdata().StartsWith("0x") ? (u8)Convert.ToInt64(romp.hashdata(), 16) : (u8)Convert.ToInt64(romp.hashdata());  //u8 fill_byte = u8(strtol(romp->hashdata().c_str(), nullptr, 0));
 
             // fill the data (filling value is stored in place of the hashdata)
             if (skip != 0)
@@ -1292,13 +1089,13 @@ namespace mame
         -------------------------------------------------*/
         void copy_rom_data(rom_entry romp)
         {
-            Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)romload_global.ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
+            Pointer<u8> base_ = new Pointer<u8>(m_region.base_(), (int)ROM_GETOFFSET(romp));  //u8 *base = m_region->base() + ROM_GETOFFSET(romp);
             string srcrgntag = romp.name();
-            u32 numbytes = romload_global.ROM_GETLENGTH(romp);
+            u32 numbytes = ROM_GETLENGTH(romp);
             u32 srcoffs = (u32)Convert.ToInt64(romp.hashdata());  /* srcoffset in place of hashdata */  //u32 srcoffs = u32(strtol(romp->hashdata().c_str(), nullptr, 0));  /* srcoffset in place of hashdata */
 
             // make sure we copy within the region space
-            if (romload_global.ROM_GETOFFSET(romp) + numbytes > m_region.bytes())
+            if (ROM_GETOFFSET(romp) + numbytes > m_region.bytes())
                 throw new emu_fatalerror("Error in RomModule definition: COPY out of target memory region space\n");
 
             // make sure the length was valid
@@ -1329,46 +1126,46 @@ namespace mame
             std.vector<string> tried_file_names = new std.vector<string>();
 
             // loop until we hit the end of this region
-            while (!romload_global.ROMENTRY_ISREGIONEND(romp[0]))
+            while (!ROMENTRY_ISREGIONEND(romp.op))
             {
                 tried_file_names.clear();
 
-                if (romload_global.ROMENTRY_ISCONTINUE(romp[0]))
+                if (ROMENTRY_ISCONTINUE(romp.op))
                     throw new emu_fatalerror("Error in RomModule definition: ROM_CONTINUE not preceded by ROM_LOAD\n");
 
-                if (romload_global.ROMENTRY_ISIGNORE(romp[0]))
+                if (ROMENTRY_ISIGNORE(romp.op))
                     throw new emu_fatalerror("Error in RomModule definition: ROM_IGNORE not preceded by ROM_LOAD\n");
 
-                if (romload_global.ROMENTRY_ISRELOAD(romp[0]))
+                if (ROMENTRY_ISRELOAD(romp.op))
                     throw new emu_fatalerror("Error in RomModule definition: ROM_RELOAD not preceded by ROM_LOAD\n");
 
-                if (romload_global.ROMENTRY_ISFILL(romp[0]))
+                if (ROMENTRY_ISFILL(romp.op))
                 {
-                    if (g.ROM_GETBIOSFLAGS(romp[0]) == 0 || g.ROM_GETBIOSFLAGS(romp[0]) == bios)
-                        fill_rom_data(romp[0]);
+                    if (ROM_GETBIOSFLAGS(romp.op) == 0 || ROM_GETBIOSFLAGS(romp.op) == bios)
+                        fill_rom_data(romp.op);
 
                     romp++;
                 }
-                else if (romload_global.ROMENTRY_ISCOPY(romp[0]))
+                else if (ROMENTRY_ISCOPY(romp.op))
                 {
-                    copy_rom_data(romp[0]);
+                    copy_rom_data(romp.op);
                     romp++;
                 }
-                else if (romload_global.ROMENTRY_ISFILE(romp[0]))
+                else if (ROMENTRY_ISFILE(romp.op))
                 {
                     // handle files
-                    bool irrelevantbios = (romload_global.ROM_GETBIOSFLAGS(romp[0]) != 0) && (romload_global.ROM_GETBIOSFLAGS(romp[0]) != bios);
-                    rom_entry baserom = romp[0];
+                    bool irrelevantbios = (ROM_GETBIOSFLAGS(romp.op) != 0) && (ROM_GETBIOSFLAGS(romp.op) != bios);
+                    rom_entry baserom = romp.op;
                     int explength = 0;
 
                     // open the file if it is a non-BIOS or matches the current BIOS
-                    LOG("Opening ROM file: {0}\n", romload_global.ROM_GETNAME(romp[0]));
+                    LOG("Opening ROM file: {0}\n", ROM_GETNAME(romp.op));
                     emu_file file = null;
                     if (!irrelevantbios)
                     {
                         file = open_rom_file(searchpath, romp, tried_file_names, from_list);
                         if (file == null)
-                            handle_missing_file(romp[0], tried_file_names, new std.error_condition());
+                            handle_missing_file(romp.op, tried_file_names, new std.error_condition());
                     }
 
                     // loop until we run out of reloads
@@ -1377,23 +1174,23 @@ namespace mame
                         // loop until we run out of continues/ignores
                         do
                         {
-                            rom_entry modified_romp = romp[0]; // *romp++;
+                            rom_entry modified_romp = romp.op; // *romp++;
                             romp++;
                             //int readresult;
 
                             // handle flag inheritance
-                            if (!romload_global.ROM_INHERITSFLAGS(modified_romp))
+                            if (!ROM_INHERITSFLAGS(modified_romp))
                                 lastflags = modified_romp.get_flags();
                             else
-                                modified_romp.set_flags((modified_romp.get_flags() & ~romentry_global.ROM_INHERITEDFLAGS) | lastflags);
+                                modified_romp.set_flags((modified_romp.get_flags() & ~ROM_INHERITEDFLAGS) | lastflags);
 
-                            explength += (int)romload_global.ROM_GETLENGTH(modified_romp);
+                            explength += (int)ROM_GETLENGTH(modified_romp);
 
                             // attempt to read using the modified entry
-                            if (!romload_global.ROMENTRY_ISIGNORE(modified_romp) && !irrelevantbios)
+                            if (!ROMENTRY_ISIGNORE(modified_romp) && !irrelevantbios)
                                 /*readresult = */read_rom_data(file, parent_region, modified_romp);
                         }
-                        while (romload_global.ROMENTRY_ISCONTINUE(romp[0]) || romload_global.ROMENTRY_ISIGNORE(romp[0]));
+                        while (ROMENTRY_ISCONTINUE(romp.op) || ROMENTRY_ISIGNORE(romp.op));
 
                         // if this was the first use of this file, verify the length and CRC
                         if (baserom != null)
@@ -1405,12 +1202,12 @@ namespace mame
 
                         // re-seek to the start and clear the baserom so we don't reverify
                         if (file != null)
-                            file.seek(0, g.SEEK_SET);
+                            file.seek(0, SEEK_SET);
 
                         baserom = null;
                         explength = 0;
                     }
-                    while (romload_global.ROMENTRY_ISRELOAD(romp[0]));
+                    while (ROMENTRY_ISRELOAD(romp.op));
 
                     // close the file
                     if (file != null)
@@ -1450,24 +1247,24 @@ namespace mame
 #endif
 
             /* loop until we hit the end of this region */
-            for ( ; !romload_global.ROMENTRY_ISREGIONEND(romp[0]); romp++)
+            for ( ; !ROMENTRY_ISREGIONEND(romp.op); romp++)
             {
                 /* handle files */
-                if (romload_global.ROMENTRY_ISFILE(romp[0]))
+                if (ROMENTRY_ISFILE(romp.op))
                 {
                     var chd = new open_chd(regiontag);
                     std.error_condition err;
 
                     /* make the filename of the source */
-                    string filename = romp[0].name() + ".chd";
+                    string filename = romp.op.name() + ".chd";
 
                     /* first open the source drive */
                     // FIXME: we've lost the ability to search parents here
                     LOG("Opening disk image: {0}\n", filename);
-                    err = romload_global.do_open_disk(machine().options(), searchpath, romp, chd.orig_chd(), next_parent);
+                    err = do_open_disk(machine().options(), searchpath, romp, chd.orig_chd(), next_parent);
                     if (err)
                     {
-                        handle_missing_file(romp[0], new std.vector<string>(), err);
+                        handle_missing_file(romp.op, new std.vector<string>(), err);
                         chd = null;
                         continue;
                     }
@@ -1477,27 +1274,27 @@ namespace mame
                     acthashes.add_sha1(chd.orig_chd().sha1());
 
                     /* verify the hash */
-                    util.hash_collection hashes = new util.hash_collection(romp[0].hashdata());
+                    util.hash_collection hashes = new util.hash_collection(romp.op.hashdata());
                     if (hashes != acthashes)
                     {
-                        m_errorstring += string.Format("{0} WRONG CHECKSUMS:\n", filename);
+                        m_errorstring += string_format("{0} WRONG CHECKSUMS:\n", filename);
                         dump_wrong_and_correct_checksums(hashes, acthashes);
                         m_warnings++;
                     }
                     else if (hashes.flag(util.hash_collection.FLAG_BAD_DUMP))
                     {
-                        m_errorstring += string.Format("{0} CHD NEEDS REDUMP\n", filename);
+                        m_errorstring += string_format("{0} CHD NEEDS REDUMP\n", filename);
                         m_knownbad++;
                     }
 
                     /* if not read-only, make the diff file */
-                    if (!romload_global.DISK_ISREADONLY(romp[0]))
+                    if (!DISK_ISREADONLY(romp.op))
                     {
                         /* try to open or create the diff */
-                        err = open_disk_diff(machine().options(), romp[0], chd.orig_chd(), chd.diff_chd());
+                        err = open_disk_diff(machine().options(), romp.op, chd.orig_chd(), chd.diff_chd());
                         if (err)
                         {
-                            m_errorstring += g.string_format("{0} DIFF CHD ERROR: {1}\n", filename, err.message());
+                            m_errorstring += string_format("{0} DIFF CHD ERROR: {1}\n", filename, err.message());
                             m_errors++;
                             chd = null;
                             continue;
@@ -1505,7 +1302,7 @@ namespace mame
                     }
 
                     /* we're okay, add to the list of disks */
-                    LOG("Assigning to handle {0}\n", romload_global.DISK_GETINDEX(romp[0]));
+                    LOG("Assigning to handle {0}\n", DISK_GETINDEX(romp.op));
                     m_chd_list.Add(chd);
                 }
             }
@@ -1528,10 +1325,10 @@ namespace mame
                     int buswidth;
 
                     /* set the endianness */
-                    if (spaceconfig.endianness() == g.ENDIANNESS_LITTLE)
-                        endian = g.ENDIANNESS_LITTLE;
+                    if (spaceconfig.endianness() == ENDIANNESS_LITTLE)
+                        endian = ENDIANNESS_LITTLE;
                     else
-                        endian = g.ENDIANNESS_BIG;
+                        endian = ENDIANNESS_BIG;
 
                     /* set the width */
                     buswidth = spaceconfig.data_width();
@@ -1561,29 +1358,29 @@ namespace mame
                 searchpath.clear();
                 Func<rom_entry> next_parent = null;  //std::function<const rom_entry * ()> next_parent;
 
-                for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+                for (Pointer<rom_entry> region = rom_first_region(device); region != null; region = rom_next_region(region))
                 {
-                    u32 regionlength = romload_global.ROMREGION_GETLENGTH(region[0]);
+                    u32 regionlength = ROMREGION_GETLENGTH(region.op);
 
-                    string regiontag = device.subtag(region[0].name());
+                    string regiontag = device.subtag(region.op.name());
                     LOG("Processing region \"{0}\" (length={1})\n", regiontag, regionlength);
 
                     // the first entry must be a region
-                    g.assert(romload_global.ROMENTRY_ISREGION(region[0]));
+                    assert(ROMENTRY_ISREGION(region.op));
 
-                    if (romload_global.ROMREGION_ISROMDATA(region[0]))
+                    if (ROMREGION_ISROMDATA(region.op))
                     {
                         // if this is a device region, override with the device width and endianness
-                        u8 width = (byte)(romload_global.ROMREGION_GETWIDTH(region[0]) / 8);
-                        endianness_t endianness = romload_global.ROMREGION_ISBIGENDIAN(region[0]) ? g.ENDIANNESS_BIG : g.ENDIANNESS_LITTLE;
+                        u8 width = (u8)(ROMREGION_GETWIDTH(region.op) / 8);
+                        endianness_t endianness = ROMREGION_ISBIGENDIAN(region.op) ? ENDIANNESS_BIG : ENDIANNESS_LITTLE;
                         normalize_flags_for_device(regiontag, ref width, ref endianness);
 
                         // remember the base and length
                         m_region = machine().memory().region_alloc(regiontag, regionlength, width, endianness);
                         LOG("Allocated {0} bytes @ {1}\n", m_region.bytes(), m_region.name());  // %X bytes @ %p\n
 
-                        if (romload_global.ROMREGION_ISERASE(region[0])) // clear the region if it's requested
-                            std.memset(new Pointer<u8>(m_region.base_()), (u8)romload_global.ROMREGION_GETERASEVAL(region[0]), m_region.bytes());
+                        if (ROMREGION_ISERASE(region.op)) // clear the region if it's requested
+                            std.memset(new Pointer<u8>(m_region.base_()), (u8)ROMREGION_GETERASEVAL(region.op), m_region.bytes());
                         else if (m_region.bytes() <= 0x400000) // or if it's sufficiently small (<= 4MB)
                             std.memset(new Pointer<u8>(m_region.base_()), (u8)0, m_region.bytes());
 
@@ -1595,19 +1392,19 @@ namespace mame
                         // now process the entries in the region
                         if (searchpath.empty())
                             searchpath = device.searchpath();
-                        g.assert(!searchpath.empty());
-                        process_rom_entries(new std.vector<string> [] { searchpath }, device.system_bios(), region[0], region + 1, false);  //process_rom_entries({ searchpath }, device.system_bios(), region, region + 1, false);
+                        assert(!searchpath.empty());
+                        process_rom_entries(new std.vector<string> [] { searchpath }, device.system_bios(), region.op, region + 1, false);  //process_rom_entries({ searchpath }, device.system_bios(), region, region + 1, false);
                     }
-                    else if (romload_global.ROMREGION_ISDISKDATA(region[0]))
+                    else if (ROMREGION_ISDISKDATA(region.op))
                     {
                         if (searchpath.empty())
                             searchpath = device.searchpath();
-                        g.assert(!searchpath.empty());
+                        assert(!searchpath.empty());
                         if (next_parent == null)
                         {
                             driver_device driver = (driver_device)device;  //driver_device const *const driver(dynamic_cast<driver_device const *>(&device));
                             if (driver != null)
-                                next_parent = romload_global.next_parent_system(driver.system());
+                                next_parent = next_parent_system(driver.system());
                             else
                                 next_parent = () => { return null; };
                         }
@@ -1619,19 +1416,19 @@ namespace mame
             // now go back and post-process all the regions
             foreach (device_t device in deviter)
             {
-                for (Pointer<rom_entry> region = romload_global.rom_first_region(device); region != null; region = romload_global.rom_next_region(region))
+                for (Pointer<rom_entry> region = rom_first_region(device); region != null; region = rom_next_region(region))
                 {
-                    region_post_process(device.memregion(region[0].name()), romload_global.ROMREGION_ISINVERTED(region[0]));
+                    region_post_process(device.memregion(region.op.name()), ROMREGION_ISINVERTED(region.op));
                 }
             }
 
             // and finally register all per-game parameters
             foreach (device_t device in deviter)
             {
-                for (Pointer<rom_entry> param = romload_global.rom_first_parameter(device); param != null; param = romload_global.rom_next_parameter(param))
+                for (Pointer<rom_entry> param = rom_first_parameter(device); param != null; param = rom_next_parameter(param))
                 {
-                    string regiontag = device.subtag(param[0].name());
-                    machine().parameters().add(regiontag, param[0].hashdata());
+                    string regiontag = device.subtag(param.op.name());
+                    machine().parameters().add(regiontag, param.op.hashdata());
                 }
             }
         }
@@ -1655,7 +1452,224 @@ namespace mame
             //    fclose(f);
             //}
 
-            g.osd_printf_info(format, args);
+            osd_printf_info(format, args);
         }
+    }
+
+
+    public static partial class romload_global
+    {
+        /* ----- Helpers ----- */
+
+        /***************************************************************************
+            HELPERS
+         ***************************************************************************/
+
+        public static Func<rom_entry> next_parent_system(game_driver system)  //auto next_parent_system(game_driver const &system)
+        {
+            return
+                    () =>  //[sys = &system, roms = std::vector<rom_entry>()] () mutable -> rom_entry const *
+                    {
+                        var sys = system;
+                        var roms = new std.vector<rom_entry>();
+
+                        if (sys == null)
+                            return null;
+                        int parent = driver_list.find(sys.parent);
+                        if (0 > parent)
+                        {
+                            sys = null;
+                            return null;
+                        }
+                        else
+                        {
+                            sys = driver_list.driver((size_t)parent);
+                            roms = rom_build_entries(sys.rom);
+                            return roms[0];
+                        }
+                    };
+        }
+
+
+        //auto next_parent_software(std::vector<software_info const *> const &parents)
+        //std::vector<std::string> make_software_searchpath(software_list_device &swlist, software_info const &swinfo, std::vector<software_info const *> &parents)
+
+
+        public static std.error_condition do_open_disk(emu_options options, std.vector<string> [] searchpath, Pointer<rom_entry> romp, chd_file chd, Func<rom_entry> next_parent)  //std::error_condition do_open_disk(const emu_options &options, std::initializer_list<std::reference_wrapper<const std::vector<std::string> > > searchpath, const rom_entry *romp, chd_file &chd, std::function<const rom_entry * ()> next_parent)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        /* ----- ROM iteration ----- */
+
+        /***************************************************************************
+            ROM LOADING
+        ***************************************************************************/
+
+        /* return pointer to the first ROM region within a source */
+        /*-------------------------------------------------
+            rom_first_region - return pointer to first ROM
+            region
+        -------------------------------------------------*/
+        public static Pointer<rom_entry> rom_first_region(device_t device)  //const rom_entry *rom_first_region(const device_t &device);
+        {
+            return rom_first_region(new Pointer<rom_entry>(device.rom_region_vector()));
+        }
+
+
+        public static Pointer<rom_entry> rom_first_region(Pointer<rom_entry> rompIn)  //const rom_entry *rom_first_region(const rom_entry *romp);
+        {
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
+
+            while (ROMENTRY_ISPARAMETER(romp.op) || ROMENTRY_ISSYSTEM_BIOS(romp.op) || ROMENTRY_ISDEFAULT_BIOS(romp.op))
+                romp++;
+            return !ROMENTRY_ISEND(romp.op) ? romp : null;
+        }
+
+
+        /* return pointer to the next ROM region within a source */
+        /*-------------------------------------------------
+            rom_next_region - return pointer to next ROM
+            region
+        -------------------------------------------------*/
+        public static Pointer<rom_entry> rom_next_region(Pointer<rom_entry> rompIn)  //const rom_entry *rom_next_region(const rom_entry *romp);
+        {
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
+
+            romp++;
+            while (!ROMENTRY_ISREGIONEND(romp.op))
+                romp++;
+            while (ROMENTRY_ISPARAMETER(romp.op))
+                romp++;
+            return ROMENTRY_ISEND(romp.op) ? null : romp;
+        }
+
+        /* return pointer to the first ROM file within a region */
+        /*-------------------------------------------------
+            rom_first_file - return pointer to first ROM
+            file
+        -------------------------------------------------*/
+        public static Pointer<rom_entry> rom_first_file(Pointer<rom_entry> rompIn)  //const rom_entry *rom_first_file(const rom_entry *romp);
+        {
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
+
+            romp++;
+            while (!ROMENTRY_ISFILE(romp.op) && !ROMENTRY_ISREGIONEND(romp.op))
+                romp++;
+            return ROMENTRY_ISREGIONEND(romp.op) ? null : romp;
+        }
+
+        /* return pointer to the next ROM file within a region */
+        /*-------------------------------------------------
+            rom_next_file - return pointer to next ROM
+            file
+        -------------------------------------------------*/
+        public static Pointer<rom_entry> rom_next_file(Pointer<rom_entry> rompIn)  //const rom_entry *rom_next_file(const rom_entry *romp);
+        {
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
+
+            romp++;
+            while (!ROMENTRY_ISFILE(romp.op) && !ROMENTRY_ISREGIONEND(romp.op))
+                romp++;
+            return ROMENTRY_ISREGIONEND(romp.op) ? null : romp;
+        }
+
+        /* return the expected size of a file given the ROM description */
+        /*-------------------------------------------------
+            rom_file_size - return the expected size of a
+            file given the ROM description
+        -------------------------------------------------*/
+        public static u32 rom_file_size(Pointer<rom_entry> rompIn)  //u32 rom_file_size(const rom_entry *romp);
+        {
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
+
+            u32 maxlength = 0;
+
+            /* loop until we run out of reloads */
+            do
+            {
+                /* loop until we run out of continues/ignores */
+                u32 curlength = ROM_GETLENGTH(romp.op);
+                romp++;
+                while (ROMENTRY_ISCONTINUE(romp.op) || ROMENTRY_ISIGNORE(romp.op))
+                {
+                    curlength += ROM_GETLENGTH(romp.op);
+                    romp++;
+                }
+
+                /* track the maximum length */
+                maxlength = std.max(maxlength, curlength);
+            }
+            while (ROMENTRY_ISRELOAD(romp.op));
+
+            return maxlength;
+        }
+
+
+        /* return pointer to the first per-game parameter */
+        /*-------------------------------------------------
+            rom_first_parameter - return pointer to the first
+            per-game parameter
+        -------------------------------------------------*/
+        public static Pointer<rom_entry> rom_first_parameter(device_t device)
+        {
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(device.rom_region_vector());
+            while (romp != null && romp.Count > 0 && !ROMENTRY_ISEND(romp.op) && !ROMENTRY_ISPARAMETER(romp.op))
+                romp++;
+
+            return (romp != null && romp.Count > 0 && !ROMENTRY_ISEND(romp.op)) ? romp : null;
+        } 
+
+
+        /* return pointer to the next per-game parameter */
+        /*-------------------------------------------------
+            rom_next_parameter - return pointer to the next
+            per-game parameter
+        -------------------------------------------------*/
+        public static Pointer<rom_entry> rom_next_parameter(Pointer<rom_entry> rompIn)
+        {
+            Pointer<rom_entry> romp = new Pointer<rom_entry>(rompIn);
+
+            romp++;
+            while (!ROMENTRY_ISREGIONEND(romp.op) && !ROMENTRY_ISPARAMETER(romp.op))
+                romp++;
+
+            return ROMENTRY_ISEND(romp.op) ? null : romp;
+        }
+
+
+        // builds a rom_entry vector from a tiny_rom_entry array
+        // -------------------------------------------------
+        // rom_build_entries - builds a rom_entry vector
+        // from a tiny_rom_entry array
+        // -------------------------------------------------
+        public static std.vector<rom_entry> rom_build_entries(Pointer<tiny_rom_entry> tinyentries)
+        {
+            std.vector<rom_entry> result = new std.vector<rom_entry>();
+
+            if (tinyentries != null)
+            {
+                int i = 0;
+                do
+                {
+                    result.emplace_back(new rom_entry(tinyentries[i]));
+                }
+                while (!ROMENTRY_ISEND(tinyentries[i++]));
+            }
+            else
+            {
+                tiny_rom_entry end_entry = new tiny_rom_entry(null, null, 0, 0, ROMENTRYTYPE_END);
+                result.emplace_back(new rom_entry(end_entry));
+            }
+
+            return result;
+        }
+    }
+
+
+    static class romload_internal
+    {
+        public const u32 TEMPBUFFER_MAX_SIZE     = 1024 * 1024 * 1024;
     }
 }

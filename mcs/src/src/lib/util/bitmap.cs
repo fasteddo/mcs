@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using bitmap8_t = mame.bitmap_specific<System.Byte, mame.PixelType_operators_u8, mame.Pointer<System.Byte>>;  //using bitmap8_t = bitmap_specific<uint8_t>;
 using bitmap16_t = mame.bitmap_specific<System.UInt16, mame.PixelType_operators_u16, mame.PointerU16>;  //using bitmap16_t = bitmap_specific<uint16_t>;
@@ -16,6 +15,8 @@ using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
+
+using static mame.cpp_global;
 
 
 namespace mame
@@ -175,7 +176,7 @@ namespace mame
             m_palette = null;
 
 
-            g.assert(valid_format());
+            assert(valid_format());
 
             // allocate intializes all other fields
             allocate(width, height, xslop, yslop);
@@ -208,7 +209,7 @@ namespace mame
             m_cliprect = new rectangle(0, width - 1, 0, height - 1);
 
 
-            g.assert(valid_format());
+            assert(valid_format());
         }
 
 
@@ -231,14 +232,14 @@ namespace mame
             m_width = subrect.width();
             m_height = subrect.height();
             m_format = format;
-            m_bpp = (byte)bpp;
+            m_bpp = (uint8_t)bpp;
             m_palette = null;
             m_cliprect = new rectangle(0, subrect.width() - 1, 0, subrect.height() - 1);
 
 
-            g.assert(format == source.m_format);
-            g.assert(bpp == source.m_bpp);
-            g.assert(source.cliprect().contains(subrect));
+            assert(format == source.m_format);
+            assert(bpp == source.m_bpp);
+            assert(source.cliprect().contains(subrect));
         }
 
         //~bitmap_t()
@@ -276,7 +277,7 @@ namespace mame
         public int32_t width() { return m_width; }
         public int32_t height() { return m_height; }
         public int32_t rowpixels() { return m_rowpixels; }
-        int32_t rowbytes() { return m_rowpixels * m_bpp / 8; }
+        public int32_t rowbytes() { return m_rowpixels * m_bpp / 8; }
         public uint8_t bpp() { return m_bpp; }
         bitmap_format format() { return m_format; }
         public bool valid() { return m_base != null; }
@@ -301,8 +302,8 @@ namespace mame
          */
         public void allocate(int width, int height, int xslop = 0, int yslop = 0)
         {
-            g.assert(m_format != bitmap_format.BITMAP_FORMAT_INVALID);
-            g.assert(m_bpp == 8 || m_bpp == 16 || m_bpp == 32 || m_bpp == 64);
+            assert(m_format != bitmap_format.BITMAP_FORMAT_INVALID);
+            assert(m_bpp == 8 || m_bpp == 16 || m_bpp == 32 || m_bpp == 64);
 
             // delete any existing stuff
             reset();
@@ -538,7 +539,7 @@ namespace mame
         where PixelType_OPS : PixelType_operators, new()
         where PixelTypePointer : PointerU8
     {
-        static readonly int PIXEL_BITS = 8 * g.sizeof_(typeof(PixelType));  //static constexpr int PixelBits = 8 * sizeof(PixelType);
+        static readonly int PIXEL_BITS = 8 * sizeof_(typeof(PixelType));  //static constexpr int PixelBits = 8 * sizeof(PixelType);
 
 
         // construction/destruction -- subclasses only
@@ -561,10 +562,10 @@ namespace mame
         // pixel accessors
         public PixelTypePointer pix(int32_t y, int32_t x = 0) { return (PixelTypePointer)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix(int32_t y, int32_t x = 0) { return pixt<PixelType>(y, x); }
 
-        public PointerU8 pix8(int32_t y, int32_t x = 0) { g.static_assert(PIXEL_BITS == 8, "must be 8bpp"); return pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix8(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 8, "must be 8bpp"); return pixt<PixelType>(y, x); }
-        public PointerU16 pix16(int32_t y, int32_t x = 0) { g.static_assert(PIXEL_BITS == 16, "must be 16bpp"); return (PointerU16)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix16(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 16, "must be 16bpp"); return pixt<PixelType>(y, x); }
-        public PointerU32 pix32(int32_t y, int32_t x = 0) { g.static_assert(PIXEL_BITS == 32, "must be 32bpp"); return (PointerU32)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix32(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 32, "must be 32bpp"); return pixt<PixelType>(y, x); }
-        public PointerU64 pix64(int32_t y, int32_t x = 0) { g.static_assert(PIXEL_BITS == 64, "must be 64bpp"); return (PointerU64)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix64(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 64, "must be 64bpp"); return pixt<PixelType>(y, x); }
+        public PointerU8 pix8(int32_t y, int32_t x = 0) { static_assert(PIXEL_BITS == 8, "must be 8bpp"); return pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix8(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 8, "must be 8bpp"); return pixt<PixelType>(y, x); }
+        public PointerU16 pix16(int32_t y, int32_t x = 0) { static_assert(PIXEL_BITS == 16, "must be 16bpp"); return (PointerU16)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix16(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 16, "must be 16bpp"); return pixt<PixelType>(y, x); }
+        public PointerU32 pix32(int32_t y, int32_t x = 0) { static_assert(PIXEL_BITS == 32, "must be 32bpp"); return (PointerU32)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix32(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 32, "must be 32bpp"); return pixt<PixelType>(y, x); }
+        public PointerU64 pix64(int32_t y, int32_t x = 0) { static_assert(PIXEL_BITS == 64, "must be 64bpp"); return (PointerU64)pixt<PixelType, PixelType_OPS>(y, x); }  //PixelType &pix64(int32_t y, int32_t x = 0) const { static_assert(PixelBits == 64, "must be 64bpp"); return pixt<PixelType>(y, x); }
 
 
         // operations
@@ -575,7 +576,7 @@ namespace mame
         }
 
 
-        void plot_box(int32_t x, int32_t y, int32_t width, int32_t height, PixelType color)
+        public void plot_box(int32_t x, int32_t y, int32_t width, int32_t height, PixelType color)
         {
             fill(color, new rectangle(x, x + width - 1, y, y + height - 1));
         }

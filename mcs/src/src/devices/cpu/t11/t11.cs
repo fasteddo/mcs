@@ -4,7 +4,6 @@
 //#define MCS_DEBUG
 
 using System;
-using System.Collections.Generic;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
@@ -13,6 +12,13 @@ using offs_t = System.UInt32;  //using offs_t = u32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
+
+using static mame.device_global;
+using static mame.diexec_global;
+using static mame.distate_global;
+using static mame.emucore_global;
+using static mame.emumem_global;
+using static mame.util;
 
 
 namespace mame
@@ -27,7 +33,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(T11,      t11_device,      "t11",      "DEC T11")
         static device_t device_creator_t11_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new t11_device(mconfig, tag, owner, clock); }
-        public static readonly device_type T11 = g.DEFINE_DEVICE_TYPE(device_creator_t11_device, "t11", "DEC T11");
+        public static readonly device_type T11 = DEFINE_DEVICE_TYPE(device_creator_t11_device, "t11", "DEC T11");
 
 
         static uint8_t OCTAL_U8(int value) { return Convert.ToByte(value.ToString(), 8); }
@@ -218,7 +224,7 @@ namespace mame
             IXD = new register_IXD(this);
 
 
-            m_program_config = new address_space_config("program", g.ENDIANNESS_LITTLE, 16, 16, 0);
+            m_program_config = new address_space_config("program", ENDIANNESS_LITTLE, 16, 16, 0);
             c_initial_mode = 0;
             m_cp_state = 0;
             m_vec_active = false;
@@ -265,29 +271,29 @@ namespace mame
 
 
             m_initial_pc = device_start_initial_pc[c_initial_mode >> 13];
-            m_dimemory.space(g.AS_PROGRAM).cache(m_cache);
-            m_dimemory.space(g.AS_PROGRAM).specific(m_program);
+            m_dimemory.space(AS_PROGRAM).cache(m_cache);
+            m_dimemory.space(AS_PROGRAM).specific(m_program);
             m_out_reset_func.resolve_safe();
             m_in_iack_func.resolve_safe_u8(0); // default vector (T-11 User's Guide, p. A-11)
 
-            save_item(g.NAME(new { m_ppc.w.l }));
-            save_item(g.NAME(new { m_reg[0].w.l }));
-            save_item(g.NAME(new { m_reg[1].w.l }));
-            save_item(g.NAME(new { m_reg[2].w.l }));
-            save_item(g.NAME(new { m_reg[3].w.l }));
-            save_item(g.NAME(new { m_reg[4].w.l }));
-            save_item(g.NAME(new { m_reg[5].w.l }));
-            save_item(g.NAME(new { m_reg[6].w.l }));
-            save_item(g.NAME(new { m_reg[7].w.l }));
-            save_item(g.NAME(new { m_psw.w.l }));
-            save_item(g.NAME(new { m_initial_pc }));
-            save_item(g.NAME(new { m_wait_state }));
-            save_item(g.NAME(new { m_cp_state }));
-            save_item(g.NAME(new { m_vec_active }));
-            save_item(g.NAME(new { m_pf_active }));
-            save_item(g.NAME(new { m_hlt_active }));
-            save_item(g.NAME(new { m_power_fail }));
-            save_item(g.NAME(new { m_ext_halt }));
+            save_item(NAME(new { m_ppc.w.l }));
+            save_item(NAME(new { m_reg[0].w.l }));
+            save_item(NAME(new { m_reg[1].w.l }));
+            save_item(NAME(new { m_reg[2].w.l }));
+            save_item(NAME(new { m_reg[3].w.l }));
+            save_item(NAME(new { m_reg[4].w.l }));
+            save_item(NAME(new { m_reg[5].w.l }));
+            save_item(NAME(new { m_reg[6].w.l }));
+            save_item(NAME(new { m_reg[7].w.l }));
+            save_item(NAME(new { m_psw.w.l }));
+            save_item(NAME(new { m_initial_pc }));
+            save_item(NAME(new { m_wait_state }));
+            save_item(NAME(new { m_cp_state }));
+            save_item(NAME(new { m_vec_active }));
+            save_item(NAME(new { m_pf_active }));
+            save_item(NAME(new { m_hlt_active }));
+            save_item(NAME(new { m_power_fail }));
+            save_item(NAME(new { m_ext_halt }));
 
             // Register debugger state
             m_distate.state_add( T11_PC,  "PC",  m_reg[7].w.l).formatstr("%06O");
@@ -300,9 +306,9 @@ namespace mame
             m_distate.state_add( T11_R4,  "R4",  m_reg[4].w.l).formatstr("%06O");
             m_distate.state_add( T11_R5,  "R5",  m_reg[5].w.l).formatstr("%06O");
 
-            m_distate.state_add(g.STATE_GENPC, "GENPC", m_reg[7].w.l).noshow();
-            m_distate.state_add(g.STATE_GENPCBASE, "CURPC", m_ppc.w.l).noshow();
-            m_distate.state_add(g.STATE_GENFLAGS, "GENFLAGS", m_psw.b.l).formatstr("%8s").noshow();
+            m_distate.state_add(STATE_GENPC, "GENPC", m_reg[7].w.l).noshow();
+            m_distate.state_add(STATE_GENPCBASE, "CURPC", m_ppc.w.l).noshow();
+            m_distate.state_add(STATE_GENFLAGS, "GENFLAGS", m_psw.b.l).formatstr("%8s").noshow();
 
             set_icountptr(m_icount);
         }
@@ -397,26 +403,26 @@ namespace mame
             case CP2_LINE:
             case CP3_LINE:
                 // set the appropriate bit
-                if (state == g.CLEAR_LINE)
+                if (state == CLEAR_LINE)
                     m_cp_state &= (uint8_t)(~(1 << irqline));
                 else
                     m_cp_state |= (uint8_t)(1 << irqline);
                 break;
 
             case VEC_LINE:
-                m_vec_active = (state != g.CLEAR_LINE);
+                m_vec_active = (state != CLEAR_LINE);
                 break;
 
             case PF_LINE:
-                if (state != g.CLEAR_LINE && !m_pf_active)
+                if (state != CLEAR_LINE && !m_pf_active)
                     m_power_fail = true;
-                m_pf_active = (state != g.CLEAR_LINE);
+                m_pf_active = (state != CLEAR_LINE);
                 break;
 
             case HLT_LINE:
-                if (state != g.CLEAR_LINE && !m_hlt_active)
+                if (state != CLEAR_LINE && !m_hlt_active)
                     m_ext_halt = true;
-                m_hlt_active = (state != g.CLEAR_LINE);
+                m_hlt_active = (state != CLEAR_LINE);
                 break;
             }
         }
@@ -428,7 +434,7 @@ namespace mame
         // device_memory_interface overrides
         space_config_vector device_memory_interface_memory_space_config()
         {
-            return new space_config_vector { std.make_pair(g.AS_PROGRAM, m_program_config) };
+            return new space_config_vector { std.make_pair(AS_PROGRAM, m_program_config) };
         }
 
 
@@ -573,7 +579,7 @@ namespace mame
                 standard_irq_callback(m_cp_state & 15);
 
                 // T11 encodes the interrupt level on DAL<12:8>
-                uint8_t iaddr = (uint8_t)g.bitswap(~m_cp_state & 15, 0, 1, 2, 3);
+                uint8_t iaddr = (uint8_t)bitswap(~m_cp_state & 15, 0, 1, 2, 3);
                 if (!m_vec_active)
                     iaddr |= 16;
 
@@ -581,7 +587,7 @@ namespace mame
                 uint8_t vector = m_in_iack_func.op_u8(iaddr);
 
                 // nonvectored or vectored interrupt depending on VEC
-                if (g.BIT(iaddr, 4) != 0)
+                if (BIT(iaddr, 4) != 0)
                     take_interrupt(irq.vector);
                 else
                     take_interrupt((uint8_t)(vector & ~3));

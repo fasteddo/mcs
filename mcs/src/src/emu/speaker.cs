@@ -2,12 +2,15 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using s32 = System.Int32;
 using speaker_device_enumerator = mame.device_type_enumerator<mame.speaker_device>;  //using speaker_device_enumerator = device_type_enumerator<speaker_device>;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u32 = System.UInt32;
+
+using static mame.device_global;
+using static mame.osdcore_global;
+using static mame.sound_global;
 
 
 namespace mame
@@ -27,7 +30,7 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(SPEAKER, speaker_device, "speaker", "Speaker")
         static device_t device_creator_speaker_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new speaker_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SPEAKER = g.DEFINE_DEVICE_TYPE(device_creator_speaker_device, "speaker", "Speaker");
+        public static readonly device_type SPEAKER = DEFINE_DEVICE_TYPE(device_creator_speaker_device, "speaker", "Speaker");
 
 
         device_mixer_interface m_dimixer;
@@ -111,7 +114,7 @@ namespace mame
             // get a view on the desired range
             read_stream_view view = m_dimixer.m_mixer_stream.update_view(start, end);
 
-            sound_global.sound_assert(view.samples() >= expected_samples);
+            sound_assert(view.samples() >= expected_samples);
 
             // track maximum sample value for each 0.1s bucket
             if (machine().options().speaker_report() != 0)
@@ -190,7 +193,7 @@ namespace mame
 
                 // levels 1 and 2 just get a summary
                 if (clipped != 0 || report == 2 || report == 4)
-                    g.osd_printf_info("Speaker \"{0}\" - max = {1} (gain *= {2}) - clipped in {3}/{4} ({5}%%) buckets\n", tag(), overallmax, 1 / (overallmax != 0 ? overallmax : 1), clipped, m_max_sample.size(), clipped * 100 / m_max_sample.size());
+                    osd_printf_info("Speaker \"{0}\" - max = {1} (gain *= {2}) - clipped in {3}/{4} ({5}%%) buckets\n", tag(), overallmax, 1 / (overallmax != 0 ? overallmax : 1), clipped, m_max_sample.size(), clipped * 100 / m_max_sample.size());
 
                 // levels 3 and 4 get a full dump
                 if (report >= 3)
@@ -206,24 +209,24 @@ namespace mame
                     {
                         if (curmax > (stream_buffer_sample_t)1.0 || report == 4)
                         {
-                            g.osd_printf_info("{0}: {1} |", t, curmax);
+                            osd_printf_info("{0}: {1} |", t, curmax);
                             if (curmax == 0)
                             {
-                                g.osd_printf_info("{0}{1}|\n", leftstars, s_spaces);
+                                osd_printf_info("{0}{1}|\n", leftstars, s_spaces);
                             }
                             else if (curmax <= 1.0)
                             {
                                 int stars = std.max(1, std.min(leftstars, (int)(curmax * totalstars / overallmax)));
-                                g.osd_printf_info("{0}{1}", stars, s_stars);
+                                osd_printf_info("{0}{1}", stars, s_stars);
                                 int spaces = leftstars - stars;
                                 if (spaces != 0)
-                                    g.osd_printf_info("{0}{1}", spaces, s_spaces);
-                                g.osd_printf_info("|\n");
+                                    osd_printf_info("{0}{1}", spaces, s_spaces);
+                                osd_printf_info("|\n");
                             }
                             else
                             {
                                 int rightstars = std.max(1, std.min(totalstars, (int)(curmax * totalstars / overallmax)) - leftstars);
-                                g.osd_printf_info("{0}|{1}\n", leftstars, s_stars, rightstars, s_stars);
+                                osd_printf_info("{0}|{1}\n", leftstars, s_stars, rightstars, s_stars);
                             }
                         }
 

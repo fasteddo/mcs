@@ -2,12 +2,17 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 
 using int32_t = System.Int32;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using uint32_t = System.UInt32;
+using uint64_t = System.UInt64;
+
+using static mame.osdcore_global;
+using static mame.osdsync_global;
 
 
 namespace mame
@@ -19,7 +24,7 @@ namespace mame
         const string ENV_PROCESSORS               = "OSDPROCESSORS";
         const string ENV_WORKQUEUEMAXTHREADS      = "OSDWORKQUEUEMAXTHREADS";
 
-        static osd_ticks_t SPIN_LOOP_TIME         = osdcore_global.m_osdcore.osd_ticks_per_second() / 10000;
+        static osd_ticks_t SPIN_LOOP_TIME         = m_osdcore.osd_ticks_per_second() / 10000;
 
 
 #if KEEP_STATISTICS
@@ -39,7 +44,7 @@ namespace mame
         //template<typename _AtomType, typename _MainType>
         static void spin_while(ref int atom, int val, osd_ticks_t timeout)  //static void spin_while(const volatile _AtomType * volatile atom, const _MainType val, const osd_ticks_t timeout, const int invert = 0)
         {
-            osd_ticks_t stopspin = osdcore_global.m_osdcore.osd_ticks() + timeout;
+            osd_ticks_t stopspin = m_osdcore.osd_ticks() + timeout;
 
             do
             {
@@ -50,12 +55,12 @@ namespace mame
                     if (atom != val)
                         return;
                 }
-            } while (atom == val && osdcore_global.m_osdcore.osd_ticks() < stopspin);  //(((*atom == val) ^ invert) && osd_ticks() < stopspin);
+            } while (atom == val && m_osdcore.osd_ticks() < stopspin);  //(((*atom == val) ^ invert) && osd_ticks() < stopspin);
         }
 
         static void spin_while(ref osd_work_item atom, osd_work_item val, osd_ticks_t timeout)  //static void spin_while(const volatile _AtomType * volatile atom, const _MainType val, const osd_ticks_t timeout, const int invert = 0)
         {
-            osd_ticks_t stopspin = osdcore_global.m_osdcore.osd_ticks() + timeout;
+            osd_ticks_t stopspin = m_osdcore.osd_ticks() + timeout;
 
             do
             {
@@ -66,14 +71,14 @@ namespace mame
                     if (atom != val)
                         return;
                 }
-            } while (atom == val && osdcore_global.m_osdcore.osd_ticks() < stopspin);  //(((*atom == val) ^ invert) && osd_ticks() < stopspin);
+            } while (atom == val && m_osdcore.osd_ticks() < stopspin);  //(((*atom == val) ^ invert) && osd_ticks() < stopspin);
         }
 
         //template<typename _AtomType, typename _MainType>
         static void spin_while_not(ref int atom, int val, osd_ticks_t timeout)  //static void spin_while_not(const volatile _AtomType * volatile atom, const _MainType val, const osd_ticks_t timeout)
         {
             //spin_while<_AtomType, _MainType>(atom, val, timeout, 1);
-            osd_ticks_t stopspin = osdcore_global.m_osdcore.osd_ticks() + timeout;
+            osd_ticks_t stopspin = m_osdcore.osd_ticks() + timeout;
 
             do
             {
@@ -84,7 +89,7 @@ namespace mame
                     if (atom == val)
                         return;
                 }
-            } while (atom != val && osdcore_global.m_osdcore.osd_ticks() < stopspin);  //(((*atom == val) ^ invert) && osd_ticks() < stopspin);
+            } while (atom != val && m_osdcore.osd_ticks() < stopspin);  //(((*atom == val) ^ invert) && osd_ticks() < stopspin);
         }
 
 
@@ -94,8 +99,7 @@ namespace mame
         static int osd_get_num_processors()
         {
             // max out at 4 for now since scaling above that seems to do poorly
-            //return std::min(std::thread::hardware_concurrency(), 4U);
-            return Math.Min(Environment.ProcessorCount, 4);
+            return std.min(Environment.ProcessorCount, 4);  //return std::min(std::thread::hardware_concurrency(), 4U);
         }
 
 
@@ -145,14 +149,14 @@ namespace mame
             osd_work_queue queue;
             int osdthreadnum = 0;
             int allocthreadnum;
-            string osdworkqueuemaxthreads = osdcore_global.m_osdcore.osd_getenv(ENV_WORKQUEUEMAXTHREADS);
+            string osdworkqueuemaxthreads = m_osdcore.osd_getenv(ENV_WORKQUEUEMAXTHREADS);
 
             // allocate a new queue
             queue = new osd_work_queue();
 
             // initialize basic queue members
             queue.tailptr = queue.list;  //(osd_work_item **)&queue->list;
-            queue.flags = (UInt32)flags;
+            queue.flags = (uint32_t)flags;
 
             // force single thread
             numprocs = 1;
@@ -169,7 +173,7 @@ namespace mame
                 threadnum = osdthreadnum;
 
             // clamp to the maximum
-            queue.threads = (UInt32)Math.Min(threadnum, osdcore_interface.WORK_MAX_THREADS);
+            queue.threads = (uint32_t)std.min(threadnum, osdcore_interface.WORK_MAX_THREADS);
 
             // allocate memory for thread array (+1 to count the calling thread if WORK_QUEUE_FLAG_MULTI)
             if ((flags & osdcore_interface.WORK_QUEUE_FLAG_MULTI) != 0)
@@ -182,7 +186,7 @@ namespace mame
 #endif
 
             for (threadnum = 0; threadnum < allocthreadnum; threadnum++)
-                queue.thread.push_back(new work_thread_info((UInt32)threadnum, queue));
+                queue.thread.push_back(new work_thread_info((uint32_t)threadnum, queue));
 
             // iterate over threads
             for (threadnum = 0; threadnum < queue.threads; threadnum++)
@@ -553,7 +557,7 @@ namespace mame
             osd_work_item next;
 
             // make sure we're done first
-            osd_work_item_wait(item, 100 * osdcore_global.m_osdcore.osd_ticks_per_second());
+            osd_work_item_wait(item, 100 * m_osdcore.osd_ticks_per_second());
 
             // add us to the free list on our queue
             //throw new emu_unimplemented();
@@ -580,7 +584,7 @@ namespace mame
             // osd_num_processors == 0 for 'auto'
             if (osd_num_processors > 0)
             {
-                return Math.Min(4 * physprocs, osd_num_processors);
+                return std.min(4 * physprocs, osd_num_processors);
             }
             else
             {
@@ -588,9 +592,9 @@ namespace mame
 
                 // if the OSDPROCESSORS environment variable is set, use that value if valid
                 // note that we permit more than the real number of processors for testing
-                string procsoverride = osdcore_global.m_osdcore.osd_getenv(ENV_PROCESSORS);
+                string procsoverride = m_osdcore.osd_getenv(ENV_PROCESSORS);
                 if (procsoverride != null && Int32.TryParse(procsoverride, out numprocs) && numprocs > 0)  // sscanf(procsoverride, "%d", &numprocs) == 1
-                    return Math.Min(4 * physprocs, numprocs);
+                    return std.min(4 * physprocs, numprocs);
 
                 // otherwise, return the info from the system
                 return physprocs;
@@ -838,8 +842,8 @@ namespace mame
         -----------------------------------------------------------------------------*/
         public bool wait(osd_ticks_t timeout)
         {
-            if (timeout == osdsync_global.OSD_EVENT_WAIT_INFINITE)
-                timeout = osdcore_global.m_osdcore.osd_ticks_per_second() * (osd_ticks_t)10000;
+            if (timeout == OSD_EVENT_WAIT_INFINITE)
+                timeout = m_osdcore.osd_ticks_per_second() * (osd_ticks_t)10000;
 
             //std::unique_lock<std::mutex> lock(m_mutex);
             lock (m_mutex)
@@ -855,7 +859,7 @@ namespace mame
                 {
                     if (m_signalled == 0)
                     {
-                        UInt64 msec = timeout * 1000 / osdcore_global.m_osdcore.osd_ticks_per_second();
+                        uint64_t msec = timeout * 1000 / m_osdcore.osd_ticks_per_second();
 
                         do
                         {
@@ -940,8 +944,8 @@ namespace mame
         public osd_work_queue queue;          // pointer back to the queue
         public Thread handle;  //std::thread *       handle;         // handle to the thread
         public osd_event wakeevent;      // wake event for the thread
-        public int active;  //std::atomic<int32_t>  active;         // are we actively processing work?
-        public UInt32 id;
+        public int32_t active;  //std::atomic<int32_t>  active;         // are we actively processing work?
+        public uint32_t id;
 
 #if KEEP_STATISTICS
         int32_t               itemsdone;
@@ -952,7 +956,7 @@ namespace mame
 #endif
 
 
-        public work_thread_info(UInt32 aid, osd_work_queue aqueue)
+        public work_thread_info(uint32_t aid, osd_work_queue aqueue)
         {
             queue = aqueue;
 
@@ -977,12 +981,12 @@ namespace mame
         public osd_work_item list;  //std::atomic<osd_work_item *> list;  // list of items in the queue
         public osd_work_item tailptr;  //osd_work_item ** volatile tailptr;  // pointer to the tail pointer of work items in the queue
         public osd_work_item free;  //std::atomic<osd_work_item *> free;  // free list of work items
-        public int items;  //std::atomic<int32_t>  items;          // items in the queue
-        public int livethreads;  //std::atomic<int32_t>  livethreads;    // number of live threads
-        public int waiting;  //std::atomic<int32_t>  waiting;        // is someone waiting on the queue to complete?
-        public int exiting;  //std::atomic<int32_t>  exiting;        // should the threads exit on their next opportunity?
-        public UInt32 threads;        // number of threads in this queue
-        public UInt32 flags;          // creation flags
+        public int32_t items;  //std::atomic<int32_t>  items;          // items in the queue
+        public int32_t livethreads;  //std::atomic<int32_t>  livethreads;    // number of live threads
+        public int32_t waiting;  //std::atomic<int32_t>  waiting;        // is someone waiting on the queue to complete?
+        public int32_t exiting;  //std::atomic<int32_t>  exiting;        // should the threads exit on their next opportunity?
+        public uint32_t threads;        // number of threads in this queue
+        public uint32_t flags;          // creation flags
         public std.vector<work_thread_info> thread = new std.vector<work_thread_info>();   // array of thread information
         public osd_event doneevent;      // event signalled when work is complete
 
@@ -1025,8 +1029,8 @@ namespace mame
         public object param;  //void *              param;          // callback parameter
         public object result;  //void *              result;         // callback result
         public osd_event event_;          // event signalled when complete
-        public UInt32 flags;          // creation flags
-        public int done;  //std::atomic<int32_t>  done;           // is the item done?
+        public uint32_t flags;          // creation flags
+        public int32_t done;  //std::atomic<int32_t>  done;           // is the item done?
 
 
         public osd_work_item(osd_work_queue aqueue)

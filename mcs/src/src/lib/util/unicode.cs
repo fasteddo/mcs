@@ -2,10 +2,11 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using char32_t = System.UInt32;
 using size_t = System.UInt64;
+
+using static mame.unicode_global;
 
 
 namespace mame
@@ -89,7 +90,8 @@ namespace mame
         public static string ustr_from_utf8(string utf8str) { return utf8str; }
 
         // converting UTF-8 strings to/from "wide" strings
-        //std::wstring wstring_from_utf8(const std::string &utf8string);
+        public static string wstring_from_utf8(string utf8string) { return utf8string; }  //std::wstring wstring_from_utf8(const std::string &utf8string);
+
         //std::string utf8_from_wstring(const std::wstring &string);
 
         // unicode normalization
@@ -107,7 +109,7 @@ namespace mame
             utf8_from_uchar - convert a unicode character
             into a UTF-8 sequence
         -------------------------------------------------*/
-        public static int utf8_from_uchar(out string utf8string, /*UInt32 count,*/ char32_t uchar)
+        public static int utf8_from_uchar(out string utf8string, /*size_t count,*/ char32_t uchar)
         {
             utf8string = "";
 
@@ -126,6 +128,7 @@ namespace mame
 
                 //utf8string[rc++] = (char) uchar;
                 utf8string += (char)uchar;
+                rc++;
             }
             else if (uchar < 0x800)
             {
@@ -135,6 +138,8 @@ namespace mame
 
                 utf8string += (char)(((char)(uchar >> 6)) | 0xC0);
                 utf8string += (char)(((char) ((uchar >> 0) & 0x3F)) | 0x80);
+                rc++;
+                rc++;
             }
             else if (uchar < 0x10000)
             {
@@ -145,6 +150,9 @@ namespace mame
                 utf8string += (char)(((char)(uchar >> 12)) | 0xE0);
                 utf8string += (char)(((char)((uchar >> 6) & 0x3F)) | 0x80);
                 utf8string += (char)(((char)((uchar >> 0) & 0x3F)) | 0x80);
+                rc++;
+                rc++;
+                rc++;
             }
             else if (uchar < 0x00200000)
             {
@@ -156,6 +164,10 @@ namespace mame
                 utf8string += (char)(((char)((uchar >> 12) & 0x3F)) | 0x80);
                 utf8string += (char)(((char)((uchar >> 6) & 0x3F)) | 0x80);
                 utf8string += (char)(((char)((uchar >> 0) & 0x3F)) | 0x80);
+                rc++;
+                rc++;
+                rc++;
+                rc++;
             }
             else if (uchar < 0x04000000)
             {
@@ -168,6 +180,11 @@ namespace mame
                 utf8string += (char)(((char)((uchar >> 12) & 0x3F)) | 0x80);
                 utf8string += (char)(((char)((uchar >> 6) & 0x3F)) | 0x80);
                 utf8string += (char)(((char)((uchar >> 0) & 0x3F)) | 0x80);
+                rc++;
+                rc++;
+                rc++;
+                rc++;
+                rc++;
             }
             else if (uchar < 0x80000000)
             {
@@ -181,14 +198,19 @@ namespace mame
                 utf8string += (char)(((char)((uchar >> 12) & 0x3F)) | 0x80);
                 utf8string += (char)(((char)((uchar >> 6) & 0x3F)) | 0x80);
                 utf8string += (char)(((char)((uchar >> 0) & 0x3F)) | 0x80);
+                rc++;
+                rc++;
+                rc++;
+                rc++;
+                rc++;
+                rc++;
             }
             else
             {
                 rc = -1;
             }
 
-            //return rc;
-            return utf8string.Length;
+            return rc;
         }
 
 
@@ -260,7 +282,7 @@ namespace mame
                 int charlen;
 
                 /* extract the current character and verify it */
-                charlen = unicode_global.uchar_from_utf8(out uchar, utf8string, (size_t)remaining_length);
+                charlen = uchar_from_utf8(out uchar, utf8string, (size_t)remaining_length);
                 if (charlen <= 0 || uchar == 0 || !uchar_isvalid(uchar))
                     return false;
 

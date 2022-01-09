@@ -2,8 +2,8 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
+using long_long = System.Int64;
 using uint32_t = System.UInt32;
 
 
@@ -230,7 +230,7 @@ namespace mame
 
 
                 // return the integer value of an attribute, or the specified default if not present
-                public Int64 get_attribute_int(string attribute, Int64 defvalue)  //long long get_attribute_int(const char *attribute, long long defvalue) const;
+                public long_long get_attribute_int(string attribute, long_long defvalue)  //long long get_attribute_int(const char *attribute, long long defvalue) const;
                 {
                     attribute_node attr = get_attribute(attribute);
                     if (attr == null)
@@ -239,7 +239,7 @@ namespace mame
 
                     //std::istringstream stream;
                     //stream.imbue(f_portable_locale);
-                    Int64 result = 0;  //long long result;
+                    long_long result = 0;  //long long result;
                     bool success = true;
                     if (string_[0] == '$')
                     {
@@ -325,7 +325,7 @@ namespace mame
                 }
 
                 // set the integer value of an attribute
-                public void set_attribute_int(string name, Int64 value) { set_attribute(name, util.string_format("{0}", value)); }  //void set_attribute_int(const char *name, long long value);
+                public void set_attribute_int(string name, long_long value) { set_attribute(name, util.string_format("{0}", value)); }  //void set_attribute_int(const char *name, long long value);
 
                 // set the float value of an attribute
                 public void set_attribute_float(string name, float value) { set_attribute(name, util.string_format("{0}", value)); }
@@ -397,7 +397,7 @@ namespace mame
 
 
                 // parse an XML file into its nodes
-                public static file read(util.core_file file, parse_options opts)  //static ptr read(util::core_file &file, parse_options const *opts);
+                public static file read(read_stream file, parse_options opts)  //static ptr read(read_stream &file, parse_options const *opts);
                 {
                     throw new emu_unimplemented();
                 }

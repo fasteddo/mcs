@@ -2,7 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections.Generic;
 
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using size_t = System.UInt64;
@@ -11,6 +10,9 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
+
+using static mame.device_global;
+using static mame.emucore_global;
 
 
 namespace mame
@@ -148,7 +150,7 @@ namespace mame
         // device type definition
         //DEFINE_DEVICE_TYPE(ATARI_MOTION_OBJECTS, atari_motion_objects_device, "atarimo", "Atari Motion Objects")
         static device_t device_creator_atari_motion_objects_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new atari_motion_objects_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ATARI_MOTION_OBJECTS = g.DEFINE_DEVICE_TYPE(device_creator_atari_motion_objects_device, "atarimo", "Atari Motion Objects");
+        public static readonly device_type ATARI_MOTION_OBJECTS = DEFINE_DEVICE_TYPE(device_creator_atari_motion_objects_device, "atarimo", "Atari Motion Objects");
 
 
         // timer IDs
@@ -524,7 +526,7 @@ namespace mame
             base.device_start();
 
             // verify configuration
-            gfx_element gfx = m_gfxdecode.op[0].digfx.gfx(m_atari_motion_objects_config.m_gfxindex);
+            gfx_element gfx = m_gfxdecode.op0.gfx(m_atari_motion_objects_config.m_gfxindex);
             if (gfx == null)
                 throw new emu_fatalerror("No gfxelement #{0}!", m_atari_motion_objects_config.m_gfxindex);
 
@@ -592,9 +594,9 @@ namespace mame
             m_force_update_timer.adjust(m_divideo.screen().time_until_pos(0));
 
             // register for save states
-            save_item(g.NAME(new { m_bank }));
-            save_item(g.NAME(new { m_xscroll }));
-            save_item(g.NAME(new { m_yscroll }));
+            save_item(NAME(new { m_bank }));
+            save_item(NAME(new { m_xscroll }));
+            save_item(NAME(new { m_yscroll }));
         }
 
 
@@ -733,7 +735,7 @@ namespace mame
         {
             // select the gfx element and save off key information
             int rawcode = (int)m_codemask.extract(entry);
-            gfx_element gfx = m_gfxdecode.op[0].digfx.gfx(m_gfxlookup[rawcode >> 8]);
+            gfx_element gfx = m_gfxdecode.op0.gfx(m_gfxlookup[rawcode >> 8]);
             int save_granularity = gfx.granularity();
             int save_colorbase = (int)gfx.colorbase();
             int save_colors = (int)gfx.colors();
