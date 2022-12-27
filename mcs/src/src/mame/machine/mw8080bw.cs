@@ -55,9 +55,15 @@ namespace mame
             int vpos = m_screen.op0.vpos();
             uint8_t counter = vpos_to_vysnc_chain_counter(vpos);
 
-            m_maincpu.op0.set_input_line(0, ASSERT_LINE);
-
-            m_interrupt_time = machine().time();
+            if (m_int_enable)
+            {
+                m_maincpu.op0.set_input_line(0, ASSERT_LINE);
+                m_interrupt_time = machine().time();
+            }
+            else
+            {
+                m_maincpu.op0.set_input_line(0, CLEAR_LINE);
+            }
 
             /* set up for next interrupt */
             uint8_t next_counter;
@@ -75,6 +81,13 @@ namespace mame
 
             int next_vpos = vysnc_chain_counter_to_vpos(next_counter, next_vblank);
             m_interrupt_timer.adjust(m_screen.op0.time_until_pos(next_vpos));
+        }
+
+
+        //WRITE_LINE_MEMBER(mw8080bw_state::int_enable_w)
+        public void int_enable_w(int state)
+        {
+            m_int_enable = state != 0;
         }
 
 

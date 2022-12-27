@@ -221,7 +221,7 @@ namespace mame
             new options_entry(OSDOPTION_BGFX_DEBUG,                   "0",               OPTION_BOOLEAN, "enable BGFX debugging statistics"),
             new options_entry(OSDOPTION_BGFX_SCREEN_CHAINS,           "default",         OPTION_STRING,  "comma-delimited list of screen chain JSON names, colon-delimited per-window"),
             new options_entry(OSDOPTION_BGFX_SHADOW_MASK,             "slot-mask.png",   OPTION_STRING,  "shadow mask texture name"),
-            new options_entry(OSDOPTION_BGFX_LUT,                     "",                OPTION_STRING, "LUT texture name"),
+            new options_entry(OSDOPTION_BGFX_LUT,                     "lut-default.png", OPTION_STRING,  "LUT texture name"),
             new options_entry(OSDOPTION_BGFX_AVI_NAME,                OSDOPTVAL_AUTO,    OPTION_STRING,  "filename for BGFX output logging"),
 
             // End of list

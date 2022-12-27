@@ -43,17 +43,19 @@ namespace mame
         required_device<screen_device> m_screen;
 
         // misc game specific
-        uint8_t m_flip_screen;
+        uint8_t m_flip_screen = 0;
 
         // misc game specific
-        //uint16_t      m_phantom2_cloud_counter;
-        //uint8_t       m_maze_tone_timing_state;   // output of IC C1, pin 5
+        //uint16_t      m_phantom2_cloud_counter = 0;
+        //uint8_t       m_maze_tone_timing_state = 0;   // output of IC C1, pin 5
 
         // timers
-        emu_timer m_interrupt_timer;
-        //emu_timer   *m_maze_tone_timer;
+        emu_timer m_interrupt_timer = null;
+        //emu_timer   *m_maze_tone_timer = nullptr;
 
         attotime m_interrupt_time;
+
+        bool m_int_enable;
 
 
         public mw8080bw_state(machine_config mconfig, device_type type, string tag) :
@@ -65,6 +67,7 @@ namespace mame
             m_main_ram = new required_shared_ptr<uint8_t>(this, "main_ram");
             m_discrete = new optional_device<discrete_sound_device>(this, "discrete");
             m_screen = new required_device<screen_device>(this, "screen");
+            m_int_enable = true;
         }
     }
 

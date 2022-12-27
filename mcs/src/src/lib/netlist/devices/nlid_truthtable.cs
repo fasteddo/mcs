@@ -442,7 +442,7 @@ namespace mame.netlist.devices
                 {
                     m_I.op(i).activate();
                     nstate |= (m_I.op(i).op() << (int)i);
-                    mt = std.max(this.m_I.op(i).net().next_scheduled_time(), mt);
+                    mt = netlist_time_ext.Max(this.m_I.op(i).net().next_scheduled_time(), mt);
                 }
             }
 

@@ -949,7 +949,7 @@ namespace mame
 
         void dkong3_sound1_map(address_map map, device_t device)
         {
-            map.op(0x0000, 0x01ff).ram();
+            map.op(0x0000, 0x07ff).ram();
             map.op(0x4016, 0x4016).r("latch1", (offs_t offset) => { return ((latch8_device)subdevice("latch1")).read(offset); });       /* overwrite default */
             map.op(0x4017, 0x4017).r("latch2", (offs_t offset) => { return ((latch8_device)subdevice("latch2")).read(offset); });
             map.op(0xe000, 0xffff).rom();
@@ -958,7 +958,7 @@ namespace mame
 
         void dkong3_sound2_map(address_map map, device_t device)
         {
-            map.op(0x0000, 0x01ff).ram();
+            map.op(0x0000, 0x07ff).ram();
             map.op(0x4016, 0x4016).r("latch3", (offs_t offset) => { return ((latch8_device)subdevice("latch2")).read(offset); });       /* overwrite default */
             map.op(0xe000, 0xffff).rom();
         }

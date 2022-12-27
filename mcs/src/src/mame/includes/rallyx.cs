@@ -14,28 +14,28 @@ namespace mame
         // memory pointers
         required_shared_ptr<uint8_t> m_videoram;
         required_shared_ptr<uint8_t> m_radarattr;
-        Pointer<uint8_t> m_spriteram;  //uint8_t *  m_spriteram;
-        Pointer<uint8_t> m_spriteram2;  //uint8_t *  m_spriteram2;
-        Pointer<uint8_t> m_radarx;  //uint8_t *  m_radarx;
-        Pointer<uint8_t> m_radary;  //uint8_t *  m_radary;
+        Pointer<uint8_t> m_spriteram = null;  //uint8_t *  m_spriteram;
+        Pointer<uint8_t> m_spriteram2 = null;  //uint8_t *  m_spriteram2;
+        Pointer<uint8_t> m_radarx = null;  //uint8_t *  m_radarx;
+        Pointer<uint8_t> m_radary = null;  //uint8_t *  m_radary;
 
         // video-related
-        tilemap_t m_bg_tilemap;
-        tilemap_t m_fg_tilemap;
+        tilemap_t m_bg_tilemap = null;
+        tilemap_t m_fg_tilemap = null;
 
         // misc
         //static constexpr unsigned JUNGLER_MAX_STARS = 1000;
 
         //struct jungler_star
 
-        bool m_last_bang;
-        uint8_t m_spriteram_base;
-        bool m_stars_enable;
-        //uint16_t  m_total_stars;
+        bool m_last_bang = false;
+        uint8_t m_spriteram_base = 0;
+        bool m_stars_enable = false;
+        //uint16_t  m_total_stars = 0;
         uint8_t [] m_drawmode_table = new uint8_t [4];
         //struct jungler_star m_stars[JUNGLER_MAX_STARS];
-        bool m_main_irq_mask;
-        uint8_t m_interrupt_vector;
+        bool m_main_irq_mask = false;
+        uint8_t m_interrupt_vector = 0;
 
         // devices
         required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;

@@ -231,7 +231,7 @@ namespace mame
             //        m_maximum_quantums.end(),
             //        default_quantum,
             //        [] (attotime const &lhs, maximum_quantum_map::value_type const &rhs) { return (std::min)(lhs, rhs.second); });
-            return Enumerable.Aggregate(m_maximum_quantums, default_quantum, (current, next) => { return std.min(current, next.second()); });
+            return Enumerable.Aggregate(m_maximum_quantums, default_quantum, (current, next) => { return attotime.Min(current, next.second()); });
         }
 
 

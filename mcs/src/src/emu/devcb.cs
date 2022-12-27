@@ -90,16 +90,10 @@ namespace mame
         //template <typename T, typename U> using mask_t = std::make_unsigned_t<intermediate_t<T, U> >;
 
         // Detecting candidates for transform functions
-        //template <typename Input, typename Result, typename Func, typename Enable = void> struct is_transform_form1 : public std::false_type { };
-        //template <typename Input, typename Result, typename Func, typename Enable = void> struct is_transform_form2 : public std::false_type { };
-        //template <typename Input, typename Result, typename Func, typename Enable = void> struct is_transform_form3 : public std::false_type { };
-        //template <typename Input, typename Result, typename Func, typename Enable = void> struct is_transform_form4 : public std::false_type { };
-        //template <typename Input, typename Result, typename Func, typename Enable = void> struct is_transform_form5 : public std::false_type { };
-        //template <typename Input, typename Result, typename Func, typename Enable = void> struct is_transform_form6 : public std::false_type { };
-        //template <typename Input, typename Result, typename Func> struct is_transform_form3<Input, Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func, offs_t &, Input, std::make_unsigned_t<Input> &>, Result>::value> > : public std::true_type { };
-        //template <typename Input, typename Result, typename Func> struct is_transform_form4<Input, Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func, offs_t &, Input>, Result>::value> > : public std::true_type { };
-        //template <typename Input, typename Result, typename Func> struct is_transform_form6<Input, Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func, Input>, Result>::value> > : public std::true_type { };
-        //template <typename Input, typename Result, typename Func> struct is_transform : public std::bool_constant<is_transform_form1<Input, Result, Func>::value || is_transform_form2<Input, Result, Func>::value || is_transform_form3<Input, Result, Func>::value || is_transform_form4<Input, Result, Func>::value || is_transform_form5<Input, Result, Func>::value || is_transform_form6<Input, Result, Func>::value> { };
+        //template <typename Input, typename Result, typename Func> using is_transform_form3 = std::is_invocable_r<Result, Func, offs_t &, Input, std::make_unsigned_t<Input> &>;
+        //template <typename Input, typename Result, typename Func> using is_transform_form4 = std::is_invocable_r<Result, Func, offs_t &, Input>;
+        //template <typename Input, typename Result, typename Func> using is_transform_form6 = std::is_invocable_r<Result, Func, Input>;
+        //template <typename Input, typename Result, typename Func> using is_transform = std::bool_constant<is_transform_form3<Input, Result, Func>::value || is_transform_form4<Input, Result, Func>::value || is_transform_form6<Input, Result, Func>::value>;
 
         // Determining the result type of a transform function
         //template <typename Input, typename Result, typename Func, typename Enable = void> struct transform_result;
@@ -265,13 +259,10 @@ namespace mame
     public abstract class devcb_read_base : devcb_base
     {
         // Detecting candidates for read functions
-        //template <typename Result, typename Func, typename Enable = void> struct is_read_form1 : public std::false_type { };
-        //template <typename Result, typename Func, typename Enable = void> struct is_read_form2 : public std::false_type { };
-        //template <typename Result, typename Func, typename Enable = void> struct is_read_form3 : public std::false_type { };
-        //template <typename Result, typename Func> struct is_read_form1<Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func, offs_t, Result>, Result>::value> > : public std::true_type { };
-        //template <typename Result, typename Func> struct is_read_form2<Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func, offs_t>, Result>::value> > : public std::true_type { };
-        //template <typename Result, typename Func> struct is_read_form3<Result, Func, std::enable_if_t<std::is_convertible<std::invoke_result_t<Func>, Result>::value> > : public std::true_type { };
-        //template <typename Result, typename Func> struct is_read : public std::bool_constant<is_read_form1<Result, Func>::value || is_read_form2<Result, Func>::value || is_read_form3<Result, Func>::value> { };
+        //template <typename Result, typename Func> using is_read_form1 = std::is_invocable_r<Result, Func, offs_t, Result>;
+        //template <typename Result, typename Func> using is_read_form2 = std::is_invocable_r<Result, Func, offs_t>;
+        //template <typename Result, typename Func> using is_read_form3 = std::is_invocable_r<Result, Func>;
+        //template <typename Result, typename Func> using is_read = std::bool_constant<is_read_form1<Result, Func>::value || is_read_form2<Result, Func>::value || is_read_form3<Result, Func>::value>;
 
         // Determining the result type of a read function
         //template <typename Result, typename Func, typename Enable = void> struct read_result;
@@ -391,13 +382,10 @@ namespace mame
     public abstract class devcb_write_base : devcb_base
     {
         // Detecting candidates for write functions
-        //template <typename Input, typename Func, typename Enable = void> struct is_write_form1 : public std::false_type { };
-        //template <typename Input, typename Func, typename Enable = void> struct is_write_form2 : public std::false_type { };
-        //template <typename Input, typename Func, typename Enable = void> struct is_write_form3 : public std::false_type { };
-        //template <typename Input, typename Func> struct is_write_form1<Input, Func, void_t<std::invoke_result_t<Func, offs_t, Input, std::make_unsigned_t<Input>> > > : public std::true_type { };
-        //template <typename Input, typename Func> struct is_write_form2<Input, Func, void_t<std::invoke_result_t<Func, offs_t, Input> > > : public std::true_type { };
-        //template <typename Input, typename Func> struct is_write_form3<Input, Func, void_t<std::invoke_result_t<Func, Input> > > : public std::true_type { };
-        //template <typename Input, typename Func> struct is_write : public std::bool_constant<is_write_form1<Input, Func>::value || is_write_form2<Input, Func>::value || is_write_form3<Input, Func>::value> { };
+        //template <typename Input, typename Func> using is_write_form1 = std::is_invocable<Func, offs_t, Input, std::make_unsigned_t<Input> >;
+        //template <typename Input, typename Func> using is_write_form2 = std::is_invocable<Func, offs_t, Input>;
+        //template <typename Input, typename Func> using is_write_form3 = std::is_invocable<Func, Input>;
+        //template <typename Input, typename Func> using is_write = std::bool_constant<is_write_form1<Input, Func>::value || is_write_form2<Input, Func>::value || is_write_form3<Input, Func>::value>;
 
         // Detecting candidates for write delegates
         //template <typename T, typename Enable = void> struct is_write_method : public std::false_type { };
@@ -681,13 +669,19 @@ namespace mame
             public transform_builder<Impl, Impl_OPS, Impl_output_t, transform_function_delegate> rshift(unsigned val)  //auto rshift(unsigned val)
             {
                 var trans = this.transform((offs_t offset, devcb_value data, ref devcb_value mem_mask) => { mem_mask >>= (int)val; return data >> (int)val; });  //auto trans(static_cast<Impl &>(*this).transform([val] (offs_t offset, T data, std::make_unsigned_t<T> &mem_mask) { mem_mask >>= val; return data >> val; }));
-                return m_transform_base.inherited_mask() ? trans : trans.mask(m_transform_base.m_mask >> (int)val);  //return inherited_mask() ? std::move(trans) : std::move(trans.mask(m_mask >> val));
+                if (inherited_mask())
+                    return trans;
+                else
+                    return trans.mask(m_transform_base.m_mask >> (int)val);  //return std::move(trans.mask(m_mask >> val));
             }
 
             public transform_builder<Impl, Impl_OPS, Impl_output_t, transform_function_delegate> lshift(unsigned val)  //auto lshift(unsigned val)
             {
                 var trans = this.transform((offs_t offset, devcb_value data, ref devcb_value mem_mask) => { mem_mask <<= (int)val; return data << (int)val; });  //auto trans(static_cast<Impl &>(*this).transform([val] (offs_t offset, T data, std::make_unsigned_t<T> &mem_mask) { mem_mask <<= val; return data << val; }));
-                return m_transform_base.inherited_mask() ? trans : trans.mask(m_transform_base.m_mask << (int)val);  //return inherited_mask() ? std::move(trans) : std::move(trans.mask(m_mask << val));
+                if (inherited_mask())
+                    return trans;
+                else
+                    return trans.mask(m_transform_base.m_mask << (int)val);  //return std::move(trans.mask(m_mask << val));
             }
 
 
@@ -1611,7 +1605,7 @@ namespace mame
             //    assert(this->m_consumed);
             //    this->built();
             //    return m_src.build(
-            //            [f = std::move(chain), cb = std::move(this->m_cb), exor = this->exor(), mask = this->mask()] (offs_t &offset, input_t data, std::make_unsigned_t<input_t> &mem_mask)
+            //            [f = std::move(chain), cb = std::move(m_cb), exor = this->exor(), mask = this->mask()] (offs_t &offset, input_t data, std::make_unsigned_t<input_t> &mem_mask)
             //            {
             //                auto const trans(devcb_write::invoke_transform<input_t, output_t>(cb, offset, data, mem_mask));
             //                output_t out_mask(mem_mask & mask);
@@ -1728,7 +1722,7 @@ namespace mame
             //    assert(this->m_consumed);
             //    this->built();
             //    return
-            //            [f = std::move(chain), sink = m_sink.build(), cb = std::move(this->m_cb), in_exor = m_in_exor, in_mask = m_in_mask, exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+            //            [f = std::move(chain), sink = m_sink.build(), cb = std::move(m_cb), in_exor = m_in_exor, in_mask = m_in_mask, exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
             //            {
             //                data = (data ^ in_exor) & in_mask;
             //                mem_mask &= in_mask;

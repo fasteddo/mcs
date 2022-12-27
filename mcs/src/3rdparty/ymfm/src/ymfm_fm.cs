@@ -392,7 +392,7 @@ namespace mame.ymfm
         //static constexpr uint8_t STATUS_BUSY = RegisterType::STATUS_BUSY;
         //static constexpr uint8_t STATUS_IRQ = RegisterType::STATUS_IRQ;
 
-        public class int_const_OUTPUTS : int_const { public int value { get { throw new emu_unimplemented(); } } }
+        public class int_const_OUTPUTS : int_const { public int value { get { throw new mcs_notimplemented(); } } }
 
 
         // expose the correct output class
@@ -490,7 +490,7 @@ namespace mame.ymfm
         //void set_clock_prescale(uint32_t prescale) { m_clock_prescale = prescale; }
 
         // compute sample rate
-        public uint32_t sample_rate(uint32_t baseclock) { throw new emu_unimplemented(); }  //{ return baseclock / (m_clock_prescale * OPERATORS); }
+        public uint32_t sample_rate(uint32_t baseclock) { throw new mcs_notimplemented(); }  //{ return baseclock / (m_clock_prescale * OPERATORS); }
 
         // return the owning device
         //ymfm_interface &intf() const { return m_intf; }
@@ -509,21 +509,21 @@ namespace mame.ymfm
         // timer callback; called by the interface when a timer fires
         public void engine_timer_expired(uint32_t tnum)
         {
-            throw new emu_unimplemented();
+            throw new mcs_notimplemented();
         }
 
 
         // check interrupts; called by the interface after synchronization
         public void engine_check_interrupts()
         {
-            throw new emu_unimplemented();
+            throw new mcs_notimplemented();
         }
 
 
         // mode register write; called by the interface after synchronization
         public void engine_mode_write(uint8_t data)
         {
-            throw new emu_unimplemented();
+            throw new mcs_notimplemented();
         }
 
 

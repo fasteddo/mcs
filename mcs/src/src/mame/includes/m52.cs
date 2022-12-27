@@ -12,10 +12,10 @@ namespace mame
     partial class m52_state : driver_device
     {
         /* board mod changes? */
-        int m_spritelimit;
-        bool m_do_bg_fills;
+        int m_spritelimit = 0;
+        bool m_do_bg_fills = false;
 
-        tilemap_t m_tx_tilemap;
+        tilemap_t m_tx_tilemap = null;
 
         required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
         required_device<screen_device> m_screen;
@@ -27,11 +27,11 @@ namespace mame
         optional_shared_ptr<uint8_t> m_spriteram;
 
         /* video-related */
-        uint8_t m_bg1xpos;
-        uint8_t m_bg1ypos;
-        uint8_t m_bg2xpos;
-        uint8_t m_bg2ypos;
-        uint8_t m_bgcontrol;
+        uint8_t m_bg1xpos = 0;
+        uint8_t m_bg1ypos = 0;
+        uint8_t m_bg2xpos = 0;
+        uint8_t m_bg2ypos = 0;
+        uint8_t m_bgcontrol = 0;
 
 
         required_device<gfxdecode_device> m_sp_gfxdecode;

@@ -14,13 +14,11 @@ using System.Reflection;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using char32_t = System.UInt32;
-using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
 using int64_t = System.Int64;
 using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
-using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using PointerU8 = mame.Pointer<System.Byte>;
@@ -42,8 +40,6 @@ using unsigned = System.UInt32;
 using uX = mame.FlexPrim;
 
 using static mame.cpp_global;
-using static mame.emucore_global;
-using static mame.osdcore_global;
 
 
 namespace mame
@@ -138,10 +134,6 @@ namespace mame
     public class u64_const_0xb5026f5aa96619e9 : u64_const { public UInt64 value { get { return 0xb5026f5aa96619e9; } } }
     public class u64_const_0xfff7eee000000000 : u64_const { public UInt64 value { get { return 0xfff7eee000000000; } } }
 
-    public interface endianness_t_const { endianness_t value { get; } }
-    public class endianness_t_const_ENDIANNESS_LITTLE : endianness_t_const { public endianness_t value { get { return ENDIANNESS_LITTLE; } } }
-    public class endianness_t_const_ENDIANNESS_BIG : endianness_t_const { public endianness_t value { get { return ENDIANNESS_BIG; } } }
-
 
     public static class cpp_global
     {
@@ -169,8 +161,8 @@ namespace mame
                     else if ((Type)value == typeof(UInt32)) return 4;
                     else if ((Type)value == typeof(Int64))  return 8;
                     else if ((Type)value == typeof(UInt64)) return 8;
-                    else throw new emu_unimplemented();
-                default: throw new emu_unimplemented();
+                    else throw new mcs_notimplemented();
+                default: throw new mcs_notimplemented();
             }
         }
 
@@ -183,8 +175,6 @@ namespace mame
         public static UInt64 max(UInt64 a, UInt64 b) { return std.max(a, b); }
         public static float max(float a, float b) { return std.max(a, b); }
         public static double max(double a, double b) { return std.max(a, b); }
-        public static attotime max(attotime a, attotime b) { return std.max(a, b); }
-        public static netlist_time max(netlist_time a, netlist_time b) { return std.max(a, b); }
         public static u8 min(u8 a, u8 b) { return std.min(a, b); }
         public static int min(int a, int b) { return std.min(a, b); }
         public static UInt32 min(UInt32 a, UInt32 b) { return std.min(a, b); }
@@ -192,7 +182,6 @@ namespace mame
         public static UInt64 min(UInt64 a, UInt64 b) { return std.min(a, b); }
         public static float min(float a, float b) { return std.min(a, b); }
         public static double min(double a, double b) { return std.min(a, b); }
-        public static attotime min(attotime a, attotime b) { return std.min(a, b); }
 
 
         // c++ cassert
@@ -256,10 +245,19 @@ namespace mame
     }
 
 
-    public class emu_unimplemented : emu_fatalerror
+    public class mcs_notimplemented : NotImplementedException
     {
         [DebuggerHidden]
-        public emu_unimplemented() : base("Unimplemented") { }
+        public mcs_notimplemented() : base("mcs not implemented") { }
+    }
+
+
+    public class mcs_fatal : Exception
+    {
+        [DebuggerHidden]
+        public mcs_fatal() : base("mcs fatal exception.") { }
+        [DebuggerHidden]
+        public mcs_fatal(string format, params object [] args) : base(string.Format("mcs fatal exception: {0}", string.Format(format, args))) { }
     }
 
 
@@ -336,8 +334,6 @@ namespace mame
         public static UInt64 max(UInt64 a, UInt64 b) { return Math.Max(a, b); }
         public static float max(float a, float b) { if (float.IsNaN(a) || float.IsNaN(b)) return a; else return Math.Max(a, b); }
         public static double max(double a, double b) { if (double.IsNaN(a) || double.IsNaN(b)) return a; else return Math.Max(a, b); }
-        public static attotime max(attotime a, attotime b) { return attotime.Max(a, b); }
-        public static netlist_time max(netlist_time a, netlist_time b) { return netlist_time.Max(a, b); }
         public static u8 min(u8 a, u8 b) { return Math.Min(a, b); }
         public static int min(int a, int b) { return Math.Min(a, b); }
         public static UInt32 min(UInt32 a, UInt32 b) { return Math.Min(a, b); }
@@ -345,7 +341,6 @@ namespace mame
         public static UInt64 min(UInt64 a, UInt64 b) { return Math.Min(a, b); }
         public static float min(float a, float b) { if (float.IsNaN(a) || float.IsNaN(b)) return a; else return Math.Min(a, b); }
         public static double min(double a, double b) { if (double.IsNaN(a) || double.IsNaN(b)) return a; else return Math.Min(a, b); }
-        public static attotime min(attotime a, attotime b) { return attotime.Min(a, b); }
         public static void sort<T>(MemoryContainer<T> list, Comparison<T> pred) { list.Sort(pred); }
 
 
@@ -424,11 +419,11 @@ namespace mame
 
 
         // c++ exception
-        public static void terminate() { throw new emu_fatalerror("std.terminate() called"); }
+        public static void terminate() { throw new mcs_fatal("std.terminate() called"); }
 
 
         // c++ iostream
-        public static void cerr(string s) { osd_printf_debug(s); }
+        public static void cerr(string s) { Debug.WriteLine(s); }
 
 
         // c++ numeric
@@ -465,7 +460,7 @@ namespace mame
             public array(params T [] args)
             {
                 if (args.Length != (int)N)
-                    throw new emu_fatalerror("array() parameter count doen't match size. Provided: {0}, Expected: {1}", args.Length, N);
+                    throw new mcs_fatal("array() parameter count doen't match size. Provided: {0}, Expected: {1}", args.Length, N);
 
                 for (int i = 0; i < args.Length; i++)
                     m_data[i] = args[i];
@@ -474,15 +469,15 @@ namespace mame
 
             // IList
             public int IndexOf(T value) { return m_data.IndexOf(value); }
-            void IList<T>.Insert(int index, T value) { throw new emu_unimplemented(); }
-            void IList<T>.RemoveAt(int index) { throw new emu_unimplemented(); }
-            void ICollection<T>.Add(T value) { throw new emu_unimplemented(); }
-            bool ICollection<T>.Contains(T value) { throw new emu_unimplemented(); }
-            void ICollection<T>.Clear() { throw new emu_unimplemented(); }
-            void ICollection<T>.CopyTo(T [] array, int index) { throw new emu_unimplemented(); }
-            bool ICollection<T>.Remove(T value) { throw new emu_unimplemented(); }
+            void IList<T>.Insert(int index, T value) { throw new mcs_notimplemented(); }
+            void IList<T>.RemoveAt(int index) { throw new mcs_notimplemented(); }
+            void ICollection<T>.Add(T value) { throw new mcs_notimplemented(); }
+            bool ICollection<T>.Contains(T value) { throw new mcs_notimplemented(); }
+            void ICollection<T>.Clear() { throw new mcs_notimplemented(); }
+            void ICollection<T>.CopyTo(T [] array, int index) { throw new mcs_notimplemented(); }
+            bool ICollection<T>.Remove(T value) { throw new mcs_notimplemented(); }
             public int Count { get { return m_data.Count; } }
-            bool ICollection<T>.IsReadOnly { get { throw new emu_unimplemented(); } }
+            bool ICollection<T>.IsReadOnly { get { throw new mcs_notimplemented(); } }
             IEnumerator IEnumerable.GetEnumerator() { return m_data.GetEnumerator(); }
             IEnumerator<T> IEnumerable<T>.GetEnumerator() { return ((IEnumerable<T>)m_data).GetEnumerator(); }
 
@@ -1607,7 +1602,7 @@ namespace mame
                 else if (m_type == typeof(s16)) return (s16)(m_value & s16.MaxValue);
                 else if (m_type == typeof(s32)) return (s32)(m_value & s32.MaxValue);
                 else if (m_type == typeof(s64)) return (s64)(m_value & s64.MaxValue);
-                else throw new emu_unimplemented();
+                else throw new mcs_notimplemented();
             }
         }
 
@@ -1644,7 +1639,7 @@ namespace mame
             else if (type == typeof(u16)) return typeof(u16);
             else if (type == typeof(u32)) return typeof(u32);
             else if (type == typeof(s32)) return typeof(u32);
-            else throw new emu_unimplemented();
+            else throw new mcs_notimplemented();
         }
 
 
@@ -1691,7 +1686,7 @@ namespace mame
                      type == typeof(s64))
                 return false;
             else
-                throw new emu_unimplemented();
+                throw new mcs_notimplemented();
         }
 
 
@@ -1707,7 +1702,7 @@ namespace mame
                 case 1: return typeof(u16);
                 case 2: return typeof(u32);
                 case 3: return typeof(u64);
-                default: throw new emu_unimplemented();
+                default: throw new mcs_notimplemented();
             }
         }
 
@@ -1717,7 +1712,7 @@ namespace mame
             else if (type == typeof(u16)) return 1;
             else if (type == typeof(u32)) return 2;
             else if (type == typeof(u64)) return 3;
-            else throw new emu_unimplemented();
+            else throw new mcs_notimplemented();
         }
     }
 }

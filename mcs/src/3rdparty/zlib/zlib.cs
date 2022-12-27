@@ -33,7 +33,7 @@ namespace mame
 
         public static int inflate(z_stream strm, int flush)
         {
-            throw new emu_unimplemented();
+            throw new mcs_notimplemented();
         }
     }
 

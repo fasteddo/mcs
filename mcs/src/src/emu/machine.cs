@@ -1136,8 +1136,9 @@ namespace mame
                 emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_READ);
                 if (!file.open(nvram_filename(nvram.device())))
                 {
-                    // FIXME: don't swallow errors
-                    nvram.nvram_load(file);
+                    if (!nvram.nvram_load(file.core_file_get()))
+                        osd_printf_error("Error reading NVRAM file {0}\n", file.filename());
+
                     file.close();
                 }
                 else
@@ -1159,8 +1160,9 @@ namespace mame
                     emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                     if (!file.open(nvram_filename(nvram.device())))
                     {
-                        // FIXME: don't swallow errors
-                        nvram.nvram_save(file);
+                        if (!nvram.nvram_save(file.core_file_get()))
+                            osd_printf_error("Error writing NVRAM file {0}\n", file.filename());
+
                         file.close();
                     }
                 }

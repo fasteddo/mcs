@@ -32,8 +32,8 @@ namespace mame
             public device_nvram_interface_er2055(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
             protected override void nvram_default() { ((er2055_device)device()).device_nvram_interface_nvram_default(); }
-            protected override void nvram_read(emu_file file) { ((er2055_device)device()).device_nvram_interface_nvram_read(file); }
-            protected override void nvram_write(emu_file file) { ((er2055_device)device()).device_nvram_interface_nvram_write(file); }
+            protected override bool nvram_read(util.read_stream file) { return ((er2055_device)device()).device_nvram_interface_nvram_read(file); }
+            protected override bool nvram_write(util.write_stream file) { return ((er2055_device)device()).device_nvram_interface_nvram_write(file); }
         }
 
 
@@ -169,11 +169,10 @@ namespace mame
         //  nvram_read - called to read NVRAM from the
         //  .nv file
         //-------------------------------------------------
-        void device_nvram_interface_nvram_read(emu_file file)
+        bool device_nvram_interface_nvram_read(util.read_stream file)
         {
             throw new emu_unimplemented();
 #if false
-            file.read(&m_rom_data[0], SIZE_DATA);
 #endif
         }
 
@@ -181,11 +180,10 @@ namespace mame
         //  nvram_write - called to write NVRAM to the
         //  .nv file
         //-------------------------------------------------
-        void device_nvram_interface_nvram_write(emu_file file)
+        bool device_nvram_interface_nvram_write(util.write_stream file)
         {
             throw new emu_unimplemented();
 #if false
-            file.write(&m_rom_data[0], SIZE_DATA);
 #endif
         }
 

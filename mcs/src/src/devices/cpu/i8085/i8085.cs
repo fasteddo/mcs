@@ -272,7 +272,7 @@ namespace mame
         //auto out_status_func() { return m_out_status_func.bind(); }
 
         // INTE changed callback
-        //auto out_inte_func() { return m_out_inte_func.bind(); }
+        public devcb_write_line.binder out_inte_func() { return m_out_inte_func.bind(); }  //auto out_inte_func() { return m_out_inte_func.bind(); }
 
         // SID changed callback (8085A only)
         //auto in_sid_func() { return m_in_sid_func.bind(); }

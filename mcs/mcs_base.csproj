@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="3rdparty\**" />
+    <Compile Remove="src\3rdparty\**" />
+    <Compile Remove="src\build\**" />
+    <Compile Remove="src\src\**" />
+    <EmbeddedResource Remove="3rdparty\**" />
+    <EmbeddedResource Remove="src\3rdparty\**" />
+    <EmbeddedResource Remove="src\build\**" />
+    <EmbeddedResource Remove="src\src\**" />
+    <None Remove="3rdparty\**" />
+    <None Remove="src\3rdparty\**" />
+    <None Remove="src\build\**" />
+    <None Remove="src\src\**" />
+  </ItemGroup>
+
+</Project>

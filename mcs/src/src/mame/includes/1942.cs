@@ -25,9 +25,9 @@ namespace mame
         required_device<generic_latch_8_device> m_soundlatch;
 
         /* video-related */
-        tilemap_t m_fg_tilemap;
-        tilemap_t m_bg_tilemap;
-        int m_palette_bank;
+        tilemap_t m_fg_tilemap = null;
+        tilemap_t m_bg_tilemap = null;
+        int m_palette_bank = 0;
         uint8_t [] m_scroll = new uint8_t[2];
         uint8_t [,] m_sprite_bufs = new uint8_t[2, 512];
 

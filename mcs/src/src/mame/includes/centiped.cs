@@ -13,8 +13,8 @@ namespace mame
     {
         required_device<m6502_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
 
-        uint8_t m_gfx_bank;
-        tilemap_t m_bg_tilemap;
+        uint8_t m_gfx_bank = 0;
+        tilemap_t m_bg_tilemap = null;
 
         optional_shared_ptr<uint8_t> m_rambase;
         required_shared_ptr<uint8_t> m_videoram;
@@ -31,10 +31,10 @@ namespace mame
 
         uint8_t [] m_oldpos = new uint8_t[4];
         uint8_t [] m_sign = new uint8_t[4];
-        uint8_t m_dsw_select;
-        uint8_t m_control_select;
-        uint8_t m_flipscreen;
-        uint8_t m_bullsdrt_sprites_bank;
+        uint8_t m_dsw_select = 0;
+        uint8_t m_control_select = 0;
+        uint8_t m_flipscreen = 0;
+        uint8_t m_bullsdrt_sprites_bank = 0;
         uint8_t [] m_penmask = new uint8_t[64];
 
 

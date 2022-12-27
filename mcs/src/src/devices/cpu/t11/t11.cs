@@ -621,6 +621,16 @@ namespace mame
         {
             throw new emu_unimplemented();
         }
+
+
+        void trap_to(uint16_t vector)
+        {
+            PUSH(PSW);
+            PUSH(PC);
+            PC = (uint16_t)RWORD(vector);
+            PSW = (uint8_t)RWORD(vector + 2);
+            t11_check_irqs();
+        }
     }
 
 

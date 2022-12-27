@@ -250,6 +250,24 @@ namespace mame.ymfm
     }
 
 
+    public interface ChipClass_operators<RegisterType, RegisterType_OPS>
+        where RegisterType : opm_registers, new()
+        where RegisterType_OPS : fm_engine_base_operators, new()
+    {
+        uint32_t OUTPUTS { get; }
+
+        void reset();
+        void save_restore(ymfm.ymfm_saved_state state);
+        uint32_t sample_rate(uint32_t input_clock);
+        uint8_t read_status();
+        uint8_t read(uint32_t offset);
+        void write_address(uint8_t data);
+        void write_data(uint8_t data);
+        void write(uint32_t offset, uint8_t data);
+        void generate(fm_engine_base<RegisterType, RegisterType_OPS>.output_data [] output, uint32_t numsamples = 1);
+    }
+
+
     //*********************************************************
     //  OPM IMPLEMENTATION CLASSES
     //*********************************************************
@@ -291,26 +309,26 @@ namespace mame.ymfm
 
 
         // reset
-        public void reset() { throw new emu_unimplemented(); }
+        public void reset() { throw new mcs_notimplemented(); }
 
         // save/restore
-        public void save_restore(ymfm_saved_state state) { throw new emu_unimplemented(); }
+        public void save_restore(ymfm_saved_state state) { throw new mcs_notimplemented(); }
 
         // pass-through helpers
         public uint32_t sample_rate(uint32_t input_clock) { return m_fm.sample_rate(input_clock); }
         //void invalidate_caches() { m_fm.invalidate_caches(); }
 
         // read access
-        public uint8_t read_status() { throw new emu_unimplemented(); }
-        public uint8_t read(uint32_t offset) { throw new emu_unimplemented(); }
+        public uint8_t read_status() { throw new mcs_notimplemented(); }
+        public uint8_t read(uint32_t offset) { throw new mcs_notimplemented(); }
 
         // write access
-        public void write_address(uint8_t data) { throw new emu_unimplemented(); }
-        public void write_data(uint8_t data) { throw new emu_unimplemented(); }
-        public void write(uint32_t offset, uint8_t data) { throw new emu_unimplemented(); }
+        public void write_address(uint8_t data) { throw new mcs_notimplemented(); }
+        public void write_data(uint8_t data) { throw new mcs_notimplemented(); }
+        public void write(uint32_t offset, uint8_t data) { throw new mcs_notimplemented(); }
 
         // generate one sample of sound
-        public void generate(ym2151_output_data [] output, uint32_t numsamples = 1) { throw new emu_unimplemented(); }
+        public void generate(ym2151_output_data [] output, uint32_t numsamples = 1) { throw new mcs_notimplemented(); }
     }
 
 

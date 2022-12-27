@@ -89,8 +89,8 @@ namespace mame
         required_shared_ptr<uint8_t> m_sprite_ram;
 
         /* machine states */
-        uint8_t m_hardware_type;
-        uint8_t m_nmi_mask;
+        uint8_t m_hardware_type = 0;
+        uint8_t m_nmi_mask = 0;
 
         //std::unique_ptr<uint8_t[]> m_decrypted;
 
@@ -98,45 +98,45 @@ namespace mame
         optional_region_ptr<uint8_t> m_snd_rom;
 
         /* video state */
-        tilemap_t m_bg_tilemap;
+        tilemap_t m_bg_tilemap = null;
 
         bitmap_ind16 m_bg_bits;
-        Pointer<uint8_t> m_color_codes;  //const uint8_t *     m_color_codes;
-        emu_timer m_scanline_timer;
+        Pointer<uint8_t> m_color_codes = null;  //const uint8_t *     m_color_codes;
+        emu_timer m_scanline_timer = null;
         int8_t m_vidhw;          /* Selected video hardware RS Conversion / TKG04 */
 
         /* radar scope */
 
-        MemoryU8 m_gfx4;  //uint8_t *           m_gfx4;
-        MemoryU8 m_gfx3;  //uint8_t *           m_gfx3;
-        int m_gfx3_len;
+        MemoryU8 m_gfx4 = null;  //uint8_t *           m_gfx4;
+        MemoryU8 m_gfx3 = null;  //uint8_t *           m_gfx3;
+        int m_gfx3_len = 0;
 
         uint8_t m_sig30Hz;
-        uint8_t m_lfsr_5I;
-        uint8_t m_grid_sig;
-        uint8_t m_rflip_sig;
-        uint8_t m_star_ff;
-        uint8_t m_blue_level;
-        double m_cd4049_a;
-        double m_cd4049_b;
+        uint8_t m_lfsr_5I = 0;
+        uint8_t m_grid_sig = 0;
+        uint8_t m_rflip_sig = 0;
+        uint8_t m_star_ff = 0;
+        uint8_t m_blue_level = 0;
+        double m_cd4049_a = 0;
+        double m_cd4049_b = 0;
 
         /* Specific states */
-        int8_t m_decrypt_counter;
+        int8_t m_decrypt_counter = 0;
 
         /* 2650 protection */
-        uint8_t m_protect_type;
-        uint8_t m_hunchloopback;
-        uint8_t m_prot_cnt;
-        uint8_t m_main_fo;
+        uint8_t m_protect_type = 0;
+        uint8_t m_hunchloopback = 0;
+        uint8_t m_prot_cnt = 0;
+        uint8_t m_main_fo = 0;
 
         /* Save state relevant */
-        uint8_t m_gfx_bank;
-        uint8_t m_palette_bank;
-        uint8_t m_grid_on;
-        uint16_t m_grid_col;
-        uint8_t m_sprite_bank;
-        uint8_t m_dma_latch;
-        uint8_t m_flip;
+        uint8_t m_gfx_bank = 0;
+        uint8_t m_palette_bank = 0;
+        uint8_t m_grid_on = 0;
+        uint16_t m_grid_col = 0;
+        uint8_t m_sprite_bank = 0;
+        uint8_t m_dma_latch = 0;
+        uint8_t m_flip = 0;
 
         /* radarscp_step */
         double m_cv1;
@@ -158,7 +158,7 @@ namespace mame
         memory_bank_creator m_bank2;
 
         /* radarscp_scanline */
-        int m_counter;
+        int m_counter = 0;
 
 
         public dkong_state(machine_config mconfig, device_type type, string tag)

@@ -423,8 +423,8 @@ namespace mame
                 case 0x00:  /* HALT  */ halt(op); break;
                 case 0x01:  /* WAIT  */ m_icount.i = 0; m_wait_state = 1; break;
                 case 0x02:  /* RTI   */ m_icount.i -= 24; PC = (uint16_t)POP(); PSW = (uint8_t)POP(); t11_check_irqs(); break;
-                case 0x03:  /* BPT   */ m_icount.i -= 48; PUSH(PSW); PUSH(PC); PC = (uint16_t)RWORD(0x0c); PSW = (uint8_t)RWORD(0x0e); t11_check_irqs(); break;
-                case 0x04:  /* IOT   */ m_icount.i -= 48; PUSH(PSW); PUSH(PC); PC = (uint16_t)RWORD(0x10); PSW = (uint8_t)RWORD(0x12); t11_check_irqs(); break;
+                case 0x03:  /* BPT   */ m_icount.i -= 48; trap_to(0x0c); break;
+                case 0x04:  /* IOT   */ m_icount.i -= 48; trap_to(0x10); break;
                 case 0x05:  /* RESET */ m_out_reset_func.op_s32(ASSERT_LINE); m_out_reset_func.op_s32(CLEAR_LINE); m_icount.i -= 110; break;
                 case 0x06:  /* RTT   */ m_icount.i -= 33; PC = (uint16_t)POP(); PSW = (uint8_t)POP(); t11_check_irqs(); break;
                 case 0x07:  /* MFPT  */ REGB(0) = 4; break;
@@ -446,11 +446,13 @@ namespace mame
         void illegal(uint16_t op)
         {
             m_icount.i -= 48;
-            PUSH(PSW);
-            PUSH(PC);
-            PC = (uint16_t)RWORD(0x08);
-            PSW = (uint8_t)RWORD(0x0a);
-            t11_check_irqs();
+            trap_to(0x08);
+        }
+
+        void illegal4(uint16_t op)
+        {
+            m_icount.i -= 48;
+            trap_to(0x04);
         }
 
         void mark(uint16_t op)
@@ -1047,21 +1049,13 @@ namespace mame
         void emt(uint16_t op)
         {
             m_icount.i -= 48;
-            PUSH(PSW);
-            PUSH(PC);
-            PC = (uint16_t)RWORD(0x18);
-            PSW = (uint8_t)RWORD(0x1a);
-            t11_check_irqs();
+            trap_to(0x18);
         }
 
         void trap(uint16_t op)
         {
             m_icount.i -= 48;
-            PUSH(PSW);
-            PUSH(PC);
-            PC = (uint16_t)RWORD(0x1c);
-            PSW = (uint8_t)RWORD(0x1e);
-            t11_check_irqs();
+            trap_to(0x1c);
         }
 
         void clrb_rg(uint16_t op)       { m_icount.i -= 12; { CLRB_R(op, RG);  } }

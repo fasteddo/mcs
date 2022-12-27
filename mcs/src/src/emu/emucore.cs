@@ -42,6 +42,11 @@ namespace mame
 
     //using endianness_t = util::endianness;
 
+    public interface endianness_t_const { endianness_t value { get; } }
+    public class endianness_t_const_ENDIANNESS_LITTLE : endianness_t_const { public endianness_t value { get { return ENDIANNESS_LITTLE; } } }
+    public class endianness_t_const_ENDIANNESS_BIG : endianness_t_const { public endianness_t value { get { return ENDIANNESS_BIG; } } }
+
+
     //using util::BYTE_XOR_BE;
     //using util::BYTE_XOR_LE;
     //using util::BYTE4_XOR_BE;
@@ -307,6 +312,13 @@ namespace mame
 
         public string what() { return text; }
         public int exitcode() { return code; }
+    }
+
+
+    public class emu_unimplemented : emu_fatalerror
+    {
+        [DebuggerHidden]
+        public emu_unimplemented() : base("Unimplemented") { }
     }
 
 

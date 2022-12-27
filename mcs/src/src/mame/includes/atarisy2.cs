@@ -23,14 +23,14 @@ namespace mame
         required_device<atari_motion_objects_device> m_mob;
         required_region_ptr_u16 m_slapstic_region;
 
-        uint8_t m_interrupt_enable;
+        uint8_t m_interrupt_enable = 0;
 
         required_device<tilemap_device> m_playfield_tilemap;
         required_device<tilemap_device> m_alpha_tilemap;
         required_shared_ptr_u16 m_xscroll;
         required_shared_ptr_u16 m_yscroll;
 
-        int8_t m_pedal_count;
+        int8_t m_pedal_count = 0;
 
         required_device<generic_latch_8_device> m_soundlatch;
         required_device<generic_latch_8_device> m_mainlatch;
@@ -38,10 +38,10 @@ namespace mame
         required_device_array<pokey_device, u32_const_2> m_pokey;
         optional_device<tms5220c_device> m_tms5220;  //optional_device<tms5220_device> m_tms5220;
 
-        bool m_scanline_int_state;
-        bool m_video_int_state;
-        bool m_p2portwr_state;
-        bool m_p2portrd_state;
+        bool m_scanline_int_state = false;
+        bool m_video_int_state = false;
+        bool m_p2portwr_state = false;
+        bool m_p2portrd_state = false;
 
         required_memory_bank_array<u32_const_2> m_rombank;
         required_device<atari_slapstic_device> m_slapstic;
@@ -49,19 +49,19 @@ namespace mame
         required_shared_ptr_u16 m_playfieldt;
         required_shared_ptr_u16 m_playfieldb;
 
-        uint8_t m_sound_reset_state;
+        uint8_t m_sound_reset_state = 0;
 
-        emu_timer m_yscroll_reset_timer;
+        emu_timer m_yscroll_reset_timer = null;
         uint32_t [] m_playfield_tile_bank = new uint32_t [2];
 
         // 720 fake joystick
-        //double          m_joy_last_angle;
-        //int             m_joy_rotations;
+        //double          m_joy_last_angle = 0;
+        //int             m_joy_rotations = 0;
 
         // 720 fake spinner
-        //uint32_t          m_spin_last_rotate_count;
-        //int32_t           m_spin_pos;                 /* track fake position of spinner */
-        //uint32_t          m_spin_center_count;
+        //uint32_t          m_spin_last_rotate_count = 0U;
+        //int32_t           m_spin_pos = 0;                 /* track fake position of spinner */
+        //uint32_t          m_spin_center_count = 0U;
 
         output_finder<u32_const_2> m_leds;
 

@@ -3,10 +3,9 @@
 
 using System;
 
-using int16 = System.Int16;
+using s16 = System.Int16;
+using u8 = System.Byte;
 using u32 = System.UInt32;
-using uint8 = System.Byte;
-using uint32 = System.UInt32;
 using unsigned = System.UInt32;
 
 using static mame.nes_defs_global;
@@ -17,15 +16,6 @@ namespace mame
     /* APU type */
     class apu_t
     {
-        /* REGULAR TYPE DEFINITIONS */
-        //typedef int8_t          int8;
-        //typedef int16_t         int16;
-        //typedef int32_t         int32;
-        //typedef uint8_t         uint8;
-        //typedef uint16_t        uint16;
-        //typedef uint32_t        uint32;
-
-
         /* CHANNEL TYPE DEFINITIONS */
 
         /* Square Wave */
@@ -37,16 +27,16 @@ namespace mame
             //        elem = 0;
             //}
 
-            public uint8 [] regs = new uint8 [4];
+            public u8 [] regs = new u8 [4];
             public int vbl_length = 0;
             public int freq = 0;
             public float phaseacc = 0.0f;
             public float env_phase = 0.0f;
             public float sweep_phase = 0.0f;
-            public uint8 adder = 0;
-            public uint8 env_vol = 0;
+            public u8 adder = 0;
+            public u8 env_vol = 0;
             public bool enabled = false;
-            public uint8 output = 0;
+            public u8 output = 0;
         }
 
 
@@ -59,16 +49,16 @@ namespace mame
             //        elem = 0;
             //}
 
-            public uint8 [] regs = new uint8 [4]; /* regs[1] unused */
+            public u8 [] regs = new u8 [4]; /* regs[1] unused */
             public int linear_length = 0;
             public bool linear_reload = false;
             public int vbl_length = 0;
             public int write_latency = 0;
             public float phaseacc = 0.0f;
-            public uint8 adder = 0;
+            public u8 adder = 0;
             public bool counter_started = false;
             public bool enabled = false;
-            public uint8 output = 0;
+            public u8 output = 0;
         }
 
 
@@ -81,14 +71,14 @@ namespace mame
             //        elem = 0;
             //}
 
-            public uint8 [] regs = new uint8 [4]; /* regs[1] unused */
+            public u8 [] regs = new u8 [4]; /* regs[1] unused */
             public u32 seed = 1;
             public int vbl_length = 0;
             public float phaseacc = 0.0f;
             public float env_phase = 0.0f;
-            public uint8 env_vol = 0;
+            public u8 env_vol = 0;
             public bool enabled = false;
-            public uint8 output = 0;
+            public u8 output = 0;
         }
 
 
@@ -101,16 +91,16 @@ namespace mame
             //        elem = 0;
             //}
 
-            public uint8 [] regs = new uint8 [4];
-            public uint32 address = 0;
-            public uint32 length = 0;
+            public u8 [] regs = new u8 [4];
+            public u32 address = 0;
+            public u32 length = 0;
             public int bits_left = 0;
             public float phaseacc = 0.0f;
-            public uint8 cur_byte = 0;
+            public u8 cur_byte = 0;
             public bool enabled = false;
             public bool irq_occurred = false;
-            public int16 vol = 0;
-            public uint8 output = 0;
+            public s16 vol = 0;
+            public u8 output = 0;
         }
 
 
@@ -143,42 +133,6 @@ namespace mame
         public noise_t noi = new noise_t();
         public dpcm_t dpcm = new dpcm_t();
 
-        /* APU registers */
-        public byte [] regs = new byte [0x18];  //unsigned char regs[0x18];
-
-        /* Sound pointers */
-        //void *buffer = nullptr;
-
-
-        //apu_t()
-        //{
-        //    memset(regs, 0, sizeof(regs));
-        //}
-
-
-#if USE_QUEUE
-
-        static constexpr unsigned QUEUE_SIZE = 0x2000;
-        static constexpr unsigned QUEUE_MAX  = QUEUE_SIZE - 1;
-
-        struct queue_t
-        {
-            queue_t() { }
-
-            int pos = 0;
-            unsigned char reg = 0, val = 0;
-        };
-
-        /* Event queue */
-        queue_t queue[QUEUE_SIZE];
-        int head, tail;
-
-#else
-
-        public int buf_pos = 0;
-
-#endif
-
         public int step_mode = 0;
     }
 
@@ -188,10 +142,10 @@ namespace mame
         /* CONSTANTS */
 
         /* vblank length table used for squares, triangle, noise */
-        public static readonly uint8 [] vbl_length = new uint8 [32]
+        public static readonly u8 [] vbl_length = new u8 [32]
         {
-            5, 127, 10, 1, 20,  2, 40,  3, 80,  4, 30,  5, 7,  6, 13,  7,
-            6,   8, 12, 9, 24, 10, 48, 11, 96, 12, 36, 13, 8, 14, 16, 15
+            10, 254, 20,  2, 40,  4, 80,  6, 160,  8, 60, 10, 14, 12, 26, 14,
+            12,  16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30
         };
 
         /* frequency limit of square channels */
@@ -212,7 +166,7 @@ namespace mame
         // each frequency is determined as: freq = master / period
         //static const int dpcm_clocks[2][16] =
         //{
-        //    { 428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 85, 72, 54 }, // NTSC
+        //    { 428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54 }, // NTSC
         //    { 398, 354, 316, 298, 276, 236, 210, 198, 176, 148, 132, 118, 98, 78, 66, 50 } // PAL
         //};
 

@@ -1243,6 +1243,8 @@ namespace mame
                 m_digital_value = value != 0;
         }
 
+        //void clear_value();
+
         bool optional() { return ((m_flags & FIELD_FLAG_OPTIONAL) != 0); }
         //bool cocktail() const { return ((m_flags & FIELD_FLAG_COCKTAIL) != 0); }
         public bool toggle() { return ((m_flags & FIELD_FLAG_TOGGLE) != 0); }
@@ -2147,6 +2149,7 @@ namespace mame
         s32 m_adjdefvalue;          // adjusted default value from the config
         s32 m_adjmin;               // adjusted minimum value from the config
         s32 m_adjmax;               // adjusted maximum value from the config
+        s32 m_adjoverride;          // programmatically set adjusted value
 
         // live values of configurable parameters
         s32 m_sensitivity;          // current live sensitivity (100=normal)
@@ -2158,7 +2161,6 @@ namespace mame
         s32 m_accum;                // accumulated value (including relative adjustments)
         s32 m_previous;             // previous adjusted value
         s32 m_previousanalog;       // previous analog value
-        s32 m_prog_analog_value;    // programmatically set analog value
 
         // parameters for modifying live values
         s32 m_minimum;              // minimum adjusted value
@@ -2180,7 +2182,7 @@ namespace mame
         bool m_single_scale;         // scale joystick differently if default is between min/max
         bool m_interpolate;          // should we do linear interpolation for mid-frame reads?
         bool m_lastdigital;          // was the last modification caused by a digital form?
-        bool m_was_written;          // was the last modification caused programmatically?
+        bool m_use_adjoverride;      // override what will be read from the field
 
 
         // construction/destruction
@@ -2194,6 +2196,7 @@ namespace mame
             m_adjdefvalue = (s32)(field.defvalue() & field.mask());
             m_adjmin = (s32)(field.minval() & field.mask());
             m_adjmax = (s32)(field.maxval() & field.mask());
+            m_adjoverride = (s32)(field.defvalue() & field.mask());
             m_sensitivity = field.sensitivity();
             m_reverse = field.analog_reverse();
             m_delta = field.delta();
@@ -2201,7 +2204,6 @@ namespace mame
             m_accum = 0;
             m_previous = 0;
             m_previousanalog = 0;
-            m_prog_analog_value = 0;
             m_minimum = INPUT_ABSOLUTE_MIN;
             m_maximum = INPUT_ABSOLUTE_MAX;
             m_center = 0;
@@ -2217,7 +2219,7 @@ namespace mame
             m_single_scale = false;
             m_interpolate = false;
             m_lastdigital = false;
-            m_was_written = false;
+            m_use_adjoverride = false;
 
 
             // compute the shift amount and number of bits
@@ -2391,6 +2393,13 @@ namespace mame
             if (!m_field.enabled())
                 return;
 
+            // if set programmatically, only use the override value
+            if (m_use_adjoverride)
+            {
+                result = (ioport_value)m_adjoverride;
+                return;
+            }
+
             // start with the raw value
             int value = m_accum;
 
@@ -2441,13 +2450,6 @@ namespace mame
             // get the new raw analog value and its type
             input_item_class itemclass;
             s32 rawvalue = machine.input().seq_axis_value(m_field.seq(input_seq_type.SEQ_TYPE_STANDARD), out itemclass);
-
-            // use programmatically set value if available
-            if (m_was_written)
-            {
-                m_was_written = false;
-                rawvalue = m_prog_analog_value;
-            }
 
             // if we got an absolute input, it overrides everything else
             if (itemclass == input_item_class.ITEM_CLASS_ABSOLUTE)
@@ -2595,16 +2597,19 @@ namespace mame
         }
 
 
-        // setters
+        // programmatic override (for script bindings)
         //-------------------------------------------------
         //  set_value - take a new value to be used
         //  at next frame update
         //-------------------------------------------------
         public void set_value(s32 value)
         {
-            m_was_written = true;
-            m_prog_analog_value = value;
+            m_use_adjoverride = true;
+            m_adjoverride = std.clamp(value, m_adjmin, m_adjmax);
         }
+
+
+        //void clear_value();
 
 
         // helpers

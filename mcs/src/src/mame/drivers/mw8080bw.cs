@@ -68,9 +68,10 @@ namespace mame
         protected void mw8080bw_root(machine_config config)
         {
             /* basic machine hardware */
-            I8080(config, m_maincpu, MW8080BW_CPU_CLOCK);
-            m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, main_map);
-            m_maincpu.op0.execute().set_irq_acknowledge_callback(interrupt_vector);
+            i8080_cpu_device maincpu = I8080(config, m_maincpu, MW8080BW_CPU_CLOCK);
+            maincpu.memory().set_addrmap(AS_PROGRAM, main_map);
+            maincpu.execute().set_irq_acknowledge_callback(interrupt_vector);
+            maincpu.out_inte_func().set((write_line_delegate)int_enable_w).reg();
 
             MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_mw8080bw);
 

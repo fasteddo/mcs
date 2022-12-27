@@ -27,8 +27,8 @@ namespace mame
             public device_nvram_interface_nvram(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
             protected override void nvram_default() { ((nvram_device)device()).device_nvram_interface_nvram_default(); }
-            protected override void nvram_read(emu_file file) { ((nvram_device)device()).device_nvram_interface_nvram_read(file); }
-            protected override void nvram_write(emu_file file) { ((nvram_device)device()).device_nvram_interface_nvram_write(file); }
+            protected override bool nvram_read(util.read_stream file) { return ((nvram_device)device()).device_nvram_interface_nvram_read(file); }
+            protected override bool nvram_write(util.write_stream file) { return ((nvram_device)device()).device_nvram_interface_nvram_write(file); }
             protected override bool nvram_can_write() { return ((nvram_device)device()).device_nvram_interface_nvram_can_write(); }
         }
 
@@ -154,8 +154,8 @@ namespace mame
         }
 
 
-        protected virtual void device_nvram_interface_nvram_read(emu_file file) { throw new emu_unimplemented(); }
-        protected virtual void device_nvram_interface_nvram_write(emu_file file) { throw new emu_unimplemented(); }
+        protected virtual bool device_nvram_interface_nvram_read(util.read_stream file) { throw new emu_unimplemented(); }
+        protected virtual bool device_nvram_interface_nvram_write(util.write_stream file) { throw new emu_unimplemented(); }
         protected virtual bool device_nvram_interface_nvram_can_write() { return m_base != null && m_length != 0; }
 
 

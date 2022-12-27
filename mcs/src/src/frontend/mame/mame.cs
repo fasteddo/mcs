@@ -30,13 +30,15 @@ namespace mame
         game_driver m_new_driver_pending;   // pointer to the next pending driver
         bool m_firstrun;
 
-        static mame_machine_manager s_manager;
-
         emu_timer m_autoboot_timer;      // autoboot timer
+        //std::unique_ptr<sol::load_result>  m_autoboot_script;   // auto-boot script
         mame_ui_manager m_ui;                  // internal data from ui.cpp
         cheat_manager m_cheat;            // internal data from cheat.cpp
         inifile_manager m_inifile;      // internal data from inifile.c for INIs
         favorite_manager m_favorite;     // internal data from inifile.c for favorites
+
+
+        static mame_machine_manager s_manager;
 
 
         // construction/destruction
@@ -133,16 +135,34 @@ namespace mame
         //TIMER_CALLBACK_MEMBER(mame_machine_manager::autoboot_callback)
         void autoboot_callback(s32 param)
         {
-            if (options().autoboot_script().Length != 0)
+            if (!string.IsNullOrEmpty(options().autoboot_script()))
             {
-                mame_machine_manager.instance().lua().load_script(options().autoboot_script());
+                throw new emu_unimplemented();
+#if false
+                assert(m_autoboot_script);
+                sol::protected_function func = *m_autoboot_script;
+                sol::protected_function_result result = lua()->invoke(func);
+                if (!result.valid())
+                {
+                    sol::error err = result;
+                    sol::call_status status = result.status();
+                    fatalerror("Error running autoboot script %s: %s error\n%s\n",
+                            options().autoboot_script(),
+                            sol::to_string(status),
+                            err.what());
+                }
+#endif
             }
-            else if (options().autoboot_command().Length != 0)
+            else if (!string.IsNullOrEmpty(options().autoboot_command()))
             {
-                string cmd = options().autoboot_command();
-                cmd = cmd.Replace("'", "\\'");
-                string val = "emu.keypost('" + cmd + "')";
-                mame_machine_manager.instance().lua().load_string(val);
+                throw new emu_unimplemented();
+#if false
+                string cmd = options().autoboot_command();  //std::string cmd(options().autoboot_command());
+                strreplace(cmd, "'", "\\'");
+                string val = "emu.keypost('".append(cmd).append("')");  //std::string val = std::string("emu.keypost('").append(cmd).append("')");
+                auto &l(*lua());
+                l.invoke(l.load_string(val));
+#endif
             }
         }
 
@@ -215,6 +235,32 @@ namespace mame
 
             // start favorite manager
             m_favorite = new favorite_manager(m_ui.options());
+
+            // attempt to load the autoboot script if configured
+            throw new emu_unimplemented();
+#if false
+            m_autoboot_script.reset();
+#endif
+
+            if (!string.IsNullOrEmpty(options().autoboot_script()))
+            {
+                throw new emu_unimplemented();
+#if false
+                auto result = lua()->load_script(options().autoboot_script());
+                if (!result.valid())
+                {
+                    sol::error err = result;
+                    sol::load_status status = result.status();
+                    fatalerror("Error loading autoboot script %s: %s error\n%s\n",
+                            options().autoboot_script(),
+                            sol::to_string(status),
+                            err.what());
+                }
+                m_autoboot_script.reset(new sol::load_result(std::move(result)));
+                sol::protected_function func = *m_autoboot_script;
+                sol::set_environment(lua()->make_environment(), func);
+#endif
+            }
         }
 
 
@@ -391,8 +437,32 @@ namespace mame
                 {
                     string exppath;
                     m_osdcore.osd_subst_env(out exppath, file.fullpath());
-                    m_lua.load_script(file.fullpath());
-                    file.close();
+
+                    throw new emu_unimplemented();
+#if false
+                    auto &l(*lua());
+                    auto load_result = l.load_script(exppath);
+                    if (!load_result.valid())
+                    {
+                        sol::error err = load_result;
+                        sol::load_status status = load_result.status();
+                        fatalerror("Error plugin bootstrap script %s: %s error\n%s\n",
+                                exppath,
+                                sol::to_string(status),
+                                err.what());
+                    }
+                    sol::protected_function func = load_result;
+                    sol::protected_function_result call_result = l.invoke(func);
+                    if (!call_result.valid())
+                    {
+                        sol::error err = call_result;
+                        sol::call_status status = call_result.status();
+                        fatalerror("Error running plugin bootstrap script %s: %s error\n%s\n",
+                                options().autoboot_script(),
+                                sol::to_string(status),
+                                err.what());
+                    }
+#endif
                 }
             }
         }

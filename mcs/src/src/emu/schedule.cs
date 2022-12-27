@@ -554,7 +554,7 @@ namespace mame
                             // if the new local CPU time is less than our target, move the target up, but not before the base
                             if (exec.m_localtime < target)
                             {
-                                target = std.max(exec.m_localtime, m_basetime);
+                                target = attotime.Max(exec.m_localtime, m_basetime);
 
                                 if (machine().video().frame_update_count() % 1000 == 0)
                                 {
@@ -779,7 +779,7 @@ namespace mame
                 // if the configuration specifies a device to make perfect, pick that as the minimum
                 device_execute_interface exec = machine().config().perfect_quantum_device();
                 if (exec != null)
-                    min_quantum = std.min(new attotime(0, exec.minimum_quantum()), min_quantum);
+                    min_quantum = attotime.Min(new attotime(0, exec.minimum_quantum()), min_quantum);
 
                 // inform the timer system of our decision
                 add_scheduling_quantum(min_quantum, attotime.never);
@@ -888,7 +888,7 @@ namespace mame
 
             // if we found an exact match, just take the maximum expiry time
             if (insert_after != null && insert_after.requested() == quantum_attos)
-                insert_after.expire_set(std.max(insert_after.expire(), expire));
+                insert_after.expire_set(attotime.Max(insert_after.expire(), expire));
 
             // otherwise, allocate a new quantum and insert it after the one we picked
             else

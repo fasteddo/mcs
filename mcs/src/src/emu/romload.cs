@@ -1264,7 +1264,13 @@ namespace mame
                     err = do_open_disk(machine().options(), searchpath, romp, chd.orig_chd(), next_parent);
                     if (err)
                     {
-                        handle_missing_file(romp.op, new std.vector<string>(), err);
+                        std.vector<string> tried = new std.vector<string>();
+                        foreach (var paths in searchpath)
+                        {
+                            foreach (string path in paths)
+                                tried.emplace_back(path);
+                        }
+                        handle_missing_file(romp.op, tried, err);
                         chd = null;
                         continue;
                     }

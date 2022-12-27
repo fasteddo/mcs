@@ -19,18 +19,18 @@ namespace mame
         optional_shared_ptr<uint8_t> m_background_color;
         optional_shared_ptr<uint8_t> m_imago_fg_videoram;
 
-        int m_hardware_type;
-        uint16_t m_charbank;
-        uint8_t m_colorbank;
-        uint8_t m_nmi_mask;
-        uint8_t m_sound_nmi_mask;
-        //uint8_t m_imago_sprites[0x800*3];
-        //uint16_t m_imago_sprites_address;
-        //uint8_t m_imago_sprites_bank;
+        int m_hardware_type = 0;
+        uint16_t m_charbank = 0;
+        uint8_t m_colorbank = 0;
+        uint8_t m_nmi_mask = 0;
+        uint8_t m_sound_nmi_mask = 0;
+        //uint8_t m_imago_sprites[0x800*3]{};
+        //uint16_t m_imago_sprites_address = 0U;
+        //uint8_t m_imago_sprites_bank = 0U;
 
-        tilemap_t m_bg_tilemap;
-        //tilemap_t *m_fg_tilemap;
-        //tilemap_t *m_web_tilemap;
+        tilemap_t m_bg_tilemap = null;
+        //tilemap_t *m_fg_tilemap = nullptr;
+        //tilemap_t *m_web_tilemap = nullptr;
 
 
         public fastfred_state(machine_config mconfig, device_type type, string tag)

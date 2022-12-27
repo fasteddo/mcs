@@ -17,12 +17,12 @@ namespace mame
         static readonly XTAL MAIN_OSC_MCR_I      = new XTAL(19_968_000);
 
 
-        int8_t m_mcr12_sprite_xoffs_flip;
-        uint8_t m_input_mux;
-        uint8_t m_last_op4;
-        tilemap_t m_bg_tilemap;
+        int8_t m_mcr12_sprite_xoffs_flip = 0;
+        uint8_t m_input_mux = 0;
+        uint8_t m_last_op4 = 0;
+        tilemap_t m_bg_tilemap = null;
 
-        uint8_t m_mcr_cocktail_flip;
+        uint8_t m_mcr_cocktail_flip = 0;
 
         required_device<z80_device> m_maincpu;
         optional_shared_ptr<uint8_t> m_spriteram;
@@ -40,10 +40,10 @@ namespace mame
         required_device<palette_device> m_palette;
 
 
-        uint32_t m_mcr_cpu_board;
-        uint32_t m_mcr_sprite_board;
+        uint32_t m_mcr_cpu_board = 0;
+        uint32_t m_mcr_sprite_board = 0;
 
-        int8_t m_mcr12_sprite_xoffs;
+        int8_t m_mcr12_sprite_xoffs = 0;
 
 
         public mcr_state(machine_config mconfig, device_type type, string tag) :

@@ -451,6 +451,7 @@ namespace mame
           57_272_727, /* 57.272727_MHz_XTAL     Psikyo SH2 with /2 divider (16x NTSC subcarrier)*/
           57_283_200, /* 57.2832_MHz_XTAL       Macintosh IIci RBV, 15-inch portrait display */
           58_000_000, /* 58_MHz_XTAL            Magic Reel (Play System) */
+          58_982_400, /* 58.9824_MHz_XTAL       Wyse WY-65 */
           59_292_000, /* 59.292_MHz_XTAL        Data General D461 */
           60_000_000, /* 60_MHz_XTAL            - */
           61_440_000, /* 61.44_MHz_XTAL         Donkey Kong */

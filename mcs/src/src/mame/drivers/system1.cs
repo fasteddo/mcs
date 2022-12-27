@@ -1272,7 +1272,7 @@ namespace mame
 
         //ROM_START( mrvikingj )
 
-        //ROM_START( swat )
+        //ROM_START( swat ) /* Sega game ID# 834-5388 SWAT */
 
         //ROM_START( flicky )
 
@@ -1386,12 +1386,12 @@ namespace mame
             ROM_LOAD( "pr5317.ic28",    0x0000, 0x0100, CRC("648350b8") + SHA1("c7986aa9127ef5b50b845434cb4e81dff9861cd2") ),
 
             ROM_REGION( 0x0618, "plds", 0 ),
-            ROM_LOAD( "315-5152.bin",   0x00000, 0x0104, CRC("2c9229b4") + SHA1("9755013afcf89f99d7a399c7e223e027761cf89a") ), /* PAL16R4A located at IC10. */
-            ROM_LOAD( "315-5138.bin",   0x00000, 0x0104, CRC("dd223015") + SHA1("8d70f91b118e8653dda1efee3eaea287ae63809f") ), /* TI PAL16R4NC located at IC11. */
-            ROM_LOAD( "315-5139.bin",   0x00000, 0x0104, NO_DUMP ), /* CK2605 located at IC50. */
-            ROM_LOAD( "315-5025.bin",   0x00000, 0x0104, NO_DUMP ), /* Located at IC7. */
-            ROM_LOAD( "315-5025.bin",   0x00000, 0x0104, NO_DUMP ), /* Located at IC13. */
-            ROM_LOAD( "315-5025.bin",   0x00000, 0x0104, NO_DUMP ), /* Located at IC19. */
+            ROM_LOAD( "315-5152.ic10",   0x00000, 0x0104, CRC("2c9229b4") + SHA1("9755013afcf89f99d7a399c7e223e027761cf89a") ), /* PAL16R4A */
+            ROM_LOAD( "315-5138.ic11",   0x00000, 0x0104, CRC("dd223015") + SHA1("8d70f91b118e8653dda1efee3eaea287ae63809f") ), /* TI PAL16R4NC */
+            ROM_LOAD( "315-5139.ic50",   0x00000, 0x00e7, CRC("943d91b0") + SHA1("37c98085d580808aaeb01726a9f59705590378c4") ), /* CK2605 */
+            ROM_LOAD( "315-5025.ic7",    0x00000, 0x0104, NO_DUMP ),
+            ROM_LOAD( "315-5025.ic13",   0x00000, 0x0104, NO_DUMP ),
+            ROM_LOAD( "315-5025.ic19",   0x00000, 0x0104, NO_DUMP ),
 
             ROM_END,
         };

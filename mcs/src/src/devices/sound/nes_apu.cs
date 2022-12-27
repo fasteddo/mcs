@@ -20,6 +20,7 @@ using static mame.emucore_global;
 using static mame.nes_apu_global;
 using static mame.nes_apu_internal;
 using static mame.nes_defs_global;
+using static mame.util;
 
 
 namespace mame
@@ -53,8 +54,7 @@ namespace mame
         apu_t m_APU = new apu_t();                   /* Actual APUs */
         int m_is_pal;
         u32 m_samps_per_sync;        /* Number of samples per vsync */
-        u32 m_buffer_size;           /* Actual buffer size in bytes */
-        u32 [] m_vbl_times = new u32 [0x20];       /* VBL durations in samples */
+        u32 [] m_vbl_times = new u32 [SYNCS_MAX1];       /* VBL durations in samples */
         u32 [] m_sync_times1 = new u32 [SYNCS_MAX1]; /* Samples per sync table */
         u32 [] m_sync_times2 = new u32 [SYNCS_MAX2]; /* Samples per sync table */
         stream_buffer_sample_t [] m_square_lut = new stream_buffer_sample_t [31];       // Non-linear Square wave output LUT
@@ -69,7 +69,7 @@ namespace mame
         { }
 
 
-        nesapu_device(machine_config mconfig, device_type type, string tag, device_t owner, uint32_t clock)
+        nesapu_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
             : base(mconfig, type, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_sound_interface_nesapu_device(mconfig, this));  //device_sound_interface(mconfig, *this),
@@ -78,29 +78,9 @@ namespace mame
 
             m_is_pal = 0;
             m_samps_per_sync = 0;
-            m_buffer_size = 0;
             m_stream = null;
             m_irq_handler = new devcb_write_line(this);
             m_mem_read_cb = new devcb_read8(this);
-
-
-            //for (auto & elem : m_vbl_times)
-            //{
-            //    elem = 0;
-            //}
-            Array.Clear(m_vbl_times, 0, m_vbl_times.Length);
-
-            //for (auto & elem : m_sync_times1)
-            //{
-            //    elem = 0;
-            //}
-            Array.Clear(m_sync_times1, 0, m_sync_times1.Length);
-
-            //for (auto & elem : m_sync_times2)
-            //{
-            //    elem = 0;
-            //}
-            Array.Clear(m_sync_times2, 0, m_sync_times2.Length);
         }
 
 
@@ -128,172 +108,14 @@ namespace mame
         public u8 read(offs_t offset) { throw new emu_unimplemented(); }
 
 
-        /* WRITE VALUE TO TEMP REGISTRY AND QUEUE EVENT */
-        public void write(offs_t address, u8 value)
-        {
-            m_APU.regs[address] = value;
-            m_stream.update();
-            apu_regwrite((int)address, value);
-        }
-
-
-        // device-level overrides
-        protected override void device_start()
-        {
-            // resolve callbacks
-            m_irq_handler.resolve_safe();
-            m_mem_read_cb.resolve_safe_u8(0x00);
-
-            calculate_rates();
-
-            // calculate mixer output
-            /*
-            pulse channel output:
-
-                     95.88
-            -----------------------
-                  8128
-            ----------------- + 100
-            pulse 1 + pulse 2
-
-            */
-            for (int i = 0; i < 31; i++)
-            {
-                stream_buffer_sample_t pulse_out = (i == 0) ? 0 : (stream_buffer_sample_t)(95.88 / ((8128.0 / i) + 100.0));
-                m_square_lut[i] = pulse_out;
-            }
-
-            /*
-            triangle, noise, DMC channel output:
-
-                         159.79
-            -------------------------------
-                        1
-            ------------------------- + 100
-            triangle   noise    dmc
-            -------- + ----- + -----
-              8227     12241   22638
-
-            */
-            for (int t = 0; t < 16; t++)
-            {
-                for (int n = 0; n < 16; n++)
-                {
-                    for (int d = 0; d < 128; d++)
-                    {
-                        stream_buffer_sample_t tnd_out = (stream_buffer_sample_t)((t / 8227.0) + (n / 12241.0) + (d / 22638.0));
-                        tnd_out = (tnd_out == 0.0) ? 0 : (stream_buffer_sample_t)(159.79 / ((1.0 / tnd_out) + 100.0));
-                        m_tnd_lut[t, n, d] = tnd_out;
-                    }
-                }
-            }
-
-            /* register for save */
-            for (int i = 0; i < 2; i++)
-            {
-                save_item(NAME(new { m_APU.squ[i].regs }), i);
-                save_item(NAME(new { m_APU.squ[i].vbl_length }), i);
-                save_item(NAME(new { m_APU.squ[i].freq }), i);
-                save_item(NAME(new { m_APU.squ[i].phaseacc }), i);
-                save_item(NAME(new { m_APU.squ[i].env_phase }), i);
-                save_item(NAME(new { m_APU.squ[i].sweep_phase }), i);
-                save_item(NAME(new { m_APU.squ[i].adder }), i);
-                save_item(NAME(new { m_APU.squ[i].env_vol }), i);
-                save_item(NAME(new { m_APU.squ[i].enabled }), i);
-                save_item(NAME(new { m_APU.squ[i].output }), i);
-            }
-
-            save_item(NAME(new { m_APU.tri.regs }));
-            save_item(NAME(new { m_APU.tri.linear_length }));
-            save_item(NAME(new { m_APU.tri.linear_reload }));
-            save_item(NAME(new { m_APU.tri.vbl_length }));
-            save_item(NAME(new { m_APU.tri.write_latency }));
-            save_item(NAME(new { m_APU.tri.phaseacc }));
-            save_item(NAME(new { m_APU.tri.adder }));
-            save_item(NAME(new { m_APU.tri.counter_started }));
-            save_item(NAME(new { m_APU.tri.enabled }));
-            save_item(NAME(new { m_APU.tri.output }));
-
-            save_item(NAME(new { m_APU.noi.regs }));
-            save_item(NAME(new { m_APU.noi.seed }));
-            save_item(NAME(new { m_APU.noi.vbl_length }));
-            save_item(NAME(new { m_APU.noi.phaseacc }));
-            save_item(NAME(new { m_APU.noi.env_phase }));
-            save_item(NAME(new { m_APU.noi.env_vol }));
-            save_item(NAME(new { m_APU.noi.enabled }));
-            save_item(NAME(new { m_APU.noi.output }));
-
-            save_item(NAME(new { m_APU.dpcm.regs }));
-            save_item(NAME(new { m_APU.dpcm.address }));
-            save_item(NAME(new { m_APU.dpcm.length }));
-            save_item(NAME(new { m_APU.dpcm.bits_left }));
-            save_item(NAME(new { m_APU.dpcm.phaseacc }));
-            save_item(NAME(new { m_APU.dpcm.cur_byte }));
-            save_item(NAME(new { m_APU.dpcm.enabled }));
-            save_item(NAME(new { m_APU.dpcm.irq_occurred }));
-            save_item(NAME(new { m_APU.dpcm.vol }));
-            save_item(NAME(new { m_APU.dpcm.output }));
-
-            save_item(NAME(new { m_APU.regs }));
-
-#if USE_QUEUE
-            save_item(NAME(m_APU.queue));
-            save_item(NAME(m_APU.head));
-            save_item(NAME(m_APU.tail));
-#else
-            save_item(NAME(new { m_APU.buf_pos }));
-#endif
-            save_item(NAME(new { m_APU.step_mode }));
-        }
-
-
-        // sound stream update overrides
-        protected virtual void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { throw new emu_unimplemented(); }
-
-
-        void calculate_rates()
-        {
-            int rate = (int)(clock() / 4);
-
-            m_samps_per_sync = 89490 / 12; // Is there a different PAL value?
-            m_buffer_size = m_samps_per_sync;
-
-            create_vbltimes(m_vbl_times, vbl_length, m_samps_per_sync);
-            create_syncs(m_samps_per_sync);
-
-            /* Adjust buffer size if 16 bits */
-            m_buffer_size+=m_samps_per_sync;
-
-            if (m_stream != null)
-                m_stream.set_sample_rate((u32)rate);
-            else
-                m_stream = disound.stream_alloc(0, 1, (u32)rate);
-        }
-
-
-        // INITIALIZE SAMPLE TIMES IN TERMS OF VSYNCS
-        void create_syncs(unsigned sps)
-        {
-            for (int i = 0; i < SYNCS_MAX1; i++)
-                m_sync_times1[i] = (u32)(sps * (i + 1));
-
-            for (int i = 0; i < SYNCS_MAX2; i++)
-                m_sync_times2[i] = (u32)((sps * i) >> 2);
-        }
-
-
-        //void apu_square(apu_t::square_t *chan);
-        //void apu_triangle(apu_t::triangle_t *chan);
-        //void apu_noise(apu_t::noise_t *chan);
-        //void apu_dpcm(apu_t::dpcm_t *chan);
-
-
         /* WRITE REGISTER VALUE */
-        void apu_regwrite(int address, u8 value)
+        public void write(offs_t offset, u8 value)
         {
-            int chan = (address & 4) != 0 ? 1 : 0;
+            m_stream.update();
 
-            switch ((unsigned)address)
+            int chan = (int)BIT(offset, 2);
+
+            switch (offset)
             {
             /* squares */
             case apu_t.WRA0:
@@ -407,7 +229,7 @@ namespace mame
                 m_APU.dpcm.regs[0] = value;
                 if ((value & 0x80) == 0)
                 {
-                    m_irq_handler.op_s32(0);  //false);
+                    m_irq_handler.op_s32(0);
                     m_APU.dpcm.irq_occurred = false;
                 }
                 break;
@@ -435,7 +257,9 @@ namespace mame
 
             case apu_t.SMASK:
                 if ((value & 0x01) != 0)
+                {
                     m_APU.squ[0].enabled = true;
+                }
                 else
                 {
                     m_APU.squ[0].enabled = false;
@@ -443,7 +267,9 @@ namespace mame
                 }
 
                 if ((value & 0x02) != 0)
+                {
                     m_APU.squ[1].enabled = true;
+                }
                 else
                 {
                     m_APU.squ[1].enabled = false;
@@ -451,7 +277,9 @@ namespace mame
                 }
 
                 if ((value & 0x04) != 0)
+                {
                     m_APU.tri.enabled = true;
+                }
                 else
                 {
                     m_APU.tri.enabled = false;
@@ -462,7 +290,9 @@ namespace mame
                 }
 
                 if ((value & 0x08) != 0)
+                {
                     m_APU.noi.enabled = true;
+                }
                 else
                 {
                     m_APU.noi.enabled = false;
@@ -479,7 +309,9 @@ namespace mame
                     }
                 }
                 else
+                {
                     m_APU.dpcm.enabled = false;
+                }
 
                 //m_irq_handler(false);
                 m_APU.dpcm.irq_occurred = false;
@@ -488,24 +320,150 @@ namespace mame
 
             default:
 #if MAME_DEBUG
-                logerror("invalid apu write: $%02X at $%04X\n", value, address);
+                logerror("invalid apu write: $%02X at $%04X\n", value, offset);
 #endif
                 break;
             }
         }
+
+
+        // device-level overrides
+        protected override void device_start()
+        {
+            // resolve callbacks
+            m_irq_handler.resolve_safe();
+            m_mem_read_cb.resolve_safe_u8(0x00);
+
+            calculate_rates();
+
+            // calculate mixer output
+            /*
+            pulse channel output:
+
+                     95.88
+            -----------------------
+                  8128
+            ----------------- + 100
+            pulse 1 + pulse 2
+
+            */
+            for (int i = 0; i < 31; i++)
+            {
+                stream_buffer_sample_t pulse_out = (i == 0) ? 0 : (stream_buffer_sample_t)(95.88 / ((8128.0 / i) + 100.0));
+                m_square_lut[i] = pulse_out;
+            }
+
+            /*
+            triangle, noise, DMC channel output:
+
+                         159.79
+            -------------------------------
+                        1
+            ------------------------- + 100
+            triangle   noise    dmc
+            -------- + ----- + -----
+              8227     12241   22638
+
+            */
+            for (int t = 0; t < 16; t++)
+            {
+                for (int n = 0; n < 16; n++)
+                {
+                    for (int d = 0; d < 128; d++)
+                    {
+                        stream_buffer_sample_t tnd_out = (stream_buffer_sample_t)((t / 8227.0) + (n / 12241.0) + (d / 22638.0));
+                        tnd_out = (tnd_out == 0.0) ? 0 : (stream_buffer_sample_t)(159.79 / ((1.0 / tnd_out) + 100.0));
+                        m_tnd_lut[t, n, d] = tnd_out;
+                    }
+                }
+            }
+
+            /* register for save */
+            for (int i = 0; i < 2; i++)
+            {
+                save_item(NAME(new { m_APU.squ[i].regs }), i);
+                save_item(NAME(new { m_APU.squ[i].vbl_length }), i);
+                save_item(NAME(new { m_APU.squ[i].freq }), i);
+                save_item(NAME(new { m_APU.squ[i].phaseacc }), i);
+                save_item(NAME(new { m_APU.squ[i].env_phase }), i);
+                save_item(NAME(new { m_APU.squ[i].sweep_phase }), i);
+                save_item(NAME(new { m_APU.squ[i].adder }), i);
+                save_item(NAME(new { m_APU.squ[i].env_vol }), i);
+                save_item(NAME(new { m_APU.squ[i].enabled }), i);
+                save_item(NAME(new { m_APU.squ[i].output }), i);
+            }
+
+            save_item(NAME(new { m_APU.tri.regs }));
+            save_item(NAME(new { m_APU.tri.linear_length }));
+            save_item(NAME(new { m_APU.tri.linear_reload }));
+            save_item(NAME(new { m_APU.tri.vbl_length }));
+            save_item(NAME(new { m_APU.tri.write_latency }));
+            save_item(NAME(new { m_APU.tri.phaseacc }));
+            save_item(NAME(new { m_APU.tri.adder }));
+            save_item(NAME(new { m_APU.tri.counter_started }));
+            save_item(NAME(new { m_APU.tri.enabled }));
+            save_item(NAME(new { m_APU.tri.output }));
+
+            save_item(NAME(new { m_APU.noi.regs }));
+            save_item(NAME(new { m_APU.noi.seed }));
+            save_item(NAME(new { m_APU.noi.vbl_length }));
+            save_item(NAME(new { m_APU.noi.phaseacc }));
+            save_item(NAME(new { m_APU.noi.env_phase }));
+            save_item(NAME(new { m_APU.noi.env_vol }));
+            save_item(NAME(new { m_APU.noi.enabled }));
+            save_item(NAME(new { m_APU.noi.output }));
+
+            save_item(NAME(new { m_APU.dpcm.regs }));
+            save_item(NAME(new { m_APU.dpcm.address }));
+            save_item(NAME(new { m_APU.dpcm.length }));
+            save_item(NAME(new { m_APU.dpcm.bits_left }));
+            save_item(NAME(new { m_APU.dpcm.phaseacc }));
+            save_item(NAME(new { m_APU.dpcm.cur_byte }));
+            save_item(NAME(new { m_APU.dpcm.enabled }));
+            save_item(NAME(new { m_APU.dpcm.irq_occurred }));
+            save_item(NAME(new { m_APU.dpcm.vol }));
+            save_item(NAME(new { m_APU.dpcm.output }));
+
+            save_item(NAME(new { m_APU.step_mode }));
+        }
+
+
+        // sound stream update overrides
+        protected virtual void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { throw new emu_unimplemented(); }
+
+
+        void calculate_rates()
+        {
+            m_samps_per_sync = 89490 / 12; // Is there a different PAL value?
+
+            // initialize sample times in terms of vsyncs
+            for (int i = 0; i < SYNCS_MAX1; i++)
+            {
+                m_vbl_times[i] = vbl_length[i] * m_samps_per_sync / 2;
+                m_sync_times1[i] = (u32)(m_samps_per_sync * (i + 1));
+            }
+
+            for (int i = 0; i < SYNCS_MAX2; i++)
+                m_sync_times2[i] = (u32)((m_samps_per_sync * i) >> 2);
+
+            int rate = (int)(clock() / 4);
+
+            if (m_stream != null)
+                m_stream.set_sample_rate((u32)rate);
+            else
+                m_stream = disound.stream_alloc(0, 1, (u32)rate);
+        }
+
+
+        //void apu_square(apu_t::square_t *chan);
+        //void apu_triangle(apu_t::triangle_t *chan);
+        //void apu_noise(apu_t::noise_t *chan);
+        //void apu_dpcm(apu_t::dpcm_t *chan);
     }
 
 
     static class nes_apu_internal
     {
-        // INITIALIZE WAVE TIMES RELATIVE TO SAMPLE RATE
-        public static void create_vbltimes(u32 [] table, u8 [] vbl, unsigned rate)
-        {
-            for (int i = 0; i < 0x20; i++)
-                table[i] = vbl[i] * rate;
-        }
-
-
         /* RESET DPCM PARAMETERS */
         public static void apu_dpcmreset(apu_t.dpcm_t chan)
         {
@@ -514,7 +472,6 @@ namespace mame
             chan.bits_left = (int)(chan.length << 3);
             chan.irq_occurred = false;
             chan.enabled = true; /* Fixed * Proper DPCM channel ENABLE/DISABLE flag behaviour*/
-            chan.vol = 0; /* Fixed * DPCM DAC resets itself when restarted */
         }
     }
 

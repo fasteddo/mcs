@@ -296,7 +296,7 @@ namespace mame
                     int align,
                     render_color color)
             {
-                // compute premultiplied colors
+                // compute premultiplied color
                 u32 r = (u32)(color.r * 255.0f);
                 u32 g = (u32)(color.g * 255.0f);
                 u32 b = (u32)(color.b * 255.0f);
@@ -777,27 +777,6 @@ namespace mame
         }
 
 
-        // 8-segment fluorescent (Gottlieb System 1)
-        class led8seg_gts1_component : component
-        {
-            // construction/destruction
-            led8seg_gts1_component(layout_element_environment env, util.xml.data_node compnode)
-                : base(env, compnode)
-            {
-            }
-
-
-            // overrides
-            public override int maxstate() { return 255; }
-
-
-            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
-            {
-                throw new emu_unimplemented();
-            }
-        }
-
-
         // 14-segment LCD
         class led14seg_component : component
         {
@@ -1002,7 +981,6 @@ namespace mame
             { "simplecounter", make_component<simplecounter_component> },
             { "reel",          make_component<reel_component>          },
             { "led7seg",       make_component<led7seg_component>       },
-            { "led8seg_gts1",  make_component<led8seg_gts1_component>  },
             { "led14seg",      make_component<led14seg_component>      },
             { "led14segsc",    make_component<led14segsc_component>    },
             { "led16seg",      make_component<led16seg_component>      },

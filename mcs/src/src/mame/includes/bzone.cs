@@ -21,7 +21,7 @@ namespace mame
         required_device<screen_device> m_screen;
         output_finder<u32_const_1> m_startled;  //output_finder<> m_startled;
 
-        uint8_t m_analog_data;
+        uint8_t m_analog_data = 0;
 
 
         public bzone_state(machine_config mconfig, device_type type, string tag) :

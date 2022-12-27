@@ -28,8 +28,8 @@ namespace mame
             public device_nvram_interface_eeprom(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
             protected override void nvram_default() { ((eeprom_base_device)device()).device_nvram_interface_nvram_default(); }
-            protected override void nvram_read(emu_file file) { throw new emu_unimplemented(); }
-            protected override void nvram_write(emu_file file) { throw new emu_unimplemented(); }
+            protected override bool nvram_read(util.read_stream file) { throw new emu_unimplemented(); }
+            protected override bool nvram_write(util.write_stream file) { throw new emu_unimplemented(); }
         }
 
 

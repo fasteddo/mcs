@@ -211,24 +211,6 @@ namespace mame
     }
 
 
-    public interface ChipClass_operators<RegisterType, RegisterType_OPS>
-        where RegisterType : opm_registers, new()
-        where RegisterType_OPS : fm_engine_base_operators, new()
-    {
-        uint32_t OUTPUTS { get; }
-
-        void reset();
-        void save_restore(ymfm.ymfm_saved_state state);
-        uint32_t sample_rate(uint32_t input_clock);
-        uint8_t read_status();
-        uint8_t read(uint32_t offset);
-        void write_address(uint8_t data);
-        void write_data(uint8_t data);
-        void write(uint32_t offset, uint8_t data);
-        void generate(fm_engine_base<RegisterType, RegisterType_OPS>.output_data [] output, uint32_t numsamples = 1);
-    }
-
-
     // ======================> ymfm_device_base
     // this template provides most of the basics used by device objects in MAME
     // that wrap ymfm chips; it provides basic read/write functions

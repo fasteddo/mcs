@@ -500,6 +500,11 @@ namespace mame
             return set_raw(xtal.value(), htotal, hbend, hbstart, vtotal, vbend, vbstart);
         }
 
+        public screen_device set_raw(XTAL xtal, u16 htotal, u16 vtotal, rectangle visarea)
+        {
+            return set_raw(xtal, htotal, (u16)visarea.left(), (u16)(visarea.right() + 1), vtotal, (u16)visarea.top(), (u16)(visarea.bottom() + 1));
+        }
+
         public void set_refresh(attoseconds_t rate) { m_refresh = rate; }
 
         /// \brief Set refresh rate in Hertz

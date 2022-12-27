@@ -234,7 +234,7 @@ namespace mame.netlist
                 new_solver_timestep_sq = std.max(plib.pg.sqrt(new_solver_timestep_sq), min_ts);
 
                 // FIXME: Factor 2 below is important. Without, we get timing issues. This must be a bug elsewhere.
-                return std.max(netlist_time.from_fp(new_solver_timestep_sq), netlist_time.quantum() * 2);
+                return netlist_time.Max(netlist_time.from_fp(new_solver_timestep_sq), netlist_time.quantum() * 2);
             }
 
 

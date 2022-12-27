@@ -21,12 +21,20 @@
 
   <ItemGroup>
     <Compile Remove="3rdparty\**" />
+    <Compile Remove="src\3rdparty\**" />
+    <Compile Remove="src\base\**" />
     <EmbeddedResource Remove="3rdparty\**" />
+    <EmbeddedResource Remove="src\3rdparty\**" />
+    <EmbeddedResource Remove="src\base\**" />
     <None Remove="3rdparty\**" />
+    <None Remove="src\3rdparty\**" />
+    <None Remove="src\base\**" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="3rdparty\SharpCompress\SharpCompress-mcs.csproj" />
+    <ProjectReference Include="mcs_3rdparty.csproj" />
+    <ProjectReference Include="mcs_base.csproj" />
   </ItemGroup>
 
 </Project>
