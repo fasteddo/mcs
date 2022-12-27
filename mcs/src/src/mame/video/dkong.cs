@@ -480,7 +480,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(dkong_state::scanline_callback)
-        void scanline_callback(object ptr, s32 param)  //void *ptr, s32 param)
+        void scanline_callback(s32 param)
         {
             int scanline = param;
 

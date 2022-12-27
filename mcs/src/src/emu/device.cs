@@ -1383,20 +1383,19 @@ namespace mame
         //  timer_alloc - allocate a timer for our device
         //  callback
         //-------------------------------------------------
-
-        public emu_timer timer_alloc(device_timer_id id = 0, object ptr = null) { return machine().scheduler().timer_alloc(this, id, ptr); }
+        public emu_timer timer_alloc(device_timer_id id = 0) { return machine().scheduler().timer_alloc(this, id); }
 
         //-------------------------------------------------
         //  timer_set - set a temporary timer that will
         //  call our device callback
         //-------------------------------------------------
-        protected void timer_set(attotime duration, device_timer_id id = 0, int param = 0, object ptr = null)
+        protected void timer_set(attotime duration, device_timer_id id = 0, int param = 0)
         {
-            machine().scheduler().timer_set(duration, this, id, param, ptr);
+            machine().scheduler().timer_set(duration, this, id, param);
         }
 
-        protected void synchronize(device_timer_id id = 0, int param = 0, object ptr = null) { timer_set(attotime.zero, id, param, ptr); }
-        public void timer_expired(emu_timer timer, device_timer_id id, int param, object ptr) { device_timer(timer, id, param, ptr); }
+        protected void synchronize(device_timer_id id = 0, int param = 0) { timer_set(attotime.zero, id, param); }
+        public void timer_expired(emu_timer timer, device_timer_id id, int param) { device_timer(timer, id, param); }
 
 
         /// \brief Register data for save states
@@ -1671,7 +1670,6 @@ namespace mame
             }
 
             // register our save states
-            save_item(NAME(new { m_clock }));
             save_item(NAME(new { m_unscaled_clock }));
             save_item(NAME(new { m_clock_scale }));
 
@@ -1743,6 +1741,21 @@ namespace mame
         //-------------------------------------------------
         public void post_load()
         {
+            // recompute clock-related parameters if something changed
+            u32 scaled_clock = (u32)(m_unscaled_clock * m_clock_scale);
+            if (m_clock != scaled_clock)
+            {
+                m_clock = scaled_clock;
+                m_attoseconds_per_clock = (scaled_clock == 0) ? 0 : HZ_TO_ATTOSECONDS(scaled_clock);
+
+                // recalculate all derived clocks
+                foreach (device_t child in subdevices())
+                    child.calculate_derived_clock();
+
+                // make sure the device knows about the new clock
+                notify_clock_changed();
+            }
+
             // notify the interface
             foreach (device_interface intf in interfaces())
                 intf.interface_post_load();
@@ -1992,7 +2005,7 @@ namespace mame
         //  device_timer - called whenever a device timer
         //  fires
         //-------------------------------------------------
-        protected virtual void device_timer(emu_timer timer, device_timer_id id, int param, object ptr) { }
+        protected virtual void device_timer(emu_timer timer, device_timer_id id, int param) { }
 
         //------------------- end derived class overrides
 

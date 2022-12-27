@@ -602,7 +602,7 @@ namespace mame
 
 
         protected override void device_post_load() { throw new emu_unimplemented(); }
-        //virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr);
+        //virtual void device_timer(emu_timer &timer, device_timer_id id, int param);
 
 
         class construct_ioport_fixedfreq : construct_ioport_helper

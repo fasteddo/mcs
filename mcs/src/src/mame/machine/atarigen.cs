@@ -54,13 +54,13 @@ namespace mame
         }
 
 
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr)
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
         {
             switch (id)
             {
-                // unhalt the CPU that was passed as a pointer
+                // unhalt the CPU
                 case TID_UNHALT_CPU:
-                    ((device_t)ptr).execute().set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
+                    m_maincpu.op0.execute().set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
                     break;
             }
         }

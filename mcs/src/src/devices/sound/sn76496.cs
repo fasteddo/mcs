@@ -174,6 +174,9 @@ namespace mame
         }
 
 
+        //virtual void    device_timer(emu_timer &timer, device_timer_id id, int param) override;
+
+
         protected virtual void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { throw new emu_unimplemented(); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
 
 
@@ -200,9 +203,6 @@ namespace mame
             save_item(NAME(new { m_output }));
             //  save_item(NAME(m_sega_style_psg));
         }
-
-
-        //void            device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
     }
 
 

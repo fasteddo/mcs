@@ -271,7 +271,7 @@ namespace mame
         //-------------------------------------------------
         //  device_timer - handle timer expiration events
         //-------------------------------------------------
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr)
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
         {
             switch (m_type)
             {

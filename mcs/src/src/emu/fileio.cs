@@ -75,7 +75,7 @@ namespace mame
         //  path_iterator::next - get the next entry in a
         //  multipath sequence
         //-------------------------------------------------
-        public bool next(out string buffer, string name = null)
+        public bool next(out string buffer)
         {
             buffer = "";
 
@@ -90,10 +90,6 @@ namespace mame
             m_currentIdx = sep;
             if (m_searchpath.Length != m_currentIdx)  //m_searchpath.cend() != m_current)
                 ++m_currentIdx;
-
-            // append the name if we have one
-            if (!string.IsNullOrEmpty(name))
-                util.path_append(ref buffer, name);
 
             // bump the index and return true
             m_is_first = false;
@@ -168,8 +164,12 @@ namespace mame
                 while (m_curdir == null)
                 {
                     // if we fail to get anything more, we're done
-                    if (!m_iterator.next(out m_pathbuffer, subdir))
+                    if (!m_iterator.next(out m_pathbuffer))
                         return null;
+
+                    // append the subdir if we have one
+                    if (!string.IsNullOrEmpty(subdir))
+                        util.path_append(ref m_pathbuffer, subdir);
 
                     // open the path
                     m_curdir = m_osddirectory.open(m_pathbuffer);  //m_curdir = osd::directory::open(m_pathbuffer);

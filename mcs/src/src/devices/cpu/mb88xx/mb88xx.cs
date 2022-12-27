@@ -1018,7 +1018,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( mb88_cpu_device::serial_timer )
-        void serial_timer(object ptr, s32 param)  //void *ptr, s32 param)
+        void serial_timer(s32 param)
         {
             m_SBcount++;
 

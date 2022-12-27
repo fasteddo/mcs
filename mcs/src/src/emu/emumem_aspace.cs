@@ -1114,7 +1114,6 @@ namespace mame
             m_spacenum = spacenum;
             m_log_unmap = true;
             m_name = memory.space_config(spacenum).name();
-            m_notifier_id = 0;
             m_in_notification = 0;
         }
 
@@ -1291,11 +1290,9 @@ namespace mame
         //  MEMORY MAPPING HELPERS
         //**************************************************************************
 
-        public int add_change_notifier(Action<read_or_write> n)  //int add_change_notifier(std::function<void (read_or_write)> n);
+        public util.notifier_subscription add_change_notifier(Action<read_or_write> n)  //util::notifier_subscription add_change_notifier(delegate<void (read_or_write)> &&n);
         {
-            int id = m_notifier_id++;
-            m_notifiers.emplace_back(new notifier_t() { m_notifier = n, m_id = id });
-            return id;
+            return m_notifiers.subscribe(n);
         }
     }
 

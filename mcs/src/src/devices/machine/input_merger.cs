@@ -78,7 +78,7 @@ namespace mame
         //  update_state - verify current input line state
         //-------------------------------------------------
         //TIMER_CALLBACK_MEMBER(input_merger_device::update_state)
-        void update_state(object ptr, s32 param)  //void *ptr, s32 param)
+        void update_state(s32 param)
         {
             if (BIT(m_state, param >> 1) != BIT(param, 0))
             {

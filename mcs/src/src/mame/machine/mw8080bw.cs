@@ -50,7 +50,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(mw8080bw_state::interrupt_trigger)
-        void interrupt_trigger(object ptr, s32 param)  //void *ptr, s32 param)
+        void interrupt_trigger(s32 param)
         {
             int vpos = m_screen.op0.vpos();
             uint8_t counter = vpos_to_vysnc_chain_counter(vpos);

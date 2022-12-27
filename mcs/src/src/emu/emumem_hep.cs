@@ -18,13 +18,12 @@ namespace mame
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
-        memory_passthrough_handler m_mph;
+        emu.detail.memory_passthrough_handler_impl m_mph;
         handler_entry_read<int_Width, int_AddrShift> m_next;  //handler_entry_read<Width, AddrShift, Endian> *m_next;
 
 
-        handler_entry_read_passthrough(address_space space, memory_passthrough_handler mph) : base(space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = null; }
-        handler_entry_read_passthrough(address_space space, memory_passthrough_handler mph, handler_entry_read<int_Width, int_AddrShift> next) : base(space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = next;  next.ref_(); mph.add_handler(this); }
-
+        handler_entry_read_passthrough(address_space space, emu.detail.memory_passthrough_handler_impl mph) : base(space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = null; }
+        handler_entry_read_passthrough(address_space space, emu.detail.memory_passthrough_handler_impl mph, handler_entry_read<int_Width, int_AddrShift> next) : base(space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = next;  next.ref_(); mph.add_handler(this); }
 
         ~handler_entry_read_passthrough()
         {
@@ -68,13 +67,12 @@ namespace mame
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
-        memory_passthrough_handler m_mph;
+        emu.detail.memory_passthrough_handler_impl m_mph;
         handler_entry_write<int_Width, int_AddrShift> m_next;  //handler_entry_write<Width, AddrShift> *m_next;
 
 
-        handler_entry_write_passthrough(address_space space, memory_passthrough_handler mph) : base(space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = null; }
-        handler_entry_write_passthrough(address_space space, memory_passthrough_handler mph, handler_entry_write<int_Width, int_AddrShift> next) : base(space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = next;  next.ref_(); mph.add_handler(this); }
-
+        handler_entry_write_passthrough(address_space space, emu.detail.memory_passthrough_handler_impl mph) : base(space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = null; }
+        handler_entry_write_passthrough(address_space space, emu.detail.memory_passthrough_handler_impl mph, handler_entry_write<int_Width, int_AddrShift> next) : base(space, handler_entry.F_PASSTHROUGH) { m_mph = mph; m_next = next;  next.ref_(); mph.add_handler(this); }
 
         ~handler_entry_write_passthrough()
         {

@@ -1074,7 +1074,7 @@ namespace mame
             m_value_for_device_timer = val * m_mult + m_offset;
             if (m_value_for_device_timer != m_param.op())
             {
-                synchronize(0, 0, m_value_for_device_timer);
+                synchronize();
             }
         }
 
@@ -1121,13 +1121,13 @@ namespace mame
         }
 
 
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr)
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
         {
             update_to_current_time();
 #if NETLIST_CREATE_CSV
-            nl_owner().log_add(m_param_name, *((double *) ptr), true);
+            nl_owner().log_add(m_param_name, m_value_for_device_timer, true);
 #endif
-            m_param.set((double)ptr);
+            m_param.set(m_value_for_device_timer);
         }
     }
 
@@ -1376,7 +1376,7 @@ namespace mame
             }
         }
 
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr)
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
         {
             m_netlist_mame_sub_interface.update_to_current_time();
 

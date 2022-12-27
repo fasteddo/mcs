@@ -1425,7 +1425,7 @@ namespace mame
         //  sync_update - timer callback to handle a
         //  synchronous stream
         //-------------------------------------------------
-        void sync_update(object o, s32 s)  //void sync_update(void *, s32);
+        void sync_update(s32 param)
         {
             update();
             reprime_sync_timer();
@@ -2070,7 +2070,7 @@ namespace mame
         //  update - mix everything down to its final form
         //  and send it to the OSD layer
         //-------------------------------------------------
-        void update(object ptr = null, s32 param = 0)  //void update(void *ptr = nullptr, s32 param = 0);
+        void update(s32 param = 0)
         {
             VPRINTF("sound_update\n");
 

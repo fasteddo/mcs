@@ -15,9 +15,8 @@ namespace mcsForm
         [STAThread]
         static void Main()
         {
-            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
+            // see https://aka.ms/applicationconfiguration
+            ApplicationConfiguration.Initialize();
 
 
             Trace.WriteLine(string.Format("Environment.OSVersion.Platform: {0}", Environment.OSVersion.Platform));

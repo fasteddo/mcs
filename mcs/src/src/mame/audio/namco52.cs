@@ -130,7 +130,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( namco_52xx_device::external_clock_pulse )
-        void external_clock_pulse(object ptr, s32 param)  //void *ptr, s32 param)
+        void external_clock_pulse(s32 param)
         {
             m_cpu.op0.clock_w(ASSERT_LINE);
             m_cpu.op0.clock_w(CLEAR_LINE);

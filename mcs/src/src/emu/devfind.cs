@@ -610,6 +610,27 @@ namespace mame
         public Pointer<adc0804_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_address_map_bank_device : object_finder_operations<address_map_bank_device>
+    {
+        public address_map_bank_device cast(device_t device) { return (address_map_bank_device)device; }
+        public address_map_bank_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<address_map_bank_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_atari_motion_objects_device : object_finder_operations<atari_motion_objects_device>
+    {
+        public atari_motion_objects_device cast(device_t device) { return (atari_motion_objects_device)device; }
+        public atari_motion_objects_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<atari_motion_objects_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_atari_slapstic_device : object_finder_operations<atari_slapstic_device>
+    {
+        public atari_slapstic_device cast(device_t device) { return (atari_slapstic_device)device; }
+        public atari_slapstic_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<atari_slapstic_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_ay8910_device : object_finder_operations<ay8910_device>
     {
         public ay8910_device cast(device_t device) { return (ay8910_device)device; }
@@ -1016,6 +1037,13 @@ namespace mame
         public Pointer<starfield_05xx_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_t11_device : object_finder_operations<t11_device>
+    {
+        public t11_device cast(device_t device) { return (t11_device)device; }
+        public t11_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<t11_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_ttl153_device : object_finder_operations<ttl153_device>
     {
         public ttl153_device cast(device_t device) { return (ttl153_device)device; }
@@ -1044,6 +1072,13 @@ namespace mame
         public Pointer<taito_sj_security_mcu_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_tilemap_device : object_finder_operations<tilemap_device>
+    {
+        public tilemap_device cast(device_t device) { return (tilemap_device)device; }
+        public tilemap_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<tilemap_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_timeplt_audio_device : object_finder_operations<timeplt_audio_device>
     {
         public timeplt_audio_device cast(device_t device) { return (timeplt_audio_device)device; }
@@ -1051,11 +1086,25 @@ namespace mame
         public Pointer<timeplt_audio_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_tms5220c_device : object_finder_operations<tms5220c_device>
+    {
+        public tms5220c_device cast(device_t device) { return (tms5220c_device)device; }
+        public tms5220c_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<tms5220c_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_watchdog_timer_device : object_finder_operations<watchdog_timer_device>
     {
         public watchdog_timer_device cast(device_t device) { return (watchdog_timer_device)device; }
         public watchdog_timer_device cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<watchdog_timer_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_ym2151_device : object_finder_operations<ym2151_device>
+    {
+        public ym2151_device cast(device_t device) { return (ym2151_device)device; }
+        public ym2151_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<ym2151_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
     public class object_finder_operations_z80_device : object_finder_operations<z80_device>
@@ -1131,6 +1180,9 @@ namespace mame
         {
             if      (typeof(ObjectClass) == typeof(ad7533_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_ad7533_device();
             else if (typeof(ObjectClass) == typeof(adc0804_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_adc0804_device();
+            else if (typeof(ObjectClass) == typeof(address_map_bank_device))    return (object_finder_operations<ObjectClass>)new object_finder_operations_address_map_bank_device();
+            else if (typeof(ObjectClass) == typeof(atari_motion_objects_device)) return (object_finder_operations<ObjectClass>)new object_finder_operations_atari_motion_objects_device();
+            else if (typeof(ObjectClass) == typeof(atari_slapstic_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_atari_slapstic_device();
             else if (typeof(ObjectClass) == typeof(ay8910_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_ay8910_device();
             else if (typeof(ObjectClass) == typeof(bally_squawk_n_talk_device)) return (object_finder_operations<ObjectClass>)new object_finder_operations_bally_squawk_n_talk_device();
             else if (typeof(ObjectClass) == typeof(cpu_device))                 return (object_finder_operations<ObjectClass>)new object_finder_operations_cpu_device();
@@ -1183,12 +1235,16 @@ namespace mame
             else if (typeof(ObjectClass) == typeof(screen_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_screen_device();
             else if (typeof(ObjectClass) == typeof(sn76477_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_sn76477_device();
             else if (typeof(ObjectClass) == typeof(starfield_05xx_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_starfield_05xx_device();
+            else if (typeof(ObjectClass) == typeof(t11_device))                 return (object_finder_operations<ObjectClass>)new object_finder_operations_t11_device();
             else if (typeof(ObjectClass) == typeof(taito_sj_security_mcu_device)) return (object_finder_operations<ObjectClass>)new object_finder_operations_taito_sj_security_mcu_device();
+            else if (typeof(ObjectClass) == typeof(tilemap_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_tilemap_device();
             else if (typeof(ObjectClass) == typeof(timeplt_audio_device))       return (object_finder_operations<ObjectClass>)new object_finder_operations_timeplt_audio_device();
+            else if (typeof(ObjectClass) == typeof(tms5220c_device))            return (object_finder_operations<ObjectClass>)new object_finder_operations_tms5220c_device();
             else if (typeof(ObjectClass) == typeof(ttl153_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_ttl153_device();
             else if (typeof(ObjectClass) == typeof(ttl7474_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_ttl7474_device();
             else if (typeof(ObjectClass) == typeof(vector_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_vector_device();
             else if (typeof(ObjectClass) == typeof(watchdog_timer_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_watchdog_timer_device();
+            else if (typeof(ObjectClass) == typeof(ym2151_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_ym2151_device();
             else if (typeof(ObjectClass) == typeof(z80_device))                 return (object_finder_operations<ObjectClass>)new object_finder_operations_z80_device();
             else if (typeof(ObjectClass) == typeof(z8002_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_z8002_device();
             else if (typeof(ObjectClass) == typeof(z80ctc_channel_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_z80ctc_channel_device();

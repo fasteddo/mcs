@@ -60,7 +60,7 @@ namespace mame
                     emu_file file = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
                     if (!file.open(name))
                     {
-                        init_category(name, file);
+                        init_category(name, file.core_file_get());
                         file.close();
                     }
                 }
@@ -114,7 +114,7 @@ namespace mame
 
 
         // init category index
-        void init_category(string filename, emu_file file)
+        void init_category(string filename, util.core_file file)
         {
             throw new emu_unimplemented();
         }

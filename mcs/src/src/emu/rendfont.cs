@@ -7,6 +7,7 @@ using System.Collections.Generic;
 
 using char32_t = System.UInt32;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using s16 = System.Int16;
 using s32 = System.Int32;
 using size_t = System.UInt64;
@@ -159,12 +160,9 @@ namespace mame
             }
 
             // load the compiled in data instead
-            emu_file ramfile = new emu_file(OPEN_FLAG_READ);
-            std.error_condition filerr = ramfile.open_ram(new MemoryU8(font_uismall), (u32)font_uismall.Length);//, sizeof(font_uismall));
-            if (!filerr)
+            util.random_read ramfile = util.ram_read(new PointerU8(new MemoryU8(font_uismall)), (size_t)font_uismall.Length);
+            if (ramfile != default)
                 load_cached(ramfile, 0, 0);
-
-            ramfile.close();
 
             render_font_command_glyph();
         }
@@ -530,7 +528,7 @@ namespace mame
         {
             std.error_condition filerr;
             u32 chunk;
-            u64 bytes;
+            size_t bytes;
 
             // first try to open the BDF itself
             emu_file file = new emu_file(manager().machine().options().font_path(), OPEN_FLAG_READ);
@@ -562,19 +560,19 @@ namespace mame
         //-------------------------------------------------
         //  load_cached - load a font in cached format
         //-------------------------------------------------
-        bool load_cached(emu_file file, u64 length, u32 hash)
+        bool load_cached(util.random_read file, u64 length, u32 hash)
         {
             // get the file size, read the header, and check that it looks good
-            u64 filesize = file.size();
+            u64 filesize;
             bdc_header header = new bdc_header();
-            if (!header.read(file))
+            if (file.length(out filesize))
             {
-                osd_printf_warning("render_font::load_cached: error reading BDC header\n");
+                LOG("render_font::load_cached: error determining size of BDC file\n");
                 return false;
             }
-            else if (!header.check_magic() || (bdc_header.MAJVERSION != header.get_major_version()) || (bdc_header.MINVERSION != header.get_minor_version()))
+            else if (!header.read(file))
             {
-                LOG("render_font::load_cached: incompatible BDC file\n");
+                osd_printf_warning("render_font::load_cached: error reading BDC header\n");
                 return false;
             }
             else if (length != 0 && ((header.get_original_length() != length) || (header.get_original_hash() != hash)))
@@ -589,14 +587,20 @@ namespace mame
             m_yoffs = header.get_y_offset();
             m_defchar = header.get_default_character();
             u32 numchars = header.get_glyph_count();
-            if (file.tell() + ((u64)numchars * bdc_table_entry.size()) > filesize)
+            u64 filepos;
+            if (file.tell(out filepos))
+            {
+                LOG("render_font::load_cached: failed to determine position in BDC file\n");
+                return false;
+            }
+            else if ((filepos + ((u64)numchars * bdc_table_entry.size())) > filesize)
             {
                 LOG("render_font::load_cached: BDC file is too small to hold glyph table\n");
                 return false;
             }
 
             // now read the rest of the data
-            u64 remaining = filesize - file.tell();
+            u64 remaining = filesize - filepos;
             try
             {
                 m_rawdata.resize(remaining);
@@ -608,7 +612,8 @@ namespace mame
             for (u64 bytes_read = 0; remaining > bytes_read; )
             {
                 u32 chunk = (u32)std.min(u32.MaxValue, remaining);
-                if (file.read(new Pointer<u8>(m_rawdata, (int)bytes_read), chunk) != chunk)  //if (file.read(&m_rawdata[bytes_read], chunk) != chunk)
+                size_t bytes = 0;
+                if (file.read(new PointerU8(m_rawdata, (int)bytes_read), chunk, out bytes) || bytes != chunk)
                 {
                     osd_printf_error("render_font::load_cached: error reading BDC data\n");
                     m_rawdata.clear();
@@ -670,7 +675,7 @@ namespace mame
         //  save_cached - save a font in cached format
         //-------------------------------------------------
 
-        bool save_cached(string filename, u64 length, u32 hash)
+        bool save_cached(util.random_write file, u64 length, u32 hash)
         {
             throw new emu_unimplemented();
 #if false
@@ -681,22 +686,20 @@ namespace mame
         void render_font_command_glyph()
         {
             // FIXME: this is copy/pasta from the BDC loading, and it shouldn't be injected into every font
-            emu_file file = new emu_file(OPEN_FLAG_READ);
-            if (!file.open_ram(new MemoryU8(font_uicmd14), (u32)font_uicmd14.Length))
+            util.random_read file = util.ram_read(new PointerU8(new MemoryU8(font_uicmd14)), (size_t)font_uicmd14.Length);
+            if (file != default)
             {
                 // get the file size, read the header, and check that it looks good
-                u64 filesize = file.size();
+                u64 filesize = (u64)font_uicmd14.Length;
                 bdc_header header = new bdc_header();
                 if (!header.read(file))
                 {
                     osd_printf_warning("render_font::render_font_command_glyph: error reading BDC header\n");
-                    file.close();
                     return;
                 }
                 else if (!header.check_magic() || (bdc_header.MAJVERSION != header.get_major_version()) || (bdc_header.MINVERSION != header.get_minor_version()))
                 {
                     LOG("render_font::render_font_command_glyph: incompatible BDC file\n");
-                    file.close();
                     return;
                 }
 
@@ -704,15 +707,20 @@ namespace mame
                 m_height_cmd = header.get_height();
                 m_yoffs_cmd = header.get_y_offset();
                 u32 numchars = header.get_glyph_count();
-                if ((file.tell() + ((u64)numchars * bdc_table_entry.size())) > filesize)
+                u64 filepos;
+                if (file.tell(out filepos))
+                {
+                    LOG("render_font::render_font_command_glyph: failed to determine position in BDC file\n");
+                    return;
+                }
+                else if ((filepos + ((u64)numchars * bdc_table_entry.size())) > filesize)
                 {
                     LOG("render_font::render_font_command_glyph: BDC file is too small to hold glyph table\n");
-                    file.close();
                     return;
                 }
 
                 // now read the rest of the data
-                u64 remaining = filesize - file.tell();
+                u64 remaining = filesize - filepos;
                 //try
                 {
                     m_rawdata_cmd.resize(remaining);
@@ -725,17 +733,15 @@ namespace mame
                 for (u64 bytes_read = 0; remaining > bytes_read; )
                 {
                     u32 chunk = (u32)std.min(u32.MaxValue, remaining);
-                    if (file.read(new Pointer<u8>(m_rawdata_cmd, (int)bytes_read), chunk) != chunk)
+                    size_t bytes = 0;
+                    if (file.read(new PointerU8(m_rawdata_cmd, (int)bytes_read), chunk, out bytes) || bytes != chunk)
                     {
                         osd_printf_error("render_font::render_font_command_glyph: error reading BDC data\n");
                         m_rawdata_cmd.clear();
-                        file.close();
                         return;
                     }
                     bytes_read += chunk;
                 }
-
-                file.close();
 
                 // extract the data from the data
                 size_t offset = (size_t)numchars * bdc_table_entry.size();
@@ -911,13 +917,16 @@ namespace mame
         MemoryU8 m_data = new MemoryU8((int)OFFS_END, true);  //u8                              m_data[OFFS_END];
 
 
-        public bool read(emu_file f)
+        public bool read(util.read_stream f)
         {
-            return f.read(new Pointer<u8>(m_data), (u32)m_data.Count) == m_data.Count;
+            size_t actual = 0;
+            return !f.read(new Pointer<u8>(m_data), (size_t)m_data.Count, out actual) && actual == (size_t)m_data.Count;  //return !f.read(m_data, sizeof(m_data), actual) && actual == sizeof(m_data);
         }
-        //bool write(emu_file &f)
+
+        //bool write(util::write_stream &f)
         //{
-        //    return f.write(m_data, sizeof(m_data)) == sizeof(m_data);
+        //    std::size_t actual(0);
+        //    return !f.write(m_data, sizeof(m_data), actual) && actual == sizeof(m_data);
         //}
 
         public bool check_magic()

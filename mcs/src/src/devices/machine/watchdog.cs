@@ -139,7 +139,7 @@ namespace mame
         }
 
 
-        //public override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr) { throw new emu_unimplemented(); }
+        //virtual void device_timer(emu_timer &timer, device_timer_id id, int param) override;
 
 
         // internal helpers

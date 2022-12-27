@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30002.166
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mcs", "mcs.csproj", "{29E3884E-3EED-4A26-8155-BD93E576E2CD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpCompress-mcs", "3rdparty\SharpCompress\SharpCompress-mcs.csproj", "{044B4CDD-3E5C-49EA-89A5-AD1A43166025}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svg", "3rdparty\SVG\Source\Svg.csproj", "{886A98C5-37C0-4E8B-885E-30C1D2F98B47}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,14 +31,6 @@ Global
 		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Release_Unsafe|Any CPU.Build.0 = Release|Any CPU
 		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Release|Any CPU.Build.0 = Release|Any CPU
-		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Debug_Unsafe|Any CPU.ActiveCfg = Debug|Any CPU
-		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Debug_Unsafe|Any CPU.Build.0 = Debug|Any CPU
-		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Release_Unsafe|Any CPU.ActiveCfg = Release|Any CPU
-		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Release_Unsafe|Any CPU.Build.0 = Release|Any CPU
-		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -282,14 +282,14 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(taito_sj_security_mcu_device::do_mcu_read)
-        void do_mcu_read(object ptr, s32 param)  //void *ptr, s32 param)
+        void do_mcu_read(s32 param)
         {
             m_zready = false;
         }
 
 
         //TIMER_CALLBACK_MEMBER(taito_sj_security_mcu_device::do_mcu_write)
-        void do_mcu_write(object ptr, s32 param)  //void *ptr, s32 param)
+        void do_mcu_write(s32 param)
         {
             m_mcu_data = (u8)param;
             if (!m_reset)
@@ -298,7 +298,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(taito_sj_security_mcu_device::do_host_write)
-        void do_host_write(object ptr, s32 param)  //void *ptr, s32 param)
+        void do_host_write(s32 param)
         {
             m_host_data = (u8)param;
             if (!m_reset)

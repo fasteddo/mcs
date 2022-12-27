@@ -110,7 +110,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(galaga_state::cpu3_interrupt_callback)
-        void cpu3_interrupt_callback(object ptr, s32 param)  //void *ptr, s32 param)
+        void cpu3_interrupt_callback(s32 param)
         {
             int scanline = param;
 
@@ -157,7 +157,7 @@ namespace mame
         {
             m_leds.resolve();
             /* create the interrupt timer */
-            m_cpu3_interrupt_timer = machine().scheduler().timer_alloc(cpu3_interrupt_callback, this);
+            m_cpu3_interrupt_timer = machine().scheduler().timer_alloc(cpu3_interrupt_callback);
             save_item(NAME(new { m_main_irq_mask }));
             save_item(NAME(new { m_sub_irq_mask }));
             save_item(NAME(new { m_sub2_nmi_mask }));

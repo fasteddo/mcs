@@ -152,7 +152,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(conversion_done);
-        void conversion_done(object ptr, s32 param)  //void *ptr, s32 param)
+        void conversion_done(s32 param)
         {
             throw new emu_unimplemented();
         }

@@ -112,13 +112,13 @@ namespace mame.ui
                     fake_ini = util.string_format("\uFEFF{0} = {1}\n", tmp, sub_filter);
                 }
 
-                emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_READ);
-
+                util.core_file file;
                 MemoryU8 fake_ini_buffer = new MemoryU8(System.Text.Encoding.ASCII.GetBytes(fake_ini));
-                if (!file.open_ram(fake_ini_buffer, (u32)fake_ini.size()))  //if (!file.open_ram(fake_ini.c_str(), fake_ini.size()))
+                if (!util.core_file.open_ram(fake_ini_buffer, fake_ini.size(), OPEN_FLAG_READ, out file))
                 {
                     m_persistent_data.filter_data().load_ini(file);
-                    file.close();
+                    file.Dispose();
+                    file = null;
                 }
             }
 
@@ -614,7 +614,7 @@ namespace mame.ui
                                 emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                                 if (!file.open(util.string_format("custom_{0}_filter.ini", emulator_info.get_configname())))
                                 {
-                                    filter.save_ini(file, 0);
+                                    filter.save_ini(file.core_file_get(), 0);
                                     file.close();
                                 }
                             }
@@ -860,7 +860,7 @@ namespace mame.ui
             emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_READ);
             if (!file.open(util.string_format("custom_{0}_filter.ini", emulator_info.get_configname())))
             {
-                machine_filter flt = machine_filter.create(file, m_persistent_data.filter_data());
+                machine_filter flt = machine_filter.create(file.core_file_get(), m_persistent_data.filter_data());
                 if (flt != null)
                     m_persistent_data.filter_data().set_filter(flt); // not emplace/insert - could replace bogus filter from ui.ini line
 

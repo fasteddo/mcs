@@ -1,24 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <Configurations>Debug;Release;Debug_Unsafe;Release_Unsafe</Configurations>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Unsafe|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;USE_UNSAFE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;USE_UNSAFE</DefineConstants>
     <Optimize>false</Optimize>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Unsafe|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>TRACE;USE_UNSAFE</DefineConstants>
     <Optimize>true</Optimize>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,7 +27,6 @@
 
   <ItemGroup>
     <ProjectReference Include="3rdparty\SharpCompress\SharpCompress-mcs.csproj" />
-    <ProjectReference Include="3rdparty\SVG\Source\Svg.csproj" />
   </ItemGroup>
 
 </Project>

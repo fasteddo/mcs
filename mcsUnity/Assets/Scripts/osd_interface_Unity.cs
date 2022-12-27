@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using mame;
 
+using static mame.emuopts_global;
+using static mame.osdcore_global;
+
 
 namespace mcsUnity
 {
@@ -523,17 +526,17 @@ namespace mcsUnity
             int bench = options.bench();
             if (bench > 0)
             {
-                options.set_value(emu_options.OPTION_THROTTLE, 0, options_global.OPTION_PRIORITY_MAXIMUM);
+                options.set_value(OPTION_THROTTLE, 0, options_global.OPTION_PRIORITY_MAXIMUM);
                 options.set_value(osd_options.OSDOPTION_SOUND, "none", options_global.OPTION_PRIORITY_MAXIMUM);
                 options.set_value(osd_options.OSDOPTION_VIDEO, "none", options_global.OPTION_PRIORITY_MAXIMUM);
-                options.set_value(emu_options.OPTION_SECONDS_TO_RUN, bench, options_global.OPTION_PRIORITY_MAXIMUM);
+                options.set_value(OPTION_SECONDS_TO_RUN, bench, options_global.OPTION_PRIORITY_MAXIMUM);
             }
 
             // determine if we are profiling, and adjust options appropriately
             int profile = options.profile();
             if (profile > 0)
             {
-                options.set_value(emu_options.OPTION_THROTTLE, 0, options_global.OPTION_PRIORITY_MAXIMUM);
+                options.set_value(OPTION_THROTTLE, 0, options_global.OPTION_PRIORITY_MAXIMUM);
                 options.set_value(osd_options.OSDOPTION_NUMPROCESSORS, 1, options_global.OPTION_PRIORITY_MAXIMUM);
             }
 
@@ -732,14 +735,14 @@ namespace mcsUnity
             {
                 if (m_exitScheduled)
                 {
-                    global_object.osd_printf_verbose("osd_interface.update() - calling schedule_exit()");
+                    osd_printf_verbose("osd_interface.update() - calling schedule_exit()");
                     machine().schedule_exit();
                 }
             }
 
 
             if (updateCount++ % 50 == 0)
-                global_object.osd_printf_verbose("osd_interface.update() - {0}", updateCount);
+                osd_printf_verbose("osd_interface.update() - {0}", updateCount);
 
 
             if (!skip_redraw)
@@ -755,7 +758,7 @@ namespace mcsUnity
                 lock (osdlock)
                 {
                     //software_renderer<typeof(UInt32), 0,0,0, 16,8,0>.draw_primitives(list, g_state.screenbuffer, width, height, pitch);
-                    software_renderer<UInt32,  int_constant_0, int_constant_0, int_constant_0,  int_constant_16, int_constant_8, int_constant_0>.draw_primitives(list, screenbufferptr, width, height, pitch);
+                    software_renderer<UInt32,  int_const_0, int_const_0, int_const_0,  int_const_16, int_const_8, int_const_0>.draw_primitives(list, screenbufferptr, width, height, pitch);
 
                     osdlock_screen_buffer_updated = true;
                 }
@@ -783,7 +786,7 @@ namespace mcsUnity
             base.update_audio_stream(buffer, samples_this_frame);
 
             if (audioUpdateCount++ % 10 == 0)
-                global_object.osd_printf_verbose("osd_interface.update_audio_stream() - {0} - samples: {1}\n", audioUpdateCount, samples_this_frame);
+                osd_printf_verbose("osd_interface.update_audio_stream() - {0} - samples: {1}\n", audioUpdateCount, samples_this_frame);
 
             lock (osdlock_audio)
             {
@@ -841,7 +844,7 @@ namespace mcsUnity
             {
                 intref item = (intref)item_internal;
 
-                if (item.i == 1) global_object.osd_printf_info("keyboard_get_state() - Pressed");
+                if (item.i == 1) osd_printf_info("keyboard_get_state() - Pressed");
 
                 return item.i;
             }

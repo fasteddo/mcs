@@ -1037,7 +1037,7 @@ namespace mame
         }
         public virtual void Clear()
         {
-            m_data = new T [0];
+            m_data = Array.Empty<T>();
             m_memory = new Memory<T>(m_data);
             m_actualLength = 0;
         }
@@ -1641,6 +1641,7 @@ namespace mame
         public static Type make_unsigned(Type type)
         {
             if      (type == typeof(u8)) return typeof(u8);
+            else if (type == typeof(u16)) return typeof(u16);
             else if (type == typeof(u32)) return typeof(u32);
             else if (type == typeof(s32)) return typeof(u32);
             else throw new emu_unimplemented();

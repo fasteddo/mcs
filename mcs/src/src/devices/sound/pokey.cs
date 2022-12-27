@@ -693,7 +693,7 @@ namespace mame
         }
 
 
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr)
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
         {
             switch (id)
             {

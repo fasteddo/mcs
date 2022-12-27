@@ -203,7 +203,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(timerproc);
-        void timerproc(object ptr, s32 param)  //void *ptr, s32 param)
+        void timerproc(s32 param)
         {
             throw new emu_unimplemented();
         }

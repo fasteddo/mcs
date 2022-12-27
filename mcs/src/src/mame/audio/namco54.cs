@@ -151,7 +151,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( namco_54xx_device::write_sync )
-        void write_sync(object ptr, s32 param)  //void *ptr, s32 param)
+        void write_sync(s32 param)
         {
             m_latched_cmd = (uint8_t)param;
         }

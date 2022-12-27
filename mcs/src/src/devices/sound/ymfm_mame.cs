@@ -205,9 +205,9 @@ namespace mame
 
 
         // timer callbacks
-        void fm_mode_write(object ptr, int param) { m_engine.engine_mode_write((uint8_t)param); }  //void fm_mode_write(void *ptr, int param) { m_engine->engine_mode_write(param); }
-        void fm_check_interrupts(object ptr, int param) { m_engine.engine_check_interrupts(); }  //void fm_check_interrupts(void *ptr, int param) { m_engine->engine_check_interrupts(); }
-        void fm_timer_handler(object ptr, int param) { m_engine.engine_timer_expired((uint32_t)param); }  //void fm_timer_handler(void *ptr, int param) { m_engine->engine_timer_expired(param); }
+        void fm_mode_write(int param) { m_engine.engine_mode_write((uint8_t)param); }
+        void fm_check_interrupts(int param) { m_engine.engine_check_interrupts(); }
+        void fm_timer_handler(int param) { m_engine.engine_timer_expired((uint32_t)param); }
     }
 
 

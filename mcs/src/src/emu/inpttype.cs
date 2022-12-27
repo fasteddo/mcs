@@ -303,50 +303,50 @@ namespace mame
 
         static void emplace_core_types_p1_mahjong(std.vector<input_type_entry> typelist)  //CORE_INPUT_TYPES_BEGIN(p1_mahjong)
         {
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_A,            N_p("input-name", "%p Mahjong A"),           new input_seq(KEYCODE_A) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_B,            N_p("input-name", "%p Mahjong B"),           new input_seq(KEYCODE_B) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_C,            N_p("input-name", "%p Mahjong C"),           new input_seq(KEYCODE_C) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_D,            N_p("input-name", "%p Mahjong D"),           new input_seq(KEYCODE_D) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_E,            N_p("input-name", "%p Mahjong E"),           new input_seq(KEYCODE_E) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_F,            N_p("input-name", "%p Mahjong F"),           new input_seq(KEYCODE_F) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_G,            N_p("input-name", "%p Mahjong G"),           new input_seq(KEYCODE_G) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_H,            N_p("input-name", "%p Mahjong H"),           new input_seq(KEYCODE_H) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_I,            N_p("input-name", "%p Mahjong I"),           new input_seq(KEYCODE_I) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_J,            N_p("input-name", "%p Mahjong J"),           new input_seq(KEYCODE_J) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_K,            N_p("input-name", "%p Mahjong K"),           new input_seq(KEYCODE_K) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_L,            N_p("input-name", "%p Mahjong L"),           new input_seq(KEYCODE_L) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_M,            N_p("input-name", "%p Mahjong M"),           new input_seq(KEYCODE_M) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_N,            N_p("input-name", "%p Mahjong N"),           new input_seq(KEYCODE_N) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_O,            N_p("input-name", "%p Mahjong O"),           new input_seq(KEYCODE_O) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_P,            N_p("input-name", "%p Mahjong P"),           new input_seq(KEYCODE_COLON) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_Q,            N_p("input-name", "%p Mahjong Q"),           new input_seq(KEYCODE_Q) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_KAN,          N_p("input-name", "%p Mahjong Kan"),         new input_seq(KEYCODE_LCONTROL) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_PON,          N_p("input-name", "%p Mahjong Pon"),         new input_seq(KEYCODE_LALT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_CHI,          N_p("input-name", "%p Mahjong Chi"),         new input_seq(KEYCODE_SPACE) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_REACH,        N_p("input-name", "%p Mahjong Reach"),       new input_seq(KEYCODE_LSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_RON,          N_p("input-name", "%p Mahjong Ron"),         new input_seq(KEYCODE_Z) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_FLIP_FLOP,    N_p("input-name", "%p Mahjong Flip Flop"),   new input_seq(KEYCODE_Y) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_BET,          N_p("input-name", "%p Mahjong Bet"),         new input_seq(KEYCODE_3) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_SCORE,        N_p("input-name", "%p Mahjong Take Score"),  new input_seq(KEYCODE_RCONTROL) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_DOUBLE_UP,    N_p("input-name", "%p Mahjong Double Up"),   new input_seq(KEYCODE_RSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_BIG,          N_p("input-name", "%p Mahjong Big"),         new input_seq(KEYCODE_ENTER) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_SMALL,        N_p("input-name", "%p Mahjong Small"),       new input_seq(KEYCODE_BACKSPACE) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_LAST_CHANCE,  N_p("input-name", "%p Mahjong Last Chance"), new input_seq(KEYCODE_RALT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_A,            N_p("input-name", "%p Mahjong A"),           new input_seq(KEYCODE_A_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_B,            N_p("input-name", "%p Mahjong B"),           new input_seq(KEYCODE_B_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_C,            N_p("input-name", "%p Mahjong C"),           new input_seq(KEYCODE_C_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_D,            N_p("input-name", "%p Mahjong D"),           new input_seq(KEYCODE_D_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_E,            N_p("input-name", "%p Mahjong E"),           new input_seq(KEYCODE_E_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_F,            N_p("input-name", "%p Mahjong F"),           new input_seq(KEYCODE_F_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_G,            N_p("input-name", "%p Mahjong G"),           new input_seq(KEYCODE_G_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_H,            N_p("input-name", "%p Mahjong H"),           new input_seq(KEYCODE_H_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_I,            N_p("input-name", "%p Mahjong I"),           new input_seq(KEYCODE_I_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_J,            N_p("input-name", "%p Mahjong J"),           new input_seq(KEYCODE_J_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_K,            N_p("input-name", "%p Mahjong K"),           new input_seq(KEYCODE_K_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_L,            N_p("input-name", "%p Mahjong L"),           new input_seq(KEYCODE_L_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_M,            N_p("input-name", "%p Mahjong M"),           new input_seq(KEYCODE_M_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_N,            N_p("input-name", "%p Mahjong N"),           new input_seq(KEYCODE_N_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_O,            N_p("input-name", "%p Mahjong O"),           new input_seq(KEYCODE_O_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_P,            N_p("input-name", "%p Mahjong P"),           new input_seq(KEYCODE_COLON_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_Q,            N_p("input-name", "%p Mahjong Q"),           new input_seq(KEYCODE_Q_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_KAN,          N_p("input-name", "%p Mahjong Kan"),         new input_seq(KEYCODE_LCONTROL_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_PON,          N_p("input-name", "%p Mahjong Pon"),         new input_seq(KEYCODE_LALT_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_CHI,          N_p("input-name", "%p Mahjong Chi"),         new input_seq(KEYCODE_SPACE_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_REACH,        N_p("input-name", "%p Mahjong Reach"),       new input_seq(KEYCODE_LSHIFT_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_RON,          N_p("input-name", "%p Mahjong Ron"),         new input_seq(KEYCODE_Z_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_FLIP_FLOP,    N_p("input-name", "%p Mahjong Flip Flop"),   new input_seq(KEYCODE_Y_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_BET,          N_p("input-name", "%p Mahjong Bet"),         new input_seq(KEYCODE_3_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_SCORE,        N_p("input-name", "%p Mahjong Take Score"),  new input_seq(KEYCODE_RCONTROL_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_DOUBLE_UP,    N_p("input-name", "%p Mahjong Double Up"),   new input_seq(KEYCODE_RSHIFT_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_BIG,          N_p("input-name", "%p Mahjong Big"),         new input_seq(KEYCODE_ENTER_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_SMALL,        N_p("input-name", "%p Mahjong Small"),       new input_seq(KEYCODE_BACKSPACE_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, MAHJONG_LAST_CHANCE,  N_p("input-name", "%p Mahjong Last Chance"), new input_seq(KEYCODE_RALT_INDEXED(0)) );
         }  //CORE_INPUT_TYPES_END()
 
 
         static void emplace_core_types_p1_hanafuda(std.vector<input_type_entry> typelist)  //CORE_INPUT_TYPES_BEGIN(p1_hanafuda)
         {
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_A,           N_p("input-name", "%p Hanafuda A/1"),        new input_seq(KEYCODE_A) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_B,           N_p("input-name", "%p Hanafuda B/2"),        new input_seq(KEYCODE_B) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_C,           N_p("input-name", "%p Hanafuda C/3"),        new input_seq(KEYCODE_C) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_D,           N_p("input-name", "%p Hanafuda D/4"),        new input_seq(KEYCODE_D) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_E,           N_p("input-name", "%p Hanafuda E/5"),        new input_seq(KEYCODE_E) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_F,           N_p("input-name", "%p Hanafuda F/6"),        new input_seq(KEYCODE_F) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_G,           N_p("input-name", "%p Hanafuda G/7"),        new input_seq(KEYCODE_G) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_H,           N_p("input-name", "%p Hanafuda H/8"),        new input_seq(KEYCODE_H) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_YES,         N_p("input-name", "%p Hanafuda Yes"),        new input_seq(KEYCODE_M) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_NO,          N_p("input-name", "%p Hanafuda No"),         new input_seq(KEYCODE_N) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_A,           N_p("input-name", "%p Hanafuda A/1"),        new input_seq(KEYCODE_A_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_B,           N_p("input-name", "%p Hanafuda B/2"),        new input_seq(KEYCODE_B_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_C,           N_p("input-name", "%p Hanafuda C/3"),        new input_seq(KEYCODE_C_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_D,           N_p("input-name", "%p Hanafuda D/4"),        new input_seq(KEYCODE_D_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_E,           N_p("input-name", "%p Hanafuda E/5"),        new input_seq(KEYCODE_E_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_F,           N_p("input-name", "%p Hanafuda F/6"),        new input_seq(KEYCODE_F_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_G,           N_p("input-name", "%p Hanafuda G/7"),        new input_seq(KEYCODE_G_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_H,           N_p("input-name", "%p Hanafuda H/8"),        new input_seq(KEYCODE_H_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_YES,         N_p("input-name", "%p Hanafuda Yes"),        new input_seq(KEYCODE_M_INDEXED(0)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 1, PLAYER1, HANAFUDA_NO,          N_p("input-name", "%p Hanafuda No"),         new input_seq(KEYCODE_N_INDEXED(0)) );
         }  //CORE_INPUT_TYPES_END()
 
 
@@ -427,50 +427,50 @@ namespace mame
 
         static void emplace_core_types_p2_mahjong(std.vector<input_type_entry> typelist)  //CORE_INPUT_TYPES_BEGIN(p2_mahjong)
         {
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_A,            N_p("input-name", "%p Mahjong A"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_B,            N_p("input-name", "%p Mahjong B"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_C,            N_p("input-name", "%p Mahjong C"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_D,            N_p("input-name", "%p Mahjong D"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_E,            N_p("input-name", "%p Mahjong E"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_F,            N_p("input-name", "%p Mahjong F"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_G,            N_p("input-name", "%p Mahjong G"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_H,            N_p("input-name", "%p Mahjong H"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_I,            N_p("input-name", "%p Mahjong I"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_J,            N_p("input-name", "%p Mahjong J"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_K,            N_p("input-name", "%p Mahjong K"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_L,            N_p("input-name", "%p Mahjong L"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_M,            N_p("input-name", "%p Mahjong M"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_N,            N_p("input-name", "%p Mahjong N"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_O,            N_p("input-name", "%p Mahjong O"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_P,            N_p("input-name", "%p Mahjong P"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_Q,            N_p("input-name", "%p Mahjong Q"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_KAN,          N_p("input-name", "%p Mahjong Kan"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_PON,          N_p("input-name", "%p Mahjong Pon"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_CHI,          N_p("input-name", "%p Mahjong Chi"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_REACH,        N_p("input-name", "%p Mahjong Reach"),       new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_RON,          N_p("input-name", "%p Mahjong Ron"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_FLIP_FLOP,   N_p("input-name", "%p Mahjong Flip Flop"),   new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_BET,         N_p("input-name", "%p Mahjong Bet"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_SCORE,       N_p("input-name", "%p Mahjong Take Score"),  new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_DOUBLE_UP,   N_p("input-name", "%p Mahjong Double Up"),   new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_BIG,         N_p("input-name", "%p Mahjong Big"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_SMALL,       N_p("input-name", "%p Mahjong Small"),       new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_LAST_CHANCE, N_p("input-name", "%p Mahjong Last Chance"), new input_seq() );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_A,            N_p("input-name", "%p Mahjong A"),           new input_seq(KEYCODE_A_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_B,            N_p("input-name", "%p Mahjong B"),           new input_seq(KEYCODE_B_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_C,            N_p("input-name", "%p Mahjong C"),           new input_seq(KEYCODE_C_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_D,            N_p("input-name", "%p Mahjong D"),           new input_seq(KEYCODE_D_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_E,            N_p("input-name", "%p Mahjong E"),           new input_seq(KEYCODE_E_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_F,            N_p("input-name", "%p Mahjong F"),           new input_seq(KEYCODE_F_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_G,            N_p("input-name", "%p Mahjong G"),           new input_seq(KEYCODE_G_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_H,            N_p("input-name", "%p Mahjong H"),           new input_seq(KEYCODE_H_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_I,            N_p("input-name", "%p Mahjong I"),           new input_seq(KEYCODE_I_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_J,            N_p("input-name", "%p Mahjong J"),           new input_seq(KEYCODE_J_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_K,            N_p("input-name", "%p Mahjong K"),           new input_seq(KEYCODE_K_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_L,            N_p("input-name", "%p Mahjong L"),           new input_seq(KEYCODE_L_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_M,            N_p("input-name", "%p Mahjong M"),           new input_seq(KEYCODE_M_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_N,            N_p("input-name", "%p Mahjong N"),           new input_seq(KEYCODE_N_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_O,            N_p("input-name", "%p Mahjong O"),           new input_seq(KEYCODE_O_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_P,            N_p("input-name", "%p Mahjong P"),           new input_seq(KEYCODE_COLON_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_Q,            N_p("input-name", "%p Mahjong Q"),           new input_seq(KEYCODE_Q_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_KAN,          N_p("input-name", "%p Mahjong Kan"),         new input_seq(KEYCODE_LCONTROL_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_PON,          N_p("input-name", "%p Mahjong Pon"),         new input_seq(KEYCODE_LALT_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_CHI,          N_p("input-name", "%p Mahjong Chi"),         new input_seq(KEYCODE_SPACE_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_REACH,        N_p("input-name", "%p Mahjong Reach"),       new input_seq(KEYCODE_LSHIFT_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, MAHJONG_RON,          N_p("input-name", "%p Mahjong Ron"),         new input_seq(KEYCODE_Z_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_FLIP_FLOP,   N_p("input-name", "%p Mahjong Flip Flop"),   new input_seq(KEYCODE_Y_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_BET,         N_p("input-name", "%p Mahjong Bet"),         new input_seq(KEYCODE_3_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_SCORE,       N_p("input-name", "%p Mahjong Take Score"),  new input_seq(KEYCODE_RCONTROL_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_DOUBLE_UP,   N_p("input-name", "%p Mahjong Double Up"),   new input_seq(KEYCODE_RSHIFT_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_BIG,         N_p("input-name", "%p Mahjong Big"),         new input_seq(KEYCODE_ENTER_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_SMALL,       N_p("input-name", "%p Mahjong Small"),       new input_seq(KEYCODE_BACKSPACE_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2,  MAHJONG_LAST_CHANCE, N_p("input-name", "%p Mahjong Last Chance"), new input_seq(KEYCODE_RALT_INDEXED(1)) );
         }  //CORE_INPUT_TYPES_END()
 
 
         static void emplace_core_types_p2_hanafuda(std.vector<input_type_entry> typelist)  //CORE_INPUT_TYPES_BEGIN(p2_hanafuda)
         {
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_A,           N_p("input-name", "%p Hanafuda A/1"),        new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_B,           N_p("input-name", "%p Hanafuda B/2"),        new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_C,           N_p("input-name", "%p Hanafuda C/3"),        new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_D,           N_p("input-name", "%p Hanafuda D/4"),        new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_E,           N_p("input-name", "%p Hanafuda E/5"),        new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_F,           N_p("input-name", "%p Hanafuda F/6"),        new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_G,           N_p("input-name", "%p Hanafuda G/7"),        new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_H,           N_p("input-name", "%p Hanafuda H/8"),        new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_YES,         N_p("input-name", "%p Hanafuda Yes"),        new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_NO,          N_p("input-name", "%p Hanafuda No"),         new input_seq() );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_A,           N_p("input-name", "%p Hanafuda A/1"),        new input_seq(KEYCODE_A_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_B,           N_p("input-name", "%p Hanafuda B/2"),        new input_seq(KEYCODE_B_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_C,           N_p("input-name", "%p Hanafuda C/3"),        new input_seq(KEYCODE_C_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_D,           N_p("input-name", "%p Hanafuda D/4"),        new input_seq(KEYCODE_D_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_E,           N_p("input-name", "%p Hanafuda E/5"),        new input_seq(KEYCODE_E_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_F,           N_p("input-name", "%p Hanafuda F/6"),        new input_seq(KEYCODE_F_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_G,           N_p("input-name", "%p Hanafuda G/7"),        new input_seq(KEYCODE_G_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_H,           N_p("input-name", "%p Hanafuda H/8"),        new input_seq(KEYCODE_H_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_YES,         N_p("input-name", "%p Hanafuda Yes"),        new input_seq(KEYCODE_M_INDEXED(1)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 2, PLAYER2, HANAFUDA_NO,          N_p("input-name", "%p Hanafuda No"),         new input_seq(KEYCODE_N_INDEXED(1)) );
         }  //CORE_INPUT_TYPES_END()
 
 
@@ -511,35 +511,35 @@ namespace mame
 
         static void emplace_core_types_p3_mahjong(std.vector<input_type_entry> typelist)  //CORE_INPUT_TYPES_BEGIN(p3_mahjong)
         {
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_A,           N_p("input-name", "%p Mahjong A"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_B,           N_p("input-name", "%p Mahjong B"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_C,           N_p("input-name", "%p Mahjong C"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_D,           N_p("input-name", "%p Mahjong D"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_E,           N_p("input-name", "%p Mahjong E"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_F,           N_p("input-name", "%p Mahjong F"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_G,           N_p("input-name", "%p Mahjong G"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_H,           N_p("input-name", "%p Mahjong H"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_I,           N_p("input-name", "%p Mahjong I"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_J,           N_p("input-name", "%p Mahjong J"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_K,           N_p("input-name", "%p Mahjong K"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_L,           N_p("input-name", "%p Mahjong L"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_M,           N_p("input-name", "%p Mahjong M"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_N,           N_p("input-name", "%p Mahjong N"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_O,           N_p("input-name", "%p Mahjong O"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_P,           N_p("input-name", "%p Mahjong P"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_Q,           N_p("input-name", "%p Mahjong Q"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_KAN,         N_p("input-name", "%p Mahjong Kan"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_PON,         N_p("input-name", "%p Mahjong Pon"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_CHI,         N_p("input-name", "%p Mahjong Chi"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_REACH,       N_p("input-name", "%p Mahjong Reach"),       new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_RON,         N_p("input-name", "%p Mahjong Ron"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_FLIP_FLOP,   N_p("input-name", "%p Mahjong Flip Flop"),   new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_BET,         N_p("input-name", "%p Mahjong Bet"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_SCORE,       N_p("input-name", "%p Mahjong Take Score"),  new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_DOUBLE_UP,   N_p("input-name", "%p Mahjong Double Up"),   new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_BIG,         N_p("input-name", "%p Mahjong Big"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_SMALL,       N_p("input-name", "%p Mahjong Small"),       new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_LAST_CHANCE, N_p("input-name", "%p Mahjong Last Chance"), new input_seq() );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_A,           N_p("input-name", "%p Mahjong A"),           new input_seq(KEYCODE_A_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_B,           N_p("input-name", "%p Mahjong B"),           new input_seq(KEYCODE_B_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_C,           N_p("input-name", "%p Mahjong C"),           new input_seq(KEYCODE_C_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_D,           N_p("input-name", "%p Mahjong D"),           new input_seq(KEYCODE_D_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_E,           N_p("input-name", "%p Mahjong E"),           new input_seq(KEYCODE_E_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_F,           N_p("input-name", "%p Mahjong F"),           new input_seq(KEYCODE_F_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_G,           N_p("input-name", "%p Mahjong G"),           new input_seq(KEYCODE_G_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_H,           N_p("input-name", "%p Mahjong H"),           new input_seq(KEYCODE_H_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_I,           N_p("input-name", "%p Mahjong I"),           new input_seq(KEYCODE_I_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_J,           N_p("input-name", "%p Mahjong J"),           new input_seq(KEYCODE_J_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_K,           N_p("input-name", "%p Mahjong K"),           new input_seq(KEYCODE_K_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_L,           N_p("input-name", "%p Mahjong L"),           new input_seq(KEYCODE_L_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_M,           N_p("input-name", "%p Mahjong M"),           new input_seq(KEYCODE_M_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_N,           N_p("input-name", "%p Mahjong N"),           new input_seq(KEYCODE_N_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_O,           N_p("input-name", "%p Mahjong O"),           new input_seq(KEYCODE_O_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_P,           N_p("input-name", "%p Mahjong P"),           new input_seq(KEYCODE_COLON_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_Q,           N_p("input-name", "%p Mahjong Q"),           new input_seq(KEYCODE_Q_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_KAN,         N_p("input-name", "%p Mahjong Kan"),         new input_seq(KEYCODE_LCONTROL_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_PON,         N_p("input-name", "%p Mahjong Pon"),         new input_seq(KEYCODE_LALT_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_CHI,         N_p("input-name", "%p Mahjong Chi"),         new input_seq(KEYCODE_SPACE_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_REACH,       N_p("input-name", "%p Mahjong Reach"),       new input_seq(KEYCODE_LSHIFT_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_RON,         N_p("input-name", "%p Mahjong Ron"),         new input_seq(KEYCODE_Z_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_FLIP_FLOP,   N_p("input-name", "%p Mahjong Flip Flop"),   new input_seq(KEYCODE_Y_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_BET,         N_p("input-name", "%p Mahjong Bet"),         new input_seq(KEYCODE_3_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_SCORE,       N_p("input-name", "%p Mahjong Take Score"),  new input_seq(KEYCODE_RCONTROL_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_DOUBLE_UP,   N_p("input-name", "%p Mahjong Double Up"),   new input_seq(KEYCODE_RSHIFT_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_BIG,         N_p("input-name", "%p Mahjong Big"),         new input_seq(KEYCODE_ENTER_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_SMALL,       N_p("input-name", "%p Mahjong Small"),       new input_seq(KEYCODE_BACKSPACE_INDEXED(2)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 3, PLAYER3,  MAHJONG_LAST_CHANCE, N_p("input-name", "%p Mahjong Last Chance"), new input_seq(KEYCODE_RALT_INDEXED(2)) );
         }  //CORE_INPUT_TYPES_END()
 
 
@@ -580,35 +580,35 @@ namespace mame
 
         static void emplace_core_types_p4_mahjong(std.vector<input_type_entry> typelist)  //CORE_INPUT_TYPES_BEGIN(p4_mahjong)
         {
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_A,           N_p("input-name", "%p Mahjong A"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_B,           N_p("input-name", "%p Mahjong B"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_C,           N_p("input-name", "%p Mahjong C"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_D,           N_p("input-name", "%p Mahjong D"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_E,           N_p("input-name", "%p Mahjong E"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_F,           N_p("input-name", "%p Mahjong F"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_G,           N_p("input-name", "%p Mahjong G"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_H,           N_p("input-name", "%p Mahjong H"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_I,           N_p("input-name", "%p Mahjong I"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_J,           N_p("input-name", "%p Mahjong J"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_K,           N_p("input-name", "%p Mahjong K"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_L,           N_p("input-name", "%p Mahjong L"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_M,           N_p("input-name", "%p Mahjong M"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_N,           N_p("input-name", "%p Mahjong N"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_O,           N_p("input-name", "%p Mahjong O"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_P,           N_p("input-name", "%p Mahjong P"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_Q,           N_p("input-name", "%p Mahjong Q"),           new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_KAN,         N_p("input-name", "%p Mahjong Kan"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_PON,         N_p("input-name", "%p Mahjong Pon"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_CHI,         N_p("input-name", "%p Mahjong Chi"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_REACH,       N_p("input-name", "%p Mahjong Reach"),       new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_RON,         N_p("input-name", "%p Mahjong Ron"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_FLIP_FLOP,   N_p("input-name", "%p Mahjong Flip Flop"),   new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_BET,         N_p("input-name", "%p Mahjong Bet"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_SCORE,       N_p("input-name", "%p Mahjong Take Score"),  new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_DOUBLE_UP,   N_p("input-name", "%p Mahjong Double Up"),   new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_BIG,         N_p("input-name", "%p Mahjong Big"),         new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_SMALL,       N_p("input-name", "%p Mahjong Small"),       new input_seq() );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_LAST_CHANCE, N_p("input-name", "%p Mahjong Last Chance"), new input_seq() );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_A,           N_p("input-name", "%p Mahjong A"),           new input_seq(KEYCODE_A_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_B,           N_p("input-name", "%p Mahjong B"),           new input_seq(KEYCODE_B_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_C,           N_p("input-name", "%p Mahjong C"),           new input_seq(KEYCODE_C_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_D,           N_p("input-name", "%p Mahjong D"),           new input_seq(KEYCODE_D_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_E,           N_p("input-name", "%p Mahjong E"),           new input_seq(KEYCODE_E_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_F,           N_p("input-name", "%p Mahjong F"),           new input_seq(KEYCODE_F_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_G,           N_p("input-name", "%p Mahjong G"),           new input_seq(KEYCODE_G_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_H,           N_p("input-name", "%p Mahjong H"),           new input_seq(KEYCODE_H_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_I,           N_p("input-name", "%p Mahjong I"),           new input_seq(KEYCODE_I_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_J,           N_p("input-name", "%p Mahjong J"),           new input_seq(KEYCODE_J_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_K,           N_p("input-name", "%p Mahjong K"),           new input_seq(KEYCODE_K_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_L,           N_p("input-name", "%p Mahjong L"),           new input_seq(KEYCODE_L_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_M,           N_p("input-name", "%p Mahjong M"),           new input_seq(KEYCODE_M_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_N,           N_p("input-name", "%p Mahjong N"),           new input_seq(KEYCODE_N_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_O,           N_p("input-name", "%p Mahjong O"),           new input_seq(KEYCODE_O_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_P,           N_p("input-name", "%p Mahjong P"),           new input_seq(KEYCODE_COLON_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_Q,           N_p("input-name", "%p Mahjong Q"),           new input_seq(KEYCODE_Q_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_KAN,         N_p("input-name", "%p Mahjong Kan"),         new input_seq(KEYCODE_LCONTROL_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_PON,         N_p("input-name", "%p Mahjong Pon"),         new input_seq(KEYCODE_LALT_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_CHI,         N_p("input-name", "%p Mahjong Chi"),         new input_seq(KEYCODE_SPACE_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_REACH,       N_p("input-name", "%p Mahjong Reach"),       new input_seq(KEYCODE_LSHIFT_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_RON,         N_p("input-name", "%p Mahjong Ron"),         new input_seq(KEYCODE_Z_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_FLIP_FLOP,   N_p("input-name", "%p Mahjong Flip Flop"),   new input_seq(KEYCODE_Y_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_BET,         N_p("input-name", "%p Mahjong Bet"),         new input_seq(KEYCODE_3_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_SCORE,       N_p("input-name", "%p Mahjong Take Score"),  new input_seq(KEYCODE_RCONTROL_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_DOUBLE_UP,   N_p("input-name", "%p Mahjong Double Up"),   new input_seq(KEYCODE_RSHIFT_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_BIG,         N_p("input-name", "%p Mahjong Big"),         new input_seq(KEYCODE_ENTER_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_SMALL,       N_p("input-name", "%p Mahjong Small"),       new input_seq(KEYCODE_BACKSPACE_INDEXED(3)) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 4, PLAYER4,  MAHJONG_LAST_CHANCE, N_p("input-name", "%p Mahjong Last Chance"), new input_seq(KEYCODE_RALT_INDEXED(3)) );
         }  //CORE_INPUT_TYPES_END()
 
 

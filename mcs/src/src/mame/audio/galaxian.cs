@@ -39,7 +39,6 @@ namespace mame
             : base(mconfig, type, tag, owner, clock)
         {
             m_discrete = new required_device<discrete_sound_device>(this, "discrete");
-            m_lfo_val = 0;
         }
 
 
@@ -134,7 +133,6 @@ namespace mame
         //-------------------------------------------------
         protected override void device_add_mconfig(machine_config config)
         {
-            // sound hardware
             DISCRETE(config, m_discrete).disound.add_route(ALL_OUTPUTS, ":speaker", 1.0);
             m_discrete.op0.set_intf(galaxian_state.galaxian_discrete);
         }

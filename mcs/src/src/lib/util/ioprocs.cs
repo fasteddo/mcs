@@ -216,11 +216,140 @@ namespace mame
 
         // helper for holding a block of memory and deallocating it (or not) as necessary
         //template <typename T, bool Owned>
-        //class ram_adapter_base : public virtual random_access
+        class ram_adapter_base : random_access
+        {
+            protected PointerU8 m_data;  //T m_data;
+            protected uint64_t m_pointer = 0U;
+            protected size_t m_size;
+
+
+            //template <typename U>
+            protected ram_adapter_base(PointerU8 data, size_t size)  //ram_adapter_base(U *data, std::size_t size) noexcept : m_data(reinterpret_cast<T>(data)), m_size(size)
+            {
+                m_data = data;
+                m_size = size;
+
+
+                //static_assert(sizeof(*m_data) == 1U, "Element type must be byte-sized");
+                assert(m_data != null || m_size == 0);
+            }
+
+
+            //virtual ~ram_adapter_base()
+            //{
+            //    if constexpr (Owned)
+            //        std::free(m_data);
+            //}
+
+
+            public std.error_condition seek(int64_t offset, int whence)
+            {
+                switch (whence)
+                {
+                    case SEEK_SET:
+                        if (0 > offset)
+                            return std.errc.invalid_argument;
+                        m_pointer = (uint64_t)offset;
+                        return new std.error_condition();
+
+                    case SEEK_CUR:
+                        if (0 > offset)
+                        {
+                            if ((uint64_t)(-offset) > m_pointer)  //if (std::uint64_t(-offset) > m_pointer)
+                                return std.errc.invalid_argument;
+                        }
+                        else if ((uint64_t.MaxValue - (uint64_t)offset) < m_pointer)  //else if ((std::numeric_limits<std::uint64_t>::max() - offset) < m_pointer)
+                        {
+                            return std.errc.invalid_argument;
+                        }
+
+                        m_pointer += (uint64_t)offset;
+                        return new std.error_condition();
+
+                    case SEEK_END:
+                        if (0 > offset)
+                        {
+                            if ((uint64_t)(-offset) > m_size)  //if (std::uint64_t(-offset) > m_size)
+                                return std.errc.invalid_argument;
+                        }
+                        else if ((uint64_t.MaxValue - (uint64_t)offset) < m_size)  //else if ((std::numeric_limits<std::uint64_t>::max() - offset) < m_size)
+                        {
+                            return std.errc.invalid_argument;
+                        }
+
+                        m_pointer = (uint64_t)m_size + (uint64_t)offset;
+                        return new std.error_condition();
+
+                    default:
+                        return std.errc.invalid_argument;
+                }
+            }
+
+            public std.error_condition tell(out uint64_t result)
+            {
+                result = m_pointer;
+                return new std.error_condition();
+            }
+
+            public std.error_condition length(out uint64_t result)
+            {
+                result = 0;
+
+                if (uint64_t.MaxValue < m_size)  //if (std::numeric_limits<uint64_t>::max() < m_size)
+                    return std.errc.file_too_large;
+
+                result = m_size;
+                return new std.error_condition();
+            }
+        }
+
 
         // RAM read implementation
         //template <typename T, bool Owned>
-        //class ram_read_adapter : public ram_adapter_base<T, Owned>, public virtual random_read
+        class ram_read_adapter : ram_adapter_base, random_read  //class ram_read_adapter : public ram_adapter_base<T, Owned>, public virtual random_read
+        {
+            //template <typename U>
+            public ram_read_adapter(PointerU8 data, size_t size) : base(data, size)  //ram_read_adapter(U *data, std::size_t size) noexcept : ram_adapter_base<T, Owned>(data, size)
+            {
+            }
+
+
+            public std.error_condition read(PointerU8 buffer, size_t length, out size_t actual)
+            {
+                do_read(m_pointer, buffer, length, out actual);
+                m_pointer += actual;
+                return new std.error_condition();
+            }
+
+
+            public std.error_condition read_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual)
+            {
+                do_read(offset, buffer, length, out actual);
+                return new std.error_condition();
+            }
+
+
+            public Stream stream { get; }
+
+
+            void do_read(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual)
+            {
+                if ((offset < m_size) && length != 0)
+                {
+                    actual = std.min((size_t)(m_size - offset), length);
+                    //if constexpr (Owned)
+                    //    std::memcpy(buffer, this->m_data + offset, actual);
+                    //else
+                    //    std::memmove(buffer, this->m_data + offset, actual);
+                    std.memcpy(buffer, m_data + (int)offset, actual);
+                }
+                else
+                {
+                    actual = 0U;
+                }
+            }
+        }
+
 
         // helper for holding a stdio FILE and closing it (or not) as necessary
         //class stdio_adapter_base : public virtual random_access
@@ -376,8 +505,22 @@ namespace mame
         //class osd_file_read_write_adapter : public osd_file_read_adapter, public random_read_write
 
 
-        //random_read::ptr ram_read(void const *data, std::size_t size) noexcept;
-        //random_read::ptr ram_read(void const *data, std::size_t size, std::uint8_t filler) noexcept;
+        public static random_read ram_read(PointerU8 data, size_t size)  //random_read::ptr ram_read(void const *data, std::size_t size) noexcept;
+        {
+            random_read result = default;  //random_read::ptr result;
+            if (data != null || size == 0)
+                result = new ram_read_adapter(data, size);  //result.reset(new (std::nothrow) ram_read_adapter<std::uint8_t const *const, false>(data, size));
+
+            return result;
+        }
+
+
+        public static random_read ram_read(PointerU8 data, size_t size, uint8_t filler)  //random_read::ptr ram_read(void const *data, std::size_t size, std::uint8_t filler) noexcept;
+        {
+            throw new emu_unimplemented();
+        }
+
+
         //random_read::ptr ram_read_copy(void const *data, std::size_t size) noexcept;
         //random_read::ptr ram_read_copy(void const *data, std::size_t size, std::uint8_t filler) noexcept;
 

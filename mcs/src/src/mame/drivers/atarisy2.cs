@@ -190,7 +190,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(atarisy2_state::delayed_int_enable_w)
-        void delayed_int_enable_w(object ptr, s32 param)  //void *ptr, s32 param)
+        void delayed_int_enable_w(s32 param)
         {
             m_interrupt_enable = (uint8_t)param;
         }

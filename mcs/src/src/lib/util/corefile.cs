@@ -840,7 +840,7 @@ namespace mame
             public override std.error_condition read(PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition read(void *buffer, std::size_t length, std::size_t &actual) noexcept override;
             {
                 // since osd_file works like pread/pwrite, implement in terms of read_at
-                // core_osd_file is delcared final, so a derived class can't interfere
+                // core_osd_file is declared final, so a derived class can't interfere
                 std.error_condition err = read_at(offset(), buffer, length, out actual);
                 add_offset(actual);
                 return err;
@@ -927,7 +927,7 @@ namespace mame
             public override std.error_condition write(PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition write(void const *buffer, std::size_t length, std::size_t &actual) noexcept override;
             {
                 // since osd_file works like pread/pwrite, implement in terms of write_at
-                // core_osd_file is delcared final, so a derived class can't interfere
+                // core_osd_file is declared final, so a derived class can't interfere
                 std.error_condition err = write_at(offset(), buffer, length, out actual);
                 add_offset(actual);
                 return err;

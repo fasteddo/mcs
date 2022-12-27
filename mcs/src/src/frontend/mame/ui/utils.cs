@@ -207,7 +207,7 @@ namespace mame
             public abstract bool adjust_left();
             public abstract bool adjust_right();
 
-            public abstract void save_ini(emu_file file, unsigned indent);
+            public abstract void save_ini(util.core_file file, unsigned indent);
 
             // moved to derived classes since templates are different
             //template <typename InputIt, class OutputIt>
@@ -297,7 +297,7 @@ namespace mame
             public abstract string adorned_display_name(type n);
 
             public static machine_filter create(type n, machine_filter_data data) { return create(n, data, null, null, 0); }
-            public static machine_filter create(emu_file file, machine_filter_data data) { return create(file, data, 0); }
+            public static machine_filter create(util.core_file file, machine_filter_data data) { return create(file, data, 0); }
 
             public static string config_name(type n)
             {
@@ -315,7 +315,7 @@ namespace mame
             //-------------------------------------------------
             //  public machine filter interface
             //-------------------------------------------------
-            protected static machine_filter create(type n, machine_filter_data data, string value, emu_file file, unsigned indent)
+            protected static machine_filter create(type n, machine_filter_data data, string value, util.core_file file, unsigned indent)
             {
                 assert(type.COUNT > n);
 
@@ -373,7 +373,7 @@ namespace mame
             }
 
 
-            protected static machine_filter create(emu_file file, machine_filter_data data, unsigned indent)
+            protected static machine_filter create(util.core_file file, machine_filter_data data, unsigned indent)
             {
                 string buffer;
                 if (file.gets(out buffer, MAX_CHAR_INFO) == null)
@@ -473,7 +473,7 @@ namespace mame
             protected abstract string adorned_display_name(type n);
 
             protected static software_filter create(type n, software_filter_data data) { return create(n, data, null, null, 0); }
-            protected static software_filter create(emu_file file, software_filter_data data) { return create(file, data, 0); }
+            protected static software_filter create(util.core_file file, software_filter_data data) { return create(file, data, 0); }
 
             protected static string config_name(type n)
             {
@@ -487,7 +487,7 @@ namespace mame
             }
 
 
-            protected static software_filter create(type n, software_filter_data data, string value, emu_file file, unsigned indent)
+            protected static software_filter create(type n, software_filter_data data, string value, util.core_file file, unsigned indent)
             {
                 assert(type.COUNT > n);
 
@@ -539,7 +539,7 @@ namespace mame
             }
 
 
-            protected static software_filter create(emu_file file, software_filter_data data, unsigned indent)
+            protected static software_filter create(util.core_file file, software_filter_data data, unsigned indent)
             {
                 string buffer;  //char buffer[MAX_CHAR_INFO];
                 if (file.gets(out buffer, MAX_CHAR_INFO) == null)
@@ -664,7 +664,7 @@ namespace mame
             }
 
 
-            public bool load_ini(emu_file file)
+            public bool load_ini(util.core_file file)
             {
                 machine_filter flt = machine_filter.create(file, this);
                 if (flt != null)
@@ -858,7 +858,7 @@ namespace mame
             public override bool adjust_left() { return false; }
             public override bool adjust_right() { return false; }
 
-            public override void save_ini(emu_file file, unsigned indent)
+            public override void save_ini(util.core_file file, unsigned indent)
             {
                 file.puts(util.string_format("{1:{0}}{2} = 1\n", -1 * 2 * indent, "", config_name()));  // %2$*1$s%3$s = 1\n
             }
@@ -906,7 +906,7 @@ namespace mame
             public override bool adjust_left() { return false; }
             public override bool adjust_right() { return false; }
 
-            public override void save_ini(emu_file file, unsigned indent)
+            public override void save_ini(util.core_file file, unsigned indent)
             {
                 file.puts(util.string_format("{1:{0}}{2} = 1\n", -1 * 2 * indent, "", config_name()));  // %2$*1$s%3$s = 1\n
             }
@@ -986,7 +986,7 @@ namespace mame
                 return true;
             }
 
-            public override void save_ini(emu_file file, unsigned indent)
+            public override void save_ini(util.core_file file, unsigned indent)
             {
                 string text = filter_text();
                 file.puts(util.string_format("{1:{0}}{2} = {3}\n", -1 * 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
@@ -1068,7 +1068,7 @@ namespace mame
                 return true;
             }
 
-            public override void save_ini(emu_file file, unsigned indent)
+            public override void save_ini(util.core_file file, unsigned indent)
             {
                 string text = filter_text();
                 file.puts(util.string_format("{1:{0}}{2} = {3}\n", -1 * 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
@@ -1308,7 +1308,7 @@ namespace mame
             public override bool wants_adjuster() { return true; }
             public override string adjust_text() { return "<set up filters>"; }
 
-            public override void save_ini(emu_file file, unsigned indent)
+            public override void save_ini(util.core_file file, unsigned indent)
             {
                 throw new emu_unimplemented();
             }
@@ -1344,7 +1344,7 @@ namespace mame
             }
 
 
-            protected void populate(string value, emu_file file, unsigned indent)
+            protected void populate(string value, util.core_file file, unsigned indent)
             {
                 // try to load filters from a file
                 if (value != null && file != null)
@@ -1576,7 +1576,7 @@ namespace mame
             public override bool wants_adjuster() { return true; }
             public override string adjust_text() { return "<set up filters>"; }
 
-            public override void save_ini(emu_file file, unsigned indent)
+            public override void save_ini(util.core_file file, unsigned indent)
             {
                 throw new emu_unimplemented();
             }
@@ -1615,7 +1615,7 @@ namespace mame
             }
 
 
-            protected void populate(string value, emu_file file, unsigned indent)
+            protected void populate(string value, util.core_file file, unsigned indent)
             {
                 // try to load filters from a file
                 if (value != null && file != null)
@@ -1648,7 +1648,7 @@ namespace mame
         //template <machine_filter::type Type = machine_filter::AVAILABLE>
         class available_machine_filter_impl : simple_filter_impl_base_machine_filter  //class available_machine_filter_impl : public simple_filter_impl_base<machine_filter, Type>
         {
-            public available_machine_filter_impl(machine_filter_data data, string value, emu_file file, unsigned indent, type Type = type.AVAILABLE) : base(Type) { }
+            public available_machine_filter_impl(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type = type.AVAILABLE) : base(Type) { }
 
             public override bool apply(ui_system_info system) { return system.available; }
         }
@@ -1657,7 +1657,7 @@ namespace mame
         //template <machine_filter::type Type = machine_filter::WORKING>
         class working_machine_filter_impl : simple_filter_impl_base_machine_filter  //class working_machine_filter_impl : public simple_filter_impl_base<machine_filter, Type>
         {
-            public working_machine_filter_impl(machine_filter_data data, string value, emu_file file, unsigned indent, type Type = type.WORKING) : base(Type) { }
+            public working_machine_filter_impl(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type = type.WORKING) : base(Type) { }
 
             public override bool apply(ui_system_info system) { return (system.driver.flags & machine_flags.type.NOT_WORKING) == 0; }
         }
@@ -1666,7 +1666,7 @@ namespace mame
         //template <machine_filter::type Type = machine_filter::MECHANICAL>
         class mechanical_machine_filter_impl : simple_filter_impl_base_machine_filter  //class mechanical_machine_filter_impl : public simple_filter_impl_base<machine_filter, Type>
         {
-            public mechanical_machine_filter_impl(machine_filter_data data, string value, emu_file file, unsigned indent, type Type = type.MECHANICAL) : base(Type) { }
+            public mechanical_machine_filter_impl(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type = type.MECHANICAL) : base(Type) { }
 
             public override bool apply(ui_system_info system) { return (system.driver.flags & machine_flags.type.MECHANICAL) != 0; }
         }
@@ -1675,7 +1675,7 @@ namespace mame
         //template <machine_filter::type Type = machine_filter::BIOS>
         class bios_machine_filter_impl : simple_filter_impl_base_machine_filter  //class bios_machine_filter_impl : public simple_filter_impl_base<machine_filter, Type>
         {
-            public bios_machine_filter_impl(machine_filter_data data, string value, emu_file file, unsigned indent, type Type = type.BIOS) : base(Type) { }
+            public bios_machine_filter_impl(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type = type.BIOS) : base(Type) { }
 
             public override bool apply(ui_system_info system) { return (system.driver.flags & machine_flags.type.IS_BIOS_ROOT) != 0; }
         }
@@ -1684,7 +1684,7 @@ namespace mame
         //template <machine_filter::type Type = machine_filter::PARENTS>
         class parents_machine_filter_impl : simple_filter_impl_base_machine_filter  //class parents_machine_filter_impl : public simple_filter_impl_base<machine_filter, Type>
         {
-            public parents_machine_filter_impl(machine_filter_data data, string value, emu_file file, unsigned indent, type Type = type.PARENTS) : base(Type) { }
+            public parents_machine_filter_impl(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type = type.PARENTS) : base(Type) { }
 
             public override bool apply(ui_system_info system)
             {
@@ -1698,7 +1698,7 @@ namespace mame
         //template <machine_filter::type Type = machine_filter::CHD>
         class chd_machine_filter_impl : simple_filter_impl_base_machine_filter  //class chd_machine_filter_impl : public simple_filter_impl_base<machine_filter, Type>
         {
-            public chd_machine_filter_impl(machine_filter_data data, string value, emu_file file, unsigned indent, type Type = type.CHD) : base(Type) { }
+            public chd_machine_filter_impl(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type = type.CHD) : base(Type) { }
 
             public override bool apply(ui_system_info system)
             {
@@ -1717,7 +1717,7 @@ namespace mame
         //template <machine_filter::type Type = machine_filter::SAVE>
         class save_machine_filter_impl : simple_filter_impl_base_machine_filter  //class save_machine_filter_impl : public simple_filter_impl_base<machine_filter, Type>
         {
-            public save_machine_filter_impl(machine_filter_data data, string value, emu_file file, unsigned indent, type Type = type.SAVE) : base(Type) { }
+            public save_machine_filter_impl(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type = type.SAVE) : base(Type) { }
 
             public override bool apply(ui_system_info system) { return (system.driver.flags & machine_flags.type.SUPPORTS_SAVE) != 0; }
         }
@@ -1726,7 +1726,7 @@ namespace mame
         //template <machine_filter::type Type = machine_filter::VERTICAL>
         class vertical_machine_filter_impl : simple_filter_impl_base_machine_filter  //class vertical_machine_filter_impl : public simple_filter_impl_base<machine_filter, Type>
         {
-            public vertical_machine_filter_impl(machine_filter_data data, string value, emu_file file, unsigned indent, type Type = type.VERTICAL) : base(Type) { }
+            public vertical_machine_filter_impl(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type = type.VERTICAL) : base(Type) { }
 
             public override bool apply(ui_system_info system) { return (system.driver.flags & machine_flags.type.SWAP_XY) != 0; }
         }
@@ -1737,7 +1737,7 @@ namespace mame
         //-------------------------------------------------
         class manufacturer_machine_filter : choice_filter_impl_base_machine_filter  //class manufacturer_machine_filter : public choice_filter_impl_base<machine_filter, machine_filter::MANUFACTURER>
         {
-            public manufacturer_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent)
+            public manufacturer_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent)
                 : base(data.manufacturers(), value, type.MANUFACTURER)
             {
             }
@@ -1757,7 +1757,7 @@ namespace mame
 
         class year_machine_filter : choice_filter_impl_base_machine_filter  //<machine_filter, machine_filter::YEAR>
         {
-            public year_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent)
+            public year_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent)
                 : base(data.years(), value, type.YEAR)
             {
             }
@@ -1772,49 +1772,49 @@ namespace mame
         //template <template <machine_filter::type T> class Base, machine_filter::type Type>
         class inverted_machine_filter_available_machine : available_machine_filter_impl  //class inverted_machine_filter : public Base<Type>
         {
-            protected inverted_machine_filter_available_machine(machine_filter_data data, string value, emu_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
+            protected inverted_machine_filter_available_machine(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
             public override bool apply(ui_system_info system) { return !base.apply(system); }
         }
 
         class inverted_machine_filter_working_machine : working_machine_filter_impl  //class inverted_machine_filter : public Base<Type>
         {
-            protected inverted_machine_filter_working_machine(machine_filter_data data, string value, emu_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
+            protected inverted_machine_filter_working_machine(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
             public override bool apply(ui_system_info system) { return !base.apply(system); }
         }
 
         class inverted_machine_filter_mechanical_machine : mechanical_machine_filter_impl  //class inverted_machine_filter : public Base<Type>
         {
-            protected inverted_machine_filter_mechanical_machine(machine_filter_data data, string value, emu_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
+            protected inverted_machine_filter_mechanical_machine(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
             public override bool apply(ui_system_info system) { return !base.apply(system); }
         }
 
         class inverted_machine_filter_bios_machine : bios_machine_filter_impl  //class inverted_machine_filter : public Base<Type>
         {
-            protected inverted_machine_filter_bios_machine(machine_filter_data data, string value, emu_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
+            protected inverted_machine_filter_bios_machine(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
             public override bool apply(ui_system_info system) { return !base.apply(system); }
         }
 
         class inverted_machine_filter_parents_machine : parents_machine_filter_impl  //class inverted_machine_filter : public Base<Type>
         {
-            protected inverted_machine_filter_parents_machine(machine_filter_data data, string value, emu_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
+            protected inverted_machine_filter_parents_machine(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
             public override bool apply(ui_system_info system) { return !base.apply(system); }
         }
 
         class inverted_machine_filter_save_machine : save_machine_filter_impl  //class inverted_machine_filter : public Base<Type>
         {
-            protected inverted_machine_filter_save_machine(machine_filter_data data, string value, emu_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
+            protected inverted_machine_filter_save_machine(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
             public override bool apply(ui_system_info system) { return !base.apply(system); }
         }
 
         class inverted_machine_filter_chd_machine : chd_machine_filter_impl  //class inverted_machine_filter : public Base<Type>
         {
-            protected inverted_machine_filter_chd_machine(machine_filter_data data, string value, emu_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
+            protected inverted_machine_filter_chd_machine(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
             public override bool apply(ui_system_info system) { return !base.apply(system); }
         }
 
         class inverted_machine_filter_vertical_machine : vertical_machine_filter_impl  //class inverted_machine_filter : public Base<Type>
         {
-            protected inverted_machine_filter_vertical_machine(machine_filter_data data, string value, emu_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
+            protected inverted_machine_filter_vertical_machine(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type) : base(data, value, file, indent, Type) { }
             public override bool apply(ui_system_info system) { return !base.apply(system); }
         }
 
@@ -1837,14 +1837,14 @@ namespace mame
         //using nochd_machine_filter          = inverted_machine_filter<chd_machine_filter_impl, machine_filter::NOCHD>;
         //using horizontal_machine_filter     = inverted_machine_filter<vertical_machine_filter_impl, machine_filter::HORIZONTAL>;
 
-        class unavailable_machine_filter : inverted_machine_filter_available_machine { public unavailable_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent) : base(data, value, file, indent, type.UNAVAILABLE) { } }
-        class not_working_machine_filter : inverted_machine_filter_working_machine { public not_working_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent) : base(data, value, file, indent, type.NOT_WORKING) { } }
-        class not_mechanical_machine_filter : inverted_machine_filter_mechanical_machine { public not_mechanical_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent) : base(data, value, file, indent, type.NOT_MECHANICAL) { } }
-        class not_bios_machine_filter : inverted_machine_filter_bios_machine { public not_bios_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent) : base(data, value, file, indent, type.NOT_BIOS) { } }
-        class clones_machine_filter : inverted_machine_filter_parents_machine { public clones_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent) : base(data, value, file, indent, type.CLONES) { } }
-        class nosave_machine_filter : inverted_machine_filter_save_machine { public nosave_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent) : base(data, value, file, indent, type.NOSAVE) { } }
-        class nochd_machine_filter : inverted_machine_filter_chd_machine { public nochd_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent) : base(data, value, file, indent, type.NOCHD) { } }
-        class horizontal_machine_filter : inverted_machine_filter_vertical_machine { public horizontal_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent) : base(data, value, file, indent, type.HORIZONTAL) { } }
+        class unavailable_machine_filter : inverted_machine_filter_available_machine { public unavailable_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent) : base(data, value, file, indent, type.UNAVAILABLE) { } }
+        class not_working_machine_filter : inverted_machine_filter_working_machine { public not_working_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent) : base(data, value, file, indent, type.NOT_WORKING) { } }
+        class not_mechanical_machine_filter : inverted_machine_filter_mechanical_machine { public not_mechanical_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent) : base(data, value, file, indent, type.NOT_MECHANICAL) { } }
+        class not_bios_machine_filter : inverted_machine_filter_bios_machine { public not_bios_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent) : base(data, value, file, indent, type.NOT_BIOS) { } }
+        class clones_machine_filter : inverted_machine_filter_parents_machine { public clones_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent) : base(data, value, file, indent, type.CLONES) { } }
+        class nosave_machine_filter : inverted_machine_filter_save_machine { public nosave_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent) : base(data, value, file, indent, type.NOSAVE) { } }
+        class nochd_machine_filter : inverted_machine_filter_chd_machine { public nochd_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent) : base(data, value, file, indent, type.NOCHD) { } }
+        class horizontal_machine_filter : inverted_machine_filter_vertical_machine { public horizontal_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent) : base(data, value, file, indent, type.HORIZONTAL) { } }
 
 
         //-------------------------------------------------
@@ -1853,7 +1853,7 @@ namespace mame
         //template <machine_filter::type Type>
         class inclusive_machine_filter_impl : simple_filter_impl_base_machine_filter  //class inclusive_machine_filter_impl : public simple_filter_impl_base<machine_filter, Type>
         {
-            protected inclusive_machine_filter_impl(machine_filter_data data, string value, emu_file file, unsigned indent, type Type) : base(Type) { }
+            protected inclusive_machine_filter_impl(machine_filter_data data, string value, util.core_file file, unsigned indent, type Type) : base(Type) { }
 
             public override bool apply(ui_system_info system) { return true; }
         }
@@ -1861,8 +1861,8 @@ namespace mame
 
         //using all_machine_filter            = inclusive_machine_filter_impl<machine_filter::ALL>;
         //using favorite_machine_filter       = inclusive_machine_filter_impl<machine_filter::FAVORITE>;
-        class all_machine_filter : inclusive_machine_filter_impl { public all_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent) : base(data, value, file, indent, type.ALL) { } }
-        class favorite_machine_filter : inclusive_machine_filter_impl { public favorite_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent) : base(data, value, file, indent, type.FAVORITE) { } }
+        class all_machine_filter : inclusive_machine_filter_impl { public all_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent) : base(data, value, file, indent, type.ALL) { } }
+        class favorite_machine_filter : inclusive_machine_filter_impl { public favorite_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent) : base(data, value, file, indent, type.FAVORITE) { } }
 
 
         //-------------------------------------------------
@@ -1966,7 +1966,7 @@ namespace mame
             bool m_cache_valid;  //mutable bool m_cache_valid;
 
 
-            public category_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent)
+            public category_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent)
                 : base(type.CATEGORY)
             {
                 m_ini = 0;
@@ -2026,7 +2026,7 @@ namespace mame
             public override bool wants_adjuster() { return mame_machine_manager.instance().inifile().get_file_count() != 0; }
             public override string adjust_text() { return m_adjust_text; }
 
-            public override void save_ini(emu_file file, unsigned indent)
+            public override void save_ini(util.core_file file, unsigned indent)
             {
                 string text = filter_text();
                 file.puts(util.string_format("{1:{0}}{2} = {3}\n", -1 * 2 * indent, "", config_name(), text != null ? text : ""));  // %2$*1$s%3$s = %4$s\n
@@ -2083,7 +2083,7 @@ namespace mame
             machine_filter_data m_data;
 
 
-            public custom_machine_filter(machine_filter_data data, string value, emu_file file, unsigned indent)
+            public custom_machine_filter(machine_filter_data data, string value, util.core_file file, unsigned indent)
                 : base(type.CUSTOM)
             {
                 m_data = data;
@@ -2093,7 +2093,7 @@ namespace mame
             }
 
             machine_filter create(type n) { return machine_filter.create(n, m_data); }
-            machine_filter create(emu_file file, unsigned indent) { return machine_filter.create(file, m_data, indent); }
+            machine_filter create(util.core_file file, unsigned indent) { return machine_filter.create(file, m_data, indent); }
 
             static bool type_allowed(unsigned pos, type n)
             {
@@ -2146,7 +2146,7 @@ namespace mame
         //-------------------------------------------------
         class all_software_filter : simple_filter_impl_base_software_filter  //class all_software_filter : public simple_filter_impl_base<software_filter, software_filter::ALL>
         {
-            public all_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.ALL) { }
+            public all_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent) : base(type.ALL) { }
 
             public override bool apply(ui_software_info info) { return true; }
         }
@@ -2154,7 +2154,7 @@ namespace mame
 
         class available_software_filter : simple_filter_impl_base_software_filter  //class available_software_filter : public simple_filter_impl_base<software_filter, software_filter::AVAILABLE>
         {
-            public available_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.AVAILABLE) { }
+            public available_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent) : base(type.AVAILABLE) { }
 
             public override bool apply(ui_software_info info) { return info.available; }
         }
@@ -2162,7 +2162,7 @@ namespace mame
 
         class unavailable_software_filter : simple_filter_impl_base_software_filter  //class unavailable_software_filter : public simple_filter_impl_base<software_filter, software_filter::UNAVAILABLE>
         {
-            public unavailable_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.UNAVAILABLE) { }
+            public unavailable_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent) : base(type.UNAVAILABLE) { }
 
             public override bool apply(ui_software_info info) { return !info.available; }
         }
@@ -2172,7 +2172,7 @@ namespace mame
         {
             favorite_manager m_manager;
 
-            public favorite_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.FAVORITE) { m_manager = mame_machine_manager.instance().favorite(); }
+            public favorite_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent) : base(type.FAVORITE) { m_manager = mame_machine_manager.instance().favorite(); }
 
             public override bool apply(ui_software_info info) { return m_manager.is_favorite_software(info); }
         }
@@ -2180,7 +2180,7 @@ namespace mame
 
         class parents_software_filter : simple_filter_impl_base_software_filter  //class parents_software_filter : public simple_filter_impl_base<software_filter, software_filter::PARENTS>
         {
-            public parents_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.PARENTS) { }
+            public parents_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent) : base(type.PARENTS) { }
 
             public override bool apply(ui_software_info info) { return info.parentname.empty(); }
         }
@@ -2188,7 +2188,7 @@ namespace mame
 
         class clones_software_filter : simple_filter_impl_base_software_filter  //class clones_software_filter : public simple_filter_impl_base<software_filter, software_filter::CLONES>
         {
-            public clones_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.CLONES) { }
+            public clones_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent) : base(type.CLONES) { }
 
             public override bool apply(ui_software_info info) { return !info.parentname.empty(); }
         }
@@ -2196,7 +2196,7 @@ namespace mame
 
         class years_software_filter : choice_filter_impl_base_software_filter  //class years_software_filter : public choice_filter_impl_base<software_filter, software_filter::YEAR>
         {
-            public years_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+            public years_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent)
                 : base(data.years(), value, type.YEAR)
             {
             }
@@ -2207,7 +2207,7 @@ namespace mame
 
         class publishers_software_filter : choice_filter_impl_base_software_filter  //class publishers_software_filter : public choice_filter_impl_base<software_filter, software_filter::PUBLISHERS>
         {
-            public publishers_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+            public publishers_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent)
                 : base(data.publishers(), value, type.PUBLISHERS)
             {
             }
@@ -2227,7 +2227,7 @@ namespace mame
 
         class supported_software_filter : simple_filter_impl_base_software_filter  //class supported_software_filter : public simple_filter_impl_base<software_filter, software_filter::SUPPORTED>
         {
-            public supported_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.SUPPORTED) { }
+            public supported_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent) : base(type.SUPPORTED) { }
 
             public override bool apply(ui_software_info info) { return software_support.SUPPORTED == info.supported; }
         }
@@ -2235,7 +2235,7 @@ namespace mame
 
         class partial_supported_software_filter : simple_filter_impl_base_software_filter  //class partial_supported_software_filter : public simple_filter_impl_base<software_filter, software_filter::PARTIAL_SUPPORTED>
         {
-            public partial_supported_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.PARTIAL_SUPPORTED) { }
+            public partial_supported_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent) : base(type.PARTIAL_SUPPORTED) { }
 
             public override bool apply(ui_software_info info) { return software_support.PARTIALLY_SUPPORTED == info.supported; }
         }
@@ -2243,7 +2243,7 @@ namespace mame
 
         class unsupported_software_filter : simple_filter_impl_base_software_filter  //class unsupported_software_filter : public simple_filter_impl_base<software_filter, software_filter::UNSUPPORTED>
         {
-            public unsupported_software_filter(software_filter_data data, string value, emu_file file, unsigned indent) : base(type.UNSUPPORTED) { }
+            public unsupported_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent) : base(type.UNSUPPORTED) { }
 
             public override bool apply(ui_software_info info) { return software_support.UNSUPPORTED == info.supported; }
         }
@@ -2251,7 +2251,7 @@ namespace mame
 
         class region_software_filter : choice_filter_impl_base_software_filter  //class region_software_filter : public choice_filter_impl_base<software_filter, software_filter::REGION>
         {
-            public region_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+            public region_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent)
                 : base(data.regions(), value, type.REGION)
             {
             }
@@ -2271,7 +2271,7 @@ namespace mame
 
         class device_type_software_filter : choice_filter_impl_base_software_filter  //class device_type_software_filter : public choice_filter_impl_base<software_filter, software_filter::DEVICE_TYPE>
         {
-            public device_type_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+            public device_type_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent)
                 : base(data.device_types(), value, type.DEVICE_TYPE)
             {
             }
@@ -2285,7 +2285,7 @@ namespace mame
             software_filter_data m_data;
 
 
-            public list_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+            public list_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent)
                 : base(data.list_descriptions(), value, type.LIST)
             {
                 m_data = data;
@@ -2344,7 +2344,7 @@ namespace mame
 
         class developer_software_filter : software_info_filter_base  //class developer_software_filter : public software_info_filter_base<software_filter::DEVELOPERS>
         {
-            public developer_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+            public developer_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent)
                 : base("developer", data.developers(), value, software_filter.type.DEVELOPERS)
             {
             }
@@ -2353,7 +2353,7 @@ namespace mame
 
         class distributor_software_filter : software_info_filter_base  //class distributor_software_filter : public software_info_filter_base<software_filter::DISTRIBUTORS>
         {
-            public distributor_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+            public distributor_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent)
                 : base("distributor", data.distributors(), value, software_filter.type.DISTRIBUTORS)
             {
             }
@@ -2362,7 +2362,7 @@ namespace mame
 
         class author_software_filter : software_info_filter_base  //class author_software_filter : public software_info_filter_base<software_filter::AUTHORS>
         {
-            public author_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+            public author_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent)
                 : base("author", data.authors(), value, software_filter.type.AUTHORS)
             {
             }
@@ -2371,7 +2371,7 @@ namespace mame
 
         class programmer_software_filter : software_info_filter_base  //class programmer_software_filter : public software_info_filter_base<software_filter::PROGRAMMERS>
         {
-            public programmer_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+            public programmer_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent)
                 : base("programmer", data.programmers(), value, software_filter.type.PROGRAMMERS)
             {
             }
@@ -2386,7 +2386,7 @@ namespace mame
             software_filter_data m_data;
 
 
-            public custom_software_filter(software_filter_data data, string value, emu_file file, unsigned indent)
+            public custom_software_filter(software_filter_data data, string value, util.core_file file, unsigned indent)
                 : base(type.CUSTOM)
             {
                 m_data = data;
@@ -2396,7 +2396,7 @@ namespace mame
             }
 
             software_filter create(type n) { return software_filter.create(n, m_data); }
-            software_filter create(emu_file file, unsigned indent) { return software_filter.create(file, m_data, indent); }
+            software_filter create(util.core_file file, unsigned indent) { return software_filter.create(file, m_data, indent); }
 
             static bool type_allowed(unsigned pos, type n)
             {

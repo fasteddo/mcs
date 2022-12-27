@@ -674,91 +674,6 @@ namespace mame
     public delegate float ioport_field_crossmap_delegate(float param);  //typedef device_delegate<float (float)> ioport_field_crossmap_delegate;
 
 
-    // ======================> inp_header
-    // header at the front of INP files
-    class inp_header
-    {
-        // parameters
-        public const unsigned MAJVERSION = 3;
-        public const unsigned MINVERSION = 0;
-
-
-        const size_t OFFS_MAGIC       = 0x00;    // 0x08 bytes
-        const size_t OFFS_BASETIME    = 0x08;    // 0x08 bytes (little-endian binary integer)
-        const size_t OFFS_MAJVERSION  = 0x10;    // 0x01 bytes (binary integer)
-        const size_t OFFS_MINVERSION  = 0x11;    // 0x01 bytes (binary integer)
-                                                                    // 0x02 bytes reserved
-        const size_t OFFS_SYSNAME     = 0x14;    // 0x0c bytes (ASCII)
-        const size_t OFFS_APPDESC     = 0x20;    // 0x20 bytes (ASCII)
-        const size_t OFFS_END         = 0x40;
-
-        static MemoryU8 MAGIC = new MemoryU8((int)(OFFS_BASETIME - OFFS_MAGIC), true);  //static u8 const                 MAGIC[OFFS_BASETIME - OFFS_MAGIC];
-
-        MemoryU8 m_data = new MemoryU8((int)OFFS_END, true);  //u8                              m_data[OFFS_END];
-
-
-        public bool read(emu_file f) { return f.read(new PointerU8(m_data), (u32)m_data.Count) == m_data.Count; }
-        public bool write(emu_file f) { return f.write(new PointerU8(m_data), (u32)m_data.Count) == m_data.Count; }
-
-        public bool check_magic() { return 0 == std.memcmp(new PointerU8(MAGIC), new PointerU8(m_data, (int)OFFS_MAGIC), OFFS_BASETIME - OFFS_MAGIC); }
-        public u64 get_basetime()
-        {
-            return
-                    ((u64)(m_data[OFFS_BASETIME + 0]) << (0 * 8)) |
-                    ((u64)(m_data[OFFS_BASETIME + 1]) << (1 * 8)) |
-                    ((u64)(m_data[OFFS_BASETIME + 2]) << (2 * 8)) |
-                    ((u64)(m_data[OFFS_BASETIME + 3]) << (3 * 8)) |
-                    ((u64)(m_data[OFFS_BASETIME + 4]) << (4 * 8)) |
-                    ((u64)(m_data[OFFS_BASETIME + 5]) << (5 * 8)) |
-                    ((u64)(m_data[OFFS_BASETIME + 6]) << (6 * 8)) |
-                    ((u64)(m_data[OFFS_BASETIME + 7]) << (7 * 8));
-        }
-        public unsigned get_majversion() { return m_data[OFFS_MAJVERSION]; }
-        public unsigned get_minversion() { return m_data[OFFS_MINVERSION]; }
-        public string get_sysname() { return get_string(OFFS_SYSNAME, OFFS_APPDESC); }
-        public string get_appdesc() { return get_string(OFFS_APPDESC, OFFS_END); }
-
-        public void set_magic() { std.memcpy(new PointerU8(m_data, (int)OFFS_MAGIC), new PointerU8(MAGIC), OFFS_BASETIME - OFFS_MAGIC); }  // std::memcpy(m_data + OFFS_MAGIC, MAGIC, OFFS_BASETIME - OFFS_MAGIC); }
-        public void set_basetime(u64 time)
-        {
-            m_data[OFFS_BASETIME + 0] = (u8)((time >> (0 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 1] = (u8)((time >> (1 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 2] = (u8)((time >> (2 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 3] = (u8)((time >> (3 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 4] = (u8)((time >> (4 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 5] = (u8)((time >> (5 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 6] = (u8)((time >> (6 * 8)) & 0x00ff);
-            m_data[OFFS_BASETIME + 7] = (u8)((time >> (7 * 8)) & 0x00ff);
-        }
-        public void set_version()
-        {
-            m_data[OFFS_MAJVERSION] = (u8)MAJVERSION;
-            m_data[OFFS_MINVERSION] = (u8)MINVERSION;
-        }
-        public void set_sysname(string name) { set_string(OFFS_SYSNAME, OFFS_APPDESC, name); }
-        public void set_appdesc(string desc) { set_string(OFFS_APPDESC, OFFS_END, desc); }
-
-
-        //template <std::size_t BEGIN, std::size_t END> void set_string(std::string const &str)
-        void set_string(size_t BEGIN, size_t END, string str)
-        {
-            size_t used = std.min(str.size() + 1, END - BEGIN);
-            byte[] strBytes = System.Text.Encoding.ASCII.GetBytes(str);
-            std.memcpy(new PointerU8(m_data, (int)BEGIN), new PointerU8(new MemoryU8(strBytes)), used);  //std::memcpy(m_data + BEGIN, str.c_str(), used);
-            if ((END - BEGIN) > used)
-                std.memset(new PointerU8(m_data, (int)BEGIN), (u8)0, (END - BEGIN) - used);  //std::memset(m_data + BEGIN + used, 0, (END - BEGIN) - used);
-        }
-
-        //template <std::size_t BEGIN, std::size_t END> std::string get_string() const
-        string get_string(size_t BEGIN, size_t END)
-        {
-            //char const *const begin = reinterpret_cast<char const *>(m_data + BEGIN);
-            //return std::string(begin, std::find(begin, reinterpret_cast<char const *>(m_data + END), '\0'));
-            return m_data.ToString((int)BEGIN, m_data.IndexOf((int)BEGIN, (int)END, Convert.ToByte('\0')) - (int)BEGIN);
-        }
-    }
-
-
     // ======================> input_device_default
     // device defined default input settings
     public struct input_device_default
@@ -2917,8 +2832,8 @@ namespace mame
         attoseconds_t m_last_delta_nsec;      // nanoseconds that passed since the previous callback
 
         // playback/record information
-        emu_file m_record_file;          // recording file (closed if not recording)
-        emu_file m_playback_file;        // playback file (closed if not recording)
+        emu_file m_record_file;          // recording file (nullptr if not recording)
+        emu_file m_playback_file;        // playback file (nullptr if not recording)
         util.write_stream m_record_stream;  //util::write_stream::ptr m_record_stream;        // recording stream (nullptr if not recording)
         util.read_stream m_playback_stream;  //util::read_stream::ptr  m_playback_stream;      // playback stream (nullptr if not recording)
         u64 m_playback_accumulated_speed; // accumulated speed during playback
@@ -2939,8 +2854,6 @@ namespace mame
             m_safe_to_read = false;
             m_last_frame_time = attotime.zero;
             m_last_delta_nsec = 0;
-            m_record_file = new emu_file(machine.options().input_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-            m_playback_file = new emu_file(machine.options().input_directory(), OPEN_FLAG_READ);
             m_playback_accumulated_speed = 0;
             m_playback_accumulated_frames = 0;
             m_deselected_card_config = null;
@@ -3376,6 +3289,7 @@ namespace mame
                 return 0;
 
             // open the playback file
+            m_playback_file = new emu_file(machine().options().input_directory(), OPEN_FLAG_READ);
             std.error_condition filerr = m_playback_file.open(filename);
 
             // return an explicit error if file isn't found in given path
@@ -3423,7 +3337,8 @@ namespace mame
             {
                 // close the file
                 m_playback_stream = null;  //m_playback_stream.reset();
-                m_playback_file.close();
+                m_playback_file.Dispose();  //m_playback_file.reset();
+                m_playback_file = null;
 
                 // pop a message
                 if (message != null)
@@ -3509,6 +3424,7 @@ namespace mame
                 return;
 
             // open the record file
+            m_record_file = new emu_file(machine().options().input_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
             std.error_condition filerr = m_record_file.open(filename);
             if (filerr)
                 throw new emu_fatalerror("ioport_manager::record_init: Failed to open file for recording ({0}:{1} {2})", filerr.category().name(), filerr.value(), filerr.message());
@@ -3543,7 +3459,8 @@ namespace mame
             {
                 // close the file
                 m_record_stream = null;  //m_record_stream.reset(); // TODO: check for errors flushing the last compressed block before doing this
-                m_record_file.close();
+                m_record_file.Dispose();  //m_record_file.reset();
+                m_record_file = null;
 
                 // pop a message
                 if (message != null)
@@ -3809,6 +3726,91 @@ namespace mame
             // clear cursettings set by setting_alloc
             m_cursetting = null;
             return this;
+        }
+    }
+
+
+    // ======================> inp_header
+    // header at the front of INP files
+    class inp_header
+    {
+        // parameters
+        public const unsigned MAJVERSION = 3;
+        public const unsigned MINVERSION = 0;
+
+
+        const size_t OFFS_MAGIC       = 0x00;    // 0x08 bytes
+        const size_t OFFS_BASETIME    = 0x08;    // 0x08 bytes (little-endian binary integer)
+        const size_t OFFS_MAJVERSION  = 0x10;    // 0x01 bytes (binary integer)
+        const size_t OFFS_MINVERSION  = 0x11;    // 0x01 bytes (binary integer)
+                                                                    // 0x02 bytes reserved
+        const size_t OFFS_SYSNAME     = 0x14;    // 0x0c bytes (ASCII)
+        const size_t OFFS_APPDESC     = 0x20;    // 0x20 bytes (ASCII)
+        const size_t OFFS_END         = 0x40;
+
+        static MemoryU8 MAGIC = new MemoryU8((int)(OFFS_BASETIME - OFFS_MAGIC), true);  //static u8 const                 MAGIC[OFFS_BASETIME - OFFS_MAGIC];
+
+        MemoryU8 m_data = new MemoryU8((int)OFFS_END, true);  //u8                              m_data[OFFS_END];
+
+
+        public bool read(emu_file f) { return f.read(new PointerU8(m_data), (u32)m_data.Count) == m_data.Count; }
+        public bool write(emu_file f) { return f.write(new PointerU8(m_data), (u32)m_data.Count) == m_data.Count; }
+
+        public bool check_magic() { return 0 == std.memcmp(new PointerU8(MAGIC), new PointerU8(m_data, (int)OFFS_MAGIC), OFFS_BASETIME - OFFS_MAGIC); }
+        public u64 get_basetime()
+        {
+            return
+                    ((u64)(m_data[OFFS_BASETIME + 0]) << (0 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 1]) << (1 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 2]) << (2 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 3]) << (3 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 4]) << (4 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 5]) << (5 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 6]) << (6 * 8)) |
+                    ((u64)(m_data[OFFS_BASETIME + 7]) << (7 * 8));
+        }
+        public unsigned get_majversion() { return m_data[OFFS_MAJVERSION]; }
+        public unsigned get_minversion() { return m_data[OFFS_MINVERSION]; }
+        public string get_sysname() { return get_string(OFFS_SYSNAME, OFFS_APPDESC); }
+        public string get_appdesc() { return get_string(OFFS_APPDESC, OFFS_END); }
+
+        public void set_magic() { std.memcpy(new PointerU8(m_data, (int)OFFS_MAGIC), new PointerU8(MAGIC), OFFS_BASETIME - OFFS_MAGIC); }  // std::memcpy(m_data + OFFS_MAGIC, MAGIC, OFFS_BASETIME - OFFS_MAGIC); }
+        public void set_basetime(u64 time)
+        {
+            m_data[OFFS_BASETIME + 0] = (u8)((time >> (0 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 1] = (u8)((time >> (1 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 2] = (u8)((time >> (2 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 3] = (u8)((time >> (3 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 4] = (u8)((time >> (4 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 5] = (u8)((time >> (5 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 6] = (u8)((time >> (6 * 8)) & 0x00ff);
+            m_data[OFFS_BASETIME + 7] = (u8)((time >> (7 * 8)) & 0x00ff);
+        }
+        public void set_version()
+        {
+            m_data[OFFS_MAJVERSION] = (u8)MAJVERSION;
+            m_data[OFFS_MINVERSION] = (u8)MINVERSION;
+        }
+        public void set_sysname(string name) { set_string(OFFS_SYSNAME, OFFS_APPDESC, name); }
+        public void set_appdesc(string desc) { set_string(OFFS_APPDESC, OFFS_END, desc); }
+
+
+        //template <std::size_t BEGIN, std::size_t END> void set_string(std::string const &str)
+        void set_string(size_t BEGIN, size_t END, string str)
+        {
+            size_t used = std.min(str.size() + 1, END - BEGIN);
+            byte[] strBytes = System.Text.Encoding.ASCII.GetBytes(str);
+            std.memcpy(new PointerU8(m_data, (int)BEGIN), new PointerU8(new MemoryU8(strBytes)), used);  //std::memcpy(m_data + BEGIN, str.c_str(), used);
+            if ((END - BEGIN) > used)
+                std.memset(new PointerU8(m_data, (int)BEGIN), (u8)0, (END - BEGIN) - used);  //std::memset(m_data + BEGIN + used, 0, (END - BEGIN) - used);
+        }
+
+        //template <std::size_t BEGIN, std::size_t END> std::string get_string() const
+        string get_string(size_t BEGIN, size_t END)
+        {
+            //char const *const begin = reinterpret_cast<char const *>(m_data + BEGIN);
+            //return std::string(begin, std::find(begin, reinterpret_cast<char const *>(m_data + END), '\0'));
+            return m_data.ToString((int)BEGIN, m_data.IndexOf((int)BEGIN, (int)END, Convert.ToByte('\0')) - (int)BEGIN);
         }
     }
 

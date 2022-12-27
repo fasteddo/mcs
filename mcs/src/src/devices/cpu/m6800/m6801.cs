@@ -1139,7 +1139,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( sci_tick );
-        void sci_tick(object ptr, s32 param)  //void *ptr, s32 param)
+        void sci_tick(s32 param)
         {
             throw new emu_unimplemented();
         }

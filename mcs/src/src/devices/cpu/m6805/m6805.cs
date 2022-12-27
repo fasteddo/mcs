@@ -178,9 +178,7 @@ namespace mame
 
 
             s_big = true;
-            string [] hmos_b_ops = new string []
-            {
-            };
+            string [] hmos_b_ops = Array.Empty<string>();
 
             // https://www.red-gate.com/simple-talk/blogs/introduction-to-open-instance-delegates/
             s_hmos_b_ops = new op_handler_func[hmos_b_ops.Length];

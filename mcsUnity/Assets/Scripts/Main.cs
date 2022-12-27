@@ -333,8 +333,10 @@ public class Main : MonoBehaviour
                     double final_real_time = tps == 0 ? 0 : (double)video.m_overall_real_seconds + (double)video.m_overall_real_ticks / (double)tps;
                     double final_emu_time = video.m_overall_emutime.as_double();
                     double average_speed_percentage = final_real_time == 0 ? 0 : 100 * final_emu_time / final_real_time;
-                    string total_time = (video.m_overall_emutime + new mame.attotime(0, mame.attotime.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
-                    GUILayout.Label(string.Format("Avg Spd: {0:f2}% ({1} secs) - speed_text: {2}", average_speed_percentage, total_time, video.speed_text()), m_guiLabel);
+                    string total_time = (video.m_overall_emutime + new mame.attotime(0, mame.attotime_global.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
+                    string speed_text = video.speed_text();
+                    GUILayout.Label(string.Format("Avg Spd: {0:f2}% ({1} secs)", average_speed_percentage, total_time), m_guiLabel);
+                    GUILayout.Label(string.Format("speed_text: {0}", speed_text.Substring(0, Math.Min(speed_text.Length, 20))), m_guiLabel);
                 }
 
                 float fps = 0;
@@ -347,8 +349,9 @@ public class Main : MonoBehaviour
 
                 float lowFpsThreshold = 30;
                 float fpsColor = Mathf.Min(1.0f, averageFps / lowFpsThreshold);
+                GUILayout.Label(string.Format("T: {0:f2} F: {1}", Time.time, Time.frameCount), m_guiLabel);
                 GUI.color = new Color(1, fpsColor, fpsColor);
-                GUILayout.Label(string.Format("T: {0:f2} F: {1} AVG: {2:f0} FPS: {3:f2}", Time.time, Time.frameCount, averageFps, fps), m_guiLabel);
+                GUILayout.Label(string.Format("AVG: {0:f0} FPS: {1:f2}", averageFps, fps), m_guiLabel);
                 GUI.color = Color.white;
 
 
@@ -418,7 +421,7 @@ public class Main : MonoBehaviour
                     double final_real_time = tps == 0 ? 0 : (double)video.m_overall_real_seconds + (double)video.m_overall_real_ticks / (double)tps;
                     double final_emu_time = video.m_overall_emutime.as_double();
                     double average_speed_percentage = final_real_time == 0 ? 0 : 100 * final_emu_time / final_real_time;
-                    string total_time = (video.m_overall_emutime + new mame.attotime(0, mame.attotime.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
+                    string total_time = (video.m_overall_emutime + new mame.attotime(0, mame.attotime_global.ATTOSECONDS_PER_SECOND / 2)).as_string(2);
                     GUILayout.Label(string.Format("Avg Spd: {0:f2}% ({1} secs) - speed_text: {2}", average_speed_percentage, total_time, video.speed_text()), m_guiLabel);
                 }
 
@@ -447,7 +450,7 @@ public class Main : MonoBehaviour
                 GUILayout.Label(string.Format("{0}", SystemInfo.graphicsDeviceVersion), m_guiLabel);
                 GUILayout.Label(string.Format("VMem: {0}mb", SystemInfo.graphicsMemorySize), m_guiLabel);
                 GUILayout.Label(string.Format("Shader Level: {0:f1}", SystemInfo.graphicsShaderLevel / 10.0f), m_guiLabel);
-                GUILayout.Label(string.Format("Shadows:{0} MT:{2}", SystemInfo.supportsShadows ? "y" : "n", SystemInfo.graphicsMultiThreaded ? "y" : "n"), m_guiLabel);
+                GUILayout.Label(string.Format("Shadows:{0} MT:{1}", SystemInfo.supportsShadows ? "y" : "n", SystemInfo.graphicsMultiThreaded ? "y" : "n"), m_guiLabel);
                 GUILayout.Label(string.Format("deviceUniqueIdentifier: {0}", SystemInfo.deviceUniqueIdentifier), m_guiLabel);
                 GUILayout.Label(string.Format("deviceName: {0}", SystemInfo.deviceName), m_guiLabel);
                 GUILayout.Label(string.Format("deviceModel: {0}", SystemInfo.deviceModel), m_guiLabel);

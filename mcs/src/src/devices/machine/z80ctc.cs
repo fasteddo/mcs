@@ -240,7 +240,7 @@ namespace mame
                     {
                         // if we hit zero, do the same thing as for a timer interrupt
                         if (--m_down == 0)
-                            timer_callback(null, 0);
+                            timer_callback(0);
                     }
                 }
             }
@@ -248,7 +248,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(timer_callback);
-        void timer_callback(object ptr, s32 param)  //void *ptr, s32 param)
+        void timer_callback(s32 param)
         {
             if ((m_mode & WAITING_FOR_TRIG) != 0)
             {
@@ -280,7 +280,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(zc_to_callback);
-        void zc_to_callback(object ptr, s32 param)  //void *ptr, s32 param)
+        void zc_to_callback(s32 param)
         {
             m_device.op0.m_zc_cb[m_index].op_s32(0);
         }

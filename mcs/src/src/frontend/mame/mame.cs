@@ -131,7 +131,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(mame_machine_manager::autoboot_callback)
-        void autoboot_callback(object ptr, s32 param)  //void *ptr, s32 param)
+        void autoboot_callback(s32 param)
         {
             if (options().autoboot_script().Length != 0)
             {

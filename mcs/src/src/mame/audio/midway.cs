@@ -247,7 +247,7 @@ namespace mame
         }
 
 
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr) { throw new emu_unimplemented(); }
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param) { throw new emu_unimplemented(); }
 
 
         // internal helpers
@@ -411,7 +411,7 @@ namespace mame
         protected override void device_add_mconfig(machine_config config) { throw new emu_unimplemented(); }
         protected override void device_start() { throw new emu_unimplemented(); }
         protected override void device_reset() { throw new emu_unimplemented(); }
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr) { throw new emu_unimplemented(); }
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param) { throw new emu_unimplemented(); }
 
 
         // internal communications
@@ -515,7 +515,7 @@ namespace mame
 
 
         protected override void device_reset() { }
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param, object ptr) { throw new emu_unimplemented(); }
+        protected override void device_timer(emu_timer timer, device_timer_id id, int param) { throw new emu_unimplemented(); }
 
 
         // internal communications

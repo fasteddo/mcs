@@ -93,7 +93,7 @@ namespace mame
         protected override void video_start()
         {
             // reset the statics
-            m_yscroll_reset_timer = machine().scheduler().timer_alloc(reset_yscroll_callback, this);
+            m_yscroll_reset_timer = machine().scheduler().timer_alloc(reset_yscroll_callback);
 
             // save states
             save_item(NAME(new { m_playfield_tile_bank }));
@@ -131,7 +131,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(atarisy2_state::reset_yscroll_callback)
-        void reset_yscroll_callback(object ptr, s32 param)  //void *ptr, s32 param)
+        void reset_yscroll_callback(s32 param)
         {
             m_playfield_tilemap.op0.tilemap.set_scrolly(0, param);
         }

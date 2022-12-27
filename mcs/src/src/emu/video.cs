@@ -196,7 +196,7 @@ namespace mame
             // if no screens, create a periodic timer to drive updates
             if (no_screens)
             {
-                m_screenless_frame_timer = machine.scheduler().timer_alloc(screenless_update_callback, this);
+                m_screenless_frame_timer = machine.scheduler().timer_alloc(screenless_update_callback);
                 m_screenless_frame_timer.adjust(screen_device.DEFAULT_FRAME_PERIOD, 0, screen_device.DEFAULT_FRAME_PERIOD);
                 machine.output().set_global_notifier(video_notifier_callback, this);
             }
@@ -396,7 +396,7 @@ namespace mame
         //  save_snapshot - save a snapshot to the given
         //  file handle
         //-------------------------------------------------
-        void save_snapshot(screen_device screen, emu_file file)
+        void save_snapshot(screen_device screen, util.core_file file)
         {
             throw new emu_unimplemented();
         }
@@ -471,7 +471,7 @@ namespace mame
         //  screenless_update_callback - update generator
         //  when there are no screens to drive it
         //-------------------------------------------------
-        void screenless_update_callback(object o, int param)  //void *ptr, int param)
+        void screenless_update_callback(int param)
         {
             // force an update
             frame_update(false);
@@ -487,7 +487,7 @@ namespace mame
             foreach (var x in m_movie_recordings)
                 x.set_next_frame_time(emutime);
 
-            // reset speed counters
+            // reset speed measurements
             m_speed_last_realtime = m_osdcore.osd_ticks();
             m_speed_last_emutime = emutime;
         }
@@ -938,7 +938,7 @@ namespace mame
                 emu_file file = new emu_file(machine().options().snapshot_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                 std.error_condition filerr = open_next(file, "png");
                 if (!filerr)
-                    save_snapshot(null, file);
+                    save_snapshot(null, file.core_file_get());
 
                 file.close();
 

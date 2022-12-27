@@ -139,7 +139,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(missile_state::clock_irq)
-        void clock_irq(object ptr, s32 param)  //void *ptr, s32 param)
+        void clock_irq(s32 param)
         {
             int curv = param;
 
@@ -169,7 +169,7 @@ namespace mame
          *
          *************************************/
         //TIMER_CALLBACK_MEMBER(missile_state::adjust_cpu_speed)
-        void adjust_cpu_speed(object ptr, s32 param)  //void *ptr, s32 param)
+        void adjust_cpu_speed(s32 param)
         {
             int curv = param;
 

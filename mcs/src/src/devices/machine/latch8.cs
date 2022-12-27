@@ -174,7 +174,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( latch8_device::timerproc )
-        void timerproc(object ptr, s32 param)  //void *ptr, s32 param)
+        void timerproc(s32 param)
         {
             uint8_t new_val = (uint8_t)(param & 0xFF);
             uint8_t mask = (uint8_t)(param >> 8);

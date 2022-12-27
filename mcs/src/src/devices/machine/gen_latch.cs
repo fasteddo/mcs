@@ -5,6 +5,7 @@ using System;
 
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -108,7 +109,7 @@ namespace mame
         //-------------------------------------------------
         //  init_callback - set initial state
         //-------------------------------------------------
-        void init_callback(object ptr, int param)
+        void init_callback(s32 param)
         {
             m_data_pending_cb.op_s32(m_latch_written ? 1 : 0);
         }
@@ -171,7 +172,7 @@ namespace mame
         //  soundlatch_sync_callback - time-delayed
         //  callback to set a latch value
         //-------------------------------------------------
-        void sync_callback(object ptr, int param)
+        void sync_callback(s32 param)
         {
             u8 value = (u8)param;
 
@@ -227,7 +228,7 @@ namespace mame
         }
 
 
-        //void sync_callback(void *ptr, s32 param);
+        //void sync_callback(s32 param);
     }
 
 

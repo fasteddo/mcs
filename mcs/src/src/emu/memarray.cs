@@ -49,7 +49,6 @@ namespace mame
 
         //memory_array(void *base, u32 bytes, int membits, endianness_t endianness, int bpe) { set(base, bytes, membits, endianness, bpe); }
         //template <typename _Type> memory_array(std::vector<_Type> &array, endianness_t endianness, int bpe) { set(array, endianness, bpe); }
-        //memory_array(const address_space &space, void *base, u32 bytes, int bpe) { set(space, base, bytes, bpe); }
         //memory_array(const memory_share &share, int bpe) { set(share, bpe); }
         //memory_array(const memory_array &array) { set(array); }
 
@@ -112,7 +111,6 @@ namespace mame
         //  set - additional setter variants
         //-------------------------------------------------
         //template <typename _Type> void set(std::vector<_Type> &array, endianness_t endianness, int bpe) { set(&array[0], array.size(), 8*sizeof(_Type), endianness, bpe); }
-        public void set(address_space space, PointerU8 base_, u32 bytes, int bpe) { set(base_, bytes, space.data_width(), space.endianness(), bpe); }  //void set(const address_space &space, void *base, u32 bytes, int bpe);
         public void set(memory_share share, int bpe) { set(share.ptr(), (u32)share.bytes(), share.bitwidth(), share.endianness(), bpe); }
         public void set(memory_array array) { set(array.base_(), array.bytes(), array.membits(), array.endianness(), array.bytes_per_entry()); }
 

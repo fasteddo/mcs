@@ -23,8 +23,7 @@ using static mame.profiler_global;
 namespace mame
 {
     // timer callbacks look like this
-    //typedef named_delegate<void (void *, s32)> timer_expired_delegate;
-    public delegate void timer_expired_delegate(object o, s32 param);
+    public delegate void timer_expired_delegate(s32 param);  //typedef named_delegate<void (s32)> timer_expired_delegate;
 
 
     // ======================> emu_timer
@@ -41,7 +40,6 @@ namespace mame
         public emu_timer m_prev;         // previous timer in order in the list
         public timer_expired_delegate m_callback;  // callback function
         public int m_param;        // integer parameter
-        public object m_ptr;          // pointer parameter
         public bool m_enabled;      // is the timer enabled?
         public bool m_temporary;    // is the timer temporary?
         public attotime m_period;       // the repeat frequency of the timer
@@ -69,7 +67,7 @@ namespace mame
         //  init - completely initialize the state when
         //  re-allocated as a non-device timer
         //-------------------------------------------------
-        public emu_timer init(running_machine machine, timer_expired_delegate callback, object o, bool temporary)
+        public emu_timer init(running_machine machine, timer_expired_delegate callback, bool temporary)
         {
             // ensure the entire timer state is clean
             m_machine = machine;
@@ -77,7 +75,6 @@ namespace mame
             m_prev = null;
             m_callback = callback;
             m_param = 0;
-            m_ptr = o;
             m_enabled = false;
             m_temporary = temporary;
             m_period = attotime.never;
@@ -100,7 +97,7 @@ namespace mame
         //  init - completely initialize the state when
         //  re-allocated as a device timer
         //-------------------------------------------------
-        public emu_timer init(device_t device, device_timer_id id, object ptr, bool temporary)
+        public emu_timer init(device_t device, device_timer_id id, bool temporary)
         {
             // ensure the entire timer state is clean
             m_machine = device.machine();
@@ -108,7 +105,6 @@ namespace mame
             m_prev = null;
             m_callback = device_timer_expired;  //m_callback = timer_expired_delegate(FUNC(emu_timer::device_timer_expired), this);
             m_param = 0;
-            m_ptr = ptr;
             m_enabled = false;
             m_temporary = temporary;
             m_period = attotime.never;
@@ -147,7 +143,6 @@ namespace mame
         running_machine machine() { assert(m_machine != null); return m_machine; }
         public bool enabled() { return m_enabled; }
         public int param() { return m_param; }
-        public object ptr() { return m_ptr; }
 
 
         // setters
@@ -173,7 +168,6 @@ namespace mame
         }
 
         //void set_param(int param) { m_param = param; }
-        //void set_ptr(void *ptr) { m_ptr = ptr; }
 
 
         // control
@@ -272,7 +266,7 @@ namespace mame
         //-------------------------------------------------
         public void dump()
         {
-            machine().logerror("{0}: en={1} temp={2} exp={3} start={4} per={5} param={6} ptr={7}", this, m_enabled, m_temporary, m_expire.as_string(), m_start.as_string(), m_period.as_string(), m_param, null /*m_ptr*/);
+            machine().logerror("{0}: en={1} temp={2} exp={3} start={4} per={5} param={6}", this, m_enabled, m_temporary, m_expire.as_string(), m_start.as_string(), m_period.as_string(), m_param);
             if (m_device == null)
                 if (m_callback == null)
                     machine().logerror(" cb=NULL\n");
@@ -287,9 +281,9 @@ namespace mame
         //  device_timer_expired - trampoline to avoid a
         //  conditional jump on the hot path
         //-------------------------------------------------
-        void device_timer_expired(object ptr, s32 param)  //static void device_timer_expired(emu_timer &timer, void *ptr, s32 param);
+        void device_timer_expired(s32 param)  //static void device_timer_expired(emu_timer &timer, s32 param);
         {
-            this.m_device.timer_expired(this, this.m_id, param, ptr);  //timer.m_device->timer_expired(timer, timer.m_id, param, ptr);
+            this.m_device.timer_expired(this, this.m_id, param);  //timer.m_device->timer_expired(timer, timer.m_id, param);
         }
     }
 
@@ -374,7 +368,7 @@ namespace mame
 
 
             // append a single never-expiring timer so there is always one in the list
-            m_timer_list = m_timer_allocator.alloc().init(machine, null, null, true);
+            m_timer_list = m_timer_allocator.alloc().init(machine, null, true);
             m_timer_list.adjust(attotime.never);
         }
 
@@ -619,16 +613,16 @@ namespace mame
         //  timer_alloc - allocate a global non-device
         //  timer and return a pointer
         //-------------------------------------------------
-        public emu_timer timer_alloc(timer_expired_delegate callback, object o = null) { return m_timer_allocator.alloc().init(machine(), callback, o, false); }
+        public emu_timer timer_alloc(timer_expired_delegate callback) { return m_timer_allocator.alloc().init(machine(), callback, false); }
 
         //-------------------------------------------------
         //  timer_set - allocate an anonymous non-device
         //  timer and set it to go off after the given
         //  amount of time
         //-------------------------------------------------
-        public void timer_set(attotime duration, timer_expired_delegate callback, int param = 0, object ptr = null) { m_timer_allocator.alloc().init(machine(), callback, ptr, true).adjust(duration, param); }
+        public void timer_set(attotime duration, timer_expired_delegate callback, int param = 0) { m_timer_allocator.alloc().init(machine(), callback, true).adjust(duration, param); }
 
-        public void synchronize(timer_expired_delegate callback = null, int param = 0, object ptr = null) { timer_set(attotime.zero, callback, param, ptr); }
+        public void synchronize(timer_expired_delegate callback = null, int param = 0) { timer_set(attotime.zero, callback, param); }
 
 
         // timers, specified by device/id; generally devices should use the device_t methods instead
@@ -637,14 +631,14 @@ namespace mame
         //  timer_alloc - allocate a global device timer
         //  and return a pointer
         //-------------------------------------------------
-        public emu_timer timer_alloc(device_t device, device_timer_id id = 0, object ptr = null) { return m_timer_allocator.alloc().init(device, id, ptr, false); }
+        public emu_timer timer_alloc(device_t device, device_timer_id id = 0) { return m_timer_allocator.alloc().init(device, id, false); }
 
         //-------------------------------------------------
         //  timer_set - allocate an anonymous device timer
         //  and set it to go off after the given amount of
         //  time
         //-------------------------------------------------
-        public void timer_set(attotime duration, device_t device, device_timer_id id = 0, int param = 0, object ptr = null) { m_timer_allocator.alloc().init(device, id, ptr, true).adjust(duration, param); }
+        public void timer_set(attotime duration, device_t device, device_timer_id id = 0, int param = 0) { m_timer_allocator.alloc().init(device, id, true).adjust(duration, param); }
 
 
         // debugging
@@ -674,7 +668,7 @@ namespace mame
 
 
         // callbacks
-        //void timed_trigger(void *ptr, s32 param);
+        //void timed_trigger(s32 param);
 
         //-------------------------------------------------
         //  presave - before creating a save state
@@ -1007,7 +1001,7 @@ namespace mame
                         else
                             LOG("execute_timers: expired: {0} timer callback {1}\n", timer.expire().attoseconds(), timer.m_callback.ToString());
 
-                        timer.m_callback(timer.m_ptr, timer.m_param);
+                        timer.m_callback(timer.m_param);
                     }
 
                     g_profiler.stop();

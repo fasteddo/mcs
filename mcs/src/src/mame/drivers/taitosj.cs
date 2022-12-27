@@ -124,7 +124,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(taitosj_state::soundlatch_w_cb)
-        void soundlatch_w_cb(object ptr, s32 param)  //void *ptr, s32 param)
+        void soundlatch_w_cb(s32 param)
         {
             if (m_soundlatch_flag && (m_soundlatch_data != param))
                 logerror("Warning: soundlatch written before being read. Previous: {0}, new: {1}\n", m_soundlatch_data, param);
@@ -136,7 +136,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(taitosj_state::soundlatch_clear7_w_cb)
-        void soundlatch_clear7_w_cb(object ptr, s32 param)  //void *ptr, s32 param)
+        void soundlatch_clear7_w_cb(s32 param)
         {
             if (m_soundlatch_flag)
                 logerror("Warning: soundlatch bit 7 cleared before being read. Previous: {0}, new: {1}\n", m_soundlatch_data, m_soundlatch_data & 0x7f);
@@ -146,7 +146,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(taitosj_state::sound_semaphore2_w_cb)
-        void sound_semaphore2_w_cb(object ptr, s32 param)  //void *ptr, s32 param)
+        void sound_semaphore2_w_cb(s32 param)
         {
             m_sound_semaphore2 = (param & 1) != 0;
             m_soundnmi[1].op0.in_w<u32_const_1>(param & 1);
@@ -154,7 +154,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(taitosj_state::sound_semaphore2_clear_w_cb)
-        void sound_semaphore2_clear_w_cb(object ptr, s32 param)  //void *ptr, s32 param)
+        void sound_semaphore2_clear_w_cb(s32 param)
         {
             m_sound_semaphore2 = false;
             m_soundnmi[1].op0.in_w<u32_const_1>(0);

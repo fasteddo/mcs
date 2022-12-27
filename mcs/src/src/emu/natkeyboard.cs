@@ -6,6 +6,7 @@ using System;
 using char32_t = System.UInt32;
 using natural_keyboard_keycode_map_entries = mame.std.vector<mame.natural_keyboard.keycode_map_entry>; //typedef std::vector<keycode_map_entry> keycode_map_entries;
 using natural_keyboard_keycode_map = mame.std.unordered_map<System.UInt32, mame.std.vector<mame.natural_keyboard.keycode_map_entry>>;  //typedef std::unordered_map<char32_t, keycode_map_entries> keycode_map;
+using s32 = System.Int32;
 using size_t = System.UInt64;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
@@ -391,7 +392,7 @@ namespace mame
         //  timer - timer callback to keep things flowing
         //  when posting a string of characters
         //-------------------------------------------------
-        void timer(object ptr, int param)
+        void timer(s32 param)
         {
             if (m_queue_chars != null)
             {

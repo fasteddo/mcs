@@ -146,7 +146,8 @@ namespace mame
         }
 
 
-        void nmi_generate(object o, int param)
+        //TIMER_CALLBACK_MEMBER( namco_06xx_device::nmi_generate )
+        void nmi_generate(s32 param)
         {
             // This timer runs at twice the clock, since we do work on both the
             // rising and falling edge.
@@ -183,7 +184,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( write_sync );
-        void write_sync(object ptr, s32 param)  //void *ptr, s32 param)
+        void write_sync(s32 param)
         {
             if (BIT(m_control, 4) != 0)
             {
@@ -199,7 +200,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( ctrl_w_sync );
-        void ctrl_w_sync(object ptr, s32 param)  //void *ptr, s32 param)
+        void ctrl_w_sync(s32 param)
         {
             m_control = (uint8_t)param;
 

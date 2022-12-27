@@ -381,7 +381,7 @@ namespace mame
 
 
         // getters
-        public bool internal_get() { return device_class() == input_device_class.DEVICE_CLASS_INTERNAL; }
+        public bool internal_() { return device_class() == input_device_class.DEVICE_CLASS_INTERNAL; }
         public input_device_class device_class() { return (input_device_class)((m_internal >> 28) & 0xf); }
         public int device_index() { return (int)((m_internal >> 20) & 0xff); }
         public input_item_class item_class() { return (input_item_class)((m_internal >> 16) & 0xf); }
@@ -1022,15 +1022,15 @@ namespace mame
             {
                 // if this is a code item which is not valid, don't copy it and remove any preceding ORs/NOTs
                 input_code code = seq[codenum];
-                if (!code.internal_get() && code_name(code).empty())
+                if (!code.internal_() && (((code.device_index() > 0) && !m_class[(int)code.device_class()].multi()) || item_from_code(code) == null))
                 {
-                    while (clean_index > 0 && clean_codes[clean_index - 1].internal_get())
+                    while (clean_index > 0 && clean_codes[clean_index - 1].internal_())
                     {
                         clean_codes.backspace();
                         clean_index--;
                     }
                 }
-                else if (clean_index > 0 || !code.internal_get() || code == input_seq.not_code)
+                else if (clean_index > 0 || !code.internal_() || code == input_seq.not_code)
                 {
                     clean_codes.append_code_to_sequence_plus(code);  //clean_codes += code;
                     clean_index++;

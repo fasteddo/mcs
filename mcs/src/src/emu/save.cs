@@ -238,9 +238,9 @@ namespace mame
 
 
         // file processing
-        //static save_error check_file(running_machine &machine, emu_file &file, const char *gamename, void (CLIB_DECL *errormsg)(const char *fmt, ...));
-        //save_error write_file(emu_file &file);
-        //save_error read_file(emu_file &file);
+        //static save_error check_file(running_machine &machine, util::core_file &file, const char *gamename, void (CLIB_DECL *errormsg)(const char *fmt, ...));
+        //save_error write_file(util::core_file &file);
+        //save_error read_file(util::core_file &file);
 
         //save_error write_stream(std::ostream &str);
         //save_error read_stream(std::istream &str);

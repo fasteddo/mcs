@@ -9,6 +9,8 @@ using mame;
 
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 
+using static mame.osdcore_global;
+
 
 namespace mcsUnity
 {
@@ -57,7 +59,7 @@ namespace mcsUnity
                 alternate path separators (specified by users and placed into the
                 options database).
         -----------------------------------------------------------------------------*/
-        public override error open(string path, UInt32 openflags, out osd_file file, out UInt64 filesize)
+        public override std.error_condition open(string path, UInt32 openflags, out osd_file file, out UInt64 filesize)
         {
             // path "roms/digdug/dd1a.1" string
 
@@ -74,10 +76,10 @@ namespace mcsUnity
                 if (Main.m_synchronizeInvoke == null)
                 {
                     filesize = 0;
-                    return osd_file.error.NOT_FOUND;
+                    return std.errc.no_such_file_or_directory;
                 }
 
-                /*var retObj =*/ Main.m_synchronizeInvoke.Invoke((System.Func<string>)(() =>
+                IAsyncResult result = Main.m_synchronizeInvoke.BeginInvoke((System.Func<string>)(() =>
                 {
                     UnityEngine.GameObject romGameObject = UnityEngine.GameObject.Find(dirPath);
 
@@ -102,23 +104,39 @@ namespace mcsUnity
                     return "";
                 }), null);
 
+                Main.m_synchronizeInvoke.EndInvoke(result);
+
+                for (int i = 0; i < 100; i++)
+                {
+                    if (result.IsCompleted)
+                        break;
+
+                    System.Threading.Thread.Sleep(10);
+                }
+
                 //UnityEngine.Debug.LogFormat("osd_file_Unity.open() - '{0}' {1} {2} {3}", retObj as string, m_position, m_path, m_name);
 
                 if (m_data == null)
                 {
                     filesize = 0;
-                    return osd_file.error.NOT_FOUND;
+                    return std.errc.no_such_file_or_directory;
                 }
 
                 m_stream = new MemoryStream(m_data);
                 filesize = (UInt64)m_data.Length;
-                return osd_file.error.NONE;
+                return new std.error_condition();
             }
             catch (Exception)
             {
                 filesize = 0;
-                return osd_file.error.NOT_FOUND;
+                return std.errc.no_such_file_or_directory;
             }
+        }
+
+
+        public override void close()
+        {
+            throw new emu_unimplemented();
         }
 
 
@@ -138,7 +156,7 @@ namespace mcsUnity
                 a file_error describing any error that occurred while creating the
                 PTY, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        protected override error openpty(out osd_file file, out string name) { throw new emu_unimplemented(); }
+        protected override std.error_condition openpty(out osd_file file, out string name) { throw new emu_unimplemented(); }
 
 
         /*-----------------------------------------------------------------------------
@@ -161,7 +179,7 @@ namespace mcsUnity
                 a file_error describing any error that occurred while reading
                 from the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override error read(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)  //virtual error read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
+        public override std.error_condition read(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)  //virtual std::error_condition read(void *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
         {
             //UnityEngine.Debug.LogFormat("osd_file_Unity.read() - {0} {1} {2} - {3} {4}", m_path, m_name, m_data.Length, offset, length);
 
@@ -176,7 +194,7 @@ namespace mcsUnity
             }
 
             actual = i;
-            return osd_file.error.NONE;
+            return new std.error_condition();
         }
 
 
@@ -200,7 +218,22 @@ namespace mcsUnity
                 a file_error describing any error that occurred while writing to
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override error write(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual) { throw new emu_unimplemented(); }  //virtual error write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
+        public override std.error_condition write(Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual) { throw new emu_unimplemented(); }  //virtual std::error_condition write(void const *buffer, std::uint64_t offset, std::uint32_t length, std::uint32_t &actual) = 0;
+
+
+        /// \brief Change the size of an open file
+        ///
+        /// \param [in] offset Desired size of the file.
+        /// \return Result of the operation.
+        public override std.error_condition truncate(UInt64 offset) { throw new emu_unimplemented(); }
+
+
+        /// \brief Flush file buffers
+        ///
+        /// This flushes any data cached by the application, but does not
+        /// guarantee that all prior writes have reached persistent storage.
+        /// \return Result of the operation.
+        public override std.error_condition flush() { throw new emu_unimplemented(); }
 
 
         /*-----------------------------------------------------------------------------
@@ -215,7 +248,7 @@ namespace mcsUnity
                 a file_error describing any error that occurred while deleting
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public override error remove(string filename) { throw new emu_unimplemented(); }
+        public override std.error_condition remove(string filename) { throw new emu_unimplemented(); }
 
 
         public override Stream stream { get { return m_stream; } }
@@ -311,7 +344,7 @@ namespace mcsUnity
                 alternate path separators (specified by users and placed into the
                 options database).
         -----------------------------------------------------------------------------*/
-        public osd_file.error osd_open(string path, UInt32 openflags, out osd_file file, out UInt64 filesize)
+        public std.error_condition osd_open(string path, UInt32 openflags, out osd_file file, out UInt64 filesize)
         {
             throw new emu_fatalerror("TODO - Fix inheritence");
 
@@ -344,7 +377,7 @@ namespace mcsUnity
                 a file_error describing any error that occurred while closing
                 the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public osd_file.error osd_close(ref osd_file file)
+        public std.error_condition osd_close(ref osd_file file)
         {
             throw new emu_fatalerror("TODO - Fix inheritence");
 
@@ -380,7 +413,7 @@ namespace mcsUnity
                 a file_error describing any error that occurred while reading
                 from the file, or FILERR_NONE if no error occurred
         -----------------------------------------------------------------------------*/
-        public osd_file.error osd_read(osd_file file, Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)
+        public std.error_condition osd_read(osd_file file, Pointer<byte> buffer, UInt64 offset, UInt32 length, out UInt32 actual)
         {
             throw new emu_fatalerror("TODO - Fix inheritence");
 

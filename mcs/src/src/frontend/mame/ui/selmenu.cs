@@ -4,7 +4,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Svg;
 
 using bitmap_vector = mame.std.vector<mame.bitmap_argb32>;
 using cache_ptr_map = mame.std.map<mame.running_machine, mame.ui.menu_select_launch.cache>;
@@ -295,43 +294,117 @@ namespace mame.ui
                     {
                         // parse SVG and calculate scale
                         xml = toolbar_icons_svg[i];
-                        //util.nsvg_image_ptr svg = nsvgParse(xml.data(), "px", 72);
-                        SvgDocument svg = SvgDocument.FromSvg<SvgDocument>(xml);
+
+#if false
+                        // c++ original
+                        util::nsvg_image_ptr svg(nsvgParse(xml.data(), "px", 72));
+                        float const xscale(float(pix_size) / svg->width);
+                        float const yscale(float(pix_size) / svg->height);
+#endif
+
+#if false
+                        // implementation using SVG.NET
+                        // https://github.com/svg-net/SVG
+                        var svg = Svg.SvgDocument.FromSvg<Svg.SvgDocument>(xml);
                         float xscale = (float)pix_size / svg.Width.Value;  //float xscale = (float)pix_size / svg->width;
                         float yscale = (float)pix_size / svg.Height.Value;  //float yscale = (float)pix_size / svg->height;
+                        byte [] bytes = svg.DrawToByteArray(pix_size, pix_size);
+#endif
+
+#if false
+                        // implementation using Svg.Skia
+                        // https://github.com/wieslawsoltes/Svg.Skia
+                        var svg = new Svg.Skia.SKSvg();
+                        var svgPicture = svg.FromSvg(xml);
+                        var svgDrawable = svg.Drawable;
+                        var svgDrawableBounds = svgDrawable.Bounds;
+                        var info = new SkiaSharp.SKImageInfo((int)svgDrawableBounds.Width, (int)svgDrawableBounds.Height, SkiaSharp.SKColorType.Rgba8888);
+                        var surface = SkiaSharp.SKSurface.Create(info);
+                        var canvas = surface.Canvas;
+                        canvas.DrawPicture(svgPicture);
+                        var snapshot = surface.Snapshot();
+                        var resizedInfo = new SkiaSharp.SKImageInfo(pix_size, pix_size, SkiaSharp.SKColorType.Rgba8888);
+                        var resizedSnapshot = SkiaSharp.SKImage.Create(resizedInfo);
+                        var resizedPixmap = resizedSnapshot.PeekPixels();
+                        snapshot.ScalePixels(resizedPixmap, SkiaSharp.SKFilterQuality.High);
+                        var peekPixels = resizedPixmap;
+                        var pixels = peekPixels.GetPixels();
+                        var pixelSpan = peekPixels.GetPixelSpan();
+                        byte [] bytes = new byte[peekPixels.BytesSize];
+                        System.Runtime.InteropServices.Marshal.Copy(pixels, bytes, 0, peekPixels.BytesSize);
+                        float xscale = (float)pix_size / svgDrawableBounds.Width;  //float xscale = (float)pix_size / svg->width;
+                        float yscale = (float)pix_size / svgDrawableBounds.Height;  //float yscale = (float)pix_size / svg->height;
+
+#if false
+                        // write out png images
+                        var stream = new System.IO.FileStream(String.Format("toolbar_icons_svg_{0}.png", i), System.IO.FileMode.Create);
+                        resizedSnapshot.Encode().SaveTo(stream);
+                        stream.Dispose();
+
+                        // write out raw pixel data
+                        System.IO.File.WriteAllBytes(String.Format("toolbar_icons_svg_{0}.bytes", i), bytes);
+#endif
+
+                        peekPixels.Dispose();
+                        resizedPixmap.Dispose();
+                        resizedSnapshot.Dispose();
+                        snapshot.Dispose();
+                        canvas.Dispose();
+                        surface.Dispose();
+                        svgPicture.Dispose();
+                        svg.Dispose();
+#endif
+
+#if true
+                        // implementation using raw pixel data stored in memory
+                        float xscale = pix_size;  //float xscale = (float)pix_size / svg->width;
+                        float yscale = pix_size;  //float yscale = (float)pix_size / svg->height;
+                        byte [] bytes = toolbar_icons_svg_bytes[i];
+#endif
+
+
                         float drawscale = std.max(xscale, yscale);
 
                         // rasterise the SVG and clear it out of memory
                         bitmap_argb32 bitmap = m_toolbar_bitmaps[i];
                         bitmap.resize(pix_size, pix_size);
-                        //nsvgRasterize(
-                        //        rasterizer.get(),
-                        //        svg.get(),
-                        //        0, 0, drawscale,
-                        //        reinterpret_cast<char *>(bitmap.pix(0)),  //reinterpret_cast<unsigned char *>(&bitmap.pix(0)),
-                        //        pix_size, pix_size,
-                        //        bitmap.rowbytes());
-                        //svg.reset();
-                        byte [] bytes = svg.DrawToByteArray(pix_size, pix_size);
+
+#if false
+                        // c++ original
+                        nsvgRasterize(
+                                rasterizer.get(),
+                                svg.get(),
+                                0, 0, drawscale,
+                                reinterpret_cast<unsigned char *>(&bitmap.pix(0)),
+                                pix_size, pix_size,
+                                bitmap.rowbytes());
+                        svg.reset();
+
+                        // correct colour format
+                        for (int32_t y = 0; bitmap.height() > y; ++y)
+                        {
+                            uint32_t *dst(&bitmap.pix(y));
+                            for (int32_t x = 0; bitmap.width() > x; ++x, ++dst)
+                            {
+                                u8 const *const src(reinterpret_cast<u8 const *>(dst));
+                                rgb_t const d(src[3], src[0], src[1], src[2]);
+                                *dst = d;
+                            }
+                        }
+#endif
+
+                        byte [] bytes_argb32 = new byte[4];
                         for (int32_t y = 0; pix_size > y; ++y)
                         {
                             for (int32_t x = 0; pix_size > x; ++x)
                             {
-                                bitmap.pix(y, x).op = BitConverter.ToUInt32(bytes, ((y * pix_size) + x) * 4);
+                                /*b*/bytes_argb32[0] = bytes[(((y * pix_size) + x) * 4) + 2];
+                                /*g*/bytes_argb32[1] = bytes[(((y * pix_size) + x) * 4) + 1];
+                                /*r*/bytes_argb32[2] = bytes[(((y * pix_size) + x) * 4) + 0];
+                                /*a*/bytes_argb32[3] = bytes[(((y * pix_size) + x) * 4) + 3];
+                                bitmap.pix(y, x).op = BitConverter.ToUInt32(bytes_argb32, 0);
                             }
                         }
-
-                        // correct colour format
-                        //for (int32_t y = 0; bitmap.height() > y; ++y)
-                        //{
-                        //    PointerU32 dst = bitmap.pix(y);  //uint32_t *dst(&bitmap.pix(y));
-                        //    for (int32_t x = 0; bitmap.width() > x; ++x, ++dst)
-                        //    {
-                        //        PointerU8 src = new PointerU8(dst);  //u8 const *const src(reinterpret_cast<u8 const *>(dst));
-                        //        rgb_t d = new rgb_t(src[3], src[0], src[1], src[2]);
-                        //        dst.op32 = d;  //*dst = d;
-                        //    }
-                        //}
 
                         // make a texture
                         render_texture texture = render.texture_alloc();  //render_texture &texture(*m_toolbar_textures.emplace_back(render.texture_alloc(), render));

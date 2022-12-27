@@ -480,6 +480,31 @@ namespace mame
                        width + ashift;
             }
         }
+
+
+        // =====================-> Passthrough handler management structure
+        class memory_passthrough_handler_impl
+        {
+            //friend address_space;
+            //template<int Width, int AddrShift> friend class ::handler_entry_read_passthrough;
+            //template<int Width, int AddrShift> friend class ::handler_entry_write_passthrough;
+
+
+            address_space m_space;
+            std.unordered_set<handler_entry> m_handlers = new std.unordered_set<handler_entry>();
+
+
+            memory_passthrough_handler_impl(address_space space) { m_space = space; }
+
+            //memory_passthrough_handler_impl(memory_passthrough_handler_impl const &) = delete;
+
+
+            public void remove() { throw new emu_unimplemented(); }
+
+
+            public void add_handler(handler_entry handler) { m_handlers.insert(handler); }
+            public void remove_handler(handler_entry handler) { m_handlers.erase(handler); }  //void remove_handler(handler_entry *handler) { m_handlers.erase(m_handlers.find(handler)); }
+        }
     }
 
 
@@ -602,9 +627,6 @@ namespace mame
     // =====================-> The parent class of all read handlers
 
     // Provides the populate/read/get_ptr/lookup API
-
-    //template<int Width, int AddrShift> class handler_entry_read_passthrough;
-
 
     //template<int Width, int AddrShift>
     public abstract class handler_entry_read<int_Width, int_AddrShift> : handler_entry
@@ -755,9 +777,6 @@ namespace mame
 
     // Provides the populate/write/get_ptr/lookup API
 
-    //template<int Width, int AddrShift> class handler_entry_write_passthrough;
-
-
     //template<int Width, int AddrShift>
     public abstract class handler_entry_write<int_Width, int_AddrShift> : handler_entry
         where int_Width : int_const, new()
@@ -907,22 +926,22 @@ namespace mame
     // =====================-> Passthrough handler management structure
     public class memory_passthrough_handler
     {
-        //template<int Width, int AddrShift> friend class handler_entry_read_passthrough;
-        //template<int Width, int AddrShift> friend class handler_entry_write_passthrough;
+        //friend class address_space;
 
 
-        address_space m_space;
-        std.unordered_set<handler_entry> m_handlers = new std.unordered_set<handler_entry>();
+        emu.detail.memory_passthrough_handler_impl m_impl;  //std::weak_ptr<emu::detail::memory_passthrough_handler_impl> m_impl;
 
 
-        memory_passthrough_handler(address_space space) { m_space = space; }
+        memory_passthrough_handler() { m_impl = null; }
+        memory_passthrough_handler(emu.detail.memory_passthrough_handler_impl impl) { m_impl = impl; }
 
 
-        //inline void remove();
-
-
-        public void add_handler(handler_entry handler) { m_handlers.insert(handler); }
-        public void remove_handler(handler_entry handler) { m_handlers.erase(handler); }  //void remove_handler(handler_entry *handler) { m_handlers.erase(m_handlers.find(handler)); }
+        void remove()
+        {
+            var impl = m_impl;  //auto impl(m_impl.lock());
+            if (impl != null)
+                impl.remove();
+        }
     }
 
 
@@ -1347,6 +1366,8 @@ namespace mame
         handler_entry_read<int_Width, int_AddrShift> m_root_read;  // decode tree roots
         handler_entry_write<int_Width, int_AddrShift> m_root_write;
 
+        util.notifier_subscription m_subscription;
+
 
         // construction/destruction
         public memory_access_cache()
@@ -1476,7 +1497,7 @@ namespace mame
             m_space = space;
             m_addrmask = space.addrmask();
 
-            space.add_change_notifier((read_or_write mode) =>
+            m_subscription = space.add_change_notifier((read_or_write mode) =>
             {
                 if (((u32)mode & (u32)read_or_write.READ) != 0)
                 {
@@ -1762,18 +1783,18 @@ namespace mame
 
 
         // install taps without mirroring
-        //memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_read_tap(addrstart, addrend, 0, name, tap, mph); }
-        //memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_read_tap(addrstart, addrend, 0, name, tap, mph); }
-        //memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_read_tap(addrstart, addrend, 0, name, tap, mph); }
-        //memory_passthrough_handler *install_read_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_read_tap(addrstart, addrend, 0, name, tap, mph); }
-        //memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_write_tap(addrstart, addrend, 0, name, tap, mph); }
-        //memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_write_tap(addrstart, addrend, 0, name, tap, mph); }
-        //memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_write_tap(addrstart, addrend, 0, name, tap, mph); }
-        //memory_passthrough_handler *install_write_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_write_tap(addrstart, addrend, 0, name, tap, mph); }
-        //memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tapr, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tapw, memory_passthrough_handler *mph = nullptr) { return install_readwrite_tap(addrstart, addrend, 0, name, tapr, tapw, mph); }
-        //memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tapr, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr) { return install_readwrite_tap(addrstart, addrend, 0, name, tapr, tapw, mph); }
-        //memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tapr, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr) { return install_readwrite_tap(addrstart, addrend, 0, name, tapr, tapw, mph); }
-        //memory_passthrough_handler *install_readwrite_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapr, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr) { return install_readwrite_tap(addrstart, addrend, 0, name, tapr, tapw, mph); }
+        //memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_read_tap(addrstart, addrend, 0, name, tap, mph); }
+        //memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_read_tap(addrstart, addrend, 0, name, tap, mph); }
+        //memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_read_tap(addrstart, addrend, 0, name, tap, mph); }
+        //memory_passthrough_handler install_read_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_read_tap(addrstart, addrend, 0, name, tap, mph); }
+        //memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_write_tap(addrstart, addrend, 0, name, tap, mph); }
+        //memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_write_tap(addrstart, addrend, 0, name, tap, mph); }
+        //memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_write_tap(addrstart, addrend, 0, name, tap, mph); }
+        //memory_passthrough_handler install_write_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tap, memory_passthrough_handler *mph = nullptr) { return install_write_tap(addrstart, addrend, 0, name, tap, mph); }
+        //memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tapr, std::function<void (offs_t offset, u8  &data, u8  mem_mask)> tapw, memory_passthrough_handler *mph = nullptr) { return install_readwrite_tap(addrstart, addrend, 0, name, tapr, tapw, mph); }
+        //memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tapr, std::function<void (offs_t offset, u16 &data, u16 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr) { return install_readwrite_tap(addrstart, addrend, 0, name, tapr, tapw, mph); }
+        //memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tapr, std::function<void (offs_t offset, u32 &data, u32 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr) { return install_readwrite_tap(addrstart, addrend, 0, name, tapr, tapw, mph); }
+        //memory_passthrough_handler install_readwrite_tap(offs_t addrstart, offs_t addrend, std::string name, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapr, std::function<void (offs_t offset, u64 &data, u64 mem_mask)> tapw, memory_passthrough_handler *mph = nullptr) { return install_readwrite_tap(addrstart, addrend, 0, name, tapr, tapw, mph); }
 
 
         public delegate void install_tap_func<T>(offs_t offset, ref T data, T mem_mask);
@@ -2422,13 +2443,6 @@ namespace mame
         //template<int Width, int AddrShift> friend class handler_entry_write_unmapped;
 
 
-        class notifier_t
-        {
-            public Action<read_or_write> m_notifier;  //std::function<void (read_or_write)> m_notifier;
-            public int m_id;
-        }
-
-
         // private state
         protected device_t m_device;           // reference to the owning device
         address_map m_map;         // original memory map  //std::unique_ptr<address_map> m_map;         // original memory map
@@ -2443,10 +2457,9 @@ namespace mame
         protected handler_entry m_nop_r;
         protected handler_entry m_nop_w;
 
-        //std::vector<std::unique_ptr<memory_passthrough_handler>> m_mphs;
+        //std::vector<std::shared_ptr<emu::detail::memory_passthrough_handler_impl>> m_mphs;
 
-        std.vector<notifier_t> m_notifiers = new std.vector<notifier_t>();        // notifier list for address map change
-        int m_notifier_id;      // next notifier id
+        util.notifier<read_or_write> m_notifiers = new notifier<read_or_write>();  // notifier list for address map change
         u32 m_in_notification;  // notification(s) currently being done
 
 
@@ -2514,8 +2527,8 @@ namespace mame
 
         // emumem_aspace.cs
 
-        //int add_change_notifier(std::function<void (read_or_write)> n);
-        //void remove_change_notifier(int id);
+        //util::notifier_subscription add_change_notifier(delegate<void (read_or_write)> &&n);
+        //template <typename T> util::notifier_subscription add_change_notifier(T &&n) { return add_change_notifier(delegate<void (read_or_write)>(std::forward<T>(n))); }
 
 
         protected void invalidate_caches(read_or_write mode)
@@ -2524,8 +2537,7 @@ namespace mame
             {
                 u32 old = m_in_notification;
                 m_in_notification |= (u32)mode;
-                foreach (var n in m_notifiers)
-                    n.m_notifier(mode);
+                m_notifiers.op(mode);
                 m_in_notification = old;
             }
         }
@@ -2539,7 +2551,7 @@ namespace mame
         public u64 unmap() { return m_unmap; }
 
 
-        //memory_passthrough_handler *make_mph();
+        //std::shared_ptr<emu::detail::memory_passthrough_handler_impl> make_mph(memory_passthrough_handler *mph);
 
 
         // debug helpers

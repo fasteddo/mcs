@@ -189,21 +189,21 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( namco_51xx_device::rw_sync )
-        void rw_sync(object ptr, s32 param)  //void *ptr, s32 param)
+        void rw_sync(s32 param)
         {
             m_rw = (uint8_t)param;
         }
 
 
         //TIMER_CALLBACK_MEMBER( namco_51xx_device::write_sync )
-        void write_sync(object ptr, s32 param)  //void *ptr, s32 param)
+        void write_sync(s32 param)
         {
             m_portO = (uint8_t)param;
         }
 
 
         //TIMER_CALLBACK_MEMBER( O_w_sync );
-        void O_w_sync(object ptr, s32 param)  //void *ptr, s32 param)
+        void O_w_sync(s32 param)
         {
             uint8_t out_ = (uint8_t)(param & 0x0f);
             if ((param & 0x10) != 0)

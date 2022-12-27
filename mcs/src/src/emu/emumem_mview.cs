@@ -158,24 +158,20 @@ namespace mame
         {
             throw new emu_unimplemented();
 #if false
-            offs_t nstart;
-            offs_t nend;
-            offs_t nmask;
-            offs_t nmirror;
+            offs_t nstart, nend, nmask, nmirror;
             check_range_optimize_mirror("install_read_tap", addrstart, addrend, addrmirror, nstart, nend, nmask, nmirror);
-            if (mph == null)
-                mph = m_view.m_space->make_mph();
+            auto impl = m_view.m_space->make_mph(mph);
 
-            r().select_u(m_id);
-            w().select_u(m_id);
+            r()->select_u(m_id);
+            w()->select_u(m_id);
 
-            var handler = new handler_entry_read_tap<Width, AddrShift, Endian>(m_view.m_space, mph, name, tap);
-            r().populate_passthrough(nstart, nend, nmirror, handler);
-            handler.unref();
+            auto handler = new handler_entry_read_tap<Width, AddrShift>(m_view.m_space, *impl, name, tap);
+            r()->populate_passthrough(nstart, nend, nmirror, handler);
+            handler->unref();
 
-            invalidate_caches(read_or_write.READ);
+            invalidate_caches(read_or_write::READ);
 
-            return mph;
+            return impl;
 #endif
         }
 
@@ -184,24 +180,20 @@ namespace mame
         {
             throw new emu_unimplemented();
 #if false
-            offs_t nstart;
-            offs_t nend;
-            offs_t nmask;
-            offs_t nmirror;
+            offs_t nstart, nend, nmask, nmirror;
             check_range_optimize_mirror("install_write_tap", addrstart, addrend, addrmirror, nstart, nend, nmask, nmirror);
-            if (mph == null)
-                mph = m_view.m_space->make_mph();
+            auto impl = m_view.m_space->make_mph(mph);
 
-            r().select_u(m_id);
-            w().select_u(m_id);
+            r()->select_u(m_id);
+            w()->select_u(m_id);
 
-            var handler = new handler_entry_write_tap<Width, AddrShift, Endian>(m_view.m_space, mph, name, tap);
-            w().populate_passthrough(nstart, nend, nmirror, handler);
+            auto handler = new handler_entry_write_tap<Width, AddrShift>(m_view.m_space, *impl, name, tap);
+            w()->populate_passthrough(nstart, nend, nmirror, handler);
             handler->unref();
 
-            invalidate_caches(read_or_write.WRITE);
+            invalidate_caches(read_or_write::WRITE);
 
-            return mph;
+            return impl;
 #endif
         }
 
@@ -210,28 +202,24 @@ namespace mame
         {
             throw new emu_unimplemented();
 #if false
-            offs_t nstart;
-            offs_t nend;
-            offs_t nmask;
-            offs_t nmirror;
+            offs_t nstart, nend, nmask, nmirror;
             check_range_optimize_mirror("install_readwrite_tap", addrstart, addrend, addrmirror, nstart, nend, nmask, nmirror);
-            if (mph == null)
-                mph = m_view.m_space->make_mph();
+            auto impl = m_view.m_space->make_mph(mph);
 
-            r().select_u(m_id);
-            w().select_u(m_id);
+            r()->select_u(m_id);
+            w()->select_u(m_id);
 
-            var rhandler = new handler_entry_read_tap<Width, AddrShift, Endian>(m_view.m_space, mph, name, tapr);
-            r().populate_passthrough(nstart, nend, nmirror, rhandler);
-            rhandler.unref();
+            auto rhandler = new handler_entry_read_tap <Width, AddrShift>(m_view.m_space, *impl, name, tapr);
+            r() ->populate_passthrough(nstart, nend, nmirror, rhandler);
+            rhandler->unref();
 
-            var whandler = new handler_entry_write_tap<Width, AddrShift, Endian>(m_view.m_space, mph, name, tapw);
-            w().populate_passthrough(nstart, nend, nmirror, whandler);
+            auto whandler = new handler_entry_write_tap<Width, AddrShift>(m_view.m_space, *impl, name, tapw);
+            w()->populate_passthrough(nstart, nend, nmirror, whandler);
             whandler->unref();
 
-            invalidate_caches(read_or_write.READWRITE);
+            invalidate_caches(read_or_write::READWRITE);
 
-            return mph;
+            return impl;
 #endif
         }
 

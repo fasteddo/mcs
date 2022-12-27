@@ -5,6 +5,7 @@ using System;
 
 using nvram_interface_enumerator = mame.device_interface_enumerator<mame.device_nvram_interface>;  //typedef device_interface_enumerator<device_nvram_interface> nvram_interface_enumerator;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using s64 = System.Int64;
 using time_t = System.Int64;
 using u8 = System.Byte;
@@ -652,8 +653,8 @@ namespace mame
 
 
         // TODO: Do saves and loads still require scheduling?
-        //void immediate_save(const char *filename);
-        //void immediate_load(const char *filename);
+        //void immediate_save(std::string_view filename);
+        //void immediate_load(std::string_view filename);
 
 
         // rewind operations
@@ -929,7 +930,7 @@ namespace mame
         //bool debug_enabled() { return (debug_flags & DEBUG_FLAG_ENABLED) != 0; }
 
         // used by debug_console to take ownership of the debug.log file
-        //std::unique_ptr<emu_file> steal_debuglogfile() { return std::move(m_debuglogfile); }
+        //std::unique_ptr<emu_file> steal_debuglogfile();
 
 
         //void disable_side_effects_count() { m_side_effects_disabled++; }
@@ -955,7 +956,7 @@ namespace mame
             m_bookkeeping = new bookkeeping_manager(this);
 
             // allocate a soft_reset timer
-            m_soft_reset_timer = m_scheduler.timer_alloc(soft_reset, this);
+            m_soft_reset_timer = m_scheduler.timer_alloc(soft_reset);
 
             // intialize UI input
             m_ui_input = new ui_input_manager(this);
@@ -1070,7 +1071,7 @@ namespace mame
         //  soft_reset - actually perform a soft-reset
         //  of the system
         //-------------------------------------------------
-        void soft_reset(object o = null, int param = 0) // void *ptr = null, int param = 0)
+        void soft_reset(s32 param = 0)
         {
             logerror("Soft reset\n");
 
@@ -1135,6 +1136,7 @@ namespace mame
                 emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_READ);
                 if (!file.open(nvram_filename(nvram.device())))
                 {
+                    // FIXME: don't swallow errors
                     nvram.nvram_load(file);
                     file.close();
                 }
@@ -1157,6 +1159,7 @@ namespace mame
                     emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                     if (!file.open(nvram_filename(nvram.device())))
                     {
+                        // FIXME: don't swallow errors
                         nvram.nvram_save(file);
                         file.close();
                     }

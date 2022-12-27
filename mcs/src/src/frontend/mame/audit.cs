@@ -456,8 +456,10 @@ namespace mame
                     emu_file file = new emu_file(m_enumerator.options().sample_path(), OPEN_FLAG_READ | OPEN_FLAG_NO_PRELOAD);
                     path_iterator path = new path_iterator(searchpath);
                     string curpath;
-                    while (path.next(out curpath, samplename))
+                    while (path.next(out curpath))
                     {
+                        util.path_append(ref curpath, samplename);
+
                         // attempt to access the file (.flac) or (.wav)
                         std.error_condition filerr = file.open(curpath + ".flac");
                         if (filerr)
