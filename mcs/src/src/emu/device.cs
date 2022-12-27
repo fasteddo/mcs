@@ -1332,7 +1332,7 @@ namespace mame
         //  set_unscaled_clock - sets the given device's
         //  unscaled clock
         //-------------------------------------------------
-        public void set_unscaled_clock(u32 clock)
+        public void set_unscaled_clock(u32 clock, bool sync_on_new_clock_domain = false)
         {
             // do nothing if no actual change
             if (clock == m_unscaled_clock)
@@ -1348,14 +1348,15 @@ namespace mame
 
             // if the device has already started, make sure it knows about the new clock
             if (m_started)
-                notify_clock_changed();
+                notify_clock_changed(sync_on_new_clock_domain);
         }
 
 
-        public void set_unscaled_clock(XTAL xtal) { set_unscaled_clock(xtal.value()); }
+        public void set_unscaled_clock(XTAL xtal, bool sync_on_new_clock_domain = false) { set_unscaled_clock(xtal.value(), sync_on_new_clock_domain); }
 
 
-        //void set_unscaled_clock_int(u32 clock) { set_unscaled_clock(clock); } // non-overloaded name because binding to overloads is ugly
+        //void set_unscaled_clock_int(u32 clock) { set_unscaled_clock(clock, false); } // non-overloaded name because binding to overloads is ugly
+        //void set_unscaled_clock_int_sync(u32 clock) { set_unscaled_clock(clock, true); } // non-overloaded name because binding to overloads is ugly
         //double clock_scale() const { return m_clock_scale; }
         //void set_clock_scale(double clockscale);
 
@@ -1777,11 +1778,11 @@ namespace mame
         //  notify_clock_changed - notify all interfaces
         //  that the clock has changed
         //-------------------------------------------------
-        protected void notify_clock_changed()
+        protected void notify_clock_changed(bool sync_on_new_clock_domain = false)
         {
             // first notify interfaces
             foreach (device_interface intf in interfaces())
-                intf.interface_clock_changed();
+                intf.interface_clock_changed(sync_on_new_clock_domain);
 
             // then notify the device
             device_clock_changed();
@@ -2313,7 +2314,7 @@ namespace mame
         //  to be overridden by the actual device
         //  implementation
         //-------------------------------------------------
-        public virtual void interface_clock_changed() { }
+        public virtual void interface_clock_changed(bool sync_on_new_clock_domain) { }
 
         //-------------------------------------------------
         //  interface_debug_setup - called to allow

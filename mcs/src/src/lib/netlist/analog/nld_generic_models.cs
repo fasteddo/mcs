@@ -86,13 +86,11 @@ namespace mame.netlist.analog
 
         public nl_fptype Ieq(nl_fptype cap, nl_fptype v)
         {
-            //plib::unused_var(v);
             return - G(cap) * m_v.op;
         }
 
         public void timestep(nl_fptype cap, nl_fptype v, nl_fptype step)
         {
-            //plib::unused_var(cap);
             m_h.op = plib.pg.reciprocal(step);
             m_v.op = v;
         }
@@ -113,8 +111,6 @@ namespace mame.netlist.analog
         public generic_capacitor_const(core_device_t dev, string name)
         {
             m_gmin = nlconst.zero();
-
-            //plib::unused_var(dev, name);
         }
 
         // Returns { G, Ieq }

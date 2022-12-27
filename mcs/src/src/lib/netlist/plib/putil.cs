@@ -18,10 +18,10 @@ namespace mame.plib
         // ----------------------------------------------------------------------------------------
         // simple hash
         // ----------------------------------------------------------------------------------------
-        //template <typename T>
-        public static size_t hash(string buf, size_t size)  //std::size_t hash(const T *buf, std::size_t size)
+        //template <typename V, typename T>
+        public static size_t hash(string buf, size_t size)  //V hash(const T *buf, std::size_t size)
         {
-            size_t result = 5381;
+            size_t result = 5381;  //V result = 5381; // NOLINT
             for (size_t pIdx = 0; pIdx != size; pIdx++)  //for (const T* p = buf; p != buf + size; p++)
                 result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ (size_t)buf[(int)pIdx];  //result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ narrow_cast<std::size_t>(*p); // NOLINT
             return result;

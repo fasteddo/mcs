@@ -8,10 +8,6 @@ using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 
 namespace mame.plib
 {
-    // ----------------------------------------------------------------------------------------
-    // pdynlib: dynamic loading of libraries  ...
-    // ----------------------------------------------------------------------------------------
-
     public abstract class dynlib_base
     {
         bool m_is_loaded;

@@ -10,7 +10,7 @@ using int64_t = System.Int64;
 using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
-using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
+using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<config::prefer_int128::value && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
@@ -81,6 +81,25 @@ namespace mame
 
 
     // ----------------------------------------------------------------------------------------
+    // netlist_log_csv
+    // ----------------------------------------------------------------------------------------
+    //template <int USE>
+    public struct netlist_log_csv
+    {
+        //static constexpr int MAX_BUFFER_ENTRIES = 1000;
+
+        public void open(running_machine machine, string name) { }
+        public void close() { }
+        public void log_add(string param, double value, bool isfloat) { }
+        //void log_flush(int count = MAX_BUFFER_ENTRIES) { }
+    }
+
+
+    //template <>
+    //struct netlist_log_csv<1>
+
+
+    // ----------------------------------------------------------------------------------------
     // netlist_mame_device
     // ----------------------------------------------------------------------------------------
     public class netlist_mame_device : device_t
@@ -146,6 +165,8 @@ namespace mame
         func_type m_setup_func;
         bool m_device_reset_called;
 
+        netlist_log_csv m_log_csv;
+
 
         // construction/destruction
         public netlist_mame_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
@@ -182,6 +203,9 @@ namespace mame
         {
             parser.register_source(new netlist_source_memregion_t(dev, name));  //parser.register_source<netlist_source_memregion_t>(dev, name);
         }
+
+
+        public netlist_log_csv log_csv() { return m_log_csv; }
 
 
         // Custom to netlist ...
@@ -222,13 +246,7 @@ namespace mame
             if (m_netlist != null)
                 netlist().exec().stop();
 
-#if NETLIST_CREATE_CSV
-            if (m_csv_file != nullptr)
-            {
-                log_flush();
-                fclose(m_csv_file);
-            }
-#endif
+            log_csv().close();
         }
 
 
@@ -284,15 +302,14 @@ namespace mame
 
             m_device_reset_called = false;
 
-#if NETLIST_CREATE_CSV
-            std::string name = machine().system().name;
+            string name = machine().system().name;
             name += tag();
-            for (int index = 0; index < name.size(); index++)
-                if (name[index] == ':')
-                    name[index] = '_';
+            //for (int index = 0; index < name.size(); index++)
+            //    if (name[index] == ':')
+            //        name[index] = '_';
+            name = name.Replace(':', '_');
             name += ".csv";
-            m_csv_file = fopen(name.c_str(), "wb");
-#endif
+            log_csv().open(machine(), name);
 
             LOGDEVCALLS("device_start exit\n");
         }
@@ -1124,9 +1141,9 @@ namespace mame
         protected override void device_timer(emu_timer timer, device_timer_id id, int param)
         {
             update_to_current_time();
-#if NETLIST_CREATE_CSV
-            nl_owner().log_add(m_param_name, m_value_for_device_timer, true);
-#endif
+
+            nl_owner().log_csv().log_add(m_param_name, m_value_for_device_timer, true);
+
             m_param.set(m_value_for_device_timer);
         }
     }
@@ -1380,9 +1397,7 @@ namespace mame
         {
             m_netlist_mame_sub_interface.update_to_current_time();
 
-#if NETLIST_CREATE_CSV
-            nl_owner().log_add(m_param_name, param, false);
-#endif
+            nl_owner().log_csv().log_add(m_param_name, param, false);
 
             m_param.set(param != 0);
         }
@@ -1585,10 +1600,6 @@ namespace mame
         protected override void device_reset()
         {
             LOGDEVCALLS("reset {0}\n", name());
-#if false //#if 0
-            m_cur = 0.0;
-            m_last_buffer_time = netlist_time_ext.zero();
-#endif
         }
 
 

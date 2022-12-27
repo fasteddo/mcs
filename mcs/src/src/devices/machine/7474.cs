@@ -70,10 +70,9 @@ namespace mame
 
 
         // device-level overrides
+        protected override void device_resolve_objects() { throw new emu_unimplemented(); }
         protected override void device_start() { throw new emu_unimplemented(); }
         protected override void device_reset() { throw new emu_unimplemented(); }
-        protected override void device_post_load() { }
-        protected override void device_clock_changed() { }
 
 
         //void update();

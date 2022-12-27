@@ -10,7 +10,6 @@ using uint_fast64_t = System.UInt64;
 
 namespace mame.plib
 {
-    // noexcept on move operator -> issue with macosx clang
     //#define PCOPYASSIGNMOVE(name, def) \
     //    PCOPYASSIGN(name, def) \
     //    PMOVEASSIGN(name, def)
@@ -20,8 +19,8 @@ namespace mame.plib
     //    name &operator=(const name &) = def;
 
     //#define PMOVEASSIGN(name, def)  \
-    //    name(name &&) /*noexcept*/ = def; \
-    //    name &operator=(name &&) /*noexcept*/ = def;
+    //name(name &&) noexcept = def; \
+    //name &operator=(name &&) noexcept = def;
 
     //#if defined(EMSCRIPTEN)
     //#undef EMSCRIPTEN
@@ -47,6 +46,13 @@ namespace mame.plib
     //    MSC
     //};
 
+    //enum class ci_cpp_stdlib
+    //{
+    //    UNKNOWN,
+    //    LIBSTDCXX,
+    //    LIBCPP
+    //};
+
     //enum class ci_os
     //{
     //    UNKNOWN,
@@ -63,7 +69,25 @@ namespace mame.plib
     //    UNKNOWN,
     //    X86,
     //    ARM,
-    //    MIPS
+    //    MIPS,
+    //    IA64
+    //};
+
+    //enum class ci_env
+    //{
+    //    DEFAULT,
+    //    MSVC,
+    //    NVCC
+    //};
+
+    // <sys/types.h> on ubuntu system may define major and minor as macros
+    // That's why we use vmajor, .. here
+    //template <std::size_t MAJOR, std::size_t MINOR>
+    //struct typed_version
+    //{
+    //    using vmajor = std::integral_constant<std::size_t, MAJOR>;
+    //    using vminor = std::integral_constant<std::size_t, MINOR>;
+    //    using full = std::integral_constant<std::size_t, MAJOR * 100 + MINOR>;
     //};
 
     //struct compile_info
@@ -224,6 +248,22 @@ namespace mame.plib
     //    const auto *sp = reinterpret_cast<std::uint8_t *>(&s);
     //    std::copy(sp, sp + sizeof(S), dp);
     //}
+
+    /// \brief Test if type R has a stream operator << defined
+    ///
+    /// has_ostram_operator<std::ostream, int>:: value should be true
+    ///
+    /// \tparam LEFT Stream type
+    /// \tparam RIGHT Type to check for operator overload
+    //template<class LEFT, class RIGHT>
+    //struct has_ostream_operator_impl {
+    //    template<class V> static auto test(V*) -> decltype(std::declval<LEFT &>() << std::declval<V>());
+    //    template<typename> static auto test(...) -> std::false_type;
+    //    //static constexpr const bool value = std::is_same<LEFT &, decltype(test<RIGHT>(0))>::value;
+    //    using type = typename std::is_same<LEFT &, decltype(test<RIGHT>(nullptr))>::type;
+    //};
+    //template<class LEFT, class RIGHT>
+    //struct has_ostream_operator : has_ostream_operator_impl<LEFT, RIGHT>::type {};
 
 
     ////============================================================

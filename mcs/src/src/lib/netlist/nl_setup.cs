@@ -48,7 +48,7 @@ namespace mame.netlist
         //        setup.register_dippins_arr( # pin1 ", " # __VA_ARGS__);
         public static void DIPPINS(nlparse_t setup, params string [] pin1) { setup.register_dip_alias_arr(string.Join(", ", pin1)); }
 
-        // to be used to reference new library truthtable devices
+        // to be used to reference new library truth table devices
         //#define NET_REGISTER_DEV(type, name)                                            \
         //        setup.register_dev(# type, # name);
         public static void NET_REGISTER_DEV(nlparse_t setup, string type, string name) { setup.register_dev(type, name); }
@@ -89,9 +89,8 @@ namespace mame.netlist
         //        void NETLIST_NAME(name)(netlist::nlparse_t &setup);
 
         //#define NETLIST_START(name)                                                    \
-        //void NETLIST_NAME(name)(netlist::nlparse_t &setup)                               \
+        //void NETLIST_NAME(name)([[maybe_unused]] netlist::nlparse_t &setup)            \
         //{
-        //    plib::unused_var(setup);
         public static void NETLIST_START() { }
 
         //#define NETLIST_END()  }
@@ -102,7 +101,6 @@ namespace mame.netlist
         public static void LOCAL_SOURCE(nlparse_t setup, string name, nlsetup_func netlist_name) { setup.register_source_proc(name, netlist_name); }
 
         //#define EXTERNAL_SOURCE(name)                                                  \
-        //        NETLIST_EXTERNAL(name)                                                 \
         //        setup.register_source_proc(# name, &NETLIST_NAME(name));
         public static void EXTERNAL_SOURCE(nlparse_t setup, string name, nlsetup_func netlist_name) { setup.register_source_proc(name, netlist_name); }
 
@@ -152,7 +150,7 @@ namespace mame.netlist
 
 
         // -----------------------------------------------------------------------------
-        // truthtable defines
+        // truth table defines
         // -----------------------------------------------------------------------------
 
         //#define TRUTHTABLE_START(cname, in, out, pdef_params)                           \
@@ -278,7 +276,7 @@ namespace mame.netlist
 
 
     // -----------------------------------------------------------------------------
-    // truthtable desc
+    // truth table desc
     // -----------------------------------------------------------------------------
     public class tt_desc
     {
@@ -310,7 +308,6 @@ namespace mame.netlist
         plib.psource_collection_t m_sources = new plib.psource_collection_t();
         detail.abstract_t m_abstract;
 
-        //std::unordered_map<pstring, parser_t::token_store>    m_source_cache;
         log_type m_log;
         unsigned m_frontier_cnt;
 
@@ -444,7 +441,7 @@ namespace mame.netlist
 
                         string paramfq = name + "." + tp;
 
-                        log().debug.op("Defparam: {0}\n", paramfq);
+                        log().debug.op("Default parameter: {0}\n", paramfq);
 
                         register_param(paramfq, params_and_connections[ptokIdx]);  //register_param(paramfq, *ptok);
 
@@ -526,7 +523,7 @@ namespace mame.netlist
         }
 
 
-        // also called from devices for latebinding connected terminals
+        // also called from devices for late binding connected terminals
         public void register_link_fqn(string sin, string sout)
         {
             abstract_t_link_t temp = new abstract_t_link_t(sin, sout);

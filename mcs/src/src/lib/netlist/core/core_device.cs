@@ -16,7 +16,7 @@ namespace mame.netlist
     // FIXME: belongs into detail namespace
     public class core_device_t : detail.netlist_object_t
     {
-        protected delegate void activate_delegate(bool param);  //using activate_delegate = plib::pmfp<void, bool>;
+        protected delegate void activate_delegate(bool param);  //using activate_delegate = plib::pmfp<void (bool)>;
 
 
         protected activate_delegate m_activate;
@@ -142,7 +142,7 @@ namespace mame.netlist
         }
 
 
-        public virtual void timestep(timestep_type ts_type, nl_fptype st) { }//plib::unused_var(ts_type, st); }
+        public virtual void timestep(timestep_type ts_type, nl_fptype st) { }
         public virtual void update_terminals() { }
 
         public virtual void update_param() { }

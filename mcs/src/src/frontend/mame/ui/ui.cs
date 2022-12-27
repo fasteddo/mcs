@@ -9,7 +9,7 @@ using image_interface_enumerator = mame.device_interface_enumerator<mame.device_
 using int32_t = System.Int32;
 using long_long = System.Int64;
 using mame_ui_manager_device_feature_set = mame.std.set<mame.std.pair<string, string>>;  //using device_feature_set = std::set<std::pair<std::string, std::string> >;
-using mame_ui_manager_session_data_map = mame.std.map<object, object>;  //using session_data_map = std::map<std::type_index, std::any>;
+using mame_ui_manager_session_data_map = mame.std.unordered_map<object, object>;  //using session_data_map = std::unordered_map<std::type_index, std::any>;
 using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using std_time_t = System.Int64;
@@ -220,8 +220,6 @@ namespace mame
             ui.system_list.instance().cache_data(options());
 
             // initialize the other UI bits
-            ui_gfx_init(machine());
-
             m_ui_colors.refresh(options());
 
             // update font row info from setting

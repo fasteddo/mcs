@@ -197,7 +197,6 @@ namespace mame
             //    const pstring &name) override
             //{
             //    return make_device(pool, anetlist, name, m_args);
-            //    //return pool.make_unique<C>(anetlist, name);
             //}
 
             public core_device_t make_device(device_arena pool, netlist_state_t anetlist, string name, object [] args)

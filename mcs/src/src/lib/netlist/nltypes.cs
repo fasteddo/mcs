@@ -6,7 +6,7 @@ using System;
 using int64_t = System.Int64;
 using models_t_map_t = mame.std.unordered_map<string, string>;  //using map_t = std::unordered_map<pstring, pstring>;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
-using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
+using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<config::prefer_int128::value && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using size_t = System.UInt64;
@@ -74,7 +74,7 @@ namespace mame.netlist
     /// \note This is not the right location yet.
     ///
     //using device_arena = std::conditional_t<config::use_mempool::value,
-    //    plib::mempool_arena<plib::aligned_arena, NL_MEMPOOL_ALIGN>,
+    //    plib::mempool_arena<plib::aligned_arena, config::mempool_align::value>,
     //    plib::aligned_arena>;
     public class device_arena
     {
@@ -103,9 +103,9 @@ namespace mame.netlist
 
     /// \brief Delegate type for device notification.
     ///
-    public delegate void nldelegate();  //using nldelegate = plib::pmfp<void>;
-    public delegate void nldelegate_ts(timestep_type param1, double param2);  //using nldelegate_ts = plib::pmfp<void, timestep_type, nl_fptype>;
-    public delegate void nldelegate_dyn();  //using nldelegate_dyn = plib::pmfp<void>;
+    public delegate void nldelegate();  //using nldelegate = plib::pmfp<void ()>;
+    public delegate void nldelegate_ts(timestep_type param1, double param2);  //using nldelegate_ts = plib::pmfp<void (timestep_type, nl_fptype)>;
+    public delegate void nldelegate_dyn();  //using nldelegate_dyn = plib::pmfp<void ()>;
 
 
     namespace detail
@@ -122,7 +122,7 @@ namespace mame.netlist
 
 
     //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
-    //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
+    //using netlist_time_ext = plib::ptime<std::conditional<config::prefer_int128::value && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 
 
     //static_assert(noexcept(netlist_time::from_nsec(1)), "Not evaluated as constexpr");
@@ -148,7 +148,6 @@ namespace mame.netlist
         {
             public static netlist_time value(Int64 value0, size_t N = 0)
             {
-                //plib::unused_var(N);
                 return NLTIME_FROM_NS(value0);
             }
         }

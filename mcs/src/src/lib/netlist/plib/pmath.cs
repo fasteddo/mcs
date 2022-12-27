@@ -425,7 +425,7 @@ namespace mame.plib
         //static inline constexpr std::enable_if_t<std::is_floating_point<T>::value, T>
         //signum(T v, T r = static_cast<T>(1))
         //{
-        //    constexpr const auto z(static_cast<T>(0));
+        //    constexpr const T z(static_cast<T>(0));
         //    return (v > z) ? r : ((v < z) ? -r : v);
         //}
 

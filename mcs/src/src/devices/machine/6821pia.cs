@@ -105,8 +105,8 @@ namespace mame
             m_irqa_handler = new devcb_write_line(this);
             m_irqb_handler = new devcb_write_line(this);
             m_in_a = 0;
-            m_in_ca1 = 0;
-            m_in_ca2 = 0;
+            m_in_ca1 = 1;//true;
+            m_in_ca2 = 1;//true;
             m_out_a = 0;
             m_a_input_overrides_output_mask = 0;
             m_out_ca2 = 0;
@@ -235,19 +235,11 @@ namespace mame
         {
             m_in_a = 0xff;
             m_in_b = 0;
-            m_in_ca1 = 1;  //true;
-            m_in_ca2 = 1;  //true;
-            m_in_cb1 = 0;
-            m_in_cb2 = 0;
             m_in_a_pushed = false;
             m_out_a_needs_pulled = false;
-            m_in_ca1_pushed = false;
-            m_in_ca2_pushed = false;
             m_out_ca2_needs_pulled = false;
             m_in_b_pushed = false;
             m_out_b_needs_pulled = false;
-            m_in_cb1_pushed = false;
-            m_in_cb2_pushed = false;
             m_out_cb2_needs_pulled = false;
             m_logged_port_a_not_connected = false;
             m_logged_port_b_not_connected = false;

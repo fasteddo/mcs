@@ -52,7 +52,7 @@ namespace mame.netlist
         //PERRMSGV(MF_TT_LINE_WITHOUT_HEAD,               0, "TT_LINE found without TT_HEAD")
         //PERRMSGV(MF_LOCAL_SOURCE_NOT_FOUND_1,           1, "Local source not found: <{1}>")
         //PERRMSGV(MF_EXTERNAL_SOURCE_IS_LOCAL_1,         1, "External lib entry appears as a local one: <{1}>")
-        //PERRMSGV(MF_TRUTHTABLE_NOT_FOUND_1,             1, "Truthtable not found: <{1}>")
+        //PERRMSGV(MF_TRUTHTABLE_NOT_FOUND_1,             1, "Truth table not found: <{1}>")
 
         // nl_setup.cpp
 
@@ -98,7 +98,7 @@ namespace mame.netlist
         public static string MW_CONNECTING_1_TO_ITSELF(params object [] args)       { return PERRMSGV(1, "Connecting net {0} to itself.", args); }
         public static string MI_CONNECTING_1_TO_2_SAME_NET(params object [] args)       { return PERRMSGV(3, "Connecting terminals {0} and {1} which are already both on net {2}. " +
             "It is ok if you read this warning and it relates to pin which is connected internally to GND and the schematics " +
-            "show an external connection as well. Onde example is the CD4538. In other cases this warning may indicate " +
+            "show an external connection as well. One example is the CD4538. In other cases this warning may indicate " +
             "an error in your netlist.", args); }
         public static string ME_NC_PIN_1_WITH_CONNECTIONS(params object [] args)    { return PERRMSGV(1, "Found NC (not connected) terminal {0} with connections", args); }
         public static string MI_ANALOG_OUTPUT_1_WITHOUT_CONNECTIONS(params object [] args) { return PERRMSGV(1, "Found analog output {0} without connections", args); }
@@ -118,7 +118,7 @@ namespace mame.netlist
         "but has been forced to act as a logic output. Parameter " +
         " FORCE_TRISTATE_LOGIC for device {1} needs to be disabled!.", args); }
 
-        public static string MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(params object [] args) { return PERRMSGV(3, "Found device {0} connected only to railterminals {1}/{2}.  This may reflect the schematic - but as well be an error. Please review.", args); }
+        public static string MI_REMOVE_DEVICE_1_CONNECTED_ONLY_TO_RAILS_2_3(params object [] args) { return PERRMSGV(3, "Found device {0} connected only to rail terminals {1}/{2}.  This may reflect the schematic - but as well be an error. Please review.", args); }
 
         public static string MW_DATA_1_NOT_FOUND(params object [] args) { return PERRMSGV(1, "unable to find data {0} in sources collection", args); }
 
@@ -138,7 +138,7 @@ namespace mame.netlist
         // nld_matrix_solver.cpp
 
         public static string MF_UNHANDLED_ELEMENT_1_FOUND(params object [] args) { return PERRMSGV(1, "setup_base:unhandled element <{0}> found", args); }
-        public static string MF_FOUND_TERM_WITH_MISSING_OTHERNET(params object [] args) { return PERRMSGV(1, "found term with missing othernet {0}", args); }
+        public static string MF_FOUND_TERM_WITH_MISSING_OTHERNET(params object [] args) { return PERRMSGV(1, "found term with missing other net {0}", args); }
 
         public static string MW_NEWTON_LOOPS_EXCEEDED_INVOCATION_3(params object [] args) { return PERRMSGV(3, "NEWTON_LOOPS exceeded resolution invoked {0} times on net {1} at {2} us", args); }
         public static string MW_NEWTON_LOOPS_EXCEEDED_ON_NET_2(params object [] args) { return PERRMSGV(2, "NEWTON_LOOPS exceeded resolution failed on net {0} ... reschedule  at {1} us", args); }

@@ -104,7 +104,7 @@ namespace mame
         //  as_ticks - convert to ticks at the given
         //  frequency
         //-------------------------------------------------
-        u64 as_ticks(u32 frequency)
+        public u64 as_ticks(u32 frequency)
         {
             u32 fracticks = (u32)((new attotime(0, m_attoseconds) * frequency).m_seconds);
             return mulu_32x32((u32)m_seconds, frequency) + fracticks;

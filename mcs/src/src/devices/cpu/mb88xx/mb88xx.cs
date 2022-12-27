@@ -138,8 +138,8 @@ namespace mame
 
         uint8_t READOP(offs_t a) { return m_cache.read_byte(a); }
 
-        uint8_t RDMEM(offs_t a) { return m_data.read_byte(a); }
-        void WRMEM(offs_t a, uint8_t v) { m_data.write_byte(a, v); }
+        uint8_t RDMEM(offs_t a) { return (uint8_t)(m_data.read_byte(a) & 0x0f); }
+        void WRMEM(offs_t a, uint8_t v) { m_data.write_byte(a, (uint8_t)(v & 0x0f)); }
 
         int TEST_ST() { return m_st & 1; }
         int TEST_ZF() { return m_zf & 1; }
@@ -323,10 +323,7 @@ namespace mame
 
             save_item(NAME(new { m_PC }));
             save_item(NAME(new { m_PA }));
-            save_item(NAME(new { m_SP }));  //save_item(NAME(m_SP[0]));
-            //save_item(NAME(new { m_SP[1] }));
-            //save_item(NAME(new { m_SP[2] }));
-            //save_item(NAME(new { m_SP[3] }));
+            save_item(NAME(new { m_SP }));
             save_item(NAME(new { m_SI }));
             save_item(NAME(new { m_A }));
             save_item(NAME(new { m_X }));
@@ -637,7 +634,7 @@ namespace mame
                         break;
 
                     case 0x20: /* setR ZCS:... */
-                        arg = m_read_r[m_Y / 4].op_u8();
+                        arg = (uint8_t)(m_read_r[m_Y / 4].op_u8() & 0x0f);
                         m_write_r[m_Y / 4].op_u8((uint8_t)(arg | (1 << (m_Y%4))));
                         m_st = 1;
                         break;
@@ -648,7 +645,7 @@ namespace mame
                         break;
 
                     case 0x22: /* rstR ZCS:... */
-                        arg = m_read_r[m_Y / 4].op_u8();
+                        arg = (uint8_t)(m_read_r[m_Y / 4].op_u8() & 0x0f);
                         m_write_r[m_Y / 4].op_u8((uint8_t)(arg & ~(1 << (m_Y%4))));
                         m_st = 1;
                         break;
@@ -659,7 +656,7 @@ namespace mame
                         break;
 
                     case 0x24: /* tstr ZCS:..x */
-                        arg = m_read_r[m_Y / 4].op_u8();
+                        arg = (uint8_t)(m_read_r[m_Y / 4].op_u8() & 0x0f);
                         m_st = ( arg & ( 1 << (m_Y%4) ) ) != 0 ? (uint8_t)0 : (uint8_t)1;
                         break;
 
@@ -781,21 +778,21 @@ namespace mame
                         break;
 
                     case 0x40:  case 0x41:  case 0x42:  case 0x43: /* setD ZCS:... */
-                        arg = m_read_r[0].op_u8();
+                        arg = (uint8_t)(m_read_r[0].op_u8() & 0x0f);
                         arg |= (uint8_t)(1 << (opcode&3));
                         m_write_r[0].op_u8(arg);
                         m_st = 1;
                         break;
 
                     case 0x44:  case 0x45:  case 0x46:  case 0x47: /* rstD ZCS:... */
-                        arg = m_read_r[0].op_u8();
+                        arg = (uint8_t)(m_read_r[0].op_u8() & 0x0f);
                         arg &= (uint8_t)(~(1 << (opcode&3)));
                         m_write_r[0].op_u8(arg);
                         m_st = 1;
                         break;
 
                     case 0x48:  case 0x49:  case 0x4a:  case 0x4b: /* tstD ZCS:..x */
-                        arg = m_read_r[2].op_u8();
+                        arg = (uint8_t)(m_read_r[2].op_u8() & 0x0f);
                         m_st = (arg & (1 << (opcode&3))) != 0 ? (uint8_t)0 : (uint8_t)1;
                         break;
 

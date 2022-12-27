@@ -816,6 +816,31 @@ namespace mame
         //    NET_REGISTER_DEVEXT(TTL_TRISTATE3, __VA_ARGS__)
 
         // ---------------------------------------------------------------------
+        // Source: ../generated/nlm_modules_lib.cpp
+        // ---------------------------------------------------------------------
+
+        //NETLIST_EXTERNAL(modules_lib)
+        // ---------------------------------------------------------------------
+        // Source: ../macro/modules/nlmod_icl8038_dip.cpp
+        // ---------------------------------------------------------------------
+
+        //NETLIST_EXTERNAL(ICL8038_DIP)
+        // ---------------------------------------------------------------------
+        // Source: ../macro/modules/nlmod_ne556_dip.cpp
+        // ---------------------------------------------------------------------
+
+        //NETLIST_EXTERNAL(NE556_DIP)
+        // ---------------------------------------------------------------------
+        // Source: ../macro/modules/nlmod_rtest.cpp
+        // ---------------------------------------------------------------------
+
+        //NETLIST_EXTERNAL(RTEST)
+        // ---------------------------------------------------------------------
+        // Source: ../macro/nlm_base_lib.cpp
+        // ---------------------------------------------------------------------
+
+        //NETLIST_EXTERNAL(base_lib)
+        // ---------------------------------------------------------------------
         // Source: ../macro/nlm_cd4xxx_lib.cpp
         // ---------------------------------------------------------------------
 
@@ -851,6 +876,7 @@ namespace mame
         //#define CD4081_GATE(...)                                                   \
         //    NET_REGISTER_DEVEXT(CD4081_GATE, __VA_ARGS__)
 
+        //NETLIST_EXTERNAL(cd4xxx_lib)
         // usage       : CD4001_DIP(name, )
         //#define CD4001_DIP(...)                                                   \
         //    NET_REGISTER_DEVEXT(CD4001_DIP, __VA_ARGS__)
@@ -947,6 +973,7 @@ namespace mame
         // Source: ../macro/nlm_opamp_lib.cpp
         // ---------------------------------------------------------------------
 
+        //NETLIST_EXTERNAL(opamp_lib)
         // usage       : opamp_layout_4_4_11(name, )
         //#define opamp_layout_4_4_11(...)                                                   \
         //    NET_REGISTER_DEVEXT(opamp_layout_4_4_11, __VA_ARGS__)
@@ -1048,6 +1075,7 @@ namespace mame
         //#define MC14584B_GATE(...)                                                   \
         //    NET_REGISTER_DEVEXT(MC14584B_GATE, __VA_ARGS__)
 
+        //NETLIST_EXTERNAL(otheric_lib)
         // usage       : MC14584B_DIP(name, )
         //#define MC14584B_DIP(...)                                                   \
         //    NET_REGISTER_DEVEXT(MC14584B_DIP, __VA_ARGS__)
@@ -1068,6 +1096,7 @@ namespace mame
         // Source: ../macro/nlm_roms_lib.cpp
         // ---------------------------------------------------------------------
 
+        //NETLIST_EXTERNAL(roms_lib)
         // usage       : PROM_82S123_DIP(name, )
         //#define PROM_82S123_DIP(...)                                                   \
         //    NET_REGISTER_DEVEXT(PROM_82S123_DIP, __VA_ARGS__)
@@ -1259,6 +1288,7 @@ namespace mame
         //#define TTL_9312(...)                                                   \
         //    NET_REGISTER_DEVEXT(TTL_9312, __VA_ARGS__)
 
+        //NETLIST_EXTERNAL(ttl74xx_lib)
         // usage       : TTL_7400_DIP(name, )
         //#define TTL_7400_DIP(...)                                                   \
         //    NET_REGISTER_DEVEXT(TTL_7400_DIP, __VA_ARGS__)

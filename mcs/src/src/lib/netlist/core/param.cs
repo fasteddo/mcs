@@ -31,7 +31,7 @@ namespace mame.netlist
         }
 
 
-        //deviceless, it's the responsibility of the owner to register!
+        //device-less, it's the responsibility of the owner to register!
         protected param_t(string name)
             : base(null, name)
         {

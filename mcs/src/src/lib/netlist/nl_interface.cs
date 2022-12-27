@@ -26,6 +26,7 @@ namespace mame.netlist.interface_
     /// The following code is an example on how to add the device to
     /// the netlist factory.
     ///
+    /// ```
     ///     const pstring pin(m_in);
     ///     pstring dname = pstring("OUT_") + pin;
     ///
@@ -41,7 +42,7 @@ namespace mame.netlist.interface_
     ///
     ///     parser.factory().add<cb_t, netlist::nl_fptype, lb_t>(dname,
     ///         netlist::factory::properties("-", PSOURCELOC()), 1e-6, std::forward<lb_t>(lambda));
-    ///
+    /// ```
 
     //template <typename FUNC>
     public class nld_analog_callback : device_t  //NETLIB_OBJECT(analog_callback)
@@ -138,7 +139,7 @@ namespace mame.netlist.interface_
     //NETLIB_OBJECT(buffered_param_setter)
     public class nld_buffered_param_setter<T> : device_t
     {
-        delegate void setter_t(nl_fptype param);  //using setter_t = plib::pmfp<void,nl_fptype>;
+        delegate void setter_t(nl_fptype param);  //using setter_t = plib::pmfp<void (nl_fptype)>;
 
 
         netlist_time m_sample_time;
@@ -196,7 +197,6 @@ namespace mame.netlist.interface_
                 if (m_buffer != null)
                 {
                     const nl_fptype v = (*m_buffer)[m_pos];  //const nl_fptype v = (*m_buffer)[m_pos];
-                    //m_params[i]->set(v * m_param_mults[i]() + m_param_offsets[i]());
                     m_param_setter(v * m_param_mult() + m_param_offset());
                 }
 #endif

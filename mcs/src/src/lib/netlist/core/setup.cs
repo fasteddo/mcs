@@ -297,12 +297,12 @@ namespace mame.netlist
 
         public string get_initial_param_val(string name, string def)
         {
-            // when get_intial_param_val is called the parameter <name> is already registered
-            // and the value (valstr()) is set to the default value, e.g. "74XX"
-            // If thus $(IC5E.A.MODEL) is given for name=="IC5E.A.MODEL" valstr() below
+            // When `get_intial_param_val` is called the parameter `<name>` is already registered
+            // and the value `(valstr())` is set to the default value, e.g. "74XX"
+            // If thus `$(IC5E.A.MODEL)` is given for `name=="IC5E.A.MODEL"` `valstr()` below
             // will return the default.
             // FIXME: It may be more explicit and stable to test if pattern==name and return
-            // def in this case.
+            // `def` in this case.
 
             var i = m_abstract.m_param_values.find(name);
             var found_pat = false;
@@ -967,7 +967,7 @@ namespace mame.netlist
 
             if (othernet.is_rail_net())
             {
-                log().debug.op("othernet is railnet\n");
+                log().debug.op("other net is a rail net\n");
                 merge_nets(othernet, thisnet);
             }
             else
@@ -1394,7 +1394,6 @@ namespace mame.netlist
 
         public override plib.istream_uptr stream(string name)  //plib::istream_uptr stream(const pstring &name) override;
         {
-            //plib::unused_var(name);
             return new plib.istream_uptr();
         }
     }

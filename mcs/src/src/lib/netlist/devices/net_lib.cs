@@ -48,4 +48,6 @@ namespace mame.netlist.devices
             lib_entries_global.initialize_factory(factory);
         }
     }
+
+    //NETLIST_EXTERNAL(base_lib)
 }

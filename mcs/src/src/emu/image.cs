@@ -197,6 +197,6 @@ namespace mame
         }
 
 
-        //bool try_change_working_directory(std::string &working_directory, const std::string &subdir);;
+        //bool try_change_working_directory(std::string &working_directory, const std::string &subdir);
     }
 }

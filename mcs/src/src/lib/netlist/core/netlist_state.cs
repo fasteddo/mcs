@@ -88,14 +88,9 @@ namespace mame.netlist
             // This is for core macro libraries
             m_setup.parser().add_include(new plib.psource_str_t("devices/net_lib.h", content));  //m_setup->parser().add_include<plib::psource_str_t>("devices/net_lib.h", content);
 
+#if true
             netlist_base_lib(m_setup.parser());  //NETLIST_NAME(base_lib)(m_setup->parser());
-
-            //throw new emu_unimplemented();
-#if false
-            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/macro/nlm_{1}.cpp", true);
-            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/generated/nlm_{1}.cpp", true);
-            m_setup->parser().register_source<source_pattern_t>("src/lib/netlist/macro/modules/nlmod_{1}.cpp", true);
-            m_setup->parser().include("base_lib");
+#else
 #endif
         }
 

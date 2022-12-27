@@ -120,7 +120,7 @@ namespace mame.netlist
             // NOLINTNEXTLINE(readability-implicit-bool-conversion)
             if (!(gt != null && go != null && Idr != null) && (gt != null || go != null || Idr != null))
             {
-                throw new nl_exception("Inconsistent nullptrs for terminal {0}", name());
+                throw new nl_exception("Either all pointers must be set or none for terminal {0}", name());
             }
 
             m_gt = gt;

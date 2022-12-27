@@ -8,6 +8,8 @@ using size_t = System.UInt64;
 using uint16_t = System.UInt16;
 using unsigned = System.UInt32;
 
+using static mame.plib.pfmtlog_global;
+
 
 namespace mame.plib
 {
@@ -113,6 +115,14 @@ namespace mame.plib
                 return m_param.index; // NOLINT
             }
         }
+
+
+        //PERRMSGV(MF_FUNCTION_UNKNOWN_TOKEN,          2, "pfunction: unknown/misformatted token <{1}> in <{2}>")
+        //PERRMSGV(MF_FUNCTION_STACK_UNDERFLOW,        2, "pfunction: stack underflow on token <{1}> in <{2}>")
+        //PERRMSGV(MF_FUNCTION_STACK_OVERFLOW,         2, "pfunction: stack overflow on token <{1}> in <{2}>")
+        //PERRMSGV(MF_FUNCTION_PARENTHESIS_INEQUALITY, 2, "pfunction: parenthesis inequality on token <{1}> in <{2}>")
+        //PERRMSGV(MF_FUNCTION_STACK_UNEQUAL_ONE,      2, "pfunction: stack count {1} different to one on <{2}>")
+        public static string MF_FUNCTION_STACK_UNDERFLOW_INFIX(params object [] args)   { return PERRMSGV(1, "pfunction: stack underflow during infix parsing of: <{0}>", args); }
 
 
         const size_t MAX_STACK = 32;
@@ -289,7 +299,7 @@ namespace mame.plib
         static string pop_check(std.stack<string> stk, string expr)
         {
             if (stk.empty())
-                throw new pexception(new plib.pfmt("pfunction: stack underflow during infix parsing of: <{0}>").op(expr));
+                throw new pexception(MF_FUNCTION_STACK_UNDERFLOW_INFIX(expr));
             string res = stk.top();
             stk.pop();
             return res;

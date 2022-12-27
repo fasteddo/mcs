@@ -5,7 +5,7 @@ using System;
 
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
-using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<NL_PREFER_INT128 && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
+using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<config::prefer_int128::value && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 
 
 namespace mame.netlist
@@ -124,7 +124,6 @@ namespace mame.netlist
             m_my_net = new logic_net_t(dev.state(), name() + ".net", this);
 
 
-            //plib::unused_var(dummy);
             this.set_net(m_my_net);
             state().register_net(m_my_net);  //state().register_net(device_arena::owned_ptr<logic_net_t>(&m_my_net, false));
             state().setup().register_term(this);
@@ -158,10 +157,9 @@ namespace mame.netlist
         ///
         /// This function terminates if actually called.
         ///
-        //[[noreturn]] static void set_tristate(netlist_sig_t v,
-        //    netlist_time ts_off_on, netlist_time ts_on_off)
+        //[[noreturn]] static void set_tristate([[maybe_unused]] netlist_sig_t v,
+        //    [[maybe_unused]] netlist_time ts_off_on, [[maybe_unused]] netlist_time ts_on_off)
         //{
-        //    plib::unused_var(v, ts_off_on, ts_on_off);
         //    plib::terminate("set_tristate on logic_output should never be called!");
         //}
     }
