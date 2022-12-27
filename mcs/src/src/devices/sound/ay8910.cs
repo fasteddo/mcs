@@ -23,7 +23,7 @@ using static mame.util;
 
 namespace mame
 {
-    static partial class ay8910_global
+    public static partial class ay8910_global
     {
         public const int ALL_8910_CHANNELS = -1;
 
@@ -245,7 +245,7 @@ namespace mame
          * resistor values. Intended to be used for
          * netlist interfacing.
          */
-        const int AY8910_RESISTOR_OUTPUT      = 0x08;
+        public const int AY8910_RESISTOR_OUTPUT      = 0x08;
 
 
         /*

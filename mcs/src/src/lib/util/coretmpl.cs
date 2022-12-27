@@ -189,27 +189,32 @@ namespace mame
             return obj;
         }
 
-#if false
+
         // replace an item in the list at the same location, and remove it
-        _ElementType &replace_and_remove(_ElementType &object, _ElementType &toreplace)
+        public ElementType replace_and_remove(ElementType object_, ElementType toreplace)
         {
-            _ElementType *prev = NULL;
-            for (_ElementType *cur = m_head; cur != NULL; prev = cur, cur = cur->m_next)
-                if (cur == &toreplace)
+            ElementType prev = default;
+            for (ElementType cur = m_head; cur != null; prev = cur, cur = cur.m_next_get())
+            {
+                if (cur.Equals(toreplace))
                 {
-                    if (prev != NULL)
-                        prev->m_next = &object;
+                    if (prev != null)
+                        prev.m_next_set(object_);
                     else
-                        m_head = &object;
-                    if (m_tail == &toreplace)
-                        m_tail = &object;
-                    object.m_next = toreplace.m_next;
-                    global_free(&toreplace);
-                    return object;
+                        m_head = object_;
+
+                    if (m_tail.Equals(toreplace))
+                        m_tail = object_;
+
+                    object_.m_next_set(toreplace.m_next_get());
+                    //delete &toreplace;
+                    return object_;
                 }
-            return append(object);
+            }
+
+            return append(object_);
         }
-#endif
+
 
         // detach the head item from the list, but don't free its memory
         public ElementType detach_head()
@@ -295,7 +300,7 @@ namespace mame
     // ======================> fixed_allocator
     // a fixed_allocator is a simple class that maintains a free pool of objects
     //template<class ItemType>
-    class fixed_allocator<ItemType> where ItemType : simple_list_item<ItemType>, new()
+    public class fixed_allocator<ItemType> where ItemType : simple_list_item<ItemType>, new()
     {
         // allocate a new item, either by recycling an old one, or by allocating a new one
         public ItemType alloc()

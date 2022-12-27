@@ -232,7 +232,7 @@ namespace mame
     }
 
 
-    static class gen_latch_global
+    public static class gen_latch_global
     {
         public static generic_latch_8_device GENERIC_LATCH_8(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<generic_latch_8_device>(mconfig, tag, generic_latch_8_device.GENERIC_LATCH_8, 0); }
         public static generic_latch_8_device GENERIC_LATCH_8<bool_Required>(machine_config mconfig, device_finder<generic_latch_8_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, generic_latch_8_device.GENERIC_LATCH_8, 0); }

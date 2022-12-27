@@ -616,7 +616,7 @@ namespace mame
     }
 
 
-    static class i8257_global
+    public static class i8257_global
     {
         public static i8257_device I8257<bool_Required>(machine_config mconfig, device_finder<i8257_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8257_device.I8257, clock); }
     }

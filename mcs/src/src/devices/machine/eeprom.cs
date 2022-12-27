@@ -276,7 +276,7 @@ namespace mame
     }
 
 
-    static class eeprom_global
+    public static class eeprom_global
     {
         public static eeprom_parallel_2804_device EEPROM_2804(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<eeprom_parallel_2804_device>(mconfig, tag, eeprom_parallel_2804_device.EEPROM_2804, 0); }
     }

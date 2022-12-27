@@ -67,7 +67,7 @@ namespace mame
     }
 
 
-    partial class m52 : construct_ioport_helper
+    public partial class m52 : construct_ioport_helper
     {
         /*************************************
          *

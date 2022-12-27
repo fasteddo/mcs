@@ -56,7 +56,7 @@ namespace mame
     //class ym2164_device : public ymfm_device_base<ymfm::ym2164>
 
 
-    static class ymopm_global
+    public static class ymopm_global
     {
         public static ym2151_device YM2151<bool_Required>(machine_config mconfig, device_finder<ym2151_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ym2151_device.YM2151, clock); }
     }

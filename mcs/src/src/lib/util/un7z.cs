@@ -8,6 +8,7 @@ using SharpCompress.Archives;
 
 using int64_t = System.Int64;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
@@ -316,7 +317,7 @@ namespace mame
             public int64_t current_crc() { return m_curr_crc; }
 
 
-            public std.error_condition decompress(MemoryU8 buffer, uint32_t length)
+            public std.error_condition decompress(PointerU8 buffer, uint32_t length)
             {
 #if false
                 // if we don't have enough buffer, error
@@ -418,7 +419,7 @@ namespace mame
                         {
                             var partialoffset = entry.Key.size() - search_filename.length();  //auto const partialoffset = m_utf8_buf.size() - search_filename.length();
                             bool namematch = (search_filename.length() == entry.Key.size()) && (search_filename.empty() || (core_stricmp(search_filename, entry.Key) == 0));  //const bool namematch = (search_filename.length() == m_utf8_buf.size()) && (search_filename.empty() || !core_strnicmp(&search_filename[0], &m_utf8_buf[0], search_filename.length()));
-                            bool partialmatch = partialpath && ((entry.Key.size() > search_filename.length()) && (entry.Key[(int)partialoffset - 1] == '/')) && (search_filename.empty() || core_strnicmp(search_filename, entry.Key.Substring((int)partialoffset), search_filename.length()) == 0);  //bool const partialmatch = partialpath && ((m_utf8_buf.size() > search_filename.length()) && (m_utf8_buf[partialoffset - 1] == '/')) && (search_filename.empty() || !core_strnicmp(&search_filename[0], &m_utf8_buf[partialoffset], search_filename.length()));
+                            bool partialmatch = partialpath && ((entry.Key.size() > search_filename.length()) && (entry.Key[(int)partialoffset - 1] == '/')) && (search_filename.empty() || core_strnicmp(search_filename, entry.Key[(int)partialoffset..], search_filename.length()) == 0);  //bool const partialmatch = partialpath && ((m_utf8_buf.size() > search_filename.length()) && (m_utf8_buf[partialoffset - 1] == '/')) && (search_filename.empty() || !core_strnicmp(&search_filename[0], &m_utf8_buf[partialoffset], search_filename.length()));
                             found = (!matchcrc || crcmatch) && (namematch || partialmatch);  //found = (!matchcrc || crcmatch) && (namematch || partialmatch);
                         }
 
@@ -488,7 +489,7 @@ namespace mame
             protected override int64_t current_last_modified() { return m_impl.current_last_modified(); }
             public override uint32_t current_crc() { return (uint32_t)m_impl.current_crc(); }
 
-            public override std.error_condition decompress(MemoryU8 buffer, uint32_t length) { return m_impl.decompress(buffer, length); }
+            public override std.error_condition decompress(PointerU8 buffer, uint32_t length) { return m_impl.decompress(buffer, length); }
         }
     }
 }

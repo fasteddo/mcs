@@ -532,7 +532,7 @@ namespace mame
 
         void validate_device_types()
         {
-            throw new emu_unimplemented();
+            //throw new emu_unimplemented();
         }
 
 
@@ -547,7 +547,7 @@ namespace mame
         {
             // if we have a current (non-root) device, indicate that
             if (m_current_device != null && m_current_device.owner() != null)
-                util.stream_format(ref str, "{0} device '{1}': ", m_current_device.name(), m_current_device.tag().Substring(1));
+                util.stream_format(ref str, "{0} device '{1}': ", m_current_device.name(), m_current_device.tag()[1..]);
 
             // if we have a current port, indicate that as well
             if (m_current_ioport != null)

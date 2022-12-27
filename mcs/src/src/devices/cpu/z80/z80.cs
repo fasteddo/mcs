@@ -437,7 +437,7 @@ namespace mame
         //template <typename... T> void set_m1_map(T &&... args) { set_addrmap(AS_OPCODES, std::forward<T>(args)...); }
         //template <typename... T> void set_io_map(T &&... args) { set_addrmap(AS_IO, std::forward<T>(args)...); }
         //auto irqack_cb() { return m_irqack_cb.bind(); }
-        //auto refresh_cb() { return m_refresh_cb.bind(); }
+        public devcb_write8.binder refresh_cb() { return m_refresh_cb.bind(); }  //auto refresh_cb() { return m_refresh_cb.bind(); }
         //auto halt_cb() { return m_halt_cb.bind(); }
 
 
@@ -4157,7 +4157,7 @@ namespace mame
     }
 
 
-    static class z80_global
+    public static class z80_global
     {
         public static z80_device Z80<bool_Required>(machine_config mconfig, device_finder<z80_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
         public static z80_device Z80<bool_Required>(machine_config mconfig, device_finder<z80_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }

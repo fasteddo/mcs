@@ -394,10 +394,10 @@ namespace mcsForm
         render_target m_target;
         MemoryContainer<byte> screenbuffer;  //g_state.screenbuffer = new uint32_t[400 * 400 * 2];
         public Pointer<byte> screenbufferptr;
-        public Queue<Int16> m_audiobuffer = new Queue<Int16>();
+        public Queue<Int16> m_audiobuffer = new();
 
-        public object osdlock = new object();
-        public object osdlock_audio = new object();
+        public object osdlock = new();
+        public object osdlock_audio = new();
 
         public intref [] keyboard_state;
         public intref [] mouse_axis_state;
@@ -526,7 +526,7 @@ namespace mcsForm
             /////////////////////////////////////////////
             // custom code below
 
-            validity_checker valid = new validity_checker(machine.options(), false);
+            validity_checker valid = new(machine.options(), false);
             string sysname = machine.options().system_name();
             bool result = valid.check_all_matching(string.IsNullOrEmpty(sysname) ? "*" : sysname);
             if (!result)
@@ -733,10 +733,8 @@ namespace mcsForm
             //return *keystate;
 
             // might want to put this check into an assert() instead
-            if (item_internal is intref)
+            if (item_internal is intref item)
             {
-                intref item = (intref)item_internal;
-
                 if (item.i == 1) Console.WriteLine("Pressed");
 
                 return item.i;
@@ -756,10 +754,8 @@ namespace mcsForm
             //return *axisdata;
 
             // might want to put this check into an assert() instead
-            if (item_internal is intref)
+            if (item_internal is intref item)
             {
-                intref item = (intref)item_internal;
-
                 Console.WriteLine("mouse_axis_get_state() - {0}", item.i);
 
                 return item.i;
@@ -781,10 +777,8 @@ namespace mcsForm
             //return *itemdata >> 7;
 
             // might want to put this check into an assert() instead
-            if (item_internal is intref)
+            if (item_internal is intref item)
             {
-                intref item = (intref)item_internal;
-
                 Console.WriteLine("mouse_button_get_state() - {0}", item.i);
 
                 return item.i;

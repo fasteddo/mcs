@@ -30,7 +30,7 @@ namespace mame.netlist
             //}
             public static core_device_t bselect(bool b, object d1, core_device_t d2)
             {
-                var h = (d1 is core_device_t) ? (core_device_t)d1 : null;
+                var h = d1 is core_device_t d1_device ? d1_device : default;
                 return b ? h : d2;
             }
             //template<>

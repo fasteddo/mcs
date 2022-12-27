@@ -63,9 +63,8 @@ namespace mame.netlist
                 m_new_Q.op = 0;
                 m_cur_Q.op = 0;
 
-                var p = this is analog_net_t ? (analog_net_t)this : null;  //auto *p = dynamic_cast<analog_net_t *>(this);
-
-                if (p != null)
+                var p = this is analog_net_t analog_net ? analog_net : default;  //auto *p = dynamic_cast<analog_net_t *>(this);
+                if (p != default)
                     p.set_Q_Analog(nlconst.zero());
 
                 // rebuild m_list and reset terminals to active or analog out state

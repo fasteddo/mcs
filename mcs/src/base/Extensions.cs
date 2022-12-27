@@ -28,18 +28,6 @@ namespace mame
     }
 
 
-    public static class ExtensionIComparable
-    {
-        // EDF - this can be removed in newer .NET versions
-        public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
-        {
-            if      (val.CompareTo(min) < 0) return min;
-            else if (val.CompareTo(max) > 0) return max;
-            else return val;
-        }
-    }
-
-
     public static class ExtensionKeyValuePair
     {
         // extensions to match std::pair
@@ -147,11 +135,11 @@ namespace mame
         public static size_t length(this String str) { return (size_t)str.Length; }
         public static string remove_prefix_(this String str, size_t n) { return str.Remove(0, (int)n); }
         public static void reserve(this String str, size_t n) { }
-        public static string resize_(this String str, size_t count) { return str.Length > (int)count ? str.Substring(0, (int)count) : str.PadRight(str.Length + (int)count, '\0'); }
+        public static string resize_(this String str, size_t count) { return str.Length > (int)count ? str[..(int)count] : str.PadRight(str.Length + (int)count, '\0'); }
         public static size_t rfind(this String str, char c) { return (size_t)str.LastIndexOf(c); }
         public static size_t rfind(this String str, string s) { return (size_t)str.LastIndexOf(s); }
         public static size_t size(this String str) { return (size_t)str.Length; }
-        public static string substr(this String str, size_t pos) { return str.Substring((int)pos); }
+        public static string substr(this String str, size_t pos) { return str[(int)pos..]; }
         public static string substr(this String str, size_t pos, size_t count) { return str.Substring((int)pos, (int)count); }
     }
 }

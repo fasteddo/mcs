@@ -40,7 +40,7 @@ namespace mame
 
 
         // endian-based value: first value is if native endianness is little-endian, second is if native is big-endian
-        static int NATIVE_ENDIAN_VALUE_LE_BE(int leval, int beval) { return (util.endianness.native == util.endianness.little) ? leval : beval; }  //#define NATIVE_ENDIAN_VALUE_LE_BE(leval,beval)  ((util::endianness::native == util::endianness::little) ? (leval) : (beval))
+        public static int NATIVE_ENDIAN_VALUE_LE_BE(int leval, int beval) { return (util.endianness.native == util.endianness.little) ? leval : beval; }  //#define NATIVE_ENDIAN_VALUE_LE_BE(leval,beval)  ((util::endianness::native == util::endianness::little) ? (leval) : (beval))
 
 
         // inline functions for accessing bytes and words within larger chunks

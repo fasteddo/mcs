@@ -483,7 +483,7 @@ namespace mame
     }
 
 
-    static class z80ctc_global
+    public static class z80ctc_global
     {
         public static z80ctc_channel_device Z80CTC_CHANNEL<bool_Required>(machine_config mconfig, device_finder<z80ctc_channel_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80ctc_channel_device.Z80CTC_CHANNEL, 0); }
         public static z80ctc_device Z80CTC<bool_Required>(machine_config mconfig, device_finder<z80ctc_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80ctc_device.Z80CTC, clock); }

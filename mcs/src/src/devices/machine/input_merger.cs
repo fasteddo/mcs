@@ -90,7 +90,7 @@ namespace mame
     }
 
 
-    class input_merger_any_high_device : input_merger_device
+    public class input_merger_any_high_device : input_merger_device
     {
         //DEFINE_DEVICE_TYPE(INPUT_MERGER_ANY_HIGH, input_merger_any_high_device, "ipt_merge_any_hi", "Input Merger (any high)") // OR
         public static readonly emu.detail.device_type_impl INPUT_MERGER_ANY_HIGH = DEFINE_DEVICE_TYPE("ipt_merge_any_hi", "Input Merger (any high)", (type, mconfig, tag, owner, clock) => { return new input_merger_any_high_device(mconfig, tag, owner, clock); });
@@ -115,7 +115,7 @@ namespace mame
     //DEFINE_DEVICE_TYPE(INPUT_MERGER_ALL_LOW,  input_merger_all_low_device,  "ipt_merge_all_lo", "Input Merger (all low)") // NOR
 
 
-    static class input_merger_global
+    public static class input_merger_global
     {
         public static input_merger_device INPUT_MERGER_ANY_HIGH(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<input_merger_device>(mconfig, tag, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, 0); }
         public static input_merger_device INPUT_MERGER_ANY_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, 0); }

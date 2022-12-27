@@ -132,7 +132,7 @@ namespace mame
     }
 
 
-    partial class mw8080bw : construct_ioport_helper
+    public partial class mw8080bw : construct_ioport_helper
     {
         static readonly ioport_value [] gunfight_controller_table =
         {

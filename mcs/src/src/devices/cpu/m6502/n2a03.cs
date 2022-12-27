@@ -115,7 +115,7 @@ namespace mame
     }
 
 
-    static class n2a03_global
+    public static class n2a03_global
     {
         /* These are the official XTAL values and clock rates used by Nintendo for
            manufacturing throughout the production of the 2A03. PALC_APU_CLOCK is

@@ -386,7 +386,7 @@ namespace mame
 
                     // advance in the X direction
                     curx += (int)font.char_width(bounds.height(), aspect, schar);
-                    str = str.Substring(scharcount);  //str.remove_prefix(scharcount);
+                    str = str[scharcount..];  //str.remove_prefix(scharcount);
                 }
             }
 
@@ -928,7 +928,7 @@ namespace mame
                 for (var location = symbollist.find(','); npos != location; location = symbollist.find(','))  //for (std::string::size_type location = symbollist.find(','); std::string::npos != location; location = symbollist.find(','))
                 {
                     m_stopnames[m_numstops] = symbollist.substr(0, location);
-                    symbollist = symbollist.Substring((int)location + 1);  //symbollist.remove_prefix(location + 1);
+                    symbollist = symbollist[(int)(location + 1)..];  //symbollist.remove_prefix(location + 1);
                     m_numstops++;
                 }
 
@@ -1189,8 +1189,8 @@ namespace mame
             layout_group_transform result = new layout_group_transform(new std.array<float, u64_const_3>(1.0F, 0.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 1.0F, 0.0F), new std.array<float, u64_const_3>(0.0F, 0.0F, 1.0F));  //transform result{{ {{ 1.0F, 0.0F, 0.0F }}, {{ 0.0F, 1.0F, 0.0F }}, {{ 0.0F, 0.0F, 1.0F }} }};
             if ((orientation & ORIENTATION_SWAP_XY) != 0)
             {
-                var temp1 = result[0][0]; result[0][0] = result[0][1];  result[0][1] = temp1;  //std::swap(result[0][0], result[0][1]);
-                var temp2 = result[1][0]; result[1][0] = result[1][1];  result[1][1] = temp2;  //std::swap(result[1][0], result[1][1]);
+                (result[0][0], result[0][1]) = (result[0][1], result[0][0]);  //std::swap(result[0][0], result[0][1]);
+                (result[1][0], result[1][1]) = (result[1][1], result[1][0]);  //std::swap(result[1][0], result[1][1]);
             }
 
             if ((orientation & ORIENTATION_FLIP_X) != 0)
@@ -1609,7 +1609,7 @@ namespace mame
                 {
                     string tag = env.get_attribute_string(itemnode, "tag");
                     var subdevice = env.device().subdevice(tag);
-                    m_screen = subdevice is screen_device ? (screen_device)subdevice : null;  //m_screen = dynamic_cast<screen_device *>(env.device().subdevice(tag));
+                    m_screen = subdevice is screen_device subdevice_screen ? subdevice_screen : null;  //m_screen = dynamic_cast<screen_device *>(env.device().subdevice(tag));
                     if (m_screen == null)
                         throw new layout_reference_error(util.string_format("invalid screen tag '{0}'", tag));
                 }
@@ -2776,7 +2776,7 @@ namespace mame
             {
                 string tag = env.device().tag();
                 if (':' == tag[0])
-                    tag = tag.Substring(1);  //++tag;
+                    tag = tag[1..];  //++tag;
 
                 return util.string_format("{0} {1}", tag, name);
             }
@@ -3109,16 +3109,16 @@ namespace mame
 
                 if ((m_entries.Count == pos) || (m_entries[pos].name() != name))
                 {
-                    if (value is string)      m_entries.emplace(pos, new entry(name, (string)value));
-                    else if (value is s64)    m_entries.emplace(pos, new entry(name, (s64)value));
-                    else if (value is double) m_entries.emplace(pos, new entry(name, (double)value));
+                    if (value is string value_string)      m_entries.emplace(pos, new entry(name, value_string));
+                    else if (value is s64 value_s64)       m_entries.emplace(pos, new entry(name, value_s64));
+                    else if (value is double value_double) m_entries.emplace(pos, new entry(name, value_double));
                     else throw new emu_unimplemented();
                 }
                 else
                 {
-                    if (value is string)      m_entries[pos].set((string)value);
-                    else if (value is s64)    m_entries[pos].set((s64)value);
-                    else if (value is double) m_entries[pos].set((double)value);
+                    if (value is string value_string)      m_entries[pos].set(value_string);
+                    else if (value is s64 value_s64)       m_entries[pos].set(value_s64);
+                    else if (value is double value_double) m_entries[pos].set(value_double);
                     else throw new emu_unimplemented();
                 }
             }
@@ -3181,7 +3181,7 @@ namespace mame
                 size_t start = 0;
                 for (size_t pos = str.find_first_of(variable_start_char); pos != npos; )
                 {
-                    string new_str = str.Substring((int)pos + 1);
+                    string new_str = str[((int)pos + 1)..];
                     int termIdx = new_str.IndexOf(c => !is_variable_char(c));  //auto term = std::find_if_not(str.begin() + pos + 1, str.end(), is_variable_char);
                     if ((termIdx == -1) || (new_str[termIdx] != variable_end_char))  //if ((term == str.end()) || (*term != variable_end_char))
                     {
@@ -3198,7 +3198,7 @@ namespace mame
                             if (start == 0)
                                 m_buffer = "";  //m_buffer.seekp(0);
                             assert(start < str.length());
-                            m_buffer += str.Substring((int)start, (int)pos - (int)start);  //m_buffer.write(&str[start], pos - start);
+                            m_buffer += str[(int)start..(int)pos];  //m_buffer.write(&str[start], pos - start);
                             m_buffer += text.first;  //m_buffer.write(text.first.data(), text.first.length());
                             start = (size_t)termIdx + 1;  //start = term - str.begin() + 1;
                             pos = str.find_first_of(variable_start_char, start);
@@ -3219,7 +3219,7 @@ namespace mame
                 else
                 {
                     if (start < str.length())
-                        m_buffer += str.Substring((int)start, (int)str.length() - (int)start);  //m_buffer.write(&str[start], str.length() - start);
+                        m_buffer += str[(int)start..(int)str.length()];  //m_buffer.write(&str[start], str.length() - start);
                     return m_buffer;
                 }
             }
@@ -3376,7 +3376,7 @@ namespace mame
                         unsigned hexprefix = hex_prefix(expanded);
                         unsigned decprefix = dec_prefix(expanded);
                         bool floatchars = expanded.find_first_of(".eE") != npos;
-                        string stream = expanded.Substring((int)(hexprefix + decprefix));  //std::istringstream stream(std::string(expanded.substr(hexprefix + decprefix)));
+                        string stream = expanded[(int)(hexprefix + decprefix)..];  //std::istringstream stream(std::string(expanded.substr(hexprefix + decprefix)));
                         //stream.imbue(std::locale::classic());
                         bool success = true;
                         if (hexprefix == 0 && decprefix == 0 && floatchars)

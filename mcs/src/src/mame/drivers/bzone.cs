@@ -136,7 +136,7 @@ namespace mame
     }
 
 
-    partial class bzone : construct_ioport_helper
+    public partial class bzone : construct_ioport_helper
     {
         /*************************************
          *

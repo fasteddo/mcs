@@ -20,6 +20,7 @@ using static mame.emumem_global;
 using static mame.emupal_global;
 using static mame.er2055_global;
 using static mame.gamedrv_global;
+using static mame.generic_global;
 using static mame.hash_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
@@ -341,7 +342,7 @@ namespace mame
     }
 
 
-    partial class centiped : construct_ioport_helper
+    public partial class centiped : construct_ioport_helper
     {
         /*************************************
          *
@@ -583,16 +584,6 @@ namespace mame
          *
          *************************************/
 
-        static readonly gfx_layout charlayout = new gfx_layout(
-            8,8,
-            RGN_FRAC(1,2),
-            2,
-            ArrayCombineUInt32( RGN_FRAC(1,2), 0 ),
-            ArrayCombineUInt32( 0, 1, 2, 3, 4, 5, 6, 7 ),
-            ArrayCombineUInt32( 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ),
-            8*8
-        );
-
         static readonly gfx_layout spritelayout = new gfx_layout(
             8,16,
             RGN_FRAC(1,2),
@@ -607,8 +598,9 @@ namespace mame
         //static GFXDECODE_START( gfx_centiped )
         static readonly gfx_decode_entry [] gfx_centiped =
         {
-            GFXDECODE_ENTRY( "gfx1", 0, charlayout,     0, 1 ),
-            GFXDECODE_ENTRY( "gfx1", 0, spritelayout,   4, 4*4*4 ),
+            GFXDECODE_ENTRY( "gfx1", 0, gfx_8x8x2_planar,     0, 1 ),
+            GFXDECODE_ENTRY( "gfx1", 0, spritelayout,         4, 4*4*4 ),
+
             //GFXDECODE_END
         };
 
@@ -616,8 +608,9 @@ namespace mame
         //static GFXDECODE_START( milliped )
         static readonly gfx_decode_entry [] gfx_milliped =
         {
-            GFXDECODE_ENTRY( "gfx1", 0, charlayout,     0, 4 ),
-            GFXDECODE_ENTRY( "gfx1", 0, spritelayout, 4*4, 4*4*4*4 ),
+            GFXDECODE_ENTRY( "gfx1", 0, gfx_8x8x2_planar,     0, 4 ),
+            GFXDECODE_ENTRY( "gfx1", 0, spritelayout,       4*4, 4*4*4*4 ),
+
             //GFXDECODE_END
         };
 

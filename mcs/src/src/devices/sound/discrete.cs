@@ -1149,8 +1149,6 @@ namespace mame
         uint64_t m_total_stream_updates;
 
 
-        //friend class discrete_base_node;
-
         // construction/destruction
         public discrete_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
             : base(mconfig, type, tag, owner, clock)
@@ -1862,7 +1860,7 @@ namespace mame
             foreach (var node in m_node_list)
             {
                 /* if we are an stream input node, track that */
-                discrete_dss_input_stream_node input_stream = (node is discrete_dss_input_stream_node) ? (discrete_dss_input_stream_node)node : null;
+                discrete_dss_input_stream_node input_stream = node is discrete_dss_input_stream_node node_stream ? node_stream : null;
                 if (input_stream != null)
                 {
                     m_input_stream_list.push_back(input_stream);
@@ -1977,7 +1975,7 @@ namespace mame
             m_output_intf = null;
 
 
-            //m_output[0][0] = 0.0;
+            //std::fill(std::begin(m_output), std::end(m_output), 0.0);
 
 
             for (int i = 0; i < DISCRETE_MAX_OUTPUTS; i++)
@@ -2045,9 +2043,9 @@ namespace mame
             m_custom = m_block.custom;
             m_active_inputs = m_block.active_inputs;
 
-            m_step_intf = (this is discrete_step_interface) ? (discrete_step_interface)this : null;
-            m_input_intf = (this is discrete_input_interface) ? (discrete_input_interface)this : null;
-            m_output_intf = (this is discrete_sound_output_interface) ? (discrete_sound_output_interface)this : null;
+            m_step_intf = this is discrete_step_interface step_interface ? step_interface : null;
+            m_input_intf = this is discrete_input_interface input_interface ? input_interface : null;
+            m_output_intf = this is discrete_sound_output_interface output_interface ? output_interface : null;
 
             if (m_step_intf != null)
             {
@@ -2111,7 +2109,7 @@ namespace mame
     {
         public static discrete_base_node create(discrete_device pdev, discrete_block block)
         {
-            discrete_base_node r = new C();  //std::unique_ptr<discrete_base_node> r = make_unique_clear<C>();
+            discrete_base_node r = new C();  //std::unique_ptr<discrete_base_node> r = std::make_unique<C>();
 
             r.init(pdev, block);
             return r;
@@ -2577,7 +2575,7 @@ namespace mame
                                     output_buffer buf = new output_buffer();
 
                                     buf.node_buf = new MemoryContainer<double>((task_node.sample_rate() + sound_manager.STREAMS_UPDATE_FREQUENCY) / sound_manager.STREAMS_UPDATE_FREQUENCY);  //buf.node_buf = std::make_unique<double []>((task_node->sample_rate() + sound_manager::STREAMS_UPDATE_FREQUENCY) / sound_manager::STREAMS_UPDATE_FREQUENCY);
-                                    buf.ptr = new Pointer<double>(buf.node_buf);  //buf.ptr = buf.node_buf;
+                                    buf.ptr = new Pointer<double>(buf.node_buf);  //buf.ptr = buf.node_buf.get();
                                     buf.source = dest_node.m_input[inputnum];  //buf.source = dest_node->m_input[inputnum];
                                     buf.node_num = inputnode_num;
                                     //buf.node = device->discrete_find_node(inputnode);

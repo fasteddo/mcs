@@ -166,7 +166,8 @@ namespace mame
         //INTERRUPT_GEN_MEMBER( driver_device::irq0_line_hold )   { device.execute().set_input_line(0, HOLD_LINE); }
         public void irq0_line_hold(device_t device) { device.execute().set_input_line(0, HOLD_LINE); }
 
-        //void irq0_line_assert(device_t &device);
+        //INTERRUPT_GEN_MEMBER( driver_device::irq0_line_assert ) { device.execute().set_input_line(0, ASSERT_LINE); }
+        public void irq0_line_assert(device_t device) { device.execute().set_input_line(0, ASSERT_LINE); }
 
         //void irq1_line_hold(device_t &device);
         //void irq1_line_assert(device_t &device);

@@ -355,7 +355,7 @@ namespace mame
         std.vector<entry> m_entries = new std.vector<entry>();  //std::vector<entry::shared_ptr>                      m_entries;              // canonical list of entries
         std.unordered_map<string, entry> m_entrymap = new std.unordered_map<string, entry>();  //std::unordered_map<std::string, entry::weak_ptr>    m_entrymap;             // map for fast lookup
         string m_command;              // command found
-        std.vector<string> m_command_arguments;   // command arguments
+        std.vector<string> m_command_arguments = new std.vector<string>();   // command arguments
 
 
         //core_options(const core_options &) = delete;
@@ -610,7 +610,7 @@ namespace mame
             {
                 if (!args[(int)arg].empty() && args[(int)arg][0] == '-')
                 {
-                    var curentry = get_entry(args[arg].Substring(1));
+                    var curentry = get_entry(args[arg][1..]);
                     if (curentry != null && curentry.type() == OPTION_COMMAND)
                     {
                         // can only have one command
@@ -739,7 +739,7 @@ namespace mame
                 //*temp = 0;
 
                 string optionname = buffer.Substring(optionnameIdx, optiondataIdx - optionnameIdx - 1);
-                string optiondata = buffer.Substring(optiondataIdx);
+                string optiondata = buffer[optiondataIdx..];
 
                 // find our entry
                 entry curentry = get_entry(optionname);  //entry::shared_ptr curentry = get_entry(optionname);
@@ -853,7 +853,7 @@ namespace mame
 
                 // otherwise, output entries for all non-deprecated items
                 else if (!string.IsNullOrEmpty(curentry.description()))
-                    util.stream_format(ref buffer, "-{0}{1}\n", curentry.name(), curentry.description());  // -%-20s%s
+                    util.stream_format(ref buffer, "-{0,-20}{1}\n", curentry.name(), curentry.description());  // -%-20s%s
             }
 
             return buffer;
@@ -1050,7 +1050,7 @@ namespace mame
             // trim quotes
             if (data.length() >= 2 && data[0] == '"' && data[data.Length - 1] == '"')  //if (data.length() >= 2 && data.front() == '"' && data.back() == '"')
             {
-                data = data.Substring(1);  //data.remove_prefix(1);
+                data = data[1..];  //data.remove_prefix(1);
                 data = data.Remove(data.Length - 1);  //data.remove_suffix(1);
             }
 

@@ -7,6 +7,7 @@ using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
 using devcb_value = mame.FlexPrim;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using devcb_write32 = mame.devcb_write<mame.Type_constant_u32>;  //using devcb_write32 = devcb_write<u32>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -146,7 +147,7 @@ namespace mame
 
 
 
-            // EDF - moved to child class
+            // MCS - moved to child class
 
             //Impl &exor(std::make_unsigned_t<T> val) { m_exor ^= val; return static_cast<Impl &>(*this); }
             //Impl &mask(std::make_unsigned_t<T> val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return static_cast<Impl &>(*this); }
@@ -785,8 +786,7 @@ namespace mame
 
 
             //template <typename T>
-            protected transform_builder<transform_builder<Source, Source_OPS, Source_output_t, Func_>, io_ops_transform_builder, Type_constant_output_t, F> transform<F>(F cb)  //std::enable_if_t<is_transform<output_t, Result, T>::value, transform_builder<transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
-                where F : Delegate
+            public override transform_builder<transform_builder<Source, Source_OPS, Source_output_t, Func_>, io_ops_transform_builder, Type_constant_output_t, transform_function_delegate> transform(transform_function_delegate cb)  //std::enable_if_t<is_transform<output_t, Result, T>::value, transform_builder<transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
             {
                 throw new emu_unimplemented();
             }
@@ -1448,7 +1448,15 @@ namespace mame
         }
 
 
-        public abstract class builder_base_with_transform_base<Type_T, Impl, Impl_OPS, Impl_output_t> : builder_base, IDisposable
+        public interface builder_base_interface
+        {
+            builder_base_interface mask_internal(devcb_value val);
+            builder_base_interface invert_interface();
+            void reg();
+        }
+
+
+        public abstract class builder_base_with_transform_base<Type_T, Impl, Impl_OPS, Impl_output_t> : builder_base, builder_base_interface, IDisposable
             where Type_T : Type_constant, new()
             where Impl : builder_base
             where Impl_OPS : io_operations<Impl>, new()
@@ -1470,25 +1478,39 @@ namespace mame
             }
 
 
-            Impl exor(devcb_value val) { m_transform_base.m_exor ^= val; return ops.cast(this); }  //Impl &exor(std::make_unsigned_t<T> val) { m_exor ^= val; return static_cast<Impl &>(*this); }
-            public Impl mask(devcb_value val) { m_transform_base.m_mask = m_transform_base.m_inherited_mask ? val : (m_transform_base.m_mask & val); m_transform_base.m_inherited_mask = false; return ops.cast(this); }  //Impl &mask(std::make_unsigned_t<T> val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return static_cast<Impl &>(*this); }
+            Impl exor(devcb_value val) { return ops.cast((builder_base)exor_internal(val)); }  //Impl &exor(std::make_unsigned_t<T> val) { m_exor ^= val; return static_cast<Impl &>(*this); }
+            builder_base_interface exor_internal(devcb_value val) { m_transform_base.m_exor ^= val; return this; }  //Impl &exor(std::make_unsigned_t<T> val) { m_exor ^= val; return static_cast<Impl &>(*this); }
+            public Impl mask(devcb_value val) { return ops.cast((builder_base)mask_internal(val)); }  //Impl &mask(std::make_unsigned_t<T> val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return static_cast<Impl &>(*this); }
+            public builder_base_interface mask_internal(devcb_value val) { m_transform_base.m_mask = m_transform_base.m_inherited_mask ? val : (m_transform_base.m_mask & val); m_transform_base.m_inherited_mask = false; return this; }  //Impl &mask(std::make_unsigned_t<T> val) { m_mask = m_inherited_mask ? val : (m_mask & val); m_inherited_mask = false; return static_cast<Impl &>(*this); }
             public Impl mask_u8(u8 val) { return mask(new devcb_value(val.GetType(), val)); }
 
-            public Impl invert() { return exor(new devcb_value(devcb_value.make_unsigned(T), u64.MaxValue)); }  //Impl &invert() { return exor(~std::make_unsigned_t<T>(0)); }
+            public Impl invert() { return ops.cast((builder_base)invert_interface()); }  //Impl &invert() { return exor(~std::make_unsigned_t<T>(0)); }
+            public builder_base_interface invert_interface() { return exor_internal(new devcb_value(devcb_value.make_unsigned(T), u64.MaxValue)); }  //Impl &invert() { return exor(~std::make_unsigned_t<T>(0)); }
 
 
-            public transform_builder<Impl, Impl_OPS, Impl_output_t, transform_function_delegate> rshift(unsigned val)  //auto rshift(unsigned val)
+            public builder_base_interface rshift(unsigned val)  //auto rshift(unsigned val)
+            {
+                var trans = this.transform((offs_t offset, devcb_value data, ref devcb_value mem_mask) => { mem_mask >>= (int)val; return data >> (int)val; });  //auto trans(static_cast<Impl &>(*this).transform([val] (offs_t offset, T data, std::make_unsigned_t<T> &mem_mask) { mem_mask >>= val; return data >> val; }));
+                if (inherited_mask())
+                    return trans;
+                else
+                    return trans.mask_internal(m_transform_base.m_mask >> (int)val);  //return std::move(trans.mask(m_mask >> val));
+            }
+
+
+            public builder_base_interface lshift(unsigned val)  //auto lshift(unsigned val)
             {
                 throw new emu_unimplemented();
             }
 
-            public transform_builder<Impl, Impl_OPS, Impl_output_t, transform_function_delegate> lshift(unsigned val)  //auto lshift(unsigned val)
+
+            public virtual builder_base_interface transform(transform_function_delegate cb) { throw new emu_unimplemented(); }
+
+
+            public builder_base_interface bit(unsigned val)  //auto bit(unsigned val) { return std::move(rshift(val).mask(T(1U))); }
             {
-                throw new emu_unimplemented();
+                return rshift(val).mask_internal(new devcb_value(T, 1U));
             }
-
-
-            //auto bit(unsigned val) { return std::move(rshift(val).mask(T(1U))); }
 
 
             protected devcb_value exor() { return m_transform_base.exor(); }
@@ -1531,9 +1553,11 @@ namespace mame
             public class io_ops_transform_builder : io_operations<transform_builder<Source, Source_OPS, Source_output_t, Func_>>
             {
                 static readonly Source_OPS source_ops = new Source_OPS();
+                class Type_constant_source_output_t : Type_constant { public Type value { get { return source_ops.output_t; } } }
+                static readonly Type output_t_Type = new Type_constant_mask_t<Type_constant_transform_result_t<Type_constant_source_output_t, Type_constant_source_output_t, Func_>, Type_constant_source_output_t>().value;
 
                 public Type input_t { get { return source_ops.output_t; } }
-                public Type output_t { get { throw new emu_unimplemented(); } }
+                public Type output_t { get { return output_t_Type; } }
                 public Type input_mask_t { get { throw new emu_unimplemented(); } }
 
                 public transform_builder<Source, Source_OPS, Source_output_t, Func_> cast(builder_base base_) { throw new emu_unimplemented(); }
@@ -1578,8 +1602,7 @@ namespace mame
 
 
             //template <typename T>
-            protected transform_builder<transform_builder<Source, Source_OPS, Source_output_t, Func_>, io_ops_transform_builder, Type_constant_output_t, F> transform<F>(F cb)  //std::enable_if_t<is_transform<output_t, output_t, T>::value, transform_builder<transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
-                where F : Delegate
+            public override builder_base_interface transform(transform_function_delegate cb)  //std::enable_if_t<is_transform<output_t, output_t, T>::value, transform_builder<transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
             {
                 throw new emu_unimplemented();
             }
@@ -1616,35 +1639,39 @@ namespace mame
 
 
         //template <typename Sink, typename Func>
-        public class first_transform_builder<Sink, Func_> :  //class first_transform_builder : public builder_base, public transform_base<mask_t<transform_result_t<typename Sink::input_t, typename Sink::input_t, Func>, typename Sink::input_t>, first_transform_builder<Sink, Func> >
-                    builder_base_with_transform_base<Type_constant_mask_t<Type_constant_transform_result_t<first_transform_builder<Sink, Func_>.Type_constant_Sink_input_t, 
-                                                                                                           first_transform_builder<Sink, Func_>.Type_constant_Sink_input_t,
+        public class first_transform_builder<Sink, Sink_input_t, Func_> :  //class first_transform_builder : public builder_base, public transform_base<mask_t<transform_result_t<typename Sink::input_t, typename Sink::input_t, Func>, typename Sink::input_t>, first_transform_builder<Sink, Func> >
+                    builder_base_with_transform_base<Type_constant_mask_t<Type_constant_transform_result_t<first_transform_builder<Sink, Sink_input_t, Func_>.Type_constant_Sink_input_t, 
+                                                                                                           first_transform_builder<Sink, Sink_input_t, Func_>.Type_constant_Sink_input_t,
                                                                                                            Func_>,
-                                                                          first_transform_builder<Sink, Func_>.Type_constant_Sink_input_t>,
-                                                     first_transform_builder<Sink, Func_>,
-                                                     first_transform_builder<Sink, Func_>.io_ops_first_transform_builder,
-                                                     first_transform_builder<Sink, Func_>.Type_constant_output_t>,
+                                                                          first_transform_builder<Sink, Sink_input_t, Func_>.Type_constant_Sink_input_t>,
+                                                     first_transform_builder<Sink, Sink_input_t, Func_>,
+                                                     first_transform_builder<Sink, Sink_input_t, Func_>.io_ops_first_transform_builder,
+                                                     first_transform_builder<Sink, Sink_input_t, Func_>.Type_constant_output_t>,
                     IDisposable
             where Sink : builder_base
+            where Sink_input_t : Type_constant, new()
         {
             //template <typename T, typename U> friend class transform_builder;
 
 
             //using input_t = typename Sink::input_t;
             //using output_t = mask_t<transform_result_t<typename Sink::input_t, typename Sink::input_t, Func>, typename Sink::input_t>;
-            public class io_ops_first_transform_builder : io_operations<first_transform_builder<Sink, Func_>>
+            public class io_ops_first_transform_builder : io_operations<first_transform_builder<Sink, Sink_input_t, Func_>>
             {
+                class Type_constant_sink_input_t : Type_constant { public Type value { get { return new Type_constant_Sink_input_t().value; } } }
+                static readonly Type output_t_Type = new Type_constant_mask_t<Type_constant_transform_result_t<Type_constant_sink_input_t, Type_constant_sink_input_t, Func_>, Type_constant_sink_input_t>().value;
+
                 public Type input_t { get { throw new emu_unimplemented(); } }
-                public Type output_t { get { throw new emu_unimplemented(); } }
+                public Type output_t { get { return output_t_Type; } }
                 public Type input_mask_t { get { throw new emu_unimplemented(); } }
 
-                public first_transform_builder<Sink, Func_> cast(builder_base base_) { throw new emu_unimplemented(); }
+                public first_transform_builder<Sink, Sink_input_t, Func_> cast(builder_base base_) { throw new emu_unimplemented(); }
             }
 
             static readonly io_ops_first_transform_builder io_ops = new io_ops_first_transform_builder();
 
             public class Type_constant_output_t : Type_constant { public Type value { get { throw new emu_unimplemented(); } } }
-            public class Type_constant_Sink_input_t : Type_constant { public Type value { get { throw new emu_unimplemented(); } } }
+            public class Type_constant_Sink_input_t : Type_constant { public Type value { get { return new Sink_input_t().value; } } }
 
 
             Sink m_sink;
@@ -1682,15 +1709,14 @@ namespace mame
             //}
 
             //~first_transform_builder() { this->template register_creator<first_transform_builder>(); }
-            protected override void Dispose(bool disposing) { register_creator<first_transform_builder<Sink, Func_>>(); base.Dispose(disposing); }
+            protected override void Dispose(bool disposing) { register_creator<first_transform_builder<Sink, Sink_input_t, Func_>>(); base.Dispose(disposing); }
 
 
             //void validity_check(validity_checker &valid) const { m_sink.validity_check(valid); }
 
 
             //template <typename T>
-            protected transform_builder<first_transform_builder<Sink, Func_>, first_transform_builder<Sink, Func_>.io_ops_first_transform_builder, first_transform_builder<Sink, Func_>.Type_constant_output_t, T> transform<T>(T cb)  //std::enable_if_t<is_transform<output_t, output_t, T>::value, transform_builder<first_transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
-                where T : Delegate
+            public override builder_base_interface transform(transform_function_delegate cb)  //std::enable_if_t<is_transform<output_t, output_t, T>::value, transform_builder<first_transform_builder, std::remove_reference_t<T> > > transform(T &&cb)
             {
                 throw new emu_unimplemented();
             }
@@ -1753,13 +1779,23 @@ namespace mame
             {
                 //template <typename T, typename U> friend class first_transform_builder;
 
+
                 //using input_t = intermediate_t<Input, typename delegate_traits<Delegate>::input_t>;
+                public class Type_constant_input_t : Type_constant
+                {
+                    static readonly Type T = new Type_Input().value;
+                    static readonly Type U = new delegate_traits<Delegate_>.input_t().value;
+
+                    Type intermediate_t { get { return sizeof_(T) >= sizeof_(U) ? T : U; } }
+
+                    public Type value { get { return intermediate_t; } }
+                }
 
 
                 Delegate_ m_delegate;
 
 
-                wrapped_builder(delegate_builder<Delegate_> that)
+                public wrapped_builder(delegate_builder<Delegate_> that)
                     : base(that)
                 {
                     m_delegate = that.m_delegate;
@@ -1851,9 +1887,11 @@ namespace mame
 
 
             //template <typename T>
-            protected first_transform_builder<wrapped_builder, F> transform<F>(F cb)  //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
+            public override builder_base_interface transform(transform_function_delegate cb)  //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
             {
-                throw new emu_unimplemented();
+                devcb_value in_mask = this.inherited_mask() ? DefaultMask : this.mask();  //std::make_unsigned_t<Input> const in_mask(this->inherited_mask() ? DefaultMask : this->mask());
+                devcb_value out_mask = DefaultMask & delegate_traits<Delegate_>.default_mask;  //mask_t<Input, typename delegate_traits<Delegate>::input_t> const out_mask(DefaultMask & delegate_traits<Delegate>::default_mask);
+                return new first_transform_builder<wrapped_builder, wrapped_builder.Type_constant_input_t, transform_function_delegate>(this.m_target, this.m_append, new wrapped_builder(this), cb, this.exor(), in_mask, out_mask);  //return first_transform_builder<wrapped_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, wrapped_builder(std::move(*this)), std::forward<T>(cb), this->exor(), in_mask, out_mask);
             }
 
 
@@ -2029,7 +2067,7 @@ namespace mame
 
 
             //template <typename T>
-            protected first_transform_builder<wrapped_builder, T> transform<T>(T cb)  //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
+            public override builder_base_interface transform(transform_function_delegate cb)  //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
             {
                 throw new emu_unimplemented();
             }
@@ -2527,7 +2565,7 @@ namespace mame
 
 
             //template <typename T>
-            protected first_transform_builder<wrapped_builder, T> transform<T>(T cb)  //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
+            public override builder_base_interface transform(transform_function_delegate cb)  //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
             {
                 throw new emu_unimplemented();
             }
@@ -2635,7 +2673,19 @@ namespace mame
 
             //template <typename... Params>
             //auto append(Params &&... args)
-            public delegate_builder<T> append_internal<T>(string tag, T func) where T : Delegate { return append_internal(func); }
+            public delegate_builder<T> append_internal<T>(string tag, T func)
+                where T : Delegate
+            {
+                m_append = true;
+                return set_internal(tag, func);
+            }
+            public delegate_builder<T> append_internal<T, U, bool_R>(device_finder<U, bool_R> finder, T func)
+                where T : Delegate
+                where bool_R : bool_const, new()
+            {
+                m_append = true;
+                return set_internal(finder, func);
+            }
             public delegate_builder<T> append_internal<T>(T func)
                 where T : Delegate
             {
@@ -2644,6 +2694,7 @@ namespace mame
             }
 
             public delegate_builder<write_line_delegate> append(string tag, write_line_delegate func) { return append_internal(tag, func); }
+            public delegate_builder<write_line_delegate> append<U, bool_R>(device_finder<U, bool_R> finder, write_line_delegate func) where bool_R : bool_const, new() { return append_internal(finder, func); }
 
             public delegate_builder<write_line_delegate> append(write_line_delegate func) { return append_internal(func); }
 

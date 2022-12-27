@@ -121,7 +121,16 @@ namespace mame
         }
 
 
-        public static bool core_iswildstr(string sp) { throw new emu_unimplemented(); }
+        public static bool core_iswildstr(string sp)
+        {
+            //for ( ; sp && *sp; sp++)
+            //{
+            //    if (('?' == *sp) || ('*' == *sp))
+            //        return true;
+            //}
+            //return false;
+            return sp.IndexOfAny("?*".ToCharArray()) != -1;
+        }
 
 
         //void strdelchr(std::string& str, char chr);

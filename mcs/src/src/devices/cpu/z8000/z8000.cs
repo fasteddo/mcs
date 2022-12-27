@@ -719,7 +719,7 @@ namespace mame
     //#define Z8K_SEGM_MODE_AUTO   2
 
 
-    static class z8000_global
+    public static class z8000_global
     {
         public static z8002_device Z8002<bool_Required>(machine_config mconfig, device_finder<z8002_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z8002_device.Z8002, clock); }
     }

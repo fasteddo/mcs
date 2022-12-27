@@ -52,6 +52,10 @@ namespace mame
             // ----- file open/close -----
 
             // open a file with the specified filename
+            //-------------------------------------------------
+            //  open - open a file for access and
+            //  return an error code
+            //-------------------------------------------------
             public static std.error_condition open(string filename, uint32_t openflags, out core_file file)
             {
                 file = null;
@@ -71,11 +75,11 @@ namespace mame
 
 
             // open a RAM-based "file" using the given data and length (read-only)
-            /*-------------------------------------------------
-                open_ram - open a RAM-based buffer for file-
-                like access and return an error code
-            -------------------------------------------------*/
-            public static std.error_condition open_ram(MemoryU8 data, size_t length, uint32_t openflags, out core_file file)  //std::error_condition open_ram(void const *data, std::size_t length, std::uint32_t openflags, ptr &file)
+            //-------------------------------------------------
+            //  open_ram - open a RAM-based buffer for file-
+            //  like access and return an error code
+            //-------------------------------------------------
+            public static std.error_condition open_ram(PointerU8 data, size_t length, uint32_t openflags, out core_file file)  //std::error_condition open_ram(void const *data, std::size_t length, std::uint32_t openflags, ptr &file)
             {
                 file = null;
 
@@ -156,19 +160,16 @@ namespace mame
             // read a full line of text from the file
             public abstract string gets(out string s, int n);
 
-            // get a pointer to a buffer that holds the full file data in RAM
-            // this function may cause the full file data to be read
-            public abstract MemoryU8 buffer();  //virtual const void *buffer() = 0;
 
             // open a file with the specified filename, read it into memory, and return a pointer
-            /*-------------------------------------------------
-                load - open a file with the specified
-                filename, read it into memory, and return a
-                pointer
-            -------------------------------------------------*/
-            public static std.error_condition load(string filename, out MemoryU8 data, out uint32_t length)  //std::error_condition load(std::string const &filename, void **data, std::uint32_t &length)
+            //-------------------------------------------------
+            //  load - open a file with the specified
+            //  filename, read it into memory, and return a
+            //  pointer
+            //-------------------------------------------------
+            public static std.error_condition load(string filename, out PointerU8 data, out uint32_t length)  //std::error_condition load(std::string const &filename, void **data, std::uint32_t &length)
             {
-                data = new MemoryU8();
+                data = new PointerU8(new MemoryU8());
                 length = 0;
 
                 std.error_condition err;
@@ -188,7 +189,7 @@ namespace mame
                     return std.errc.file_too_large;
 
                 // allocate memory
-                data.Resize((int)size);  //*data = std::malloc(std::size_t(size));
+                data = new PointerU8(new MemoryU8((int)size, true));  //*data = std::malloc(std::size_t(size));
                 //if (!*data)
                 //    return std.errc.not_enough_memory;
                 length = (uint32_t)size;
@@ -197,11 +198,11 @@ namespace mame
                 if (size != 0)
                 {
                     size_t actual;
-                    err = file.read(new PointerU8(data), (size_t)size, out actual);  //err = file->read(*data, std::size_t(size), actual);
+                    err = file.read(data, (size_t)size, out actual);  //err = file->read(*data, std::size_t(size), actual);
                     if (err || (size != actual))
                     {
                         //std::free(*data);
-                        data = new MemoryU8();
+                        data = new PointerU8(new MemoryU8());
                         length = 0;
                         if (err)
                             return err;
@@ -272,9 +273,9 @@ namespace mame
             }
 
 
-            /*-------------------------------------------------
-                getc - read a character from a file
-            -------------------------------------------------*/
+            //-------------------------------------------------
+            //  getc - read a character from a file
+            //-------------------------------------------------
             public override int getc()
             {
                 // refresh buffer, if necessary
@@ -435,10 +436,10 @@ namespace mame
             }
 
 
-            /*-------------------------------------------------
-                ungetc - put back a character read from a
-                file
-            -------------------------------------------------*/
+            //-------------------------------------------------
+            //  ungetc - put back a character read from a
+            //  file
+            //-------------------------------------------------
             public override int ungetc(int c)
             {
                 m_back_chars[m_back_char_tail++] = (char)c;
@@ -447,9 +448,9 @@ namespace mame
             }
 
 
-            /*-------------------------------------------------
-                gets - read a line from a text file
-            -------------------------------------------------*/
+            //-------------------------------------------------
+            //  gets - read a line from a text file
+            //-------------------------------------------------
             public override string gets(out string s, int n)
             {
                 s = "";
@@ -499,9 +500,9 @@ namespace mame
             }
 
 
-            /*-------------------------------------------------
-                puts - write a line to a text file
-            -------------------------------------------------*/
+            //-------------------------------------------------
+            //  puts - write a string to a text file
+            //-------------------------------------------------
             public override int puts(string s)
             {
                 // TODO: what to do about write errors or short writes (interrupted)?
@@ -575,9 +576,9 @@ namespace mame
             }
 
 
-            /*-------------------------------------------------
-                vprintf - vfprintf to a text file
-            -------------------------------------------------*/
+            //-------------------------------------------------
+            //  vprintf - vfprintf to a text file
+            //-------------------------------------------------
             public override int vprintf(string str)  //util::format_argument_pack<std::ostream> const &args) override;
             {
                 throw new emu_unimplemented();
@@ -594,40 +595,24 @@ namespace mame
         }
 
 
-        class core_in_memory_file : core_text_file
+        abstract class core_basic_file : core_text_file
         {
-            bool m_data_allocated;   // was the data allocated by us?
-            MemoryU8 m_data;  //void const *    m_data;             // file data, if RAM-based
-            uint64_t m_offset;           // current file offset
-            uint64_t m_length;           // total file length
+            uint64_t m_index;            // current file offset
+            uint64_t m_size;             // total file length
 
 
-            public core_in_memory_file(uint32_t openflags, MemoryU8 data, size_t length, bool copy)  //core_in_memory_file(std::uint32_t openflags, void const *data, std::size_t length, bool copy)
+            protected core_basic_file(uint32_t openflags, uint64_t length)
                 : base(openflags)
             {
-                m_data_allocated = false;
-                m_data = copy ? null : data;
-                m_offset = 0;
-                m_length = length;
-
-
-                if (copy)
-                {
-                    MemoryU8 buf = allocate();  // void *const buf = allocate();
-                    if (buf != null)
-                        std.memcpy(new Pointer<uint8_t>(buf), new Pointer<uint8_t>(data), length);  //if (buf) std::memcpy(buf, data, length);
-                }
-            }
-
-            //~core_in_memory_file() { purge(); }
-
-            public override void close()
-            {
-                purge();
+                m_index = 0;
+                m_size = length;
             }
 
 
-            public override std.error_condition seek(int64_t offset, int whence)  //virtual std::error_condition seek(std::int64_t offset, int whence) noexcept override;
+            //-------------------------------------------------
+            //  seek - seek within a file
+            //-------------------------------------------------
+            public override std.error_condition seek(int64_t offset, int whence)
             {
                 // flush any buffered char
                 clear_putback(); // TODO: report errors; also, should the argument check happen before this?
@@ -639,35 +624,35 @@ namespace mame
                     if (0 > offset)
                         return std.errc.invalid_argument;
 
-                    m_offset = (uint64_t)offset;
+                    m_index = (uint64_t)offset;
                     return new std.error_condition();
 
                 case SEEK_CUR:
                     if (0 > offset)
                     {
-                        if ((uint64_t)(-offset) > m_offset)  //if (std::uint64_t(-offset) > m_offset)
+                        if ((uint64_t)(-offset) > m_index)  //if (std::uint64_t(-offset) > m_index)
                             return std.errc.invalid_argument;
                     }
-                    else if ((uint64_t.MaxValue - (uint64_t)offset) < m_offset)  //else if ((std::numeric_limits<std::uint64_t>::max() - offset) < m_offset)
+                    else if ((uint64_t.MaxValue - (uint64_t)offset) < m_index)  //else if ((std::numeric_limits<std::uint64_t>::max() - offset) < m_index)
                     {
                         return std.errc.invalid_argument;
                     }
 
-                    m_offset += (uint64_t)offset;
+                    m_index += (uint64_t)offset;
                     return new std.error_condition();
 
                 case SEEK_END:
                     if (0 > offset)
                     {
-                        if ((uint64_t)(-offset) > m_length)  //if (std::uint64_t(-offset) > m_length)
+                        if ((uint64_t)(-offset) > m_size)  //if (std::uint64_t(-offset) > m_size)
                             return std.errc.invalid_argument;
                     }
-                    else if ((uint64_t.MaxValue - (uint64_t)offset) < m_length)  //else if ((std::numeric_limits<std::uint64_t>::max() - offset) < m_length)
+                    else if ((uint64_t.MaxValue - (uint64_t)offset) < m_size)  //else if ((std::numeric_limits<std::uint64_t>::max() - offset) < m_size)
                     {
                         return std.errc.invalid_argument;
                     }
 
-                    m_offset = m_length + (uint64_t)offset;
+                    m_index = m_size + (uint64_t)offset;
                     return new std.error_condition();
 
                 default:
@@ -676,20 +661,91 @@ namespace mame
             }
 
 
-            public override std.error_condition tell(out uint64_t result) { result = m_offset; return new std.error_condition(); }  //virtual std::error_condition tell(std::uint64_t &result) noexcept override { result = m_offset; return std::error_condition(); }
-            public override std.error_condition length(out uint64_t result) { result = m_length; return new std.error_condition(); }  //virtual std::error_condition length(std::uint64_t &result) noexcept override { result = m_length; return std::error_condition(); }
+            public override std.error_condition tell(out uint64_t result) { result = m_index; return new std.error_condition(); }
+            public override std.error_condition length(out uint64_t result) { result = m_size; return new std.error_condition(); }
 
+
+            //-------------------------------------------------
+            //  eof - return true if we're at the end of file
+            //-------------------------------------------------
+            protected override bool eof()
+            {
+                // check for buffered chars
+                if (has_putback())
+                    return false;
+
+                // if the offset == length, we're at EOF
+                return (m_index >= m_size);
+            }
+
+
+            protected uint64_t index() { return m_index; }
+            protected void add_offset(size_t increment) { m_index += increment; m_size = std.max(m_size, m_index); }
+            protected uint64_t size() { return m_size; }
+            protected void set_size(uint64_t value) { m_size = value; }
+
+            protected static size_t safe_buffer_copy(
+                PointerU8 source, size_t sourceoffs, size_t sourcelen,  //void const *source, std::size_t sourceoffs, std::size_t sourcelen,
+                PointerU8 dest, size_t destoffs, size_t destlen)  //void *dest, std::size_t destoffs, std::size_t destlen)
+            {
+                var sourceavail = sourcelen - sourceoffs;
+                var destavail = destlen - destoffs;
+                var bytes_to_copy = std.min(sourceavail, destavail);
+                if (bytes_to_copy > 0)
+                {
+                    std.memcpy(
+                        new PointerU8(dest, (int)destoffs),  //reinterpret_cast<std::uint8_t *>(dest) + destoffs,
+                        new PointerU8(source, (int)sourceoffs),  //reinterpret_cast<std::uint8_t const *>(source) + sourceoffs,
+                        bytes_to_copy);
+                }
+
+                return bytes_to_copy;
+            }
+        }
+
+
+        class core_in_memory_file : core_basic_file
+        {
+            bool m_data_allocated;   // was the data allocated by us?
+            PointerU8 m_data;  //void const *    m_data;             // file data, if RAM-based
+
+
+            public core_in_memory_file(uint32_t openflags, PointerU8 data, size_t length, bool copy)  //core_in_memory_file(std::uint32_t openflags, void const *data, std::size_t length, bool copy) noexcept
+                : base(openflags, length)
+            {
+                m_data_allocated = false;
+                m_data = copy ? null : data;
+
+
+                if (copy)
+                {
+                    PointerU8 buf = allocate();  // void *const buf = allocate();
+                    if (buf != null)
+                        std.memcpy(buf, data, length);  //if (buf) std::memcpy(buf, data, length);
+                }
+            }
+
+            //~core_in_memory_file() { purge(); }
+
+            public override void close()
+            {
+                purge();
+            }
+
+
+            //-------------------------------------------------
+            //  read - read from a file
+            //-------------------------------------------------
             public override std.error_condition read(PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition read(void *buffer, std::size_t length, std::size_t &actual) noexcept override;
             {
                 clear_putback();
 
-                // handle RAM-based files
-                if (m_offset < m_length)
-                    actual = safe_buffer_copy(new PointerU8(m_data), (size_t)m_offset, (size_t)m_length, buffer, 0, length);
+                if (index() < size())
+                    actual = safe_buffer_copy(m_data, (size_t)index(), (size_t)size(), buffer, 0, length);
                 else
                     actual = 0U;
 
-                m_offset += actual;
+                add_offset(actual);
                 return new std.error_condition();
             }
 
@@ -698,8 +754,8 @@ namespace mame
                 clear_putback();
 
                 // handle RAM-based files
-                if (offset < m_length)
-                    actual = safe_buffer_copy(new PointerU8(m_data), (size_t)offset, (size_t)m_length, buffer, 0, length);
+                if (offset < size())
+                    actual = safe_buffer_copy(m_data, (size_t)offset, (size_t)size(), buffer, 0, length);
                 else
                     actual = 0U;
 
@@ -712,58 +768,37 @@ namespace mame
             public override std.error_condition write_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual) { actual = 0; return std.errc.bad_file_descriptor; }  //virtual std::error_condition write_at(std::uint64_t offset, void const *buffer, std::size_t length, std::size_t &actual) noexcept override { actual = 0; return std::errc::bad_file_descriptor; }
 
 
-            protected override bool eof()
-            {
-                // check for buffered chars
-                if (has_putback())
-                    return false;
-
-                // if the offset == length, we're at EOF
-                return (m_offset >= m_length);
-            }
+            public PointerU8 buffer() { return new PointerU8(m_data); }  //void const *buffer() const { return m_data; }
 
 
-            public override MemoryU8 buffer() { return m_data; }  //virtual void const *buffer() override { return m_data; }
-
-
+            //-------------------------------------------------
+            //  truncate - truncate a file
+            //-------------------------------------------------
             protected override std.error_condition truncate(uint64_t offset)
             {
-                if (m_length < offset)
+                if (size() < offset)
                     return std.errc.io_error; // TODO: revisit this error code
 
                 // adjust to new length and offset
-                set_length(offset);
+                set_size(offset);
                 return new std.error_condition();
             }
 
 
-            protected core_in_memory_file(uint32_t openflags, uint64_t length)
-                : base(openflags)
+            protected PointerU8 allocate()  //void *allocate()
             {
-                m_data_allocated = false;
-                m_data = null;
-                m_offset = 0;
-                m_length = length;
-            }
-
-
-            protected bool is_loaded() { return null != m_data; }
-
-
-            protected MemoryU8 allocate()  //void *allocate()
-            {
-                if (m_data != null || (size_t.MaxValue < m_length))  //if (m_data || (std::numeric_limits<std::size_t>::max() < m_length))
+                if (m_data != null || (size_t.MaxValue < size()))  //if (m_data || (std::numeric_limits<std::size_t>::max() < size()))
                     return null;
 
-                MemoryU8 data = new MemoryU8((int)m_length, true);  //void *data = malloc(m_length);
-                data.Resize((int)m_length);
+                MemoryU8 data = new MemoryU8((int)size(), true);  //void *data = malloc(size());
+                data.Resize((int)size());
                 if (data != null)
                 {
                     m_data_allocated = true;
-                    m_data = data;
+                    m_data = new PointerU8(data);
                 }
 
-                return data;
+                return new PointerU8(data);
             }
 
 
@@ -776,44 +811,11 @@ namespace mame
             }
 
 
-            protected uint64_t offset() { return m_offset; }
-            protected void add_offset(size_t increment) { m_offset += increment; m_length = std.max(m_length, m_offset); }
-            protected uint64_t length() { return m_length; }
-            protected void set_length(uint64_t value) { m_length = value; m_offset = std.min(m_offset, m_length); }
-
-
-            /*-------------------------------------------------
-                safe_buffer_copy - copy safely from one
-                bounded buffer to another
-            -------------------------------------------------*/
-            protected static size_t safe_buffer_copy(  //std::size_t safe_buffer_copy(
-                    Pointer<uint8_t> source, size_t sourceoffs, size_t sourcelen,  //void const *source, std::size_t sourceoffs, std::size_t sourcelen,
-                    Pointer<uint8_t> dest, size_t destoffs, size_t destlen)  //void *dest, std::size_t destoffs, std::size_t destlen)
-            {
-                var sourceavail = sourcelen - sourceoffs;
-                var destavail = destlen - destoffs;
-                var bytes_to_copy = std.min(sourceavail, destavail);
-                if (bytes_to_copy > 0)
-                {
-                    //std::memcpy(
-                    //        reinterpret_cast<std::uint8_t *>(dest) + destoffs,
-                    //        reinterpret_cast<std::uint8_t const *>(source) + sourceoffs,
-                    //        bytes_to_copy);
-                    std.memcpy(
-                        new Pointer<uint8_t>(dest, (int)destoffs),
-                        new Pointer<uint8_t>(source, (int)sourceoffs),
-                        bytes_to_copy);
-                }
-
-                return bytes_to_copy;
-            }
-
-
             public override Stream stream { get { throw new emu_unimplemented(); } }
         }
 
 
-        sealed class core_osd_file : core_in_memory_file
+        sealed class core_osd_file : core_basic_file
         {
             const int FILE_BUFFER_SIZE = 512;
 
@@ -834,14 +836,18 @@ namespace mame
             public override void close()
             {
                 m_file.Dispose();
+                m_file = null;
             }
 
 
+            //-------------------------------------------------
+            //  read - read from a file
+            //-------------------------------------------------
             public override std.error_condition read(PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition read(void *buffer, std::size_t length, std::size_t &actual) noexcept override;
             {
                 // since osd_file works like pread/pwrite, implement in terms of read_at
                 // core_osd_file is declared final, so a derived class can't interfere
-                std.error_condition err = read_at(offset(), buffer, length, out actual);
+                std.error_condition err = read_at(index(), buffer, length, out actual);
                 add_offset(actual);
                 return err;
             }
@@ -849,8 +855,11 @@ namespace mame
 
             public override std.error_condition read_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition read_at(std::uint64_t offset, void *buffer, std::size_t length, std::size_t &actual) noexcept override;
             {
-                if (m_file == null || is_loaded())
-                    return base.read_at(offset, buffer, length, out actual);
+                if (m_file == null)
+                {
+                    actual = 0U;
+                    return std.errc.bad_file_descriptor;
+                }
 
                 // flush any buffered char
                 clear_putback();
@@ -900,20 +909,17 @@ namespace mame
             }
 
 
+            //-------------------------------------------------
+            //  flush - flush file buffers
+            //-------------------------------------------------
             public override std.error_condition finalize()
             {
-                if (is_loaded())
-                    return base.finalize();
-
                 return new std.error_condition();
             }
 
 
             public override std.error_condition flush()
             {
-                if (is_loaded())
-                    return base.flush();
-
                 // flush any buffered char
                 clear_putback();
 
@@ -924,11 +930,14 @@ namespace mame
             }
 
 
+            //-------------------------------------------------
+            //  write - write to a file
+            //-------------------------------------------------
             public override std.error_condition write(PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition write(void const *buffer, std::size_t length, std::size_t &actual) noexcept override;
             {
                 // since osd_file works like pread/pwrite, implement in terms of write_at
                 // core_osd_file is declared final, so a derived class can't interfere
-                std.error_condition err = write_at(offset(), buffer, length, out actual);
+                std.error_condition err = write_at(index(), buffer, length, out actual);
                 add_offset(actual);
                 return err;
             }
@@ -936,10 +945,6 @@ namespace mame
 
             public override std.error_condition write_at(uint64_t offset, PointerU8 buffer, size_t length, out size_t actual)  //virtual std::error_condition write_at(std::uint64_t offset, void const *buffer, std::size_t length, std::size_t &actual) noexcept override;
             {
-                // can't write to RAM-based stuff
-                if (is_loaded())
-                    return base.write_at(offset, buffer, length, out actual);
-
                 // flush any buffered char
                 clear_putback();
 
@@ -963,73 +968,33 @@ namespace mame
                     buffer = buffer + bytes_written;  //buffer = reinterpret_cast<std::uint8_t const *>(buffer) + bytes_written;
                     length -= bytes_written;
                     actual += bytes_written;
-                    set_length(std.max(this.length(), offset));
+                    set_size(std.max(size(), offset));
                 }
 
                 return new std.error_condition();
             }
 
 
-            /*-------------------------------------------------
-                buffer - return a pointer to the file buffer;
-                if it doesn't yet exist, load the file into
-                RAM first
-            -------------------------------------------------*/
-            public override MemoryU8 buffer()  //void const *buffer()
-            {
-                // if we already have data, just return it
-                if (!is_loaded() && length() != 0)
-                {
-                    // allocate some memory
-                    MemoryU8 buf = allocate();  //void *const buf = allocate();
-                    if (buf == null)
-                        return null;
-
-                    // read the file
-                    uint64_t bytes_read = 0;
-                    uint64_t remaining = length();
-                    PointerU8 ptr = new PointerU8(buf);  //std::uint8_t *ptr = reinterpret_cast<std::uint8_t *>(buf);
-                    while (remaining != 0)
-                    {
-                        uint32_t chunk = std.min(uint32_t.MaxValue, (uint32_t)remaining);  //std::uint32_t const chunk = std::min<std::common_type_t<std::uint32_t, std::size_t> >(std::numeric_limits<std::uint32_t>::max(), remaining);
-                        uint32_t read_length;
-                        std.error_condition filerr = m_file.read(ptr, bytes_read, chunk, out read_length);
-                        if (filerr || read_length == 0)
-                        {
-                            purge();
-                            return base.buffer();
-                        }
-
-                        bytes_read += read_length;
-                        remaining -= read_length;
-                        ptr += read_length;
-                    }
-
-                    m_file.Dispose();  //m_file.reset(); // close the file because we don't need it anymore
-                    m_file = null;
-                }
-
-                return base.buffer();
-            }
-
-
+            //-------------------------------------------------
+            //  truncate - truncate a file
+            //-------------------------------------------------
             protected override std.error_condition truncate(uint64_t offset)
             {
-                if (is_loaded())
-                    return base.truncate(offset);
-
                 // truncate file
                 std.error_condition err = m_file.truncate(offset);
                 if (err)
                     return err;
 
                 // and adjust to new length and offset
-                set_length(offset);
+                set_size(offset);
                 return new std.error_condition();
             }
 
 
             bool is_buffered(uint64_t offset) { return (offset >= m_bufferbase) && (offset < (m_bufferbase + m_bufferbytes)); }
+
+
+            public override Stream stream { get { throw new emu_unimplemented(); } }
         }
     }
 

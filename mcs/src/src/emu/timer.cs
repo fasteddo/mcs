@@ -312,7 +312,7 @@ namespace mame
     }
 
 
-    static class timer_global
+    public static class timer_global
     {
         public static timer_device TIMER(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<timer_device>(mconfig, tag, timer_device.TIMER, clock); }
     }

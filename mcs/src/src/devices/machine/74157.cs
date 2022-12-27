@@ -125,8 +125,9 @@ namespace mame
     //class hct157_device : public ls157_device
 
 
-    static class _74157_global
+    public static class _74157_global
     {
+        public static ls157_device LS157(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<ls157_device>(mconfig, tag, ls157_device.LS157, 0); }
         public static ls157_device LS157<bool_Required>(machine_config mconfig, device_finder<ls157_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ls157_device.LS157, clock); }
     }
 }

@@ -16,7 +16,7 @@ namespace mame
     //**************************************************************************
 
     // ======================> filter_rc_device
-    class filter_rc_device : device_t
+    public class filter_rc_device : device_t
                              //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(FILTER_RC, filter_rc_device, "filter_rc", "RC Filter")

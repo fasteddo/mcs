@@ -157,7 +157,7 @@ namespace mame
         public virtual string get_default_card_software() { return ""; }
         public device_t get_card_device() { return m_card_device; }
         public void set_card_device(device_t dev) { m_card_device = dev; }
-        public string slot_name() { return device().tag().Substring(1); }  // + 1; }
+        public string slot_name() { return device().tag()[1..]; }  // + 1; }
         //slot_option &option_set(const char *tag, const device_type &devtype) { m_default_option = tag; m_fixed = true; return option_add_internal(tag, devtype); }
 
 

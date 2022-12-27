@@ -210,7 +210,7 @@ namespace mame
     }
 
 
-    static class vector_global
+    public static class vector_global
     {
         public static vector_device VECTOR(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<vector_device>(mconfig, tag, vector_device.VECTOR, 0); }
     }

@@ -1136,8 +1136,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            IMMWORD(ref b);
+            PAIR b;
+            IMMWORD(out b);
             d = D;
             r = d - b.d;
             CLR_NZVC();
@@ -1227,8 +1227,8 @@ namespace mame
         {
             PAIR r = new PAIR();
             PAIR d = new PAIR();
-            PAIR b = new PAIR();
-            IMMWORD(ref b);
+            PAIR b;
+            IMMWORD(out b);
             d.d = X;
             r.w.l = (uint16_t)(d.b.h - b.b.h);
             CLR_NZV();
@@ -1244,8 +1244,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            IMMWORD(ref b);
+            PAIR b;
+            IMMWORD(out b);
             d = X;
             r = d - b.d;
             CLR_NZVC(); SET_FLAGS16(d, b.d, r);
@@ -1266,7 +1266,7 @@ namespace mame
         //OP_HANDLER( lds_im )
         protected void lds_im()
         {
-            IMMWORD(ref m_s);
+            IMMWORD(out m_s);
             CLR_NZV();
             SET_NZ16(S);
         }
@@ -1278,7 +1278,7 @@ namespace mame
             CLR_NZV();
             SET_NZ16(S);
             IMM16();
-            WM16(EAD, ref m_s);
+            WM16(EAD, m_s);
         }
 
         /* $90 SUBA direct ?**** */
@@ -1317,9 +1317,10 @@ namespace mame
         //OP_HANDLER( subd_di )
         protected void subd_di()
         {
-            uint32_t r,d;
-            PAIR b = new PAIR();
-            DIRWORD(ref b);
+            uint32_t r;
+            uint32_t d;
+            PAIR b;
+            DIRWORD(out b);
             d = D;
             r = d - b.d;
             CLR_NZVC();
@@ -1421,8 +1422,8 @@ namespace mame
         {
             PAIR r = new PAIR();
             PAIR d = new PAIR();
-            PAIR b = new PAIR();
-            DIRWORD(ref b);
+            PAIR b;
+            DIRWORD(out b);
             d.d = X;
             r.w.l = (uint16_t)(d.b.h - b.b.h);
             CLR_NZV();
@@ -1438,8 +1439,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            DIRWORD(ref b);
+            PAIR b;
+            DIRWORD(out b);
             d = X;
             r = d - b.d;
             CLR_NZVC();
@@ -1459,7 +1460,7 @@ namespace mame
         //OP_HANDLER( lds_di )
         protected void lds_di()
         {
-            DIRWORD(ref m_s);
+            DIRWORD(out m_s);
             CLR_NZV();
             SET_NZ16(S);
         }
@@ -1471,7 +1472,7 @@ namespace mame
             CLR_NZV();
             SET_NZ16(S);
             DIRECT();
-            WM16(EAD, ref m_s);
+            WM16(EAD, m_s);
         }
 
         /* $a0 SUBA indexed ?**** */
@@ -1518,8 +1519,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            IDXWORD(ref b);
+            PAIR b;
+            IDXWORD(out b);
             d = D;
             r = d - b.d;
             CLR_NZVC();
@@ -1623,8 +1624,8 @@ namespace mame
         {
             PAIR r = new PAIR();
             PAIR d = new PAIR();
-            PAIR b = new PAIR();
-            IDXWORD(ref b);
+            PAIR b;
+            IDXWORD(out b);
             d.d = X;
             r.w.l = (uint16_t)(d.b.h - b.b.h);
             CLR_NZV();
@@ -1640,8 +1641,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            IDXWORD(ref b);
+            PAIR b;
+            IDXWORD(out b);
             d = X;
             r = d - b.d;
             CLR_NZVC();
@@ -1661,7 +1662,7 @@ namespace mame
         //OP_HANDLER( lds_ix )
         protected void lds_ix()
         {
-            IDXWORD(ref m_s);
+            IDXWORD(out m_s);
             CLR_NZV();
             SET_NZ16(S);
         }
@@ -1673,7 +1674,7 @@ namespace mame
             CLR_NZV();
             SET_NZ16(S);
             INDEXED();
-            WM16(EAD, ref m_s);
+            WM16(EAD, m_s);
         }
 
         /* $b0 SUBA extended ?**** */
@@ -1720,8 +1721,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            EXTWORD(ref b);
+            PAIR b;
+            EXTWORD(out b);
             d = D;
             r = d - b.d;
             CLR_NZVC();
@@ -1827,8 +1828,8 @@ namespace mame
         {
             PAIR r = new PAIR();
             PAIR d = new PAIR();
-            PAIR b = new PAIR();
-            EXTWORD(ref b);
+            PAIR b;
+            EXTWORD(out b);
             d.d = X;
             r.w.l = (uint16_t)(d.b.h - b.b.h);
             CLR_NZV();
@@ -1844,8 +1845,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            EXTWORD(ref b);
+            PAIR b;
+            EXTWORD(out b);
             d = X;
             r = d - b.d;
             CLR_NZVC();
@@ -1865,7 +1866,7 @@ namespace mame
         //OP_HANDLER( lds_ex )
         protected void lds_ex()
         {
-            EXTWORD(ref m_s);
+            EXTWORD(out m_s);
             CLR_NZV();
             SET_NZ16(S);
         }
@@ -1877,7 +1878,7 @@ namespace mame
             CLR_NZV();
             SET_NZ16(S);
             EXTENDED();
-            WM16(EAD, ref m_s);
+            WM16(EAD, m_s);
         }
 
         /* $c0 SUBB immediate ?**** */
@@ -1924,8 +1925,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            IMMWORD(ref b);
+            PAIR b;
+            IMMWORD(out b);
             d = D;
             r = d + b.d;
             CLR_NZVC();
@@ -2030,7 +2031,7 @@ namespace mame
         //OP_HANDLER( ldd_im )
         protected void ldd_im()
         {
-            IMMWORD(ref m_d);
+            IMMWORD(out m_d);
             CLR_NZV();
             SET_NZ16(D);
         }
@@ -2043,14 +2044,14 @@ namespace mame
             IMM16();
             CLR_NZV();
             SET_NZ16(D);
-            WM16(EAD, ref m_d);
+            WM16(EAD, m_d);
         }
 
         /* $ce LDX immediate -**0- */
         //OP_HANDLER( ldx_im )
         protected void ldx_im()
         {
-            IMMWORD(ref m_x);
+            IMMWORD(out m_x);
             CLR_NZV();
             SET_NZ16(X);
         }
@@ -2062,7 +2063,7 @@ namespace mame
             CLR_NZV();
             SET_NZ16(X);
             IMM16();
-            WM16(EAD, ref m_x);
+            WM16(EAD, m_x);
         }
 
         /* $d0 SUBB direct ?**** */
@@ -2109,8 +2110,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            DIRWORD(ref b);
+            PAIR b;
+            DIRWORD(out b);
             d = D;
             r = d + b.d;
             CLR_NZVC();
@@ -2214,7 +2215,7 @@ namespace mame
         //OP_HANDLER( ldd_di )
         protected void ldd_di()
         {
-            DIRWORD(ref m_d);
+            DIRWORD(out m_d);
             CLR_NZV();
             SET_NZ16(D);
         }
@@ -2226,14 +2227,14 @@ namespace mame
             DIRECT();
             CLR_NZV();
             SET_NZ16(D);
-            WM16(EAD, ref m_d);
+            WM16(EAD, m_d);
         }
 
         /* $de LDX direct -**0- */
         //OP_HANDLER( ldx_di )
         protected void ldx_di()
         {
-            DIRWORD(ref m_x);
+            DIRWORD(out m_x);
             CLR_NZV();
             SET_NZ16(X);
         }
@@ -2245,7 +2246,7 @@ namespace mame
             CLR_NZV();
             SET_NZ16(X);
             DIRECT();
-            WM16(EAD, ref m_x);
+            WM16(EAD, m_x);
         }
 
         /* $e0 SUBB indexed ?**** */
@@ -2292,8 +2293,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            IDXWORD(ref b);
+            PAIR b;
+            IDXWORD(out b);
             d = D;
             r = d + b.d;
             CLR_NZVC();
@@ -2397,7 +2398,7 @@ namespace mame
         //OP_HANDLER( ldd_ix )
         protected void ldd_ix()
         {
-            IDXWORD(ref m_d);
+            IDXWORD(out m_d);
             CLR_NZV();
             SET_NZ16(D);
         }
@@ -2424,14 +2425,14 @@ namespace mame
             INDEXED();
             CLR_NZV();
             SET_NZ16(D);
-            WM16(EAD, ref m_d);
+            WM16(EAD, m_d);
         }
 
         /* $ee LDX indexed -**0- */
         //OP_HANDLER( ldx_ix )
         protected void ldx_ix()
         {
-            IDXWORD(ref m_x);
+            IDXWORD(out m_x);
             CLR_NZV();
             SET_NZ16(X);
         }
@@ -2443,7 +2444,7 @@ namespace mame
             CLR_NZV();
             SET_NZ16(X);
             INDEXED();
-            WM16(EAD, ref m_x);
+            WM16(EAD, m_x);
         }
 
         /* $f0 SUBB extended ?**** */
@@ -2490,8 +2491,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            EXTWORD(ref b);
+            PAIR b;
+            EXTWORD(out b);
             d = D;
             r = d + b.d;
             CLR_NZVC();
@@ -2595,7 +2596,7 @@ namespace mame
         //OP_HANDLER( ldd_ex )
         protected void ldd_ex()
         {
-            EXTWORD(ref m_d);
+            EXTWORD(out m_d);
             CLR_NZV();
             SET_NZ16(D);
         }
@@ -2606,8 +2607,8 @@ namespace mame
         {
             uint32_t r;
             uint32_t d;
-            PAIR b = new PAIR();
-            EXTWORD(ref b);
+            PAIR b;
+            EXTWORD(out b);
             d = X;
             r = d + b.d;
             CLR_NZVC();
@@ -2622,14 +2623,14 @@ namespace mame
             EXTENDED();
             CLR_NZV();
             SET_NZ16(D);
-            WM16(EAD, ref m_d);
+            WM16(EAD, m_d);
         }
 
         /* $fe LDX extended -**0- */
         //OP_HANDLER( ldx_ex )
         protected void ldx_ex()
         {
-            EXTWORD(ref m_x);
+            EXTWORD(out m_x);
             CLR_NZV();
             SET_NZ16(X);
         }
@@ -2641,7 +2642,7 @@ namespace mame
             CLR_NZV();
             SET_NZ16(X);
             EXTENDED();
-            WM16(EAD, ref m_x);
+            WM16(EAD, m_x);
         }
 
         /* NSC8105 specific, guessed opcodes (tested by Night Gal Summer) */

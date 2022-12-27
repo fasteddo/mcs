@@ -327,7 +327,7 @@ namespace mame
         string m_tag;
 
         public tag_add_exception(string tag) : base() { m_tag = tag; }
-        string tag() { return m_tag; }
+        public string tag() { return m_tag; }
     }
 
 

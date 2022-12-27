@@ -8,8 +8,10 @@ using uint8_t = System.Byte;
 
 using static mame._74153_global;
 using static mame.avgdvg_global;
+using static mame.disound_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.er2055_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
 using static mame.input_global;
@@ -18,6 +20,8 @@ using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
 using static mame.m6502_global;
 using static mame.output_latch_global;
+using static mame.pokey_global;
+using static mame.rescap_global;
 using static mame.romentry_global;
 using static mame.screen_global;
 using static mame.util;
@@ -107,7 +111,13 @@ namespace mame
         }
 
 
-        //void asteroid_state::astdelux_map(address_map &map)
+        void astdelux_map(address_map map, device_t device)
+        {
+            throw new emu_unimplemented();
+#if false
+#endif
+        }
+
 
         //void asteroid_state::llander_map(address_map &map)
 
@@ -127,7 +137,7 @@ namespace mame
     }
 
 
-    partial class asteroid : construct_ioport_helper
+    public partial class asteroid : construct_ioport_helper
     {
         //static INPUT_PORTS_START( asteroid )
         void construct_ioport_asteroid(device_t owner, ioport_list portlist, ref string errorbuf)
@@ -195,7 +205,17 @@ namespace mame
 
         //static INPUT_PORTS_START( asterock )
 
+
         //static INPUT_PORTS_START( astdelux )
+        void construct_ioport_astdelux(device_t owner, ioport_list portlist, ref string errorbuf)
+        {
+            INPUT_PORTS_START(owner, portlist, ref errorbuf);
+
+            throw new emu_unimplemented();
+#if false
+#endif
+        }
+
 
         //static INPUT_PORTS_START( llander )
 
@@ -259,7 +279,37 @@ namespace mame
 
         //void asteroid_state::asterock(machine_config &config)
 
-        //void asteroid_state::astdelux(machine_config &config)
+
+        public void astdelux(machine_config config)
+        {
+            asteroid_base(config);
+
+            // Basic machine hardware
+            m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, astdelux_map);
+
+            ER2055(config, m_earom);
+
+            // Sound hardware
+            astdelux_sound(config);
+
+            pokey_device pokey = POKEY(config, "pokey", MASTER_CLOCK / 8);
+            pokey.allpot_r().set_ioport("DSW2").reg();
+            pokey.set_output_rc(RES_K(10), CAP_U(0.015), 5.0);
+            pokey.disound.add_route(ALL_OUTPUTS, "mono", 1.0);
+
+            config.device_remove("outlatch");
+
+            ls259_device audiolatch = subdevice<ls259_device>("audiolatch");
+            audiolatch.q_out_cb<u32_const_0>().set_output("led0").invert().reg(); // START1
+            audiolatch.q_out_cb<u32_const_1>().set_output("led1").invert().reg(); // START2
+            audiolatch.q_out_cb<u32_const_4>().set_membank("ram1").reg(); // RAMSEL
+            audiolatch.q_out_cb<u32_const_4>().append_membank("ram2").reg();
+            audiolatch.q_out_cb<u32_const_4>().append(cocktail_inv_w).reg();
+            audiolatch.q_out_cb<u32_const_5>().set((write_line_delegate)coin_counter_left_w).reg(); // LEFT COIN
+            audiolatch.q_out_cb<u32_const_6>().set((write_line_delegate)coin_counter_center_w).reg(); // CENTER COIN
+            audiolatch.q_out_cb<u32_const_7>().set((write_line_delegate)coin_counter_right_w).reg(); // RIGHT COIN
+        }
+
 
         //void asteroid_state::llander(machine_config &config)
     }
@@ -317,7 +367,28 @@ namespace mame
 
         //ROM_START( hyperspc )
 
+
         //ROM_START( astdelux )
+        static readonly tiny_rom_entry [] rom_astdelux =
+        {
+            ROM_REGION( 0x8000, "maincpu", 0 ),
+            ROM_LOAD( "036430-02.d1",  0x6000, 0x0800, CRC("a4d7a525") + SHA1("abe262193ec8e1981be36928e9a89a8ac95cd0ad") ),
+            ROM_LOAD( "036431-02.ef1", 0x6800, 0x0800, CRC("d4004aae") + SHA1("aa2099b8fc62a79879efeea70ea1e9ed77e3e6f0") ),
+            ROM_LOAD( "036432-02.fh1", 0x7000, 0x0800, CRC("6d720c41") + SHA1("198218cd2f43f8b83e4463b1f3a8aa49da5015e4") ),
+            ROM_LOAD( "036433-03.j1",  0x7800, 0x0800, CRC("0dcc0be6") + SHA1("bf10ffb0c4870e777d6b509cbede35db8bb6b0b8") ),
+            // Vector ROM
+            ROM_LOAD( "036800-02.r2",  0x4800, 0x0800, CRC("bb8cabe1") + SHA1("cebaa1b91b96e8b80f2b2c17c6fd31fa9f156386") ),
+            ROM_LOAD( "036799-01.np2", 0x5000, 0x0800, CRC("7d511572") + SHA1("1956a12bccb5d3a84ce0c1cc10c6ad7f64e30b40") ),
+
+            // DVG PROM
+            ROM_REGION( 0x100, "dvg:prom", 0 ),
+            ROM_LOAD( "034602-01.c8",  0x0000, 0x0100, CRC("97953db8") + SHA1("8cbded64d1dd35b18c4d5cece00f77e7b2cab2ad") ),
+
+            ROM_REGION( 0x40, "earom", ROMREGION_ERASE00 ), // default to zero fill to suppress invalid high score display
+
+            ROM_END,
+        };
+
 
         //ROM_START( astdelux2 )
 
@@ -348,13 +419,16 @@ namespace mame
          *************************************/
 
         static void asteroid_state_asteroid(machine_config config, device_t device) { asteroid_state asteroid_state = (asteroid_state)device; asteroid_state.asteroid(config); }
+        static void asteroid_state_astdelux(machine_config config, device_t device) { asteroid_state asteroid_state = (asteroid_state)device; asteroid_state.astdelux(config); }
 
         static asteroid m_asteroid = new asteroid();
 
         static device_t device_creator_asteroid(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new asteroid_state(mconfig, type, tag); }
 
 
-        //                                                        creator,                 rom           YEAR    NAME          PARENT      MACHINE                  INPUT                                 INIT                      ROT   COMPANY, FULLNAME,            FLAGS                  LAYOUT
-        public static readonly game_driver driver_asteroid = GAME(device_creator_asteroid, rom_asteroid, "1979", "asteroid",   "0",        asteroid_state_asteroid, m_asteroid.construct_ioport_asteroid, driver_device.empty_init, ROT0, "Atari", "Asteroids (rev 4)", MACHINE_SUPPORTS_SAVE);
+        //                                                        creator,                  rom           YEAR    NAME        PARENT  MACHINE                  INPUT                                 INIT                      ROT   COMPANY, FULLNAME,                   FLAGS                  LAYOUT
+        public static readonly game_driver driver_asteroid = GAME(device_creator_asteroid,  rom_asteroid, "1979", "asteroid", "0",    asteroid_state_asteroid, m_asteroid.construct_ioport_asteroid, driver_device.empty_init, ROT0, "Atari", "Asteroids (rev 4)",        MACHINE_SUPPORTS_SAVE);
+
+        public static readonly game_driver driver_astdelux = GAMEL(device_creator_asteroid, rom_astdelux, "1980", "astdelux", "0",    asteroid_state_astdelux, m_asteroid.construct_ioport_astdelux, driver_device.empty_init, ROT0, "Atari", "Asteroids Deluxe (rev 3)", MACHINE_SUPPORTS_SAVE, null /*layout_astdelux*/);
     }
 }

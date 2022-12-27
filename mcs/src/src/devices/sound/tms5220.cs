@@ -586,7 +586,7 @@ namespace mame
             }
 
             /* resolve callbacks */
-            m_irq_handler.resolve();
+            m_irq_handler.resolve_safe();
             m_readyq_handler.resolve();
             m_m0_cb.resolve();
             m_m1_cb.resolve();
@@ -1775,9 +1775,11 @@ namespace mame
 
             LOGMASKED(LOG_PIN_READS, "irq pin set to state {0}\n", state);
 
-            if (!m_irq_handler.isnull() && ((state != 0) != m_irq_pin))
+            if ((state != 0) != m_irq_pin)
+            {
+                m_irq_pin = state != 0;
                 m_irq_handler.op_s32(state == 0 ? 1 : 0);
-            m_irq_pin = state != 0;
+            }
         }
 
 
@@ -1857,7 +1859,7 @@ namespace mame
     //DECLARE_DEVICE_TYPE(CD2501ECD, cd2501ecd_device)
 
 
-    static class tms5220_global
+    public static class tms5220_global
     {
         public static tms5220c_device TMS5220C<bool_Required>(machine_config mconfig, device_finder<tms5220c_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, tms5220c_device.TMS5220C, clock); }
     }

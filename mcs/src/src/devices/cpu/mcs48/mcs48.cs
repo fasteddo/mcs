@@ -1313,7 +1313,7 @@ namespace mame
     }
 
 
-    static class mcs48_global
+    public static class mcs48_global
     {
         public static mcs48_cpu_device MB8884<bool_Required>(machine_config mconfig, device_finder<mcs48_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8884_device.MB8884, clock); }
     }

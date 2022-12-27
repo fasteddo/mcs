@@ -60,7 +60,7 @@ namespace mame
                     emu_file file = new emu_file(m_options.categoryini_path(), OPEN_FLAG_READ);
                     if (!file.open(name))
                     {
-                        init_category(name, file.core_file_get());
+                        init_category(name, file.core_file_);
                         file.close();
                     }
                 }
@@ -96,7 +96,7 @@ namespace mame
                 //var tail = std::find_if(std::begin(rbuf), std::prev(std::end(rbuf)));//, [] (char ch) { return !ch || ('\r' == ch) || ('\n' == ch); });
                 //*tail = '\0';
                 var tail = rbuf.IndexOfAny("\r\n".ToCharArray());
-                rbuf = rbuf.Substring(tail);
+                rbuf = rbuf[tail..];
                 int dfind = driver_list.find(rbuf);
                 if (0 <= dfind)
                     result.emplace(driver_list.driver((size_t)dfind));
@@ -280,9 +280,9 @@ namespace mame
         bool check_impl(object key)  //bool check_impl(T const &key) const;
         {
             //return m_favorites.find(key) != m_favorites.end();
-            if (key is game_driver)
+            if (key is game_driver key_game)
             {
-                return m_favorites.ContainsIf((item) => { return favorite_compare.op((game_driver)key, item); });
+                return m_favorites.ContainsIf((item) => { return favorite_compare.op(key_game, item); });
             }
             else  // add new type as needed
             {

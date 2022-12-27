@@ -24,16 +24,21 @@ namespace mcsForm
             Trace.WriteLine(string.Format("RuntimeInformation.FrameworkDescription: {0}", System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription));
 
 
-            Form1 form = new Form1();
+            Form1 form = new();
 
+            drivlist_global_generated.init();
+            object_finder_operations_global.init();
+            samples_device_enumerator_helper_samples.init();
+            cassette_device_enumerator_helper_cassette.init();
+            nld_sound_in_helper_global.init();
 
-            osdcore_WinForms osdcore = new osdcore_WinForms();
-            osd_file_WinForms osdfile = new osd_file_WinForms();
-            osd_directory_static_WinForms osddirectory = new osd_directory_static_WinForms();
-            osd_options_WinForms options = new osd_options_WinForms();
-            osd_interface_WinForms osd = new osd_interface_WinForms(options);
+            osdcore_WinForms osdcore = new();
+            osd_file_WinForms osdfile = new();
+            osd_directory_static_WinForms osddirectory = new();
+            osd_options_WinForms options = new();
+            osd_interface_WinForms osd = new(options);
             osd.register_options();
-            cli_frontend frontend = new cli_frontend(options, osd);
+            cli_frontend frontend = new(options, osd);
 
             // to jump to a specific game on startup
             //string gamename = "___empty";

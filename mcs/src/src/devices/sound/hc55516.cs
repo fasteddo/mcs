@@ -19,7 +19,7 @@ using static mame.hc55516_internal;
 
 namespace mame
 {
-    class cvsd_device_base : device_t
+    public class cvsd_device_base : device_t
                              //device_sound_interface
     {
         public class device_sound_interface_cvsd : device_sound_interface
@@ -144,7 +144,7 @@ namespace mame
     }
 
 
-    class hc55516_device : cvsd_device_base
+    public class hc55516_device : cvsd_device_base
     {
         //DEFINE_DEVICE_TYPE(HC55516, hc55516_device, "hc55516", "HC-55516")
         public static readonly emu.detail.device_type_impl HC55516 = DEFINE_DEVICE_TYPE("hc55516", "HC-55516", (type, mconfig, tag, owner, clock) => { return new hc55516_device(mconfig, tag, owner, clock); });
@@ -265,7 +265,7 @@ namespace mame
     }
 
 
-    static class hc55516_global
+    public static class hc55516_global
     {
         public static hc55516_device HC55516(machine_config mconfig, string tag, uint32_t clock) { return emu.detail.device_type_impl.op<hc55516_device>(mconfig, tag, hc55516_device.HC55516, clock); }
     }

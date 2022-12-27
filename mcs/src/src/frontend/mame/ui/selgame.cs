@@ -5,6 +5,7 @@ using System;
 
 using icon_cache = mame.util.lru_cache_map<mame.game_driver, mame.ui.menu_select_game.texture_and_bitmap>;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using size_t = System.UInt64;
 using software_list_device_enumerator = mame.device_type_enumerator<mame.software_list_device>;  //typedef device_type_enumerator<software_list_device> software_list_device_enumerator;
 using system_list_system_reference_vector = mame.std.vector<mame.ui_system_info>;  //using system_reference_vector = std::vector<system_reference>;
@@ -108,13 +109,13 @@ namespace mame.ui
                 else
                 {
                     string sub_filter = tmp.substr(found + 1);
-                    tmp = tmp.Substring((int)found);  // .resize(found);
+                    tmp = tmp[(int)found..];  // .resize(found);
                     fake_ini = util.string_format("\uFEFF{0} = {1}\n", tmp, sub_filter);
                 }
 
                 util.core_file file;
                 MemoryU8 fake_ini_buffer = new MemoryU8(System.Text.Encoding.ASCII.GetBytes(fake_ini));
-                if (!util.core_file.open_ram(fake_ini_buffer, fake_ini.size(), OPEN_FLAG_READ, out file))
+                if (!util.core_file.open_ram(new PointerU8(fake_ini_buffer), fake_ini.size(), OPEN_FLAG_READ, out file))
                 {
                     m_persistent_data.filter_data().load_ini(file);
                     file.Dispose();
@@ -614,7 +615,7 @@ namespace mame.ui
                                 emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                                 if (!file.open(util.string_format("custom_{0}_filter.ini", emulator_info.get_configname())))
                                 {
-                                    filter.save_ini(file.core_file_get(), 0);
+                                    filter.save_ini(file.core_file_, 0);
                                     file.close();
                                 }
                             }
@@ -860,7 +861,7 @@ namespace mame.ui
             emu_file file = new emu_file(ui().options().ui_path(), OPEN_FLAG_READ);
             if (!file.open(util.string_format("custom_{0}_filter.ini", emulator_info.get_configname())))
             {
-                machine_filter flt = machine_filter.create(file.core_file_get(), m_persistent_data.filter_data());
+                machine_filter flt = machine_filter.create(file.core_file_, m_persistent_data.filter_data());
                 if (flt != null)
                     m_persistent_data.filter_data().set_filter(flt); // not emplace/insert - could replace bogus filter from ui.ini line
 
@@ -877,7 +878,7 @@ namespace mame.ui
         void inkey_select(event_ menu_event)
         {
             var system = (ui_system_info)menu_event.itemref;
-            int driverint = menu_event.itemref is int ? (int)menu_event.itemref : -1;
+            int driverint = menu_event.itemref is int itemref ? itemref : -1;
 
             if (driverint == CONF_OPTS)
             {

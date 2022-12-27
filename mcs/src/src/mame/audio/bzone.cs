@@ -209,11 +209,11 @@ namespace mame
             double BZONE_CUSTOM_FILTER__VP { get { return DISCRETE_INPUT(8); } }
 
 
-            double m_v_in1_gain;
-            double m_v_p;
-            double m_exponent;
+            double m_v_in1_gain = 0;
+            double m_v_p = 0;
+            double m_exponent = 0;
             double [] m_gain = new double [2];
-            double m_out_v;
+            double m_out_v = 0;
 
 
             //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -236,7 +236,7 @@ namespace mame
             public void step()
             {
                 int     in0 = (BZONE_CUSTOM_FILTER__IN0 == 0) ? 0 : 1;
-                double  v;
+                double  v = 0;
 
                 if (BZONE_CUSTOM_FILTER__IN1 > 0)
                     v = 0;

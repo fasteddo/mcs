@@ -7,6 +7,7 @@ using System.Collections.Generic;
 
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using gfx_interface_enumerator = mame.device_interface_enumerator<mame.device_gfx_interface>;  //typedef device_interface_enumerator<device_gfx_interface> gfx_interface_enumerator;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -57,9 +58,9 @@ namespace mame
             List<u32> output = new List<u32>();
             for (int i = 0; i < objects.Length; i++)
             {
-                if (objects[i] is u32)        { output.Add((u32)objects[i]); }
-                else if (objects[i] is u32[]) { output.AddRange((u32 [])objects[i]); }
-                else if (objects[i] is int)   { output.Add((u32)((int)objects[i])); }
+                if (objects[i] is u32 object_u32) { output.Add(object_u32); }
+                else if (objects[i] is u32[] object_u32_array) { output.AddRange(object_u32_array); }
+                else if (objects[i] is s32 object_s32) { output.Add((u32)object_s32); }
             }
 
             return output.ToArray();
@@ -114,13 +115,13 @@ namespace mame
         //#define GFXDECODE_MEMBER( name ) const gfx_decode_entry name[] = {
         // common gfx_decode_entry macros
         //#define GFXDECODE_ENTRYX(region,offset,layout,start,colors,flags) { region, offset, &layout, start, colors, flags },
-        public static gfx_decode_entry GFXDECODE_ENTRY(string region, u32 offset, gfx_layout layout, u16 start, u16 colors) { return new gfx_decode_entry() { memory_region = region, start = offset, gfxlayout = layout, color_codes_start = start, total_color_codes = colors, flags = 0 }; }
+        public static gfx_decode_entry GFXDECODE_ENTRY(string region, u32 offset, gfx_layout layout, u16 start, u16 colors) { return new gfx_decode_entry(region, offset, layout, start, colors, 0); }
 
         // specialized gfx_decode_entry macros
-        //#define GFXDECODE_RAM(region,offset,layout,start,colors) { region, offset, &layout, start, colors, GFXENTRY_RAM },
+        public static gfx_decode_entry GFXDECODE_RAM(string region, u32 offset, gfx_layout layout, u16 start, u16 colors) { return new gfx_decode_entry(region, offset, layout, start, colors, GFXENTRY_RAM); }
         //#define GFXDECODE_DEVICE(region,offset,layout,start,colors) { region, offset, &layout, start, colors, GFXENTRY_DEVICE },
         //#define GFXDECODE_DEVICE_RAM(region,offset,layout,start,colors) { region, offset, &layout, start, colors, GFXENTRY_DEVICE | GFXENTRY_RAM },
-        public static gfx_decode_entry GFXDECODE_SCALE(string region, u32 offset, gfx_layout layout, u16 start, u16 colors, u32 x, u32 y) { return new gfx_decode_entry() { memory_region = region, start = offset, gfxlayout = layout, color_codes_start = start, total_color_codes = colors, flags = GFXENTRY_XSCALE(x) | GFXENTRY_YSCALE(y) }; }
+        public static gfx_decode_entry GFXDECODE_SCALE(string region, u32 offset, gfx_layout layout, u16 start, u16 colors, u32 x, u32 y) { return new gfx_decode_entry(region, offset, layout, start, colors, GFXENTRY_XSCALE(x) | GFXENTRY_YSCALE(y)); }
         //#define GFXDECODE_REVERSEBITS(region,offset,layout,start,colors) { region, offset, &layout, start, colors, GFXENTRY_REVERSE },
     }
 
@@ -183,6 +184,16 @@ namespace mame
         public u16 color_codes_start;  // offset in the color lookup table where color codes start
         public u16 total_color_codes;  // total number of color codes
         public u32 flags;              // flags and optional scaling factors
+
+        public gfx_decode_entry(string memory_region, u32 start, gfx_layout gfxlayout, u16 color_codes_start, u16 total_color_codes, u32 flags)
+        {
+            this.memory_region = memory_region;
+            this.start = start;
+            this.gfxlayout = gfxlayout;
+            this.color_codes_start = color_codes_start;
+            this.total_color_codes = total_color_codes;
+            this.flags = flags;
+        }
     }
 
 

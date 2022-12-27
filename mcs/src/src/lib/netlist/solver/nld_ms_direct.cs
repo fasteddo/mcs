@@ -116,20 +116,10 @@ namespace mame.netlist
                                 m_A[maxrow][k] = temp;
                             }
 #else
-                            {
-                                //std::swap(m_A[i], m_A[maxrow]);
-                                var temp = m_A[i];
-                                m_A[i] = m_A[maxrow];
-                                m_A[maxrow] = temp;
-                            }
+                            (m_A[i], m_A[maxrow]) = (m_A[maxrow], m_A[i]);  //std::swap(m_A[i], m_A[maxrow]);
 #endif
 
-                            {
-                                //std::swap(this->m_RHS[i], this->m_RHS[maxrow]);
-                                var temp = this.m_RHS[i];
-                                this.m_RHS[i] = this.m_RHS[maxrow];
-                                this.m_RHS[maxrow] = temp;
-                            }
+                            (this.m_RHS[i], this.m_RHS[maxrow]) = (this.m_RHS[maxrow], this.m_RHS[i]);  //std::swap(this->m_RHS[i], this->m_RHS[maxrow]);
                         }
 
                         // FIXME: Singular matrix?

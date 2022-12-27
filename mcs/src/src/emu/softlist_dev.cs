@@ -69,9 +69,9 @@ namespace mame
         // getters
         public string list_name() { return m_list_name; }
         //softlist_type list_type() const { return m_list_type; }
-        //bool is_original() const { return softlist_type::ORIGINAL_SYSTEM == m_list_type; }
+        public bool is_original() { throw new emu_unimplemented(); }  //bool is_original() const { return softlist_type::ORIGINAL_SYSTEM == m_list_type; }
         //bool is_compatible() const { return softlist_type::COMPATIBLE_SYSTEM == m_list_type; }
-        //const char *filter() const { return m_filter; }
+        public string filter() { throw new emu_unimplemented(); }  //const char *filter() const { return m_filter; }
 
 
         // getters that may trigger a parse

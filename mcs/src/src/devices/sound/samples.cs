@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections.Generic;
 
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
@@ -28,6 +29,48 @@ using static mame.sound_global;
 
 namespace mame
 {
+    public static class samples_device_enumerator_helper_samples
+    {
+        public static void init()
+        {
+            // see src/frontend/mame/audit.cs
+            // media_auditor.audit_samples()()
+            samples_device_enumerator_helper.get_samples_device_type = () =>
+            {
+                return typeof(samples_device);
+            };
+
+            samples_device_enumerator_helper.get_samples_devices = (root_device) =>
+            {
+                List<object> samples = new List<object>();
+                foreach (samples_device device in new samples_device_enumerator(root_device))
+                    samples.Add(device);
+
+                return samples.ToArray();
+            };
+
+            samples_device_enumerator_helper.get_samples_iterator = (device) =>
+            {
+                return new samples_iterator((samples_device)device);
+            };
+
+            samples_device_enumerator_helper.get_altbasename = (iter) =>
+            {
+                return ((samples_iterator)iter).altbasename();
+            };
+
+            samples_device_enumerator_helper.get_samplenames = (iter) =>
+            {
+                List<string> samplenames = new List<string>();
+                for (string samplename = ((samples_iterator)iter).first(); samplename != null; samplename = ((samples_iterator)iter).next())
+                    samplenames.Add(samplename);
+
+                return samplenames.ToArray();
+            };
+        }
+    }
+
+
     // ======================> samples_device
     public class samples_device : device_t
                                   //device_sound_interface
@@ -582,7 +625,7 @@ namespace mame
             file.seek(0, SEEK_SET);
 
             // create the FLAC decoder and fill in the sample data
-            flac_decoder decoder = new flac_decoder(file.core_file_get());
+            flac_decoder decoder = new flac_decoder(file.core_file_);
             sample.frequency = decoder.sample_rate();
 
             // error if more than 1 channel or not 16bpp
@@ -680,7 +723,7 @@ namespace mame
 
 
         // getters
-        public string altbasename() { return (m_samples.m_names != null && !string.IsNullOrEmpty(m_samples.m_names[0]) && m_samples.m_names[0][0] == '*') ? m_samples.m_names[0].Substring(1) : null; }  // return (m_samples.m_names != null && m_samples.m_names[0] != null && m_samples.m_names[0][0] == '*') ? &m_samples.m_names[0][1] : null; }
+        public string altbasename() { return (m_samples.m_names != null && !string.IsNullOrEmpty(m_samples.m_names[0]) && m_samples.m_names[0][0] == '*') ? m_samples.m_names[0][1..] : null; }  // return (m_samples.m_names != null && m_samples.m_names[0] != null && m_samples.m_names[0][0] == '*') ? &m_samples.m_names[0][1] : null; }
 
 
         // iteration
@@ -720,7 +763,7 @@ namespace mame
     }
 
 
-    static class samples_global
+    public static class samples_global
     {
         public static samples_device SAMPLES<bool_Required>(machine_config mconfig, device_finder<samples_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, samples_device.SAMPLES, 0); }
     }

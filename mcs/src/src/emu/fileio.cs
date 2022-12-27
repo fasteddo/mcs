@@ -86,7 +86,7 @@ namespace mame
             // copy up to the next separator
             var sep = m_searchpath.IndexOf(m_separator, m_currentIdx);  //auto const sep(std::find(m_current, m_searchpath.cend(), m_separator));
             if (sep == -1) sep = m_searchpath.Length;
-            buffer = m_searchpath.Substring(m_currentIdx, sep - m_currentIdx);  //buffer.assign(m_current, sep);
+            buffer = m_searchpath[m_currentIdx..sep];  //buffer.assign(m_current, sep);
             m_currentIdx = sep;
             if (m_searchpath.Length != m_currentIdx)  //m_searchpath.cend() != m_current)
                 ++m_currentIdx;
@@ -292,14 +292,17 @@ namespace mame
 
         // getters
         //operator core_file &();
-        public util.core_file core_file_get()
+        public util.core_file core_file_
         {
-            // load the ZIP file now if we haven't yet
-            if (compressed_file_ready())
-                throw new emu_fatalerror("operator core_file & used on invalid file");
+            get
+            {
+                // load the ZIP file now if we haven't yet
+                if (compressed_file_ready())
+                    throw new emu_fatalerror("operator core_file & used on invalid file");
 
-            // return the core file
-            return m_file;
+                // return the core file
+                return m_file;
+            }
         }
 
         public bool is_open() { return m_file != null; }
@@ -339,15 +342,13 @@ namespace mame
                 return m_hashes;
             }
 
-            // read the data if we can
-            MemoryU8 filedata = m_file.buffer();  //const u8 *filedata = (const u8 *)m_file->buffer();
-            if (filedata == null)
+            uint64_t length;
+            if (m_file.length(out length))
                 return m_hashes;
 
-            // compute the hash
-            uint64_t length;
-            if (!m_file.length(out length))
-                m_hashes.compute(new PointerU8(filedata), (uint32_t)length, needed);
+            // hash the data
+            size_t actual;
+            m_hashes.compute(m_file, 0U, length, out actual, needed); // FIXME: need better interface to report errors
 
             return m_hashes;
         }
@@ -484,7 +485,7 @@ namespace mame
         //  open_ram - open a "file" which is actually
         //  just an array of data in RAM
         //-------------------------------------------------
-        public std.error_condition open_ram(MemoryU8 data, u32 length)  //const void *data, u32 length)
+        public std.error_condition open_ram(PointerU8 data, u32 length)  //const void *data, u32 length)
         {
             // set a fake filename and CRC
             m_filename = "RAM";
@@ -588,7 +589,7 @@ namespace mame
         //-------------------------------------------------
         //  read - read from a file
         //-------------------------------------------------
-        public u32 read(Pointer<u8> buffer, u32 length)  //u32 read(void *buffer, u32 length)
+        public u32 read(PointerU8 buffer, u32 length)  //u32 read(void *buffer, u32 length)
         {
             // FIXME: need better interface to report errors
             // load the ZIP file now if we haven't yet
@@ -632,7 +633,7 @@ namespace mame
         //-------------------------------------------------
         //  write - write to a file
         //-------------------------------------------------
-        public u32 write(Pointer<u8> buffer, u32 length)  //u32 write(const void *buffer, u32 length)
+        public u32 write(PointerU8 buffer, u32 length)  //u32 write(const void *buffer, u32 length)
         {
             // FIXME: need better interface to report errors
             // write the data if we can
@@ -834,7 +835,7 @@ namespace mame
                     filename = filename.insert_(0, m_fullpath.substr(dirsep + 1));
 
                     // remove this part of the filename and append an archive extension
-                    m_fullpath = m_fullpath.Substring(0, (int)dirsep);
+                    m_fullpath = m_fullpath[..(int)dirsep];
                     m_fullpath += suffixes[i];
                     LOG(null, "emu_file: looking for '{0}' in archive '{1}'\n", filename, m_fullpath);
 
@@ -904,7 +905,7 @@ namespace mame
             m_zipdata.resize(m_ziplength);
 
             // read the data into our buffer and return
-            var ziperr = m_zipfile.decompress(m_zipdata, (uint32_t)m_zipdata.size());
+            var ziperr = m_zipfile.decompress(m_zipdata.data(), (uint32_t)m_zipdata.size());
             if (ziperr)
             {
                 m_zipdata.clear();
@@ -912,7 +913,7 @@ namespace mame
             }
 
             // convert to RAM file
-            std.error_condition filerr = util.core_file.open_ram(m_zipdata, m_zipdata.size(), m_openflags, out m_file);
+            std.error_condition filerr = util.core_file.open_ram(m_zipdata.data(), m_zipdata.size(), m_openflags, out m_file);
             if (filerr)
             {
                 m_zipdata.clear();

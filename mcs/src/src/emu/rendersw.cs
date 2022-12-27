@@ -58,7 +58,7 @@ namespace mame
         static readonly bool BilinearFilter = new bool_BilinearFilter().value;
 
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
         unsafe interface PixelType_operations
 #else
         interface PixelType_operations
@@ -70,7 +70,7 @@ namespace mame
             void SetValueAndIncrement(PointerU8 dest, u32 value);
             void Increment(PointerU8 dest);
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
             u8 * UnsafeGetPointer(u8 * dstdata, int offset);
             u32 UnsafeGetValue(u8 * dest);
             void UnsafeSetValue(u8 * dest, u32 value);
@@ -85,7 +85,7 @@ namespace mame
 #endif
         }
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
         unsafe class PixelType_operations_u8 : PixelType_operations
 #else
         class PixelType_operations_u8 : PixelType_operations
@@ -97,7 +97,7 @@ namespace mame
             public void SetValueAndIncrement(PointerU8 dest, u32 value) { dest[0] = (u8)value; dest++; }
             public void Increment(PointerU8 dest) { dest++; }
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
             public u8 * UnsafeGetPointer(u8 * dstdata, int offset) { return dstdata + offset; }
             public u32 UnsafeGetValue(u8 * dest) { return dest[0]; }
             public void UnsafeSetValue(u8 * dest, u32 value) { dest[0] = (u8)value; }
@@ -112,7 +112,7 @@ namespace mame
 #endif
         }
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
         unsafe class PixelType_operations_u16 : PixelType_operations
 #else
         class PixelType_operations_u16 : PixelType_operations
@@ -124,7 +124,7 @@ namespace mame
             public void SetValueAndIncrement(PointerU8 dest, u32 value) { var dest16 = (PointerU16)dest; dest16[0] = (u16)value; dest16++; }
             public void Increment(PointerU8 dest) { var dest16 = (PointerU16)dest; dest16++; }
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
             public u8 * UnsafeGetPointer(u8 * dstdata, int offset) { return dstdata + (offset * 2); }
             public u32 UnsafeGetValue(u8 * dest) { return ((u16 *)dest)[0]; }
             public void UnsafeSetValue(u8 * dest, u32 value) { ((u16 *)dest)[0] = (u16)value; }
@@ -139,7 +139,7 @@ namespace mame
 #endif
         }
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
         unsafe class PixelType_operations_u32 : PixelType_operations
 #else
         class PixelType_operations_u32 : PixelType_operations
@@ -151,7 +151,7 @@ namespace mame
             public void SetValueAndIncrement(PointerU8 dest, u32 value) { var dest32 = (PointerU32)dest; dest32[0] = (u32)value; dest32++; }
             public void Increment(PointerU8 dest) { var dest32 = (PointerU32)dest; dest32++; }
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
             public u8 * UnsafeGetPointer(u8 * dstdata, int offset) { return dstdata + (offset * 4); }
             public u32 UnsafeGetValue(u8 * dest) { return ((u32 *)dest)[0]; }
             public void UnsafeSetValue(u8 * dest, u32 value) { ((u32 *)dest)[0] = (u32)value; }
@@ -332,7 +332,7 @@ namespace mame
         //  get_texel_palette16 - return a texel from a
         //  palettized 16bpp source
         //-------------------------------------------------
-#if USE_UNSAFE
+#if MCS_UNSAFE
         unsafe static u32 get_texel_palette16(render_texinfo texture, s32 curu, s32 curv, u16 * texbase_u16)
 #else
         static u32 get_texel_palette16(render_texinfo texture, s32 curu, s32 curv, PointerU16 unused)
@@ -367,7 +367,7 @@ namespace mame
                     v1 = 0;
                 }
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 {
                     var texbase = texbase_u16;  //u16 const *texbase = reinterpret_cast<u16 const *>(texture.base);
 #else
@@ -386,7 +386,7 @@ namespace mame
             }
             else
             {
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 {
                     var texbase = texbase_u16 + (curv >> 16) * texture.rowpixels + (curu >> 16);  //u16 const *const texbase = reinterpret_cast<u16 const *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
 #else
@@ -498,7 +498,7 @@ namespace mame
         //  ARGB source
         //-------------------------------------------------
         //template <bool Wrap>
-#if USE_UNSAFE
+#if MCS_UNSAFE
         unsafe static u32 get_texel_argb32(bool Wrap, render_texinfo texture, s32 curu, s32 curv)
 #else
         static u32 get_texel_argb32(bool Wrap, render_texinfo texture, s32 curu, s32 curv)
@@ -542,7 +542,7 @@ namespace mame
                         v1 = v0 + 1;
                 }
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 fixed(u8 * texbase_u8_zero = texture.base_.Buffer.data_raw)
                 {
                     u8 * texbase_u8 = texbase_u8_zero + texture.base_.Offset;
@@ -580,7 +580,7 @@ namespace mame
                     v = std.clamp(curv >> 16, 0, (s32)texture.height - 1);
                 }
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 fixed(u8 * rowbase_u8_zero = texture.base_.Buffer.data_raw)
                 {
                     u8 * rowbase_u8 = rowbase_u8_zero + texture.base_.Offset;
@@ -774,7 +774,7 @@ namespace mame
         //-------------------------------------------------
         //  draw_rect - draw a solid rectangle
         //-------------------------------------------------
-#if USE_UNSAFE
+#if MCS_UNSAFE
         unsafe static void draw_rect(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_rect(render_primitive const &prim, PixelType *dstdata, s32 width, s32 height, u32 pitch)
 #else
         static void draw_rect(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_rect(render_primitive const &prim, PixelType *dstdata, s32 width, s32 height, u32 pitch)
@@ -808,7 +808,7 @@ namespace mame
                 u32 b = (u32)(std.clamp(256.0f * prim.color.b, 0.0f, 255.0f));
                 u32 pix = dest_rgb_to_pixel32(r, g, b);
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw)
                 {
                     u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;
@@ -847,7 +847,7 @@ namespace mame
                 g = dest_rgb_to_pixel32(0, g, 0) << 8;
                 b = dest_rgb_to_pixel32(0, 0, b) << 8;
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw)
                 {
                     u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;
@@ -884,7 +884,7 @@ namespace mame
         //  draw_quad_palette16_none - perform
         //  rasterization of a 16bpp palettized texture
         //-------------------------------------------------
-#if USE_UNSAFE
+#if MCS_UNSAFE
         unsafe static void draw_quad_palette16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_none(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
 #else
         static void draw_quad_palette16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_none(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
@@ -896,7 +896,7 @@ namespace mame
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
             {
                 // fast case: no coloring, no alpha
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw,
                            texbase_u8_zero = prim.texture.base_.Buffer.data_raw)
                 {
@@ -935,7 +935,7 @@ namespace mame
                 u32 sg = (u32)(std.clamp(256.0f * prim.color.g, 0.0f, 256.0f));
                 u32 sb = (u32)(std.clamp(256.0f * prim.color.b, 0.0f, 256.0f));
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw,
                            texbase_u8_zero = prim.texture.base_.Buffer.data_raw)
                 {
@@ -979,7 +979,7 @@ namespace mame
                 u32 sb = (u32)(std.clamp(256.0f * prim.color.b * prim.color.a, 0.0f, 256.0f));
                 u32 invsa = (u32)(std.clamp(256.0f * (1.0f - prim.color.a), 0.0f, 256.0f));
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw,
                            texbase_u8_zero = prim.texture.base_.Buffer.data_raw)
                 {
@@ -1253,7 +1253,7 @@ namespace mame
         //  rasterization using standard alpha blending
         //-------------------------------------------------
         //template <bool Wrap>
-#if USE_UNSAFE
+#if MCS_UNSAFE
         unsafe static void draw_quad_argb32_alpha<bool_Wrap>(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_argb32_alpha(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
 #else
         static void draw_quad_argb32_alpha<bool_Wrap>(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_argb32_alpha(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
@@ -1268,7 +1268,7 @@ namespace mame
 
                 bool Wrap = new bool_Wrap().value;
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw)
                 {
                     u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;
@@ -1342,7 +1342,7 @@ namespace mame
 
                 bool Wrap = new bool_Wrap().value;
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
                 fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw)
                 {
                     u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;

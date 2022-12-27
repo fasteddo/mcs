@@ -3,8 +3,11 @@
 
 using System;
 
+using size_t = System.UInt64;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+using uint64_t = System.UInt64;
+using unsigned = System.UInt32;
 
 using static mame.cpp_global;
 using static mame.hash_global;
@@ -28,6 +31,53 @@ namespace mame
         // a collection of the various supported hashes and flags
         public class hash_collection
         {
+            class hash_creator
+            {
+                crc32_creator m_crc32_creator;  //std::optional<crc32_creator> m_crc32_creator;
+                sha1_creator m_sha1_creator;  //std::optional<sha1_creator> m_sha1_creator;
+
+
+                // constructor
+                public hash_creator(bool doing_crc32, bool doing_sha1)
+                {
+                    if (doing_crc32)
+                        m_crc32_creator = new crc32_creator();  //m_crc32_creator.emplace();
+                    if (doing_sha1)
+                        m_sha1_creator = new sha1_creator();  //m_sha1_creator.emplace();
+                }
+
+
+                // add the given buffer to the hash
+                public void append(Pointer<uint8_t> buffer, size_t length)  //void append(void const *buffer, std::size_t length)
+                {
+                    // append to each active hash
+                    if (m_crc32_creator != null)
+                        m_crc32_creator.append(buffer, (uint32_t)length);
+                    if (m_sha1_creator != null)
+                        m_sha1_creator.append(buffer, (uint32_t)length);
+                }
+
+
+                // stop hashing
+                public void finish(hash_collection hashes)
+                {
+                    // finish up the CRC32
+                    if (m_crc32_creator != null)
+                    {
+                        hashes.add_crc(m_crc32_creator.finish().op);
+                        m_crc32_creator = null;  //m_crc32_creator.reset();
+                    }
+
+                    // finish up the SHA1
+                    if (m_sha1_creator != null)
+                    {
+                        hashes.add_sha1(m_sha1_creator.finish());
+                        m_sha1_creator = null;  //m_sha1_creator.reset();
+                    }
+                }
+            }
+
+
             // hash types are identified by non-hex alpha values (G-Z)
             public const char HASH_CRC = 'R';
             public const char HASH_SHA1 = 'S';
@@ -49,16 +99,6 @@ namespace mame
             bool m_has_sha1;
             sha1_t m_sha1 = new sha1_t();
 
-            // creators
-            class hash_creator
-            {
-                public bool m_doing_crc32;
-                public crc32_creator m_crc32_creator = new crc32_creator();
-                public bool m_doing_sha1;
-                public sha1_creator m_sha1_creator = new sha1_creator();
-            }
-            hash_creator m_creator;
-
 
             // construction/destruction
             //-------------------------------------------------
@@ -66,17 +106,12 @@ namespace mame
             //-------------------------------------------------
             public hash_collection()
             {
+                m_has_crc32 = false;
+                m_has_sha1 = false;
             }
 
-            public hash_collection(string str)
-            {
-                from_internal_string(str);
-            }
-
-            public hash_collection(hash_collection src)
-            {
-                copyfrom(src);
-            }
+            public hash_collection(string str) : this() { from_internal_string(str); }
+            public hash_collection(hash_collection src) : this() { copyfrom(src); }
 
 
             // operators
@@ -145,7 +180,6 @@ namespace mame
                 m_flags = "";
                 m_has_crc32 = false;
                 m_has_sha1 = false;
-                m_creator = null;
             }
 
             //bool add_from_string(char type, std::string_view string);
@@ -196,7 +230,34 @@ namespace mame
             }
 
 
-            //string attribute_string() const;
+            //-------------------------------------------------
+            //  attribute_string - convert set of hashes and
+            //  flags to a string in XML attribute format
+            //-------------------------------------------------
+            public string attribute_string()
+            {
+                string buffer = "";
+
+                // handle CRCs
+                if (m_has_crc32)
+                    buffer = buffer.append_("crc=\"").append_(m_crc32.as_string()).append_("\" ");
+
+                // handle SHA1s
+                if (m_has_sha1)
+                    buffer = buffer.append_("sha1=\"").append_(m_sha1.as_string()).append_("\" ");
+
+                // append flags
+                if (flag(FLAG_NO_DUMP))
+                    buffer = buffer.append_("status=\"nodump\"");
+                if (flag(FLAG_BAD_DUMP))
+                    buffer = buffer.append_("status=\"baddump\"");
+
+                // remove trailing space
+                if (!buffer.empty() && buffer.back() == ' ')
+                    buffer = buffer.substr(0, buffer.length() - 1);
+
+                return buffer;
+            }
 
 
             //-------------------------------------------------
@@ -215,7 +276,7 @@ namespace mame
                 {
                     char c = string_[0];
                     char uc = char.ToUpper(c);
-                    string_ = string_.Substring(1);  //string.remove_prefix(1);
+                    string_ = string_[1..];  //string.remove_prefix(1);
 
                     // non-hex alpha values specify a hash type
                     if (uc >= 'G' && uc <= 'Z')
@@ -263,72 +324,78 @@ namespace mame
             // creation
 
             //-------------------------------------------------
-            //  begin - begin hashing
+            //  compute - hash a block of data
             //-------------------------------------------------
-            void begin(string types = null)
+            public void compute(Pointer<uint8_t> data, uint32_t length, string types = null)  //void compute(const uint8_t *data, uint32_t length, const char *types = nullptr);
             {
-                // nuke previous creator and make a new one
-                //delete m_creator;
-                m_creator = new hash_creator();
+                // begin
+                hash_creator creator = create(types);
 
-                // by default use all types
-                if (string.IsNullOrEmpty(types))
-                {
-                    m_creator.m_doing_crc32 = true;
-                    m_creator.m_doing_sha1 = true;
-                }
-                // otherwise, just allocate the ones that are specified
-                else
-                {
-                    m_creator.m_doing_crc32 = types.IndexOf(HASH_CRC) != -1;
-                    m_creator.m_doing_sha1 = types.IndexOf(HASH_SHA1) != -1;
-                }
+                // run the hashes
+                creator.append(data, length);
+
+                // end
+                creator.finish(this);
             }
 
+
             //-------------------------------------------------
-            //  buffer - add the given buffer to the hash
+            //  compute - hash data from a stream
             //-------------------------------------------------
-            void buffer(Pointer<uint8_t> data, uint32_t length)  //void buffer(const uint8_t *data, uint32_t length)
+            public std.error_condition compute(random_read stream, uint64_t offset, size_t length, out size_t actual, string types = null)  //std::error_condition compute(random_read &stream, uint64_t offset, size_t length, size_t &actual, const char *types = nullptr);
             {
-                assert(m_creator != null);
+                // begin
+                hash_creator creator = create(types);
 
-                // append to each active hash
-                if (m_creator.m_doing_crc32)
-                    m_creator.m_crc32_creator.append(data, length);
-                if (m_creator.m_doing_sha1)
-                    m_creator.m_sha1_creator.append(data, length);
-            }
+                // local buffer of arbitrary size
+                Pointer<uint8_t> buffer = new Pointer<uint8_t>(new MemoryContainer<uint8_t>(2048, true));  //uint8_t buffer[2048];
 
-            //-------------------------------------------------
-            //  end - stop hashing
-            //-------------------------------------------------
-            void end()
-            {
-                //assert(m_creator != NULL);
-
-                // finish up the CRC32
-                if (m_creator.m_doing_crc32)
+                // run the hashes
+                actual = 0U;
+                while (length != 0)
                 {
-                    m_has_crc32 = true;
-                    m_crc32 = m_creator.m_crc32_creator.finish();
+                    // determine the size of the next chunk
+                    unsigned chunk_length = (unsigned)std.min((int)length, buffer.Count);
+
+                    // read one chunk
+                    size_t bytes_read;
+                    std.error_condition err = stream.read_at(offset, buffer, chunk_length, out bytes_read);
+                    if (err)
+                        return err;
+
+                    if (bytes_read == 0) // EOF?
+                        break;
+
+                    offset += bytes_read;
+                    length -= chunk_length;
+
+                    // append the chunk
+                    creator.append(buffer, bytes_read);
+                    actual += bytes_read;
                 }
 
-                // finish up the SHA1
-                if (m_creator.m_doing_sha1)
-                {
-                    m_has_sha1 = true;
-                    m_sha1 = m_creator.m_sha1_creator.finish();
-                }
-
-                // nuke the creator
-                //delete m_creator;
-                m_creator = null;
+                // end
+                creator.finish(this);
+                return new std.error_condition();
             }
-
-            public void compute(Pointer<uint8_t> data, uint32_t length, string types = null) { begin(types); buffer(data, length); end(); }  //void compute(const uint8_t *data, uint32_t length, const char *types = nullptr) { begin(types); buffer(data, length); end(); }
 
 
             // internal helpers
+            //-------------------------------------------------
+            //  create - begin hashing
+            //-------------------------------------------------
+            hash_creator create(string types = null)
+            {
+                // by default use all types
+                if (types == null)
+                    return new hash_creator(true, true);
+
+                // otherwise, just allocate the ones that are specified
+                else
+                    return new hash_creator(std.strchr(types, HASH_CRC) != -1, std.strchr(types, HASH_SHA1) != -1);
+            }
+
+
             //-------------------------------------------------
             //  copyfrom - copy everything from another
             //  collection
@@ -343,9 +410,6 @@ namespace mame
                 m_crc32 = src.m_crc32;
                 m_has_sha1 = src.m_has_sha1;
                 m_sha1 = src.m_sha1;
-
-                // don't copy creators
-                m_creator = null;
             }
         }
     }

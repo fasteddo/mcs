@@ -113,7 +113,7 @@ namespace mame.netlist
                             }
                             else
                             {
-                                var otherterm = t is terminal_t ? (terminal_t)t : null;  //auto *otherterm = dynamic_cast<terminal_t *>(t);
+                                var otherterm = t is terminal_t t_terminal ? t_terminal : null;  //auto *otherterm = dynamic_cast<terminal_t *>(t);
                                 if (otherterm != null)
                                     if (state().setup().get_connected_terminal(otherterm).net().is_rail_net())
                                         railterms++;

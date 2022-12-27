@@ -30,8 +30,8 @@ namespace mame.netlist
             : base(owner is netlist_state_t ? ((netlist_state_t)owner).exec() : ((core_device_t)owner).state().exec(),
                    owner is netlist_state_t ? name : ((core_device_t)owner).name() + "." + name)
         {
-            if (owner is netlist_state_t) core_device_t_after_ctor((netlist_state_t)owner, name);
-            else if (owner is core_device_t) core_device_t_after_ctor((core_device_t)owner, name);
+            if (owner is netlist_state_t owner_netlist) core_device_t_after_ctor(owner_netlist, name);
+            else if (owner is core_device_t owner_device) core_device_t_after_ctor(owner_device, name);
             else throw new emu_unimplemented();
         }
 

@@ -35,13 +35,13 @@ namespace mame
 
         public handler_entry_read_delegate(address_space space, u16 flags, object /*READ*/ delegate_) : base(space, flags)
         {
-            if      (delegate_ is read8_delegate)    m_delegate8    = (read8_delegate)delegate_;
-            else if (delegate_ is read8m_delegate)   m_delegate8m   = (read8m_delegate)delegate_;
-            else if (delegate_ is read8sm_delegate)  m_delegate8sm  = (read8sm_delegate)delegate_;
-            else if (delegate_ is read8mo_delegate)  m_delegate8mo  = (read8mo_delegate)delegate_;
-            else if (delegate_ is read8smo_delegate) m_delegate8smo = (read8smo_delegate)delegate_;
-            else if (delegate_ is read16_delegate)   m_delegate16   = (read16_delegate)delegate_;
-            else if (delegate_ is read16s_delegate)  m_delegate16s  = (read16s_delegate)delegate_;
+            if      (delegate_ is read8_delegate delegate_r8)       m_delegate8    = delegate_r8;
+            else if (delegate_ is read8m_delegate delegate_r8m)     m_delegate8m   = delegate_r8m;
+            else if (delegate_ is read8sm_delegate delegate_r8sm)   m_delegate8sm  = delegate_r8sm;
+            else if (delegate_ is read8mo_delegate delegate_r8mo)   m_delegate8mo  = delegate_r8mo;
+            else if (delegate_ is read8smo_delegate delegate_r8smo) m_delegate8smo = delegate_r8smo;
+            else if (delegate_ is read16_delegate delegate_r16)     m_delegate16   = delegate_r16;
+            else if (delegate_ is read16s_delegate delegate_r16s)   m_delegate16s  = delegate_r16s;
             else throw new emu_unimplemented();
         }
 
@@ -168,13 +168,13 @@ namespace mame
 
         public handler_entry_write_delegate(address_space space, u16 flags, object /*WRITE*/ delegate_) : base(space, flags)
         {
-            if      (delegate_ is write8_delegate)     m_delegate8 = (write8_delegate)delegate_;
-            else if (delegate_ is write8m_delegate)    m_delegate8m = (write8m_delegate)delegate_;
-            else if (delegate_ is write8sm_delegate)   m_delegate8sm = (write8sm_delegate)delegate_;
-            else if (delegate_ is write8smo_delegate)  m_delegate8smo = (write8smo_delegate)delegate_;
-            else if (delegate_ is write16_delegate)    m_delegate16 = (write16_delegate)delegate_;
-            else if (delegate_ is write16s_delegate)   m_delegate16s = (write16s_delegate)delegate_;
-            else if (delegate_ is write16smo_delegate) m_delegate16smo = (write16smo_delegate)delegate_;
+            if      (delegate_ is write8_delegate delegate_w8)          m_delegate8 = delegate_w8;
+            else if (delegate_ is write8m_delegate delegate_w8m)        m_delegate8m = delegate_w8m;
+            else if (delegate_ is write8sm_delegate delegate_w8sm)      m_delegate8sm = delegate_w8sm;
+            else if (delegate_ is write8smo_delegate delegate_w8smo)    m_delegate8smo = delegate_w8smo;
+            else if (delegate_ is write16_delegate delegate_w16)        m_delegate16 = delegate_w16;
+            else if (delegate_ is write16s_delegate delegate_w16s)      m_delegate16s = delegate_w16s;
+            else if (delegate_ is write16smo_delegate delegate_w16smo)  m_delegate16smo = delegate_w16smo;
             else throw new emu_unimplemented();
         }
 

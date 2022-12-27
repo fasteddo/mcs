@@ -39,7 +39,7 @@ namespace mame.plib
     //============================================================
     //  exception base
     //============================================================
-    class pexception : Exception
+    public class pexception : Exception
     {
         string m_text;
 

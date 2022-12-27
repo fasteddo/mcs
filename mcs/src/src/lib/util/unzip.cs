@@ -4,7 +4,7 @@
 using System;
 
 using int64_t = System.Int64;
-using MemoryU8 = mame.MemoryContainer<System.Byte>;
+using PointerU8 = mame.Pointer<System.Byte>;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
@@ -128,7 +128,7 @@ namespace mame
 
 
             // decompress the most recently found file in the ZIP
-            public abstract std.error_condition decompress(MemoryU8 buffer, uint32_t length);  //void *buffer, std::uint32_t length)
+            public abstract std.error_condition decompress(PointerU8 buffer, uint32_t length);  //void *buffer, std::uint32_t length)
         }
 
 

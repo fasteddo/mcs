@@ -288,11 +288,11 @@ namespace mame
         double DST_BITS_DECODE__VOUT { get { return DISCRETE_INPUT(3); } }
 
 
-        int             m_count;
-        int             m_decode_x_time;
-        int             m_from;
-        int             m_last_val;
-        int             m_last_had_x_time;
+        int             m_count = 0;
+        int             m_decode_x_time = 0;
+        int             m_from = 0;
+        int             m_last_val = 0;
+        int             m_last_had_x_time = 0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -499,7 +499,7 @@ namespace mame
         double DST_LOGIC_DFF__DATA { get { return DISCRETE_INPUT(3); } }
 
 
-        int             m_last_clk;
+        int             m_last_clk = 0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -546,24 +546,24 @@ namespace mame
 
 
     //DISCRETE_CLASS_STEP_RESET(dst_logic_jkff, 1,
-    //    double          m_v_out;
-    //    int             m_last_clk;
+    //double          m_v_out = 0;
+    //int             m_last_clk = 0;
     //);
 
     //DISCRETE_CLASS_STEP_RESET(dst_logic_shift, 1,
-    //    double          m_t_left;                   /* time unused during last sample in seconds */
-    //    uint32_t          m_shift_data;
-    //    uint32_t          m_bit_mask;
-    //    uint8_t           m_clock_type;
-    //    uint8_t           m_reset_on_high;
-    //    uint8_t           m_shift_r;
-    //    uint8_t           m_last;
+    //double          m_t_left = 0.0;             /* time unused during last sample in seconds */
+    //uint32_t        m_shift_data = 0;
+    //uint32_t        m_bit_mask = 0;
+    //uint8_t         m_clock_type = 0;
+    //uint8_t         m_reset_on_high = 0;
+    //uint8_t         m_shift_r = 0;
+    //uint8_t         m_last = 0;
     //);
 
     //DISCRETE_CLASS_STEP(dst_lookup_table, 1, /* no context */ );
 
     //DISCRETE_CLASS_STEP_RESET(dst_multiplex, 1,
-    //    int             m_size;
+    //int             m_size = 0;
     //);
 
 
@@ -581,10 +581,10 @@ namespace mame
         int DST_ONESHOT__TYPE { get { return (int)DISCRETE_INPUT(4); } }
 
 
-        double m_countdown;
-        int m_state;
-        int m_last_trig;
-        int m_type;
+        double m_countdown = 0.0;
+        int m_state = 0;
+        int m_last_trig = 0;
+        int m_type = 0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -693,10 +693,10 @@ namespace mame
         double DST_RAMP__CLAMP { get { return DISCRETE_INPUT(5); } }
 
 
-        double          m_v_out;
-        double          m_step;
-        int             m_dir;                  /* 1 if End is higher then Start */
-        int             m_last_en;              /* Keep track of the last enable value */
+        double          m_v_out = 0.0;
+        double          m_step = 0.0;
+        int             m_dir = 0;                  /* 1 if End is higher then Start */
+        int             m_last_en = 0;              /* Keep track of the last enable value */
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -771,8 +771,8 @@ namespace mame
         double DST_SAMPHOLD__TYPE { get { return DISCRETE_INPUT(2); } }
 
 
-        double          m_last_input;
-        int             m_clocktype;
+        double          m_last_input = 0.0;
+        int             m_clocktype = 0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -947,7 +947,7 @@ namespace mame
         }
 
 
-        token [] precomp = new token[32];  //enum token precomp[32];
+        token [] precomp = new token[32];  //enum token precomp[32]{ TOK_END };
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(dst_transform, base)
@@ -1169,11 +1169,11 @@ namespace mame
         public double DST_DAC_R1__VON() { return DISCRETE_INPUT(1); }
 
 
-        double m_v_out;
-        double m_exponent;
-        double m_last_v;
+        double m_v_out = 0.0;
+        double m_exponent = 0.0;
+        double m_last_v = 0.0;
         double [] m_v_step = new double[256];
-        int m_has_c_filter;
+        int m_has_c_filter = 0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)
@@ -1334,7 +1334,7 @@ namespace mame
         double DST_DIODE_MIX__INP(int addr) { return DISCRETE_INPUT(DST_DIODE_MIX_INP_OFFSET + addr); }
 
 
-        int m_size;
+        int m_size = 0;
         double [] m_v_junction = new double [8];
 
 
@@ -1404,15 +1404,13 @@ namespace mame
     }
 
 
-#if false
-    DISCRETE_CLASS_STEP_RESET(dst_integrate, 1,
-        double          m_v_out;
-        double          m_change;
-        double          m_v_max_in;             /* v1 - norton VBE */
-        double          m_v_max_in_d;           /* v1 - norton VBE - diode drop */
-        double          m_v_max_out;
-    );
-#endif
+    //DISCRETE_CLASS_STEP_RESET(dst_integrate, 1,
+    //    double          m_v_out = 0.0;
+    //    double          m_change = 0.0;
+    //    double          m_v_max_in = 0.0;       /* v1 - norton VBE */
+    //    double          m_v_max_in_d = 0.0;     /* v1 - norton VBE - diode drop */
+    //    double          m_v_max_out = 0.0;
+    //);
 
 
     //DISCRETE_CLASS_STEP_RESET(dst_mixer, 1,
@@ -1480,20 +1478,20 @@ namespace mame
         public double DST_MIXER__IN(int bit) { return DISCRETE_INPUT(bit + 1); }
 
 
-        int m_type;
-        int m_size;
-        int m_r_node_bit_flag;
-        int m_c_bit_flag;
-        double m_r_total;
+        int m_type = 0;
+        int m_size = 0;
+        int m_r_node_bit_flag = 0;
+        int m_c_bit_flag = 0;
+        double m_r_total = 0.0;
         Pointer<double> [] m_r_node = new Pointer<double> [DISC_MIXER_MAX_INPS];  //const double *  m_r_node[DISC_MIXER_MAX_INPS];      /* Either pointer to resistance node output OR NULL */
         double [] m_r_last = new double[DISC_MIXER_MAX_INPS];
         double [] m_exponent_rc = new double[DISC_MIXER_MAX_INPS]; /* For high pass filtering cause by cIn */
         double [] m_v_cap = new double[DISC_MIXER_MAX_INPS];       /* cap voltage of each input */
-        double m_exponent_c_f;         /* Low pass on mixed inputs */
-        double m_exponent_c_amp;       /* Final high pass caused by out cap and amp input impedance */
-        double m_v_cap_f;              /* cap voltage of cF */
-        double m_v_cap_amp;            /* cap voltage of cAmp */
-        double m_gain;                 /* used for DISC_MIXER_IS_OP_AMP_WITH_RI */
+        double m_exponent_c_f = 0.0;         /* Low pass on mixed inputs */
+        double m_exponent_c_amp = 0.0;       /* Final high pass caused by out cap and amp input impedance */
+        double m_v_cap_f = 0.0;              /* cap voltage of cF */
+        double m_v_cap_amp = 0.0;            /* cap voltage of cAmp */
+        double m_gain = 0.0;                 /* used for DISC_MIXER_IS_OP_AMP_WITH_RI */
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)
@@ -1816,13 +1814,13 @@ namespace mame
         double DST_OP_AMP__INP1 { get { return DISCRETE_INPUT(2); } }
 
 
-        uint8_t m_has_cap;
-        uint8_t m_has_r1;
-        uint8_t m_has_r4;
-        double m_v_max;
-        double m_i_fixed;
-        double m_v_cap;
-        double m_exponent;
+        uint8_t m_has_cap = 0;
+        uint8_t m_has_r1 = 0;
+        uint8_t m_has_r4 = 0;
+        double m_v_max = 0.0;
+        double m_i_fixed = 0.0;
+        double m_v_cap = 0.0;
+        double m_exponent = 0.0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)
@@ -1974,15 +1972,15 @@ namespace mame
         double DST_OP_AMP_1SHT__TRIGGER { get { return DISCRETE_INPUT(0); } }
 
 
-        double m_v_out;
-        double m_i_fixed;
-        double m_v_max;
-        double m_r34ratio;
-        double m_v_cap1;
-        double m_v_cap2;
-        double m_exponent1c;
-        double m_exponent1d;
-        double m_exponent2;
+        double m_v_out = 0.0;
+        double m_i_fixed = 0.0;
+        double m_v_max = 0.0;
+        double m_r34ratio = 0.0;
+        double m_v_cap1 = 0.0;
+        double m_v_cap2 = 0.0;
+        double m_exponent1c = 0.0;
+        double m_exponent1d = 0.0;
+        double m_exponent2 = 0.0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)
@@ -2080,23 +2078,23 @@ namespace mame
         double DST_TVCA_OP_AMP__INP1 { get { return DISCRETE_INPUT(4); } }
 
 
-        double m_v_out_max;            /* Maximum output voltage */
+        double m_v_out_max = 0.0;            /* Maximum output voltage */
         double [] m_v_trig = new double [2];            /* Voltage used to charge cap1 based on function F3 */
-        double m_v_trig2;              /* Voltage used to charge cap2 */
-        double m_v_trig3;              /* Voltage used to charge cap3 */
-        double m_i_fixed;              /* Fixed current going into - input */
+        double m_v_trig2 = 0.0;              /* Voltage used to charge cap2 */
+        double m_v_trig3 = 0.0;              /* Voltage used to charge cap3 */
+        double m_i_fixed = 0.0;              /* Fixed current going into - input */
         double [] m_exponent_c = new double [2];        /* Charge exponents based on function F3 */
         double [] m_exponent_d = new double [2];        /* Discharge exponents based on function F3 */
         double [] m_exponent2 = new double [2];         /* Discharge/charge exponents based on function F4 */
         double [] m_exponent3 = new double [2];         /* Discharge/charge exponents based on function F5 */
-        double m_exponent4;            /* Discharge/charge exponents for c4 */
-        double m_v_cap1;               /* charge on cap c1 */
-        double m_v_cap2;               /* charge on cap c2 */
-        double m_v_cap3;               /* charge on cap c3 */
-        double m_v_cap4;               /* charge on cap c4 */
-        double m_r67;                  /* = r6 + r7 (for easy use later) */
-        uint8_t m_has_c4;
-        uint8_t m_has_r4;
+        double m_exponent4 = 0.0;            /* Discharge/charge exponents for c4 */
+        double m_v_cap1 = 0.0;               /* charge on cap c1 */
+        double m_v_cap2 = 0.0;               /* charge on cap c2 */
+        double m_v_cap3 = 0.0;               /* charge on cap c3 */
+        double m_v_cap4 = 0.0;               /* charge on cap c4 */
+        double m_r67 = 0.0;                  /* = r6 + r7 (for easy use later) */
+        uint8_t m_has_c4 = 0;
+        uint8_t m_has_r4 = 0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)

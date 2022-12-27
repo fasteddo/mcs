@@ -210,7 +210,7 @@ namespace mame.netlist
 
     /// \brief Generic netlist exception.
     ///  The exception is used in all events which are considered fatal.
-    class nl_exception : plib.pexception
+    public class nl_exception : plib.pexception
     {
         /// \brief Constructor.
         ///  Allows a descriptive text to be passed to the exception

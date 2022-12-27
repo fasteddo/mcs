@@ -102,13 +102,13 @@ namespace mame.ui
                     emu_file backgroundfile = new emu_file(".", OPEN_FLAG_READ);
                     if (!backgroundfile.open("background.jpg"))
                     {
-                        render_load_jpeg(out m_bgrnd_bitmap, backgroundfile.core_file_get());
+                        render_load_jpeg(out m_bgrnd_bitmap, backgroundfile.core_file_);
                         backgroundfile.close();
                     }
 
                     if (!m_bgrnd_bitmap.valid() && !backgroundfile.open("background.png"))
                     {
-                        render_load_png(out m_bgrnd_bitmap, backgroundfile.core_file_get());
+                        render_load_png(out m_bgrnd_bitmap, backgroundfile.core_file_);
                         backgroundfile.close();
                     }
 

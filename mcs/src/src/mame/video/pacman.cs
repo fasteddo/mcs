@@ -80,7 +80,7 @@ namespace mame
           bit 0 -- 1  kohm resistor  -- RED
 
         ***************************************************************************/
-        void pacman_palette(palette_device palette)
+        protected void pacman_palette(palette_device palette)
         {
             Pointer<uint8_t> color_prom = new Pointer<uint8_t>(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
             int [] resistances3 = new int [3] { 1000, 470, 220 };
@@ -199,6 +199,9 @@ namespace mame
         }
 
 
+        //VIDEO_START_MEMBER(pacman_state,birdiy)
+
+
         void pacman_videoram_w(offs_t offset, uint8_t data)
         {
             m_videoram[offset].op = data;
@@ -214,14 +217,19 @@ namespace mame
 
 
         //WRITE_LINE_MEMBER(pacman_state::flipscreen_w)
-        void flipscreen_w(int state)
+        protected void flipscreen_w(int state)
         {
             m_flipscreen = (uint8_t)state;
             m_bg_tilemap.set_flip(m_flipscreen * (TILEMAP_FLIPX + TILEMAP_FLIPY));
         }
 
 
-        u32 screen_update_pacman(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
+        //void mspactwin_state::mspactwin_videoram_w(offs_t offset, uint8_t data)
+
+        //WRITE_LINE_MEMBER(mspactwin_state::flipscreen_w)
+
+
+        protected u32 screen_update_pacman(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
             if (m_bgpriority != 0)
                 bitmap.fill(0, cliprect);
@@ -327,5 +335,103 @@ namespace mame
 
             return 0;
         }
+
+
+        /*************************************************************************
+            Sega Pengo
+        **************************************************************************/
+        //VIDEO_START_MEMBER(pacman_state,pengo)
+        protected void video_start_pengo()
+        {
+            throw new emu_unimplemented();
+#if false
+            init_save_state();
+
+            m_charbank = 0;
+            m_spritebank = 0;
+            m_palettebank = 0;
+            m_colortablebank = 0;
+            m_flipscreen = 0;
+            m_bgpriority = 0;
+            m_inv_spr = 0;
+            m_xoffsethack = 0;
+
+            m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(pacman_state::pacman_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(pacman_state::pacman_scan_rows)), 8, 8, 36, 28);
+#endif
+        }
+
+
+        //WRITE_LINE_MEMBER(pacman_state::pengo_palettebank_w)
+        protected void pengo_palettebank_w(int state)
+        {
+            throw new emu_unimplemented();
+#if false
+            m_palettebank = state;
+            m_bg_tilemap->mark_all_dirty();
+#endif
+        }
+
+
+        //WRITE_LINE_MEMBER(pacman_state::pengo_colortablebank_w)
+        protected void pengo_colortablebank_w(int state)
+        {
+            throw new emu_unimplemented();
+#if false
+            m_colortablebank = state;
+            m_bg_tilemap->mark_all_dirty();
+#endif
+        }
+
+
+        //WRITE_LINE_MEMBER(pacman_state::pengo_gfxbank_w)
+        protected void pengo_gfxbank_w(int state)
+        {
+            throw new emu_unimplemented();
+#if false
+            m_spritebank = state;
+            m_charbank = state;
+            m_bg_tilemap->mark_all_dirty();
+#endif
+        }
+
+
+        /*************************************************************************
+        S2650 Games
+        **************************************************************************/
+        //TILE_GET_INFO_MEMBER(pacman_state::s2650_get_tile_info)
+
+        //VIDEO_START_MEMBER(pacman_state,s2650games)
+
+        //uint32_t pacman_state::screen_update_s2650games(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect)
+
+        //void pacman_state::s2650games_videoram_w(offs_t offset, uint8_t data)
+
+        //void pacman_state::s2650games_colorram_w(offs_t offset, uint8_t data)
+
+        //void pacman_state::s2650games_scroll_w(offs_t offset, uint8_t data)
+
+        //void pacman_state::s2650games_tilesbank_w(offs_t offset, uint8_t data)
+
+
+        /*************************************************************************
+        Jr. Pac-Man
+        **************************************************************************/
+        //TILEMAP_MAPPER_MEMBER(pacman_state::jrpacman_scan_rows)
+
+        //TILE_GET_INFO_MEMBER(pacman_state::jrpacman_get_tile_info)
+
+        //void pacman_state::jrpacman_mark_tile_dirty(int offset)
+
+        //VIDEO_START_MEMBER(pacman_state,jrpacman)
+
+        //void pacman_state::jrpacman_videoram_w(offs_t offset, uint8_t data)
+
+        //WRITE_LINE_MEMBER(pacman_state::jrpacman_charbank_w)
+
+        //WRITE_LINE_MEMBER(pacman_state::jrpacman_spritebank_w)
+
+        //void pacman_state::jrpacman_scroll_w(uint8_t data)
+
+        //WRITE_LINE_MEMBER(pacman_state::jrpacman_bgpriority_w)
     }
 }

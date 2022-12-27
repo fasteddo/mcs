@@ -237,7 +237,7 @@ namespace mame
             m_favorite = new favorite_manager(m_ui.options());
 
             // attempt to load the autoboot script if configured
-            throw new emu_unimplemented();
+            //throw new emu_unimplemented();
 #if false
             m_autoboot_script.reset();
 #endif

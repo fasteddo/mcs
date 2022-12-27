@@ -44,7 +44,7 @@ namespace mame.netlist.interface_
     ///
 
     //template <typename FUNC>
-    class nld_analog_callback : device_t  //NETLIB_OBJECT(analog_callback)
+    public class nld_analog_callback : device_t  //NETLIB_OBJECT(analog_callback)
     {
         public delegate void FUNC(device_t device, nl_fptype val);
 
@@ -136,7 +136,7 @@ namespace mame.netlist.interface_
     ///
     //template <typename T>
     //NETLIB_OBJECT(buffered_param_setter)
-    class nld_buffered_param_setter<T> : device_t
+    public class nld_buffered_param_setter<T> : device_t
     {
         delegate void setter_t(nl_fptype param);  //using setter_t = plib::pmfp<void,nl_fptype>;
 

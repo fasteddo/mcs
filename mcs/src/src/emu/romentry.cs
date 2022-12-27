@@ -39,10 +39,10 @@ namespace mame
         //#define     ROMREGION_8BIT          0x00000000          /*    (non-CPU regions only) */
         //#define     ROMREGION_16BIT         0x00000100
         public const u32 ROMREGION_32BIT             = 0x00000200;
-        //#define     ROMREGION_64BIT         0x00000300
+        public const u32 ROMREGION_64BIT             = 0x00000300;
 
         public const u32 ROMREGION_ENDIANMASK        = 0x00000400;          /* endianness of the region */
-        //#define     ROMREGION_LE            0x00000000          /*    (non-CPU regions only) */
+        public const u32 ROMREGION_LE                = 0x00000000;          /*    (non-CPU regions only) */
         public const u32 ROMREGION_BE                = 0x00000400;
 
         public const u32 ROMREGION_INVERTMASK        = 0x00000800;          /* invert the bits of the region */
@@ -118,7 +118,7 @@ namespace mame
         //#define ROM_REGION16_BE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_16BIT | ROMREGION_BE)
         //#define ROM_REGION32_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_32BIT | ROMREGION_LE)
         public static tiny_rom_entry ROM_REGION32_BE(u32 length, string tag, u32 flags) { return ROM_REGION(length, tag, (flags) | ROMREGION_32BIT | ROMREGION_BE); }
-        //#define ROM_REGION64_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_64BIT | ROMREGION_LE)
+        public static tiny_rom_entry ROM_REGION64_LE(u32 length, string tag, u32 flags) { return ROM_REGION(length, tag, (flags) | ROMREGION_64BIT | ROMREGION_LE); }
         //#define ROM_REGION64_BE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_64BIT | ROMREGION_BE)
 
 
@@ -129,8 +129,8 @@ namespace mame
 
 
         /* ----- specialized loading macros ----- */
-        //#define ROM_LOAD_NIB_HIGH(name,offset,length,hash)      ROMX_LOAD(name, offset, length, hash, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI)
-        //#define ROM_LOAD_NIB_LOW(name,offset,length,hash)       ROMX_LOAD(name, offset, length, hash, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO)
+        public static tiny_rom_entry ROM_LOAD_NIB_HIGH(string name, u32 offset, u32 length, string hash) { return ROMX_LOAD(name, offset, length, hash, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI); }
+        public static tiny_rom_entry ROM_LOAD_NIB_LOW(string name, u32 offset, u32 length, string hash) { return ROMX_LOAD(name, offset, length, hash, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO); }
         public static tiny_rom_entry ROM_LOAD16_BYTE(string name, u32 offset, u32 length, string hash) { return ROMX_LOAD(name, offset, length, hash, ROM_SKIP(1)); }
         //#define ROM_LOAD16_WORD(name,offset,length,hash)        ROM_LOAD(name, offset, length, hash)
         //#define ROM_LOAD16_WORD_SWAP(name,offset,length,hash)   ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_REVERSE)
@@ -240,6 +240,15 @@ namespace mame
 
         //rom_entry(rom_entry const &) = default;
         //rom_entry(rom_entry &&) = default;
+        public rom_entry(rom_entry ent)
+        {
+            this.m_name = ent.m_name;
+            this.m_hashdata = ent.m_hashdata;
+            this.m_offset = ent.m_offset;
+            this.m_length = ent.m_length;
+            this.m_flags = ent.m_flags;
+        }
+
         //rom_entry &operator=(rom_entry const &) = default;
         //rom_entry &operator=(rom_entry &&) = default;
 

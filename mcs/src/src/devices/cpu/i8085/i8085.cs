@@ -1643,7 +1643,7 @@ namespace mame
     //class i8080a_cpu_device : public i8085a_cpu_device
 
 
-    static class i8085_global
+    public static class i8085_global
     {
         public static i8080_cpu_device I8080<bool_Required>(machine_config mconfig, device_finder<i8080_cpu_device, bool_Required> finder, double clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8080_cpu_device.I8080, new XTAL(clock)); }
         public static i8085a_cpu_device I8085A<bool_Required>(machine_config mconfig, device_finder<i8085a_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8085a_cpu_device.I8085A, clock); }

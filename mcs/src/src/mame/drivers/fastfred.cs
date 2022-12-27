@@ -20,6 +20,7 @@ using static mame.emumem_global;
 using static mame.emupal_global;
 using static mame.gamedrv_global;
 using static mame.gen_latch_global;
+using static mame.generic_global;
 using static mame.hash_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
@@ -198,7 +199,7 @@ namespace mame
     }
 
 
-    partial class fastfred : construct_ioport_helper
+    public partial class fastfred : construct_ioport_helper
     {
         //static INPUT_PORTS_START( common )
         void construct_ioport_common(device_t owner, ioport_list portlist, ref string errorbuf)
@@ -322,18 +323,6 @@ namespace mame
 
     partial class fastfred_state : galaxold_state
     {
-        static readonly gfx_layout charlayout = new gfx_layout
-        (
-            8,8,
-            RGN_FRAC(1,3),
-            3,
-            new u32 [] { RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
-            new u32 [] { 0, 1, 2, 3, 4, 5, 6, 7 },
-            new u32 [] { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-            8*8
-        );
-
-
         static readonly gfx_layout spritelayout = new gfx_layout
         (
             16,16,
@@ -350,14 +339,13 @@ namespace mame
 
         //static const gfx_layout imago_spritelayout =
 
-        //static const gfx_layout imago_char_1bpp =
-
 
         //static GFXDECODE_START( gfx_fastfred )
         static readonly gfx_decode_entry [] gfx_fastfred =
         {
-            GFXDECODE_ENTRY( "gfx1", 0, charlayout,   0, 32 ),
-            GFXDECODE_ENTRY( "gfx2", 0, spritelayout, 0, 32 ),
+            GFXDECODE_ENTRY( "gfx1", 0, gfx_8x8x3_planar,   0, 32 ),
+            GFXDECODE_ENTRY( "gfx2", 0, spritelayout,       0, 32 ),
+
             //GFXDECODE_END
         };
 

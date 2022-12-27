@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using BitmapHelperNS;
 using NAudio;
 using NAudio.Wave;
 
@@ -24,7 +25,7 @@ namespace mcsForm
 
         Bitmap m_bitmap;
         BitmapHelper m_bitmapHelper;
-        Random m_random = new Random();
+        Random m_random = new();
         Graphics m_graphics;
         int m_bitmapXOffset = 10;
         int m_bitmapYOffset = 10;
@@ -56,7 +57,7 @@ namespace mcsForm
             m_bitmapHelper = new BitmapHelper(m_bitmap);
 
 
-            Timer updateTimer = new Timer();
+            Timer updateTimer = new();
             updateTimer.Interval = 50;
             updateTimer.Tick += new EventHandler(updateTimer_Tick);
             updateTimer.Start();
@@ -87,7 +88,7 @@ namespace mcsForm
 
         // master keyboard translation table
         //static const int win_key_trans_table[][4] =
-        public static readonly Dictionary<Keys, mame.input_item_id> keymap = new Dictionary<Keys, mame.input_item_id>()
+        public static readonly Dictionary<Keys, mame.input_item_id> keymap = new()
         {
             // MAME key             dinput key          virtual key     ascii
 
@@ -285,8 +286,7 @@ namespace mcsForm
             if (osd.keyboard_state == null)
                 return;
 
-            mame.input_item_id input_id;
-            if (keymap.TryGetValue(keycode, out input_id))
+            if (keymap.TryGetValue(keycode, out mame.input_item_id input_id))
                 osd.keyboard_state[(int)input_id].i = 1;
 
 
@@ -317,8 +317,7 @@ namespace mcsForm
             if (osd.keyboard_state == null)
                 return;
 
-            mame.input_item_id input_id;
-            if (keymap.TryGetValue(e.KeyCode, out input_id))
+            if (keymap.TryGetValue(e.KeyCode, out mame.input_item_id input_id))
                 osd.keyboard_state[(int)input_id].i = 0;
 
             if (e.KeyCode == Keys.ShiftKey)
@@ -551,7 +550,7 @@ namespace mcsForm
 
             osd_interface_WinForms osd = (osd_interface_WinForms)mame.mame_machine_manager.instance().osd();
             mame.Pointer<byte> framedata = osd.screenbufferptr;
-            ConcurrentDictionary<int, int> frameDataCopyThreadIds = new ConcurrentDictionary<int, int>();
+            ConcurrentDictionary<int, int> frameDataCopyThreadIds = new();
 
             if (framedata == null)
                 return;
@@ -642,7 +641,7 @@ namespace mcsForm
                     System.Threading.Tasks.Parallel.For(0, sourceHeight, y =>
                     //for (int y = 0; y < sourceHeight; y++)
                     {
-                        frameDataCopyThreadIds.TryAdd(System.Threading.Thread.CurrentThread.ManagedThreadId, 0);  // count how many threads are in use when using Parallel.For() version
+                        frameDataCopyThreadIds.TryAdd(Environment.CurrentManagedThreadId, 0);  // count how many threads are in use when using Parallel.For() version
                         framedata.CopyTo(y * sourceStride, m_bitmapHelper.GetBitmapData(y * destStride, copyLength), copyLength);
                     });
                 }

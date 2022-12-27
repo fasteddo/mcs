@@ -347,7 +347,7 @@ namespace mame
         //void mcr_nflfoot_state::ipu_91695_portmap(address_map &map)
 
 
-    partial class mcr : construct_ioport_helper
+    public partial class mcr : construct_ioport_helper
     {
         /*************************************
          *

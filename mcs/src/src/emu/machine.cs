@@ -908,10 +908,7 @@ namespace mame
             device_execute_interface executing = m_scheduler.currently_executing();
             if (executing != null)
             {
-                cpu_device cpu = null;
-                if (executing.device() is cpu_device)
-                    cpu = (cpu_device)executing.device();
-
+                cpu_device cpu = executing.device() is cpu_device cpu_device ? cpu_device : null;
                 if (cpu != null)
                 {
                     address_space prg = cpu.memory().space(AS_PROGRAM);
@@ -1136,7 +1133,7 @@ namespace mame
                 emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_READ);
                 if (!file.open(nvram_filename(nvram.device())))
                 {
-                    if (!nvram.nvram_load(file.core_file_get()))
+                    if (!nvram.nvram_load(file.core_file_))
                         osd_printf_error("Error reading NVRAM file {0}\n", file.filename());
 
                     file.close();
@@ -1160,7 +1157,7 @@ namespace mame
                     emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                     if (!file.open(nvram_filename(nvram.device())))
                     {
-                        if (!nvram.nvram_save(file.core_file_get()))
+                        if (!nvram.nvram_save(file.core_file_))
                             osd_printf_error("Error writing NVRAM file {0}\n", file.filename());
 
                         file.close();

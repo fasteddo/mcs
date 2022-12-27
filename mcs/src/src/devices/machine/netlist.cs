@@ -39,7 +39,7 @@ namespace mame
     public delegate void func_type(netlist.nlparse_t setup);  //using func_type = std::function<void(netlist::nlparse_t &)>;
 
 
-    static partial class netlist_global
+    public static partial class netlist_global
     {
         //#define NETLIST_LOGIC_PORT_CHANGED(_base, _tag)  PORT_CHANGED_MEMBER(_base ":" _tag, netlist_mame_logic_input_device, input_changed, 0)
         //#define NETLIST_INT_PORT_CHANGED(_base, _tag)    PORT_CHANGED_MEMBER(_base ":" _tag, netlist_mame_logic_input_device, input_changed, 0)
@@ -965,9 +965,9 @@ namespace mame
             m_offset = 0.0;
             m_mult = 1.0;
 
-            m_owner = owner is netlist_mame_device ? (netlist_mame_device)owner : null;
-            m_sound = owner is netlist_mame_sound_device ? (netlist_mame_sound_device)owner : null;
-            m_cpu = owner is netlist_mame_cpu_device ? (netlist_mame_cpu_device)owner : null;
+            m_owner = owner is netlist_mame_device owner_device ? owner_device : null;
+            m_sound = owner is netlist_mame_sound_device owner_sound ? owner_sound : null;
+            m_cpu = owner is netlist_mame_cpu_device owner_cpu ? owner_cpu : null;
         }
 
         //virtual ~netlist_mame_sub_interface() { }
@@ -1107,7 +1107,7 @@ namespace mame
             LOGDEVCALLS("start\n");
             netlist.param_ref_t p = this.nl_owner().setup().find_param(m_param_name);
             // FIXME: m_param should be param_ref_t
-            m_param = p.param() is param_fp_t ? (param_fp_t)p.param() : null;  //m_param = dynamic_cast<netlist::param_fp_t *>(&p.param());
+            m_param = p.param() is param_fp_t param_fp ? param_fp : null;  //m_param = dynamic_cast<netlist::param_fp_t *>(&p.param());
             if (m_param == null)
             {
                 fatalerror("device {0} wrong parameter type for {1}\n", basetag(), m_param_name);
@@ -1458,7 +1458,7 @@ namespace mame
 
     /// \brief save state helper for plib classes supporting the save_state interface
     ///
-    public struct save_helper
+    public class save_helper : plib.save_state_helper_interface
     {
         device_t m_device;
         string m_prefix;
@@ -1687,6 +1687,28 @@ namespace mame
     // ----------------------------------------------------------------------------------------
     // sound_in
     // ----------------------------------------------------------------------------------------
+
+    public static class nld_sound_in_helper_global
+    {
+        public static void init()
+        {
+            netlist.factory.nld_sound_in_helper.is_nld_sound_in = (typeof_C) =>
+            {
+                return typeof_C == typeof(nld_sound_in);
+            };
+
+            netlist.factory.nld_sound_in_helper.new_nld_sound_in = (anetlist, name) =>
+            {
+                return new nld_sound_in(anetlist, name);
+            };
+
+            netlist.factory.nld_sound_in_helper.new_device_element_t_nld_sound_in = (name, props) =>
+            {
+                return new netlist.factory.device_element_t<nld_sound_in>(name, props);
+            };
+        }
+    }
+
 
     //using sound_in_type = netlist::interface::NETLIB_NAME(buffered_param_setter)<netlist_mame_sound_input_buffer>;
 

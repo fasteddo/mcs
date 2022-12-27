@@ -42,7 +42,7 @@ namespace mame
             }
 
             osd_printf_verbose("Loading translation file {0}\n", file.fullpath());
-            util.load_translation(file.core_file_get());
+            util.load_translation(file.core_file_);
         }
     }
 }

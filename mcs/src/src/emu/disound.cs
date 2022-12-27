@@ -112,7 +112,7 @@ namespace mame
         }
 
 
-        //device_sound_interface &reset_routes() { m_route_list.clear(); return *this; }
+        public device_sound_interface reset_routes() { m_route_list.clear(); return this; }
 
 
         // sound stream update overrides

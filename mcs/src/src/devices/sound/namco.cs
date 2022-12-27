@@ -17,7 +17,7 @@ using static mame.namco_global;
 
 namespace mame
 {
-    static partial class namco_global
+    public static partial class namco_global
     {
         /* quality parameter: internal sample rate is 192 KHz, output is 48 KHz */
         public const int INTERNAL_RATE = 192000;
@@ -292,7 +292,7 @@ namespace mame
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
         //-------------------------------------------------
-        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
+        protected virtual void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
             if (m_stereo)
             {
@@ -569,20 +569,48 @@ namespace mame
         }
 
 
-        void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
+        protected override void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
             throw new emu_unimplemented();
         }
     }
 
 
-    //class namco_15xx_device : public namco_audio_device
+    public class namco_15xx_device : namco_audio_device
+    {
+        //DEFINE_DEVICE_TYPE(NAMCO_15XX,  namco_15xx_device,  "namco_15xx",  "Namco 15xx")
+        public static readonly emu.detail.device_type_impl NAMCO_15XX = DEFINE_DEVICE_TYPE("namco_15xx", "Namco 15xx", (type, mconfig, tag, owner, clock) => { return new namco_15xx_device(mconfig, tag, owner, clock); });
+
+
+        uint8_t [] m_soundregs;  //std::unique_ptr<uint8_t[]> m_soundregs;
+
+
+        namco_15xx_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
+            : base(mconfig, NAMCO_15XX, tag, owner, clock)
+        {
+            m_soundregs = null;
+        }
+
+
+        //void namco_15xx_w(offs_t offset, uint8_t data);
+        //uint8_t sharedram_r(offs_t offset);
+        //void sharedram_w(offs_t offset, uint8_t data);
+
+
+        // device-level overrides
+        protected override void device_start() { throw new emu_unimplemented(); }
+
+        protected override void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { throw new emu_unimplemented(); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
+    }
+
 
     //class namco_cus30_device : public namco_audio_device
 
 
     static partial class namco_global
     {
+        public static namco_device NAMCO<bool_Required>(machine_config mconfig, device_finder<namco_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
         public static namco_device NAMCO<bool_Required>(machine_config mconfig, device_finder<namco_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
+        public static namco_15xx_device NAMCO_15XX<bool_Required>(machine_config mconfig, device_finder<namco_15xx_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, namco_15xx_device.NAMCO_15XX, clock); }
     }
 }

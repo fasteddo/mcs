@@ -2,11 +2,11 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using media_auditor_record_list = mame.std.list<mame.media_auditor.audit_record>;  //using record_list = std::list<audit_record>;
-using samples_device_enumerator = mame.device_type_enumerator<mame.samples_device>;  //typedef device_type_enumerator<samples_device> samples_device_enumerator;
 using size_t = System.UInt64;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
@@ -262,12 +262,12 @@ namespace mame
                         bool dumped = !hashes.flag(util.hash_collection.FLAG_NO_DUMP);
                         device_type shared_device = parentroms.find_shared_device(device, name, hashes, rom_file_size(rom));
                         if (shared_device != null)
-                            LOG(null, "File '{0}' {1}{2}dumped shared with {3}\n", name, ROM_ISOPTIONAL(rom.op) ? "optional " : "", dumped ? "" : "un", shared_device.shortname());
+                            LOG(null, "File '{0}' {1}{2}dumped shared with {3}\n", name, ROM_ISOPTIONAL(rom) ? "optional " : "", dumped ? "" : "un", shared_device.shortname());
                         else
-                            LOG(null, "File '{0}' {1}{2}dumped\n", name, ROM_ISOPTIONAL(rom.op) ? "optional " : "", dumped ? "" : "un");
+                            LOG(null, "File '{0}' {1}{2}dumped\n", name, ROM_ISOPTIONAL(rom) ? "optional " : "", dumped ? "" : "un");
 
                         // count the number of files with hashes
-                        if (dumped && !ROM_ISOPTIONAL(rom.op))
+                        if (dumped && !ROM_ISOPTIONAL(rom))
                         {
                             required++;
                             if (shared_device != null)
@@ -276,11 +276,11 @@ namespace mame
 
                         // audit a file
                         audit_record record = null;
-                        if (ROMREGION_ISROMDATA(region.op))
+                        if (ROMREGION_ISROMDATA(region))
                             record = audit_one_rom(searchpath, rom);
 
                         // audit a disk
-                        else if (ROMREGION_ISDISKDATA(region.op))
+                        else if (ROMREGION_ISDISKDATA(region))
                             record = audit_one_disk(rom, device);
 
                         if (record != null)
@@ -337,7 +337,7 @@ namespace mame
 
             std.vector<string> searchpath = new std.vector<string>();
             audit_regions(
-                    (rom_entry region, Pointer<rom_entry> rom) =>  //[this, &device, &searchpath] (rom_entry const *region, rom_entry const *rom) -> audit_record const *
+                    (Pointer<rom_entry> region, Pointer<rom_entry> rom) =>  //[this, &device, &searchpath] (rom_entry const *region, rom_entry const *rom) -> audit_record const *
                     {
                         if (ROMREGION_ISROMDATA(region))
                         {
@@ -434,18 +434,20 @@ namespace mame
             int found = 0;
 
             // iterate over sample entries
-            foreach (samples_device device in new samples_device_enumerator(m_enumerator.config().root_device()))
+            object [] samples_devices = samples_device_enumerator_helper.get_samples_devices(m_enumerator.config().root_device());
+            foreach (var device in samples_devices)  //for (samples_device &device : samples_device_enumerator(m_enumerator.config()->root_device()))
             {
                 // by default we just search using the driver name
                 string searchpath = m_enumerator.driver().name;
 
                 // add the alternate path if present
-                samples_iterator samplesiter = new samples_iterator(device);
-                if (samplesiter.altbasename() != null)
-                    searchpath += ";" + samplesiter.altbasename();
+                object iter = samples_device_enumerator_helper.get_samples_iterator(device);  //samples_iterator iter(device);
+                if (samples_device_enumerator_helper.get_altbasename(iter) != null)  //if (iter.altbasename() != nullptr)
+                    searchpath += ";" + samples_device_enumerator_helper.get_altbasename(iter);  //searchpath.append(";").append(iter.altbasename());
 
                 // iterate over samples in this entry
-                for (string samplename = samplesiter.first(); samplename != null; samplename = samplesiter.next())
+                string [] iter_samplenames = samples_device_enumerator_helper.get_samplenames(iter);
+                foreach (var samplename in iter_samplenames)  //for (const char *samplename = iter.first(); samplename; samplename = iter.next())
                 {
                     required++;
 
@@ -588,7 +590,7 @@ namespace mame
 
         // internal helpers
 
-        void audit_regions(Func<rom_entry, Pointer<rom_entry>, audit_record> do_audit, rom_entry region, out size_t found, out size_t required)  //template <typename T> void audit_regions(T do_audit, const rom_entry *region, std::size_t &found, std::size_t &required);
+        void audit_regions(Func<Pointer<rom_entry>, Pointer<rom_entry>, audit_record> do_audit, rom_entry region, out size_t found, out size_t required)  //template <typename T> void audit_regions(T do_audit, const rom_entry *region, std::size_t &found, std::size_t &required);
         {
             throw new emu_unimplemented();
         }
@@ -624,7 +626,7 @@ namespace mame
             file.close();
 
             // compute the final status
-            compute_status(record, rom.op, record.actual_length() != 0);
+            compute_status(record, rom, record.actual_length() != 0);
             return record;
         }
 
@@ -650,7 +652,7 @@ namespace mame
         //  compute_status - compute a detailed status
         //  based on the information we have
         //-------------------------------------------------
-        void compute_status(audit_record record, rom_entry rom, bool found)
+        void compute_status(audit_record record, Pointer<rom_entry> rom, bool found)
         {
             // if not found, provide more details
             if (!found)

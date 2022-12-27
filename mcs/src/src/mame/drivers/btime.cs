@@ -22,6 +22,7 @@ using static mame.emumem_global;
 using static mame.emupal_global;
 using static mame.gamedrv_global;
 using static mame.gen_latch_global;
+using static mame.generic_global;
 using static mame.hash_global;
 using static mame.input_merger_global;
 using static mame.ioport_global;
@@ -145,7 +146,7 @@ namespace mame
     }
 
 
-    partial class btime : construct_ioport_helper
+    public partial class btime : construct_ioport_helper
     {
         //static INPUT_PORTS_START( btime )
         void construct_ioport_btime(device_t owner, ioport_list portlist, ref string errorbuf)
@@ -258,18 +259,6 @@ namespace mame
 
     partial class btime_state : driver_device
     {
-        static readonly gfx_layout tile8layout = new gfx_layout
-        (
-            8,8,
-            RGN_FRAC(1,3),
-            3,
-            new u32[] { RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
-            STEP8(0,1),
-            STEP8(0,8),
-            8*8
-        );
-
-
         //static const gfx_layout disco_tile8layout =
 
 
@@ -293,9 +282,9 @@ namespace mame
         //static GFXDECODE_START( gfx_btime )
         static readonly gfx_decode_entry [] gfx_btime =
         {
-            GFXDECODE_ENTRY( "gfx1", 0, tile8layout,     0, 1 ), /* char set #1 */
-            GFXDECODE_ENTRY( "gfx1", 0, tile16layout,    0, 1 ), /* sprites */
-            GFXDECODE_ENTRY( "gfx2", 0, tile16layout,    8, 1 ), /* background tiles */
+            GFXDECODE_ENTRY( "gfx1", 0, gfx_8x8x3_planar, 0, 1 ), /* char set #1 */
+            GFXDECODE_ENTRY( "gfx1", 0, tile16layout,     0, 1 ), /* sprites */
+            GFXDECODE_ENTRY( "gfx2", 0, tile16layout,     8, 1 ), /* background tiles */
 
             //GFXDECODE_END
         };

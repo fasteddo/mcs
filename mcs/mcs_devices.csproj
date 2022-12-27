@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Configurations>Debug;Release;Debug_Unsafe;Release_Unsafe</Configurations>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Unsafe|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE;MCS_UNSAFE</DefineConstants>
+    <Optimize>false</Optimize>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Unsafe|AnyCPU'">
+    <DefineConstants>TRACE;MCS_UNSAFE</DefineConstants>
+    <Optimize>true</Optimize>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="3rdparty\**" />
+    <Compile Remove="src\3rdparty\**" />
+    <Compile Remove="src\base\**" />
+    <Compile Remove="src\build\generated\**" />
+    <Compile Remove="src\src\**" />
+    <EmbeddedResource Remove="3rdparty\**" />
+    <EmbeddedResource Remove="src\3rdparty\**" />
+    <EmbeddedResource Remove="src\base\**" />
+    <EmbeddedResource Remove="src\build\generated\**" />
+    <EmbeddedResource Remove="src\src\**" />
+    <None Remove="3rdparty\**" />
+    <None Remove="src\3rdparty\**" />
+    <None Remove="src\base\**" />
+    <None Remove="src\build\generated\**" />
+    <None Remove="src\src\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="src\build\generated\emu\cpu\**" />
+    <EmbeddedResource Include="src\build\generated\emu\cpu\**" />
+    <None Include="src\build\generated\emu\cpu\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="src\src\devices\**" />
+    <EmbeddedResource Include="src\src\devices\**" />
+    <None Include="src\src\devices\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="mcs_3rdparty.csproj" />
+    <ProjectReference Include="mcs_base.csproj" />
+    <ProjectReference Include="mcs_src.csproj" />
+  </ItemGroup>
+
+</Project>

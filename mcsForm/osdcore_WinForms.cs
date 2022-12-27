@@ -284,14 +284,14 @@ namespace mcsForm
         {
             if (m_directoryIdx < m_directories.Length)
             {
-                entry newentry = new entry();
+                entry newentry = new();
                 newentry.name = m_directories[m_directoryIdx++].Name;
                 newentry.type = entry.entry_type.DIR;
                 return newentry;
             }
             else if (m_fileIdx < m_files.Length)
             {
-                entry newentry = new entry();
+                entry newentry = new();
                 newentry.name = m_files[m_fileIdx++].Name;
                 newentry.type = entry.entry_type.FILE;
                 return newentry;
@@ -311,7 +311,7 @@ namespace mcsForm
             if (!Directory.Exists(dirname))
                 return null;
 
-            osd_directory_WinForms dirWinForms = new osd_directory_WinForms();
+            osd_directory_WinForms dirWinForms = new();
             dirWinForms.m_directory = new DirectoryInfo(dirname);
             dirWinForms.m_directories = dirWinForms.m_directory.GetDirectories();
             dirWinForms.m_files = dirWinForms.m_directory.GetFiles();
@@ -365,7 +365,7 @@ namespace mcsForm
         {
             throw new emu_fatalerror("Fix inheritence");
 
-            osd_file_WinForms fileWinForms = new osd_file_WinForms();
+            osd_file_WinForms fileWinForms = new();
             file = fileWinForms;
             try
             {
@@ -768,7 +768,7 @@ namespace mcsForm
         -----------------------------------------------------------------------------*/
         public override void osd_subst_env(out string dst, string src)
         {
-            throw new emu_unimplemented();
+            dst = Environment.ExpandEnvironmentVariables(src);
         }
     }
 }

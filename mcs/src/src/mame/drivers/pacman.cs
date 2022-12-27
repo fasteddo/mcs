@@ -59,7 +59,7 @@ namespace mame
          *************************************/
 
         //WRITE_LINE_MEMBER(pacman_state::vblank_irq)
-        void vblank_irq(int state)
+        protected void vblank_irq(int state)
         {
             if (state != 0 && m_irq_mask)
                 m_maincpu.op0.set_input_line(INPUT_LINE_IRQ0, ASSERT_LINE);
@@ -70,7 +70,7 @@ namespace mame
         //DECLARE_WRITE_LINE_MEMBER(s2650_interrupt);
 
         //WRITE_LINE_MEMBER(pacman_state::irq_mask_w)
-        void irq_mask_w(int state)
+        protected void irq_mask_w(int state)
         {
             m_irq_mask = state != 0;
             if (state == 0)
@@ -216,7 +216,7 @@ namespace mame
     }
 
 
-    partial class pacman : construct_ioport_helper
+    public partial class pacman : construct_ioport_helper
     {
         /*************************************
          *
@@ -351,7 +351,8 @@ namespace mame
          *
          *************************************/
 
-        static readonly gfx_layout tilelayout = new gfx_layout(
+        static readonly gfx_layout tilelayout = new gfx_layout
+        (
             8, 8,    /* 8*8 characters */
             RGN_FRAC(1,2),    /* 256 characters */
             2,  /* 2 bits per pixel */
@@ -362,7 +363,8 @@ namespace mame
         );
 
 
-        static readonly gfx_layout spritelayout = new gfx_layout(
+        static readonly gfx_layout spritelayout = new gfx_layout
+        (
             16,16,  /* 16*16 sprites */
             RGN_FRAC(1,2),  /* 64 sprites */
             2,  /* 2 bits per pixel */

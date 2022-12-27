@@ -212,7 +212,7 @@ namespace mame
     }
 
 
-    partial class taitosj : construct_ioport_helper
+    public partial class taitosj : construct_ioport_helper
     {
         void DSW2_PORT()
         {

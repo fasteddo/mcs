@@ -179,7 +179,7 @@ namespace mame
     }
 
 
-    static class nvram_global
+    public static class nvram_global
     {
         public static nvram_device NVRAM(machine_config mconfig, string tag, nvram_device.default_value value)
         {

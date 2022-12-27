@@ -34,7 +34,7 @@ namespace mame
         DISCRETE_CLASS_CONSTRUCTOR(unimplemented, base)
         DISCRETE_CLASS_DESTRUCTOR(unimplemented)
     public:
-        int max_output(void) { return 0; }
+        int max_output() { return 0; }
     };
 #endif
 
@@ -49,8 +49,8 @@ namespace mame
                                      discrete_sound_output_interface, 
                                      discrete_step_interface
     {
-        write_stream_view m_outview;  //write_stream_view     *m_outview;
-        u32 m_outview_sample;
+        write_stream_view m_outview = null;  //write_stream_view     *m_outview = nullptr;
+        u32 m_outview_sample = 0U;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(dso_output, base)
@@ -85,9 +85,9 @@ namespace mame
 
 #if false
     DISCRETE_CLASS(dso_csvlog, 0,
-        FILE *m_csv_file;
-        INT64 m_sample_num;
-        char  m_name[32];
+        FILE *m_csv_file = nullptr;
+        int64_t m_sample_num = 0;
+        char m_name[32];
     );
 
     DISCRETE_CLASS(dso_wavlog, 0,
@@ -106,12 +106,12 @@ namespace mame
     partial class discrete_dss_adjustment_node : discrete_base_node,
                                                  discrete_step_interface
     {
-        ioport_port m_port;
-        int32_t m_lastpval;
-        int32_t m_pmin;
-        double m_pscale;
-        double m_min;
-        double m_scale;
+        ioport_port m_port = null;
+        int32_t m_lastpval = 0;
+        int32_t m_pmin = 0;
+        double m_pscale = 0.0;
+        double m_min = 0.0;
+        double m_scale = 0.0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(dss_adjustment, base)
@@ -122,8 +122,8 @@ namespace mame
 
 
         //disc_inp.cs
-        //virtual void reset(void) override;
-        //virtual void step(void) override;
+        //virtual void reset() override;
+        //virtual void step() override;
     }
 
 
@@ -136,9 +136,9 @@ namespace mame
     partial class discrete_dss_input_data_node : discrete_base_node,
                                                  discrete_input_interface
     {
-        double m_gain;             /* node gain */
-        double m_offset;           /* node offset */
-        uint8_t m_data;             /* data written */
+        double m_gain = 0.0;             /* node gain */
+        double m_offset = 0.0;           /* node offset */
+        uint8_t m_data = 0;             /* data written */
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(dss_input_data, base)
@@ -162,9 +162,9 @@ namespace mame
     partial class discrete_dss_input_logic_node : discrete_base_node,
                                                   discrete_input_interface
     {
-        double m_gain;             /* node gain */
-        double m_offset;           /* node offset */
-        uint8_t m_data;             /* data written */
+        double m_gain = 0.0;             /* node gain */
+        double m_offset = 0.0;           /* node offset */
+        uint8_t m_data = 0;             /* data written */
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(dss_input_logic, base)
@@ -188,9 +188,9 @@ namespace mame
     class discrete_dss_input_not_node : discrete_base_node,
                                         discrete_input_interface
     {
-        double m_gain;             /* node gain */
-        double m_offset;           /* node offset */
-        uint8_t m_data;             /* data written */
+        double m_gain = 0.0;             /* node gain */
+        double m_offset = 0.0;           /* node offset */
+        uint8_t m_data = 0;             /* data written */
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(dss_input_not, base)
@@ -241,9 +241,9 @@ namespace mame
                                                   discrete_input_interface,
                                                   discrete_step_interface
     {
-        //double m_gain;             /* node gain */
-        //double m_offset;           /* node offset */
-        uint8_t m_data;             /* data written */
+        //double m_gain = 0.0;             /* node gain */
+        //double m_offset = 0.0;           /* node offset */
+        uint8_t m_data = 0;             /* data written */
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(dss_input_pulse, base)
@@ -269,17 +269,17 @@ namespace mame
                                                           discrete_input_interface,
                                                           discrete_step_interface
     {
-        public uint32_t m_stream_in_number;
-        public read_stream_view m_inview;         /* current in ptr for stream */  //read_stream_view const *m_inview;         /* current in ptr for stream */
-        public uint32_t m_inview_sample;
+        public uint32_t m_stream_in_number = 0;
+        public read_stream_view m_inview = null;         /* current in ptr for stream */  //read_stream_view const *m_inview;         /* current in ptr for stream */
+        public uint32_t m_inview_sample = 0;
 
 
-        double m_gain;             /* node gain */
-        double m_offset;           /* node offset */
-        uint8_t m_data;             /* data written */
-        uint8_t m_is_buffered;
+        double m_gain = 0.0;             /* node gain */
+        double m_offset = 0.0;           /* node offset */
+        uint8_t m_data = 0;             /* data written */
+        uint8_t m_is_buffered = 0;
         /* the buffer stream */
-        sound_stream m_buffer_stream;
+        sound_stream m_buffer_stream = null;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(dss_input_stream, base)

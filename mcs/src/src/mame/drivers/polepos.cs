@@ -49,7 +49,7 @@ namespace mame
     }
 
 
-    partial class polepos : construct_ioport_helper
+    public partial class polepos : construct_ioport_helper
     {
         void POLEPOS_TOGGLE() { PORT_TOGGLE(); }  //#define POLEPOS_TOGGLE  PORT_TOGGLE
     }

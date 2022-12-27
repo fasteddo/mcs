@@ -542,7 +542,7 @@ namespace mame
     }
 
 
-    partial class system1 : construct_ioport_helper
+    public partial class system1 : construct_ioport_helper
     {
         /*************************************
          *  Generic port definitions

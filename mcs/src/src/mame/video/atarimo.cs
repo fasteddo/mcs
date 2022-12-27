@@ -316,7 +316,7 @@ namespace mame
         int m_slipramsize;        // total size of SLIP RAM, in entries
 
         // live state
-        emu_timer m_force_update_timer;   // timer for forced updating
+        emu_timer m_force_update_timer = null;   // timer for forced updating
         uint32_t m_bank;               // current bank number
         uint32_t m_xscroll;            // xscroll offset
         uint32_t m_yscroll;            // yscroll offset
@@ -344,12 +344,12 @@ namespace mame
         atari_motion_objects_device(machine_config mconfig, string tag, device_t owner, uint32_t clock, object screen_tag, atari_motion_objects_config config)
             : this(mconfig, tag, owner, clock)
         {
-            if (screen_tag is string)
-                m_divideo.set_screen((string)screen_tag);
-            else if (screen_tag is device_finder<screen_device, bool_const_true>)
-                m_divideo.set_screen((device_finder<screen_device, bool_const_true>)screen_tag);
-            else if (screen_tag is device_finder<screen_device, bool_const_false>)
-                m_divideo.set_screen((device_finder<screen_device, bool_const_false>)screen_tag);
+            if (screen_tag is string screen_tag_string)
+                m_divideo.set_screen(screen_tag_string);
+            else if (screen_tag is device_finder<screen_device, bool_const_true> screen_tag_finder_true)
+                m_divideo.set_screen(screen_tag_finder_true);
+            else if (screen_tag is device_finder<screen_device, bool_const_false> screen_tag_finder_false)
+                m_divideo.set_screen(screen_tag_finder_false);
             else
                 throw new emu_unimplemented();
 
@@ -393,12 +393,12 @@ namespace mame
 
         public void atari_motion_objects_device_after_ctor(object screen_tag, atari_motion_objects_config config)
         {
-            if (screen_tag is string)
-                m_divideo.set_screen((string)screen_tag);
-            else if (screen_tag is device_finder<screen_device, bool_const_false>)
-                m_divideo.set_screen((device_finder<screen_device, bool_const_false>)screen_tag);
-            else if (screen_tag is device_finder<screen_device, bool_const_true>)
-                m_divideo.set_screen((device_finder<screen_device, bool_const_true>)screen_tag);
+            if (screen_tag is string screen_tag_string)
+                m_divideo.set_screen(screen_tag_string);
+            else if (screen_tag is device_finder<screen_device, bool_const_false> screen_tag_finder_false)
+                m_divideo.set_screen(screen_tag_finder_false);
+            else if (screen_tag is device_finder<screen_device, bool_const_true> screen_tag_finder_true)
+                m_divideo.set_screen(screen_tag_finder_true);
             else
                 throw new emu_unimplemented();
 

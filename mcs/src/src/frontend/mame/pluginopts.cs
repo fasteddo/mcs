@@ -33,7 +33,7 @@ namespace mame
         // methods
         public void scan_directory(string path, bool recursive)
         {
-            throw new emu_unimplemented();
+            //throw new emu_unimplemented();
         }
 
 
@@ -52,6 +52,11 @@ namespace mame
             throw new emu_unimplemented();
         }
 
-        //std::string output_ini() const;
+
+        public string output_ini()
+        {
+            //throw new emu_unimplemented();
+            return "";
+        }
     }
 }

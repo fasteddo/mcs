@@ -221,7 +221,7 @@ namespace mame
     }
 
 
-    static class latch8_global
+    public static class latch8_global
     {
         public static latch8_device LATCH8(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<latch8_device>(mconfig, tag, latch8_device.LATCH8, 0); }
         public static latch8_device LATCH8<bool_Required>(machine_config mconfig, device_finder<latch8_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, latch8_device.LATCH8, 0); }

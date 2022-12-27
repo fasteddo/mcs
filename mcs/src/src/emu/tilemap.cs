@@ -26,7 +26,7 @@ using static mame.tilemap_global;
 
 namespace mame
 {
-    static partial class tilemap_global
+    public static partial class tilemap_global
     {
         // maximum number of groups
         public const int TILEMAP_NUM_GROUPS              = 256;

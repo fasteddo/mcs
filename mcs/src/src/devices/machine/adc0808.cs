@@ -234,7 +234,7 @@ namespace mame
     //class m58990_device : public adc0808_device
 
 
-    static class adc0808_global
+    public static class adc0808_global
     {
         public static adc0809_device ADC0809(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<adc0809_device>(mconfig, tag, adc0809_device.ADC0809, clock); }
     }

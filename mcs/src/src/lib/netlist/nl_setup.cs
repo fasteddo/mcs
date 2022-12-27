@@ -215,7 +215,7 @@ namespace mame.netlist
     {
         Stack<nlparse_t> m_helper_setups = new Stack<nlparse_t>();
 
-        nlparse_t helper_setup { get { return m_helper_setups.Peek(); } }
+        public nlparse_t helper_setup { get { return m_helper_setups.Peek(); } }
 
         void helper_setup_push(netlist.nlparse_t setup) { m_helper_setups.Push(setup); }
         void helper_setup_pop() { m_helper_setups.Pop(); }
@@ -229,10 +229,6 @@ namespace mame.netlist
 
         // net_lib
         public void SOLVER(string name, int freq) { devices.net_lib_global.SOLVER(helper_setup, name, freq); }
-
-
-        // netlist
-        public void MEMREGION_SOURCE(mame.device_t device, string _name) { netlist_global.MEMREGION_SOURCE(helper_setup, device, _name); }
 
 
         // nl_setup

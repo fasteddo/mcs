@@ -1211,7 +1211,7 @@ namespace mame
     //class hd6303y_cpu_device : public hd6301y_cpu_device
 
 
-    static class m6801_global
+    public static class m6801_global
     {
         public static m6803_cpu_device M6803<bool_Required>(machine_config mconfig, device_finder<m6803_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
     }

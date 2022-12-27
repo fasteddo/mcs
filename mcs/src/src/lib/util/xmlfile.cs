@@ -247,7 +247,7 @@ namespace mame
                         //unsigned long long uvalue;
                         //stream >> std::hex >> uvalue;
                         //result = static_cast<long long>(uvalue);
-                        string stream = string_.Substring(1);
+                        string stream = string_[1..];
                         try { result = Convert.ToInt64(stream, 16); }
                         catch (Exception) { success = false; }
                     }
@@ -257,7 +257,7 @@ namespace mame
                         //unsigned long long uvalue;
                         //stream >> std::hex >> uvalue;
                         //result = static_cast<long long>(uvalue);
-                        string stream = string_.Substring(2);
+                        string stream = string_[2..];
                         try { result = Convert.ToInt64(stream, 16); }
                         catch (Exception) { success = false; }
                     }
@@ -265,7 +265,7 @@ namespace mame
                     {
                         //stream.str(&string[1]);
                         //stream >> result;
-                        string stream = string_.Substring(1);
+                        string stream = string_[1..];
                         success = Int64.TryParse(stream, out result);
                     }
                     else

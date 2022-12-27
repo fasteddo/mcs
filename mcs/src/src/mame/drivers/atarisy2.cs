@@ -517,7 +517,7 @@ namespace mame
     }
 
 
-    partial class atarisy2 : construct_ioport_helper
+    public partial class atarisy2 : construct_ioport_helper
     {
         //static INPUT_PORTS_START( paperboy )
         void construct_ioport_paperboy(device_t owner, ioport_list portlist, ref string errorbuf)

@@ -282,7 +282,7 @@ namespace mame
         public u8 flags() { return 0; }
     }
 
-    class device_state_register_operators_u32 : device_state_register_operators<u32>
+    public class device_state_register_operators_u32 : device_state_register_operators<u32>
     {
         public u64 cast_u64(u32 value) { return value; }
         public u8 sizeof_() { return sizeof(u32); }
@@ -298,7 +298,7 @@ namespace mame
         public u8 flags() { return 0; }
     }
 
-    class device_state_register_operators_double : device_state_register_operators<double>
+    public class device_state_register_operators_double : device_state_register_operators<double>
     {
         public u64 cast_u64(double value) { throw new emu_unimplemented(); }
         public u8 sizeof_() { return sizeof(double); }

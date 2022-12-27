@@ -233,6 +233,71 @@ namespace mame
 
 
         //static DISCRETE_SOUND_START(astdelux_discrete)
+        static readonly discrete_block [] astdelux_discrete = 
+        {
+            /************************************************/
+            /* Asteroid delux sound hardware is mostly done */
+            /* in the Pokey chip except for the thrust and  */
+            /* explosion sounds that are a direct lift of   */
+            /* the asteroids hardware hence is a clone of   */
+            /* the circuit above apart from gain scaling.   */
+            /*                                              */
+            /* Note that the thrust enable signal is invert */
+            /************************************************/
+            /*                         NODE                GAIN        OFFSET  INIT */
+            DISCRETE_INPUT_LOGIC (ASTEROID_THRUST_EN),
+            DISCRETE_INPUT_PULSE (ASTEROID_NOISE_RESET, 1),
+
+            DISCRETE_INPUTX_DATA (ASTEROID_EXPLODE_DATA, 1000.0/15.0,   0.0,   0),
+            DISCRETE_INPUTX_DATA (ASTEROID_EXPLODE_PITCH, 1,            0,     12),
+
+            /************************************************/
+            /* Thrust noise is a gated noise source         */
+            /* fed into a filter network                    */
+            /* It is an RC lowpass, followed by a           */
+            /* Sallen-Key bandpass, followed by an active   */
+            /* lowpass.                                     */
+            /************************************************/
+            DISCRETE_LFSR_NOISE(ASTEROID_NOISE, ASTEROID_NOISE_RESET, ASTEROID_NOISE_RESET, 12000.0, 1.0, 0, 0, asteroid_lfsr),
+
+            DISCRETE_GAIN(NODE_70, ASTEROID_NOISE, 1000.0*7.6),
+            DISCRETE_RCFILTER(NODE_71, NODE_70, 2200, 1e-6),
+            DISCRETE_MULTIPLY(NODE_72, NODE_71, ASTEROID_THRUST_EN),
+            /* TBD - replace this line with a Sallen-Key Bandpass macro */
+            DISCRETE_FILTER2(NODE_73, 1, NODE_72, 89.5, (1.0 / 7.6), DISC_FILTER_BANDPASS),
+            /* TBD - replace this line with a Active Lowpass macro */
+            DISCRETE_FILTER1(ASTEROID_THRUST_SND, 1, NODE_73, 160, DISC_FILTER_LOWPASS),
+
+            /************************************************/
+            /* Explosion generation circuit, pitch and vol  */
+            /* are variable.                                */
+            /* The pitch divides using an overflow counter. */
+            /* Meaning the duty cycle varies.  The on time  */
+            /* is always the same (one 12Khz cycle).  But   */
+            /* the off time varies.  /12 = 11 off cycles    */
+            /* Then it is ANDed with the 12kHz to make a    */
+            /* shorter pulse.  There is no real reason to   */
+            /* do this, as the D-Latch already triggers on  */
+            /* the rising edge.  So we won't add the extra  */
+            /* nodes.                                       */
+            /************************************************/
+            DISCRETE_DIVIDE(NODE_80, 1, 12000, ASTEROID_EXPLODE_PITCH),      /* Frequency */
+            DISCRETE_DIVIDE(NODE_81, 1, 100, ASTEROID_EXPLODE_PITCH),        /* Duty */
+            DISCRETE_SQUAREWFIX(NODE_82, 1, NODE_80, 1.0, NODE_81, 1.0/2, 0),    /* Pitch clock */
+            DISCRETE_SAMPLHOLD(NODE_83, ASTEROID_NOISE, NODE_82, DISC_SAMPHOLD_REDGE),
+            DISCRETE_MULTIPLY(NODE_84, NODE_83, ASTEROID_EXPLODE_DATA),
+            DISCRETE_RCFILTER(ASTEROID_EXPLODE_SND, NODE_84, 3042, 1e-6),
+
+            /************************************************/
+            /* Combine all 7 sound sources with a double    */
+            /* adder circuit                                */
+            /************************************************/
+            DISCRETE_ADDER2(NODE_90, 1, ASTEROID_THRUST_SND, ASTEROID_EXPLODE_SND),
+
+            DISCRETE_OUTPUT(NODE_90, 65534.0/(1000+600)),    // Take the output from the mixer
+
+            DISCRETE_SOUND_END,
+        };
 
 
         void asteroid_explode_w(uint8_t data)
@@ -288,6 +353,14 @@ namespace mame
         }
 
 
-        //void asteroid_state::astdelux_sound(machine_config &config)
+        void astdelux_sound(machine_config config)
+        {
+            SPEAKER(config, "mono").front_center();
+
+            DISCRETE(config, m_discrete, astdelux_discrete).disound.add_route(ALL_OUTPUTS, "mono", 1.0);
+
+            ls259_device audiolatch = LS259(config, "audiolatch"); // M10
+            audiolatch.q_out_cb<u32_const_3>().set("discrete", (int state) => { ((discrete_device)subdevice("discrete")).write_line<int_ASTEROID_THRUST_EN>(state); }).reg();
+        }
     }
 }

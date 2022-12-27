@@ -1729,20 +1729,24 @@ namespace mame
                 //pixel_op(destptr[1], srcptr[1]);
                 //pixel_op(destptr[2], srcptr[2]);
                 //pixel_op(destptr[3], srcptr[3]);
-                if (bitmap.bpp() == 16 && srcptr is PointerU16)
                 {
-                    var destptrTemp0 = destptr16[0]; pixel_op.op16x16(ref destptrTemp0, ((PointerU16)srcptr)[0]); destptr16[0] = destptrTemp0;
-                    var destptrTemp1 = destptr16[1]; pixel_op.op16x16(ref destptrTemp1, ((PointerU16)srcptr)[1]); destptr16[1] = destptrTemp1;
-                    var destptrTemp2 = destptr16[2]; pixel_op.op16x16(ref destptrTemp2, ((PointerU16)srcptr)[2]); destptr16[2] = destptrTemp2;
-                    var destptrTemp3 = destptr16[3]; pixel_op.op16x16(ref destptrTemp3, ((PointerU16)srcptr)[3]); destptr16[3] = destptrTemp3;
+                    if (bitmap.bpp() == 16 && srcptr is PointerU16 srcptr_u16)
+                    {
+                        var destptrTemp0 = destptr16[0]; pixel_op.op16x16(ref destptrTemp0, srcptr_u16[0]); destptr16[0] = destptrTemp0;
+                        var destptrTemp1 = destptr16[1]; pixel_op.op16x16(ref destptrTemp1, srcptr_u16[1]); destptr16[1] = destptrTemp1;
+                        var destptrTemp2 = destptr16[2]; pixel_op.op16x16(ref destptrTemp2, srcptr_u16[2]); destptr16[2] = destptrTemp2;
+                        var destptrTemp3 = destptr16[3]; pixel_op.op16x16(ref destptrTemp3, srcptr_u16[3]); destptr16[3] = destptrTemp3;
+                    }
+                    else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
                 }
-                else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
 
                 length -= 4;
 
                 //srcptr += 4;
-                if (srcptr is PointerU16) { srcptr = (PointerU16)srcptr + 4; }
-                else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
+                {
+                    if (srcptr is PointerU16 srcptr_u16) { srcptr = srcptr_u16 + 4; }
+                    else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
+                }
 
                 //destptr += 4;
                 switch (bitmap.bpp())
@@ -1759,15 +1763,19 @@ namespace mame
             while (length-- > 0)
             {
                 //pixel_op(destptr[0], srcptr[0]);
-                if (bitmap.bpp() == 16 && srcptr is PointerU16)
                 {
-                    var destptrTemp = destptr16[0]; pixel_op.op16x16(ref destptrTemp, ((PointerU16)srcptr)[0]); destptr16[0] = destptrTemp;
+                    if (bitmap.bpp() == 16 && srcptr is PointerU16 srcptr_u16)
+                    {
+                        var destptrTemp = destptr16[0]; pixel_op.op16x16(ref destptrTemp, srcptr_u16[0]); destptr16[0] = destptrTemp;
+                    }
+                    else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
                 }
-                else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
 
                 //srcptr++;
-                if (srcptr is PointerU16) { srcptr = (PointerU16)srcptr + 1; }
-                else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
+                {
+                    if (srcptr is PointerU16 srcptr_u16) { srcptr = srcptr_u16 + 1; }
+                    else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
+                }
 
                 //destptr++;
                 switch (bitmap.bpp())

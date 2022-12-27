@@ -65,7 +65,7 @@ namespace mame
     }
 
 
-    static class mb14241_global
+    public static class mb14241_global
     {
         public static mb14241_device MB14241<bool_Required>(machine_config mconfig, device_finder<mb14241_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb14241_device.MB14241, 0); }
     }

@@ -17,7 +17,7 @@ namespace mame
         public const int EMU_ERR_NONE             = 0;    // no error
         public const int EMU_ERR_FAILED_VALIDITY  = 1;    // failed validity checks
         public const int EMU_ERR_MISSING_FILES    = 2;    // missing files
-        const int EMU_ERR_FATALERROR       = 3;    // some other fatal error
+        public const int EMU_ERR_FATALERROR       = 3;    // some other fatal error
         public const int EMU_ERR_DEVICE           = 4;    // device initialization error
         public const int EMU_ERR_NO_SUCH_SYSTEM   = 5;    // system was specified but doesn't exist
         public const int EMU_ERR_INVALID_CONFIG   = 6;    // some sort of error in configuration

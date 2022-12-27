@@ -27,7 +27,7 @@ namespace mame
 
         // internal state
         required_device<discrete_sound_device> m_discrete;  //required_device<discrete_device> m_discrete;
-        uint8_t m_lfo_val;
+        uint8_t m_lfo_val = 0;
 
 
         galaxian_sound_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)

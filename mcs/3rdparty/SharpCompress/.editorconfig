@@ -1,6 +1,7 @@
 ﻿# SharpCompress-mcs
 
 [*.cs]
+csharp_style_prefer_index_operator = false  # set to true to trigger IDE0056
 dotnet_diagnostic.IDE0016.severity = none  # Null check can be simplified
 dotnet_diagnostic.IDE0017.severity = none  # Object initialization can be simplified
 dotnet_diagnostic.IDE0018.severity = none  # Variable declaration can be inlined
@@ -11,6 +12,7 @@ dotnet_diagnostic.IDE0038.severity = none  # Use pattern matching
 dotnet_diagnostic.IDE0051.severity = none  # Private member '' is unused
 dotnet_diagnostic.IDE0052.severity = none  # Private property '' can be converted to a method as its get accessor is never invoked.
 dotnet_diagnostic.IDE0054.severity = none  # Use compound assignment
+dotnet_diagnostic.IDE0057.severity = none  # Substring can be simplified
 dotnet_diagnostic.IDE0059.severity = none  # Unnecessary assignment of a value to ''
 dotnet_diagnostic.IDE0060.severity = none  # Remove unused parameter ''
 dotnet_diagnostic.IDE0063.severity = none  # 'using' statement can be simplified
@@ -19,4 +21,5 @@ dotnet_diagnostic.IDE0075.severity = none  # Conditional expression can be simpl
 dotnet_diagnostic.IDE0079.severity = none  # Remove unnecessesary suppression
 dotnet_diagnostic.IDE0083.severity = none  # Use pattern matching
 dotnet_diagnostic.IDE0090.severity = none  # 'new' expression can be simplified
+dotnet_diagnostic.IDE0180.severity = none  # Use tuple to swap values
 dotnet_diagnostic.IDE1006.severity = none  # Naming rule violation: These words must begin with upper case characters: 

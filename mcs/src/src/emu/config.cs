@@ -44,7 +44,7 @@ namespace mame
         public delegate void save_delegate(config_type param1, util.xml.data_node param2);  //typedef delegate<void (config_type, util::xml::data_node *)> save_delegate;
 
 
-        //static inline constexpr int CONFIG_VERSION = 10;
+        public const int CONFIG_VERSION = 10;
 
 
         // internal state

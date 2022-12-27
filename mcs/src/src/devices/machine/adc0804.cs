@@ -163,7 +163,7 @@ namespace mame
     //class adc0803_device : public adc0804_device
 
 
-    static class adc0804_global
+    public static class adc0804_global
     {
         public static adc0804_device ADC0804<bool_Required>(machine_config mconfig, device_finder<adc0804_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, adc0804_device.ADC0804, clock); }
     }

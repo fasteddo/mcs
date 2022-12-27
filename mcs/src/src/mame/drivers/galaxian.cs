@@ -541,7 +541,7 @@ namespace mame
     }
 
 
-    partial class galaxian : construct_ioport_helper
+    public partial class galaxian : construct_ioport_helper
     {
         /*************************************
          *

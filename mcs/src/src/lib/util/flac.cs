@@ -10,7 +10,7 @@ using uint32_t = System.UInt32;
 namespace mame
 {
     // ======================> flac_decoder
-    class flac_decoder
+    public class flac_decoder
     {
         // output state
         //FLAC__StreamDecoder *   m_decoder;              // actual encoder

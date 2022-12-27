@@ -230,7 +230,7 @@ namespace mame
     }
 
 
-    static class _74153_global
+    public static class _74153_global
     {
         public static ttl153_device TTL153<bool_Required>(machine_config mconfig, device_finder<ttl153_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ttl153_device.TTL153, 0); }
     }

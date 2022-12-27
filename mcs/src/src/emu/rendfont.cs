@@ -196,7 +196,7 @@ namespace mame
             {
                 int scharcount = uchar_from_utf8(out schar, str);
                 totwidth += get_char(schar).width;
-                str = str.Substring(scharcount);  //string.remove_prefix(scharcount);
+                str = str[scharcount..];  //string.remove_prefix(scharcount);
             }
 
             // scale the final result based on height
@@ -220,7 +220,7 @@ namespace mame
                     break;
 
                 totwidth += get_char(uchar).width;
-                utf8string = utf8string.Substring(count);  //utf8string.remove_prefix(count);
+                utf8string = utf8string[count..];  //utf8string.remove_prefix(count);
             }
 
             // scale the final result based on height
@@ -829,7 +829,7 @@ namespace mame
                 int codelen = uchar_from_utf8(out uchar, str);  //int const codelen(uchar_from_utf8(&uchar, str));
                 if (0 >= codelen)
                     break;
-                str = str.Substring(codelen);  //str.remove_prefix(codelen);
+                str = str[codelen..];  //str.remove_prefix(codelen);
 
                 // check for three metacharacters
                 fix_command_t [] fixcmd = null;  //fix_command_t const *fixcmd(nullptr);
@@ -843,7 +843,7 @@ namespace mame
                         if (str.substr(0, fixtext.glyph_str.length()) == fixtext.glyph_str)
                         {
                             uchar = (char)(fixtext.glyph_code + COMMAND_UNICODE);
-                            str = str.Substring((int)fixtext.glyph_str.length());  //str.remove_prefix(fixtext->glyph_str.length());
+                            str = str[(int)fixtext.glyph_str.length()..];  //str.remove_prefix(fixtext->glyph_str.length());
                             break;
                         }
                     }
@@ -863,7 +863,7 @@ namespace mame
                 {
                     if (str[0] == uchar)
                     {
-                        str = str.Substring(1);  //str.remove_prefix(1);
+                        str = str[1..];  //str.remove_prefix(1);
                     }
                     else
                     {
@@ -873,7 +873,7 @@ namespace mame
                         if (fixcmd[fixcmdOffset].glyph_code != 0 && !str.empty())
                         {
                             uchar = (char)(COMMAND_UNICODE + fixcmd[fixcmdOffset].glyph_code);
-                            str = str.Substring(1);  //str.remove_prefix(1);
+                            str = str[1..];  //str.remove_prefix(1);
                         }
                     }
                 }
@@ -890,7 +890,7 @@ namespace mame
                 j += (size_t)outlen;
             }
 
-            return new string(buf.ToArray()).Substring(0, (int)j);  //return std::string(&buf[0], j);
+            return new string(buf.ToArray())[..(int)j];  //return std::string(&buf[0], j);
         }
     }
 

@@ -14,7 +14,7 @@ using static mame.emucore_global;
 
 namespace mame
 {
-    static class XTAL_global
+    public static class XTAL_global
     {
         //template <typename T> constexpr auto operator /(T &&div, const XTAL &xtal) { return div / xtal.dvalue(); }
 

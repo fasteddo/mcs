@@ -43,15 +43,15 @@ namespace mame
 
         delegate void copy_layer_func_t(bitmap_ind16 bitmap, rectangle cliprect, int which, int [] sprites_on, rectangle [] sprite_areas);  //typedef void (taitosj_state::*copy_layer_func_t)(bitmap_ind16 &, const rectangle &, int, int *, rectangle *);
 
-        uint8_t m_input_port_4_f0;
+        uint8_t m_input_port_4_f0 = 0;
         uint8_t [] m_kikstart_gears = new uint8_t [2];
 
-        uint8_t m_spacecr_prot_value;
-        uint8_t m_protection_value;
-        //uint32_t m_address;
-        uint8_t m_soundlatch_data;
-        bool m_soundlatch_flag;  // 74ls74 1/2 @ GAME BOARD IC42
-        bool m_sound_semaphore2;  // 74ls74 2/2 @ GAME BOARD IC42
+        uint8_t m_spacecr_prot_value = 0;
+        uint8_t m_protection_value = 0;
+        //uint32_t m_address = 0;
+        uint8_t m_soundlatch_data = 0;
+        bool m_soundlatch_flag = false;  // 74ls74 1/2 @ GAME BOARD IC42
+        bool m_sound_semaphore2 = false;  // 74ls74 2/2 @ GAME BOARD IC42
         bitmap_ind16 [] m_layer_bitmap = new bitmap_ind16[3];
         bitmap_ind16 m_sprite_sprite_collbitmap1 = new bitmap_ind16();
         bitmap_ind16 m_sprite_sprite_collbitmap2 = new bitmap_ind16();

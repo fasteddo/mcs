@@ -81,7 +81,7 @@ namespace mame
 
         // inline configuration helpers
 
-        speaker_device set_position(double x, double y, double z) { m_x = x; m_y = y; m_z = z; return this; }
+        public speaker_device set_position(double x, double y, double z) { m_x = x; m_y = y; m_z = z; return this; }
         public speaker_device front_center()  { set_position( 0.0,  0.0,  1.0); return this; }
         public speaker_device front_left()    { set_position(-0.2,  0.0,  1.0); return this; }
         //speaker_device &front_floor()       { set_position( 0.0, -0.5,  1.0); return *this; }
@@ -240,8 +240,14 @@ namespace mame
     //using speaker_device_enumerator = device_type_enumerator<speaker_device>;
 
 
-    static class speaker_global
+    public static class speaker_global
     {
         public static speaker_device SPEAKER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<speaker_device>(mconfig, tag, speaker_device.SPEAKER, 0); }
+        public static speaker_device SPEAKER(machine_config mconfig, string tag, double x, double y, double z)
+        {
+            var device = SPEAKER(mconfig, tag);
+            device.set_position(x, y, z);
+            return device;
+        }
     }
 }

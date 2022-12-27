@@ -285,7 +285,7 @@ namespace mame
     }
 
 
-    static class _74259_global
+    public static class _74259_global
     {
         public static ls259_device LS259(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<ls259_device>(mconfig, tag, ls259_device.LS259, 0); }
         public static ls259_device LS259<bool_Required>(machine_config mconfig, device_finder<ls259_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ls259_device.LS259, clock); }

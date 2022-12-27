@@ -199,7 +199,7 @@ namespace mame
 
         //static INPUT_PORTS_START( monitor_controls )
 
-    partial class williams : construct_ioport_helper
+    public partial class williams : construct_ioport_helper
     {
         //static INPUT_PORTS_START( defender )
         void construct_ioport_defender(device_t owner, ioport_list portlist, ref string errorbuf)

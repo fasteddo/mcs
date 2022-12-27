@@ -187,7 +187,7 @@ namespace mame.ui
             // try to load localised descriptions
             if (try_titles)
             {
-                load_titles(titles_file.core_file_get());
+                load_titles(titles_file.core_file_);
 
                 // populate parent descriptions while still ordered by shortname
                 // already done on the first pass if built-in titles are used

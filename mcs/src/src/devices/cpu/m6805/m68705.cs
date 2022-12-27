@@ -27,7 +27,7 @@ using static mame.util;
 
 namespace mame
 {
-    static partial class m68705_global
+    public static partial class m68705_global
     {
         //enum : u16 {
         public const u16 M68705_VECTOR_BOOTSTRAP  = 0xfff6;

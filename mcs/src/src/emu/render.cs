@@ -1295,8 +1295,8 @@ namespace mame
             //load_layout_files(std::forward<T>(layout), flags & RENDER_CREATE_SINGLE_FILE);
             if (layout == null || layout is internal_layout)
                 load_layout_files((internal_layout)layout, (flags & RENDER_CREATE_SINGLE_FILE) != 0);
-            else if (layout is util.xml.data_node)
-                load_layout_files((util.xml.data_node)layout, (flags & RENDER_CREATE_SINGLE_FILE) != 0);
+            else if (layout is util.xml.data_node layout_data_node)
+                load_layout_files(layout_data_node, (flags & RENDER_CREATE_SINGLE_FILE) != 0);
             else
                 throw new emu_unimplemented();
 
@@ -2364,13 +2364,13 @@ namespace mame
             for (std.error_condition filerr = layoutfile.open(fname); !filerr; filerr = layoutfile.open_next())
             {
                 // read the file and parse as XML
-                util.xml.file rootnode = util.xml.file.read(layoutfile.core_file_get(), parseopt);
+                util.xml.file rootnode = util.xml.file.read(layoutfile.core_file_, parseopt);
                 if (rootnode != null)
                 {
                     // extract directory name from location of layout file
                     string artdir = layoutfile.fullpath();
                     var dirsep = artdir.LastIndexOf(PATH_SEPARATOR[0]);  //auto const dirsep(std::find_if(artdir.rbegin(), artdir.rend(), &util::is_directory_separator));
-                    artdir = artdir.Substring(0, dirsep);  //artdir.erase(dirsep.base(), artdir.end());
+                    artdir = artdir[..dirsep];  //artdir.erase(dirsep.base(), artdir.end());
 
                     // record a warning if we didn't get a properly-formatted XML file
                     if (!load_layout_file(m_manager.machine().root_device(), rootnode, null, artdir))

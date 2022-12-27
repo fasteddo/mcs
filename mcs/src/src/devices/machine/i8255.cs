@@ -884,8 +884,9 @@ namespace mame
     }
 
 
-    static class i8255_global
+    public static class i8255_global
     {
+        public static i8255_device I8255<bool_Required>(machine_config mconfig, device_finder<i8255_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8255_device.I8255, 0); }
         public static i8255_device I8255A<bool_Required>(machine_config mconfig, device_finder<i8255_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8255_device.I8255A, 0); }
     }
 }

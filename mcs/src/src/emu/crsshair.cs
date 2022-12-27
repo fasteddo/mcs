@@ -229,7 +229,7 @@ namespace mame
                 // look for user specified file
                 if (!crossfile.open(m_name + ".png"))
                 {
-                    render_load_png(out m_bitmap, crossfile.core_file_get());
+                    render_load_png(out m_bitmap, crossfile.core_file_);
                     crossfile.close();
                 }
             }
@@ -239,14 +239,14 @@ namespace mame
                 string filename = util.string_format("cross{0}.png", m_player + 1);
                 if (!crossfile.open(m_machine.system().name + (PATH_SEPARATOR + filename)))
                 {
-                    render_load_png(out m_bitmap, crossfile.core_file_get());
+                    render_load_png(out m_bitmap, crossfile.core_file_);
                     crossfile.close();
                 }
 
                 // look for default cross?.png in crsshair dir
                 if (!m_bitmap.valid() && !crossfile.open(filename))
                 {
-                    render_load_png(out m_bitmap, crossfile.core_file_get());
+                    render_load_png(out m_bitmap, crossfile.core_file_);
                     crossfile.close();
                 }
             }

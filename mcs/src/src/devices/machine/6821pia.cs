@@ -378,7 +378,7 @@ namespace mame
     }
 
 
-    static class _6821pia_global
+    public static class _6821pia_global
     {
         public static pia6821_device PIA6821<bool_Required>(machine_config mconfig, device_finder<pia6821_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, pia6821_device.PIA6821, clock); }
     }

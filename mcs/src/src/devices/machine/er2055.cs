@@ -214,7 +214,7 @@ namespace mame
     }
 
 
-    static class er2055_global
+    public static class er2055_global
     {
         public static er2055_device ER2055<bool_Required>(machine_config mconfig, device_finder<er2055_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, er2055_device.ER2055, 0); }
     }

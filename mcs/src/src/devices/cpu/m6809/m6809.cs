@@ -590,7 +590,7 @@ namespace mame
     //class m6809_device : public m6809_base_device
 
 
-    static partial class m6809_global
+    public static partial class m6809_global
     {
         //enum
         //{

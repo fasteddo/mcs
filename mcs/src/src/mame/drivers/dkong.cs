@@ -261,7 +261,7 @@ namespace mame
     }
 
 
-    partial class dkong : construct_ioport_helper
+    public partial class dkong : construct_ioport_helper
     {
         /*************************************
          *

@@ -69,8 +69,8 @@ namespace mame
         // configuration helpers
         public address_map_bank_device set_map(address_map_constructor args) { m_dimemory.set_addrmap(0, args); return this; }  //template <typename... T> address_map_bank_device& set_map(T &&... args) { set_addrmap(0, std::forward<T>(args)...); return *this; }
         address_map_bank_device set_endianness(endianness_t endianness) { m_endianness = endianness; return this; }
-        address_map_bank_device set_data_width(u8 data_width) { m_data_width = data_width; return this; }
-        address_map_bank_device set_addr_width(u8 addr_width) { m_addr_width = addr_width; return this; }
+        public address_map_bank_device set_data_width(u8 data_width) { m_data_width = data_width; return this; }
+        public address_map_bank_device set_addr_width(u8 addr_width) { m_addr_width = addr_width; return this; }
         address_map_bank_device set_stride(u32 stride) { m_stride = stride; return this; }
         //address_map_bank_device& set_shift(u32 shift) { m_shift = shift; return *this; }
 
@@ -149,7 +149,7 @@ namespace mame
     }
 
 
-    static class bankdev_global
+    public static class bankdev_global
     {
         public static address_map_bank_device ADDRESS_MAP_BANK<bool_Required>(machine_config mconfig, device_finder<address_map_bank_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, address_map_bank_device.ADDRESS_MAP_BANK, 0); }
     }

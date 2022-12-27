@@ -3,7 +3,6 @@
 
 using System;
 
-using cassette_device_enumerator = mame.device_type_enumerator<mame.cassette_image_device>;  //typedef device_type_enumerator<cassette_image_device> cassette_device_enumerator;
 using char32_t = System.UInt32;
 using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
@@ -160,6 +159,7 @@ namespace mame
         float m_target_font_height;
         bool m_has_warnings;
         bool m_unthrottle_mute;
+        bool m_image_display_enabled;
 
         ui.machine_info m_machine_info;
         mame_ui_manager_device_feature_set m_unemulated_features;
@@ -203,6 +203,7 @@ namespace mame
             m_target_font_height = 0;
             m_has_warnings = false;
             m_unthrottle_mute = false;
+            m_image_display_enabled = true;
             m_machine_info = null;
             m_unemulated_features = null;
             m_imperfect_features = null;
@@ -991,7 +992,7 @@ namespace mame
         void image_handler_ingame()
         {
             // run display routine for devices
-            if (machine().phase() == machine_phase.RUNNING)
+            if (m_image_display_enabled && machine().phase() == machine_phase.RUNNING)
             {
                 var layout = create_layout(machine().render().ui_container());
 
@@ -1136,6 +1137,10 @@ namespace mame
             // create the layout
             return new ui.text_layout(get_font(), xscale, yscale, width, justify, wrap);
         }
+
+
+        //void set_image_display_enabled(bool image_display_enabled) { m_image_display_enabled = image_display_enabled; }
+        //bool image_display_enabled() const { return m_image_display_enabled; }
 
 
         // draw an outlined box with given line color and filled with a texture
@@ -1313,19 +1318,23 @@ namespace mame
             // handle a tape control key
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_TAPE_START))
             {
-                foreach (cassette_image_device cass in new cassette_device_enumerator(machine().root_device()))
-                {
-                    cass.change_state(cassette_state.CASSETTE_PLAY, cassette_state.CASSETTE_MASK_UISTATE);
+                //for (cassette_image_device &cass : cassette_device_enumerator(machine().root_device()))
+                //{
+                //    cass.change_state(CASSETTE_PLAY, CASSETTE_MASK_UISTATE);
+                //    return 0;
+                //}
+                if (cassette_device_enumerator_helper.handle_tape_start(machine().root_device()))
                     return 0;
-                }
             }
             if (machine().ui_input().pressed((int)ioport_type.IPT_UI_TAPE_STOP))
             {
-                foreach (cassette_image_device cass in new cassette_device_enumerator(machine().root_device()))
-                {
-                    cass.change_state(cassette_state.CASSETTE_STOPPED, cassette_state.CASSETTE_MASK_UISTATE);
+                //for (cassette_image_device &cass : cassette_device_enumerator(machine().root_device()))
+                //{
+                //    cass.change_state(CASSETTE_STOPPED, CASSETTE_MASK_UISTATE);
+                //    return 0;
+                //}
+                if (cassette_device_enumerator_helper.handle_tape_stop(machine().root_device()))
                     return 0;
-                }
             }
 
             // handle a save state request
@@ -1457,8 +1466,8 @@ namespace mame
             // free persistent data for other classes
             foreach (var data in m_session_data)
             {
-                if (data.Value is IDisposable)
-                    ((IDisposable)data.Value).Dispose();
+                if (data.Value is IDisposable data_disposable)
+                    data_disposable.Dispose();
             }
             m_session_data.clear();
         }
@@ -1584,7 +1593,7 @@ namespace mame
             {
                 try
                 {
-                    options().parse_ini_file(file.core_file_get(), OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true);  //options().parse_ini_file((util::core_file &)file, OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true);
+                    options().parse_ini_file(file.core_file_, OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true);  //options().parse_ini_file((util::core_file &)file, OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true);
                 }
                 catch (options_exception )
                 {

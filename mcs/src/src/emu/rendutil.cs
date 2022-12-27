@@ -357,7 +357,7 @@ namespace mame
             by performing a true weighted average over
             all contributing pixels
         -------------------------------------------------*/
-#if USE_UNSAFE
+#if MCS_UNSAFE
         public unsafe static void resample_argb_bitmap_average(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_average(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
 #else
         public static void resample_argb_bitmap_average(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_average(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
@@ -377,7 +377,7 @@ namespace mame
             b = (u32)(color.b * color.a * 256.0f);
             a = (u32)(color.a * 256.0f);
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
             fixed(u8 * dest_u8_zero = dest.Buffer.data_raw,
                        source_u8_zero = source.Buffer.data_raw)
             {
@@ -473,7 +473,7 @@ namespace mame
             resample_argb_bitmap_bilinear - perform texture
             sampling via a bilinear filter
         -------------------------------------------------*/
-#if USE_UNSAFE
+#if MCS_UNSAFE
         public unsafe static void resample_argb_bitmap_bilinear(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_bilinear(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
 #else
         public static void resample_argb_bitmap_bilinear(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_bilinear(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
@@ -494,7 +494,7 @@ namespace mame
             b = (u32)(color.b * color.a * 256.0f);
             a = (u32)(color.a * 256.0f);
 
-#if USE_UNSAFE
+#if MCS_UNSAFE
             fixed(u8 * dest_u8_zero = dest.Buffer.data_raw,
                        source_u8_zero = source.Buffer.data_raw)
             {

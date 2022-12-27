@@ -763,11 +763,7 @@ namespace mame.netlist
                                     var pi = get_weight_around_diag(i, k);
                                     if (pi < pk)
                                     {
-                                        //std::swap(m_terms[i], m_terms[k]);
-                                        var temp = m_terms[i];
-                                        m_terms[i] = m_terms[k];
-                                        m_terms[k] = temp;
-
+                                        (m_terms[i], m_terms[k]) = (m_terms[k], m_terms[i]);  //std::swap(m_terms[i], m_terms[k]);
                                         pk = get_weight_around_diag(k, k);
                                     }
                                 }
@@ -784,11 +780,7 @@ namespace mame.netlist
                                     var pi = get_left_right_of_diag(i, k);
                                     if (pi.first <= pk.first && pi.second >= pk.second)
                                     {
-                                        //std::swap(m_terms[i], m_terms[k]);
-                                        var temp = m_terms[i];
-                                        m_terms[i] = m_terms[k];
-                                        m_terms[k] = temp;
-
+                                        (m_terms[i], m_terms[k]) = (m_terms[k], m_terms[i]);  //std::swap(m_terms[i], m_terms[k]);
                                         pk = get_left_right_of_diag(k, k);
                                     }
                                 }
@@ -805,12 +797,7 @@ namespace mame.netlist
                                 for (size_t i = k + 1; i < iN; i++)
                                 {
                                     if (((int)m_terms[k].railstart() - (int)m_terms[i].railstart()) * sort_order < 0)
-                                    {
-                                        //std::swap(m_terms[i], m_terms[k]);
-                                        var temp = m_terms[i];
-                                        m_terms[i] = m_terms[k];
-                                        m_terms[k] = temp;
-                                    }
+                                        (m_terms[i], m_terms[k]) = (m_terms[k], m_terms[i]);  //std::swap(m_terms[i], m_terms[k]);
                                 }
                             }
                         }

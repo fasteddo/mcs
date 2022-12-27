@@ -1702,10 +1702,10 @@ namespace mame
 
             public override bool apply(ui_system_info system)
             {
-                Pointer<tiny_rom_entry> rom = system.driver.rom;
-                for (int romOffset = 0; !ROMENTRY_ISEND(rom[romOffset]); ++romOffset)
+                //OLD Pointer<tiny_rom_entry> rom = system.driver.rom;
+                for (Pointer<tiny_rom_entry> rom = system.driver.rom; !ROMENTRY_ISEND(rom); ++rom)  //for (tiny_rom_entry const *rom = system.driver->rom; !ROMENTRY_ISEND(rom); ++rom)
                 {
-                    if (ROMENTRY_ISREGION(rom[romOffset]) && ROMREGION_ISDISKDATA(rom[romOffset]))
+                    if (ROMENTRY_ISREGION(rom) && ROMREGION_ISDISKDATA(rom))
                         return true;
                 }
 

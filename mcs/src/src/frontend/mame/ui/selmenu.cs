@@ -53,19 +53,19 @@ namespace mame.ui
 
             if (!file.open(base_ + ".png"))
             {
-                render_load_png(out bitmap, file.core_file_get());
+                render_load_png(out bitmap, file.core_file_);
                 file.close();
             }
 
             if (!bitmap.valid() && !file.open(base_ + ".jpg"))
             {
-                render_load_jpeg(out bitmap, file.core_file_get());
+                render_load_jpeg(out bitmap, file.core_file_);
                 file.close();
             }
 
             if (!bitmap.valid() && !file.open(base_ + ".bmp"))
             {
-                render_load_msdib(out bitmap, file.core_file_get());
+                render_load_msdib(out bitmap, file.core_file_);
                 file.close();
             }
         }
@@ -1227,29 +1227,29 @@ namespace mame.ui
             //return (uintptr_t(selected_ref) > skip_main_items) ? selected_ref : m_prev_selected;
             if (selected_ref == null)
             {
-                if (m_prev_selected is ui_system_info)
-                    return ((ui_system_info)m_prev_selected).driver;  //m_prev_selected;
+                if (m_prev_selected is ui_system_info prev_ui_system)
+                    return prev_ui_system.driver;  //m_prev_selected;
                 else
                     throw new emu_unimplemented();  // put a check for whatever type is the ref object
             }
-            else if (selected_ref is int)  // || selected_ref is CONF)
+            else if (selected_ref is int selected_int)  // || selected_ref is CONF)
             {
-                if ((int)selected_ref > skip_main_items)
+                if (selected_int > skip_main_items)
                     return selected_ref;
                 else if (m_prev_selected == null)
                     return null;
-                else if (m_prev_selected is ui_system_info)
-                    return ((ui_system_info)m_prev_selected).driver;  //m_prev_selected;
+                else if (m_prev_selected is ui_system_info prev_ui_system)
+                    return prev_ui_system.driver;  //m_prev_selected;
                 else
                     throw new emu_unimplemented();  // put a check for whatever type is the ref object
             }
-            else if (selected_ref is game_driver)
+            else if (selected_ref is game_driver selected_game)
             {
-                return (game_driver)selected_ref;
+                return selected_game;
             }
-            else if (selected_ref is ui_system_info)
+            else if (selected_ref is ui_system_info selected_ui_system)
             {
-                return (ui_system_info)selected_ref;
+                return selected_ui_system;
             }
             else
             {
@@ -1701,9 +1701,9 @@ namespace mame.ui
             str += (((int)flags.machine_flags() & ORIENTATION_SWAP_XY) != 0)             ? __("Screen Orientation\tVertical\n")    : __("Screen Orientation\tHorizontal\n");
 
             bool found = false;
-            foreach (var region in new romload.entries(driver.rom).get_regions())  //for (romload::region const &region : romload::entries(driver.rom).get_regions())
+            foreach (romload.region region in new romload.entries(driver.rom).get_regions())
             {
-                if (romload.region.is_diskdata(region))
+                if (region.is_diskdata())
                 {
                     found = true;
                     break;

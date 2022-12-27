@@ -9,6 +9,8 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 
 
+namespace BitmapHelperNS
+{
 public class BitmapHelper
 {
     Bitmap m_bitmap;
@@ -49,7 +51,7 @@ public class BitmapHelper
 
         // https://stackoverflow.com/questions/1563038/fast-work-with-bitmaps-in-c-sharp
 
-        Rectangle rect = new Rectangle(0, 0, Width, Height);
+        Rectangle rect = new(0, 0, Width, Height);
         m_bitmapData = BitmapRef.LockBits(rect, ImageLockMode.ReadWrite, BitmapRef.PixelFormat);
 
         //int rgbValueLength = IsAlphaBitmap ? 4 : 3;
@@ -243,4 +245,5 @@ public class BitmapHelper
             return Color.FromArgb(r, g, b);
         }
     }
+}
 }

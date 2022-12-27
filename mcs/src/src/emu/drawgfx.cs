@@ -21,7 +21,7 @@ using static mame.drawgfxt_global;
 
 namespace mame
 {
-    static partial class drawgfx_global
+    public static partial class drawgfx_global
     {
         //enum
         //{
@@ -955,6 +955,13 @@ namespace mame
         {
             var device = emu.detail.device_type_impl.op<gfxdecode_device>(mconfig, tag, gfxdecode_device.GFXDECODE, 0);
             device.gfxdecode_device_after_ctor(palette, gfxinfo);
+            return device;
+        }
+        public static gfxdecode_device GFXDECODE<bool_Required>(machine_config mconfig, device_finder<gfxdecode_device, bool_Required> finder, string palette_tag, gfx_decode_entry [] gfxinfo)
+            where bool_Required : bool_const, new()
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, gfxdecode_device.GFXDECODE, 0);
+            device.gfxdecode_device_after_ctor(palette_tag, gfxinfo);
             return device;
         }
         public static gfxdecode_device GFXDECODE<bool_Required>(machine_config mconfig, device_finder<gfxdecode_device, bool_Required> finder, finder_base palette, gfx_decode_entry [] gfxinfo)

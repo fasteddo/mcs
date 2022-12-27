@@ -11,7 +11,7 @@ using unsigned = System.UInt32;
 
 namespace mame.plib
 {
-    static class pg
+    public static class pg
     {
         // pexception
         public static void terminate(string msg) { pexception_global.terminate(msg); }

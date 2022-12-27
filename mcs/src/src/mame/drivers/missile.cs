@@ -506,7 +506,7 @@ namespace mame
     }
 
 
-    partial class missile : construct_ioport_helper
+    public partial class missile : construct_ioport_helper
     {
         /*************************************
          *

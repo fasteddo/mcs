@@ -364,7 +364,7 @@ namespace mame
     //class msm6585_device : public msm5205_device
 
 
-    static class msm5205_global
+    public static class msm5205_global
     {
         public static msm5205_device MSM5205<bool_Required>(machine_config mconfig, device_finder<msm5205_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, msm5205_device.MSM5205, clock); }
     }

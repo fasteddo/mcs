@@ -156,7 +156,7 @@ namespace mame
                         return false;
 
                     m_raw[i] = (uint8_t)((upper << 4) | lower);  //elem = (upper << 4) | lower;
-                    string_ = string_.Substring(2);  //string.remove_prefix(2);
+                    string_ = string_[2..];  //string.remove_prefix(2);
                 }
 
                 return true;
@@ -326,7 +326,7 @@ namespace mame
                         return false;
 
                     m_raw = (m_raw << 4) | (uint32_t)nibble;
-                    string_ = string_.Substring(1);  //string.remove_prefix(1);
+                    string_ = string_[1..];  //string.remove_prefix(1);
                 }
 
                 return true;

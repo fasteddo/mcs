@@ -221,7 +221,7 @@ namespace mame
             osd_printf_verbose("Parsing {0}.ini\n", basename);
             try
             {
-                options.parse_ini_file(file.core_file_get(), priority, priority < OPTION_PRIORITY_DRIVER_INI, false);
+                options.parse_ini_file(file.core_file_, priority, priority < OPTION_PRIORITY_DRIVER_INI, false);
             }
             catch (options_exception ex)
             {

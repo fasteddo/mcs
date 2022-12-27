@@ -18,7 +18,7 @@ using static mame.sn76496_internal;
 
 namespace mame
 {
-    class sn76496_base_device : device_t
+    public class sn76496_base_device : device_t
                                 //device_sound_interface
     {
         public class device_sound_interface_sn76496 : device_sound_interface
@@ -214,7 +214,7 @@ namespace mame
 
 
     // SN76489A: whitenoise verified, phase verified, periodic verified (by plgdavid)
-    class sn76489a_device : sn76496_base_device
+    public class sn76489a_device : sn76496_base_device
     {
         //DEFINE_DEVICE_TYPE(SN76489A, sn76489a_device,  "sn76489a",     "SN76489A")
         public static readonly emu.detail.device_type_impl SN76489A = DEFINE_DEVICE_TYPE("sn76489a", "SN76489A", (type, mconfig, tag, owner, clock) => { return new sn76489a_device(mconfig, tag, owner, clock); });
@@ -245,7 +245,7 @@ namespace mame
     }
 
 
-    static class sn76496_global
+    public static class sn76496_global
     {
         public static sn76489a_device SN76489A(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<sn76489a_device>(mconfig, tag, sn76489a_device.SN76489A, clock); }
     }

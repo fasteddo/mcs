@@ -37,15 +37,15 @@ namespace mame
     partial class _1942_state : driver_device
     {
         /* 12mhz OSC */
-        static readonly XTAL MASTER_CLOCK     = new XTAL(12000000);
-        static readonly XTAL MAIN_CPU_CLOCK   = MASTER_CLOCK/3;
-        static readonly XTAL SOUND_CPU_CLOCK  = MASTER_CLOCK/4;
-        static readonly XTAL AUDIO_CLOCK      = MASTER_CLOCK/8;
+        static readonly XTAL MASTER_CLOCK     = XTAL_global.op("12_MHz_XTAL");
+        static readonly XTAL MAIN_CPU_CLOCK   = MASTER_CLOCK / 4;
+        static readonly XTAL SOUND_CPU_CLOCK  = MASTER_CLOCK / 4;
+        static readonly XTAL AUDIO_CLOCK      = MASTER_CLOCK / 8;
         /* 20mhz OSC - both Z80s are 4 MHz */
-        //#define MASTER_CLOCK_1942P     (XTAL_20MHz)
-        //#define MAIN_CPU_CLOCK_1942P      (MASTER_CLOCK_1942P/5)
-        //#define SOUND_CPU_CLOCK_1942P     (MASTER_CLOCK_1942P/5)
-        //#define AUDIO_CLOCK_1942P     (MASTER_CLOCK_1942P/16)
+        //constexpr XTAL MASTER_CLOCK_1942P(20_MHz_XTAL);
+        //constexpr XTAL MAIN_CPU_CLOCK_1942P(MASTER_CLOCK_1942P/5);
+        //constexpr XTAL SOUND_CPU_CLOCK_1942P(MASTER_CLOCK_1942P/5);
+        //constexpr XTAL AUDIO_CLOCK_1942P(MASTER_CLOCK_1942P/16);
 
 
         void _1942_bankswitch_w(uint8_t data)
@@ -111,7 +111,7 @@ namespace mame
     }
 
 
-    partial class _1942 : construct_ioport_helper
+    public partial class _1942 : construct_ioport_helper
     {
         //static INPUT_PORTS_START( 1942 )
         void construct_ioport_1942(device_t owner, ioport_list portlist, ref string errorbuf)
@@ -265,12 +265,12 @@ namespace mame
         public void _1942(machine_config config)
         {
             /* basic machine hardware */
-            Z80(config, m_maincpu, MAIN_CPU_CLOCK);    /* 4 MHz ??? */
+            Z80(config, m_maincpu, MAIN_CPU_CLOCK);    /* 3 MHz */
             m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, _1942_map);
 
             TIMER(config, "scantimer").configure_scanline(_1942_scanline, "screen", 0, 1);
 
-            Z80(config, m_audiocpu, SOUND_CPU_CLOCK);  /* 3 MHz ??? */
+            Z80(config, m_audiocpu, SOUND_CPU_CLOCK);  /* 3 MHz */
             m_audiocpu.op0.memory().set_addrmap(AS_PROGRAM, sound_map);
 
             /* video hardware */

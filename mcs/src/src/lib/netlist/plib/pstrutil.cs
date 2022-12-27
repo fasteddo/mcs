@@ -16,8 +16,8 @@ namespace mame.plib
         public static bool endsWith(string str, string value) { return str.EndsWith(value); }
         public static string ucase(string str) { return str.ToUpper(); }
         public static string trim(string str) { return str.Trim(); }
-        public static string left(string str, size_t len) { return str.Substring(0, (int)len); }
-        public static string right(string str, size_t nlen) { return (int)nlen >= str.Length ? str : str.Substring(str.Length - (int)nlen); }
+        public static string left(string str, size_t len) { return str[..(int)len]; }
+        public static string right(string str, size_t nlen) { return (int)nlen >= str.Length ? str : str[(str.Length - (int)nlen)..]; }
         public static string replace_all(string str, string search, string replace) { return str.Replace(search, replace); }
 
         //template <typename T>

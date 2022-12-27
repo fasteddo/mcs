@@ -412,7 +412,7 @@ namespace mame
     }
 
 
-    static class flt_biquad_global
+    public static class flt_biquad_global
     {
         public static filter_biquad_device FILTER_BIQUAD<bool_Required>(machine_config mconfig, device_finder<filter_biquad_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, filter_biquad_device.FILTER_BIQUAD, 0); }
     }

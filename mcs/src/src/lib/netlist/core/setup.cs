@@ -1349,7 +1349,7 @@ namespace mame.netlist
     }
 
 
-    abstract class source_data_t : plib.psource_t
+    public abstract class source_data_t : plib.psource_t
     {
         //source_data_t() = default;
 

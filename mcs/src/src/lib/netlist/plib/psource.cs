@@ -162,8 +162,8 @@ namespace mame.plib
         {
             foreach (var s in m_collection)
             {
-                var source = s is T ? (T)s : null;  //auto *source(dynamic_cast<S *>(s.get()));
-                if (source != null)
+                var source = s is T s_t ? s_t : default;  //auto *source(dynamic_cast<S *>(s.get()));
+                if (source != default)
                 {
                     if (lambda(source))
                         return true;

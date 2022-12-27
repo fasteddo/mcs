@@ -126,7 +126,7 @@ namespace mame
         public abstract string image_interface();
         public abstract string file_extensions();
         //protected abstract option_guide create_option_guide();
-        protected abstract string image_type_name();
+        public abstract string image_type_name();
         protected abstract string image_brief_type_name();
 
 
@@ -147,7 +147,7 @@ namespace mame
         }
 
 
-        //void seterror(std::error_condition err, const char *message);
+        //void seterror(std::error_condition err, const char *message = nullptr);
         //void message(const char *format, ...) ATTR_PRINTF(2,3);
 
 
@@ -161,7 +161,7 @@ namespace mame
         //bool is_filetype(const std::string &candidate_filetype) { return !core_stricmp(filetype().c_str(), candidate_filetype.c_str()); }
 
         //bool is_open() const noexcept { return bool(m_file); }
-        //util::core_file &image_core_file() const noexcept { return *m_file; }
+        //util::core_file &image_core_file() const noexcept { assert(is_open()); return *m_file; }
         //u64 length() { check_for_file(); return m_file->size(); }
         //bool is_readonly() const noexcept { return m_readonly; }
 
@@ -201,27 +201,10 @@ namespace mame
         //    m_file->tell(result);
         //    return result;
         //}
-        //int fgetc()
-        //{
-        //    char ch;
-        //    if (fread(&ch, 1) != 1)
-        //        ch = '\0';
-        //    return ch;
-        //}
-        //char *fgets(char *buffer, u32 length)
-        //{
-        //    check_for_file();
-        //    return m_file->gets(buffer, length);
-        //}
         //bool image_feof()
         //{
         //    check_for_file();
         //    return m_file->eof();
-        //}
-        //const void *ptr()
-        //{
-        //    check_for_file();
-        //    return m_file->buffer();
         //}
 
         // allocate and read into buffers
@@ -248,7 +231,7 @@ namespace mame
 
         //u32 crc();
         //hash_collection& hash() { return m_hash; }
-        //util::hash_collection calculate_hash_on_file(util::core_file &file) const;
+        //util::hash_collection calculate_hash_on_file(util::random_read &file) const;
 
 
         //void battery_load(void *buffer, int length, int fill);
@@ -363,7 +346,7 @@ namespace mame
         //bool load_software_part(const std::string &identifier);
 
         //bool init_phase() const;
-        //static bool run_hash(util::core_file &file, u32 skip_bytes, util::hash_collection &hashes, const char *types);
+        //static std::error_condition run_hash(util::random_read &file, u32 skip_bytes, util::hash_collection &hashes, const char *types);
 
         // loads an image or software items and resets - called internally when we
         // load an is_reset_on_load() item

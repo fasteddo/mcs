@@ -717,7 +717,7 @@ namespace mame
     }
 
 
-    static class fixfreq_global
+    public static class fixfreq_global
     {
         public static fixedfreq_device FIXFREQ<bool_Required>(machine_config mconfig, device_finder<fixedfreq_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, fixedfreq_device.FIXFREQ, 0); }
     }

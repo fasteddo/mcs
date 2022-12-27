@@ -1516,8 +1516,9 @@ namespace mame
     }
 
 
-    static class sn76477_global
+    public static class sn76477_global
     {
+        public static sn76477_device SN76477(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<sn76477_device>(mconfig, tag, sn76477_device.SN76477, 0); }
         public static sn76477_device SN76477<bool_Required>(machine_config mconfig, device_finder<sn76477_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, sn76477_device.SN76477, 0); }
     }
 }

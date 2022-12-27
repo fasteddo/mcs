@@ -37,16 +37,16 @@ namespace mame
         static readonly int [] disc_7492_count = new int [6] {0x00, 0x01, 0x02, 0x04, 0x05, 0x06};
 
 
-        int             m_clock_type;
-        int             m_out_type;
-        int             m_is_7492;
-        int             m_last_clock;
-        uint32_t          m_last_count;
+        int             m_clock_type = 0;
+        int             m_out_type = 0;
+        int             m_is_7492 = 0;
+        int             m_last_clock = 0;
+        uint32_t          m_last_count = 0;
         ////uint32_t          m_last;                 /* Last clock state */
-        uint32_t          m_min;
-        uint32_t          m_max;
-        uint32_t          m_diff;
-        double          m_t_left;               /* time unused during last sample in seconds */
+        uint32_t          m_min = 0;
+        uint32_t          m_max = 0;
+        uint32_t          m_diff = 0;
+        double          m_t_left = 0.0;               /* time unused during last sample in seconds */
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -239,16 +239,16 @@ namespace mame
         double DSS_LFSR_NOISE__BIAS { get { return DISCRETE_INPUT(5); } }
 
 
-        unsigned m_lfsr_reg;  //unsigned int    m_lfsr_reg;
-        int m_last;                 /* Last clock state */
-        double m_t_clock;              /* fixed counter clock in seconds */
-        double m_t_left;               /* time unused during last sample in seconds */
-        //double          m_sample_step;
-        //double          m_t;
-        uint8_t m_reset_on_high;
-        uint8_t m_invert_output;
-        uint8_t m_out_is_f0;
-        uint8_t m_out_lfsr_reg;
+        unsigned m_lfsr_reg = 0;  //unsigned int    m_lfsr_reg;
+        int m_last = 0;                 /* Last clock state */
+        double m_t_clock = 0.0;              /* fixed counter clock in seconds */
+        double m_t_left = 0.0;               /* time unused during last sample in seconds */
+        //double          m_sample_step = 0.0;
+        //double          m_t = 0.0;
+        uint8_t m_reset_on_high = 0;
+        uint8_t m_invert_output = 0;
+        uint8_t m_out_is_f0 = 0;
+        uint8_t m_out_lfsr_reg = 0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -489,11 +489,9 @@ namespace mame
     }
 
 
-#if false
-    DISCRETE_CLASS_STEP_RESET(dss_noise, 2,
-        double          m_phase;
-    );
-#endif
+    //DISCRETE_CLASS_STEP_RESET(dss_noise, 2,
+    //    double          m_phase = 0.0;
+    //);
 
 
     //DISCRETE_CLASS_STEP_RESET(dss_note, 1,
@@ -512,15 +510,15 @@ namespace mame
         double DSS_NOTE__CLOCK_TYPE { get { return DISCRETE_INPUT(5); } }
 
 
-        int             m_clock_type;
-        int             m_out_type;
-        int             m_last;                 /* Last clock state */
-        double          m_t_clock;              /* fixed counter clock in seconds */
-        double          m_t_left;               /* time unused during last sample in seconds */
-        int             m_max1;                 /* Max 1 Count stored as int for easy use. */
-        int             m_max2;                 /* Max 2 Count stored as int for easy use. */
-        int             m_count1;               /* current count1 */
-        int             m_count2;               /* current count2 */
+        int             m_clock_type = 0;
+        int             m_out_type = 0;
+        int             m_last = 0;                 /* Last clock state */
+        double          m_t_clock = 0.0;              /* fixed counter clock in seconds */
+        double          m_t_left = 0.0;               /* time unused during last sample in seconds */
+        int             m_max1 = 0;                 /* Max 1 Count stored as int for easy use. */
+        int             m_max2 = 0;                 /* Max 2 Count stored as int for easy use. */
+        int             m_count1 = 0;               /* current count1 */
+        int             m_count2 = 0;               /* current count2 */
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -656,6 +654,16 @@ namespace mame
     }
 
 
+    //DISCRETE_CLASS_STEP_RESET(dss_sawtoothwave, 1,
+    //    double          m_phase = 0.0;
+    //    int             m_type = 0;
+    //);
+
+    //DISCRETE_CLASS_STEP_RESET(dss_sinewave, 1,
+    //    double          m_phase = 0.0;
+    //);
+
+
     //DISCRETE_CLASS_STEP_RESET(dss_squarewave, 1,
     class discrete_dss_squarewave_node : discrete_base_node,
                                          discrete_step_interface
@@ -671,8 +679,8 @@ namespace mame
         double DSS_SQUAREWAVE__PHASE { get { return DISCRETE_INPUT(5); } }
 
 
-        double m_phase;
-        double m_trigger;
+        double m_phase = 0.0;
+        double m_trigger = 0.0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -752,11 +760,11 @@ namespace mame
         double DSS_SQUAREWFIX__PHASE { get { return DISCRETE_INPUT(5); } }
 
 
-        int             m_flip_flop;
-        double          m_sample_step;
-        double          m_t_left;
-        double          m_t_off;
-        double          m_t_on;
+        int             m_flip_flop = 0;
+        double          m_sample_step = 0;
+        double          m_t_left = 0;
+        double          m_t_off = 0;
+        double          m_t_on = 0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -837,8 +845,8 @@ namespace mame
 
 
     //DISCRETE_CLASS_STEP_RESET(dss_squarewave2, 1,
-    //    double          m_phase;
-    //    double          m_trigger;
+    //    double          m_phase = 0.0;
+    //    double          m_trigger = 0.0;
     //);
 
 
@@ -856,7 +864,7 @@ namespace mame
         double DSS_TRIANGLEWAVE__PHASE { get { return DISCRETE_INPUT(4); } }
 
 
-        double m_phase;
+        double m_phase = 0.0;
 
 
         //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
@@ -975,16 +983,16 @@ namespace mame
         double I_R2() { return m_input[5].m_pointer[0]; }  //DISCRETE_CLASS_INPUT(I_R2,      5);
 
 
-        double          mc_v_cap;
-        double          mc_v_g2_old;
-        double          mc_w;
-        double          mc_wc;
-        double          mc_rp;
-        double          mc_r1;
-        double          mc_r2;
-        double          mc_c;
-        double          mc_tf_a;
-        double          mc_tf_b;
+        double          mc_v_cap = 0.0;
+        double          mc_v_g2_old = 0.0;
+        double          mc_w = 0.0;
+        double          mc_wc = 0.0;
+        double          mc_rp = 0.0;
+        double          mc_r1 = 0.0;
+        double          mc_r2 = 0.0;
+        double          mc_c = 0.0;
+        double          mc_tf_a = 0.0;
+        double          mc_tf_b = 0.0;
         double [] mc_tf_tab = new double [DSS_INV_TAB_SIZE];
 
 
@@ -1210,22 +1218,22 @@ namespace mame
 
 
         Pointer<double> [] m_r = new Pointer<double> [8];  //const double *  m_r[8];                 /* pointers to resistor values */
-        int m_type;
-        uint8_t m_flip_flop;            /* flip/flop output state */
-        uint8_t m_flip_flop_xor;        /* flip_flop ^ flip_flop_xor, 0 = discharge, 1 = charge */
-        uint8_t m_output_type;
-        uint8_t m_has_enable;
-        double m_v_out_high;
-        double m_threshold_low;        /* falling threshold */
-        double m_threshold_high;       /* rising threshold */
-        double m_v_cap;                /* current capacitor voltage */
-        double m_r_total;              /* all input resistors in parallel */
-        double m_i_fixed;              /* fixed current at the input */
-        double m_i_enable;             /* fixed current at the input if enabled */
-        double m_temp1;                /* Multi purpose */
-        double m_temp2;                /* Multi purpose */
-        double m_temp3;                /* Multi purpose */
-        double m_is_linear_charge;
+        int m_type = 0;
+        uint8_t m_flip_flop = 0;            /* flip/flop output state */
+        uint8_t m_flip_flop_xor = 0;        /* flip_flop ^ flip_flop_xor, 0 = discharge, 1 = charge */
+        uint8_t m_output_type = 0;
+        uint8_t m_has_enable = 0;
+        double m_v_out_high = 0.0;
+        double m_threshold_low = 0.0;        /* falling threshold */
+        double m_threshold_high = 0.0;       /* rising threshold */
+        double m_v_cap = 0.0;                /* current capacitor voltage */
+        double m_r_total = 0.0;              /* all input resistors in parallel */
+        double m_i_fixed = 0.0;              /* fixed current at the input */
+        double m_i_enable = 0.0;             /* fixed current at the input if enabled */
+        double m_temp1 = 0.0;                /* Multi purpose */
+        double m_temp2 = 0.0;                /* Multi purpose */
+        double m_temp3 = 0.0;                /* Multi purpose */
+        double m_is_linear_charge = 0.0;
         double [] m_charge_rc = new double [2];
         double [] m_charge_exp = new double [2];
         double [] m_charge_v = new double [2];
@@ -1699,6 +1707,17 @@ namespace mame
 
 
     //DISCRETE_CLASS_STEP_RESET(dss_schmitt_osc, 1,
+    //    double          m_ration_in = 0.0;      /* ratio of total charging voltage that comes from the input */
+    //    double          m_ratio_feedback = 0.0; /* ratio of total charging voltage that comes from the feedback */
+    //    double          m_v_cap = 0.0;          /* current capacitor voltage */
+    //    double          m_rc = 0.0;             /* r*c */
+    //    double          m_exponent = 0.0;
+    //    int             m_state = 0;            /* state of the output */
+    //    int             m_enable_type = 0;
+    //    uint8_t         m_input_is_voltage = 0;
+    //);
 
     //DISCRETE_CLASS_STEP_RESET(dss_adsrenv,  1,
+    //    //double          m_phase = 0.0;
+    //);
 }

@@ -283,7 +283,7 @@ namespace mame
             double [] m_r_in = new double [2];
             double [] m_r_total = new double [2];
             double [] m_exp = new double [2];
-            double m_out_v;
+            double m_out_v = 0;
 
 
             public osd_ticks_t run_time { get; set; }

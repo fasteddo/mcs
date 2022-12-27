@@ -29,23 +29,23 @@ namespace mame.netlist
         protected device_t(object owner, string name)
             : base(owner, name)
         {
-            if (owner is netlist_state_t) device_t_after_ctor((netlist_state_t)owner, name);
-            else if (owner is device_t) device_t_after_ctor((device_t)owner, name);
+            if (owner is netlist_state_t owner_netlist) device_t_after_ctor(owner_netlist, name);
+            else if (owner is device_t owner_device) device_t_after_ctor(owner_device, name);
             else throw new emu_unimplemented();
         }
 
         protected device_t(object owner, string name, string model)
             : base(owner, name)
         {
-            if (owner is netlist_state_t) device_t_after_ctor((netlist_state_t)owner, name, model);
-            else if (owner is device_t) device_t_after_ctor((device_t)owner, name, model);
+            if (owner is netlist_state_t owner_netlist) device_t_after_ctor(owner_netlist, name, model);
+            else if (owner is device_t owner_device) device_t_after_ctor(owner_device, name, model);
             else throw new emu_unimplemented();
         }
 
         protected device_t(object owner, string name, logic_family_desc_t desc)
             : base(owner, name)
         {
-            if (owner is netlist_state_t) device_t_after_ctor((netlist_state_t)owner, name, desc);
+            if (owner is netlist_state_t owner_netlist) device_t_after_ctor(owner_netlist, name, desc);
             else if (owner is device_t) throw new emu_unimplemented();
             else throw new emu_unimplemented();
         }

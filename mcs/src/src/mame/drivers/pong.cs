@@ -110,7 +110,7 @@ namespace mame
 
             h.NETLIST_START(setup);
 
-            h.MEMREGION_SOURCE(this, "maincpu");
+            netlist_global.MEMREGION_SOURCE(h.helper_setup, this, "maincpu");
             h.PARAM("NETLIST.USE_DEACTIVATE", 1);
             h.INCLUDE("pong_schematics");
 
@@ -265,7 +265,7 @@ namespace mame
     //}
 
 
-    partial class pong : construct_ioport_helper
+    public partial class pong : construct_ioport_helper
     {
         //static INPUT_PORTS_START( pong )
         void construct_ioport_pong(device_t owner, ioport_list portlist, ref string errorbuf)

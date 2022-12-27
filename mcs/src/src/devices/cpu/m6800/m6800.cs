@@ -23,7 +23,7 @@ using static mame.m6800_global;
 
 namespace mame
 {
-    static partial class m6800_global
+    public static partial class m6800_global
     {
         //enum
         //{
@@ -162,23 +162,23 @@ namespace mame
         /* macros to access memory */
         void IMMBYTE(out uint8_t b) { b = (uint8_t)M_RDOP_ARG(PCD); PC++; }
         void IMMBYTE(out uint16_t b) { b = (uint16_t)M_RDOP_ARG(PCD); PC++; }
-        void IMMBYTE(out uint32_t b) { b = (uint32_t)M_RDOP_ARG(PCD); PC++; }
-        void IMMWORD(ref PAIR w) { w.d = (M_RDOP_ARG(PCD) << 8) | M_RDOP_ARG((PCD + 1) & 0xffff); PC += 2; }
+        void IMMBYTE(out uint32_t b) { b = M_RDOP_ARG(PCD); PC++; }
+        void IMMWORD(out PAIR w) { w = default; w.d = (M_RDOP_ARG(PCD) << 8) | M_RDOP_ARG((PCD + 1) & 0xffff); PC += 2; }
 
         void PUSHBYTE(uint8_t b) { WM(SD, b); --S; }
         void PUSHWORD(PAIR w) { WM(SD, w.b.l); --S; WM(SD, w.b.h); --S; }
         void PULLBYTE(out uint8_t b) { S++; b = (uint8_t)RM(SD); }
-        void PULLWORD(ref PAIR w) { S++; w.d = RM(SD)<<8; S++; w.d |= RM(SD); }
+        void PULLWORD(out PAIR w) { S++; w = default; w.d = RM(SD) << 8; S++; w.d |= RM(SD); }
 
-        // helpers due to properties can't use 'out'
-        void IMMBYTE_A() { var temp = A; IMMBYTE(out temp); A = temp; }
-        void IMMBYTE_B() { var temp = B; IMMBYTE(out temp); B = temp; }
-        void IMMBYTE_EAD() { var temp = EAD; IMMBYTE(out temp); EAD = temp; }
-        void PULLBYTE_A() { var temp = A; PULLBYTE(out temp); A = temp; }
-        void PULLBYTE_B() { var temp = B; PULLBYTE(out temp); B = temp; }
-        void PULLBYTE_CC() { var temp = CC; PULLBYTE(out temp); CC = temp; }
-        void PULLWORD_pPC() { var temp = pPC; PULLWORD(ref temp); pPC = temp; }
-        void PULLWORD_pX() { var temp = pX; PULLWORD(ref temp); pX = temp; }
+        // helpers because properties don't work with 'out'
+        void IMMBYTE_A() { IMMBYTE(out uint8_t temp); A = temp; }
+        void IMMBYTE_B() { IMMBYTE(out uint8_t temp); B = temp; }
+        void IMMBYTE_EAD() { IMMBYTE(out uint8_t temp); EAD = temp; }
+        void PULLBYTE_A() { PULLBYTE(out uint8_t temp); A = temp; }
+        void PULLBYTE_B() { PULLBYTE(out uint8_t temp); B = temp; }
+        void PULLBYTE_CC() { PULLBYTE(out uint8_t temp); CC = temp; }
+        void PULLWORD_pPC() { PULLWORD(out PAIR temp); pPC = temp; }
+        void PULLWORD_pX() { PULLWORD(out PAIR temp); pX = temp; }
 
 
         /* operate one instruction for */
@@ -229,14 +229,14 @@ namespace mame
 
 
         /* for treating an uint8_t as a signed int16_t */
-        int16_t SIGNED(uint8_t b) { return (int16_t)(((b & 0x80) != 0) ? b | 0xff00 : b); }
+        int16_t SIGNED(uint8_t b) { return (int16_t)((b & 0x80) != 0 ? b | 0xff00 : b); }
 
 
         /* Macros for addressing modes */
         void DIRECT() { IMMBYTE_EAD(); }
         void IMM8() { EA = PC++; }
         void IMM16() { EA = PC; PC += 2; }
-        void EXTENDED() { IMMWORD(ref m_ea); }
+        void EXTENDED() { IMMWORD(out m_ea); }
         void INDEXED() { EA = (uint16_t)(X + (uint8_t)M_RDOP_ARG(PCD)); PC++; }
 
 
@@ -261,22 +261,22 @@ namespace mame
         /* macros for convenience */
         void DIRBYTE(out uint8_t b) { DIRECT(); b = (uint8_t)RM(EAD); }
         void DIRBYTE(out uint16_t b) { DIRECT(); b = (uint16_t)RM(EAD); }
-        void DIRWORD(ref PAIR w) { DIRECT(); w.d = RM16(EAD); }
+        void DIRWORD(out PAIR w) { DIRECT(); w = default; w.d = RM16(EAD); }
         void EXTBYTE(out uint8_t b) { EXTENDED(); b = (uint8_t)RM(EAD); }
         void EXTBYTE(out uint16_t b) { EXTENDED(); b = (uint16_t)RM(EAD); }
-        void EXTWORD(ref PAIR w) { EXTENDED(); w.d = RM16(EAD); }
+        void EXTWORD(out PAIR w) { EXTENDED(); w = default; w.d = RM16(EAD); }
 
         void IDXBYTE(out uint8_t b)  { INDEXED(); b = (uint8_t)RM(EAD); }
         void IDXBYTE(out uint16_t b) { INDEXED(); b = (uint16_t)RM(EAD); }
-        void IDXWORD(ref PAIR w) { INDEXED(); w.d = RM16(EAD); }
+        void IDXWORD(out PAIR w) { INDEXED(); w = default; w.d = RM16(EAD); }
 
-        // helpers due to properties can't use 'out'
-        void DIRBYTE_A() { var temp = A; DIRBYTE(out temp); A = temp; }
-        void DIRBYTE_B() { var temp = B; DIRBYTE(out temp); B = temp; }
-        void EXTBYTE_A() { var temp = A; EXTBYTE(out temp); A = temp; }
-        void EXTBYTE_B() { var temp = B; EXTBYTE(out temp); B = temp; }
-        void IDXBYTE_A() { var temp = A; IDXBYTE(out temp); A = temp; }
-        void IDXBYTE_B() { var temp = B; IDXBYTE(out temp); B = temp; }
+        // helpers because properties don't work with 'out'
+        void DIRBYTE_A() { DIRBYTE(out uint8_t temp); A = temp; }
+        void DIRBYTE_B() { DIRBYTE(out uint8_t temp); B = temp; }
+        void EXTBYTE_A() { EXTBYTE(out uint8_t temp); A = temp; }
+        void EXTBYTE_B() { EXTBYTE(out uint8_t temp); B = temp; }
+        void IDXBYTE_A() { IDXBYTE(out uint8_t temp); A = temp; }
+        void IDXBYTE_B() { IDXBYTE(out uint8_t temp); B = temp; }
 
         /* Macros for branch instructions */
         void BRANCH(out uint8_t t, bool f) { IMMBYTE(out t); if (f) { PC = (uint16_t)(PC + SIGNED(t)); } }  //PC += SIGNED(t);
@@ -540,7 +540,7 @@ namespace mame
         }
 
 
-        void WM16(uint32_t Addr, ref PAIR p)
+        void WM16(uint32_t Addr, PAIR p)
         {
             WM(Addr, p.b.h);
             WM((Addr + 1) & 0xffff, p.b.l);

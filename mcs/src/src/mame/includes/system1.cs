@@ -18,25 +18,25 @@ namespace mame
         // video related
         MemoryU8 m_videoram;  //std::unique_ptr<u8[]> m_videoram;
         Action<u8, u8> m_videomode_custom;  //void (system1_state::*m_videomode_custom)(u8 data, u8 prevdata);
-        u8 m_videomode_prev;
+        u8 m_videomode_prev = 0;
         u8 [] m_mix_collide;  //std::unique_ptr<u8[]> m_mix_collide;
-        u8 m_mix_collide_summary;
+        u8 m_mix_collide_summary = 0;
         u8 [] m_sprite_collide;  //std::unique_ptr<u8[]> m_sprite_collide;
-        u8 m_sprite_collide_summary;
+        u8 m_sprite_collide_summary = 0;
         bitmap_ind16 m_sprite_bitmap = new bitmap_ind16();
-        u8 m_video_mode;
-        u8 m_videoram_bank;
-        tilemap_t [] m_tilemap_page = new tilemap_t [8];  //tilemap_t *m_tilemap_page[8];
-        u8 m_tilemap_pages;
+        u8 m_video_mode = 0;
+        u8 m_videoram_bank = 0;
+        tilemap_t [] m_tilemap_page = new tilemap_t [8];  //tilemap_t *m_tilemap_page[8]{};
+        u8 m_tilemap_pages = 0;
 
         // protection, miscs
-        u8 m_mute_xor;
-        u8 m_dakkochn_mux_data;
-        u8 m_mcu_control;
-        u8 m_nob_maincpu_latch;
-        u8 m_nob_mcu_latch;
-        u8 m_nob_mcu_status;
-        //int m_nobb_inport23_step;
+        u8 m_mute_xor = 0;
+        u8 m_dakkochn_mux_data = 0;
+        u8 m_mcu_control = 0;
+        u8 m_nob_maincpu_latch = 0;
+        u8 m_nob_mcu_latch = 0;
+        u8 m_nob_mcu_status = 0;
+        //int m_nobb_inport23_step = 0;
 
 
         // devices

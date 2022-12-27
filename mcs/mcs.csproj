@@ -8,13 +8,13 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Unsafe|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE;USE_UNSAFE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;MCS_UNSAFE</DefineConstants>
     <Optimize>false</Optimize>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Unsafe|AnyCPU'">
-    <DefineConstants>TRACE;USE_UNSAFE</DefineConstants>
+    <DefineConstants>TRACE;MCS_UNSAFE</DefineConstants>
     <Optimize>true</Optimize>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -23,18 +23,33 @@
     <Compile Remove="3rdparty\**" />
     <Compile Remove="src\3rdparty\**" />
     <Compile Remove="src\base\**" />
+    <Compile Remove="src\build\generated\**" />
+    <Compile Remove="src\src\**" />
     <EmbeddedResource Remove="3rdparty\**" />
     <EmbeddedResource Remove="src\3rdparty\**" />
     <EmbeddedResource Remove="src\base\**" />
+    <EmbeddedResource Remove="src\build\generated\**" />
+    <EmbeddedResource Remove="src\src\**" />
     <None Remove="3rdparty\**" />
     <None Remove="src\3rdparty\**" />
     <None Remove="src\base\**" />
+    <None Remove="src\build\generated\**" />
+    <None Remove="src\src\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="src\build\generated\mame\**" />
+    <EmbeddedResource Include="src\build\generated\mame\**" />
+    <None Include="src\build\generated\mame\**" />
+  </ItemGroup>
+  
   <ItemGroup>
     <ProjectReference Include="3rdparty\SharpCompress\SharpCompress-mcs.csproj" />
     <ProjectReference Include="mcs_3rdparty.csproj" />
     <ProjectReference Include="mcs_base.csproj" />
+    <ProjectReference Include="mcs_devices.csproj" />
+    <ProjectReference Include="mcs_mame.csproj" />
+    <ProjectReference Include="mcs_src.csproj" />
   </ItemGroup>
 
 </Project>

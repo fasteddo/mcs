@@ -43,7 +43,7 @@ namespace mame
     }
 
 
-    static partial class screen_global
+    public static partial class screen_global
     {
         public const screen_type_enum SCREEN_TYPE_RASTER = screen_type_enum.SCREEN_TYPE_RASTER;
         public const screen_type_enum SCREEN_TYPE_VECTOR = screen_type_enum.SCREEN_TYPE_VECTOR;
@@ -344,7 +344,7 @@ namespace mame
             m_curtexture = 0;
             m_changed = true;
             m_last_partial_scan = 0;
-            m_partial_scan_hpos = -1;
+            m_partial_scan_hpos = 0;
             m_color = new rgb_t(0xff, 0xff, 0xff, 0xff);
             m_brightness = 0xff;
             m_frame_period = DEFAULT_FRAME_PERIOD.as_attoseconds();
@@ -448,7 +448,7 @@ namespace mame
         public int height() { return m_height; }
         public rectangle visible_area() { return m_visarea; }
         public rectangle cliprect() { return m_bitmap[0].cliprect(); }
-        bool oldstyle_vblank_supplied() { return m_oldstyle_vblank_supplied; }
+        public bool oldstyle_vblank_supplied() { return m_oldstyle_vblank_supplied; }
         public attoseconds_t refresh_attoseconds() { return m_refresh; }
         attoseconds_t vblank_attoseconds() { return m_vblank; }
         public bitmap_format format() { return m_screen_update_ind16 != null ? bitmap_format.BITMAP_FORMAT_IND16 : bitmap_format.BITMAP_FORMAT_RGB32; }
@@ -485,7 +485,7 @@ namespace mame
         public screen_device set_raw(u32 pixclock, u16 htotal, u16 hbend, u16 hbstart, u16 vtotal, u16 vbend, u16 vbstart)
         {
             assert(pixclock != 0);
-            clock_set(pixclock);
+            set_clock(pixclock);
             m_refresh = HZ_TO_ATTOSECONDS(pixclock) * htotal * vtotal;
             m_vblank = m_refresh / vtotal * (vtotal - (vbstart - vbend));
             m_width = htotal;
@@ -517,6 +517,7 @@ namespace mame
         /// \return Reference to device for method chaining.
         /// 
         public screen_device set_refresh_hz(s32 hz) { set_refresh(HZ_TO_ATTOSECONDS(hz)); return this; }  //template <typename T> screen_device &set_refresh_hz(T &&hz) { set_refresh(HZ_TO_ATTOSECONDS(std::forward<T>(hz))); return *this; }
+        public screen_device set_refresh_hz(double hz) { set_refresh(HZ_TO_ATTOSECONDS(hz)); return this; }  //template <typename T> screen_device &set_refresh_hz(T &&hz) { set_refresh(HZ_TO_ATTOSECONDS(std::forward<T>(hz))); return *this; }
         public screen_device set_refresh_hz(XTAL hz) { set_refresh(HZ_TO_ATTOSECONDS(hz)); return this; }  //template <typename T> screen_device &set_refresh_hz(T &&hz) { set_refresh(HZ_TO_ATTOSECONDS(std::forward<T>(hz))); return *this; }
 
         /// \brief Set vertical blanking interval time
@@ -972,7 +973,7 @@ namespace mame
 
             // remember where we left off
             m_last_partial_scan = scanline + 1;
-            m_partial_scan_hpos = -1;
+            m_partial_scan_hpos = 0;
 
             return true;
         }
@@ -1026,10 +1027,10 @@ namespace mame
             if (current_vpos > m_last_partial_scan)
             {
                 // if the line before us was incomplete, we must do it in two pieces
-                if (m_partial_scan_hpos >= 0)
+                if (m_partial_scan_hpos > 0)
                 {
                     // now finish the previous partial scanline
-                    clip.set(std.max(clip.left(), m_partial_scan_hpos + 1),
+                    clip.set(std.max(clip.left(), m_partial_scan_hpos),
                              clip.right(),
                              std.max(clip.top(), m_last_partial_scan),
                              std.min(clip.bottom(), m_last_partial_scan));
@@ -1068,7 +1069,7 @@ namespace mame
                         m_changed = ((m_changed ? 1U : 0) | ~flags & UPDATE_HAS_NOT_CHANGED) != 0;  //m_changed |= ~flags & UPDATE_HAS_NOT_CHANGED;
                     }
 
-                    m_partial_scan_hpos = -1;
+                    m_partial_scan_hpos = 0;
                     m_last_partial_scan++;
                 }
 
@@ -1079,47 +1080,50 @@ namespace mame
             }
 
             // now draw this partial scanline
-            clip = m_visarea;
-
-            clip.set(std.max(clip.left(), m_partial_scan_hpos + 1),
-                     std.min(clip.right(), current_hpos),
-                     std.max(clip.top(), current_vpos),
-                     std.min(clip.bottom(), current_vpos));
-
-            // and if there's something to draw, do it
-            if (!clip.empty())
+            if (current_hpos > 0)
             {
-                g_profiler.start(profile_type.PROFILER_VIDEO);
+                clip = m_visarea;
 
-                LOG_PARTIAL_UPDATES("doing scanline partial draw: Y {0} X {1}-{2}\n", clip.bottom(), clip.left(), clip.right());
+                clip.set(std.max(clip.left(), m_partial_scan_hpos),
+                        std.min(clip.right(), current_hpos - 1),
+                        std.max(clip.top(), current_vpos),
+                        std.min(clip.bottom(), current_vpos));
 
-                u32 flags = 0;
-                screen_bitmap curbitmap = m_bitmap[m_curbitmap];
-                if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
+                // and if there's something to draw, do it
+                if (!clip.empty())
                 {
-                    pre_update_scanline(current_vpos);
-                    switch (curbitmap.format())
-                    {
-                        default:
-                        case bitmap_format.BITMAP_FORMAT_IND16:   flags = m_screen_update_ind16(this, (bitmap_ind16)m_scan_bitmaps[m_curbitmap][current_vpos], clip);   break;
-                        case bitmap_format.BITMAP_FORMAT_RGB32:   flags = m_screen_update_rgb32(this, (bitmap_rgb32)m_scan_bitmaps[m_curbitmap][current_vpos], clip);   break;
-                    }
-                }
-                else
-                {
-                    switch (curbitmap.format())
-                    {
-                        default:
-                        case bitmap_format.BITMAP_FORMAT_IND16:   flags = m_screen_update_ind16(this, curbitmap.as_ind16(), clip);   break;
-                        case bitmap_format.BITMAP_FORMAT_RGB32:   flags = m_screen_update_rgb32(this, curbitmap.as_rgb32(), clip);   break;
-                    }
-                }
+                    g_profiler.start(profile_type.PROFILER_VIDEO);
 
-                m_partial_updates_this_frame++;
-                g_profiler.stop();
+                    LOG_PARTIAL_UPDATES("doing scanline partial draw: Y {0} X {1}-{2}\n", clip.bottom(), clip.left(), clip.right());
 
-                // if we modified the bitmap, we have to commit
-                m_changed = ((m_changed ? 1U : 0) | ~flags & UPDATE_HAS_NOT_CHANGED) != 0;  //m_changed |= ~flags & UPDATE_HAS_NOT_CHANGED;
+                    u32 flags = 0;
+                    screen_bitmap curbitmap = m_bitmap[m_curbitmap];
+                    if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
+                    {
+                        pre_update_scanline(current_vpos);
+                        switch (curbitmap.format())
+                        {
+                            default:
+                            case bitmap_format.BITMAP_FORMAT_IND16:   flags = m_screen_update_ind16(this, (bitmap_ind16)m_scan_bitmaps[m_curbitmap][current_vpos], clip);   break;
+                            case bitmap_format.BITMAP_FORMAT_RGB32:   flags = m_screen_update_rgb32(this, (bitmap_rgb32)m_scan_bitmaps[m_curbitmap][current_vpos], clip);   break;
+                        }
+                    }
+                    else
+                    {
+                        switch (curbitmap.format())
+                        {
+                            default:
+                            case bitmap_format.BITMAP_FORMAT_IND16:   flags = m_screen_update_ind16(this, curbitmap.as_ind16(), clip);   break;
+                            case bitmap_format.BITMAP_FORMAT_RGB32:   flags = m_screen_update_rgb32(this, curbitmap.as_rgb32(), clip);   break;
+                        }
+                    }
+
+                    m_partial_updates_this_frame++;
+                    g_profiler.stop();
+
+                    // if we modified the bitmap, we have to commit
+                    m_changed = ((m_changed ? 1U : 0) | ~flags & UPDATE_HAS_NOT_CHANGED) != 0;  //m_changed |= ~flags & UPDATE_HAS_NOT_CHANGED;
+                }
             }
 
             // remember where we left off
@@ -1135,7 +1139,7 @@ namespace mame
         public void reset_partial_updates()
         {
             m_last_partial_scan = 0;
-            m_partial_scan_hpos = -1;
+            m_partial_scan_hpos = 0;
             m_partial_updates_this_frame = 0;
             m_scanline0_timer.adjust(time_until_pos(0));
         }

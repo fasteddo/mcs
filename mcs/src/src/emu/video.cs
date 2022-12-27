@@ -567,7 +567,7 @@ namespace mame
             bool has_live_screen = false;
             foreach (screen_device screen in iter)
             {
-                if (screen.partial_scan_hpos() >= 0) // previous update ended mid-scanline
+                if (screen.partial_scan_hpos() > 0) // previous update ended mid-scanline
                     screen.update_now();
 
                 screen.update_partial(screen.visible_area().max_y);
@@ -938,7 +938,7 @@ namespace mame
                 emu_file file = new emu_file(machine().options().snapshot_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                 std.error_condition filerr = open_next(file, "png");
                 if (!filerr)
-                    save_snapshot(null, file.core_file_get());
+                    save_snapshot(null, file.core_file_);
 
                 file.close();
 

@@ -156,8 +156,16 @@ namespace mame
         }
 
 
+        public static class nld_sound_in_helper
+        {
+            public static Func<Type, bool> is_nld_sound_in;
+            public static Func<object, string, core_device_t> new_nld_sound_in;
+            public static Func<string, properties, element_t> new_device_element_t_nld_sound_in;
+        }
+
+
         //template <class C, typename... Args>
-        class device_element_t<C> : element_t
+        public class device_element_t<C> : element_t
         {
             object [] m_args;  //std::tuple<Args...> m_args;
 
@@ -229,7 +237,7 @@ namespace mame
                 else if (typeof(C) == typeof(devices.nld_sys_noise<mt19937_64, plib.normal_distribution_t, plib.distribution_ops_normal>)) return new devices.nld_sys_noise<mt19937_64, plib.normal_distribution_t, plib.distribution_ops_normal>(anetlist, name);
                 else if (typeof(C) == typeof(interface_.nld_analog_callback)) { assert(args.Length == 2);  return new interface_.nld_analog_callback(anetlist, name, (nl_fptype)args[0], (interface_.nld_analog_callback.FUNC)args[1]); }
                 else if (typeof(C) == typeof(interface_.nld_logic_callback))  { assert(args.Length == 1);  return new interface_.nld_logic_callback(anetlist, name, (interface_.nld_logic_callback.FUNC)args[0]); }
-                else if (typeof(C) == typeof(nld_sound_in))                   return new nld_sound_in(anetlist, name);
+                else if (nld_sound_in_helper.is_nld_sound_in(typeof(C)))      return nld_sound_in_helper.new_nld_sound_in(anetlist, name);
                 else throw new emu_unimplemented();
             }
 
@@ -248,7 +256,7 @@ namespace mame
 
             public static element_t create_nld_sound_in(string name, properties props)
             {
-                return new device_element_t<nld_sound_in>(name, props);
+                return nld_sound_in_helper.new_device_element_t_nld_sound_in(name, props);
             }
 
             public static element_t create_nld_analog_callback(string name, properties props, params object [] args)
@@ -281,7 +289,7 @@ namespace mame
             //}
             public void add_nld_sound_in(string name, properties props)
             {
-                add(device_element_t<nld_sound_in>.create_nld_sound_in(name, props));
+                add(nld_sound_in_helper.new_device_element_t_nld_sound_in(name, props));
             }
 
             public void add_nld_analog_callback<cb_t, fptype, lb_t>(string name, properties props, fptype fp, lb_t lb)

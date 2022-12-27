@@ -351,7 +351,7 @@ namespace mame
     }
 
 
-    static class z80dma_global
+    public static class z80dma_global
     {
         public static z80dma_device Z80DMA<bool_Required>(machine_config mconfig, device_finder<z80dma_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80dma_device.Z80DMA, clock); }
     }

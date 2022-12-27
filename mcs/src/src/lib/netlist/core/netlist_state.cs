@@ -165,8 +165,8 @@ namespace mame.netlist
             std.vector<C> tmp = new std.vector<C>();
             foreach (var d in m_devices)
             {
-                var dev = d.second is C ? (C)d.second : null;  //auto dev = dynamic_cast<C *>(d.second.get());
-                if (dev != null)
+                var dev = d.second is C d_C ? d_C : default;  //auto dev = dynamic_cast<C *>(d.second.get());
+                if (dev != default)
                     tmp.push_back(dev);
             }
             return tmp;

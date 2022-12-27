@@ -13,6 +13,7 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+using unsigned = System.UInt32;
 
 using static mame.cpp_global;
 using static mame.device_global;
@@ -354,7 +355,7 @@ namespace mame
         public device_sound_interface_pokey disound { get { return m_disound; } }
 
 
-        //template <unsigned N> auto pot_r() { return m_pot_r_cb[N].bind(); }
+        public devcb_read8.binder pot_r<unsigned_N>() where unsigned_N : u32_const, new() { unsigned N = new unsigned_N().value;  return m_pot_r_cb[N].bind(); }  //template <unsigned N> auto pot_r() { return m_pot_r_cb[N].bind(); }
 
 
         public devcb_read8.binder allpot_r() { return m_allpot_r_cb.bind(); }  //auto allpot_r() { return m_allpot_r_cb.bind(); }
@@ -1477,7 +1478,7 @@ namespace mame
     }
 
 
-    static class pokey_global
+    public static class pokey_global
     {
         public static pokey_device POKEY(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<pokey_device>(mconfig, tag, pokey_device.POKEY, clock); }
         public static pokey_device POKEY(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<pokey_device>(mconfig, tag, pokey_device.POKEY, clock); }

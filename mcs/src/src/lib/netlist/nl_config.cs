@@ -164,7 +164,7 @@ namespace mame.netlist
 
 
     // FIXME: need a better solution for global constants.
-    static class config
+    public static class config
     {
         //============================================================
         // Time resolution

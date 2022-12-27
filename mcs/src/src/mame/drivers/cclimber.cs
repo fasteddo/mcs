@@ -151,7 +151,7 @@ namespace mame
     }
 
 
-    partial class cclimber : construct_ioport_helper
+    public partial class cclimber : construct_ioport_helper
     {
         //static INPUT_PORTS_START( cclimber )
         void construct_ioport_cclimber(device_t owner, ioport_list portlist, ref string errorbuf)

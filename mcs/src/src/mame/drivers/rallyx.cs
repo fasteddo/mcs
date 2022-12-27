@@ -138,7 +138,7 @@ namespace mame
     }
 
 
-    partial class rallyx : construct_ioport_helper
+    public partial class rallyx : construct_ioport_helper
     {
         /*************************************
          *

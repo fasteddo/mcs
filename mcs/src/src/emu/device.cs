@@ -323,7 +323,7 @@ namespace mame
             //    assert(!owner);
             //    assert(!clock);
 
-            //    return make_unique_clear<DriverClass>(mconfig, type, tag);
+            //    return std::make_unique<DriverClass>(mconfig, type, tag);
             //}
 
 
@@ -404,22 +404,28 @@ namespace mame
                 return op(mconfig, finder, type, clock.value());
             }
 
+
 #if false
             template <class DeviceClass> template <typename... Params>
             inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config_replace replace, char const *tag, Params &&... args) const
             {
                 return dynamic_cast<DeviceClass &>(*replace.config.device_replace(tag, *this, std::forward<Params>(args)...));
             }
-
-            template <class DeviceClass> template <typename Exposed, bool Required, typename... Params>
-            inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config_replace replace, device_finder<Exposed, Required> &finder, Params &&... args) const
-            {
-                std::pair<device_t &, char const *> const target(finder.finder_target());
-                assert(&replace.config.current_device() == &target.first);
-                DeviceClass &result(dynamic_cast<DeviceClass &>(*replace.config.device_replace(target.second, *this, std::forward<Params>(args)...)));
-                return finder = result;
-            }
 #endif
+
+            //template <class DeviceClass> template <typename Exposed, bool Required, typename... Params>
+            public static DeviceClass op<DeviceClass, bool_Required>(machine_config_replace replace, device_finder<DeviceClass, bool_Required> finder, device_type type, u32 clock)  //inline DeviceClass &device_type_impl<DeviceClass>::operator()(machine_config_replace replace, device_finder<Exposed, Required> &finder, Params &&... args) const
+                where DeviceClass : device_t
+                where bool_Required : bool_const, new()
+            {
+                var target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
+                assert(replace.config.current_device() == target.first);
+                DeviceClass result = (DeviceClass)replace.config.device_replace(target.second, type, clock);  //DeviceClass &result(dynamic_cast<DeviceClass &>(*replace.config.device_replace(target.second, *this, std::forward<Params>(args)...)));
+
+                //return finder = result;
+                finder.assign(result);
+                return result;
+            }
         }
     }
 
@@ -631,7 +637,7 @@ namespace mame
     /// not been satisfied.  MAME will start additional devices before
     /// reattempting to start the device that threw the exception.
     /// \sa device_t::device_start device_interface::interface_pre_start
-    class device_missing_dependencies : emu_exception { }
+    public class device_missing_dependencies : emu_exception { }
 
 
     // timer IDs for devices
@@ -706,7 +712,17 @@ namespace mame
             }
 
 
-            //device_t &replace_and_remove(std::unique_ptr<device_t> &&device, device_t &existing);
+            //-------------------------------------------------
+            //  replace_and_remove - add a new device to
+            //  replace an existing subdevice
+            //-------------------------------------------------
+            public device_t replace_and_remove(device_t device, device_t existing)  //device_t &replace_and_remove(std::unique_ptr<device_t> &&device, device_t &existing);
+            {
+                m_tagmap.erase(existing.m_basetag);
+                device_t result = m_list.replace_and_remove(device, existing);
+                m_tagmap.emplace(result.m_basetag, result);
+                return result;
+            }
 
 
             //-------------------------------------------------
@@ -796,7 +812,7 @@ namespace mame
         public List<device_interface> m_class_interfaces = new List<device_interface>();
 
         public bool IsA<T>() where T : device_interface { return GetClassInterface<T>() != null; }
-        public T GetClassInterface<T>() where T : device_interface { foreach (var i in m_class_interfaces) { if (i is T) return (T)i; } return null; }
+        public T GetClassInterface<T>() where T : device_interface { foreach (var i in m_class_interfaces) { if (i is T device_interface) return device_interface; } return null; }
 
 
         // core device properties
@@ -950,7 +966,7 @@ namespace mame
         }
 
 
-        string source() { return m_type.source(); }
+        public string source() { return m_type.source(); }
         public device_t owner() { return m_owner; }
 
         public device_t next() { return m_next; }
@@ -1177,12 +1193,10 @@ namespace mame
         public void add_machine_configuration(machine_config config)
         {
             assert(config == m_machine_config);
-            using (machine_config.token tok = config.begin_configuration(this))  // machine_config::token const tok(config.begin_configuration(*this));
-            {
-                device_add_mconfig(config);
-                for (finder_base autodev = m_auto_finder_list; autodev != null; autodev = autodev.next())
-                    autodev.end_configuration();
-            }
+            using machine_config.token tok = config.begin_configuration(this);  // machine_config::token const tok(config.begin_configuration(*this));
+            device_add_mconfig(config);
+            for (finder_base autodev = m_auto_finder_list; autodev != null; autodev = autodev.next())
+                autodev.end_configuration();
         }
 
 
@@ -1227,27 +1241,24 @@ namespace mame
                 bool twopass = false;
                 bool havebios = false;
                 u8 firstbios = 0;
+                for (Pointer<tiny_rom_entry> rom = new Pointer<tiny_rom_entry>(roms); m_default_bios == 0 && !ROMENTRY_ISEND(rom); ++rom)  //for (tiny_rom_entry rom = roms; !m_default_bios && !ROMENTRY_ISEND(rom); ++rom)
                 {
-                    int romIdx = 0;
-                    for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !ROMENTRY_ISEND(rom); rom = roms[++romIdx])  //  for (tiny_rom_entry rom = roms; !m_default_bios && !ROMENTRY_ISEND(rom); ++rom)
+                    if (ROMENTRY_ISSYSTEM_BIOS(rom))
                     {
-                        if (ROMENTRY_ISSYSTEM_BIOS(rom))
+                        if (!havebios)
                         {
-                            if (!havebios)
-                            {
-                                havebios = true;
-                                firstbios = (u8)ROM_GETBIOSFLAGS(rom);
-                            }
+                            havebios = true;
+                            firstbios = (u8)ROM_GETBIOSFLAGS(rom);
+                        }
 
-                            if (string.IsNullOrEmpty(defbios))
-                                twopass = true;
-                            else if (std.strcmp(rom.name_, defbios) == 0)
-                                m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
-                        }
-                        else if (string.IsNullOrEmpty(defbios) && ROMENTRY_ISDEFAULT_BIOS(rom))
-                        {
-                            defbios = rom.name_;
-                        }
+                        if (string.IsNullOrEmpty(defbios))
+                            twopass = true;
+                        else if (std.strcmp(rom.op.name_, defbios) == 0)
+                            m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
+                    }
+                    else if (string.IsNullOrEmpty(defbios) && ROMENTRY_ISDEFAULT_BIOS(rom))
+                    {
+                        defbios = rom.op.name_;
                     }
                 }
 
@@ -1256,10 +1267,9 @@ namespace mame
                 {
                     if (!string.IsNullOrEmpty(defbios) && twopass)
                     {
-                        int romIdx = 0;
-                        for (tiny_rom_entry rom = roms[romIdx]; m_default_bios == 0 && !ROMENTRY_ISEND(rom); rom = roms[++romIdx])
+                        for (Pointer<tiny_rom_entry> rom = new Pointer<tiny_rom_entry>(roms); m_default_bios == 0 && !ROMENTRY_ISEND(rom); ++rom)
                         {
-                            if (ROMENTRY_ISSYSTEM_BIOS(rom) && std.strcmp(rom.name_, defbios) == 0)
+                            if (ROMENTRY_ISSYSTEM_BIOS(rom) && std.strcmp(rom.op.name_, defbios) == 0)
                                 m_default_bios = (u8)ROM_GETBIOSFLAGS(rom);
                         }
                     }
@@ -1315,7 +1325,6 @@ namespace mame
 
         // clock/timing accessors
         public u32 clock() { return m_clock; }
-        public void clock_set(u32 value) { m_clock = value; }
         protected u32 unscaled_clock() { return m_unscaled_clock; }
 
 
@@ -2040,7 +2049,7 @@ namespace mame
                 else
                 {
                     curdevice = curdevice.subdevices().find(part.substr(0, end));
-                    part = part.Substring((int)end + 1);  //part.remove_prefix(end + 1);
+                    part = part[(int)(end + 1)..];  //part.remove_prefix(end + 1);
                 }
             }
 
@@ -2471,6 +2480,23 @@ namespace mame
         public device_type_enumerator(device_t root, int maxdepth = 255)
             : base(root, maxdepth)
         { }
+    }
+
+
+    public static class cassette_device_enumerator_helper
+    {
+        public static Func<device_t, bool> handle_tape_start;
+        public static Func<device_t, bool> handle_tape_stop;
+    }
+
+
+    public static class samples_device_enumerator_helper
+    {
+        public static Func<Type> get_samples_device_type;
+        public static Func<device_t, object []> get_samples_devices;
+        public static Func<object, object> get_samples_iterator;
+        public static Func<object, string> get_altbasename;
+        public static Func<object, string []> get_samplenames;
     }
 
 

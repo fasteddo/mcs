@@ -21,6 +21,7 @@ using static mame.emumem_global;
 using static mame.emupal_global;
 using static mame.er2055_global;
 using static mame.gamedrv_global;
+using static mame.generic_global;
 using static mame.hash_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
@@ -248,7 +249,7 @@ namespace mame
     }
 
 
-    partial class galaga : construct_ioport_helper
+    public partial class galaga : construct_ioport_helper
     {
         //static INPUT_PORTS_START( galaga )
         void construct_ioport_galaga(device_t owner, ioport_list portlist, ref string errorbuf)
@@ -538,17 +539,6 @@ namespace mame
         );
 
 
-        static readonly gfx_layout charlayout_xevious = new gfx_layout(
-            8,8,
-            RGN_FRAC(1,1),
-            1,
-            ArrayCombineUInt32(0),
-            ArrayCombineUInt32(STEP8(0,1)),
-            ArrayCombineUInt32(STEP8(0,8)),
-            8*8
-        );
-
-
         static readonly gfx_layout charlayout_digdug = new gfx_layout(
             8,8,
             RGN_FRAC(1,1),
@@ -583,7 +573,7 @@ namespace mame
         //static GFXDECODE_START( gfx_xevious )
         protected static readonly gfx_decode_entry [] gfx_xevious =
         {
-            GFXDECODE_ENTRY( "gfx1", 0, charlayout_xevious, 128*4+64*8,  64 ),
+            GFXDECODE_ENTRY( "gfx1", 0, gfx_8x8x1,          128*4+64*8,  64 ),
             GFXDECODE_ENTRY( "gfx2", 0, bgcharlayout,                0, 128 ),
             GFXDECODE_ENTRY( "gfx3", 0, spritelayout_xevious,    128*4,  64 ),
             //GFXDECODE_END

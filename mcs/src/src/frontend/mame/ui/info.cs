@@ -84,9 +84,9 @@ namespace mame.ui
                 device_slot_interface slot = device.GetClassInterface<device_slot_interface>();  //device_slot_interface const *const slot(dynamic_cast<device_slot_interface const *>(parent));
                 if (parent == null || (slot != null && (slot.get_card_device() == device)))
                 {
-                    for (Pointer<tiny_rom_entry> rom = device.rom_region(); !m_has_bioses && rom != null && !ROMENTRY_ISEND(rom.op); ++rom)  //for (tiny_rom_entry const *rom = device.rom_region(); !m_has_bioses && rom && !ROMENTRY_ISEND(rom); ++rom)
+                    for (Pointer<tiny_rom_entry> rom = device.rom_region(); !m_has_bioses && rom != null && !ROMENTRY_ISEND(rom); ++rom)  //for (tiny_rom_entry const *rom = device.rom_region(); !m_has_bioses && rom && !ROMENTRY_ISEND(rom); ++rom)
                     {
-                        if (ROMENTRY_ISSYSTEM_BIOS(rom.op))
+                        if (ROMENTRY_ISSYSTEM_BIOS(rom))
                             m_has_bioses = true;
                     }
                 }

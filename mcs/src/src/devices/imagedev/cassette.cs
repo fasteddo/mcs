@@ -12,6 +12,37 @@ using static mame.device_global;
 
 namespace mame
 {
+    public static class cassette_device_enumerator_helper_cassette
+    {
+        public static void init()
+        {
+            // see src/frontend/mame/ui/ui.cs
+            // mame_ui_manager.handler_ingame()
+            cassette_device_enumerator_helper.handle_tape_start = (root_device) =>
+            {
+                foreach (cassette_image_device cass in new cassette_device_enumerator(root_device))
+                {
+                    cass.change_state(cassette_state.CASSETTE_PLAY, cassette_state.CASSETTE_MASK_UISTATE);
+                    return true;  //return 0;
+                }
+
+                return false;
+            };
+
+            cassette_device_enumerator_helper.handle_tape_stop = (root_device) =>
+            {
+                foreach (cassette_image_device cass in new cassette_device_enumerator(root_device))
+                {
+                    cass.change_state(cassette_state.CASSETTE_STOPPED, cassette_state.CASSETTE_MASK_UISTATE);
+                    return true;  //return 0;
+                }
+
+                return false;
+            };
+        }
+    }
+
+
     public enum cassette_state
     {
         /* this part of the state is controlled by the UI */

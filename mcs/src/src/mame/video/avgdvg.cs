@@ -730,18 +730,18 @@ namespace mame
         public static readonly emu.detail.device_type_impl AVG = DEFINE_DEVICE_TYPE("avg", "Atari AVG", (type, mconfig, tag, owner, clock) => { return new avg_device(mconfig, tag, owner, clock); });
 
 
-        int m_xmax;
-        int m_ymax;
+        int m_xmax = 0;
+        int m_ymax = 0;
 
-        protected u8 m_dvy12;
-        u16 m_timer;
+        protected u8 m_dvy12 = 0;
+        u16 m_timer = 0;
 
-        protected u8 m_int_latch;
-        u8 m_bin_scale;
-        u8 m_color;
+        protected u8 m_int_latch = 0;
+        u8 m_bin_scale = 0;
+        u8 m_color = 0;
 
-        u16 m_xdac_xor;
-        u16 m_ydac_xor;
+        u16 m_xdac_xor = 0;
+        u16 m_ydac_xor = 0;
 
 
         protected avg_device(machine_config mconfig, string tag, device_t owner, u32 clock) :
@@ -1028,7 +1028,34 @@ namespace mame
     }
 
 
-    //class avg_tempest_device : public avg_device
+    class avg_tempest_device : avg_device
+    {
+        //DEFINE_DEVICE_TYPE(AVG_TEMPEST,  avg_tempest_device,  "avg_tempest",  "Atari AVG (Tempest)")
+        public static readonly emu.detail.device_type_impl AVG_TEMPEST = DEFINE_DEVICE_TYPE("avg_tempest", "Atari AVG (Tempest)", (type, mconfig, tag, owner, clock) => { return new avg_tempest_device(mconfig, tag, owner, clock); });
+
+
+        required_shared_ptr<u8> m_colorram;
+
+
+        avg_tempest_device(machine_config mconfig, string tag, device_t owner, u32 clock) :
+            base(mconfig, AVG_TEMPEST, tag, owner, clock)
+        {
+            m_colorram = new required_shared_ptr<u8>(this, "colorram");
+        }
+
+
+        protected override int handler_6()
+        {
+            throw new emu_unimplemented();
+        }
+
+        protected override int handler_7()
+        {
+            throw new emu_unimplemented();
+        }
+
+        //virtual void vggo();
+    }
 
 
     //class avg_mhavoc_device : public avg_device
@@ -1046,14 +1073,14 @@ namespace mame
         public static readonly emu.detail.device_type_impl AVG_BZONE = DEFINE_DEVICE_TYPE("avg_bzone", "Atari AVG (Battle Zone)", (type, mconfig, tag, owner, clock) => { return new avg_bzone_device(mconfig, tag, owner, clock); });
 
 
-        u16 m_hst;
-        u16 m_lst;
-        u16 m_izblank;
+        u16 m_hst = 0;
+        u16 m_lst = 0;
+        u16 m_izblank = 0;
 
-        s32 m_clipx_min;
-        s32 m_clipy_min;
-        s32 m_clipx_max;
-        s32 m_clipy_max;
+        s32 m_clipx_min = 0;
+        s32 m_clipy_min = 0;
+        s32 m_clipx_max = 0;
+        s32 m_clipy_max = 0;
 
 
         avg_bzone_device(machine_config mconfig, string tag, device_t owner, u32 clock) :
@@ -1160,6 +1187,7 @@ namespace mame
     static class avgdvg_global
     {
         public static dvg_device DVG<bool_Required>(machine_config mconfig, device_finder<dvg_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dvg_device.DVG, clock); }
+        public static avg_tempest_device AVG_TEMPEST<bool_Required>(machine_config mconfig, device_finder<avg_tempest_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, avg_tempest_device.AVG_TEMPEST, clock); }
         public static avg_bzone_device AVG_BZONE(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<avg_bzone_device>(mconfig, tag, avg_bzone_device.AVG_BZONE, clock); }
     }
 }

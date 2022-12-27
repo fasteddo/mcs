@@ -52,7 +52,7 @@ namespace mame
         int16_t [] m_reg = new int16_t [16];
 
         /* math box result */
-        int16_t m_result;
+        int16_t m_result = 0;
 
 
         mathbox_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)

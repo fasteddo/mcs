@@ -42,7 +42,7 @@ namespace mame.plib
 
 
 
-    class pfmt
+    public class pfmt
     {
         string m_str;
         UInt32 m_arg;

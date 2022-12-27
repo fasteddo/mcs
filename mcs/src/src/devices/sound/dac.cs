@@ -22,7 +22,7 @@ using static mame.util;
 
 namespace mame
 {
-    static partial class dac_global
+    public static partial class dac_global
     {
         //**************************************************************************
         //  CONSTANTS
@@ -346,6 +346,7 @@ namespace mame
     {
         public static ad7533_device AD7533<bool_Required>(machine_config mconfig, device_finder<ad7533_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ad7533_device.AD7533, clock); }
         public static mc1408_device MC1408(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<mc1408_device>(mconfig, tag, mc1408_device.MC1408, clock); }
+        public static mc1408_device MC1408<bool_Required>(machine_config mconfig, device_finder<mc1408_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mc1408_device.MC1408, clock); }
         public static dac_8bit_r2r_device DAC_8BIT_R2R<bool_Required>(machine_config mconfig, device_finder<dac_8bit_r2r_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
         public static dac_16bit_r2r_twos_complement_device DAC_16BIT_R2R_TWOS_COMPLEMENT<bool_Required>(machine_config mconfig, device_finder<dac_16bit_r2r_twos_complement_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_16bit_r2r_twos_complement_device.DAC_16BIT_R2R_TWOS_COMPLEMENT, clock); }
     }

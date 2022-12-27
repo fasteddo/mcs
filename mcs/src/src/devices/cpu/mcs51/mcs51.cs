@@ -28,7 +28,7 @@ using static mame.mcs51_internal;
 
 namespace mame
 {
-    static partial class mcs51_global
+    public static partial class mcs51_global
     {
         //enum
         //{

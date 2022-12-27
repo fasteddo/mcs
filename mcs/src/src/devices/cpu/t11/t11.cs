@@ -641,7 +641,7 @@ namespace mame
     //DECLARE_DEVICE_TYPE(K1801VM2, k1801vm2_device)
 
 
-    static class t11_global
+    public static class t11_global
     {
         public static t11_device T11<bool_Required>(machine_config mconfig, device_finder<t11_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, t11_device.T11, clock); }
     }

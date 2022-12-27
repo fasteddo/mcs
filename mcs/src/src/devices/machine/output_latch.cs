@@ -68,7 +68,7 @@ namespace mame
     }
 
 
-    static class output_latch_global
+    public static class output_latch_global
     {
         public static output_latch_device OUTPUT_LATCH(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<output_latch_device>(mconfig, tag, output_latch_device.OUTPUT_LATCH, 0); }
     }

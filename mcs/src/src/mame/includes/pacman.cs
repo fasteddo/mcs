@@ -11,10 +11,10 @@ namespace mame
 {
     partial class pacman_state : driver_device
     {
-        required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
+        protected required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
         optional_device<ls259_device> m_mainlatch;
-        optional_device<namco_device> m_namco_sound;
-        required_device<watchdog_timer_device> m_watchdog;
+        protected optional_device<namco_device> m_namco_sound;
+        protected required_device<watchdog_timer_device> m_watchdog;
         optional_shared_ptr<uint8_t> m_spriteram;
         optional_shared_ptr<uint8_t> m_spriteram2;
         optional_shared_ptr<uint8_t> m_s2650_spriteram;
@@ -22,8 +22,8 @@ namespace mame
         optional_shared_ptr<uint8_t> m_colorram;
         optional_shared_ptr<uint8_t> m_s2650games_tileram;
         optional_shared_ptr<uint8_t> m_rocktrv2_prot_data;
-        required_device<gfxdecode_device> m_gfxdecode;
-        required_device<palette_device> m_palette;
+        protected required_device<gfxdecode_device> m_gfxdecode;
+        protected required_device<palette_device> m_palette;
 
         //uint8_t m_cannonb_bit_to_read = 0;
         //int m_mystery = 0;

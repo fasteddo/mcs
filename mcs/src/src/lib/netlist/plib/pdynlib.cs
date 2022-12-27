@@ -48,7 +48,7 @@ namespace mame.plib
     }
 
 
-    class dynlib_static : dynlib_base
+    public class dynlib_static : dynlib_base
     {
         dynlib_static_sym [] m_syms;
 

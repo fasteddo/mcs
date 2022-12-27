@@ -69,6 +69,13 @@ namespace mame.plib
     }
 
 
+    public interface save_state_helper_interface
+    {
+        //template<typename T, typename X = void *>
+        void save_item<T>(T item, string name);  //void save_item(T &&item, const pstring &name, X = nullptr)
+    }
+
+
     //template <typename TYPE, TYPE RES>
     public class ptime<TYPE, TYPE_OPS, TYPE_RES> : IComparable
         where TYPE_OPS : ptime_operators<TYPE>, new()
@@ -116,9 +123,9 @@ namespace mame.plib
 
 
         // IComparable
-        public int CompareTo(object rhs) { return (rhs is ptime<TYPE, TYPE_OPS, TYPE_RES>) ? CompareTo((ptime<TYPE, TYPE_OPS, TYPE_RES>)rhs) : -1; }
+        public int CompareTo(object rhs) { return (rhs is ptime<TYPE, TYPE_OPS, TYPE_RES> rhs_ptime) ? CompareTo(rhs_ptime) : -1; }
         public int CompareTo(ptime<TYPE, TYPE_OPS, TYPE_RES> rhs) { return ops.CompareTo(m_time, rhs.m_time); }
-        public override bool Equals(object rhs) { return (rhs is ptime<TYPE, TYPE_OPS, TYPE_RES>) ? ops.equal(m_time, ((ptime<TYPE, TYPE_OPS, TYPE_RES>)rhs).m_time) : false; }
+        public override bool Equals(object rhs) { return (rhs is ptime<TYPE, TYPE_OPS, TYPE_RES> rhs_ptime) ? ops.equal(m_time, rhs_ptime.m_time) : false; }
         public override int GetHashCode() { return m_time.GetHashCode(); }
 
 
@@ -256,7 +263,7 @@ namespace mame.plib
 #endif
 
         //template <typename ST>
-        public void save_state(save_helper st)  //void save_state(ST &&st)
+        public void save_state(save_state_helper_interface st)  //void save_state(ST &&st)
         {
             st.save_item(m_time, "m_time");
         }

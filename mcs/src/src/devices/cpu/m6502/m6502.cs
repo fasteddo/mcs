@@ -859,8 +859,9 @@ namespace mame
     //class m6512_device : public m6502_device {
 
 
-    static class m6502_global
+    public static class m6502_global
     {
+        public static m6502_device M6502(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<m6502_device>(mconfig, tag, m6502_device.M6502, clock); }
         public static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
         public static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
     }

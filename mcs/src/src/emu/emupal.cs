@@ -584,9 +584,15 @@ namespace mame
     }
 
 
-    static class emupal_global
+    public static class emupal_global
     {
         public static palette_device PALETTE(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<palette_device>(mconfig, tag, palette_device.PALETTE, 0); }
+        public static palette_device PALETTE(machine_config mconfig, string tag, palette_device.init_delegate init, u32 entries = 0U, u32 indirect = 0U)
+        {
+            var device = emu.detail.device_type_impl.op<palette_device>(mconfig, tag, palette_device.PALETTE, 0);
+            device.palette_device_after_ctor(init, entries, indirect);
+            return device;
+        }
         public static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0); }
         public static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder, palette_device.init_delegate init, u32 entries = 0U, u32 indirect = 0U)
             where bool_Required : bool_const, new()

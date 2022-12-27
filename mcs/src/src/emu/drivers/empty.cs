@@ -51,7 +51,7 @@ namespace mame
     }
 
 
-    class ___empty
+    public class ___empty
     {
         //ROM_START( ___empty )
         static readonly tiny_rom_entry [] rom____empty =

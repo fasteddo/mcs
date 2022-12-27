@@ -683,7 +683,7 @@ namespace mame
     // ======================> bitmap_yuy16, bitmap_rgb32, bitmap_argb32
 
     // BITMAP_FORMAT_YUY16 bitmaps
-    class bitmap_yuy16 : bitmap16_t
+    public class bitmap_yuy16 : bitmap16_t
     {
         const bitmap_format k_bitmap_format = bitmap_format.BITMAP_FORMAT_YUY16;
 

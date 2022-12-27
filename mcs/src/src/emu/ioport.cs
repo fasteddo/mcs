@@ -957,9 +957,9 @@ namespace mame
 
         // getters
         public condition_t condition() { return m_condition; }
-        string tag() { return m_tag; }
-        //ioport_value mask() const { return m_mask; }
-        //ioport_value value() const { return m_value; }
+        public string tag() { return m_tag; }
+        public ioport_value mask() { return m_mask; }
+        public ioport_value value() { return m_value; }
 
 
         // operators
@@ -1048,7 +1048,7 @@ namespace mame
         //running_machine &machine() const;
         public ioport_value value() { return m_value; }
         public ioport_condition condition() { return m_condition; }
-        //const char *name() const { return m_name; }
+        public string name() { return m_name; }
 
 
         // helpers
@@ -1058,7 +1058,7 @@ namespace mame
 
     // ======================> ioport_diplocation
     // a mapping from a bit to a physical DIP switch description
-    class ioport_diplocation
+    public class ioport_diplocation
     {
         string m_name;         // name of the physical DIP switch
         u8 m_number;       // physical switch number
@@ -1078,9 +1078,9 @@ namespace mame
 
 
         // getters
-        //const char *name() const { return m_name; }
-        //u8 number() const { return m_number; }
-        //bool inverted() const { return m_invert; }
+        public string name() { return m_name; }
+        public u8 number() { return m_number; }
+        public bool inverted() { return m_invert; }
     }
 
 
@@ -1227,7 +1227,7 @@ namespace mame
         public running_machine machine() { return m_port.machine(); }
         public int modcount() { return m_modcount; }
         public std.vector<ioport_setting> settings() { return m_settinglist; }
-        std.vector<ioport_diplocation> diplocations() { return m_diploclist; }
+        public std.vector<ioport_diplocation> diplocations() { return m_diploclist; }
 
         public ioport_value mask() { return m_mask; }
         public ioport_value defvalue() { return m_defvalue; }
@@ -1245,7 +1245,7 @@ namespace mame
 
         //void clear_value();
 
-        bool optional() { return ((m_flags & FIELD_FLAG_OPTIONAL) != 0); }
+        public bool optional() { return ((m_flags & FIELD_FLAG_OPTIONAL) != 0); }
         //bool cocktail() const { return ((m_flags & FIELD_FLAG_COCKTAIL) != 0); }
         public bool toggle() { return ((m_flags & FIELD_FLAG_TOGGLE) != 0); }
         public bool rotated() { return (m_flags & FIELD_FLAG_ROTATED) != 0; }
@@ -1342,7 +1342,7 @@ namespace mame
         public ioport_value [] remap_table() { return m_remap_table; }
 
 
-        u8 way() { return m_way; }
+        public u8 way() { return m_way; }
 
 
         //-------------------------------------------------
@@ -1730,14 +1730,14 @@ namespace mame
             {
                 // find the end of this entry
                 //const char *comma = strchr(curentry, ',');
-                int commaIdx = location.Substring(curentryIdx).IndexOf(',');
+                int commaIdx = location[curentryIdx..].IndexOf(',');
                 if (commaIdx == -1)
-                    commaIdx = curentryIdx + location.Substring(curentryIdx).Length;
+                    commaIdx = curentryIdx + location[curentryIdx..].Length;
                 else
                     commaIdx += curentryIdx;
 
                 // extract it to tempbuf
-                string tempstr = location.Substring(curentryIdx, commaIdx - curentryIdx);  //std::string tempstr(curentry, comma - curentry);
+                string tempstr = location[curentryIdx..commaIdx];  //std::string tempstr(curentry, comma - curentry);
 
                 // first extract the switch name if present
                 int numberIdx = 0;  //const char *number = tempstr;
@@ -1747,7 +1747,7 @@ namespace mame
                 {
                     // allocate and copy the name if it is present
                     //lastname = name.cpy(number, colon - number);
-                    name = tempstr.Substring(numberIdx, colonIdx - numberIdx);
+                    name = tempstr[numberIdx..colonIdx];
                     lastname = name;
                     numberIdx = colonIdx + 1;
                 }
@@ -1772,7 +1772,7 @@ namespace mame
 
                 // now scan the switch number
                 int swnum = -1;
-                if (!int.TryParse(tempstr.Substring(numberIdx).Split()[0], out swnum))  //if (sscanf(number, "%d", &swnum) != 1)
+                if (!int.TryParse(tempstr[numberIdx..].Split()[0], out swnum))  //if (sscanf(number, "%d", &swnum) != 1)
                     errorbuf += string_format("Switch location '{0}' has invalid format!\n", location);
 
                 // allocate a new entry
@@ -3327,7 +3327,7 @@ namespace mame
                 osd_printf_info("Input file is for machine '{0}', not for current machine '{1}'\n", sysname, machine().system().name);
 
             // enable compression
-            m_playback_stream = util.zlib_read(m_playback_file.core_file_get(), 16386);
+            m_playback_stream = util.zlib_read(m_playback_file.core_file_, 16386);
             return basetime;
         }
 
@@ -3450,7 +3450,7 @@ namespace mame
             header.write(m_record_file);
 
             // enable compression
-            m_record_stream = util.zlib_write(m_record_file.core_file_get(), 6, 16384);
+            m_record_stream = util.zlib_write(m_record_file.core_file_, 6, 16384);
         }
 
 
