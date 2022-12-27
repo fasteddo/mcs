@@ -11,7 +11,7 @@ namespace mame
 {
     partial class pacman_state : driver_device
     {
-        required_device<cpu_device> m_maincpu;
+        required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
         optional_device<ls259_device> m_mainlatch;
         optional_device<namco_device> m_namco_sound;
         required_device<watchdog_timer_device> m_watchdog;
@@ -50,7 +50,7 @@ namespace mame
         public pacman_state(machine_config mconfig, device_type type, string tag) 
             : base(mconfig, type, tag)
         {
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
+            m_maincpu = new required_device<z80_device>(this, "maincpu");
             m_mainlatch = new optional_device<ls259_device>(this, "mainlatch");
             m_namco_sound = new optional_device<namco_device>(this, "namco");
             m_watchdog = new required_device<watchdog_timer_device>(this, "watchdog");

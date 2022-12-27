@@ -18,7 +18,6 @@ using uint64_t = System.UInt64;
 using unsigned = System.UInt32;
 
 using static mame.cpp_global;
-using static mame.logmacro_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;
 

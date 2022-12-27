@@ -60,8 +60,7 @@ namespace mame
         public speaker_device(machine_config mconfig, string tag, device_t owner, u32 clock = 0)
             : base(mconfig, SPEAKER, tag, owner, clock)
         {
-            m_class_interfaces.Add(new device_mixer_interface(mconfig, this));
-
+            m_class_interfaces.Add(new device_mixer_interface(mconfig, this));  //, device_mixer_interface(mconfig, *this)
             m_dimixer = GetClassInterface<device_mixer_interface>();
 
 

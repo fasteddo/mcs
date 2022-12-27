@@ -4013,7 +4013,7 @@ namespace mame
         //define PORT_DIPUNKNOWN(_mask, _default)             PORT_SPECIAL_ONOFF(_mask, _default, Unknown)
         public static void PORT_SERVICE_DIPLOC(ioport_configurer configurer, ioport_value mask, ioport_value default_, string diploc) { PORT_SPECIAL_ONOFF_DIPLOC(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Service_Mode, diploc); }
         public static void PORT_SERVICE(ioport_configurer configurer, ioport_value mask, ioport_value default_) { PORT_SPECIAL_ONOFF(configurer, mask, default_, INPUT_STRING.INPUT_STRING_Service_Mode); }
-        //define PORT_SERVICE_NO_TOGGLE(_mask, _default)             PORT_BIT( _mask, _mask & _default, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ))
+        public static void PORT_SERVICE_NO_TOGGLE(ioport_configurer configurer, ioport_value _mask, ioport_value _default) { PORT_BIT(configurer, _mask, _mask & _default, IPT_SERVICE); PORT_NAME(configurer, DEF_STR(INPUT_STRING.INPUT_STRING_Service_Mode)); }
         public static void PORT_VBLANK(ioport_configurer configurer, string screen, screen_device device) { PORT_READ_LINE_DEVICE_MEMBER(configurer, screen, device.vblank); }
         //define PORT_HBLANK(_screen)             PORT_READ_LINE_DEVICE_MEMBER(_screen, screen_device, hblank)
     }
@@ -4261,6 +4261,7 @@ namespace mame
         public const INPUT_STRING Medium = INPUT_STRING.INPUT_STRING_Medium;
         public const INPUT_STRING Medium_Hard = INPUT_STRING.INPUT_STRING_Medium_Hard;
         public const INPUT_STRING Hard = INPUT_STRING.INPUT_STRING_Hard;
+        public const INPUT_STRING Harder = INPUT_STRING.INPUT_STRING_Harder;
         public const INPUT_STRING Hardest = INPUT_STRING.INPUT_STRING_Hardest;
         public const INPUT_STRING Difficult = INPUT_STRING.INPUT_STRING_Difficult;
         public const INPUT_STRING Very_Difficult = INPUT_STRING.INPUT_STRING_Very_Difficult;
@@ -4280,9 +4281,12 @@ namespace mame
         public const ioport_type IPT_UNKNOWN = ioport_type.IPT_UNKNOWN;
         public const ioport_type IPT_START1 = ioport_type.IPT_START1;
         public const ioport_type IPT_START2 = ioport_type.IPT_START2;
+        public const ioport_type IPT_START3 = ioport_type.IPT_START3;
+        public const ioport_type IPT_START4 = ioport_type.IPT_START4;
         public const ioport_type IPT_COIN1 = ioport_type.IPT_COIN1;
         public const ioport_type IPT_COIN2 = ioport_type.IPT_COIN2;
         public const ioport_type IPT_COIN3 = ioport_type.IPT_COIN3;
+        public const ioport_type IPT_COIN4 = ioport_type.IPT_COIN4;
         public const ioport_type IPT_SERVICE1 = ioport_type.IPT_SERVICE1;
         public const ioport_type IPT_SERVICE = ioport_type.IPT_SERVICE;
         public const ioport_type IPT_TILT = ioport_type.IPT_TILT;
@@ -4308,6 +4312,8 @@ namespace mame
         public const ioport_type IPT_AD_STICK_X = ioport_type.IPT_AD_STICK_X;
         public const ioport_type IPT_AD_STICK_Y = ioport_type.IPT_AD_STICK_Y;
         public const ioport_type IPT_PADDLE = ioport_type.IPT_PADDLE;
+        public const ioport_type IPT_PEDAL = ioport_type.IPT_PEDAL;
+        public const ioport_type IPT_PEDAL2 = ioport_type.IPT_PEDAL2;
         public const ioport_type IPT_POSITIONAL_V = ioport_type.IPT_POSITIONAL_V;
         public const ioport_type IPT_DIAL = ioport_type.IPT_DIAL;
         public const ioport_type IPT_DIAL_V = ioport_type.IPT_DIAL_V;
@@ -4398,6 +4404,7 @@ namespace mame
         protected void PORT_DIPUNKNOWN_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_DIPUNKNOWN_DIPLOC(configurer, mask, default_, diploc); }
         protected void PORT_SERVICE_DIPLOC(ioport_value mask, ioport_value default_, string diploc) { ioport_global.PORT_SERVICE_DIPLOC(configurer, mask, default_, diploc); }
         protected void PORT_SERVICE(ioport_value mask, ioport_value default_) { ioport_global.PORT_SERVICE(configurer, mask, default_); }
+        protected void PORT_SERVICE_NO_TOGGLE(ioport_value _mask, ioport_value _default) { ioport_global.PORT_SERVICE_NO_TOGGLE(configurer, _mask, _default); }
         protected void PORT_VBLANK(string screen) { ioport_global.PORT_VBLANK(configurer, screen, (screen_device)owner.subdevice(screen)); }
 
         protected void NETLIST_LOGIC_PORT_CHANGED(string _base, string _tag, ioport_field_write_delegate delegate_) { PORT_CHANGED_MEMBER(_base + ":" + _tag, delegate_ /*netlist_mame_logic_input_device.input_changed*/, 0); }

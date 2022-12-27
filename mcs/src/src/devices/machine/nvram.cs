@@ -156,7 +156,7 @@ namespace mame
 
         protected virtual void device_nvram_interface_nvram_read(emu_file file) { throw new emu_unimplemented(); }
         protected virtual void device_nvram_interface_nvram_write(emu_file file) { throw new emu_unimplemented(); }
-        protected virtual bool device_nvram_interface_nvram_can_write() { throw new emu_unimplemented(); }  //{ return m_base && m_length; }
+        protected virtual bool device_nvram_interface_nvram_can_write() { return m_base != null && m_length != 0; }
 
 
         // internal helpers

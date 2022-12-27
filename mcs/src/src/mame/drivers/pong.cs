@@ -427,7 +427,7 @@ namespace mame
                 .m_divideo.set_screen("screen");
             /* sound hardware */
             SPEAKER(config, "speaker").front_center();
-            DAC_16BIT_R2R_TWOS_COMPLEMENT(config, m_dac, 0).add_route(ALL_OUTPUTS, "speaker", 0.5); // unknown DAC
+            DAC_16BIT_R2R_TWOS_COMPLEMENT(config, m_dac, 0).disound.add_route(ALL_OUTPUTS, "speaker", 0.5); // unknown DAC
         }
     }
 
@@ -584,7 +584,7 @@ namespace mame
         ***************************************************************************/
 
         //ROM_START( pong ) /* dummy to satisfy game entry*/
-        static readonly MemoryContainer<tiny_rom_entry> rom_pong = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_pong =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ), /* enough for netlist */
             ROM_LOAD( "pong.netlist", 0x000000, 18273, CRC("d249ce49") + SHA1("e1d2cfca74b75f0520965639e6947a351650fc3e") ),

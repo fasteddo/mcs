@@ -19,9 +19,9 @@ namespace mame
         optional_shared_ptr<uint8_t> m_galaga_ram2;
         optional_shared_ptr<uint8_t> m_galaga_ram3;
         protected optional_device<ls259_device> m_videolatch; // not present on Xevious
-        protected required_device<cpu_device> m_maincpu;
-        protected required_device<cpu_device> m_subcpu;
-        protected required_device<cpu_device> m_subcpu2;
+        protected required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
+        protected required_device<z80_device> m_subcpu;  //required_device<cpu_device> m_subcpu;
+        protected required_device<z80_device> m_subcpu2;  //required_device<cpu_device> m_subcpu2;
         protected required_device<namco_device> m_namco_sound;
         protected required_device<gfxdecode_device> m_gfxdecode;
         protected required_device<screen_device> m_screen;
@@ -49,9 +49,9 @@ namespace mame
             m_galaga_ram2 = new optional_shared_ptr<uint8_t>(this, "galaga_ram2");
             m_galaga_ram3 = new optional_shared_ptr<uint8_t>(this, "galaga_ram3");
             m_videolatch = new optional_device<ls259_device>(this, "videolatch");
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
-            m_subcpu = new required_device<cpu_device>(this, "sub");
-            m_subcpu2 = new required_device<cpu_device>(this, "sub2");
+            m_maincpu = new required_device<z80_device>(this, "maincpu");
+            m_subcpu = new required_device<z80_device>(this, "sub");
+            m_subcpu2 = new required_device<z80_device>(this, "sub2");
             m_namco_sound = new required_device<namco_device>(this, "namco");
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
             m_screen = new required_device<screen_device>(this, "screen");

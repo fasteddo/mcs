@@ -5,6 +5,7 @@ using System;
 
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
+using s32 = System.Int32;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
 using unsigned = System.UInt32;
@@ -21,7 +22,8 @@ namespace mame
     public class input_merger_device : device_t
     {
         const int VERBOSE = 0;  //#define VERBOSE 1
-        protected void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
+        //#include "logmacro.h"
+        void LOG(string format, params object [] args) { logmacro_global.LOG(VERBOSE, this, format, args); }
 
 
         devcb_write_line m_output_handler;
@@ -76,7 +78,7 @@ namespace mame
         //  update_state - verify current input line state
         //-------------------------------------------------
         //TIMER_CALLBACK_MEMBER(input_merger_device::update_state)
-        void update_state(object ptr, int param)
+        void update_state(object ptr, s32 param)  //void *ptr, s32 param)
         {
             if (BIT(m_state, param >> 1) != BIT(param, 0))
             {

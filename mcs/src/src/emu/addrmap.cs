@@ -557,6 +557,14 @@ namespace mame
 
 
         //template <typename T, bool Reqd, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
+        public address_map_entry rw<T, Reqd>(device_finder<T, Reqd> finder, read8m_delegate read, write8sm_delegate write)  //address_map_entry &rw(device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
+            where Reqd : bool_const, new()
+        { 
+            device_t device = find_device(finder);
+            return r(read).w(write);  //return r(emu::detail::make_delegate(device, DEVICE_SELF, read, read_name)).w(emu::detail::make_delegate(device, DEVICE_SELF, write, write_name));
+        }
+
+        //template <typename T, bool Reqd, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
         public address_map_entry rw<T, Reqd>(device_finder<T, Reqd> finder, read8sm_delegate read, write8sm_delegate write)  //address_map_entry &rw(device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
             where Reqd : bool_const, new()
         { 
@@ -565,7 +573,7 @@ namespace mame
         }
 
         //template <typename T, bool Reqd, typename U, typename RetR, typename... ParamsR, typename V, typename RetW, typename... ParamsW>
-        public address_map_entry rw<T, Reqd>(device_finder<T, Reqd> finder, read8m_delegate read, write8sm_delegate write)  //address_map_entry &rw(device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
+        public address_map_entry rw<T, Reqd>(device_finder<T, Reqd> finder, read8smo_delegate read, write8smo_delegate write)  //address_map_entry &rw(device_finder<T, Reqd> &finder, RetR (U::*read)(ParamsR...), const char *read_name, RetW (V::*write)(ParamsW...), const char *write_name) {
             where Reqd : bool_const, new()
         { 
             device_t device = find_device(finder);

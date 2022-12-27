@@ -477,19 +477,19 @@ namespace mame
                 if (GLOBAL_FLIP_Y) sy = 31 - sy;
 
                 m_gfxdecode.op0.gfx((m_colorbank.op[0] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[0], m_layer_bitmap[0].cliprect(),
-                        m_videoram.op(0).op[offs],
+                        m_videoram[0].op[offs],
                         (u32)(m_colorbank.op[0] & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
                         8 * sx, 8 * sy, 0);
 
                 m_gfxdecode.op0.gfx((m_colorbank.op[0] & 0x80) != 0 ? 2 : 0).transpen(m_layer_bitmap[1], m_layer_bitmap[1].cliprect(),
-                        m_videoram.op(1).op[offs],
+                        m_videoram[1].op[offs],
                         (u32)((m_colorbank.op[0] >> 4) & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
                         8 * sx, 8 * sy, 0);
 
                 m_gfxdecode.op0.gfx((m_colorbank.op[1] & 0x08) != 0 ? 2 : 0).transpen(m_layer_bitmap[2], m_layer_bitmap[2].cliprect(),
-                        m_videoram.op(2).op[offs],
+                        m_videoram[2].op[offs],
                         (u32)(m_colorbank.op[1] & 0x07),
                         GLOBAL_FLIP_X ? 1 : 0,GLOBAL_FLIP_Y ? 1 : 0,
                         8 * sx, 8 * sy, 0);

@@ -370,7 +370,7 @@ namespace mame
         public tilemap_t m_next_get() { return m_next; }
         public void m_next_set(tilemap_t value) { m_next = value; }
 
-        //void *user_data() const { return m_user_data; }
+        public object user_data() { return m_user_data; }  //void *user_data() const { return m_user_data; }
         //u32 rows() const { return m_rows; }
         //u32 cols() const { return m_cols; }
         //u16 tilewidth() const { return m_tilewidth; }
@@ -392,7 +392,7 @@ namespace mame
 
         // setters
         //void enable(bool enable = true) { m_enable = enable; }
-        //void set_user_data(void *user_data) { m_user_data = user_data; }
+        public void set_user_data(object user_data) { m_user_data = user_data; }  //void set_user_data(void *user_data) { m_user_data = user_data; }
         //void set_palette(device_palette_interface *palette) { m_palette = palette; }
         //void set_palette_offset(u32 offset) { m_palette_offset = offset; }
         public void set_scrolldx(int dx, int dx_flipped) { m_dx = dx; m_dx_flipped = dx_flipped; }

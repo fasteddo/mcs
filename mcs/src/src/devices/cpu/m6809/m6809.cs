@@ -13,10 +13,12 @@ using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
 using static mame.device_global;
+using static mame.diexec_global;
 using static mame.distate_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
 using static mame.m6809_global;
+using static mame.m6809_internal;
 
 
 namespace mame
@@ -361,6 +363,7 @@ namespace mame
         protected virtual uint32_t device_execute_interface_execute_min_cycles() { return 1; }
         protected virtual uint32_t device_execute_interface_execute_max_cycles() { throw new emu_unimplemented(); }
         protected virtual uint32_t device_execute_interface_execute_input_lines() { throw new emu_unimplemented(); }
+
         protected virtual void device_execute_interface_execute_run()
         {
             do
@@ -368,7 +371,32 @@ namespace mame
                 execute_one();
             } while (m_icount.i > 0);
         }
-        protected virtual void device_execute_interface_execute_set_input(int inputnum, int state) { throw new emu_unimplemented(); }
+
+        protected virtual void device_execute_interface_execute_set_input(int inputnum, int state)
+        {
+            if (LOG_INTERRUPTS)
+                logerror("{0}: inputnum={1} state={2} totalcycles={3}\n", machine().describe_context(), inputnum_string(inputnum), state, (int)attotime_to_clocks(machine().time()));
+
+            switch (inputnum)
+            {
+                case INPUT_LINE_NMI:
+                    // NMI is edge triggered
+                    m_nmi_asserted = m_nmi_asserted || ((state != CLEAR_LINE) && !m_nmi_line && m_lds_encountered);
+                    m_nmi_line = (state != CLEAR_LINE);
+                    break;
+
+                case M6809_FIRQ_LINE:
+                    // FIRQ is line triggered
+                    m_firq_line = (state != CLEAR_LINE);
+                    break;
+
+                case M6809_IRQ_LINE:
+                    // IRQ is line triggered
+                    m_irq_line = (state != CLEAR_LINE);
+                    break;
+            }
+        }
+
         protected virtual bool device_execute_interface_execute_input_edge_triggered(int inputnum) { throw new emu_unimplemented(); }
         protected virtual uint64_t device_execute_interface_execute_clocks_to_cycles(uint64_t clocks) { return (clocks + (uint64_t)m_clock_divider - 1) / (uint64_t)m_clock_divider; }
         protected virtual uint64_t device_execute_interface_execute_cycles_to_clocks(uint64_t cycles) { throw new emu_unimplemented(); }
@@ -533,7 +561,7 @@ namespace mame
         }
 
 
-        //const char *inputnum_string(int inputnum);
+        string inputnum_string(int inputnum) { throw new emu_unimplemented(); }
     }
 
 
@@ -562,7 +590,7 @@ namespace mame
     //class m6809_device : public m6809_base_device
 
 
-    static class m6809_global
+    static partial class m6809_global
     {
         //enum
         //{
@@ -582,8 +610,22 @@ namespace mame
         public const int M6809_IRQ_LINE  = 0;   /* IRQ line number */
         public const int M6809_FIRQ_LINE = 1;   /* FIRQ line number */
         public const int M6809_SWI       = 2;   /* Virtual SWI line to be used during SWI acknowledge cycle */
+    }
 
 
+    static class m6809_internal
+    {
+        //**************************************************************************
+        //  PARAMETERS
+        //**************************************************************************
+
+        public const bool LOG_INTERRUPTS  = false;
+    }
+
+
+    static partial class m6809_global
+    {
+        public static mc6809e_device MC6809E<bool_Required>(machine_config mconfig, device_finder<mc6809e_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mc6809e_device.MC6809E, clock); }
         public static mc6809e_device MC6809E<bool_Required>(machine_config mconfig, device_finder<mc6809e_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mc6809e_device.MC6809E, clock); }
     }
 }

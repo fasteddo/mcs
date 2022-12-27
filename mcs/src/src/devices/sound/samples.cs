@@ -123,14 +123,43 @@ namespace mame
 
 
         // getters
-        //bool playing(uint8_t channel) const;
+        public bool playing(uint8_t channel)
+        {
+            assert(channel < m_channels);
+
+            // force an update before we start
+            channel_t chan = m_channel[channel];
+            chan.stream.update();
+            return chan.source != null;
+        }
+
+
         //uint32_t base_frequency(uint8_t channel) const;
 
 
         // start/stop helpers
         public void start(uint8_t channel, uint32_t samplenum, bool loop = false)
         {
-            throw new emu_unimplemented();
+            // if samples are disabled, just return quietly
+            if (m_sample.empty())
+                return;
+
+            assert(samplenum < m_sample.size());
+            assert(channel < m_channels);
+
+            // force an update before we start
+            channel_t chan = m_channel[channel];
+            chan.stream.update();
+
+            // update the parameters
+            sample_t sample = m_sample[samplenum];
+            chan.source = (sample.data.size() > 0) ? new Pointer<int16_t>(sample.data) : null;
+            chan.source_num = (chan.source_len > 0) ? (int)samplenum : -1;
+            chan.source_len = (uint32_t)sample.data.size();
+            chan.pos = 0;
+            chan.basefreq = sample.frequency;
+            chan.curfreq = sample.frequency;
+            chan.loop = loop;
         }
 
 
@@ -153,7 +182,14 @@ namespace mame
         }
 
 
-        //void pause(uint8_t channel, bool pause = true);
+        public void pause(uint8_t channel, bool pause = true)
+        {
+            assert(channel < m_channels);
+
+            // force an update before we start
+            channel_t chan = m_channel[channel];
+            chan.paused = pause;
+        }
 
 
         //-------------------------------------------------
@@ -585,7 +621,7 @@ namespace mame
             string altbasename = iter.altbasename();
 
             // pre-size the array
-            m_sample.resize((size_t)iter.count());
+            m_sample.resize((size_t)iter.count(), () => { return new sample_t(); });
 
             // load the samples
             int index = 0;

@@ -25,6 +25,9 @@ namespace mame
 {
     static partial class ay8910_global
     {
+        public const int ALL_8910_CHANNELS = -1;
+
+
         /* Internal resistance at Volume level 7. */
 
         public const int AY8910_INTERNAL_RESISTANCE  = 356;
@@ -489,7 +492,14 @@ namespace mame
         // bc1=a0, bc2=a1
         //void write_bc1_bc2(offs_t offset, u8 data);
 
-        //void set_volume(int channel,int volume);
+
+        public void set_volume(int channel, int volume)
+        {
+            for (int ch = 0; ch < m_streams; ch++)
+                if (channel == ch || m_streams == 1 || channel == ALL_8910_CHANNELS)
+                    set_output_gain(ch, (float)(volume / 100.0));
+        }
+
 
         void ay_set_clock(int clock)
         {
@@ -1351,6 +1361,7 @@ namespace mame
     {
         public static ay8910_device AY8910(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
         public static ay8910_device AY8910(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
+        public static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
         public static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
     }
 }

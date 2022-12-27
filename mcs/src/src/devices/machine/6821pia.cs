@@ -163,8 +163,8 @@ namespace mame
 
         public uint8_t read(offs_t offset) { throw new emu_unimplemented(); }
         public void write(offs_t offset, uint8_t data) { throw new emu_unimplemented(); }
-        //uint8_t read_alt(offs_t offset) { return read(((offset << 1) & 0x02) | ((offset >> 1) & 0x01)); }
-        //void write_alt(offs_t offset, uint8_t data) { write(((offset << 1) & 0x02) | ((offset >> 1) & 0x01), data); }
+        public uint8_t read_alt(offs_t offset) { return read(((offset << 1) & 0x02) | ((offset >> 1) & 0x01)); }
+        public void write_alt(offs_t offset, uint8_t data) { write(((offset << 1) & 0x02) | ((offset >> 1) & 0x01), data); }
 
         //uint8_t port_b_z_mask() const { return ~m_ddr_b; } // see notes
 
@@ -208,8 +208,8 @@ namespace mame
         //bool cb2_output();
         //bool cb2_output_z();
 
-        //int irq_a_state() const { return m_irq_a_state; }
-        //int irq_b_state() const { return m_irq_b_state; }
+        public int irq_a_state() { return m_irq_a_state; }
+        public int irq_b_state() { return m_irq_b_state; }
 
 
         // device-level overrides

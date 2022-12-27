@@ -5,6 +5,7 @@ using System;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -54,7 +55,7 @@ namespace mame
 
 
         //TIMER_DEVICE_CALLBACK_MEMBER(_1942_state::_1942_scanline)
-        void _1942_scanline(timer_device timer, object ptr, int param)  // void *ptr, INT32 param) 
+        void _1942_scanline(timer_device timer, object ptr, s32 param)  //void *ptr, s32 param
         {
             int scanline = param;
 
@@ -329,7 +330,7 @@ namespace mame
         ***************************************************************************/
 
         //ROM_START( 1942 )
-        static readonly MemoryContainer<tiny_rom_entry> rom_1942 = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_1942 =
         {
             ROM_REGION( 0x20000, "maincpu", ROMREGION_ERASEFF ), /* 64k for code + 3*16k for the banked ROMs images */
             ROM_LOAD( "srb-03.m3", 0x00000, 0x4000, CRC("d9dafcc3") + SHA1("a089a9bc55fb7d6d0ac53f91b258396d5d62677a") ),

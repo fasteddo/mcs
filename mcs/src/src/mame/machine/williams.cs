@@ -5,6 +5,7 @@ using System;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
+using s32 = System.Int32;
 using u8 = System.Byte;
 
 
@@ -19,7 +20,7 @@ namespace mame
          *************************************/
 
         //TIMER_DEVICE_CALLBACK_MEMBER(williams_state::va11_callback)
-        protected virtual void va11_callback(timer_device timer, object ptr, int param)
+        protected virtual void va11_callback(timer_device timer, object ptr, s32 param)  //void *ptr, s32 param
         {
             throw new emu_unimplemented();
 #if false
@@ -36,7 +37,7 @@ namespace mame
 
 
         //TIMER_DEVICE_CALLBACK_MEMBER(williams_state::count240_callback)
-        protected virtual void count240_callback(timer_device timer, object ptr, int param)
+        protected virtual void count240_callback(timer_device timer, object ptr, s32 param)  //void *ptr, s32 param
         {
             throw new emu_unimplemented();
 #if false

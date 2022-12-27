@@ -21,9 +21,9 @@ namespace mame
     {
         protected const int LOG_WARN = 1 << 0;
         const int VERBOSE = LOG_WARN;  //#define VERBOSE (LOG_WARN)
-
-        protected void LOGMASKED(int mask, string format, params object [] args) { LOGMASKED(VERBOSE, mask, format, args); }
-        protected void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
+        //#include "logmacro.h"
+        protected void LOGMASKED(int mask, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, this, format, args); }
+        protected void LOG(string format, params object [] args) { logmacro_global.LOG(VERBOSE, this, format, args); }
 
 
         bool m_separate_acknowledge;

@@ -30,9 +30,6 @@ namespace mame
         public static readonly emu.detail.device_type_impl I8085A = DEFINE_DEVICE_TYPE("i8085a", "Intel 8085A", (type, mconfig, tag, owner, clock) => { return new i8085a_cpu_device(mconfig, tag, owner, clock); });
 
 
-        const int VERBOSE = 0;
-
-
         class device_execute_interface_i8085a : device_execute_interface
         {
             public device_execute_interface_i8085a(machine_config mconfig, device_t device) : base(mconfig, device) { }
@@ -73,6 +70,11 @@ namespace mame
 
             protected override util.disasm_interface create_disassembler() { throw new emu_unimplemented(); }
         }
+
+
+        const int VERBOSE = 0;
+        //#include "logmacro.h"
+        void LOG(string format, params object [] args) { logmacro_global.LOG(VERBOSE, this, format, args); }
 
 
         const int I8085_INTR_LINE     = 0;
@@ -694,7 +696,7 @@ namespace mame
 
                 /* use the resulting vector as an opcode to execute */
                 set_inte(0);
-                LOG(VERBOSE, "i8085 take int {0}\n", vector);
+                LOG("i8085 take int {0}\n", vector);
                 execute_one(vector);
             }
         }

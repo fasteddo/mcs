@@ -223,6 +223,7 @@ namespace mame
         public static double exp(double x) { return std.exp(x); }
         public static float fabs(float arg) { return std.fabs(arg); }
         public static double fabs(double arg) { return std.fabs(arg); }
+        public static float fabsf(float arg) { return std.fabs(arg); }
         public static float floor(float arg) { return std.floor(arg); }
         public static double floor(double arg) { return std.floor(arg); }
         public static float floorf(float arg) { return std.floorf(arg); }
@@ -232,6 +233,9 @@ namespace mame
         public static double log10(double arg) { return std.log10(arg); }
         public static float pow(float base_, float exponent) { return std.pow(base_, exponent); }
         public static double pow(double base_, double exponent) { return std.pow(base_, exponent); }
+        public static float roundf(float arg) { return (float)Math.Round(arg, MidpointRounding.AwayFromZero); }
+        public static float sqrt(float arg) { return std.sqrt(arg); }
+        public static double sqrt(double arg) { return std.sqrt(arg); }
         public static float tan(float arg) { return std.tan(arg); }
         public static double tan(double arg) { return std.tan(arg); }
 
@@ -287,6 +291,7 @@ namespace mame
         public static void fill<T>(MemoryContainer<T> destination, T value) { std.memset(destination, value); }
         public static void fill<T>(IList<T> destination, T value) { std.memset(destination, value); }
         public static void fill<T>(IList<T> destination, Func<T> value) { std.memset(destination, value); }
+        public static void fill<T>(T [,] destination, T value) { std.memset(destination, value); }
         public static void fill_n<T>(MemoryContainer<T> destination, size_t count, T value) { std.memset(destination, value, count); }
         public static void fill_n<T>(Pointer<T> destination, size_t count, T value) { std.memset(destination, value, count); }
         public static void fill_n(PointerU16 destination, size_t count, UInt16 value) { std.memset(destination, value, count); }
@@ -1334,7 +1339,7 @@ namespace mame
         public static PointerU16 operator -(PointerU16 left, UInt32 right) { return new PointerU16(left, -(int)right); }
         public static PointerU16 operator --(PointerU16 left) { left.m_offset -= 2; return left; }
 
-        public virtual UInt16 op16 { get { return this[0]; } set { this[0] = value; } }
+        public new UInt16 op { get { return this[0]; } set { this[0] = value; } }
 
         public void Fill(UInt16 value, int count) { Fill(value, 0, count); }
         public void Fill(UInt16 value, int start, int count) { for (int i = start; i < start + count; i++) this[i] = value; }
@@ -1356,7 +1361,7 @@ namespace mame
         public static PointerU32 operator -(PointerU32 left, UInt32 right) { return new PointerU32(left, -(int)right); }
         public static PointerU32 operator --(PointerU32 left) { left.m_offset -= 4; return left; }
 
-        public virtual UInt32 op32 { get { return this[0]; } set { this[0] = value; } }
+        public new UInt32 op { get { return this[0]; } set { this[0] = value; } }
 
         public void Fill(UInt32 value, int count) { Fill(value, 0, count); }
         public void Fill(UInt32 value, int start, int count) { for (int i = start; i < start + count; i++) this[i] = value; }
@@ -1378,7 +1383,7 @@ namespace mame
         public static PointerU64 operator -(PointerU64 left, UInt32 right) { return new PointerU64(left, -(int)right); }
         public static PointerU64 operator --(PointerU64 left) { left.m_offset -= 8; return left; }
 
-        public virtual UInt64 op64 { get { return this[0]; } set { this[0] = value; } }
+        public new UInt64 op { get { return this[0]; } set { this[0] = value; } }
 
         public void Fill(UInt64 value, int count) { Fill(value, 0, count); }
         public void Fill(UInt64 value, int start, int count) { for (int i = start; i < start + count; i++) this[i] = value; }

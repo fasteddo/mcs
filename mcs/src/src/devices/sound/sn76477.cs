@@ -40,7 +40,7 @@ namespace mame
         device_sound_interface_sn76477 m_disound;
 
 
-        //#define VERBOSE                 1
+        const int VERBOSE                 = 1;
 
         /* if 1, create a .wav file of the sound produced */
         const int LOG_WAV                 = 0;
@@ -65,8 +65,8 @@ namespace mame
 
         //#define LOG_WAV_FILE_NAME       "sn76477_%s.wav"
 
+        void LOG(int n, string format, params object [] args) { if (VERBOSE >= n) logerror(format, args); }
 
-        //#define LOG(n,...) do { if (VERBOSE >= (n)) logerror(__VA_ARGS__); } while (0)
 
         static void CHECK_BOOLEAN(int state) { assert((state & 0x01) == state); }
         //#define CHECK_POSITIVE     assert(data >= 0.0)

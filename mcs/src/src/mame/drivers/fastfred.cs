@@ -447,7 +447,7 @@ namespace mame
         ***************************************************************************/
 
         //ROM_START( fastfred )
-        static readonly MemoryContainer<tiny_rom_entry> rom_fastfred = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_fastfred =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "ffr.01",       0x0000, 0x1000, CRC("15032c13") + SHA1("18ae84e87ac430e3f1cbc388ad16fb1d20aaba2f") ),
@@ -486,7 +486,7 @@ namespace mame
 
 
         //ROM_START( flyboy )
-        static readonly MemoryContainer<tiny_rom_entry> rom_flyboy = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_flyboy =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "flyboy01.cpu", 0x0000, 0x1000, CRC("b05aa900") + SHA1("1ad394a438ddf96974b0b841d916766e45e8f3ba") ),

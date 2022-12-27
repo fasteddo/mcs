@@ -178,8 +178,8 @@ namespace mame
 
         // control
 
-        void reset() { reset(attotime.never); }
-        void reset(attotime duration) { adjust(duration, m_param, m_period); }  //void reset(const attotime &duration = attotime::never) { adjust(duration, m_param, m_period); }
+        public void reset() { reset(attotime.never); }
+        public void reset(attotime duration) { adjust(duration, m_param, m_period); }  //void reset(const attotime &duration = attotime::never) { adjust(duration, m_param, m_period); }
 
         //-------------------------------------------------
         //  adjust - adjust the time when this timer will
@@ -219,8 +219,19 @@ namespace mame
 
 
         // timing queries
+
         //attotime elapsed() const;
-        //attotime remaining() const;
+
+
+        public attotime remaining()
+        {
+            attotime curtime = machine().time();
+            if (curtime >= m_expire)
+                return attotime.zero;
+            return m_expire - curtime;
+        }
+
+
         attotime start() { return m_start; }
         public attotime expire() { return m_expire; }
         //attotime period() const { return m_period; }
@@ -663,7 +674,7 @@ namespace mame
 
 
         // callbacks
-        //void timed_trigger(void *ptr, INT32 param);
+        //void timed_trigger(void *ptr, s32 param);
 
         //-------------------------------------------------
         //  presave - before creating a save state

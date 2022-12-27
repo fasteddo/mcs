@@ -66,7 +66,8 @@ namespace mame
         const int LOG_RS_WS = 1 << 15;
 
         const int VERBOSE = 1;  //#define VERBOSE (LOG_GENERAL | LOG_DUMP_INPUT_DATA | LOG_FIFO | LOG_PARSE_FRAME_DUMP_HEX | LOG_FRAME_ERRORS | LOG_COMMAND_DUMP | LOG_COMMAND_VERBOSE | LOG_PIN_READS | LOG_GENERATION | LOG_GENERATION_VERBOSE | LOG_LATTICE | LOG_CLIP | LOG_IO_READY | LOG_RS_WS)
-        protected void LOGMASKED(int mask, string format, params object [] args) { LOGMASKED(VERBOSE, mask, format, args); }
+        //#include "logmacro.h"
+        void LOGMASKED(int mask, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, this, format, args); }
 
 
         public class device_sound_interface_tms5220 : device_sound_interface

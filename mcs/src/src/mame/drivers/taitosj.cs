@@ -5,6 +5,7 @@ using System;
 
 using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -43,7 +44,7 @@ namespace mame
         void sndnmi_msk_w(uint8_t data)
         {
             // B0 is the sound nmi enable, active low
-            m_soundnmi.op(0).op0.in_w<u32_const_0>((~data) & 1);
+            m_soundnmi[0].op0.in_w<u32_const_0>((~data) & 1);
         }
 
 
@@ -82,9 +83,9 @@ namespace mame
             map.op(0x8801, 0x8801).mirror(0x07fe).r(fake_status_r);
             map.op(0x9000, 0xbfff).w(characterram_w).share(m_characterram);
             map.op(0xc000, 0xc3ff).ram();
-            map.op(0xc400, 0xc7ff).ram().share(m_videoram.op(0));
-            map.op(0xc800, 0xcbff).ram().share(m_videoram.op(1));
-            map.op(0xcc00, 0xcfff).ram().share(m_videoram.op(2));
+            map.op(0xc400, 0xc7ff).ram().share(m_videoram[0]);
+            map.op(0xc800, 0xcbff).ram().share(m_videoram[1]);
+            map.op(0xcc00, 0xcfff).ram().share(m_videoram[2]);
             map.op(0xd000, 0xd05f).ram().share(m_colscrolly);
             map.op(0xd100, 0xd1ff).ram().share(m_spriteram);
             map.op(0xd200, 0xd27f).mirror(0x0080).ram().share(m_paletteram);
@@ -97,8 +98,8 @@ namespace mame
             map.op(0xd40b, 0xd40b).mirror(0x00f0).portr("IN2");
             map.op(0xd40c, 0xd40c).mirror(0x00f0).portr("IN3");          // Service
             map.op(0xd40d, 0xd40d).mirror(0x00f0).portr("IN4");
-            map.op(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay.op(0), (offset, data) => { m_ay.op(0).op0.address_data_w(offset, data); });  //map(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay[0], FUNC(ay8910_device::address_data_w));
-            map.op(0xd40f, 0xd40f).mirror(0x00f0).r(m_ay.op(0), () => { return m_ay.op(0).op0.data_r(); });  //map(0xd40f, 0xd40f).mirror(0x00f0).r(m_ay[0], FUNC(ay8910_device::data_r));   // DSW2 and DSW3
+            map.op(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay[0], (offset, data) => { m_ay[0].op0.address_data_w(offset, data); });  //map(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay[0], FUNC(ay8910_device::address_data_w));
+            map.op(0xd40f, 0xd40f).mirror(0x00f0).r(m_ay[0], () => { return m_ay[0].op0.data_r(); });  //map(0xd40f, 0xd40f).mirror(0x00f0).r(m_ay[0], FUNC(ay8910_device::data_r));   // DSW2 and DSW3
             map.op(0xd500, 0xd505).mirror(0x00f0).writeonly().share(m_scroll);
             map.op(0xd506, 0xd507).mirror(0x00f0).writeonly().share(m_colorbank);
             map.op(0xd508, 0xd508).mirror(0x00f0).w(collision_reg_clear_w);
@@ -123,19 +124,19 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(taitosj_state::soundlatch_w_cb)
-        void soundlatch_w_cb(object ptr, int param)
+        void soundlatch_w_cb(object ptr, s32 param)  //void *ptr, s32 param)
         {
             if (m_soundlatch_flag && (m_soundlatch_data != param))
                 logerror("Warning: soundlatch written before being read. Previous: {0}, new: {1}\n", m_soundlatch_data, param);
 
             m_soundlatch_data = (uint8_t)param;
             m_soundlatch_flag = true;
-            m_soundnmi.op(0).op0.in_w<u32_const_1>(1);
+            m_soundnmi[0].op0.in_w<u32_const_1>(1);
         }
 
 
         //TIMER_CALLBACK_MEMBER(taitosj_state::soundlatch_clear7_w_cb)
-        void soundlatch_clear7_w_cb(object ptr, int param)
+        void soundlatch_clear7_w_cb(object ptr, s32 param)  //void *ptr, s32 param)
         {
             if (m_soundlatch_flag)
                 logerror("Warning: soundlatch bit 7 cleared before being read. Previous: {0}, new: {1}\n", m_soundlatch_data, m_soundlatch_data & 0x7f);
@@ -145,18 +146,18 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(taitosj_state::sound_semaphore2_w_cb)
-        void sound_semaphore2_w_cb(object ptr, int param)
+        void sound_semaphore2_w_cb(object ptr, s32 param)  //void *ptr, s32 param)
         {
             m_sound_semaphore2 = (param & 1) != 0;
-            m_soundnmi.op(1).op0.in_w<u32_const_1>(param & 1);
+            m_soundnmi[1].op0.in_w<u32_const_1>(param & 1);
         }
 
 
         //TIMER_CALLBACK_MEMBER(taitosj_state::sound_semaphore2_clear_w_cb)
-        void sound_semaphore2_clear_w_cb(object ptr, int param)
+        void sound_semaphore2_clear_w_cb(object ptr, s32 param)  //void *ptr, s32 param)
         {
             m_sound_semaphore2 = false;
-            m_soundnmi.op(1).op0.in_w<u32_const_1>(0);
+            m_soundnmi[1].op0.in_w<u32_const_1>(0);
         }
 
 
@@ -166,7 +167,7 @@ namespace mame
             if (!machine().side_effects_disabled())
             {
                 m_soundlatch_flag = false;
-                m_soundnmi.op(0).op0.in_w<u32_const_1>(0);
+                m_soundnmi[0].op0.in_w<u32_const_1>(0);
             }
 
             return m_soundlatch_data;
@@ -198,12 +199,12 @@ namespace mame
         {
             map.op(0x0000, 0x3fff).rom();
             map.op(0x4000, 0x43ff).ram();
-            map.op(0x4800, 0x4801).mirror(0x07f8).w(m_ay.op(1), (data) => { m_ay.op(1).op0.data_w(data); });  //FUNC(ay8910_device::address_data_w));
-            map.op(0x4801, 0x4801).mirror(0x07f8).r(m_ay.op(1), () => { return m_ay.op(1).op0.data_r(); });  //FUNC(ay8910_device::data_r));
-            map.op(0x4802, 0x4803).mirror(0x07f8).w(m_ay.op(2), (data) => { m_ay.op(2).op0.data_w(data); });  //FUNC(ay8910_device::address_data_w));
-            map.op(0x4803, 0x4803).mirror(0x07f8).r(m_ay.op(2), () => { return m_ay.op(2).op0.data_r(); });  //FUNC(ay8910_device::data_r));
-            map.op(0x4804, 0x4805).mirror(0x07fa).w(m_ay.op(3), (data) => { m_ay.op(3).op0.data_w(data); });  //FUNC(ay8910_device::address_data_w));
-            map.op(0x4805, 0x4805).mirror(0x07fa).r(m_ay.op(3), () => { return m_ay.op(3).op0.data_r(); });  //FUNC(ay8910_device::data_r));
+            map.op(0x4800, 0x4801).mirror(0x07f8).w(m_ay[1], (data) => { m_ay[1].op0.data_w(data); });  //FUNC(ay8910_device::address_data_w));
+            map.op(0x4801, 0x4801).mirror(0x07f8).r(m_ay[1], () => { return m_ay[1].op0.data_r(); });  //FUNC(ay8910_device::data_r));
+            map.op(0x4802, 0x4803).mirror(0x07f8).w(m_ay[2], (data) => { m_ay[2].op0.data_w(data); });  //FUNC(ay8910_device::address_data_w));
+            map.op(0x4803, 0x4803).mirror(0x07f8).r(m_ay[2], () => { return m_ay[2].op0.data_r(); });  //FUNC(ay8910_device::data_r));
+            map.op(0x4804, 0x4805).mirror(0x07fa).w(m_ay[3], (data) => { m_ay[3].op0.data_w(data); });  //FUNC(ay8910_device::address_data_w));
+            map.op(0x4805, 0x4805).mirror(0x07fa).r(m_ay[3], () => { return m_ay[3].op0.data_r(); });  //FUNC(ay8910_device::data_r));
             map.op(0x5000, 0x5000).mirror(0x07fc).rw(soundlatch_r, soundlatch_clear7_w);
             map.op(0x5001, 0x5001).mirror(0x07fc).rw(soundlatch_flags_r, sound_semaphore2_clear_w);
             map.op(0xe000, 0xefff).rom(); // space for diagnostic ROM
@@ -569,40 +570,40 @@ namespace mame
             // sound hardware
             SPEAKER(config, "speaker").front_center();
 
-            INPUT_MERGER_ALL_HIGH(config, m_soundnmi.op(0)).output_handler().set(m_soundnmi.op(1), (int state) => { m_soundnmi.op(1).op0.in_w<u32_const_0>(state); }).reg();  //FUNC(input_merger_device::in_w<0>));
+            INPUT_MERGER_ALL_HIGH(config, m_soundnmi[0]).output_handler().set(m_soundnmi[1], (int state) => { m_soundnmi[1].op0.in_w<u32_const_0>(state); }).reg();  //FUNC(input_merger_device::in_w<0>));
 
-            INPUT_MERGER_ANY_HIGH(config, m_soundnmi.op(1)).output_handler().set_inputline(m_audiocpu, INPUT_LINE_NMI).reg();
+            INPUT_MERGER_ANY_HIGH(config, m_soundnmi[1]).output_handler().set_inputline(m_audiocpu, INPUT_LINE_NMI).reg();
 
-            AY8910(config, m_ay.op(0), new XTAL(6000000)/4); // on GAME board, AY-3-8910 @ IC53 (this is the only AY which uses proper mixing resistors, the 3 below have outputs tied together)
-            m_ay.op(0).op0.port_a_read_callback().set_ioport("DSW2").reg();
-            m_ay.op(0).op0.port_b_read_callback().set_ioport("DSW3").reg();
-            m_ay.op(0).op0.add_route(ALL_OUTPUTS, "speaker", 0.15);
+            AY8910(config, m_ay[0], new XTAL(6000000)/4); // on GAME board, AY-3-8910 @ IC53 (this is the only AY which uses proper mixing resistors, the 3 below have outputs tied together)
+            m_ay[0].op0.port_a_read_callback().set_ioport("DSW2").reg();
+            m_ay[0].op0.port_b_read_callback().set_ioport("DSW3").reg();
+            m_ay[0].op0.add_route(ALL_OUTPUTS, "speaker", 0.15);
 
-            AY8910(config, m_ay.op(1), new XTAL(6000000)/4); // on GAME board, AY-3-8910 @ IC51
-            m_ay.op(1).op0.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
-            m_ay.op(1).op0.port_a_write_callback().set(m_dac, (u8 data) => { m_dac.op0.data_w(data); }).reg();  //FUNC(dac_byte_interface::data_w));
-            m_ay.op(1).op0.port_b_write_callback().set(dacvol_w).reg();
-            m_ay.op(1).op0.add_route(ALL_OUTPUTS, "speaker", 0.5);
+            AY8910(config, m_ay[1], new XTAL(6000000)/4); // on GAME board, AY-3-8910 @ IC51
+            m_ay[1].op0.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
+            m_ay[1].op0.port_a_write_callback().set(m_dac, (u8 data) => { m_dac.op0.data_w(data); }).reg();  //FUNC(dac_byte_interface::data_w));
+            m_ay[1].op0.port_b_write_callback().set(dacvol_w).reg();
+            m_ay[1].op0.add_route(ALL_OUTPUTS, "speaker", 0.5);
 
-            AY8910(config, m_ay.op(2), new XTAL(6000000)/4); // on GAME board, AY-3-8910 @ IC49
-            m_ay.op(2).op0.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
-            m_ay.op(2).op0.port_a_write_callback().set(input_port_4_f0_w).reg();
-            m_ay.op(2).op0.add_route(ALL_OUTPUTS, "speaker", 0.5);
+            AY8910(config, m_ay[2], new XTAL(6000000)/4); // on GAME board, AY-3-8910 @ IC49
+            m_ay[2].op0.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
+            m_ay[2].op0.port_a_write_callback().set(input_port_4_f0_w).reg();
+            m_ay[2].op0.add_route(ALL_OUTPUTS, "speaker", 0.5);
 
-            AY8910(config, m_ay.op(3), new XTAL(6000000)/4); // on GAME board, AY-3-8910 @ IC50
-            m_ay.op(3).op0.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
+            AY8910(config, m_ay[3], new XTAL(6000000)/4); // on GAME board, AY-3-8910 @ IC50
+            m_ay[3].op0.set_flags(ay8910_device.AY8910_SINGLE_OUTPUT);
             /* TODO: Implement ay4 Port A bits 0 and 1 which connect to a 7416 open
                collector inverter, to selectively tie none, either or both of two
                capacitors between the ay4 audio output signal and ground, or between
                audio output signal and high-z (i.e. do nothing).
                Bio Attack uses this?
             */
-            m_ay.op(3).op0.port_b_write_callback().set(sndnmi_msk_w).reg();
-            m_ay.op(3).op0.add_route(ALL_OUTPUTS, "speaker", 1.0);
+            m_ay[3].op0.port_b_write_callback().set(sndnmi_msk_w).reg();
+            m_ay[3].op0.add_route(ALL_OUTPUTS, "speaker", 1.0);
 
             WATCHDOG_TIMER(config, "watchdog").set_vblank_count("screen", 128); // 74LS393 on CPU board, counts 128 vblanks before firing watchdog
 
-            DAC_8BIT_R2R(config, m_dac, 0).add_route(ALL_OUTPUTS, "speaker", 0.15); // 30k r-2r network
+            DAC_8BIT_R2R(config, m_dac, 0).disound.add_route(ALL_OUTPUTS, "speaker", 0.15); // 30k r-2r network
             DISCRETE(config, m_dacvol, taitosj_dacvol_discrete);
             m_dacvol.op0.disound.add_route(0, "dac", 1.0, DAC_INPUT_RANGE_HI);
             m_dacvol.op0.disound.add_route(0, "dac", -1.0, DAC_INPUT_RANGE_LO);
@@ -636,7 +637,7 @@ namespace mame
         ***************************************************************************/
 
         //ROM_START( junglek )
-        static readonly MemoryContainer<tiny_rom_entry> rom_junglek = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_junglek =
         {
             ROM_REGION( 0x12000, "maincpu", 0 ),
             ROM_LOAD( "kn21-1.bin",   0x00000, 0x1000, CRC("45f55d30") + SHA1("bb9518d7728938f673a663801e47ae0438cdbea1") ),
@@ -673,7 +674,7 @@ namespace mame
 
 
         //ROM_START( jungleh )
-        static readonly MemoryContainer<tiny_rom_entry> rom_jungleh = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_jungleh =
         {
             ROM_REGION( 0x12000, "maincpu", 0 ),
             ROM_LOAD( "kn41a",        0x00000, 0x1000, CRC("6bf118d8") + SHA1("d6de28766aab90b5dbca7f74612ec8eafd144348") ),
@@ -710,7 +711,7 @@ namespace mame
 
 
         //ROM_START( elevator ) // later 4 board set, with rom data on 2764s, split between gfx and cpu data.
-        static readonly MemoryContainer<tiny_rom_entry> rom_elevator = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_elevator =
         {
             ROM_REGION( 0x12000, "maincpu", 0 ), // on L-shaped rom board
             ROM_LOAD( "ba3__01.2764.ic1",  0x0000, 0x2000, CRC("da775a24") + SHA1("b4341d2c87285d7a3d1773e2d94b3f621ebb4489") ), // == ea_12.2732.ic69 + ea_13.2732.ic68
@@ -743,7 +744,7 @@ namespace mame
 
 
         //ROM_START( elevatora ) // 5 board set, using 2732s on both mainboard and square rom board, and 68705 on daughterboard at bottom of stack, upside down
-        static readonly MemoryContainer<tiny_rom_entry> rom_elevatora = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_elevatora =
         {
             ROM_REGION( 0x12000, "maincpu", 0 ), // on CPU BOARD
             ROM_LOAD( "ea_12.2732.ic69",  0x0000, 0x1000, CRC("24e277ef") + SHA1("764e3b3a34bf0ec849d58023f710e5b0a0d0ccb5") ), // needs label verified
@@ -789,18 +790,18 @@ namespace mame
         void reset_common(running_machine machine_)
         {
             m_sound_semaphore2 = false;
-            m_soundnmi.op(1).op0.in_w<u32_const_1>(0);
+            m_soundnmi[1].op0.in_w<u32_const_1>(0);
             m_soundlatch_data = 0xff;
             m_soundlatch_flag = false;
-            m_soundnmi.op(0).op0.in_w<u32_const_1>(0);
-            m_soundnmi.op(0).op0.in_w<u32_const_0>(0);
+            m_soundnmi[0].op0.in_w<u32_const_1>(0);
+            m_soundnmi[0].op0.in_w<u32_const_0>(0);
             m_sound_semaphore2 = false;
-            m_ay.op(0).op0.set_output_gain(0, 0.0f); // 3 outputs for Ay1 since it doesn't use tied together outs
-            m_ay.op(0).op0.set_output_gain(1, 0.0f);
-            m_ay.op(0).op0.set_output_gain(2, 0.0f);
-            m_ay.op(1).op0.set_output_gain(0, 0.0f);
-            m_ay.op(2).op0.set_output_gain(0, 0.0f);
-            m_ay.op(3).op0.set_output_gain(0, 0.0f);
+            m_ay[0].op0.set_output_gain(0, 0.0f); // 3 outputs for Ay1 since it doesn't use tied together outs
+            m_ay[0].op0.set_output_gain(1, 0.0f);
+            m_ay[0].op0.set_output_gain(2, 0.0f);
+            m_ay[1].op0.set_output_gain(0, 0.0f);
+            m_ay[2].op0.set_output_gain(0, 0.0f);
+            m_ay[3].op0.set_output_gain(0, 0.0f);
             m_dac.op0.set_output_gain(0, 0.0f);
             m_input_port_4_f0 = 0;
             // start in 1st gear

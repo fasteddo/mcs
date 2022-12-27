@@ -17,7 +17,7 @@ namespace mame
 
         tilemap_t m_tx_tilemap;
 
-        required_device<cpu_device> m_maincpu;
+        required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
         required_device<screen_device> m_screen;
 
 
@@ -45,7 +45,7 @@ namespace mame
         public m52_state(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag)
         {
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
+            m_maincpu = new required_device<z80_device>(this, "maincpu");
             m_screen = new required_device<screen_device>(this, "screen");
             m_videoram = new required_shared_ptr<uint8_t>(this, "videoram");
             m_colorram = new required_shared_ptr<uint8_t>(this, "colorram");

@@ -4,6 +4,7 @@
 using System;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -27,7 +28,7 @@ namespace mame
 
 
         //ROM_START( namco_50xx )
-        static readonly MemoryContainer<tiny_rom_entry> rom_namco_50xx = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_namco_50xx =
         {
             ROM_REGION( 0x800, "mcu", 0 ),
             ROM_LOAD( "50xx.bin",     0x0000, 0x0800, CRC("a0acbaf7") + SHA1("f03c79451e73b3a93c1591cdb27fedc9f130508d") ),
@@ -104,11 +105,7 @@ namespace mame
 
         void O_w(uint8_t data)
         {
-            uint8_t out_ = (uint8_t)(data & 0x0f);
-            if ((data & 0x10) != 0)
-                m_portO = (uint8_t)((m_portO & 0x0f) | (out_ << 4));
-            else
-                m_portO = (uint8_t)((m_portO & 0xf0) | (out_));
+            machine().scheduler().synchronize(O_w_sync, data);  //machine().scheduler().synchronize(timer_expired_delegate(FUNC(namco_50xx_device::O_w_sync),this), data);
         }
 
 
@@ -130,7 +127,7 @@ namespace mame
         //-------------------------------------------------
         protected override Pointer<tiny_rom_entry> device_rom_region()
         {
-            return new Pointer<tiny_rom_entry>(rom_namco_50xx);
+            return new Pointer<tiny_rom_entry>(new MemoryContainer<tiny_rom_entry>(rom_namco_50xx));
         }
 
         //-------------------------------------------------
@@ -146,15 +143,26 @@ namespace mame
         }
 
 
+        //TIMER_CALLBACK_MEMBER( O_w_sync );
+        void O_w_sync(object ptr, s32 param)  //void *ptr, s32 param)
+        {
+            uint8_t out_ = (uint8_t)(param & 0x0f);
+            if ((param & 0x10) != 0)
+                m_portO = (uint8_t)((m_portO & 0x0f) | (out_ << 4));
+            else
+                m_portO = (uint8_t)((m_portO & 0xf0) | (out_));
+        }
+
+
         //TIMER_CALLBACK_MEMBER( namco_50xx_device::rw_sync )
-        void rw_sync(object ptr, int param)
+        void rw_sync(object ptr, s32 param)  //void *ptr, s32 param)
         {
             m_rw = (uint8_t)param;
         }
 
 
         //TIMER_CALLBACK_MEMBER( namco_50xx_device::write_sync )
-        void write_sync(object ptr, int param)
+        void write_sync(object ptr, s32 param)  //void *ptr, s32 param)
         {
             m_cmd = (uint8_t)param;
         }

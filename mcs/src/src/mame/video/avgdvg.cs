@@ -397,14 +397,14 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(vg_set_halt_callback);
-        void vg_set_halt_callback(object ptr, int param)
+        void vg_set_halt_callback(object ptr, s32 param)  //void *ptr, s32 param)
         {
             vg_set_halt(param);
         }
 
 
         //TIMER_CALLBACK_MEMBER(run_state_machine);
-        void run_state_machine(object ptr, int param)
+        void run_state_machine(object ptr, s32 param)  //void *ptr, s32 param)
         {
             int cycles = 0;
 

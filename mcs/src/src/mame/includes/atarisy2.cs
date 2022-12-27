@@ -5,6 +5,8 @@ using System;
 
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using int8_t = System.SByte;
+using required_region_ptr_u16 = mame.region_ptr_finder_u16<mame.bool_const_true>;  //using optional_region_ptr_u16 = region_ptr_finder_u16<false>;
+using required_shared_ptr_u16 = mame.shared_ptr_finder_u16<mame.bool_const_true>;  //using optional_shared_ptr_u16 = shared_ptr_finder_u16<false>;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -19,14 +21,14 @@ namespace mame
         required_device<gfxdecode_device> m_gfxdecode;
         required_device<screen_device> m_screen;
         required_device<atari_motion_objects_device> m_mob;
-        required_region_ptr<uint16_t> m_slapstic_region;
+        required_region_ptr_u16 m_slapstic_region;
 
         uint8_t m_interrupt_enable;
 
         required_device<tilemap_device> m_playfield_tilemap;
         required_device<tilemap_device> m_alpha_tilemap;
-        required_shared_ptr<uint16_t> m_xscroll;
-        required_shared_ptr<uint16_t> m_yscroll;
+        required_shared_ptr_u16 m_xscroll;
+        required_shared_ptr_u16 m_yscroll;
 
         int8_t m_pedal_count;
 
@@ -44,8 +46,8 @@ namespace mame
         required_memory_bank_array<u32_const_2> m_rombank;
         required_device<atari_slapstic_device> m_slapstic;
         memory_view m_vmmu;
-        required_shared_ptr<uint16_t> m_playfieldt;
-        required_shared_ptr<uint16_t> m_playfieldb;
+        required_shared_ptr_u16 m_playfieldt;
+        required_shared_ptr_u16 m_playfieldb;
 
         uint8_t m_sound_reset_state;
 
@@ -75,11 +77,11 @@ namespace mame
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
             m_screen = new required_device<screen_device>(this, "screen");
             m_mob = new required_device<atari_motion_objects_device>(this, "mob");
-            m_slapstic_region = new required_region_ptr<uint16_t>(this, "maincpu");
+            m_slapstic_region = new required_region_ptr_u16(this, "maincpu");
             m_playfield_tilemap = new required_device<tilemap_device>(this, "playfield");
             m_alpha_tilemap = new required_device<tilemap_device>(this, "alpha");
-            m_xscroll = new required_shared_ptr<uint16_t>(this, "xscroll");
-            m_yscroll = new required_shared_ptr<uint16_t>(this, "yscroll");
+            m_xscroll = new required_shared_ptr_u16(this, "xscroll");
+            m_yscroll = new required_shared_ptr_u16(this, "yscroll");
             m_soundlatch = new required_device<generic_latch_8_device>(this, "soundlatch");
             m_mainlatch = new required_device<generic_latch_8_device>(this, "mainlatch");
             m_ym2151 = new required_device<ym2151_device>(this, "ymsnd");
@@ -88,8 +90,8 @@ namespace mame
             m_rombank = new required_memory_bank_array<u32_const_2>(this, "rombank{0}", 1);
             m_slapstic = new required_device<atari_slapstic_device>(this, "slapstic");
             m_vmmu = new memory_view(this, "vmmu");
-            m_playfieldt = new required_shared_ptr<uint16_t>(this, "playfieldt");
-            m_playfieldb = new required_shared_ptr<uint16_t>(this, "playfieldb");
+            m_playfieldt = new required_shared_ptr_u16(this, "playfieldt");
+            m_playfieldb = new required_shared_ptr_u16(this, "playfieldb");
             m_leds = new output_finder<u32_const_2>(this, "led{0}", 0);
         }
     }

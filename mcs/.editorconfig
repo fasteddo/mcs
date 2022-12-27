@@ -1,6 +1,13 @@
 ﻿# mcs
 
+root = true
+
 [*.cs]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
 #dotnet_diagnostic.CS0108.severity = none  # '' hides inherited member ''. Use the new keyword if hiding was intended.
 #dotnet_diagnostic.CS0114.severity = none  # '' hides inherited member ''. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword.
 dotnet_diagnostic.CS0162.severity = none  # Unreachable code detected

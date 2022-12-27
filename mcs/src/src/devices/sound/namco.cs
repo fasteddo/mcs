@@ -73,7 +73,7 @@ namespace mame
 
         /* data about the sound system */
         protected sound_channel [] m_channel_list = new sound_channel[MAX_VOICES];
-        sound_channel m_last_channel;
+        int m_last_channelIdx;  //sound_channel *m_last_channel;
         Pointer<uint8_t> m_wavedata;  //uint8_t *m_wavedata;
 
         /* global sound parameters */
@@ -100,7 +100,7 @@ namespace mame
             m_disound = GetClassInterface<device_sound_interface_namco_audio>();
 
             m_wave_ptr = new optional_region_ptr<uint8_t>(this, DEVICE_SELF);
-            m_last_channel = null;
+            m_last_channelIdx = 0;  //m_last_channel(nullptr)
             m_wavedata = null;
             m_wave_size = 0;
             m_sound_enable = false;
@@ -121,7 +121,7 @@ namespace mame
 
         // static configuration
         public void set_voices(int voices) { m_voices = voices; }
-        //void set_stereo(bool stereo) { m_stereo = stereo; }
+        public void set_stereo(bool stereo) { m_stereo = stereo; }
 
 
         public void sound_enable_w(int state)
@@ -138,7 +138,7 @@ namespace mame
         protected override void device_start()
         {
             /* extract globals from the interface */
-            m_last_channel = m_channel_list[m_voices];
+            m_last_channelIdx = m_voices;  //m_last_channel = m_channel_list + m_voices;
 
             /* build the waveform table */
             build_decoded_waveform(m_wave_ptr.op);
@@ -164,7 +164,7 @@ namespace mame
 #endif
 
             /* reset all the voices */
-            for (int voiceIdx = 0; m_channel_list[voiceIdx] != m_last_channel; voiceIdx++)  //for (sound_channel *voice = m_channel_list; voice < m_last_channel; voice++)
+            for (int voiceIdx = 0; voiceIdx < m_last_channelIdx; voiceIdx++)  //for (sound_channel *voice = m_channel_list; voice < m_last_channel; voice++)
             {
                 sound_channel voice = m_channel_list[voiceIdx];
 
@@ -305,7 +305,7 @@ namespace mame
                     return;
 
                 /* loop over each voice and add its contribution */
-                for (int voiceIdx = 0; m_channel_list[voiceIdx] != m_last_channel; voiceIdx++)  //for (sound_channel *voice = m_channel_list; voice < m_last_channel; voice++)
+                for (int voiceIdx = 0; voiceIdx < m_last_channelIdx; voiceIdx++)  //for (sound_channel *voice = m_channel_list; voice < m_last_channel; voice++)
                 {
                     sound_channel voice = m_channel_list[voiceIdx];
 
@@ -411,7 +411,7 @@ namespace mame
                     return;
 
                 /* loop over each voice and add its contribution */
-                for (voiceIdx = 0; m_channel_list[voiceIdx] != m_last_channel; voiceIdx++)  //for (voice = m_channel_list; voice < m_last_channel; voice++)
+                for (voiceIdx = 0; voiceIdx < m_last_channelIdx; voiceIdx++)  //for (voice = m_channel_list; voice < m_last_channel; voice++)
                 {
                     sound_channel voice = m_channel_list[voiceIdx];
 
@@ -551,8 +551,8 @@ namespace mame
         }
 
 
-        //uint8_t polepos_sound_r(offs_t offset);
-        //void polepos_sound_w(offs_t offset, uint8_t data);
+        public uint8_t polepos_sound_r(offs_t offset) { throw new emu_unimplemented(); }
+        public void polepos_sound_w(offs_t offset, uint8_t data) { throw new emu_unimplemented(); }
 
 
         // device-level overrides

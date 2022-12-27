@@ -7,6 +7,7 @@ using int8_t = System.SByte;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using s16 = System.Int16;
+using s32 = System.Int32;
 using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -307,7 +308,10 @@ namespace mame
         }
 
 
-        //void dkong_state::dkong3_gfxbank_w(uint8_t data)
+        void dkong3_gfxbank_w(uint8_t data)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         void dkong_palettebank_w(offs_t offset, uint8_t data)
@@ -476,7 +480,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(dkong_state::scanline_callback)
-        void scanline_callback(object ptr, int param)
+        void scanline_callback(object ptr, s32 param)  //void *ptr, s32 param)
         {
             int scanline = param;
 

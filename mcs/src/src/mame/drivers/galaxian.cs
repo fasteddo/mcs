@@ -174,7 +174,7 @@ namespace mame
                 /* AV6 .. AV11 ==> AY8910 #1 - 3D */
                 for (int which = 0; which < 2; which++)
                 {
-                    if (m_ay8910.op(which).op0 != null)
+                    if (m_ay8910[which].op0 != null)
                     {
                         for (int flt = 0; flt < 6; flt++)
                         {
@@ -183,7 +183,7 @@ namespace mame
 
                             /* low bit goes to 0.22uF capacitor = 220000pF  */
                             /* high bit goes to 0.047uF capacitor = 47000pF */
-                            m_filter_ctl.op(fltnum).op0.write(bit);
+                            m_filter_ctl[fltnum].op0.write(bit);
                         }
                     }
                 }
@@ -213,8 +213,8 @@ namespace mame
         {
             /* the decoding here is very simplistic, and you can address both simultaneously */
             uint8_t result = 0xff;
-            if ((offset & 0x1000) != 0) result &= m_ppi8255.op(1).op0.read((offset >> 1) & 3);
-            if ((offset & 0x2000) != 0) result &= m_ppi8255.op(0).op0.read((offset >> 1) & 3);
+            if ((offset & 0x1000) != 0) result &= m_ppi8255[1].op0.read((offset >> 1) & 3);
+            if ((offset & 0x2000) != 0) result &= m_ppi8255[0].op0.read((offset >> 1) & 3);
             return result;
         }
 
@@ -222,8 +222,8 @@ namespace mame
         void frogger_ppi8255_w(offs_t offset, uint8_t data)
         {
             /* the decoding here is very simplistic, and you can address both simultaneously */
-            if ((offset & 0x1000) != 0) m_ppi8255.op(1).op0.write((offset >> 1) & 3, data);
-            if ((offset & 0x2000) != 0) m_ppi8255.op(0).op0.write((offset >> 1) & 3, data);
+            if ((offset & 0x1000) != 0) m_ppi8255[1].op0.write((offset >> 1) & 3, data);
+            if ((offset & 0x2000) != 0) m_ppi8255[0].op0.write((offset >> 1) & 3, data);
         }
 
 
@@ -231,7 +231,7 @@ namespace mame
         {
             /* the decoding here is very simplistic */
             uint8_t result = 0xff;
-            if ((offset & 0x40) != 0) result &= m_ay8910.op(0).op0.data_r();
+            if ((offset & 0x40) != 0) result &= m_ay8910[0].op0.data_r();
             return result;
         }
 
@@ -241,9 +241,9 @@ namespace mame
             /* the decoding here is very simplistic */
             /* AV6,7 ==> AY8910 #1 */
             if ((offset & 0x40) != 0)
-                m_ay8910.op(0).op0.data_w(data);
+                m_ay8910[0].op0.data_w(data);
             else if ((offset & 0x80) != 0)
-                m_ay8910.op(0).op0.address_w(data);
+                m_ay8910[0].op0.address_w(data);
         }
 
 
@@ -755,17 +755,17 @@ namespace mame
         {
             galaxian_base(config);
 
-            I8255A(config, m_ppi8255.op(0));
-            m_ppi8255.op(0).op0.in_pa_callback().set_ioport("IN0").reg();
-            m_ppi8255.op(0).op0.in_pb_callback().set_ioport("IN1").reg();
-            m_ppi8255.op(0).op0.in_pc_callback().set_ioport("IN2").reg();
-            m_ppi8255.op(0).op0.out_pc_callback().set(konami_portc_0_w).reg();
+            I8255A(config, m_ppi8255[0]);
+            m_ppi8255[0].op0.in_pa_callback().set_ioport("IN0").reg();
+            m_ppi8255[0].op0.in_pb_callback().set_ioport("IN1").reg();
+            m_ppi8255[0].op0.in_pc_callback().set_ioport("IN2").reg();
+            m_ppi8255[0].op0.out_pc_callback().set(konami_portc_0_w).reg();
 
-            I8255A(config, m_ppi8255.op(1));
-            m_ppi8255.op(1).op0.out_pa_callback().set(m_soundlatch, (u8 data) => { ((generic_latch_8_device)subdevice("soundlatch")).write(data); }).reg();  //FUNC(generic_latch_8_device::write));
-            m_ppi8255.op(1).op0.out_pb_callback().set(konami_sound_control_w).reg();
-            m_ppi8255.op(1).op0.in_pc_callback().set_ioport("IN3").reg();
-            m_ppi8255.op(1).op0.out_pc_callback().set(konami_portc_1_w).reg();
+            I8255A(config, m_ppi8255[1]);
+            m_ppi8255[1].op0.out_pa_callback().set(m_soundlatch, (u8 data) => { ((generic_latch_8_device)subdevice("soundlatch")).write(data); }).reg();  //FUNC(generic_latch_8_device::write));
+            m_ppi8255[1].op0.out_pb_callback().set(konami_sound_control_w).reg();
+            m_ppi8255[1].op0.in_pc_callback().set_ioport("IN3").reg();
+            m_ppi8255[1].op0.out_pc_callback().set(konami_portc_1_w).reg();
         }
 
 
@@ -779,14 +779,14 @@ namespace mame
             GENERIC_LATCH_8(config, m_soundlatch);
 
             /* sound hardware */
-            AY8910(config, m_ay8910.op(0), KONAMI_SOUND_CLOCK/8);
-            m_ay8910.op(0).op0.set_flags(AY8910_RESISTOR_OUTPUT);
-            m_ay8910.op(0).op0.set_resistors_load((int)1000.0, (int)1000.0, (int)1000.0);
-            m_ay8910.op(0).op0.port_a_read_callback().set(m_soundlatch, () => { return ((generic_latch_8_device)subdevice("soundlatch")).read(); }).reg();  //FUNC(generic_latch_8_device::read));
-            m_ay8910.op(0).op0.port_b_read_callback().set(frogger_sound_timer_r).reg();
-            m_ay8910.op(0).op0.add_route(0, "konami", 1.0, 0);
-            m_ay8910.op(0).op0.add_route(1, "konami", 1.0, 1);
-            m_ay8910.op(0).op0.add_route(2, "konami", 1.0, 2);
+            AY8910(config, m_ay8910[0], KONAMI_SOUND_CLOCK/8);
+            m_ay8910[0].op0.set_flags(AY8910_RESISTOR_OUTPUT);
+            m_ay8910[0].op0.set_resistors_load((int)1000.0, (int)1000.0, (int)1000.0);
+            m_ay8910[0].op0.port_a_read_callback().set(m_soundlatch, () => { return ((generic_latch_8_device)subdevice("soundlatch")).read(); }).reg();  //FUNC(generic_latch_8_device::read));
+            m_ay8910[0].op0.port_b_read_callback().set(frogger_sound_timer_r).reg();
+            m_ay8910[0].op0.add_route(0, "konami", 1.0, 0);
+            m_ay8910[0].op0.add_route(1, "konami", 1.0, 1);
+            m_ay8910[0].op0.add_route(2, "konami", 1.0, 2);
 
             NETLIST_SOUND(config, "konami", 48000)
                 .set_source(netlist_konami1x)
@@ -894,7 +894,7 @@ namespace mame
          *************************************/
 
         //ROM_START( galaxian )
-        static readonly MemoryContainer<tiny_rom_entry> rom_galaxian = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_galaxian =
         {
             ROM_REGION( 0x4000, "maincpu", 0 ),
             ROM_LOAD( "galmidw.u",    0x0000, 0x0800, CRC("745e2d61") + SHA1("e65f74e35b1bfaccd407e168ea55678ae9b68edf") ),
@@ -922,7 +922,7 @@ namespace mame
          *************************************/
 
         //ROM_START( frogger )
-        static readonly MemoryContainer<tiny_rom_entry> rom_frogger = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_frogger =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "frogger.26",   0x0000, 0x1000, CRC("597696d6") + SHA1("e7e021776cad00f095a1ebbef407b7c0a8f5d835") ),

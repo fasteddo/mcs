@@ -23,7 +23,6 @@ using static mame.device_global;
 using static mame.eminline_global;
 using static mame.emucore_global;
 using static mame.gamedrv_global;
-using static mame.logmacro_global;
 using static mame.machine_global;
 using static mame.osdcore_global;
 using static mame.profiler_global;
@@ -812,7 +811,7 @@ namespace mame
         // device clocks
         u32 m_configured_clock;     // originally configured device clock
         u32 m_unscaled_clock;       // current unscaled device clock
-        u32 m_clock;                // current device clock, after scaling
+        protected u32 m_clock;                // current device clock, after scaling
         double m_clock_scale;          // clock scale factor
         protected attoseconds_t m_attoseconds_per_clock;// period in attoseconds
 
@@ -1191,7 +1190,7 @@ namespace mame
         //  set_clock - set/change the clock on
         //  a device
         //-------------------------------------------------
-        void set_clock(u32 clock)
+        public void set_clock(u32 clock)
         {
             m_configured_clock = clock;
 
@@ -1317,7 +1316,7 @@ namespace mame
         // clock/timing accessors
         public u32 clock() { return m_clock; }
         public void clock_set(u32 value) { m_clock = value; }
-        //u32 unscaled_clock() const { return m_unscaled_clock; }
+        protected u32 unscaled_clock() { return m_unscaled_clock; }
 
 
         //-------------------------------------------------
@@ -1374,7 +1373,8 @@ namespace mame
             }
         }
 
-        //u64 attotime_to_clocks(const attotime &duration) const;
+
+        protected u64 attotime_to_clocks(attotime duration) { throw new emu_unimplemented(); }
 
 
         // timer interfaces
@@ -2047,10 +2047,6 @@ namespace mame
                 set_unscaled_clock(m_owner.m_clock * ((m_configured_clock >> 12) & 0xfff) / ((m_configured_clock >> 0) & 0xfff));
             }
         }
-
-
-        protected void LOGMASKED(int VERBOSE, int mask, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, this, format, args); }
-        protected void LOG(int VERBOSE, string format, params object [] args) { logmacro_global.LOG(VERBOSE, this, format, args); }
     }
 
 

@@ -6,6 +6,7 @@ using System;
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -173,7 +174,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( latch8_device::timerproc )
-        void timerproc(object ptr, int param)
+        void timerproc(object ptr, s32 param)  //void *ptr, s32 param)
         {
             uint8_t new_val = (uint8_t)(param & 0xFF);
             uint8_t mask = (uint8_t)(param >> 8);

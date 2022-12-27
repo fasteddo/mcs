@@ -7,6 +7,7 @@ using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -29,11 +30,8 @@ namespace mame
         public static readonly emu.detail.device_type_impl NAMCO_51XX = DEFINE_DEVICE_TYPE("namco51", "Namco 51xx", (type, mconfig, tag, owner, clock) => { return new namco_51xx_device(mconfig, tag, owner, clock); });
 
 
-        const bool VERBOSE = false;
-
-
         //ROM_START( namco_51xx )
-        static readonly MemoryContainer<tiny_rom_entry> rom_namco_51xx = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_namco_51xx =
         {
             ROM_REGION( 0x400, "mcu", 0 ),
             ROM_LOAD( "51xx.bin",     0x0000, 0x0400, CRC("c2f57ef8") + SHA1("50de79e0d6a76bda95ffb02fcce369a79e6abfec") ),
@@ -133,7 +131,7 @@ namespace mame
         //-------------------------------------------------
         protected override Pointer<tiny_rom_entry> device_rom_region()
         {
-            return new Pointer<tiny_rom_entry>(rom_namco_51xx);
+            return new Pointer<tiny_rom_entry>(new MemoryContainer<tiny_rom_entry>(rom_namco_51xx));
         }
 
         //-------------------------------------------------
@@ -180,11 +178,7 @@ namespace mame
 
         void O_w(uint8_t data)
         {
-            uint8_t out_ = (uint8_t)(data & 0x0f);
-            if ((data & 0x10) != 0)
-                m_portO = (uint8_t)((m_portO & 0x0f) | (out_ << 4));
-            else
-                m_portO = (uint8_t)((m_portO & 0xf0) | (out_));
+            machine().scheduler().synchronize(O_w_sync, data);  //machine().scheduler().synchronize(timer_expired_delegate(FUNC(namco_51xx_device::O_w_sync),this), data);
         }
 
 
@@ -195,16 +189,27 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( namco_51xx_device::rw_sync )
-        void rw_sync(object ptr, int param)
+        void rw_sync(object ptr, s32 param)  //void *ptr, s32 param)
         {
             m_rw = (uint8_t)param;
         }
 
 
         //TIMER_CALLBACK_MEMBER( namco_51xx_device::write_sync )
-        void write_sync(object ptr, int param)
+        void write_sync(object ptr, s32 param)  //void *ptr, s32 param)
         {
             m_portO = (uint8_t)param;
+        }
+
+
+        //TIMER_CALLBACK_MEMBER( O_w_sync );
+        void O_w_sync(object ptr, s32 param)  //void *ptr, s32 param)
+        {
+            uint8_t out_ = (uint8_t)(param & 0x0f);
+            if ((param & 0x10) != 0)
+                m_portO = (uint8_t)((m_portO & 0x0f) | (out_ << 4));
+            else
+                m_portO = (uint8_t)((m_portO & 0xf0) | (out_));
         }
     }
 

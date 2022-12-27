@@ -115,6 +115,7 @@ namespace mame
            5_460_000, /* 5.46_MHz_XTAL          ec1840 and ec1841 keyboard */
            5_529_600, /* 5.5296_MHz_XTAL        Kontron PSI98 keyboard */
            5_626_000, /* 5.626_MHz_XTAL         RCA CDP1869 PAL dot clock */
+           5_659_200, /* 5.6592_MHz_XTAL        Digilog 320 dot clock */
            5_670_000, /* 5.67_MHz_XTAL          RCA CDP1869 NTSC dot clock */
            5_714_300, /* 5.7143_MHz_XTAL        Cidelsa Destroyer, TeleVideo serial keyboards */
            5_856_000, /* 5.856_MHz_XTAL         HP 3478A Multimeter */
@@ -254,6 +255,7 @@ namespace mame
           16_364_000, /* 16.364_MHz_XTAL        Corvus Concept */
           16_384_000, /* 16.384_MHz_XTAL        - */
           16_400_000, /* 16.4_MHz_XTAL          MS 6102 */
+          16_537_000, /* 16.537_MHz_XTAL        Falco terminals 80-column clock */
           16_572_000, /* 16.572_MHz_XTAL        Micro-Term ACT-5A */
           16_588_800, /* 16.5888_MHz_XTAL       SM 7238 */
           16_666_600, /* 16.6666_MHz_XTAL       Firebeat GCU */
@@ -367,7 +369,7 @@ namespace mame
           28_475_000, /* 28.475_MHz_XTAL        CoCo 3 PAL */
           28_480_000, /* 28.48_MHz_XTAL         Chromatics CGC-7900 */
           28_636_000, /* 28.636_MHz_XTAL        Super Kaneko Nova System */
-          28_636_363, /* 28.636363_MHz_XTAL     Later Leland games and Atari GT, Amiga NTSC, Raiden2 h/w (8x NTSC subcarrier)*/
+          28_636_363, /* 28.636363_MHz_XTAL     Later Leland games and Atari GT, Amiga NTSC, Raiden2 h/w (8x NTSC subcarrier), NEC PC-88xx */
           28_640_000, /* 28.64_MHz_XTAL         Fuuki FG-1c AI AM-2 PCB */
           28_700_000, /* 28.7_MHz_XTAL          - */
           29_376_000, /* 29.376_MHz_XTAL        Qume QVT-103 */
@@ -398,6 +400,7 @@ namespace mame
           34_000_000, /* 34_MHz_XTAL            Gaelco PCBs */
           34_291_712, /* 34.291712_MHz_XTAL     Fairlight CMI master card */
           34_846_000, /* 34.846_MHz_XTAL        Visual 550 */
+          35_469_000, /* 35.469_MHz_XTAL        ZX Spectrum +2/+3 (~8x PAL subcarrier) */
           35_640_000, /* 35.640_MHz_XTAL        HDS200 132-column display clock */
           35_834_400, /* 35.8344_MHz_XTAL       Tab Products E-22 132-column display clock */
           35_840_000, /* 35.84_MHz_XTAL         Akai MPC 60 voice PCB */

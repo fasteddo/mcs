@@ -51,12 +51,12 @@ namespace mame
                 amplitude-overdrive-mute stuff done by
                 bit 1 here should be done on a netlist.
             */
-            m_ay.op(0).op0.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f); // 3 outputs for Ay1 since it doesn't use tied together outs
-            m_ay.op(0).op0.set_output_gain(1, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay.op(0).op0.set_output_gain(2, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay.op(1).op0.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay.op(2).op0.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
-            m_ay.op(3).op0.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay[0].op0.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f); // 3 outputs for Ay1 since it doesn't use tied together outs
+            m_ay[0].op0.set_output_gain(1, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay[0].op0.set_output_gain(2, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay[1].op0.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay[2].op0.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
+            m_ay[3].op0.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
             m_dac.op0.set_output_gain(0, (data & 0x2) != 0 ? 1.0f : 0.0f);
 
             m_mainbank.op0.set_entry(BIT(data, 7));

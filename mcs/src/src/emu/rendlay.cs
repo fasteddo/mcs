@@ -58,10 +58,10 @@ namespace mame
         //#define LOG_DISK_DRAW               (1U << 3)
         //#define LOG_IMAGE_LOAD              (1U << 4)
 
-        ////#define VERBOSE (LOG_GROUP_BOUNDS_RESOLUTION | LOG_INTERACTIVE_ITEMS | LOG_DISK_DRAW | LOG_IMAGE_LOAD)
-        public const int VERBOSE = 0;
-        //#define LOG_OUTPUT_FUNC osd_printf_verbose
-        public static void LOGMASKED(int mask, string format, params object [] args) { if ((VERBOSE & mask) != 0) osd_printf_verbose(format, args); }
+        public const int VERBOSE = 0;  //#define VERBOSE (LOG_GROUP_BOUNDS_RESOLUTION | LOG_INTERACTIVE_ITEMS | LOG_DISK_DRAW | LOG_IMAGE_LOAD)
+        static void LOG_OUTPUT_FUNC_rendlay(device_t device, string format, params object [] args) { osd_printf_verbose(format, args); }
+        //#include "logmacro.h"
+        public static void LOGMASKED(int mask, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, null, LOG_OUTPUT_FUNC_rendlay, format, args); }
     }
 
 
@@ -288,7 +288,7 @@ namespace mame
             //-------------------------------------------------
             //  draw_text - draw text in the specified color
             //-------------------------------------------------
-            void draw_text(
+            static void draw_text(
                     render_font font,
                     bitmap_argb32 dest,
                     rectangle bounds,
@@ -396,7 +396,7 @@ namespace mame
             //  horizontal LED segment with definable end
             //  and start points
             //-------------------------------------------------
-            void draw_segment_horizontal_caps(bitmap_argb32 dest, int minx, int maxx, int midy, int width, int caps, rgb_t color)
+            static void draw_segment_horizontal_caps(bitmap_argb32 dest, int minx, int maxx, int midy, int width, int caps, rgb_t color)
             {
                 // loop over the width of the segment
                 for (int y = 0; y < width / 2; y++)
@@ -418,7 +418,7 @@ namespace mame
             //  draw_segment_horizontal - draw a horizontal
             //  LED segment
             //-------------------------------------------------
-            void draw_segment_horizontal(bitmap_argb32 dest, int minx, int maxx, int midy, int width, rgb_t color)
+            static void draw_segment_horizontal(bitmap_argb32 dest, int minx, int maxx, int midy, int width, rgb_t color)
             {
                 draw_segment_horizontal_caps(dest, minx, maxx, midy, width, LINE_CAP_START | LINE_CAP_END, color);
             }
@@ -428,7 +428,7 @@ namespace mame
             //  vertical LED segment with definable end
             //  and start points
             //-------------------------------------------------
-            void draw_segment_vertical_caps(bitmap_argb32 dest, int miny, int maxy, int midx, int width, int caps, rgb_t color)
+            static void draw_segment_vertical_caps(bitmap_argb32 dest, int miny, int maxy, int midx, int width, int caps, rgb_t color)
             {
                 // loop over the width of the segment
                 for (int x = 0; x < width / 2; x++)
@@ -450,7 +450,7 @@ namespace mame
             //  draw_segment_vertical - draw a vertical
             //  LED segment
             //-------------------------------------------------
-            void draw_segment_vertical(bitmap_argb32 dest, int miny, int maxy, int midx, int width, rgb_t color)
+            static void draw_segment_vertical(bitmap_argb32 dest, int miny, int maxy, int midx, int width, rgb_t color)
             {
                 draw_segment_vertical_caps(dest, miny, maxy, midx, width, LINE_CAP_START | LINE_CAP_END, color);
             }
@@ -459,7 +459,7 @@ namespace mame
             //  draw_segment_diagonal_1 - draw a diagonal
             //  LED segment that looks like a backslash
             //-------------------------------------------------
-            void draw_segment_diagonal_1(bitmap_argb32 dest, int minx, int maxx, int miny, int maxy, int width, rgb_t color)
+            static void draw_segment_diagonal_1(bitmap_argb32 dest, int minx, int maxx, int miny, int maxy, int width, rgb_t color)
             {
                 // compute parameters
                 width = (int)(width * 1.5);
@@ -489,7 +489,7 @@ namespace mame
             //  draw_segment_diagonal_2 - draw a diagonal
             //  LED segment that looks like a forward slash
             //-------------------------------------------------
-            void draw_segment_diagonal_2(bitmap_argb32 dest, int minx, int maxx, int miny, int maxy, int width, rgb_t color)
+            static void draw_segment_diagonal_2(bitmap_argb32 dest, int minx, int maxx, int miny, int maxy, int width, rgb_t color)
             {
                 // compute parameters
                 width = (int)(width * 1.5);
@@ -518,7 +518,7 @@ namespace mame
             //-------------------------------------------------
             //  draw_segment_decimal - draw a decimal point
             //-------------------------------------------------
-            void draw_segment_decimal(bitmap_argb32 dest, int midx, int midy, int width, rgb_t color)
+            static void draw_segment_decimal(bitmap_argb32 dest, int midx, int midy, int width, rgb_t color)
             {
                 // compute parameters
                 width /= 2;
@@ -545,12 +545,12 @@ namespace mame
                 }
             }
 
-            //void draw_segment_comma(bitmap_argb32 &dest, int minx, int maxx, int miny, int maxy, int width, rgb_t color);
+            //static void draw_segment_comma(bitmap_argb32 &dest, int minx, int maxx, int miny, int maxy, int width, rgb_t color);
 
             //-------------------------------------------------
             //  apply_skew - apply skew to a bitmap
             //-------------------------------------------------
-            void apply_skew(bitmap_argb32 dest, int skewwidth)
+            static void apply_skew(bitmap_argb32 dest, int skewwidth)
             {
                 for (int y = 0; y < dest.height(); y++)
                 {

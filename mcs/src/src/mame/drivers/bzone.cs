@@ -332,7 +332,7 @@ namespace mame
 
         */
         //ROM_START( bzone ) /* Analog Vec Gen A035742-02 */
-        static readonly MemoryContainer<tiny_rom_entry> rom_bzone = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_bzone =
         {
             ROM_REGION( 0x8000, "maincpu", 0 ),
             ROM_LOAD( "036414-02.e1",  0x5000, 0x0800, CRC("13de36d5") + SHA1("40e356ddc5c042bc1ce0b71f51e8b6de72daf1e4") ),

@@ -37,13 +37,17 @@ namespace mame
         }
 
 
+        //#define LOG_GENERAL (1U << 0) //defined in logmacro.h already
         const int LOG_SETUP     = 1 << 1;
         const int LOG_TFR       = 1 << 2;
         const int VERBOSE = 0;  //#define VERBOSE (LOG_GENERAL | LOG_SETUP | LOG_TFR)
+        //#define LOG_OUTPUT_STREAM std::cout
+        //#include "logmacro.h"
+        void LOGMASKED(int mask, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, this, format, args); }
+        void LOG(string format, params object [] args) { logmacro_global.LOG(VERBOSE, this, format, args); }
 
-        void LOGSETUP(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_SETUP, format, args); }  //#define LOGSETUP(...) LOGMASKED(LOG_SETUP, __VA_ARGS__)
-        void LOGTFR(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_TFR, format, args); }  //#define LOGTFR(...)   LOGMASKED(LOG_TFR, __VA_ARGS__)
-        void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
+        void LOGSETUP(string format, params object [] args) { LOGMASKED(LOG_SETUP, format, args); }  //#define LOGSETUP(...) LOGMASKED(LOG_SETUP, __VA_ARGS__)
+        void LOGTFR(string format, params object [] args) { LOGMASKED(LOG_TFR, format, args); }  //#define LOGTFR(...)   LOGMASKED(LOG_TFR, __VA_ARGS__)
 
 
         //enum

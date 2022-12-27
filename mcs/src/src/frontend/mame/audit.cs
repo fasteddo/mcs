@@ -12,7 +12,6 @@ using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
 using static mame.cpp_global;
-using static mame.logmacro_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;
 using static mame.romload_global;

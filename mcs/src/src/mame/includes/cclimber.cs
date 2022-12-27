@@ -11,7 +11,7 @@ namespace mame
 {
     partial class cclimber_state : driver_device
     {
-        required_device<cpu_device> m_maincpu;
+        required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
         optional_device<cpu_device> m_audiocpu;
         required_device<gfxdecode_device> m_gfxdecode;
         required_device<palette_device> m_palette;
@@ -47,7 +47,7 @@ namespace mame
         public cclimber_state(machine_config mconfig, device_type type, string tag) :
             base(mconfig, type, tag)
         {
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
+            m_maincpu = new required_device<z80_device>(this, "maincpu");
             m_audiocpu = new optional_device<cpu_device>(this, "audiocpu");
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
             m_palette = new required_device<palette_device>(this, "palette");

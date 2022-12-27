@@ -50,6 +50,7 @@ namespace mame
     public interface Type_constant { Type value { get; } }
 
     public class Type_constant_u8 : Type_constant { public Type value { get { return typeof(u8); } } }
+    public class Type_constant_u16 : Type_constant { public Type value { get { return typeof(u16); } } }
     public class Type_constant_s32 : Type_constant { public Type value { get { return typeof(s32); } } }
     public class Type_constant_u32 : Type_constant { public Type value { get { return typeof(u32); } } }
     public class Type_constant_ioport_value : Type_constant { public Type value { get { return typeof(ioport_value); } } }
@@ -1213,6 +1214,7 @@ namespace mame
             }
 
             public void resolve_all_safe_u8(u8 dflt) { resolve_all_safe(new devcb_value(dflt.GetType(), dflt)); }
+            public void resolve_all_safe_u16(u16 dflt) { resolve_all_safe(new devcb_value(dflt.GetType(), dflt)); }
             public void resolve_all_safe_s32(s32 dflt) { resolve_all_safe(new devcb_value(dflt.GetType(), dflt)); }
         }
 
@@ -1286,6 +1288,7 @@ namespace mame
 
         public u8 op_u8(offs_t offset) { return op(offset).u8; }
         public u8 op_u8(offs_t offset, u8 mem_mask) { return op(offset, new devcb_value(mem_mask.GetType(), mem_mask)).u8; }
+        public u16 op_u16(offs_t offset) { return op(offset).u16; }
 
 
         //Result operator()();
@@ -1325,6 +1328,8 @@ namespace mame
     {
         static readonly Type Input = new Type_Input().value;
         static readonly devcb_value DefaultMask = new devcb_value_const_unsigned_DefaultMask().value;
+
+        public class make_unsigned_Type_Input : Type_constant { public Type value { get { return devcb_value.make_unsigned(Input); } } }
 
 
         public delegate void func_t(offs_t offset, devcb_value data, devcb_value mem_mask);  //using func_t = std::function<void (offs_t, Input, std::make_unsigned_t<Input>)>;
@@ -2074,7 +2079,210 @@ namespace mame
         }
 
 
-        //class latched_inputline_builder : public builder_base, public transform_base<std::make_unsigned_t<Input>, latched_inputline_builder>
+        public class latched_inputline_builder : //class latched_inputline_builder : public builder_base, public transform_base<std::make_unsigned_t<Input>, latched_inputline_builder>
+                    builder_base_with_transform_base<make_unsigned_Type_Input, 
+                                                     latched_inputline_builder,
+                                                     latched_inputline_builder.io_ops_latched_inputline_builder,
+                                                     latched_inputline_builder.Type_constant_output_t>,
+                    creator_impl_builder
+        {
+            class wrapped_builder : builder_base
+            {
+                //template <typename T, typename U> friend class first_transform_builder;
+
+                //using input_t = Input;
+
+
+                //device_t &m_devbase;
+                //char const *const m_tag;
+                //device_execute_interface *m_exec;
+                //int const m_linenum;
+                //int const m_value;
+
+
+                wrapped_builder(latched_inputline_builder that)
+                    : base(that)
+                {
+                    throw new emu_unimplemented();
+#if false
+                    , m_devbase(that.m_devbase)
+                    , m_tag(that.m_tag)
+                    , m_exec(that.m_exec)
+                    , m_linenum(that.m_linenum)
+                    , m_value(that.m_value)
+
+
+                    that.consume();
+                    that.built();
+#endif
+                }
+
+                wrapped_builder(wrapped_builder that)
+                    : base(that)
+                {
+                    throw new emu_unimplemented();
+#if false
+                    , m_devbase(that.m_devbase)
+                    , m_tag(that.m_tag)
+                    , m_exec(that.m_exec)
+                    , m_linenum(that.m_linenum)
+                    , m_value(that.m_value)
+
+
+                    that.consume();
+                    that.built();
+#endif
+                }
+
+                //void validity_check(validity_checker &valid) const
+                //{
+                //    if (!m_exec)
+                //    {
+                //        device_t *const device(m_devbase.subdevice(m_tag));
+                //        if (!device)
+                //            osd_printf_error("Write callback bound to non-existent object tag %s\n", m_tag);
+                //        else if (!dynamic_cast<device_execute_interface *>(device))
+                //            osd_printf_error("Write callback bound to device %s (%s) that does not implement device_execute_interface\n", device->tag(), device->name());
+                //    }
+                //}
+
+                public override Action<offs_t, devcb_value, devcb_value> build()  //auto build()
+                {
+                    throw new emu_unimplemented();
+#if false
+                    assert(this->m_consumed);
+                    this->built();
+                    if (!m_exec)
+                    {
+                        device_t *const device(m_devbase.subdevice(m_tag));
+                        if (!device)
+                            throw emu_fatalerror("Write callback bound to non-existent object tag %s\n", m_tag);
+                        m_exec = dynamic_cast<device_execute_interface *>(device);
+                        if (!m_exec)
+                            throw emu_fatalerror("Write callback bound to device %s (%s) that does not implement device_execute_interface\n", device->tag(), device->name());
+                    }
+                    return
+                            [&exec = *m_exec, linenum = m_linenum, value = m_value] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+                            { if (data) exec.set_input_line(linenum, value); };
+#endif
+                }
+
+
+                //wrapped_builder(wrapped_builder const &) = delete;
+                //wrapped_builder operator=(wrapped_builder const &) = delete;
+                //wrapped_builder operator=(wrapped_builder &&that) = delete;
+            }
+
+
+            //friend class wrapped_builder; // workaround for MSVC
+
+            //latched_inputline_builder(latched_inputline_builder const &) = delete;
+            //latched_inputline_builder &operator=(latched_inputline_builder const &) = delete;
+            //latched_inputline_builder &operator=(latched_inputline_builder &&that) = delete;
+
+
+            device_t m_devbase;
+            string m_tag;
+            device_execute_interface m_exec;
+            int m_linenum;
+            int m_value;
+
+
+            //using input_t = Input;
+            public class io_ops_latched_inputline_builder : io_operations<latched_inputline_builder>
+            {
+                public Type input_t { get { throw new emu_unimplemented(); } }
+                public Type output_t { get { throw new emu_unimplemented(); } }
+                public Type input_mask_t { get { throw new emu_unimplemented(); } }
+
+                public latched_inputline_builder cast(builder_base base_) { return (latched_inputline_builder)base_; }
+            }
+
+            public class Type_constant_output_t : Type_constant { public Type value { get { throw new emu_unimplemented(); } } }
+
+
+            public latched_inputline_builder(devcb_write<Type_Input, devcb_value_const_unsigned_DefaultMask> target, bool append, device_t devbase, string tag, int linenum, int value)
+                : base(target, append, DefaultMask)
+            {
+                //transform_base<std::make_unsigned_t<Input>, latched_inputline_builder>(DefaultMask)
+
+
+                m_devbase = devbase;
+                m_tag = tag;
+                m_exec = null;
+                m_linenum = linenum;
+                m_value = value;
+            }
+
+            //latched_inputline_builder(devcb_write &target, bool append, device_execute_interface &exec, int linenum, int value)
+            //    : builder_base(target, append)
+            //    , transform_base<std::make_unsigned_t<Input>, latched_inputline_builder>(DefaultMask)
+            //    , m_devbase(exec.device())
+            //    , m_tag(exec.device().tag())
+            //    , m_exec(&exec)
+            //    , m_linenum(linenum)
+            //    , m_value(value)
+            //{ }
+
+            //latched_inputline_builder(latched_inputline_builder &&that)
+            //    : builder_base(std::move(that))
+            //    , transform_base<std::make_unsigned_t<Input>, latched_inputline_builder>(std::move(that))
+            //    , m_devbase(that.m_devbase)
+            //    , m_tag(that.m_tag)
+            //    , m_exec(that.m_exec)
+            //    , m_linenum(that.m_linenum)
+            //    , m_value(that.m_value)
+            //{
+            //    that.consume();
+            //    that.built();
+            //}
+
+            //~latched_inputline_builder() { this->template register_creator<latched_inputline_builder>(); }
+            protected override void Dispose(bool disposing) { register_creator<latched_inputline_builder>(); base.Dispose(disposing); }
+
+
+            //template <typename T>
+            //std::enable_if_t<is_transform<input_t, input_t, T>::value, first_transform_builder<wrapped_builder, std::remove_reference_t<T> > > transform(T &&cb)
+            //{
+            //    return first_transform_builder<wrapped_builder, std::remove_reference_t<T> >(this->m_target, this->m_append, wrapped_builder(std::move(*this)), std::forward<T>(cb), this->exor(), this->mask(), DefaultMask);
+            //}
+
+            //void validity_check(validity_checker &valid) const
+            //{
+            //    if (!m_exec)
+            //    {
+            //        device_t *const device(m_devbase.subdevice(m_tag));
+            //        if (!device)
+            //            osd_printf_error("Write callback bound to non-existent object tag %s\n", m_tag);
+            //        else if (!dynamic_cast<device_execute_interface *>(device))
+            //            osd_printf_error("Write callback bound to device %s (%s) that does not implement device_execute_interface\n", device->tag(), device->name());
+            //    }
+            //}
+
+            public override Action<offs_t, devcb_value, devcb_value> build()  //auto build()
+            {
+                assert(this.m_consumed);
+                this.built();
+                if (m_exec == null)
+                {
+                    device_t device = m_devbase.subdevice(m_tag);
+                    if (device == null)
+                        throw new emu_fatalerror("Write callback bound to non-existent object tag {0}\n", m_tag);
+                    m_exec = device.GetClassInterface<device_execute_interface>();  //m_exec = dynamic_cast<device_execute_interface *>(device);
+                    if (m_exec == null)
+                        throw new emu_fatalerror("Write callback bound to device {0} ({1}) that does not implement device_execute_interface\n", device.tag(), device.name());
+                }
+
+                var exec = m_exec;
+                var linenum = m_linenum;
+                var value = m_value;
+                var exor = this.exor();
+                var mask = this.mask();
+                return
+                        (offs_t offset, devcb_value data, devcb_value mem_mask) =>  //[&exec = *m_exec, linenum = m_linenum, value = m_value, exor = this->exor(), mask = this->mask()] (offs_t offset, input_t data, std::make_unsigned_t<input_t> mem_mask)
+                        { if (((data ^ exor) & mask) != 0) exec.set_input_line(linenum, value); };  //{ if ((data ^ exor) & mask) exec.set_input_line(linenum, value); };
+            }
+        }
 
 
         //class ioport_builder : public builder_base, public transform_base<mask_t<Input, ioport_value>, ioport_builder>
@@ -2482,13 +2690,13 @@ namespace mame
             }
 
 
-            //template <typename T, bool R>
-            //latched_inputline_builder set_inputline(device_finder<T, R> const &finder, int linenum, int value)
-            //{
-            //    set_used();
-            //    std::pair<device_t &, char const *> const target(finder.finder_target());
-            //    return latched_inputline_builder(m_target, m_append, target.first, target.second, linenum, value);
-            //}
+            public latched_inputline_builder set_inputline<T, bool_R>(device_finder<T, bool_R> finder, int linenum, int value)  //latched_inputline_builder set_inputline(device_finder<T, R> const &finder, int linenum, int value)
+                where bool_R : bool_const, new()
+            {
+                set_used();
+                std.pair<device_t, string> target = finder.finder_target();  //std::pair<device_t &, char const *> const target(finder.finder_target());
+                return new latched_inputline_builder(m_target, m_append, target.first, target.second, linenum, value);  //return latched_inputline_builder(m_target, m_append, target.first, target.second, linenum, value);
+            }
 
 
             //template <typename... Params>

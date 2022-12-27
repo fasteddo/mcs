@@ -4,6 +4,7 @@
 using System;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using uint8_t = System.Byte;
 
 using static mame.diexec_global;
@@ -49,7 +50,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(mw8080bw_state::interrupt_trigger)
-        void interrupt_trigger(object ptr, int param)
+        void interrupt_trigger(object ptr, s32 param)  //void *ptr, s32 param)
         {
             int vpos = m_screen.op0.vpos();
             uint8_t counter = vpos_to_vysnc_chain_counter(vpos);

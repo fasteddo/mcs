@@ -30,8 +30,8 @@ namespace mame
         required_ioport m_in2;
         optional_ioport_array<u32_const_2> m_gear;
 
-        required_device<cpu_device> m_maincpu;
-        required_device<cpu_device> m_audiocpu;
+        required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
+        required_device<z80_device> m_audiocpu;  //required_device<cpu_device> m_audiocpu;
         optional_device<taito_sj_security_mcu_device> m_mcu;
         required_device_array<input_merger_device, u32_const_2> m_soundnmi;
         required_device<dac_8bit_r2r_device> m_dac;
@@ -79,8 +79,8 @@ namespace mame
             m_mainbank = new required_memory_bank(this, "mainbank");
             m_in2 = new required_ioport(this, "IN2");
             m_gear = new optional_ioport_array<u32_const_2>(this, "GEARP{0}", 1U);
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
-            m_audiocpu = new required_device<cpu_device>(this, "audiocpu");
+            m_maincpu = new required_device<z80_device>(this, "maincpu");
+            m_audiocpu = new required_device<z80_device>(this, "audiocpu");
             m_mcu = new optional_device<taito_sj_security_mcu_device>(this, "bmcu");
             m_soundnmi = new required_device_array<input_merger_device, u32_const_2>(this, "soundnmi{0}", 1U, (base_, tag_) => { return new device_finder<input_merger_device, bool_const_true>(base_, tag_); });
             m_dac = new required_device<dac_8bit_r2r_device>(this, "dac");

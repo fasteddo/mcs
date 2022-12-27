@@ -18,8 +18,8 @@ namespace mame
         required_shared_ptr<uint8_t> m_fg_videoram;
         required_shared_ptr<uint8_t> m_bg_videoram;
 
-        required_device<cpu_device> m_audiocpu;
-        required_device<cpu_device> m_maincpu;
+        required_device<z80_device> m_audiocpu;  //required_device<cpu_device> m_audiocpu;
+        required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
         required_device<gfxdecode_device> m_gfxdecode;
         required_device<palette_device> m_palette;
         required_device<generic_latch_8_device> m_soundlatch;
@@ -39,8 +39,8 @@ namespace mame
             m_spriteram = new required_shared_ptr<uint8_t>(this, "spriteram");
             m_fg_videoram = new required_shared_ptr<uint8_t>(this, "fg_videoram");
             m_bg_videoram = new required_shared_ptr<uint8_t>(this, "bg_videoram");
-            m_audiocpu = new required_device<cpu_device>(this, "audiocpu");
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
+            m_audiocpu = new required_device<z80_device>(this, "audiocpu");
+            m_maincpu = new required_device<z80_device>(this, "maincpu");
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
             m_palette = new required_device<palette_device>(this, "palette");
             m_soundlatch = new required_device<generic_latch_8_device>(this, "soundlatch");

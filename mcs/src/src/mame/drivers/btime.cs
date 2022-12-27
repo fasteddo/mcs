@@ -4,6 +4,7 @@
 using System;
 
 using ioport_value = System.UInt32;  //typedef u32 ioport_value;
+using s32 = System.Int32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
@@ -71,7 +72,7 @@ namespace mame
 
 
         //TIMER_DEVICE_CALLBACK_MEMBER(btime_state::audio_nmi_gen)
-        void audio_nmi_gen(timer_device timer, object ptr, int param)  
+        void audio_nmi_gen(timer_device timer, object ptr, s32 param)  //void *ptr, s32 param
         {
             int scanline = param;
             m_audionmi.op0.in_w<u32_const_1>((scanline & 8) >> 3);
@@ -518,7 +519,7 @@ namespace mame
 
         ***************************************************************************/
         //ROM_START( btime )
-        static readonly MemoryContainer<tiny_rom_entry> rom_btime = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_btime =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "aa04.9b",      0xc000, 0x1000, CRC("368a25b5") + SHA1("ed3f3712423979dcb351941fa85dce6a0a7bb16b") ),

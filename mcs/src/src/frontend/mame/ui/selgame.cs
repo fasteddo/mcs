@@ -185,9 +185,25 @@ namespace mame.ui
         }
 
 
+        // dumb workaround for not being able to add an exit notifier
+        //struct cache_reset { ~cache_reset() { system_list::instance().reset_cache(); } };
+        class cache_reset_local : IDisposable { public void Dispose() { system_list.instance().reset_cache(); } }
+
+
         protected override void menu_activated()
         {
-            throw new emu_unimplemented();
+            // if I have to load datfile, perform a hard reset
+            if (ui_globals.reset)
+            {
+                // dumb workaround for not being able to add an exit notifier
+                //struct cache_reset { ~cache_reset() { system_list::instance().reset_cache(); } };
+                ui().get_session_data(typeof(cache_reset_local), () => { return new cache_reset_local(); });  //ui().get_session_data<cache_reset, cache_reset>();
+
+                ui_globals.reset = false;
+                machine().schedule_hard_reset();
+                stack_reset();
+                return;
+            }
         }
 
 

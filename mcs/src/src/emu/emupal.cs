@@ -52,17 +52,26 @@ namespace mame
         public rgb_t op(u32 raw) { return m_func(raw); }
 
 
-#if false
         // generic raw-to-RGB conversion helpers
-        template<int RedBits, int GreenBits, int BlueBits, int RedShift, int GreenShift, int BlueShift>
-        static rgb_t standard_rgb_decoder(u32 raw)
+        //template<int RedBits, int GreenBits, int BlueBits, int RedShift, int GreenShift, int BlueShift>
+        public static rgb_t standard_rgb_decoder<int_RedBits, int_GreenBits, int_BlueBits, int_RedShift, int_GreenShift, int_BlueShift>(u32 raw)
+            where int_RedBits : int_const, new()
+            where int_GreenBits : int_const, new()
+            where int_BlueBits : int_const, new()
+            where int_RedShift : int_const, new()
+            where int_GreenShift : int_const, new()
+            where int_BlueShift : int_const, new()
         {
-            u8 const r = palexpand<RedBits>(raw >> RedShift);
-            u8 const g = palexpand<GreenBits>(raw >> GreenShift);
-            u8 const b = palexpand<BlueBits>(raw >> BlueShift);
-            return rgb_t(r, g, b);
+            int RedShift = new int_RedShift().value;
+            int GreenShift = new int_GreenShift().value;
+            int BlueShift = new int_BlueShift().value;
+
+            u8 r = palexpand<int_RedBits>((uint8_t)(raw >> RedShift));
+            u8 g = palexpand<int_GreenBits>((uint8_t)(raw >> GreenShift));
+            u8 b = palexpand<int_BlueBits>((uint8_t)(raw >> BlueShift));
+            return new rgb_t(r, g, b);
         }
-#endif
+
 
         // data-inverted generic raw-to-RGB conversion helpers
         //template<int RedBits, int GreenBits, int BlueBits, int RedShift, int GreenShift, int BlueShift>
@@ -168,7 +177,7 @@ namespace mame
         //enum xrbg_333_t     { xRBG_333, xxxxxxxRRRBBBGGG };
         //enum xbgr_333_t     { xBGR_333, xxxxxxxBBBGGGRRR };
         //enum xrgb_444_t     { xRGB_444, xxxxRRRRGGGGBBBB };
-        //enum xrbg_444_t     { xRBG_444, xxxxRRRRBBBBGGGG };
+        public enum xrbg_444_t  { xRBG_444, xxxxRRRRBBBBGGGG }
         //enum xbrg_444_t     { xBRG_444, xxxxBBBBRRRRGGGG };
         //enum xbgr_444_t     { xBGR_444, xxxxBBBBGGGGRRRR };
         //enum rgbx_444_t     { RGBx_444, RRRRGGGGBBBBxxxx };
@@ -344,7 +353,13 @@ namespace mame
         //palette_device &set_format(xrbg_333_t, u32 entries);
         //palette_device &set_format(xbgr_333_t, u32 entries);
         //palette_device &set_format(xrgb_444_t, u32 entries);
-        //palette_device &set_format(xrbg_444_t, u32 entries);
+
+        public palette_device set_format(xrbg_444_t _, u32 entries)
+        {
+            set_format(2, raw_to_rgb_converter.standard_rgb_decoder<int_const_4,int_const_4,int_const_4, int_const_8,int_const_0,int_const_4>, entries);
+            return this;
+        }
+
         //palette_device &set_format(xbrg_444_t, u32 entries);
         //palette_device &set_format(xbgr_444_t, u32 entries);
         //palette_device &set_format(rgbx_444_t, u32 entries);

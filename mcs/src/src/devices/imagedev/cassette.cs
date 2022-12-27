@@ -85,17 +85,14 @@ namespace mame
         //virtual void call_unload();
         //virtual string call_display();
 
-
-        //virtual iodevice_t image_type() const { return IO_CASSETTE; }
-
-
         //virtual bool is_readable()  const noexcept override { return true; }
         //virtual bool is_writeable() const noexcept override { return true; }
         //virtual bool is_creatable() const noexcept override { return true; }
-        //virtual bool must_be_loaded() const noexcept override { return false; }
         //virtual bool is_reset_on_load() const noexcept override { return false; }
         //virtual const char *image_interface() const noexcept override { return m_interface; }
         //virtual const char *file_extensions() const noexcept override { return m_extension_list; }
+        //virtual const char *image_type_name() const noexcept override { return "cassette"; }
+        //virtual const char *image_brief_type_name() const noexcept override { return "cass"; }
 
 
         // specific implementation
@@ -134,7 +131,7 @@ namespace mame
         //virtual const bool use_software_list_file_extension_for_filetype() const override { return true; }
 
         // device_image_interface implementation
-        //virtual const software_list_loader &get_software_list_loader() const override { return image_software_list_loader::instance(); }
+        //virtual const software_list_loader &get_software_list_loader() const override;
 
         //image_init_result internal_load(bool is_create);
     }

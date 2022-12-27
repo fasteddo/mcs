@@ -483,8 +483,13 @@ namespace mame
         //-------------------------------------------------
         void postload()
         {
+            attotime emutime = machine().time();
             foreach (var x in m_movie_recordings)
-                x.set_next_frame_time(machine().time());
+                x.set_next_frame_time(emutime);
+
+            // reset speed counters
+            m_speed_last_realtime = m_osdcore.osd_ticks();
+            m_speed_last_emutime = emutime;
         }
 
 

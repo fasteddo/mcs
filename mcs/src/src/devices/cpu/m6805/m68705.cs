@@ -255,12 +255,14 @@ namespace mame
 
         public const int VERBOSE = 0;  //#define VERBOSE (LOG_GENERAL | LOG_IOPORT | LOG_TIMER | LOG_EPROM)
         //#define LOG_OUTPUT_FUNC printf
+        //#include "logmacro.h"
+        void LOGMASKED(int mask, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, this, format, args); }
+        protected void LOG(string format, params object [] args) { logmacro_global.LOG(VERBOSE, this, format, args); }
 
-        void LOGINT(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_INT, format, args); }
-        void LOGIOPORT(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_IOPORT, format, args); }
-        void LOGTIMER(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_TIMER, format, args); }
-        protected void LOGEPROM(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_EPROM, format, args); }
-        protected void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
+        void LOGINT(string format, params object [] args) { LOGMASKED(LOG_INT, format, args); }
+        void LOGIOPORT(string format, params object [] args) { LOGMASKED(LOG_IOPORT, format, args); }
+        void LOGTIMER(string format, params object [] args) { LOGMASKED(LOG_TIMER, format, args); }
+        protected void LOGEPROM(string format, params object [] args) { LOGMASKED(LOG_EPROM, format, args); }
 
 
         const int PORT_COUNT = 4;
@@ -856,7 +858,7 @@ namespace mame
 
 
         //ROM_START( m68705p5 )
-        static readonly MemoryContainer<tiny_rom_entry> rom_m68705p5 = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_m68705p5 =
         {
             ROM_REGION(0x0073, "bootstrap", 0),
             ROM_LOAD("bootstrap.bin", 0x0000, 0x0073, CRC("f70a8620") + SHA1("c154f78c23f10bb903a531cb19e99121d5f7c19c")),
@@ -871,7 +873,7 @@ namespace mame
 
         protected override Pointer<tiny_rom_entry> device_rom_region()
         {
-            return new Pointer<tiny_rom_entry>(rom_m68705p5);
+            return new Pointer<tiny_rom_entry>(new MemoryContainer<tiny_rom_entry>(rom_m68705p5));
         }
 
         protected override u8 get_mask_options()

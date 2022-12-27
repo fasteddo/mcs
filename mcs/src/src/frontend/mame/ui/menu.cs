@@ -231,7 +231,7 @@ namespace mame.ui
                     stack_push(new menu_main(m_ui, container));
 
                 // ensure topmost menu is active - need a loop because it could push another menu
-                while (m_stack != null && m_stack.is_active())
+                while (m_stack != null && !m_stack.is_active())
                 {
                     m_stack.m_active = true;
                     m_stack.menu_activated();

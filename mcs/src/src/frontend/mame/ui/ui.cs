@@ -1455,6 +1455,11 @@ namespace mame
             m_font = null;  //m_font.reset();
 
             // free persistent data for other classes
+            foreach (var data in m_session_data)
+            {
+                if (data.Value is IDisposable)
+                    ((IDisposable)data.Value).Dispose();
+            }
             m_session_data.clear();
         }
 

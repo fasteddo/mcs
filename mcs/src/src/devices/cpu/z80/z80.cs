@@ -262,12 +262,12 @@ namespace mame
         };
 
 
-        device_memory_interface_z80 m_dimemory;
         device_execute_interface_z80 m_diexec;
+        device_memory_interface_z80 m_dimemory;
         device_state_interface_z80 m_distate;
 
 
-        z80_daisy_chain_interface m_daisy;
+        z80_daisy_chain_interface m_z80daisy;
 
 
         // address spaces
@@ -401,8 +401,13 @@ namespace mame
             m_class_interfaces.Add(new device_memory_interface_z80(mconfig, this));
             m_class_interfaces.Add(new device_state_interface_z80(mconfig, this));
             m_class_interfaces.Add(new device_disasm_interface_z80(mconfig, this));
+            m_diexec = GetClassInterface<device_execute_interface_z80>();
+            m_dimemory = GetClassInterface<device_memory_interface_z80>();
+            m_distate = GetClassInterface<device_state_interface_z80>();
 
-            m_daisy = new z80_daisy_chain_interface(mconfig, this);
+
+            m_class_interfaces.Add(new z80_daisy_chain_interface(mconfig, this));
+            m_z80daisy = GetClassInterface<z80_daisy_chain_interface>();
 
 
             m_program_config = new address_space_config("program", ENDIANNESS_LITTLE, 8, 16, 0);
@@ -414,7 +419,20 @@ namespace mame
         }
 
 
-        //void z80_set_cycle_tables(const uint8_t *op, const uint8_t *cb, const uint8_t *ed, const uint8_t *xy, const uint8_t *xycb, const uint8_t *ex);
+        public z80_daisy_chain_interface z80daisy { get { return m_z80daisy; } }
+
+
+        public void z80_set_cycle_tables(uint8_t [] op, uint8_t [] cb, uint8_t [] ed, uint8_t [] xy, uint8_t [] xycb, uint8_t [] ex)
+        {
+            m_cc_op = (op != null) ? op : cc_op;
+            m_cc_cb = (cb != null) ? cb : cc_cb;
+            m_cc_ed = (ed != null) ? ed : cc_ed;
+            m_cc_xy = (xy != null) ? xy : cc_xy;
+            m_cc_xycb = (xycb != null) ? xycb : cc_xycb;
+            m_cc_ex = (ex != null) ? ex : cc_ex;
+        }
+
+
         //template <typename... T> void set_memory_map(T &&... args) { set_addrmap(AS_PROGRAM, std::forward<T>(args)...); }
         //template <typename... T> void set_m1_map(T &&... args) { set_addrmap(AS_OPCODES, std::forward<T>(args)...); }
         //template <typename... T> void set_io_map(T &&... args) { set_addrmap(AS_IO, std::forward<T>(args)...); }
@@ -430,11 +448,6 @@ namespace mame
          ****************************************************************************/
         protected override void device_start()
         {
-            m_dimemory = GetClassInterface<device_memory_interface_z80>();
-            m_diexec = GetClassInterface<device_execute_interface_z80>();
-            m_distate = GetClassInterface<device_state_interface_z80>();
-
-
             if (!tables_initialised)
             {
                 uint32_t paddIdx =   0*256;  //uint8_t *padd = &SZHVC_add[  0*256];
@@ -731,8 +744,8 @@ namespace mame
                 case INPUT_LINE_IRQ0:
                     /* update the IRQ state via the daisy chain */
                     m_irq_state = (uint8_t)state;
-                    if (m_daisy.daisy_chain_present())
-                        m_irq_state = (m_daisy.daisy_update_irq_state() == ASSERT_LINE) ? (uint8_t)ASSERT_LINE : m_irq_state;
+                    if (m_z80daisy.daisy_chain_present())
+                        m_irq_state = (m_z80daisy.daisy_update_irq_state() == ASSERT_LINE) ? (uint8_t)ASSERT_LINE : m_irq_state;
 
                     /* the main execute loop will take the interrupt */
                     break;
@@ -3314,7 +3327,7 @@ namespace mame
             pop(ref m_pc);
             WZ = PC;
             m_iff1 = m_iff2;
-            m_daisy.daisy_call_reti_device();
+            m_z80daisy.daisy_call_reti_device();
         }
 
         /***************************************************************
@@ -4052,7 +4065,7 @@ namespace mame
             m_irqack_cb.op_s32(1);
 
             // fetch the IRQ vector
-            device_z80daisy_interface intf = m_daisy.daisy_get_irq_device();
+            device_z80daisy_interface intf = m_z80daisy.daisy_get_irq_device();
             int irq_vector = (intf != null) ? intf.z80daisy_irq_ack() : m_diexec.standard_irq_callback_member(this, 0);
             LOG("Z80 single int. irq_vector ${0}\n", irq_vector);  // $%02x
 
@@ -4146,6 +4159,7 @@ namespace mame
 
     static class z80_global
     {
-        public static cpu_device Z80<bool_Required>(machine_config mconfig, device_finder<cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
+        public static z80_device Z80<bool_Required>(machine_config mconfig, device_finder<z80_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
+        public static z80_device Z80<bool_Required>(machine_config mconfig, device_finder<z80_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
     }
 }

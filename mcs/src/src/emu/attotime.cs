@@ -174,7 +174,7 @@ namespace mame
         public seconds_t seconds() { return m_seconds; }
 
 
-        //static attotime from_double(double _time);
+        public static attotime from_double(double _time) { throw new emu_unimplemented(); }
 
 
         /** Create an attotime from a tick count @p ticks at the given frequency @p frequency  */

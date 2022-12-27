@@ -1,6 +1,13 @@
 ﻿# mcsForm
 
+root = true
+
 [*.cs]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
 dotnet_diagnostic.CS0162.severity = none  # Unreachable code detected
 dotnet_diagnostic.IDE0017.severity = none  # Object initialization can be simplified
 dotnet_diagnostic.IDE0018.severity = none  # Variable declaration can be inlined

@@ -434,150 +434,150 @@ namespace mame
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write8_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write8_delegate, handler_width_write8_delegate, handler_width_n_write8_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8_delegate rhandler, write8_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read8_delegate, write8_delegate, handler_width_read8_delegate, handler_width_n_read8_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read16_delegate, handler_width_read16_delegate, handler_width_n_read16_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write16_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write16_delegate, handler_width_write16_delegate, handler_width_n_write16_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16_delegate rhandler, write16_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read16_delegate, write16_delegate, handler_width_read16_delegate, handler_width_n_read16_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read32_delegate, handler_width_read32_delegate, handler_width_n_read32_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write32_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write32_delegate, handler_width_write32_delegate, handler_width_n_write32_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32_delegate rhandler, write32_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read32_delegate, write32_delegate, handler_width_read32_delegate, handler_width_n_read32_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read64_delegate, handler_width_read64_delegate, handler_width_n_read64_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write64_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write64_delegate, handler_width_write64_delegate, handler_width_n_write64_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64_delegate rhandler, write64_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read64_delegate, write64_delegate, handler_width_read64_delegate, handler_width_n_read64_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
 
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8m_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read8m_delegate, handler_width_read8m_delegate, handler_width_n_read8m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write8m_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write8m_delegate, handler_width_write8m_delegate, handler_width_n_write8m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8m_delegate rhandler, write8m_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read8m_delegate, write8m_delegate, handler_width_read8m_delegate, handler_width_n_read8m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16m_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read16m_delegate, handler_width_read16m_delegate, handler_width_n_read16m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write16m_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write16m_delegate, handler_width_write16m_delegate, handler_width_n_write16m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16m_delegate rhandler, write16m_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read16m_delegate, write16m_delegate, handler_width_read16m_delegate, handler_width_n_read16m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32m_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read32m_delegate, handler_width_read32m_delegate, handler_width_n_read32m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write32m_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write32m_delegate, handler_width_write32m_delegate, handler_width_n_write32m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32m_delegate rhandler, write32m_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read32m_delegate, write32m_delegate, handler_width_read32m_delegate, handler_width_n_read32m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64m_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read64m_delegate, handler_width_read64m_delegate, handler_width_n_read64m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write64m_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write64m_delegate, handler_width_write64m_delegate, handler_width_n_write64m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64m_delegate rhandler, write64m_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read64m_delegate, write64m_delegate, handler_width_read64m_delegate, handler_width_n_read64m_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
 
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8s_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read8s_delegate, handler_width_read8s_delegate, handler_width_n_read8s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write8s_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write8s_delegate, handler_width_write8s_delegate, handler_width_n_write8s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8s_delegate rhandler, write8s_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read8s_delegate, write8s_delegate, handler_width_read8s_delegate, handler_width_n_read8s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16s_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read16s_delegate, handler_width_read16s_delegate, handler_width_n_read16s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write16s_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write16s_delegate, handler_width_write16s_delegate, handler_width_n_write16s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16s_delegate rhandler, write16s_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read16s_delegate, write16s_delegate, handler_width_read16s_delegate, handler_width_n_read16s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32s_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read32s_delegate, handler_width_read32s_delegate, handler_width_n_read32s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write32s_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write32s_delegate, handler_width_write32s_delegate, handler_width_n_write32s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32s_delegate rhandler, write32s_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read32s_delegate, write32s_delegate, handler_width_read32s_delegate, handler_width_n_read32s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64s_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read64s_delegate, handler_width_read64s_delegate, handler_width_n_read64s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write64s_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write64s_delegate, handler_width_write64s_delegate, handler_width_n_write64s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64s_delegate rhandler, write64s_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read64s_delegate, write64s_delegate, handler_width_read64s_delegate, handler_width_n_read64s_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
 
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8sm_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read8sm_delegate, handler_width_read8sm_delegate, handler_width_n_read8sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write8sm_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write8sm_delegate, handler_width_write8sm_delegate, handler_width_n_write8sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
-        protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8sm_delegate rhandler, write8sm_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        public override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8sm_delegate rhandler, write8sm_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
+        { install_readwrite_handler_impl<read8sm_delegate, write8sm_delegate, handler_width_read8sm_delegate, handler_width_n_read8sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16sm_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read16sm_delegate, handler_width_read16sm_delegate, handler_width_n_read16sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write16sm_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write16sm_delegate, handler_width_write16sm_delegate, handler_width_n_write16sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16sm_delegate rhandler, write16sm_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read16sm_delegate, write16sm_delegate, handler_width_read16sm_delegate, handler_width_n_read16sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32sm_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read32sm_delegate, handler_width_read32sm_delegate, handler_width_n_read32sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write32sm_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write32sm_delegate, handler_width_write32sm_delegate, handler_width_n_write32sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32sm_delegate rhandler, write32sm_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read32sm_delegate, write32sm_delegate, handler_width_read32sm_delegate, handler_width_n_read32sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64sm_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read64sm_delegate, handler_width_read64sm_delegate, handler_width_n_read64sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write64sm_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write64sm_delegate, handler_width_write64sm_delegate, handler_width_n_write64sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64sm_delegate rhandler, write64sm_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read64sm_delegate, write64sm_delegate, handler_width_read64sm_delegate, handler_width_n_read64sm_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
 
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8mo_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read8mo_delegate, handler_width_read8mo_delegate, handler_width_n_read8mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write8mo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write8mo_delegate, handler_width_write8mo_delegate, handler_width_n_write8mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8mo_delegate rhandler, write8mo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read8mo_delegate, write8mo_delegate, handler_width_read8mo_delegate, handler_width_n_read8mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16mo_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read16mo_delegate, handler_width_read16mo_delegate, handler_width_n_read16mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write16mo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write16mo_delegate, handler_width_write16mo_delegate, handler_width_n_write16mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16mo_delegate rhandler, write16mo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read16mo_delegate, write16mo_delegate, handler_width_read16mo_delegate, handler_width_n_read16mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32mo_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read32mo_delegate, handler_width_read32mo_delegate, handler_width_n_read32mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write32mo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write32mo_delegate, handler_width_write32mo_delegate, handler_width_n_write32mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32mo_delegate rhandler, write32mo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read32mo_delegate, write32mo_delegate, handler_width_read32mo_delegate, handler_width_n_read32mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64mo_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read64mo_delegate, handler_width_read64mo_delegate, handler_width_n_read64mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write64mo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write64mo_delegate, handler_width_write64mo_delegate, handler_width_n_write64mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64mo_delegate rhandler, write64mo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read64mo_delegate, write64mo_delegate, handler_width_read64mo_delegate, handler_width_n_read64mo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
 
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8smo_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read8smo_delegate, handler_width_read8smo_delegate, handler_width_n_read8smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write8smo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write8smo_delegate, handler_width_write8smo_delegate, handler_width_n_write8smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read8smo_delegate rhandler, write8smo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read8smo_delegate, write8smo_delegate, handler_width_read8smo_delegate, handler_width_n_read8smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16smo_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read16smo_delegate, handler_width_read16smo_delegate, handler_width_n_read16smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write16smo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write16smo_delegate, handler_width_write16smo_delegate, handler_width_n_write16smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read16smo_delegate rhandler, write16smo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read16smo_delegate, write16smo_delegate, handler_width_read16smo_delegate, handler_width_n_read16smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32smo_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read32smo_delegate, handler_width_read32smo_delegate, handler_width_n_read32smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write32smo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write32smo_delegate, handler_width_write32smo_delegate, handler_width_n_write32smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read32smo_delegate rhandler, write32smo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read32smo_delegate, write32smo_delegate, handler_width_read32smo_delegate, handler_width_n_read32smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
         protected override void install_read_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64smo_delegate rhandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_read_handler_impl<read64smo_delegate, handler_width_read64smo_delegate, handler_width_n_read64smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler); }
         protected override void install_write_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, write64smo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
         { install_write_handler_impl<write64smo_delegate, handler_width_write64smo_delegate, handler_width_n_write64smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, whandler); }
         protected override void install_readwrite_handler(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, read64smo_delegate rhandler, write64smo_delegate whandler, u64 unitmask = 0, int cswidth = 0, u16 flags = 0)
-        { install_readwrite_handler_impl(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
+        { install_readwrite_handler_impl<read64smo_delegate, write64smo_delegate, handler_width_read64smo_delegate, handler_width_n_read64smo_delegate>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, rhandler, whandler); }
 
 
         //using address_space::install_read_tap;
@@ -838,23 +838,24 @@ namespace mame
         }
 
         //template<typename READ, typename WRITE>
-        void install_readwrite_handler_impl<READ, WRITE>(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, u16 flags, READ handler_r, WRITE handler_w)  //void install_readwrite_handler_impl(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, u16 flags, READ &handler_r, WRITE &handler_w)
+        void install_readwrite_handler_impl<READ, WRITE, handler_width_READWRITE, handler_width_n_READWRITE>(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, u16 flags, READ handler_r, WRITE handler_w)  //void install_readwrite_handler_impl(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, u16 flags, READ &handler_r, WRITE &handler_w)
+            where handler_width_READWRITE : int_const, new()
+            where handler_width_n_READWRITE : int_const, new()
         {
-            throw new emu_unimplemented();
-#if false
-            static_assert(handler_width<READ>::value == handler_width<WRITE>::value, "handler widths do not match");
-            try { handler_r.resolve(); }
-            catch (const binding_type_exception &) {
-                osd_printf_error("Binding error while installing read handler %s for range 0x%X-0x%X mask 0x%X mirror 0x%X select 0x%X umask 0x%X\n", handler_r.name(), addrstart, addrend, addrmask, addrmirror, addrselect, unitmask);
+            //static_assert(handler_width<READ>::value == handler_width<WRITE>::value, "handler widths do not match");
+            try { }  //try { handler_r.resolve(); }
+            catch (binding_type_exception)
+            {
+                osd_printf_error("Binding error while installing read handler {0} for range 0x{1}-0x{2} mask 0x{3} mirror 0x{4} select 0x{5} umask 0x{6}\n", handler_r.ToString(), addrstart, addrend, addrmask, addrmirror, addrselect, unitmask);
                 throw;
             }
-            try { handler_w.resolve(); }
-            catch (const binding_type_exception &) {
-                osd_printf_error("Binding error while installing write handler %s for range 0x%X-0x%X mask 0x%X mirror 0x%X select 0x%X umask 0x%X\n", handler_w.name(), addrstart, addrend, addrmask, addrmirror, addrselect, unitmask);
+            try { }  //try { handler_w.resolve(); }
+            catch (binding_type_exception)
+            {
+                osd_printf_error("Binding error while installing write handler {0} for range 0x{1}-0x{2} mask 0x{3} mirror 0x{4} select 0x{5} umask 0x{6}\n", handler_w.ToString(), addrstart, addrend, addrmask, addrmirror, addrselect, unitmask);
                 throw;
             }
-            install_readwrite_handler_helper<handler_width<READ>::value>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, handler_r, handler_w);
-#endif
+            install_readwrite_handler_helper<handler_width_READWRITE, handler_width_n_READWRITE, READ, WRITE>(addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, flags, handler_r, handler_w);
         }
 
         //template<int AccessWidth, typename READ>
@@ -950,10 +951,64 @@ namespace mame
             }
         }
 
+
         //template<int AccessWidth, typename READ, typename WRITE>
-        //void install_readwrite_handler_helper(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, u16 flags,
-        //                                 const READ  &handler_r,
-        //                                 const WRITE &handler_w)
+        void install_readwrite_handler_helper<int_AccessWidth, int_nAccessWidth, READ, WRITE>(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, u16 flags,  //void install_readwrite_handler_helper(offs_t addrstart, offs_t addrend, offs_t addrmask, offs_t addrmirror, offs_t addrselect, u64 unitmask, int cswidth, u16 flags,
+                                         READ  handler_r,  //const READ  &handler_r,
+                                         WRITE handler_w)  //const WRITE &handler_w)
+            where int_AccessWidth : int_const, new()
+            where int_nAccessWidth : int_const, new()
+        {
+            int AccessWidth = new int_AccessWidth().value;
+
+            if (Width < AccessWidth)
+            {
+                fatalerror("install_readwrite_handler: cannot install a {0}-wide handler in a {1}-wide bus", 8 << AccessWidth, 8 << Width);
+            }
+            else
+            {
+                VPRINTF("address_space::install_readwrite_handler({0}{1}-{2}{3} mask={4}{5} mirror={6}{7}, space width={8}, handler width={9}, {10}, {11}, {12}{13})\n",
+                        m_addrchars, addrstart, m_addrchars, addrend,
+                        m_addrchars, addrmask, m_addrchars, addrmirror,
+                        8 << Width, 8 << AccessWidth,
+                        handler_r.ToString(), handler_w.ToString(), data_width() / 4, unitmask);
+
+                offs_t nstart;
+                offs_t nend;
+                offs_t nmask;
+                offs_t nmirror;
+                u64 nunitmask;
+                int ncswidth;
+                check_optimize_all("install_readwrite_handler", 8 << AccessWidth, addrstart, addrend, addrmask, addrmirror, addrselect, unitmask, cswidth, out nstart, out nend, out nmask, out nmirror, out nunitmask, out ncswidth);
+
+                if (Width == AccessWidth)
+                {
+                    var hand_r = new handler_entry_read_delegate <int_Width, int_AddrShift>(this, flags, handler_r);
+                    hand_r.set_address_info(nstart, nmask);
+                    m_root_read.populate(nstart, nend, nmirror, hand_r);
+
+                    var hand_w = new handler_entry_write_delegate<int_Width, int_AddrShift>(this, flags, handler_w);
+                    hand_w.set_address_info(nstart, nmask);
+                    m_root_write.populate(nstart, nend, nmirror, hand_w);
+                }
+                else
+                {
+                    var hand_r = new handler_entry_read_delegate <int_AccessWidth, int_nAccessWidth>(this, flags, handler_r);
+                    memory_units_descriptor<int_Width, int_AddrShift> descriptor = new memory_units_descriptor<int_Width, int_AddrShift>((u8)AccessWidth, Endian, hand_r, nstart, nend, nmask, new uX(Width, nunitmask), ncswidth);
+                    hand_r.set_address_info(descriptor.get_handler_start(), descriptor.get_handler_mask());
+                    m_root_read.populate_mismatched(nstart, nend, nmirror, descriptor);
+                    hand_r.unref();
+
+                    var hand_w = new handler_entry_write_delegate<int_AccessWidth, int_nAccessWidth>(this, flags, handler_w);
+                    descriptor.set_subunit_handler(hand_w);
+                    hand_w.set_address_info(descriptor.get_handler_start(), descriptor.get_handler_mask());
+                    m_root_write.populate_mismatched(nstart, nend, nmirror, descriptor);
+                    hand_w.unref();
+                }
+
+                invalidate_caches(read_or_write.READWRITE);
+            }
+        }
     }
 
 

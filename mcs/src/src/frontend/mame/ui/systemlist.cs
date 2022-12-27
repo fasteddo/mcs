@@ -94,7 +94,19 @@ namespace mame.ui
         }
 
 
-        public void reset_cache() { throw new emu_unimplemented(); }
+        public void reset_cache()
+        {
+            //std::unique_lock<std::mutex> lock(m_mutex);
+            //if (m_thread)
+            //    m_thread->join();
+            //m_thread.reset();
+            m_started = false;
+            m_available = (unsigned)available.AVAIL_NONE;
+            m_systems.clear();
+            m_sorted_list.clear();
+            m_filter_data = new machine_filter_data();
+            m_bios_count = 0;
+        }
 
 
         public bool is_available(available desired)

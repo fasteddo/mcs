@@ -165,7 +165,7 @@ namespace mame
 
         devcb_write_line sync_w;
 
-        address_space_config program_config;
+        protected address_space_config program_config;
         address_space_config sprogram_config;
 
         uint16_t PPC;                    /* previous program counter */

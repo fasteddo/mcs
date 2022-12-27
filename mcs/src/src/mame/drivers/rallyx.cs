@@ -410,7 +410,7 @@ namespace mame
          *
          *************************************/
         //ROM_START( rallyx )
-        static readonly MemoryContainer<tiny_rom_entry> rom_rallyx = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_rallyx =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "1b",           0x0000, 0x1000, CRC("5882700d") + SHA1("b6029e9730f1694894fe8b729ac0ba8d6712dea9") ),

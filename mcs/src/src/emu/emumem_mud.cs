@@ -138,7 +138,7 @@ namespace mame
         public u8 get_subunit_width() { return m_access_width; }
         public endianness_t get_subunit_endian() { return m_access_endian; }
 
-        //void set_subunit_handler(handler_entry *handler) { m_handler = handler; }
+        public void set_subunit_handler(handler_entry handler) { m_handler = handler; }
         public handler_entry get_subunit_handler() { return m_handler; }
 
 

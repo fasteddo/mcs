@@ -9,6 +9,7 @@ using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -48,15 +49,6 @@ namespace mame
         }
 
 
-        //enum
-        //{
-        const int M6801_IRQ_LINE = M6800_IRQ_LINE;
-        const int M6801_TIN_LINE = M6800_IRQ_LINE + 1; // P20/Tin Input Capture line (edge sense). Active edge is selectable by internal reg.
-        const int M6801_SC1_LINE = M6800_IRQ_LINE + 2;
-        const int M6801_IS_LINE  = M6800_IRQ_LINE + 3; // IS3(6801) or ISF(6301Y)
-        //}
-
-
         //#define LOG_GENERAL (1U << 0)
         const int LOG_TX      = 1 << 1;
         //#define LOG_TXTICK  (1U << 2)
@@ -70,13 +62,25 @@ namespace mame
         //#define LOG_OUTPUT_STREAM std::cout
         //#define LOG_OUTPUT_STREAM std::cerr
 
-        void LOGTX(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_TX, format, args); }
+        //#include "logmacro.h"
+        void LOGMASKED(int mask, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, this, format, args); }
+
+        void LOGTX(string format, params object [] args) { LOGMASKED(LOG_TX, format, args); }  //#define LOGTX(...)      LOGMASKED(LOG_TX, __VA_ARGS__)
         //#define LOGTXTICK(...)  LOGMASKED(LOG_TXTICK, __VA_ARGS__)
         //#define LOGRX(...)      LOGMASKED(LOG_RX, __VA_ARGS__)
         //#define LOGRXTICK(...)  LOGMASKED(LOG_RXTICK, __VA_ARGS__)
-        public void LOGPORT(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_PORT, format, args); }
-        public void LOGSER(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_SER, format, args); }  //#define LOGSER(...)     LOGMASKED(LOG_SER, __VA_ARGS__)
-        public void LOGTIMER(string format, params object [] args) { LOGMASKED(VERBOSE, LOG_TIMER, format, args); }  //#define LOGTIMER(...)   LOGMASKED(LOG_TIMER, __VA_ARGS__)
+        void LOGPORT(string format, params object [] args) { LOGMASKED(LOG_PORT, format, args); }  //#define LOGPORT(...)    LOGMASKED(LOG_PORT, __VA_ARGS__)
+        void LOGSER(string format, params object [] args) { LOGMASKED(LOG_SER, format, args); }  //#define LOGSER(...)     LOGMASKED(LOG_SER, __VA_ARGS__)
+        void LOGTIMER(string format, params object [] args) { LOGMASKED(LOG_TIMER, format, args); }  //#define LOGTIMER(...)   LOGMASKED(LOG_TIMER, __VA_ARGS__)
+
+
+        //enum
+        //{
+        const int M6801_IRQ_LINE = M6800_IRQ_LINE;
+        const int M6801_TIN_LINE = M6800_IRQ_LINE + 1; // P20/Tin Input Capture line (edge sense). Active edge is selectable by internal reg.
+        const int M6801_SC1_LINE = M6800_IRQ_LINE + 2;
+        const int M6801_IS_LINE  = M6800_IRQ_LINE + 3; // IS3(6801) or ISF(6301Y)
+        //}
 
 
         uint16_t CT { get { return m_counter.w.l; } set { m_counter.w.l = value; } }
@@ -1135,7 +1139,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( sci_tick );
-        void sci_tick(object ptr, int param)
+        void sci_tick(object ptr, s32 param)  //void *ptr, s32 param)
         {
             throw new emu_unimplemented();
         }
@@ -1180,81 +1184,31 @@ namespace mame
     }
 
 
-#if false
-    class m6803e_cpu_device : public m6801_cpu_device
+    //class m6803e_cpu_device : public m6801_cpu_device
 
-    class hd6301_cpu_device : public m6801_cpu_device
+    //class hd6301_cpu_device : public m6801_cpu_device
 
-    // DP-40 package: HD6301V1P,  HD63A01V1P,  HD63B01V1P
-    // FP-54 package: HD6301V1F,  HD63A01V1F,  HD63B01V1F
-    // CG-40 package: HD6301V1CG, HD63A01V1CG, HD63B01V1CG
-    // CP-52 package: HD6301V1CP, HD63A01V1CP, HD63B01V1CP
-    // CP-44 package: HD6301V1L,  HD63A01V1L,  HD63B01V1L
-    // Not fully emulated yet
-    class hd6301v1_cpu_device : public hd6301_cpu_device
+    //class hd6301v1_cpu_device : public hd6301_cpu_device
 
-    // DC-40 package: HD63701V0C, HD63A701V0C, HD63B701V0C
-    // Not fully emulated yet
-    class hd63701v0_cpu_device : public hd6301_cpu_device
+    //class hd63701v0_cpu_device : public hd6301_cpu_device
 
-    // DP-40 package: HD6303RP,  HD63A03RP,  HD63B03RP
-    // FP-54 package: HD6303RF,  HD63A03RF,  HD63B03RF
-    // CG-40 package: HD6303RCG, HD63A03RCG, HD63B03RCG
-    // Not fully emulated yet
-    class hd6303r_cpu_device : public hd6301_cpu_device
+    //class hd6303r_cpu_device : public hd6301_cpu_device
 
-    class hd6301x_cpu_device : public hd6301_cpu_device
+    //class hd6301x_cpu_device : public hd6301_cpu_device
 
-    // DP-64S package: HD6301X0P,  HD63A01X0P,  HD63B01X0P
-    // FP-80  package: HD6301X0F,  HD63A01X0F,  HD63B01X0F
-    // CP-68  package: HD6301X0CP, HD63A01X0CP, HD63B01X0CP
-    // Not fully emulated yet
-    class hd6301x0_cpu_device : public hd6301x_cpu_device
+    //class hd6301x0_cpu_device : public hd6301x_cpu_device
 
-    // DC-64S package: HD63701X0C, HD63A701X0C, HD63B701X0C
-    // Not fully emulated yet
-    class hd63701x0_cpu_device : public hd6301x_cpu_device
+    //class hd63701x0_cpu_device : public hd6301x_cpu_device
 
-    // DP-64S package: HD6303XP,  HD63A03XP,  HD63B03XP
-    // FP-80  package: HD6303XF,  HD63A03XF,  HD63B03XF
-    // CP-68  package: HD6303XCP, HD63A03XCP, HD63B03XCP
-    // Not fully emulated yet
-    class hd6303x_cpu_device : public hd6301x_cpu_device
+    //class hd6303x_cpu_device : public hd6301x_cpu_device
 
-    class hd6301y_cpu_device : public hd6301x_cpu_device
+    //class hd6301y_cpu_device : public hd6301x_cpu_device
 
-    // DP-64S package: HD6301Y0P,  HD63A01Y0P,  HD63B01Y0P,  HD63C01Y0P
-    // FP-64  package: HD6301Y0F,  HD63A01Y0F,  HD63B01Y0F,  HD63C01Y0F
-    // FP-64A package: HD6301Y0H,  HD63A01Y0H,  HD63B01Y0H,  HD63C01Y0H
-    // CP-68  package: HD6301Y0CP, HD63A01Y0CP, HD63B01Y0CP, HD63C01Y0CP
-    // Not fully emulated yet
-    class hd6301y0_cpu_device : public hd6301y_cpu_device
+    //class hd6301y0_cpu_device : public hd6301y_cpu_device
 
-    // DC-64S package: HD63701Y0C, HD63A701Y0C, HD63B701Y0C, HD63C701Y0C
-    // Not fully emulated yet
-    class hd63701y0_cpu_device : public hd6301y_cpu_device
+    //class hd63701y0_cpu_device : public hd6301y_cpu_device
 
-    // DP-64S package: HD6303YP,  HD63A03YP,  HD63B03YP,  HD63C03YP
-    // FP-64  package: HD6303YF,  HD63A03YF,  HD63B03YF,  HD63C03YF
-    // FP-64A package: HD6303YH,  HD63A03YH,  HD63B03YH,  HD63C03YH
-    // CP-68  package: HD6303YCP, HD63A03YCP, HD63B03YCP, HD63C03YCP
-    // Not fully emulated yet
-    class hd6303y_cpu_device : public hd6301y_cpu_device
-#endif
-
-
-    //DECLARE_DEVICE_TYPE(M6801, m6801_cpu_device)
-    //DECLARE_DEVICE_TYPE(M6803, m6803_cpu_device)
-    //DECLARE_DEVICE_TYPE(M6803E, m6803e_cpu_device)
-    //DECLARE_DEVICE_TYPE(HD6301V1, hd6301v1_cpu_device)
-    //DECLARE_DEVICE_TYPE(HD6301X0, hd6301x0_cpu_device)
-    //DECLARE_DEVICE_TYPE(HD6301Y0, hd6301y0_cpu_device)
-    //DECLARE_DEVICE_TYPE(HD63701V0, hd63701v0_cpu_device)
-    //DECLARE_DEVICE_TYPE(HD63701X0, hd63701x0_cpu_device)
-    //DECLARE_DEVICE_TYPE(HD63701Y0, hd63701y0_cpu_device)
-    //DECLARE_DEVICE_TYPE(HD6303R, hd6303r_cpu_device)
-    //DECLARE_DEVICE_TYPE(HD6303X, hd6303x_cpu_device)
-    //DECLARE_DEVICE_TYPE(HD6303Y, hd6303y_cpu_device)
+    //class hd6303y_cpu_device : public hd6301y_cpu_device
 
 
     static class m6801_global

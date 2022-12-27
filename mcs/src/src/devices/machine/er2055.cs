@@ -23,7 +23,8 @@ namespace mame
 
 
         const int VERBOSE = 0;
-        protected void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
+        //#include "logmacro.h"
+        protected void LOG(string format, params object [] args) { logmacro_global.LOG(VERBOSE, this, format, args); }
 
 
         public class device_nvram_interface_er2055 : device_nvram_interface

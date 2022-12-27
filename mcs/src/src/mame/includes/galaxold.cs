@@ -20,8 +20,8 @@ namespace mame
     class galaxold_state : driver_device
     {
         /* devices */
-        protected required_device<cpu_device> m_maincpu;
-        protected optional_device<cpu_device> m_audiocpu;
+        protected required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
+        protected optional_device<z80_device> m_audiocpu;  //optional_device<cpu_device> m_audiocpu;
         optional_device<ttl7474_device> m_7474_9m_1;
         optional_device<ttl7474_device> m_7474_9m_2;
         protected required_device<gfxdecode_device> m_gfxdecode;
@@ -84,8 +84,8 @@ namespace mame
         protected galaxold_state(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag)
         {
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
-            m_audiocpu = new optional_device<cpu_device>(this, "audiocpu");
+            m_maincpu = new required_device<z80_device>(this, "maincpu");
+            m_audiocpu = new optional_device<z80_device>(this, "audiocpu");
             m_7474_9m_1 = new optional_device<ttl7474_device>(this, "7474_9m_1");
             m_7474_9m_2 = new optional_device<ttl7474_device>(this, "7474_9m_2");
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");

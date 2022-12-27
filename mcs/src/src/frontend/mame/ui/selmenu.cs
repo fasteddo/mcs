@@ -317,7 +317,7 @@ namespace mame.ui
                         {
                             for (int32_t x = 0; pix_size > x; ++x)
                             {
-                                bitmap.pix(y, x).op32 = BitConverter.ToUInt32(bytes, ((y * pix_size) + x) * 4);
+                                bitmap.pix(y, x).op = BitConverter.ToUInt32(bytes, ((y * pix_size) + x) * 4);
                             }
                         }
 

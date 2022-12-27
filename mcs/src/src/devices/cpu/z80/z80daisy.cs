@@ -5,9 +5,26 @@ using System;
 
 using uint8_t = System.Byte;
 
+using static mame.cpp_global;
+using static mame.emucore_global;
+using static mame.osdcore_global;
+using static mame.z80daisy_global;
+
 
 namespace mame
 {
+    static class z80daisy_global
+    {
+        //**************************************************************************
+        //  CONSTANTS
+        //**************************************************************************
+
+        // these constants are returned from the irq_state function
+        public const uint8_t Z80_DAISY_INT = 0x01;       // interrupt request mask
+        public const uint8_t Z80_DAISY_IEO = 0x02;       // interrupt disable mask (IEO)
+    }
+
+
     // ======================> z80_daisy_config
     public class z80_daisy_config
     {
@@ -22,6 +39,7 @@ namespace mame
 
 
         public device_z80daisy_interface m_daisy_next;    // next device in the chain
+        uint8_t m_last_opcode;
 
 
         // construction/destruction
@@ -32,6 +50,19 @@ namespace mame
             : base(device, "z80daisy")
         {
             m_daisy_next = null;
+            m_last_opcode = 0;
+        }
+
+
+        public override void interface_post_start()
+        {
+            device().save_item(NAME(new { m_last_opcode }));
+        }
+
+
+        public override void interface_post_reset()
+        {
+            m_last_opcode = 0;
         }
 
 
@@ -39,6 +70,10 @@ namespace mame
         public abstract int z80daisy_irq_state();
         public abstract int z80daisy_irq_ack();
         public abstract void z80daisy_irq_reti();
+
+
+        // instruction decoding
+        //void z80daisy_decode(uint8_t opcode);
     }
 
 
@@ -48,12 +83,7 @@ namespace mame
         const bool VERBOSE = false;
 
 
-        // these constants are returned from the irq_state function
-        const uint8_t Z80_DAISY_INT = 0x01;       // interrupt request mask
-        const uint8_t Z80_DAISY_IEO = 0x02;       // interrupt disable mask (IEO)
-
-
-        z80_daisy_config m_daisy_config;
+        z80_daisy_config [] m_daisy_config;
         device_z80daisy_interface m_chain;     // head of the daisy chain
 
 
@@ -70,33 +100,87 @@ namespace mame
 
 
         // configuration helpers
-        //void set_daisy_config(const z80_daisy_config *config) { m_daisy_config = config; }
+        public void set_daisy_config(z80_daisy_config [] config) { m_daisy_config = config; }
 
 
         // getters
-        public bool daisy_chain_present()
-        {
-            //throw new emu_unimplemented();
-            return false;
-        }
+        public bool daisy_chain_present() { return m_chain != null; }
 
-        //std::string daisy_show_chain() const;
+
+        string daisy_show_chain()
+        {
+            string result = "";
+
+            // loop over all devices
+            for (device_z80daisy_interface intf = m_chain; intf != null; intf = intf.m_daisy_next)
+            {
+                if (intf != m_chain)
+                    result += " -> ";
+                result += intf.device().tag();
+            }
+
+            return result;
+        }
 
 
         // interface-level overrides
         public override void interface_post_start()
         {
-            //throw new emu_unimplemented();
+            if (m_daisy_config != null)
+                daisy_init(m_daisy_config);
         }
+
 
         public override void interface_post_reset()
         {
-            //throw new emu_unimplemented();
+            // loop over all chained devices and call their reset function
+            for (device_z80daisy_interface intf = m_chain; intf != null; intf = intf.m_daisy_next)
+                intf.device().reset();
         }
 
 
         // initialization
-        //void daisy_init(const z80_daisy_config *daisy);
+        void daisy_init(z80_daisy_config [] daisy)
+        {
+            assert(daisy != null);
+
+            // create a linked list of devices
+            device_z80daisy_interface tailptr = m_chain;  //device_z80daisy_interface **tailptr = &m_chain;
+            int daisyIdx = 0;
+            for ( ; daisy[daisyIdx].devname != null; daisyIdx++)  //for ( ; daisy->devname != nullptr; daisy++)
+            {
+                // find the device
+                device_t target = device().subdevice(daisy[daisyIdx].devname);  //device_t *target = device().subdevice(daisy->devname);
+                if (target == null)
+                {
+                    target = device().siblingdevice(daisy[daisyIdx].devname);  //target = device().siblingdevice(daisy->devname);
+                    if (target == null)
+                        fatalerror("Unable to locate device '{0}'\n", daisy[daisyIdx].devname);  //fatalerror("Unable to locate device '%s'\n", daisy->devname);
+                }
+
+                // make sure it has an interface
+                device_z80daisy_interface intf;
+                if (!target.interface_(out intf))
+                    fatalerror("Device '{0}' does not implement the z80daisy interface!\n", daisy[daisyIdx].devname);  //fatalerror("Device '%s' does not implement the z80daisy interface!\n", daisy->devname);
+
+                // splice it out of the list if it was previously added
+                device_z80daisy_interface oldtailptr = tailptr;  //device_z80daisy_interface **oldtailptr = tailptr;
+                while (oldtailptr != null)  //while (*oldtailptr != nullptr)
+                {
+                    if (oldtailptr == intf)  //if (*oldtailptr == intf)
+                        oldtailptr = oldtailptr.m_daisy_next;  //*oldtailptr = (*oldtailptr)->m_daisy_next;
+                    else
+                        oldtailptr = oldtailptr.m_daisy_next;  //oldtailptr = &(*oldtailptr)->m_daisy_next;
+                }
+
+                // add the interface to the list
+                intf.m_daisy_next = tailptr;  //intf->m_daisy_next = *tailptr;
+                tailptr = intf;  //*tailptr = intf;
+                tailptr = tailptr.m_daisy_next;  //tailptr = &(*tailptr)->m_daisy_next;
+            }
+
+            osd_printf_verbose("Daisy chain = {0}\n", daisy_show_chain());
+        }
 
 
         // callbacks

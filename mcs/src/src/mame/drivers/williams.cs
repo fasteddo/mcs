@@ -98,8 +98,8 @@ namespace mame
             map.op(0x0000, 0xbfff).ram().share("videoram");
             map.op(0x0000, 0x8fff).bankr("mainbank");
             map.op(0xc000, 0xc00f).mirror(0x03f0).writeonly().share("paletteram");
-            map.op(0xc804, 0xc807).mirror(0x00f0).rw(m_pia.op(0), (offset) => { return m_pia.op(0).op0.read(offset); }, (offset, data) => { m_pia.op(0).op0.write(offset, data); });
-            map.op(0xc80c, 0xc80f).mirror(0x00f0).rw(m_pia.op(1), (offset) => { return m_pia.op(1).op0.read(offset); }, (offset, data) => { m_pia.op(1).op0.write(offset, data); });
+            map.op(0xc804, 0xc807).mirror(0x00f0).rw(m_pia[0], (offset) => { return m_pia[0].op0.read(offset); }, (offset, data) => { m_pia[0].op0.write(offset, data); });
+            map.op(0xc80c, 0xc80f).mirror(0x00f0).rw(m_pia[1], (offset) => { return m_pia[1].op0.read(offset); }, (offset, data) => { m_pia[1].op0.write(offset, data); });
             map.op(0xc900, 0xc9ff).w(vram_select_w);
             map.op(0xca00, 0xca07).mirror(0x00f8).w(blitter_w);
             map.op(0xcb00, 0xcbff).r(video_counter_r);
@@ -170,7 +170,7 @@ namespace mame
         {
             map.op(0x0000, 0x007f).ram();     // internal RAM
             map.op(0x0080, 0x00ff).ram();     // MC6810 RAM
-            map.op(0x0400, 0x0403).mirror(0x8000).rw(m_pia.op(2), (offset) => { return m_pia.op(2).op0.read(offset); }, (offset, data) => { m_pia.op(2).op0.write(offset, data); });
+            map.op(0x0400, 0x0403).mirror(0x8000).rw(m_pia[2], (offset) => { return m_pia[2].op0.read(offset); }, (offset, data) => { m_pia[2].op0.write(offset, data); });
             map.op(0xb000, 0xffff).rom();
         }
     }
@@ -471,27 +471,27 @@ namespace mame
 
             // sound hardware
             SPEAKER(config, "speaker").front_center();
-            MC1408(config, "dac", 0).add_route(ALL_OUTPUTS, "speaker", 0.25); // mc1408.ic6
+            MC1408(config, "dac", 0).disound.add_route(ALL_OUTPUTS, "speaker", 0.25); // mc1408.ic6
 
             // pia
             INPUT_MERGER_ANY_HIGH(config, "mainirq").output_handler().set_inputline(m_maincpu, M6809_IRQ_LINE).reg();
 
             INPUT_MERGER_ANY_HIGH(config, "soundirq").output_handler().set_inputline(m_soundcpu, M6808_IRQ_LINE).reg();
 
-            PIA6821(config, m_pia.op(0), 0);
-            m_pia.op(0).op0.readpa_handler().set_ioport("IN0").reg();
-            m_pia.op(0).op0.readpb_handler().set_ioport("IN1").reg();
+            PIA6821(config, m_pia[0], 0);
+            m_pia[0].op0.readpa_handler().set_ioport("IN0").reg();
+            m_pia[0].op0.readpb_handler().set_ioport("IN1").reg();
 
-            PIA6821(config, m_pia.op(1), 0);
-            m_pia.op(1).op0.readpa_handler().set_ioport("IN2").reg();
-            m_pia.op(1).op0.writepb_handler().set(snd_cmd_w).reg();
-            m_pia.op(1).op0.irqa_handler().set("mainirq", (int state) => { ((input_merger_any_high_device)subdevice("mainirq")).in_w<u32_const_0>(state); }).reg();  //m_pia[1]->irqa_handler().set("mainirq", FUNC(input_merger_any_high_device::in_w<0>));
-            m_pia.op(1).op0.irqb_handler().set("mainirq", (int state) => { ((input_merger_any_high_device)subdevice("mainirq")).in_w<u32_const_1>(state); }).reg();  //m_pia[1]->irqb_handler().set("mainirq", FUNC(input_merger_any_high_device::in_w<1>));
+            PIA6821(config, m_pia[1], 0);
+            m_pia[1].op0.readpa_handler().set_ioport("IN2").reg();
+            m_pia[1].op0.writepb_handler().set(snd_cmd_w).reg();
+            m_pia[1].op0.irqa_handler().set("mainirq", (int state) => { ((input_merger_any_high_device)subdevice("mainirq")).in_w<u32_const_0>(state); }).reg();  //m_pia[1]->irqa_handler().set("mainirq", FUNC(input_merger_any_high_device::in_w<0>));
+            m_pia[1].op0.irqb_handler().set("mainirq", (int state) => { ((input_merger_any_high_device)subdevice("mainirq")).in_w<u32_const_1>(state); }).reg();  //m_pia[1]->irqb_handler().set("mainirq", FUNC(input_merger_any_high_device::in_w<1>));
 
-            PIA6821(config, m_pia.op(2), 0);
-            m_pia.op(2).op0.writepa_handler().set("dac", (u8 data) => { ((dac_byte_interface)subdevice("dac")).data_w(data); }).reg();  //m_pia[2]->writepa_handler().set("dac", FUNC(dac_byte_interface::data_w));
-            m_pia.op(2).op0.irqa_handler().set("soundirq", (int state) => { ((input_merger_any_high_device)subdevice("soundirq")).in_w<u32_const_0>(state); }).reg();  //m_pia[2]->irqa_handler().set("soundirq", FUNC(input_merger_any_high_device::in_w<0>));
-            m_pia.op(2).op0.irqb_handler().set("soundirq", (int state) => { ((input_merger_any_high_device)subdevice("soundirq")).in_w<u32_const_1>(state); }).reg();  //m_pia[2]->irqb_handler().set("soundirq", FUNC(input_merger_any_high_device::in_w<1>));
+            PIA6821(config, m_pia[2], 0);
+            m_pia[2].op0.writepa_handler().set("dac", (u8 data) => { ((dac_byte_interface)subdevice("dac")).data_w(data); }).reg();  //m_pia[2]->writepa_handler().set("dac", FUNC(dac_byte_interface::data_w));
+            m_pia[2].op0.irqa_handler().set("soundirq", (int state) => { ((input_merger_any_high_device)subdevice("soundirq")).in_w<u32_const_0>(state); }).reg();  //m_pia[2]->irqa_handler().set("soundirq", FUNC(input_merger_any_high_device::in_w<0>));
+            m_pia[2].op0.irqb_handler().set("soundirq", (int state) => { ((input_merger_any_high_device)subdevice("soundirq")).in_w<u32_const_1>(state); }).reg();  //m_pia[2]->irqb_handler().set("soundirq", FUNC(input_merger_any_high_device::in_w<1>));
         }
     }
 
@@ -526,13 +526,13 @@ namespace mame
             // basic machine hardware
 
             // pia
-            m_pia.op(0).op0.readpa_handler().set_ioport("IN0").mask_u32(0x30).reg();
-            m_pia.op(0).op0.readpa_handler().append("mux_0", () => { return ((ls157_device)subdevice("mux_0")).output_r(); }).mask_u32(0x0f).reg();
-            m_pia.op(0).op0.readpa_handler().append("mux_1", () => { return ((ls157_device)subdevice("mux_1")).output_r(); }).lshift(6).mask_u32(0xc0).reg();
-            m_pia.op(0).op0.readpb_handler().set_ioport("IN1").mask_u32(0xfc).reg();
-            m_pia.op(0).op0.readpb_handler().append("mux_1", () => { return ((ls157_device)subdevice("mux_1")).output_r(); }).rshift(2).mask_u32(0x03).reg();
-            m_pia.op(0).op0.cb2_handler().set("mux_0", (int state) => { ((ls157_device)subdevice("mux_0")).select_w(state); }).reg();
-            m_pia.op(0).op0.cb2_handler().append("mux_1", (state) => { ((ls157_device)subdevice("mux_1")).select_w(state); }).reg();
+            m_pia[0].op0.readpa_handler().set_ioport("IN0").mask_u32(0x30).reg();
+            m_pia[0].op0.readpa_handler().append("mux_0", () => { return ((ls157_device)subdevice("mux_0")).output_r(); }).mask_u32(0x0f).reg();
+            m_pia[0].op0.readpa_handler().append("mux_1", () => { return ((ls157_device)subdevice("mux_1")).output_r(); }).lshift(6).mask_u32(0xc0).reg();
+            m_pia[0].op0.readpb_handler().set_ioport("IN1").mask_u32(0xfc).reg();
+            m_pia[0].op0.readpb_handler().append("mux_1", () => { return ((ls157_device)subdevice("mux_1")).output_r(); }).rshift(2).mask_u32(0x03).reg();
+            m_pia[0].op0.cb2_handler().set("mux_0", (int state) => { ((ls157_device)subdevice("mux_0")).select_w(state); }).reg();
+            m_pia[0].op0.cb2_handler().append("mux_1", (state) => { ((ls157_device)subdevice("mux_1")).select_w(state); }).reg();
 
             LS157(config, m_mux0, 0); // IC3 on interface board (actually LS257 with OC tied low)
             m_mux0.op0.a_in_callback().set_ioport("INP2").reg();
@@ -563,10 +563,10 @@ namespace mame
             HC55516(config, "cvsd", 0).disound.add_route(ALL_OUTPUTS, "speaker", 0.8);
 
             // pia
-            m_pia.op(0).op0.readpa_handler().set(port_0_49way_r).reg();
+            m_pia[0].op0.readpa_handler().set(port_0_49way_r).reg();
 
-            m_pia.op(2).op0.ca2_handler().set("cvsd", (int state) => { ((hc55516_device)subdevice("cvsd")).digit_w(state); }).reg();
-            m_pia.op(2).op0.cb2_handler().set("cvsd", (int state) => { ((hc55516_device)subdevice("cvsd")).clock_w(state); }).reg();
+            m_pia[2].op0.ca2_handler().set("cvsd", (int state) => { ((hc55516_device)subdevice("cvsd")).digit_w(state); }).reg();
+            m_pia[2].op0.cb2_handler().set("cvsd", (int state) => { ((hc55516_device)subdevice("cvsd")).clock_w(state); }).reg();
         }
     }
 
@@ -599,7 +599,7 @@ namespace mame
          *************************************/
 
         //ROM_START( defender )
-        static readonly MemoryContainer<tiny_rom_entry> rom_defender = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_defender =
         {
             ROM_REGION( 0x19000, "maincpu", 0 ),
             ROM_LOAD( "defend.1",     0x0d000, 0x0800, CRC("c3e52d7e") + SHA1("a57f5278ffe44248fc73f9925d107f4024ad981a") ),
@@ -735,7 +735,7 @@ namespace mame
 
         */
         //ROM_START( stargate ) /* "B" ROMs labeled 3002-13 through 3002-24, identical data */
-        static readonly MemoryContainer<tiny_rom_entry> rom_stargate = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_stargate =
         {
             ROM_REGION( 0x19000, "maincpu", 0 ),
             ROM_LOAD( "stargate_rom_10-a_3002-10.a7", 0x0d000, 0x1000, CRC("60b07ff7") + SHA1("ba833f48ddfc1bd04ddb41b1d1c840d66ee7da30") ),
@@ -868,7 +868,7 @@ namespace mame
 
         */
         //ROM_START( robotron ) /* Solid Blue labels, "B" type ROMs labeled 3005-13 through 3005-24 */
-        static readonly MemoryContainer<tiny_rom_entry> rom_robotron = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_robotron =
         {
             ROM_REGION( 0x19000, "maincpu", 0 ),
             ROM_LOAD( "2084_rom_10b_3005-22.a7", 0x0d000, 0x1000, CRC("13797024") + SHA1("d426a50e75dabe936de643c83a548da5e399331c") ),
@@ -1017,7 +1017,7 @@ namespace mame
 
         */
         //ROM_START( joust ) /* Solid green labels - contains the same data as the white label with green stripe 3006-52 through 3006-63 set */
-        static readonly MemoryContainer<tiny_rom_entry> rom_joust = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_joust =
         {
             ROM_REGION( 0x19000, "maincpu", 0 ),
             ROM_LOAD( "joust_rom_10b_3006-22.a7", 0x0d000, 0x1000, CRC("3f1c4f89") + SHA1("90864a8ab944df45287bf0f68ad3a85194077a82") ),
@@ -1203,7 +1203,7 @@ namespace mame
 
         */
         //ROM_START( sinistar ) // rev. 3
-        static readonly MemoryContainer<tiny_rom_entry> rom_sinistar = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_sinistar =
         {
             ROM_REGION( 0x19000, "maincpu", 0 ), // solid RED labels with final production part numbers
             ROM_LOAD( "sinistar_rom_10-b_16-3004-62.4c", 0x0e000, 0x1000, CRC("3d670417") + SHA1("81802622bee8dbea5c0f08019d87d941dcdbe292") ),

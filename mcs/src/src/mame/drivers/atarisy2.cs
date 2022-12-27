@@ -6,6 +6,7 @@ using System;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using uint8_t = System.Byte;
@@ -102,7 +103,7 @@ namespace mame
          *************************************/
 
         //TIMER_DEVICE_CALLBACK_MEMBER(atarisy2_state::scanline_update)
-        protected void scanline_update(timer_device timer, object ptr, int param)
+        protected void scanline_update(timer_device timer, object ptr, s32 param)  //void *ptr, s32 param
         {
             int scanline = param;
             if (scanline <= m_screen.op0.height())
@@ -140,7 +141,7 @@ namespace mame
             save_item(NAME(new { m_sound_reset_state }));
 
             for (int bank = 0; bank < 2; bank++)
-                m_rombank.op(bank).op0.configure_entries(0, 64, new PointerU8(memregion("maincpu").base_()) + 0x10000, 0x2000);
+                m_rombank[bank].op0.configure_entries(0, 64, new PointerU8(memregion("maincpu").base_()) + 0x10000, 0x2000);
         }
 
 
@@ -189,7 +190,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(atarisy2_state::delayed_int_enable_w)
-        void delayed_int_enable_w(object ptr, int param)
+        void delayed_int_enable_w(object ptr, s32 param)  //void *ptr, s32 param)
         {
             m_interrupt_enable = (uint8_t)param;
         }
@@ -254,7 +255,7 @@ namespace mame
             uint8_t banknumber = (uint8_t)((((uint32_t)data >> 10) & 077) ^ 0x03);
             banknumber = (uint8_t)bitswap(banknumber, 5, 4, 1, 0, 3, 2);  //banknumber = bitswap<6>(banknumber, 5, 4, 1, 0, 3, 2);
 
-            m_rombank.op((int)offset).op0.set_entry(banknumber);
+            m_rombank[(int)offset].op0.set_entry(banknumber);
         }
 
 
@@ -343,8 +344,8 @@ namespace mame
             if ((data & 0x08) == 0) rbott += 1.0 / 47;
             if ((data & 0x10) == 0) rbott += 1.0 / 22;
             gain = (rbott == 0) ? 1.0 : ((1.0 / rbott) / (rtop + (1.0 / rbott)));
-            m_pokey.op(0).op0.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
-            m_pokey.op(1).op0.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
+            m_pokey[0].op0.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
+            m_pokey[1].op0.disound.set_output_gain(ALL_OUTPUTS, (float)gain);
 
             // bits 5-7 control the volume of the TMS5220, using 22k, 47k, and 100k resistors
             if (m_tms5220.found())
@@ -497,9 +498,9 @@ namespace mame
         {
             map.op(0x0000, 0x0fff).mirror(0x2000).ram();
             map.op(0x1000, 0x17ff).mirror(0x2000).rw("eeprom", (address_space space, offs_t offset) => { return ((eeprom_parallel_28xx_device)subdevice("eeprom")).read(space, offset); }, (offs_t offset, u8 data) => { ((eeprom_parallel_28xx_device)subdevice("eeprom")).write(offset, data); });  //map(0x1000, 0x17ff).mirror(0x2000).rw("eeprom", FUNC(eeprom_parallel_28xx_device::read), FUNC(eeprom_parallel_28xx_device::write));
-            map.op(0x1800, 0x180f).mirror(0x2780).rw(m_pokey.op(0), (offset) => { return m_pokey.op(0).op0.read(offset); }, (offs_t offset, u8 data) => { m_pokey.op(0).op0.write(offset, data); });  //map(0x1800, 0x180f).mirror(0x2780).rw(m_pokey[0], FUNC(pokey_device::read), FUNC(pokey_device::write));
+            map.op(0x1800, 0x180f).mirror(0x2780).rw(m_pokey[0], (offset) => { return m_pokey[0].op0.read(offset); }, (offs_t offset, u8 data) => { m_pokey[0].op0.write(offset, data); });  //map(0x1800, 0x180f).mirror(0x2780).rw(m_pokey[0], FUNC(pokey_device::read), FUNC(pokey_device::write));
             map.op(0x1810, 0x1813).mirror(0x278c).r(leta_r);
-            map.op(0x1830, 0x183f).mirror(0x2780).rw(m_pokey.op(1), (offset) => { return m_pokey.op(1).op0.read(offset); }, (offs_t offset, u8 data) => { m_pokey.op(1).op0.write(offset, data); });  //map(0x1830, 0x183f).mirror(0x2780).rw(m_pokey[1], FUNC(pokey_device::read), FUNC(pokey_device::write));
+            map.op(0x1830, 0x183f).mirror(0x2780).rw(m_pokey[1], (offset) => { return m_pokey[1].op0.read(offset); }, (offs_t offset, u8 data) => { m_pokey[1].op0.write(offset, data); });  //map(0x1830, 0x183f).mirror(0x2780).rw(m_pokey[1], FUNC(pokey_device::read), FUNC(pokey_device::write));
             map.op(0x1840, 0x1840).mirror(0x278f).r(switch_6502_r);
             map.op(0x1850, 0x1851).mirror(0x278e).rw(m_ym2151, (offset) => { return m_ym2151.op0.read(offset); }, (offs_t offset, u8 data) => { m_ym2151.op0.write(offset, data); });  //map(0x1850, 0x1851).mirror(0x278e).rw(m_ym2151, FUNC(ym2151_device::read), FUNC(ym2151_device::write));
             map.op(0x1860, 0x1860).mirror(0x278f).r(sound_6502_r);
@@ -822,13 +823,13 @@ namespace mame
             m_ym2151.op0.disound.add_route(0, "lspeaker", 0.60);
             m_ym2151.op0.disound.add_route(1, "rspeaker", 0.60);
 
-            POKEY(config, m_pokey.op(0), SOUND_CLOCK / 8);
-            m_pokey.op(0).op0.allpot_r().set_ioport("DSW0").reg();
-            m_pokey.op(0).op0.disound.add_route(ALL_OUTPUTS, "lspeaker", 1.35);
+            POKEY(config, m_pokey[0], SOUND_CLOCK / 8);
+            m_pokey[0].op0.allpot_r().set_ioport("DSW0").reg();
+            m_pokey[0].op0.disound.add_route(ALL_OUTPUTS, "lspeaker", 1.35);
 
-            POKEY(config, m_pokey.op(1), SOUND_CLOCK / 8);
-            m_pokey.op(1).op0.allpot_r().set_ioport("DSW1").reg();
-            m_pokey.op(1).op0.disound.add_route(ALL_OUTPUTS, "rspeaker", 1.35);
+            POKEY(config, m_pokey[1], SOUND_CLOCK / 8);
+            m_pokey[1].op0.allpot_r().set_ioport("DSW1").reg();
+            m_pokey[1].op0.disound.add_route(ALL_OUTPUTS, "rspeaker", 1.35);
 
             TMS5220C(config, m_tms5220, MASTER_CLOCK / 4 / 4 / 2);
             m_tms5220.op0.disound.add_route(ALL_OUTPUTS, "lspeaker", 0.75);
@@ -873,7 +874,7 @@ namespace mame
          *************************************/
 
         //ROM_START( paperboy ) // ALL of these roms should be 136034-xxx but the correct labels aren't known per game rev!
-        static readonly MemoryContainer<tiny_rom_entry> rom_paperboy = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_paperboy =
         {
             ROM_REGION( 0x90000, "maincpu", 0 ), // 9*64k for T11 code
             ROM_LOAD16_BYTE( "cpu_l07.rv3", 0x008000, 0x004000, CRC("4024bb9b") + SHA1("9030ce5a6a1a3d769c699a92b32a55013f9766aa") ),
@@ -924,7 +925,7 @@ namespace mame
 
 
         //ROM_START( 720 )
-        static readonly MemoryContainer<tiny_rom_entry> rom_720 = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_720 =
         {
             ROM_REGION( 0x90000, "maincpu", 0 ),     // 9 * 64k T11 code
             ROM_LOAD16_BYTE( "136047-3126.7lm", 0x008000, 0x004000, CRC("43abd367") + SHA1("bb58c42f25ef0ee5357782652e9e2b28df0ba82e") ),

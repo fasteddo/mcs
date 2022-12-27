@@ -171,7 +171,7 @@ namespace mame
                 if (event_index >= (int)std.size(m_queue))
                 {
                     m_qindex--;
-                    empty_event_queue();
+                    empty_event_queue(null, 0);
                     event_index = m_qindex++;
                     m_execute.device().logerror("Exceeded pending input line event queue on device '{0}'!\n", m_execute.device().tag());
                 }
@@ -214,7 +214,7 @@ namespace mame
             //  empty_event_queue - empty our event queue
             //-------------------------------------------------
             //TIMER_CALLBACK_MEMBER(empty_event_queue);
-            void empty_event_queue(object ptr = null, int param = 0)
+            void empty_event_queue(object ptr, s32 param)  //void *ptr, s32 param)
             {
                 if (TEMPLOG) osd_printf_info("empty_queue({0},{1},{2})\n", m_execute.device().tag(), m_linenum, m_qindex);
 
@@ -416,11 +416,11 @@ namespace mame
         }
 
 
-        //void remove_vblank_int()
-        //{
-        //    m_vblank_interrupt = device_interrupt_delegate(*this);
-        //    m_vblank_interrupt_screen = nullptr;
-        //}
+        public void remove_vblank_int()
+        {
+            m_vblank_interrupt = null;  //m_vblank_interrupt = device_interrupt_delegate(*this);
+            m_vblank_interrupt_screen = null;
+        }
 
 
         //template <typename F> void set_periodic_int(F &&cb, const char *name, const attotime &rate)
@@ -434,6 +434,7 @@ namespace mame
         //    m_timed_interrupt_period = rate;
         //}
 
+        public void set_periodic_int(string target, device_interrupt_delegate function, attotime rate) { set_periodic_int(function, rate); }
         public void set_periodic_int(device_interrupt_delegate function, attotime rate)
         {
             m_timed_interrupt = function;  //m_timed_interrupt.set(std::forward<F>(cb), name);
@@ -530,7 +531,7 @@ namespace mame
         //-------------------------------------------------
         //  suspend - set a suspend reason for this device
         //-------------------------------------------------
-        void suspend(u32 reason, bool eatcycles)
+        public void suspend(u32 reason, bool eatcycles)
         {
             if (TEMPLOG) osd_printf_info("suspend {0} ({1})\n", device().tag(), reason);
 
@@ -951,7 +952,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(trigger_periodic_interrupt);
-        void trigger_periodic_interrupt(object ptr, int param)
+        void trigger_periodic_interrupt(object ptr, s32 param)  //void *ptr, s32 param)
         {
             // bail if there is no routine
             if (!suspended(SUSPEND_REASON_HALT | SUSPEND_REASON_RESET | SUSPEND_REASON_DISABLE | SUSPEND_REASON_CLOCK))
@@ -963,7 +964,10 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(irq_pulse_clear) { set_input_line(int(param), CLEAR_LINE); }
-        void irq_pulse_clear(object ptr, s32 param) { set_input_line(param, CLEAR_LINE); }
+        void irq_pulse_clear(object ptr, s32 param)  //void *ptr, s32 param)
+        {
+            set_input_line(param, CLEAR_LINE);
+        }
 
 
         //-------------------------------------------------

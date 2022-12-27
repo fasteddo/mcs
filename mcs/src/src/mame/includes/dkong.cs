@@ -72,7 +72,7 @@ namespace mame
 
 
         /* devices */
-        required_device<cpu_device> m_maincpu;
+        required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
         optional_device<mcs48_cpu_device> m_soundcpu;
         optional_device<eeprom_serial_93cxx_device> m_eeprom;
         optional_device<n2a03_device> m_dev_n2a03a; /* dkong3 */
@@ -164,7 +164,7 @@ namespace mame
         public dkong_state(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag)
         {
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
+            m_maincpu = new required_device<z80_device>(this, "maincpu");
             m_soundcpu = new optional_device<mcs48_cpu_device>(this, "soundcpu");
             m_eeprom = new optional_device<eeprom_serial_93cxx_device>(this, "eeprom");
             m_dev_n2a03a = new optional_device<n2a03_device>(this, "n2a03a");

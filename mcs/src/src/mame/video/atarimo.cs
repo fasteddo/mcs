@@ -4,6 +4,7 @@
 using System;
 
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using optional_shared_ptr_u16 = mame.shared_ptr_finder_u16<mame.bool_const_false>;  //using optional_shared_ptr_u16 = shared_ptr_finder_u16<false>;
 using size_t = System.UInt64;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -321,8 +322,8 @@ namespace mame
         uint32_t m_yscroll;            // yscroll offset
 
         // arrays
-        Pointer<uint16_t> m_slipram;  //uint16_t *              m_slipram;    // pointer to the SLIP RAM  //uint16_t *              m_slipram;    // pointer to the SLIP RAM
-        optional_shared_ptr<u16> m_slipramshare;
+        PointerU16 m_slipram;  //uint16_t *              m_slipram;    // pointer to the SLIP RAM  //uint16_t *              m_slipram;    // pointer to the SLIP RAM
+        optional_shared_ptr_u16 m_slipramshare;
         std.vector<uint32_t> m_codelookup = new std.vector<uint32_t>();       // lookup table for codes
         std.vector<uint8_t> m_colorlookup = new std.vector<uint8_t>();       // lookup table for colors
         std.vector<uint8_t> m_gfxlookup = new std.vector<uint8_t>();         // lookup table for graphics
@@ -381,7 +382,7 @@ namespace mame
             m_xscroll = 0;
             m_yscroll = 0;
             m_slipram = null;
-            m_slipramshare = new optional_shared_ptr<u16>(this, "slip");
+            m_slipramshare = new optional_shared_ptr_u16(this, "slip");
             m_activelast = null;
             m_last_xpos = 0;
             m_next_xpos = 0;
@@ -568,7 +569,7 @@ namespace mame
 
             // Get the slipram from the share if not already explicitly set
             if (m_slipram == null)
-                m_slipram = new Pointer<u16>(m_slipramshare.op);
+                m_slipram = new PointerU16(m_slipramshare.op);
 
             // allocate and initialize the code lookup
             int codesize = round_to_powerof2((int)m_codemask.mask());

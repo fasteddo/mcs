@@ -95,7 +95,7 @@ namespace mame.ui
             // suppress "requires external artwork" warning when external artwork was loaded
             if (config.root_device().has_running_machine())
             {
-                for (render_target target = config.root_device().machine().render().first_target(); target != null; target = target.next())
+                foreach (render_target target in config.root_device().machine().render().targets())
                 {
                     if (!target.hidden() && target.external_artwork())
                     {

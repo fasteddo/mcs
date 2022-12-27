@@ -777,7 +777,7 @@ namespace mame
 
 
         //ROM_START( gunfight )
-        static readonly MemoryContainer<tiny_rom_entry> rom_gunfight = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_gunfight =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "7609h.bin",  0x0000, 0x0400, CRC("0b117d73") + SHA1("99d01313e251818d336281700e206d9003c71dae") ),
@@ -832,7 +832,7 @@ namespace mame
 
 
         //ROM_START( invaders )
-        static readonly MemoryContainer<tiny_rom_entry> rom_invaders = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_invaders =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "invaders.h", 0x0000, 0x0800, CRC("734f5ad8") + SHA1("ff6200af4c9110d8181249cbcef1a8a40fa40b7f") ),

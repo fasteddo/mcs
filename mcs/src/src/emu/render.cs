@@ -1347,7 +1347,10 @@ namespace mame
         //-------------------------------------------------
         //  index - return the index of this target
         //-------------------------------------------------
-        int index() { return m_manager.targetlist().indexof(this); }
+        int index()
+        {
+            return m_manager.m_targetlist.indexof(this);
+        }
 
 
         // setters
@@ -1539,61 +1542,101 @@ namespace mame
                     if ((target_orientation & ORIENTATION_SWAP_XY) != 0)
                         src_aspect = 1.0f / src_aspect;
 
-                    // get target aspect
-                    float target_aspect = (float)target_width / (float)target_height * target_pixel_aspect;
+                    // we need the ratio of target to source aspect
+                    float aspect_ratio = m_keepaspect ? (float)target_width / (float)target_height * target_pixel_aspect / src_aspect : 1.0f;
+
+                    // first compute (a, b) scale factors to fit the screen
+                    float a = (float)target_width / src_width;
+                    float b = (float)target_height / src_height;
 
                     // apply automatic axial stretching if required
                     int scale_mode = m_scale_mode;
-                    if (m_scale_mode == SCALE_FRACTIONAL_AUTO)
+                    if (scale_mode == SCALE_FRACTIONAL_AUTO)
+                        scale_mode = (((int)m_manager.machine().system().flags & ORIENTATION_SWAP_XY) ^ (target_orientation & ORIENTATION_SWAP_XY)) != 0 ?
+                                    SCALE_FRACTIONAL_Y : SCALE_FRACTIONAL_X;
+
+                    // determine the scaling method for each axis
+                    bool a_is_fract = (scale_mode == SCALE_FRACTIONAL_X || scale_mode == SCALE_FRACTIONAL);
+                    bool b_is_fract = (scale_mode == SCALE_FRACTIONAL_Y || scale_mode == SCALE_FRACTIONAL);
+
+                    // check if we have user defined scale factors, if so use them instead, but only on integer axes
+                    int a_user = a_is_fract ? 0 : m_int_scale_x;
+                    int b_user = b_is_fract ? 0 : m_int_scale_y;
+
+                    // we allow overscan either explicitely or if integer scale factors are forced by user
+                    bool int_overscan = m_int_overscan || (m_keepaspect && (a_user != 0 || b_user != 0));
+                    float a_max = std.max(a, (float)a_user);
+                    float b_max = std.max(b, (float)b_user);
+
+
+                    // get the usable bounding box considering the type of scaling for each axis
+                    float usable_aspect = (a_is_fract ? a : std.max(1.0f, floorf(a))) * src_width /
+                                         ((b_is_fract ? b : std.max(1.0f, floorf(b))) * src_height) * target_pixel_aspect;
+
+                    // depending on the relative shape between target and source, let's define 'a' and 'b' so that:
+                    // * a is the leader axis (first to hit a boundary)
+                    // * b is the follower axis
+                    if (usable_aspect > src_aspect)
                     {
-                        bool is_rotated = (((int)m_manager.machine().system().flags & ORIENTATION_SWAP_XY) ^ (target_orientation & ORIENTATION_SWAP_XY)) != 0;
-                        scale_mode = is_rotated ? SCALE_FRACTIONAL_Y : SCALE_FRACTIONAL_X;
+                        std.swap(ref a, ref b);
+                        std.swap(ref a_user, ref b_user);
+                        std.swap(ref a_is_fract, ref b_is_fract);
+                        std.swap(ref a_max, ref b_max);
+                        aspect_ratio = 1.0f / aspect_ratio;
                     }
 
-                    // first compute scale factors to fit the screen
-                    float xscale = (float)target_width / src_width;
-                    float yscale = (float)target_height / src_height;
+                    // now find an (a, b) pair that best fits our boundaries and scale options
+                    float a_best = 1.0f, b_best = 1.0f;
+                    float diff = 1000;
 
-                    // apply aspect correction
-                    if (m_keepaspect)
+                    // fill (a0, a1) range
+                    float u = a_user == 0 ? a : (float)a_user;
+                    float [] a_range = new float [] { a_is_fract ? u : std.max(1.0f, floorf(u)), a_is_fract ? u : std.max(1.0f, roundf(u)) };
+
+                    foreach (float aa in a_range)
                     {
-                        if (target_aspect > src_aspect)
-                            xscale *= src_aspect / target_aspect;
-                        else
-                            yscale *= target_aspect / src_aspect;
-                    }
+                        // apply aspect correction to 'b' axis if needed, considering resulting 'a' borders
+                        float ba = b * (m_keepaspect ? aspect_ratio * (aa / a) : 1.0f);
 
-                    bool x_fits = render_round_nearest(xscale) * src_width <= target_width;
-                    bool y_fits = render_round_nearest(yscale) * src_height <= target_height;
+                        // fill (b0, b1) range
+                        float v = b_user == 0 ? ba : (float)b_user;
+                        float [] b_range = new float [] { b_is_fract ? v : std.max(1.0f, floorf(v)), b_is_fract ? v : std.max(1.0f, roundf(v)) };
 
-                    // compute integer scale factors
-                    float integer_x = std.max(1.0f, (float)(m_int_overscan || x_fits ? render_round_nearest(xscale) : std.floor(xscale)));
-                    float integer_y = std.max(1.0f, (float)(m_int_overscan || y_fits ? render_round_nearest(yscale) : std.floor(yscale)));
+                        foreach (float bb in b_range)
+                        {
+                            // we may need to propagate proportions back to 'a' axis
+                            float ab = aa;
+                            if (m_keepaspect && a_user == 0)
+                            {
+                                if (a_is_fract) ab *= (bb / ba);
+                                else if (b_user != 0) ab = std.max(1.0f, roundf(ab * (bb / ba)));
+                            }
 
-                    // check if we have user defined scale factors, if so use them instead
-                    integer_x = m_int_scale_x > 0 ? m_int_scale_x : integer_x;
-                    integer_y = m_int_scale_y > 0 ? m_int_scale_y : integer_y;
+                            // if overscan isn't allowed, discard values that exceed the usable bounding box, except a minimum of 1.0f
+                            if (!int_overscan && ((ab > a_max && bb > 1.0f) || (bb > b_max && ab > 1.0f)))
+                                continue;
 
-                    // now apply desired scale mode
-                    if (scale_mode == SCALE_FRACTIONAL_X)
-                    {
-                        if (m_keepaspect) xscale *= integer_y / yscale;
-                        yscale = integer_y;
+                            // score the result
+                            float new_diff = fabsf(aspect_ratio * (a / b) - (ab / bb));
+
+                            if (new_diff <= diff)
+                            {
+                                diff = new_diff;
+                                a_best = ab;
+                                b_best = bb;
+                            }
+                        }
                     }
-                    else if (scale_mode == SCALE_FRACTIONAL_Y)
-                    {
-                        if (m_keepaspect) yscale *= integer_x / xscale;
-                        xscale = integer_x;
-                    }
-                    else
-                    {
-                        xscale = integer_x;
-                        yscale = integer_y;
-                    }
+                    a = a_best;
+                    b = b_best;
+
+                    // restore orientation
+                    if (usable_aspect > src_aspect)
+                        std.swap(ref a, ref b);
 
                     // set the final width/height
-                    visible_width = (int)render_round_nearest(src_width * xscale);
-                    visible_height = (int)render_round_nearest(src_height * yscale);
+                    visible_width = (int)render_round_nearest(src_width * a);
+                    visible_height = (int)render_round_nearest(src_height * b);
                     break;
                 }
             }
@@ -3086,7 +3129,7 @@ namespace mame
         running_machine m_machine;          // reference back to the machine
 
         // array of live targets
-        simple_list<render_target> m_targetlist = new simple_list<render_target>();       // list of targets
+        public simple_list<render_target> m_targetlist = new simple_list<render_target>();       // list of targets
         render_target m_ui_target;        // current UI target
 
         // texture lists
@@ -3212,12 +3255,9 @@ namespace mame
                 m_targetlist.remove(target);
         }
 
-
-        //const simple_list<render_target> &targets() const { return m_targetlist; }
-
+        public simple_list<render_target> targets() { return m_targetlist; }
 
         public render_target first_target() { return m_targetlist.first(); }
-        public simple_list<render_target> targetlist() { return m_targetlist; }
 
         //-------------------------------------------------
         //  target_by_index - get a render_target by index

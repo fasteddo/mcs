@@ -17,7 +17,8 @@ namespace mame
     public class eeprom_parallel_base_device : eeprom_base_device
     {
         const int VERBOSE = 0;  //#define VERBOSE 1
-        protected void LOG(string format, params object [] args) { LOG(VERBOSE, format, args); }
+        //#include "logmacro.h"
+        protected void LOG(string format, params object [] args) { logmacro_global.LOG(VERBOSE, this, format, args); }
 
 
         // construction/destruction

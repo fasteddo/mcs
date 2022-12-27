@@ -60,8 +60,8 @@ namespace mame
         //static constexpr int SIDAM_HBSTART    = (256 * SIDAM_XSCALE);
 
 
-        required_device<cpu_device> m_maincpu;
-        optional_device<cpu_device> m_audiocpu;
+        required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
+        optional_device<z80_device> m_audiocpu;  //optional_device<cpu_device> m_audiocpu;
         optional_device_array<ay8910_device, u32_const_3> m_ay8910;
         optional_device<ay8910_device> m_ay8910_cclimber;
         optional_device_array<i8255_device, u32_const_3> m_ppi8255;
@@ -129,8 +129,8 @@ namespace mame
         public galaxian_state(machine_config mconfig, device_type type, string tag)
             : base(mconfig, type, tag)
         {
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
-            m_audiocpu = new optional_device<cpu_device>(this, "audiocpu");
+            m_maincpu = new required_device<z80_device>(this, "maincpu");
+            m_audiocpu = new optional_device<z80_device>(this, "audiocpu");
             m_ay8910 = new optional_device_array<ay8910_device, u32_const_3>(this, "8910.{0}", 0, (base_, tag_) => { return new device_finder<ay8910_device, bool_const_false>(base_, tag_); });  // "8910.%u"
             m_ay8910_cclimber = new optional_device<ay8910_device>(this, "cclimber_audio:aysnd");
             m_ppi8255 = new optional_device_array<i8255_device, u32_const_3>(this, "ppi8255_{0}", 0, (base_, tag_) => { return new device_finder<i8255_device, bool_const_false>(base_, tag_); });  // ppi8255_%u

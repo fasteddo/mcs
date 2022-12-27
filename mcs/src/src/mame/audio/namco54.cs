@@ -4,6 +4,7 @@
 using System;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -37,7 +38,7 @@ namespace mame
 
 
         //ROM_START( namco_54xx )
-        static readonly MemoryContainer<tiny_rom_entry> rom_namco_54xx = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_namco_54xx =
         {
             ROM_REGION( 0x400, "mcu", 0 ),
             ROM_LOAD( "54xx.bin",     0x0000, 0x0400, CRC("ee7357e0") + SHA1("01bdf984a49e8d0cc8761b2cc162fd6434d5afbe") ),
@@ -50,7 +51,6 @@ namespace mame
         required_device<mb88_cpu_device> m_cpu;
         required_device<discrete_device> m_discrete;
 
-        attotime m_irq_duration;
         int m_basenode;
         uint8_t m_latched_cmd;
 
@@ -60,7 +60,6 @@ namespace mame
         {
             m_cpu = new required_device<mb88_cpu_device>(this, "mcu");
             m_discrete = new required_device<discrete_device>(this, finder_base.DUMMY_TAG);
-            m_irq_duration = attotime.from_usec(100);
             m_basenode = 0;
             m_latched_cmd = 0;
         }
@@ -69,8 +68,6 @@ namespace mame
         //template <typename T> void set_discrete(T &&tag) { m_discrete.set_tag(std::forward<T>(tag)); }
         public void set_discrete(string tag) { m_discrete.set_tag(tag); }
         public void set_basenote(int node) { m_basenode = node; }
-
-        //namco_54xx_device &set_irq_duration(attotime t) { m_irq_duration = t; return *this; }
 
 
         //WRITE_LINE_MEMBER( namco_54xx_device::reset )
@@ -84,8 +81,7 @@ namespace mame
         //WRITE_LINE_MEMBER( chip_select );
         public void chip_select(int state)
         {
-            // TODO: broken sound when using this
-            //m_cpu->set_input_line(0, state);
+            m_cpu.op0.set_input_line(0, state);
         }
 
 
@@ -117,10 +113,7 @@ namespace mame
 
         public void write(uint8_t data)
         {
-            machine().scheduler().synchronize(latch_callback, data);  //timer_expired_delegate(FUNC(namco_54xx_device::latch_callback),this), data);
-
-            // TODO: should use chip_select line for this
-            m_cpu.op0.pulse_input_line(0, m_irq_duration);
+            machine().scheduler().synchronize(write_sync, data);  //machine().scheduler().synchronize(timer_expired_delegate(FUNC(namco_54xx_device::write_sync),this), data);
         }
 
 
@@ -140,7 +133,7 @@ namespace mame
         //-------------------------------------------------
         protected override Pointer<tiny_rom_entry> device_rom_region()
         {
-            return new Pointer<tiny_rom_entry>(rom_namco_54xx);
+            return new Pointer<tiny_rom_entry>(new MemoryContainer<tiny_rom_entry>(rom_namco_54xx));
         }
 
 
@@ -157,8 +150,8 @@ namespace mame
         }
 
 
-        //TIMER_CALLBACK_MEMBER( namco_54xx_device::latch_callback )
-        void latch_callback(object ptr, int param)
+        //TIMER_CALLBACK_MEMBER( namco_54xx_device::write_sync )
+        void write_sync(object ptr, s32 param)  //void *ptr, s32 param)
         {
             m_latched_cmd = (uint8_t)param;
         }

@@ -10,6 +10,7 @@ using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_val
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -260,7 +261,7 @@ namespace mame
         public devcb_write8.binder write_r(int Port) { return m_write_r[Port].bind(); }  //template <std::size_t Port> auto write_r() { return m_write_r[Port].bind(); }
 
         // SI: serial input
-        //auto read_si() { return m_read_si.bind(); }
+        public devcb_read_line.binder read_si() { return m_read_si.bind(); }  //auto read_si() { return m_read_si.bind(); }
 
         // SO: serial output
         //auto write_so() { return m_write_so.bind(); }
@@ -924,8 +925,10 @@ namespace mame
 
         void device_execute_interface_execute_set_input(int state)
         {
-            /* on rising edge trigger interrupt */
-            if ( (m_pio & 0x04) != 0 && m_nf == 0 && state != CLEAR_LINE )
+            /* On rising edge trigger interrupt.
+             * Note this is a logical level, the actual pin is high-to-low voltage
+             * triggered. */
+            if ( (m_pio & INT_CAUSE_EXTERNAL) != 0 && m_nf == 0 && state != CLEAR_LINE )
             {
                 m_pending_interrupt |= INT_CAUSE_EXTERNAL;
             }
@@ -1015,7 +1018,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER( mb88_cpu_device::serial_timer )
-        void serial_timer(object ptr, int param)
+        void serial_timer(object ptr, s32 param)  //void *ptr, s32 param)
         {
             m_SBcount++;
 
@@ -1108,6 +1111,9 @@ namespace mame
                 {
                     /* if we have a live external source, call the irqcallback */
                     standard_irq_callback( 0 );
+                    /* The datasheet doesn't mention if the interrupt flag
+                     * is cleared, but it seems to be only for this case. */
+                    m_pio &= unchecked((uint8_t)~INT_CAUSE_EXTERNAL);
                     m_PC = 0x02;
                 }
                 else if ((m_pending_interrupt & m_pio & INT_CAUSE_TIMER) != 0)

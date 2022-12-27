@@ -4,6 +4,7 @@
 using System;
 
 using image_interface_enumerator = mame.device_interface_enumerator<mame.device_image_interface>;  //typedef device_interface_enumerator<device_image_interface> image_interface_enumerator;
+using s32 = System.Int32;
 using size_t = System.UInt64;
 
 using static mame.cpp_global;
@@ -130,7 +131,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(mame_machine_manager::autoboot_callback)
-        void autoboot_callback(object ptr, int param)
+        void autoboot_callback(object ptr, s32 param)  //void *ptr, s32 param)
         {
             if (options().autoboot_script().Length != 0)
             {

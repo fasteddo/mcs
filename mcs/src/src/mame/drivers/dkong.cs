@@ -111,7 +111,10 @@ namespace mame
          *
          *************************************/
 
-        //void dkong_state::dkong3_coin_counter_w(offs_t offset, uint8_t data)
+        void dkong3_coin_counter_w(offs_t offset, uint8_t data)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         void p8257_drq_w(uint8_t data)
@@ -142,10 +145,22 @@ namespace mame
         //void dkong_state::s2650_data_w(uint8_t data)
         //uint8_t dkong_state::s2650_port0_r()
         //uint8_t dkong_state::s2650_port1_r()
-        //void dkong_state::dkong3_2a03_reset_w(uint8_t data)
+
+
+        void dkong3_2a03_reset_w(uint8_t data)
+        {
+            throw new emu_unimplemented();
+        }
+
+
         //uint8_t dkong_state::strtheat_inputport_0_r()
         //uint8_t dkong_state::strtheat_inputport_1_r()
-        //void dkong_state::dkong_z80dma_rdy_w(uint8_t data)
+
+
+        void dkong_z80dma_rdy_w(uint8_t data)
+        {
+            throw new emu_unimplemented();
+        }
 
 
         void nmi_mask_w(uint8_t data)
@@ -218,36 +233,30 @@ namespace mame
 
         void dkong3_map(address_map map, device_t device)
         {
-            throw new emu_unimplemented();
-#if false
-            map(0x0000, 0x5fff).rom();
-            map(0x6000, 0x67ff).ram();
-            map(0x6800, 0x6fff).ram();
-            map(0x7000, 0x73ff).ram().share("sprite_ram"); /* sprite set 1 */
-            map(0x7400, 0x77ff).ram().w(FUNC(dkong_state::dkong_videoram_w)).share("video_ram");
-            map(0x7c00, 0x7c00).portr("IN0").w("latch1", FUNC(latch8_device::write));
-            map(0x7c80, 0x7c80).portr("IN1").w("latch2", FUNC(latch8_device::write));
-            map(0x7d00, 0x7d00).portr("DSW0").w("latch3", FUNC(latch8_device::write));
-            map(0x7d80, 0x7d80).portr("DSW1").w(FUNC(dkong_state::dkong3_2a03_reset_w));
-            map(0x7e80, 0x7e80).w(FUNC(dkong_state::dkong3_coin_counter_w));
-            map(0x7e81, 0x7e81).w(FUNC(dkong_state::dkong3_gfxbank_w));
-            map(0x7e82, 0x7e82).w(FUNC(dkong_state::dkong_flipscreen_w));
-            map(0x7e83, 0x7e83).w(FUNC(dkong_state::dkong_spritebank_w));                 /* 2 PSL Signal */
-            map(0x7e84, 0x7e84).w(FUNC(dkong_state::nmi_mask_w));
-            map(0x7e85, 0x7e85).w(FUNC(dkong_state::dkong_z80dma_rdy_w));  /* ==> DMA Chip */
-            map(0x7e86, 0x7e87).w(FUNC(dkong_state::dkong_palettebank_w));
-            map(0x8000, 0x9fff).rom();                                       /* DK3 and bootleg DKjr only */
-#endif
+            map.op(0x0000, 0x5fff).rom();
+            map.op(0x6000, 0x67ff).ram();
+            map.op(0x6800, 0x6fff).ram();
+            map.op(0x7000, 0x73ff).ram().share("sprite_ram"); /* sprite set 1 */
+            map.op(0x7400, 0x77ff).ram().w(dkong_videoram_w).share("video_ram");
+            map.op(0x7c00, 0x7c00).portr("IN0").w("latch1", (offset, data) => { ((latch8_device)subdevice("latch1")).write(offset, data); });
+            map.op(0x7c80, 0x7c80).portr("IN1").w("latch2", (offset, data) => { ((latch8_device)subdevice("latch2")).write(offset, data); });
+            map.op(0x7d00, 0x7d00).portr("DSW0").w("latch3", (offset, data) => { ((latch8_device)subdevice("latch3")).write(offset, data); });
+            map.op(0x7d80, 0x7d80).portr("DSW1").w(dkong3_2a03_reset_w);
+            map.op(0x7e80, 0x7e80).w(dkong3_coin_counter_w);
+            map.op(0x7e81, 0x7e81).w(dkong3_gfxbank_w);
+            map.op(0x7e82, 0x7e82).w(dkong_flipscreen_w);
+            map.op(0x7e83, 0x7e83).w(dkong_spritebank_w);                 /* 2 PSL Signal */
+            map.op(0x7e84, 0x7e84).w(nmi_mask_w);
+            map.op(0x7e85, 0x7e85).w(dkong_z80dma_rdy_w);  /* ==> DMA Chip */
+            map.op(0x7e86, 0x7e87).w(dkong_palettebank_w);
+            map.op(0x8000, 0x9fff).rom();                                       /* DK3 and bootleg DKjr only */
         }
 
 
         void dkong3_io_map(address_map map, device_t device)
         {
-            throw new emu_unimplemented();
-#if false
             map.global_mask(0xff);
-            map(0x00, 0x00).rw(m_z80dma, FUNC(z80dma_device::read), FUNC(z80dma_device::write));  /* dma controller */
-#endif
+            map.op(0x00, 0x00).rw(m_z80dma, () => { return m_z80dma.op0.read(); }, (uint8_t data) => { m_z80dma.op0.write(data); });  /* dma controller */
         }
     }
 
@@ -397,68 +406,66 @@ namespace mame
         {
             INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
-            throw new emu_unimplemented();
-#if false
-            PORT_START("IN0")      /* IN0 */
-            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY
-            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY
-            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
-            PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY
-            PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-            PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-            PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
+            PORT_START("IN0");      /* IN0 */
+            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ); PORT_4WAY();
+            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ); PORT_4WAY();
+            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ); PORT_4WAY();
+            PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ); PORT_4WAY();
+            PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 );
+            PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 );
+            PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 );
+            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE );
 
-            PORT_START("IN1")      /* IN1 */
-            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
-            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
-            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
-            PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
-            PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
-            PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
-            PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)
-            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+            PORT_START("IN1");      /* IN1 */
+            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ); PORT_4WAY(); PORT_COCKTAIL();
+            PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ); PORT_COCKTAIL();
+            PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 ); PORT_IMPULSE(1);
+            PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 ); PORT_IMPULSE(1);
+            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN );
 
-            PORT_START("DSW0")      /* DSW0 */
-            PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ) )          PORT_DIPLOCATION("SW2:!1,!2,!3")
-            PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
-            PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-            PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-            PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-            PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
-            PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
-            PORT_DIPSETTING(    0x05, DEF_STR( 1C_5C ) )
-            PORT_DIPSETTING(    0x07, DEF_STR( 1C_6C ) )
-            PORT_DIPUNKNOWN_DIPLOC( 0x08, 0x00, "SW2:!4" )
-            PORT_DIPUNKNOWN_DIPLOC( 0x10, 0x00, "SW2:!5" )
-            PORT_DIPUNKNOWN_DIPLOC( 0x20, 0x00, "SW2:!6" )
-            PORT_SERVICE_DIPLOC( 0x40, IP_ACTIVE_HIGH, "SW2:!7" )
-            PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )          PORT_DIPLOCATION("SW2:!8")
-            PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-            PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+            PORT_START("DSW0");      /* DSW0 */
+            PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ) );          PORT_DIPLOCATION("SW2:!1,!2,!3");
+            PORT_DIPSETTING(    0x02, DEF_STR( _3C_1C ) );
+            PORT_DIPSETTING(    0x04, DEF_STR( _2C_1C ) );
+            PORT_DIPSETTING(    0x00, DEF_STR( _1C_1C ) );
+            PORT_DIPSETTING(    0x06, DEF_STR( _1C_2C ) );
+            PORT_DIPSETTING(    0x01, DEF_STR( _1C_3C ) );
+            PORT_DIPSETTING(    0x03, DEF_STR( _1C_4C ) );
+            PORT_DIPSETTING(    0x05, DEF_STR( _1C_5C ) );
+            PORT_DIPSETTING(    0x07, DEF_STR( _1C_6C ) );
+            PORT_DIPUNKNOWN_DIPLOC( 0x08, 0x00, "SW2:!4" );
+            PORT_DIPUNKNOWN_DIPLOC( 0x10, 0x00, "SW2:!5" );
+            PORT_DIPUNKNOWN_DIPLOC( 0x20, 0x00, "SW2:!6" );
+            PORT_SERVICE_DIPLOC( 0x40, IP_ACTIVE_HIGH, "SW2:!7" );
+            PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) );          PORT_DIPLOCATION("SW2:!8");
+            PORT_DIPSETTING(    0x00, DEF_STR( Upright ) );
+            PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) );
 
-            PORT_START("DSW1")      /* DSW1 */
-            PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )            PORT_DIPLOCATION("SW1:!1,!2")
-            PORT_DIPSETTING(    0x00, "3" )
-            PORT_DIPSETTING(    0x01, "4" )
-            PORT_DIPSETTING(    0x02, "5" )
-            PORT_DIPSETTING(    0x03, "6" )
-            PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )       PORT_DIPLOCATION("SW1:!3,!4")
-            PORT_DIPSETTING(    0x00, "30000" )
-            PORT_DIPSETTING(    0x04, "40000" )
-            PORT_DIPSETTING(    0x08, "50000" )
-            PORT_DIPSETTING(    0x0c, DEF_STR( None ) )
-            PORT_DIPNAME( 0x30, 0x00, "Additional Bonus" )          PORT_DIPLOCATION("SW1:!5,!6")
-            PORT_DIPSETTING(    0x00, "30000" )
-            PORT_DIPSETTING(    0x10, "40000" )
-            PORT_DIPSETTING(    0x20, "50000" )
-            PORT_DIPSETTING(    0x30, DEF_STR( None ) )
-            PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )       PORT_DIPLOCATION("SW1:!7,!8")
-            PORT_DIPSETTING(    0x00, "1" )
-            PORT_DIPSETTING(    0x40, "2" )
-            PORT_DIPSETTING(    0x80, "3" )
-            PORT_DIPSETTING(    0xc0, "4" )
-#endif
+            PORT_START("DSW1");      /* DSW1 */
+            PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) );            PORT_DIPLOCATION("SW1:!1,!2");
+            PORT_DIPSETTING(    0x00, "3" );
+            PORT_DIPSETTING(    0x01, "4" );
+            PORT_DIPSETTING(    0x02, "5" );
+            PORT_DIPSETTING(    0x03, "6" );
+            PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) );       PORT_DIPLOCATION("SW1:!3,!4");
+            PORT_DIPSETTING(    0x00, "30000" );
+            PORT_DIPSETTING(    0x04, "40000" );
+            PORT_DIPSETTING(    0x08, "50000" );
+            PORT_DIPSETTING(    0x0c, DEF_STR( None ) );
+            PORT_DIPNAME( 0x30, 0x00, "Additional Bonus" );          PORT_DIPLOCATION("SW1:!5,!6");
+            PORT_DIPSETTING(    0x00, "30000" );
+            PORT_DIPSETTING(    0x10, "40000" );
+            PORT_DIPSETTING(    0x20, "50000" );
+            PORT_DIPSETTING(    0x30, DEF_STR( None ) );
+            PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) );       PORT_DIPLOCATION("SW1:!7,!8");
+            PORT_DIPSETTING(    0x00, "1" );
+            PORT_DIPSETTING(    0x40, "2" );
+            PORT_DIPSETTING(    0x80, "3" );
+            PORT_DIPSETTING(    0xc0, "4" );
+
             INPUT_PORTS_END();
         }
 
@@ -607,18 +614,18 @@ namespace mame
             MCFG_MACHINE_START_OVERRIDE(config, machine_start_dkong3);
 
             Z80DMA(config, m_z80dma, CLOCK_1H);
-            m_z80dma.op0.out_busreq_callback().set_inputline(m_maincpu, INPUT_LINE_HALT);
-            m_z80dma.op0.in_mreq_callback().set(memory_read_byte);
-            m_z80dma.op0.out_mreq_callback().set(memory_write_byte);
+            m_z80dma.op0.out_busreq_callback().set_inputline(m_maincpu, INPUT_LINE_HALT).reg();
+            m_z80dma.op0.in_mreq_callback().set(memory_read_byte).reg();
+            m_z80dma.op0.out_mreq_callback().set(memory_write_byte).reg();
 
             /* video hardware */
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
             m_screen.op0.set_raw(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART);
             m_screen.op0.set_screen_update(screen_update_dkong);
             m_screen.op0.set_palette(m_palette);
-            m_screen.op0.screen_vblank().set((write_line_delegate)vblank_irq);
-            m_screen.op0.screen_vblank().append_inputline(m_dev_n2a03a, INPUT_LINE_NMI);
-            m_screen.op0.screen_vblank().append_inputline(m_dev_n2a03b, INPUT_LINE_NMI);
+            m_screen.op0.screen_vblank().set((write_line_delegate)vblank_irq).reg();
+            m_screen.op0.screen_vblank().append_inputline(m_dev_n2a03a, INPUT_LINE_NMI).reg();
+            m_screen.op0.screen_vblank().append_inputline(m_dev_n2a03b, INPUT_LINE_NMI).reg();
 
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_dkong);
             PALETTE(config, m_palette, dkong3_palette, DK3_PALETTE_LENGTH);
@@ -653,7 +660,7 @@ namespace mame
          *************************************/
 
         //ROM_START( dkong ) /* Confirmed TKG-04 Upgrade as mentioned in Nintendo Service Department Bulletin # TKG-02 12-11-81 */
-        static readonly MemoryContainer<tiny_rom_entry> rom_dkong = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_dkong =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "c_5et_g.bin",  0x0000, 0x1000, CRC("ba70b88b") + SHA1("d76ebecfea1af098d843ee7e578e480cd658ac1a") ),
@@ -686,7 +693,7 @@ namespace mame
 
 
         //ROM_START( dkongjr )
-        static readonly MemoryContainer<tiny_rom_entry> rom_dkongjr = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_dkongjr =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "djr1-c_5b_f-2.5b", 0x0000, 0x1000, CRC("dea28158") + SHA1("08baf84ae6f9b40a2c743fe1d8c158c74a40e95a") ),
@@ -724,7 +731,7 @@ namespace mame
 
 
         //ROM_START( dkong3 )
-        static readonly MemoryContainer<tiny_rom_entry> rom_dkong3 = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_dkong3 =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, CRC("38d5f38e") + SHA1("5a6bb0e5070211515e3d56bd7d4c2d1655ac1621") ),

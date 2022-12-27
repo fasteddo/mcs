@@ -39,6 +39,24 @@ namespace mame
         public static void PIXEL_OP_COPY_OPAQUE(ref u32 DEST, u32 SOURCE) { DEST = SOURCE; }
 
 
+        //#define PIXEL_OP_COPY_OPAQUE_PRIORITY(DEST, PRIORITY, SOURCE)                       \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                                  \
+        //        (DEST) = SOURCE;                                                            \
+        //    (PRIORITY) = 31;                                                                \
+        //}                                                                                   \
+        //while (0)
+
+        //#define PIXEL_OP_COPY_OPAQUE_PRIMASK(DEST, PRIORITY, SOURCE)                        \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    (DEST) = SOURCE;                                                                \
+        //    (PRIORITY) = ((PRIORITY) & pmask) | pcode;                                      \
+        //}                                                                                   \
+        //while (0)
+
+
         /*-------------------------------------------------
             PIXEL_OP_COPY_TRANSPEN - render all pixels
             except those matching 'transpen', copying
@@ -88,6 +106,113 @@ namespace mame
             if (srcdata != trans_pen)
                 DEST = SOURCE;
         }
+
+
+        //#define PIXEL_OP_COPY_TRANSPEN_PRIORITY(DEST, PRIORITY, SOURCE)                     \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if (srcdata != trans_pen)                                                       \
+        //    {                                                                               \
+        //        if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
+        //            (DEST) = SOURCE;                                                        \
+        //        (PRIORITY) = 31;                                                            \
+        //    }                                                                               \
+        //}                                                                                   \
+
+
+        //while (0)
+        //#define PIXEL_OP_COPY_TRANSPEN_PRIMASK(DEST, PRIORITY, SOURCE)                      \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if (srcdata != trans_pen)                                                       \
+        //    {                                                                               \
+        //        (DEST) = SOURCE;                                                            \
+        //        (PRIORITY) = ((PRIORITY) & pmask) | pcode;                                  \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
+
+
+        /*-------------------------------------------------
+            PIXEL_OP_COPY_TRANSALPHA - render all pixels
+            except those with an alpha of zero, copying
+            directly
+        -------------------------------------------------*/
+
+        //#define PIXEL_OP_COPY_TRANSALPHA(DEST, SOURCE)                                      \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if ((srcdata & 0xff000000) != 0)                                                \
+        //        (DEST) = SOURCE;                                                            \
+        //}                                                                                   \
+        //while (0)
+
+
+        //#define PIXEL_OP_COPY_TRANSALPHA_PRIORITY(DEST, PRIORITY, SOURCE)                   \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if ((srcdata & 0xff000000) != 0)                                                \
+        //    {                                                                               \
+        //        if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
+        //            (DEST) = SOURCE;                                                        \
+        //        (PRIORITY) = 31;                                                            \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
+
+
+        //#define PIXEL_OP_COPY_TRANSALPHA_PRIMASK(DEST, PRIORITY, SOURCE)                    \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if ((srcdata & 0xff000000) != 0)                                                \
+        //    {                                                                               \
+        //        (DEST) = SOURCE;                                                            \
+        //        (PRIORITY) = ((PRIORITY) & pmask) | pcode;                                  \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
+
+
+        /*-------------------------------------------------
+            PIXEL_OP_REMAP_OPAQUE - render all pixels
+            regardless of pen, mapping the pen via the
+            'paldata' array
+        -------------------------------------------------*/
+
+        //#define PIXEL_OP_REMAP_OPAQUE(DEST, SOURCE)                                         \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    (DEST) = paldata[SOURCE];                                                       \
+        //}                                                                                   \
+        //while (0)
+        public static void PIXEL_OP_REMAP_OPAQUE(Pointer<pen_t> paldata, ref u16 DEST, u16 SOURCE)
+        {
+            DEST = (u16)paldata[SOURCE];
+        }
+
+
+        //#define PIXEL_OP_REMAP_OPAQUE_PRIORITY(DEST, PRIORITY, SOURCE)                      \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                                  \
+        //        (DEST) = paldata[SOURCE];                                                   \
+        //    (PRIORITY) = 31;                                                                \
+        //}                                                                                   \
+        //while (0)
+
+
+        //#define PIXEL_OP_REMAP_OPAQUE_PRIMASK(DEST, PRIORITY, SOURCE)                       \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    (DEST) = paldata[SOURCE];                                                       \
+        //    (PRIORITY) = ((PRIORITY) & pmask) | pcode;                                      \
+        //}                                                                                   \
+        //while (0)
 
 
         /*-------------------------------------------------
@@ -157,6 +282,20 @@ namespace mame
         }
 
 
+        //#define PIXEL_OP_REMAP_TRANSPEN_PRIORITY(DEST, PRIORITY, SOURCE)                    \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if (srcdata != trans_pen)                                                       \
+        //    {                                                                               \
+        //        if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
+        //            (DEST) = paldata[srcdata];                                              \
+        //        (PRIORITY) = 31;                                                            \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
+
+
         /*-------------------------------------------------
             PIXEL_OP_REBASE_TRANSPEN - render all pixels
             except those matching 'transpen', adding
@@ -206,6 +345,20 @@ namespace mame
             if (srcdata != trans_pen)
                 DEST = (u32)(color + srcdata);
         }
+
+
+        //#define PIXEL_OP_REBASE_TRANSPEN_PRIORITY(DEST, PRIORITY, SOURCE)                   \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if (srcdata != trans_pen)                                                       \
+        //    {                                                                               \
+        //        if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
+        //            (DEST) = color + srcdata;                                               \
+        //        (PRIORITY) = 31;                                                            \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
 
 
         /*-------------------------------------------------
@@ -292,6 +445,7 @@ namespace mame
             if (((trans_mask >> (int)srcdata) & 1) == 0)
                 DEST = color + srcdata;
         }
+
 
         //#define PIXEL_OP_REBASE_TRANSMASK_PRIORITY(DEST, PRIORITY, SOURCE)                  \
         //do                                                                                  \
@@ -1128,6 +1282,13 @@ namespace mame
 
     public static partial class drawgfxt_global
     {
+        //template <typename BitmapType, typename FunctionClass>
+        //inline void gfx_element::drawgfxzoom_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, FunctionClass pixel_op)
+
+        //template <typename BitmapType, typename PriorityType, typename FunctionClass>
+        //inline void gfx_element::drawgfxzoom_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, PriorityType &priority, FunctionClass pixel_op)
+
+
         /***************************************************************************
             BASIC COPYBITMAP CORE
         ***************************************************************************/
@@ -1502,5 +1663,126 @@ namespace mame
         {
             throw new emu_unimplemented();
         }
+
+
+        //template <typename BitmapType, typename FunctionClass>
+        //inline void copyrozbitmap_core(BitmapType &dest, const rectangle &cliprect, const BitmapType &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, FunctionClass pixel_op)
+
+        //template <typename BitmapType, typename PriorityType, typename FunctionClass>
+        //inline void copyrozbitmap_core(BitmapType &dest, const rectangle &cliprect, const BitmapType &src, s32 startx, s32 starty, s32 incxx, s32 incxy, s32 incyx, s32 incyy, bool wraparound, PriorityType &priority, FunctionClass pixel_op)
+
+
+        /***************************************************************************
+            BASIC DRAWSCANLINE CORE
+        ***************************************************************************/
+
+        /*
+            Input parameters:
+
+                bitmap_t &bitmap - the bitmap to copy to
+                s32 destx - the X coordinate to copy to
+                s32 desty - the Y coordinate to copy to
+                s32 length - the total number of pixels to copy
+                const UINTx *srcptr - pointer to memory containing the source pixels
+                bitmap_t &priority - the priority bitmap (if and only if priority is to be applied)
+        */
+
+        //template <typename BitmapType, typename SourceType, typename FunctionClass>
+        public static void drawscanline_core<BitmapType, BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer>  //inline void drawscanline_core(BitmapType &bitmap, s32 destx, s32 desty, s32 length, const SourceType *srcptr, FunctionClass pixel_op)
+        (
+            BitmapType bitmap,
+            s32 destx,
+            s32 desty,
+            s32 length,
+            PointerU8 srcptr,
+            gfx_element.FunctionClass pixel_op
+        )
+            where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer> 
+            where BitmapType_PixelType_OPS : PixelType_operators, new()
+            where BitmapType_PixelTypePointer : PointerU8
+        {
+            assert(bitmap.valid());
+            assert(destx >= 0);
+            assert(destx + length <= bitmap.width());
+            assert(desty >= 0);
+            assert(desty < bitmap.height());
+            assert(srcptr != null);
+
+            //auto *destptr = &bitmap.pix(desty, destx);
+            PointerU8 destptr8 = null;
+            PointerU16 destptr16 = null;
+            PointerU32 destptr32 = null;
+            PointerU64 destptr64 = null;
+            switch (bitmap.bpp())
+            {
+                case 8:  destptr8 = bitmap.pix8(desty, destx); break;
+                case 16: destptr16 = bitmap.pix16(desty, destx); break;
+                case 32: destptr32 = bitmap.pix32(desty, destx); break;
+                case 64: destptr64 = bitmap.pix64(desty, destx); break;
+                default: throw new emu_fatalerror("drawscanline_core() - unknown bpp - {0}\n", bitmap.bpp());
+            }
+
+            // iterate over unrolled blocks of 4
+            while (length >= 4)
+            {
+                //pixel_op(destptr[0], srcptr[0]);
+                //pixel_op(destptr[1], srcptr[1]);
+                //pixel_op(destptr[2], srcptr[2]);
+                //pixel_op(destptr[3], srcptr[3]);
+                if (bitmap.bpp() == 16 && srcptr is PointerU16)
+                {
+                    var destptrTemp0 = destptr16[0]; pixel_op.op16x16(ref destptrTemp0, ((PointerU16)srcptr)[0]); destptr16[0] = destptrTemp0;
+                    var destptrTemp1 = destptr16[1]; pixel_op.op16x16(ref destptrTemp1, ((PointerU16)srcptr)[1]); destptr16[1] = destptrTemp1;
+                    var destptrTemp2 = destptr16[2]; pixel_op.op16x16(ref destptrTemp2, ((PointerU16)srcptr)[2]); destptr16[2] = destptrTemp2;
+                    var destptrTemp3 = destptr16[3]; pixel_op.op16x16(ref destptrTemp3, ((PointerU16)srcptr)[3]); destptr16[3] = destptrTemp3;
+                }
+                else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
+
+                length -= 4;
+
+                //srcptr += 4;
+                if (srcptr is PointerU16) { srcptr = (PointerU16)srcptr + 4; }
+                else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
+
+                //destptr += 4;
+                switch (bitmap.bpp())
+                {
+                    case 8:  destptr8 += 4; break;
+                    case 16: destptr16 += 4; break;
+                    case 32: destptr32 += 4; break;
+                    case 64: destptr64 += 4; break;
+                    default: throw new emu_fatalerror("drawscanline_core() - unknown bpp - {0}\n", bitmap.bpp());
+                }
+            }
+
+            // iterate over leftover pixels
+            while (length-- > 0)
+            {
+                //pixel_op(destptr[0], srcptr[0]);
+                if (bitmap.bpp() == 16 && srcptr is PointerU16)
+                {
+                    var destptrTemp = destptr16[0]; pixel_op.op16x16(ref destptrTemp, ((PointerU16)srcptr)[0]); destptr16[0] = destptrTemp;
+                }
+                else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
+
+                //srcptr++;
+                if (srcptr is PointerU16) { srcptr = (PointerU16)srcptr + 1; }
+                else throw new emu_fatalerror("drawscanline_core() - unknown bpp - dest: {0} src: {1}\n", bitmap.bpp(), srcptr.GetType());
+
+                //destptr++;
+                switch (bitmap.bpp())
+                {
+                    case 8:  destptr8++; break;
+                    case 16: destptr16++; break;
+                    case 32: destptr32++; break;
+                    case 64: destptr64++; break;
+                    default: throw new emu_fatalerror("drawscanline_core() - unknown bpp - {0}\n", bitmap.bpp());
+                }
+            }
+        }
+
+
+        //template <typename BitmapType, typename SourceType, typename PriorityType, typename FunctionClass>
+        //inline void drawscanline_core(BitmapType &bitmap, s32 destx, s32 desty, s32 length, const SourceType *srcptr, PriorityType &priority, FunctionClass pixel_op)
     }
 }

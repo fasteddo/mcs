@@ -382,7 +382,7 @@ namespace mame
         ***************************************************************************/
 
         //ROM_START( cclimber )
-        static readonly MemoryContainer<tiny_rom_entry> rom_cclimber = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_cclimber =
         {
             ROM_REGION( 0x6000, "maincpu", 0 ),
             ROM_LOAD( "cc11",         0x0000, 0x1000, CRC("217ec4ff") + SHA1("334604c3a051d57440a9d0bfc34b809418ef1d2d") ),

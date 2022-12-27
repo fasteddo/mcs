@@ -135,7 +135,7 @@ namespace mame
         public string name;                       // short name of the system
 
 
-        public game_driver(device_type type, string parent, string year, string manufacturer, machine_creator_wrapper machine_creator, ioport_constructor ipt, driver_init_wrapper driver_init, MemoryContainer<tiny_rom_entry> rom, int monitor, u64 flags, string name, string fullname)
+        public game_driver(device_type type, string parent, string year, string manufacturer, machine_creator_wrapper machine_creator, ioport_constructor ipt, driver_init_wrapper driver_init, tiny_rom_entry [] rom, int monitor, u64 flags, string name, string fullname)
         {
             this.type = type;
             this.parent = parent;
@@ -144,7 +144,7 @@ namespace mame
             this.machine_creator = machine_creator;
             this.ipt = ipt;
             this.driver_init = driver_init;
-            this.rom = new Pointer<tiny_rom_entry>(rom);
+            this.rom = new Pointer<tiny_rom_entry>(new MemoryContainer<tiny_rom_entry>(rom));
             this.compatible_with = null;
             this.default_layout = null;
             this.flags = (machine_flags.type)((u64)(u32)monitor | flags | MACHINE_TYPE_ARCADE);
@@ -295,7 +295,7 @@ namespace mame
         //    #NAME                                                               \
         //};
 
-        public static game_driver GAME(device_type.create_func creator, MemoryContainer<tiny_rom_entry> roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, int MONITOR, string COMPANY, string FULLNAME, u64 FLAGS)
+        public static game_driver GAME(device_type.create_func creator, tiny_rom_entry [] roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, int MONITOR, string COMPANY, string FULLNAME, u64 FLAGS)
         {
             var traits = GAME_DRIVER_TRAITS(NAME, FULLNAME);
 
@@ -390,7 +390,7 @@ namespace mame
         //    #NAME                                                               \
         //};
 
-        public static game_driver GAMEL(device_type.create_func creator, MemoryContainer<tiny_rom_entry> roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, int MONITOR, string COMPANY, string FULLNAME, u64 FLAGS, internal_layout LAYOUT)
+        public static game_driver GAMEL(device_type.create_func creator, tiny_rom_entry [] roms, string YEAR, string NAME, string PARENT, machine_creator_wrapper MACHINE, ioport_constructor INPUT, driver_init_wrapper INIT, int MONITOR, string COMPANY, string FULLNAME, u64 FLAGS, internal_layout LAYOUT)
         {
             var traits = GAME_DRIVER_TRAITS(NAME, FULLNAME);
 

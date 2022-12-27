@@ -139,7 +139,7 @@ namespace mame
             PORT_START("IN0");
             PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN );
             // Bit 2 is the 3 KHz source and Bit 3 the VG_HALT bit
-            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_READ_LINE_MEMBER(() => { return asteroid_state.clock_r(); });
+            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_READ_LINE_MEMBER(asteroid_state.clock_r);
             PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_CUSTOM ); PORT_READ_LINE_DEVICE_MEMBER("dvg", () => { return ((dvg_device)asteroid_state.subdevice("dvg")).done_r(); });
             PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON5 ); PORT_CODE(KEYCODE_SPACE); PORT_CODE(JOYCODE_BUTTON3);       // Hyperspace
             PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 ); PORT_CODE(KEYCODE_LCONTROL); PORT_CODE(JOYCODE_BUTTON1);    // Fire
@@ -274,7 +274,7 @@ namespace mame
          *************************************/
 
         //ROM_START( asteroid )
-        static readonly MemoryContainer<tiny_rom_entry> rom_asteroid = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_asteroid =
         {
             ROM_REGION( 0x8000, "maincpu", 0 ),
             ROM_LOAD( "035145-04e.ef2", 0x6800, 0x0800, CRC("b503eaf7") + SHA1("5369dcfe01c0b9e48b15a96a0de8d23ee8ef9145") ),

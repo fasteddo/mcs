@@ -5,6 +5,7 @@ using System;
 
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -138,7 +139,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(missile_state::clock_irq)
-        void clock_irq(object ptr, int param)
+        void clock_irq(object ptr, s32 param)  //void *ptr, s32 param)
         {
             int curv = param;
 
@@ -168,7 +169,7 @@ namespace mame
          *
          *************************************/
         //TIMER_CALLBACK_MEMBER(missile_state::adjust_cpu_speed)
-        void adjust_cpu_speed(object ptr, int param)
+        void adjust_cpu_speed(object ptr, s32 param)  //void *ptr, s32 param)
         {
             int curv = param;
 
@@ -655,7 +656,7 @@ namespace mame
          *
          *************************************/
         //ROM_START( missile )
-        static readonly MemoryContainer<tiny_rom_entry> rom_missile = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_missile =
         {
             ROM_REGION( 0x8000, "maincpu", 0 ),
             ROM_LOAD( "035820-02.h1",  0x5000, 0x0800, CRC("7a62ce6a") + SHA1("9a39978138dc28fdefe193bfae1b226391e471db") ),

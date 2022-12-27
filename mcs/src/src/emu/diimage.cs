@@ -8,34 +8,6 @@ using image_interface_enumerator = mame.device_interface_enumerator<mame.device_
 
 namespace mame
 {
-    public enum iodevice_t
-    {
-        /* List of all supported devices.  Refer to the device by these names only */
-        IO_UNKNOWN,
-        IO_CARTSLOT,    /*  1 - Cartridge Port, as found on most console and on some computers */
-        IO_FLOPPY,      /*  2 - Floppy Disk unit */
-        IO_HARDDISK,    /*  3 - Hard Disk unit */
-        IO_CYLINDER,    /*  4 - Magnetically-Coated Cylinder */
-        IO_CASSETTE,    /*  5 - Cassette Recorder (common on early home computers) */
-        IO_PUNCHCARD,   /*  6 - Card Puncher/Reader */
-        IO_PUNCHTAPE,   /*  7 - Tape Puncher/Reader (reels instead of punchcards) */
-        IO_PRINTER,     /*  8 - Printer device */
-        IO_SERIAL,      /*  9 - Generic Serial Port */
-        IO_PARALLEL,    /* 10 - Generic Parallel Port */
-        IO_SNAPSHOT,    /* 11 - Complete 'snapshot' of the state of the computer */
-        IO_QUICKLOAD,   /* 12 - Allow to load program/data into memory, without matching any actual device */
-        IO_MEMCARD,     /* 13 - Memory card */
-        IO_CDROM,       /* 14 - optical CD-ROM disc */
-        IO_MAGTAPE,     /* 15 - Magnetic tape */
-        IO_ROM,         /* 16 - Individual ROM image - the Amstrad CPC has a few applications that were sold on 16kB ROMs */
-        IO_MIDIIN,      /* 17 - MIDI In port */
-        IO_MIDIOUT,     /* 18 - MIDI Out port */
-        IO_PICTURE,     /* 19 - A single-frame image */
-        IO_VIDEO,       /* 20 - A video file */
-        IO_COUNT        /* 21 - Total Number of IO_devices for searching */
-    }
-
-
     enum image_error_t : int
     {
         INTERNAL = 1,
@@ -50,7 +22,6 @@ namespace mame
     //inline std::error_condition make_error_condition(image_error e) noexcept { return std::error_condition(int(e), image_category()); }
     //namespace std { template <> struct is_error_condition_enum<image_error> : public std::true_type { }; }
 
-    //struct image_device_type_info
 
     //class image_device_format
 
@@ -78,9 +49,6 @@ namespace mame
         //typedef device_delegate<void (device_image_interface &)> unload_delegate;
 
         //typedef std::vector<std::unique_ptr<image_device_format>> formatlist_type;
-
-
-        //static const image_device_type_info m_device_info_array[];
 
 
         // error related info
@@ -124,6 +92,8 @@ namespace mame
         // we want to disable command line cart loading...
         bool m_user_loadable;
 
+        bool m_must_be_loaded;
+
         bool m_is_loading;
 
         bool m_is_reset_and_loading;
@@ -140,67 +110,28 @@ namespace mame
         }
 
 
-        //-------------------------------------------------
-        //  device_typename - retrieves device type name
-        //-------------------------------------------------
-        public static string device_typename(iodevice_t type)
-        {
-            throw new emu_unimplemented();
-        }
-
-        //static const char *device_brieftypename(iodevice_t type);
-        //static iodevice_t device_typeid(const char *name);
-
-
         //virtual image_init_result call_load() { return FALSE; }
         //virtual image_init_result call_create(int format_type, option_resolution *format_options) { return FALSE; }
         //virtual void call_unload() { }
         public virtual string call_display() { return ""; }
         //virtual u32 unhashed_header_length() const { return 0; }
         //virtual bool core_opens_image_file() const { return TRUE; }
-        public abstract iodevice_t image_type();
+        protected virtual bool image_is_chd_type() { return false; }
         protected abstract bool is_readable();
         protected abstract bool is_writeable();
         protected abstract bool is_creatable();
-        public abstract bool must_be_loaded();
         public abstract bool is_reset_on_load();
-
-        //-------------------------------------------------
-        //  support_command_line_image_creation - do we
-        //  want to support image creation from the front
-        //  end command line?
-        //-------------------------------------------------
-        protected virtual bool support_command_line_image_creation()
-        {
-            bool result;
-            switch (image_type())
-            {
-            case iodevice_t.IO_PRINTER:
-            case iodevice_t.IO_SERIAL:
-            case iodevice_t.IO_PARALLEL:
-                // going by the assumption that these device image types should support this
-                // behavior; ideally we'd get rid of IO_* and just push this to the specific
-                // devices
-                result = true;
-                break;
-            default:
-                result = false;
-                break;
-            }
-
-            return result;
-        }
-
+        protected virtual bool support_command_line_image_creation() { return false; }
 
         public abstract string image_interface();
         public abstract string file_extensions();
         //protected abstract option_guide create_option_guide();
-        //virtual const char *custom_instance_name() const { return nullptr; }
-        //virtual const char *custom_brief_instance_name() const { return nullptr; }
+        protected abstract string image_type_name();
+        protected abstract string image_brief_type_name();
 
 
         //const image_device_format *device_get_indexed_creatable_format(int index) const noexcept { return (index < m_formatlist.size()) ? m_formatlist.at(index).get() : nullptr;  }
-        //const image_device_format *device_get_named_creatable_format(const char *format_name);
+        //const image_device_format *device_get_named_creatable_format(std::string_view format_name) const noexcept;
         //const option_guide *device_get_creation_option_guide() { return create_option_guide(); }
 
 
@@ -310,10 +241,10 @@ namespace mame
         //const std::string &working_directory() const { return m_working_directory; }
 
         // access to software list properties and ROM data areas
-        //u8 *get_software_region(const char *tag);
-        //u32 get_software_region_length(const char *tag);
-        //const char *get_feature(const char *feature_name) const;
-        //bool load_software_region(const char *tag, std::unique_ptr<u8[]> &ptr);
+        //u8 *get_software_region(std::string_view tag);
+        //u32 get_software_region_length(std::string_view tag);
+        //const char *get_feature(std::string_view feature_name) const;
+        //bool load_software_region(std::string_view tag, std::unique_ptr<u8[]> &ptr);
 
         //u32 crc();
         //hash_collection& hash() { return m_hash; }
@@ -324,13 +255,10 @@ namespace mame
         //void battery_load(void *buffer, int length, void *def_buffer);
         //void battery_save(const void *buffer, int length);
 
-        //const char *image_type_name()  const { return device_typename(image_type()); }
-
 
         public string instance_name() { return m_instance_name; }
         public string brief_instance_name() { return m_brief_instance_name; }
         //const std::string &canonical_instance_name() const { return m_canonical_instance_name; }
-        //bool uses_file_extension(const char *file_extension) const;
         //formatlist_type formatlist() const { return m_formatlist.first(); }
 
 
@@ -365,11 +293,12 @@ namespace mame
         //bool load_software(software_list_device &swlist, const char *swname, const rom_entry *entry);
         //std::error_condition reopen_for_write(std::string_view path);
 
-
-        //void set_user_loadable(bool user_loadable) { m_user_loadable = user_loadable; }
+        //void set_user_loadable(bool user_loadable) noexcept { m_user_loadable = user_loadable; }
+        //void set_must_be_loaded(bool must_be_loaded) noexcept { m_must_be_loaded = must_be_loaded; }
 
 
         public bool user_loadable() { return m_user_loadable; }
+        public bool must_be_loaded() { return m_must_be_loaded; }
         public bool is_reset_and_loading() { return m_is_reset_and_loading; }
         public string full_software_name() { return m_full_software_name; }
 
@@ -418,12 +347,6 @@ namespace mame
 
         //void add_format(std::unique_ptr<image_device_format> &&format);
         //void add_format(std::string &&name, std::string &&description, std::string &&extensions, std::string &&optspec);
-
-
-        // derived class overrides
-
-        // configuration
-        //static const image_device_type_info *find_device_type(iodevice_t type);
 
 
         //std::vector<u32> determine_open_plan(bool is_create);

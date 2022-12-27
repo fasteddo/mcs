@@ -5,6 +5,7 @@ using System;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
+using s32 = System.Int32;
 using tilemap_memory_index = System.UInt32;  //typedef u32 tilemap_memory_index;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
@@ -130,7 +131,7 @@ namespace mame
 
 
         //TIMER_CALLBACK_MEMBER(atarisy2_state::reset_yscroll_callback)
-        void reset_yscroll_callback(object ptr, int param)
+        void reset_yscroll_callback(object ptr, s32 param)  //void *ptr, s32 param)
         {
             m_playfield_tilemap.op0.tilemap.set_scrolly(0, param);
         }

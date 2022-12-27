@@ -697,8 +697,21 @@ namespace mame
         //void primask_draw_scanline8(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u8 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
         //void primask_draw_scanline8(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u8 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
 
+
         // copy pixels from a 16bpp buffer to a single scanline of a bitmap
-        //void draw_scanline16(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata);
+
+        public static void draw_scanline16(bitmap_ind16 bitmap, s32 destx, s32 desty, s32 length, PointerU16 srcptr, Pointer<pen_t> paldata)  //void draw_scanline16(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata);
+        {
+            // palette lookup case
+            if (paldata != null)
+                drawscanline_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(bitmap, destx, desty, length, srcptr, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { PIXEL_OP_REMAP_OPAQUE(paldata, ref destp, srcp); }));  //drawscanline_core(bitmap, destx, desty, length, srcptr, [paldata](u16 &destp, const u16 &srcp) { PIXEL_OP_REMAP_OPAQUE(destp, srcp); });
+
+            // raw copy case
+            else
+                drawscanline_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(bitmap, destx, desty, length, srcptr, new gfx_element.FunctionClass((ref u16 destp, u16 srcp) => { PIXEL_OP_COPY_OPAQUE(ref destp, srcp); }));  //drawscanline_core(bitmap, destx, desty, length, srcptr, [](u16 &destp, const u16 &srcp) { PIXEL_OP_COPY_OPAQUE(destp, srcp); });
+        }
+
+
         //void draw_scanline16(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata);
 
         //void prio_draw_scanline16(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u32 pmask);
@@ -706,6 +719,7 @@ namespace mame
 
         //void primask_draw_scanline16(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
         //void primask_draw_scanline16(bitmap_rgb32 &bitmap, s32 destx, s32 desty, s32 length, const u16 *srcptr, const pen_t *paldata, bitmap_ind8 &priority, u8 pcode = 0, u8 pmask = 0xff);
+
 
         // copy pixels from a 32bpp buffer to a single scanline of a bitmap
         //void draw_scanline32(bitmap_ind16 &bitmap, s32 destx, s32 desty, s32 length, const u32 *srcptr, const pen_t *paldata);

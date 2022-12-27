@@ -89,12 +89,14 @@ namespace mame
         //    configure_generic(expired_delegate(callback, name, nullptr, static_cast<FunctionClass *>(nullptr)));
         //}
 
-        //template <typename Object> void configure_periodic(Object &&cb, const attotime &period)
-        //{
-        //    m_type = TIMER_TYPE_PERIODIC;
-        //    m_callback = std::forward<Object>(cb);
-        //    m_period = period;
-        //}
+
+        public void configure_periodic(expired_delegate cb, attotime period)  //template <typename Object> void configure_periodic(Object &&cb, const attotime &period)
+        {
+            m_type = timer_type.TIMER_TYPE_PERIODIC;
+            m_callback = cb;  //m_callback = std::forward<Object>(cb);
+            m_period = period;
+        }
+
         //template <class FunctionClass> void configure_periodic(void (FunctionClass::*callback)(timer_device &, void *, s32), const char *name,
         //    const attotime &period)
         //{
@@ -312,6 +314,6 @@ namespace mame
 
     static class timer_global
     {
-        public static timer_device TIMER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<timer_device>(mconfig, tag, timer_device.TIMER, 0); }
+        public static timer_device TIMER(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<timer_device>(mconfig, tag, timer_device.TIMER, clock); }
     }
 }

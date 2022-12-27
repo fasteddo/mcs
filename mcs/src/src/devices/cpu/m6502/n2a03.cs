@@ -4,15 +4,19 @@
 using System;
 
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
+using offs_t = System.UInt32;  //using offs_t = u32;
+using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
 using static mame.device_global;
+using static mame.disound_global;
 using static mame.n2a03_global;
+using static mame.nes_apu_global;
 
 
 namespace mame
 {
-    class n2a03_core_device : m6502_device
+    public class n2a03_core_device : m6502_device
     {
         //DEFINE_DEVICE_TYPE(N2A03_CORE, n2a03_core_device, "n2a03_core", "Ricoh N2A03 core") // needed for some VT systems with XOP instead of standard APU
         public static readonly emu.detail.device_type_impl N2A03_CORE = DEFINE_DEVICE_TYPE("n2a03_core", "Ricoh N2A03 core", (type, mconfig, tag, owner, clock) => { return new n2a03_core_device(mconfig, tag, owner, clock); });
@@ -48,58 +52,66 @@ namespace mame
     }
 
 
-    class n2a03_device : n2a03_core_device
-                         //device_mixer_interface
+    public class n2a03_device : n2a03_core_device
+                                //device_mixer_interface
     {
         //DEFINE_DEVICE_TYPE(N2A03, n2a03_device, "n2a03", "Ricoh N2A03")
         public static readonly emu.detail.device_type_impl N2A03 = DEFINE_DEVICE_TYPE("n2a03", "Ricoh N2A03", (type, mconfig, tag, owner, clock) => { return new n2a03_device(mconfig, tag, owner, clock); });
 
 
-        public class device_mixer_interface_n2a03_device : device_mixer_interface
-        {
-            public device_mixer_interface_n2a03_device(machine_config mconfig, device_t device) : base(mconfig, device) { }
-        }
+        device_mixer_interface m_dimixer;
 
 
-        device_mixer_interface_n2a03_device m_dimixer;
-
-
-        //required_device<nesapu_device> m_apu;
+        required_device<nesapu_device> m_apu;
 
 
         n2a03_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
             : base(mconfig, N2A03, tag, owner, clock)
         {
-            m_class_interfaces.Add(new device_mixer_interface_n2a03_device(mconfig, this));  //device_mixer_interface(mconfig, *this, 1)
-            m_dimixer = GetClassInterface<device_mixer_interface_n2a03_device>();
+            m_class_interfaces.Add(new device_mixer_interface(mconfig, this, 1));  //, device_mixer_interface(mconfig, *this, 1)
+            m_dimixer = GetClassInterface<device_mixer_interface>();
 
 
-            throw new emu_unimplemented();
-#if false
-            m_apu(*this, "nesapu")
+            m_apu = new required_device<nesapu_device>(this, "nesapu");
 
 
-            program_config.m_internal_map = address_map_constructor(FUNC(n2a03_device::n2a03_map), this);
-#endif
+            program_config.m_internal_map = n2a03_map;
         }
 
 
-        public device_mixer_interface_n2a03_device dimixer { get { return m_dimixer; } }
+        public device_mixer_interface dimixer { get { return m_dimixer; } }
 
 
-        //uint8_t psg1_4014_r();
-        //uint8_t psg1_4015_r();
-        //void psg1_4015_w(uint8_t data);
-        //void psg1_4017_w(uint8_t data);
-
-        //void n2a03_map(address_map &map);
+        uint8_t psg1_4014_r() { throw new emu_unimplemented(); }
+        uint8_t psg1_4015_r() { throw new emu_unimplemented(); }
+        void psg1_4015_w(uint8_t data) { throw new emu_unimplemented(); }
+        void psg1_4017_w(uint8_t data) { throw new emu_unimplemented(); }
 
 
-        protected override void device_add_mconfig(machine_config config) { throw new emu_unimplemented(); }
+        void n2a03_map(address_map map, device_t device)
+        {
+            map.op(0x4000, 0x4013).rw("nesapu", (offset) => { return ((nesapu_device)subdevice("nesapu")).read(offset); }, (offset, data) => { ((nesapu_device)subdevice("nesapu")).write(offset, data); });
+            map.op(0x4014, 0x4014).r(psg1_4014_r); // .w(FUNC(nesapu_device::sprite_dma_0_w));
+            map.op(0x4015, 0x4015).rw(psg1_4015_r, psg1_4015_w); /* PSG status / first control register */
+            //map(0x4016, 0x4016).rw(FUNC(n2a03_device::vsnes_in0_r), FUNC(n2a03_device::vsnes_in0_w));
+            map.op(0x4017, 0x4017) /*.r(FUNC(n2a03_device::vsnes_in1_r))*/ .w(psg1_4017_w);
+        }
+
+
+        protected override void device_add_mconfig(machine_config config)
+        {
+            NES_APU(config, m_apu, DERIVED_CLOCK(1,1));
+            m_apu.op0.irq().set((write_line_delegate)apu_irq).reg();
+            m_apu.op0.mem_read().set(apu_read_mem).reg();
+            m_apu.op0.disound.add_route(ALL_OUTPUTS, this.m_dimixer, 1.0, AUTO_ALLOC_INPUT, 0);
+        }
 
 
         //DECLARE_WRITE_LINE_MEMBER(apu_irq);
-        //uint8_t apu_read_mem(offs_t offset);
+        public void apu_irq(int state) { throw new emu_unimplemented(); }
+
+
+        uint8_t apu_read_mem(offs_t offset) { throw new emu_unimplemented(); }
     }
 
 

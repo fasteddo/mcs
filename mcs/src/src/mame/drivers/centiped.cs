@@ -4,6 +4,7 @@
 using System;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -45,7 +46,7 @@ namespace mame
          *************************************/
 
         //TIMER_DEVICE_CALLBACK_MEMBER(centiped_state::generate_interrupt)
-        void generate_interrupt(timer_device timer, object ptr, int param)  // void *ptr, INT32 param) 
+        void generate_interrupt(timer_device timer, object ptr, s32 param)  //void *ptr, s32 param
         {
             int scanline = param;
 
@@ -734,7 +735,7 @@ namespace mame
         */
 
         //ROM_START( centiped )
-        static readonly MemoryContainer<tiny_rom_entry> rom_centiped = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_centiped =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "136001-407.d1",  0x2000, 0x0800, CRC("c4d995eb") + SHA1("d0b2f0461cfa35842045d40ffb65e777703b773e") ),
@@ -754,7 +755,7 @@ namespace mame
 
 
         //ROM_START( milliped )
-        static readonly MemoryContainer<tiny_rom_entry> rom_milliped = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom_milliped =
         {
             ROM_REGION( 0x10000, "maincpu", 0 ),
             ROM_LOAD( "136013-104.mn1", 0x4000, 0x1000, CRC("40711675") + SHA1("b595d6a0f5d3c611ade1b83a94c3b909d2124dc4") ),

@@ -38,7 +38,7 @@ namespace mame
         uint8_t m_interrupt_vector;
 
         // devices
-        required_device<cpu_device> m_maincpu;
+        required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
         optional_device<namco_device> m_namco_sound;
         optional_device<samples_device> m_samples;
         optional_device<timeplt_audio_device> m_timeplt_audio;
@@ -52,7 +52,7 @@ namespace mame
         {
             m_videoram = new required_shared_ptr<uint8_t>(this, "videoram");
             m_radarattr = new required_shared_ptr<uint8_t>(this, "radarattr");
-            m_maincpu = new required_device<cpu_device>(this, "maincpu");
+            m_maincpu = new required_device<z80_device>(this, "maincpu");
             m_namco_sound = new optional_device<namco_device>(this, "namco");
             m_samples = new optional_device<samples_device>(this, "samples");
             m_timeplt_audio = new optional_device<timeplt_audio_device>(this, "timeplt_audio");

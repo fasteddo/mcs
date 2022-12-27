@@ -54,7 +54,7 @@ namespace mame
     class ___empty
     {
         //ROM_START( ___empty )
-        static readonly MemoryContainer<tiny_rom_entry> rom____empty = new MemoryContainer<tiny_rom_entry>()
+        static readonly tiny_rom_entry [] rom____empty =
         {
             ROM_END,
         };

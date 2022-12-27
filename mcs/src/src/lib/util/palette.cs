@@ -600,7 +600,7 @@ namespace mame
 
         public static uint8_t pal1bit(uint8_t bits) { return palexpand<int_const_1>(bits); }
         static uint8_t pal2bit(uint8_t bits) { return palexpand<int_const_2>(bits); }
-        static uint8_t pal3bit(uint8_t bits) { return palexpand<int_const_3>(bits); }
+        public static uint8_t pal3bit(uint8_t bits) { return palexpand<int_const_3>(bits); }
         static uint8_t pal4bit(uint8_t bits) { return palexpand<int_const_4>(bits); }
         public static uint8_t pal5bit(uint8_t bits) { return palexpand<int_const_5>(bits); }
         static uint8_t pal6bit(uint8_t bits) { return palexpand<int_const_6>(bits); }

@@ -54,12 +54,12 @@ namespace mame
         }
 
 
-        /*-------------------------------------------------
-            render_clip_line - clip a line to a rectangle
-        -------------------------------------------------*/
-        public static bool render_clip_line(ref render_bounds bounds, render_bounds clip)
+        //-------------------------------------------------
+        //  render_clip_line - clip a line to a rectangle
+        //-------------------------------------------------
+        public static bool render_clip_line(ref render_bounds bounds, in render_bounds clip)
         {
-            /* loop until we get a final result */
+            // loop until we get a final result
             while (true)
             {
                 u8 code0 = 0;
@@ -68,7 +68,7 @@ namespace mame
                 float x;
                 float y;
 
-                /* compute Cohen Sutherland bits for first coordinate */
+                // compute Cohen Sutherland bits for first coordinate
                 if (bounds.y0 > clip.y1)
                     code0 |= 1;
                 if (bounds.y0 < clip.y0)
@@ -78,7 +78,7 @@ namespace mame
                 if (bounds.x0 < clip.x0)
                     code0 |= 8;
 
-                /* compute Cohen Sutherland bits for second coordinate */
+                // compute Cohen Sutherland bits for second coordinate
                 if (bounds.y1 > clip.y1)
                     code1 |= 1;
                 if (bounds.y1 < clip.y0)
@@ -88,46 +88,46 @@ namespace mame
                 if (bounds.x1 < clip.x0)
                     code1 |= 8;
 
-                /* trivial accept: just return FALSE */
+                // trivial accept: just return false
                 if ((code0 | code1) == 0)
                     return false;
 
-                /* trivial reject: just return TRUE */
+                // trivial reject: just return true
                 if ((code0 & code1) != 0)
                     return true;
 
-                /* fix one of the OOB cases */
+                // fix one of the OOB cases
                 thiscode = code0 > 0 ? code0 : code1;
 
-                /* off the bottom */
+                // off the bottom
                 if ((thiscode & 1) != 0)
                 {
                     x = bounds.x0 + (bounds.x1 - bounds.x0) * (clip.y1 - bounds.y0) / (bounds.y1 - bounds.y0);
                     y = clip.y1;
                 }
 
-                /* off the top */
+                // off the top
                 else if ((thiscode & 2) != 0)
                 {
                     x = bounds.x0 + (bounds.x1 - bounds.x0) * (clip.y0 - bounds.y0) / (bounds.y1 - bounds.y0);
                     y = clip.y0;
                 }
 
-                /* off the right */
+                // off the right
                 else if ((thiscode & 4) != 0)
                 {
                     y = bounds.y0 + (bounds.y1 - bounds.y0) * (clip.x1 - bounds.x0) / (bounds.x1 - bounds.x0);
                     x = clip.x1;
                 }
 
-                /* off the left */
+                // off the left
                 else
                 {
                     y = bounds.y0 + (bounds.y1 - bounds.y0) * (clip.x0 - bounds.x0) / (bounds.x1 - bounds.x0);
                     x = clip.x0;
                 }
 
-                /* fix the appropriate coordinate */
+                // fix the appropriate coordinate
                 if (thiscode == code0)
                 {
                     bounds.x0 = x;
@@ -141,16 +141,16 @@ namespace mame
             }
         }
 
-        /*-------------------------------------------------
-            render_clip_quad - clip a quad to a rectangle
-        -------------------------------------------------*/
-        public static bool render_clip_quad(ref render_bounds bounds, render_bounds clip, ref render_quad_texuv texcoords, bool use_texcoords)
+        //-------------------------------------------------
+        //  render_clip_quad - clip a quad to a rectangle
+        //-------------------------------------------------
+        public static bool render_clip_quad(ref render_bounds bounds, in render_bounds clip, ref render_quad_texuv texcoords, bool use_texcoords)
         {
-            /* ensure our assumptions about the bounds are correct */
+            // ensure our assumptions about the bounds are correct
             assert(bounds.x0 <= bounds.x1);
             assert(bounds.y0 <= bounds.y1);
 
-            /* trivial reject */
+            // trivial reject
             if (bounds.y1 < clip.y0)
                 return true;
             if (bounds.y0 > clip.y1)
@@ -160,7 +160,7 @@ namespace mame
             if (bounds.x0 > clip.x1)
                 return true;
 
-            /* clip top (x0,y0)-(x1,y1) */
+            // clip top (x0,y0)-(x1,y1)
             if (bounds.y0 < clip.y0)
             {
                 float frac = (clip.y0 - bounds.y0) / (bounds.y1 - bounds.y0);
@@ -174,7 +174,7 @@ namespace mame
                 }
             }
 
-            /* clip bottom (x3,y3)-(x2,y2) */
+            // clip bottom (x3,y3)-(x2,y2)
             if (bounds.y1 > clip.y1)
             {
                 float frac = (bounds.y1 - clip.y1) / (bounds.y1 - bounds.y0);
@@ -188,7 +188,7 @@ namespace mame
                 }
             }
 
-            /* clip left (x0,y0)-(x3,y3) */
+            // clip left (x0,y0)-(x3,y3)
             if (bounds.x0 < clip.x0)
             {
                 float frac = (clip.x0 - bounds.x0) / (bounds.x1 - bounds.x0);
@@ -202,7 +202,7 @@ namespace mame
                 }
             }
 
-            /* clip right (x1,y1)-(x2,y2) */
+            // clip right (x1,y1)-(x2,y2)
             if (bounds.x1 > clip.x1)
             {
                 float frac = (bounds.x1 - clip.x1) / (bounds.x1 - bounds.x0);
@@ -220,7 +220,7 @@ namespace mame
         }
 
 
-        //void render_line_to_quad(const render_bounds *bounds, float width, float length_extension, render_bounds *bounds0, render_bounds *bounds1);
+        //std::pair<render_bounds, render_bounds> render_line_to_quad(const render_bounds &bounds, float width, float length_extension);
 
 
         /*-------------------------------------------------
