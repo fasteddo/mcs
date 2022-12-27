@@ -15,6 +15,7 @@ using uint32_t = System.UInt32;
 using static mame.device_global;
 using static mame.emucore_global;
 using static mame.osdcore_global;
+using static mame.slapstic_global;
 
 
 namespace mame
@@ -22,8 +23,7 @@ namespace mame
     public class atari_slapstic_device : device_t
     {
         //DEFINE_DEVICE_TYPE(SLAPSTIC, atari_slapstic_device, "slapstic", "Atari Slapstic")
-        static device_t device_creator_atari_slapstic_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new atari_slapstic_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SLAPSTIC = DEFINE_DEVICE_TYPE(device_creator_atari_slapstic_device, "slapstic", "Atari Slapstic");
+        public static readonly emu.detail.device_type_impl SLAPSTIC = DEFINE_DEVICE_TYPE("slapstic", "Atari Slapstic", (type, mconfig, tag, owner, clock) => { return new atari_slapstic_device(mconfig, tag, owner, clock); });
 
 
         struct mask_value
@@ -1563,6 +1563,18 @@ namespace mame
         void commit_bank()
         {
             change_bank(m_loaded_bank);
+        }
+    }
+
+
+    static class slapstic_global
+    {
+        public static atari_slapstic_device SLAPSTIC<bool_Required>(machine_config mconfig, device_finder<atari_slapstic_device, bool_Required> finder, int chipnum)
+            where bool_Required : bool_const, new()
+        {
+            var device = emu.detail.device_type_impl.op<atari_slapstic_device, bool_Required>(mconfig, finder, atari_slapstic_device.SLAPSTIC, 0);
+            device.atari_slapstic_device_after_ctor(chipnum);
+            return device;
         }
     }
 }

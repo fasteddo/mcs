@@ -11,20 +11,28 @@ using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
 using static mame.ay8910_global;
-using static mame.device_creator_helper_global;
 using static mame.diexec_global;
 using static mame.digfx_global;
 using static mame.disound_global;
+using static mame.drawgfx_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.emupal_global;
+using static mame.galaxian_global;
 using static mame.gamedrv_global;
+using static mame.gen_latch_global;
 using static mame.hash_global;
+using static mame.i8255_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
+using static mame.netlist_global;
 using static mame.romentry_global;
 using static mame.screen_global;
+using static mame.speaker_global;
 using static mame.util;
+using static mame.watchdog_global;
+using static mame.z80_global;
 
 
 namespace mame
@@ -946,8 +954,8 @@ namespace mame
         static galaxian m_galaxian = new galaxian();
 
 
-        static device_t device_creator_galaxian(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_state(mconfig, (device_type)type, tag); }
-        static device_t device_creator_frogger(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_galaxian(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_state(mconfig, type, tag); }
+        static device_t device_creator_frogger(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_state(mconfig, type, tag); }
 
 
         /*************************************

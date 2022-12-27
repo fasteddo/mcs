@@ -10,19 +10,25 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
 using static mame.ay8910_global;
-using static mame.device_creator_helper_global;
 using static mame.diexec_global;
 using static mame.digfx_global;
 using static mame.disound_global;
+using static mame.drawgfx_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.emupal_global;
 using static mame.gamedrv_global;
+using static mame.gen_latch_global;
 using static mame.hash_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
+using static mame.netlist_global;
 using static mame.romentry_global;
 using static mame.screen_global;
+using static mame.speaker_global;
+using static mame.timer_global;
+using static mame.z80_global;
 
 
 namespace mame
@@ -396,7 +402,7 @@ namespace mame
         static _1942 m_1942 = new _1942();
 
 
-        static device_t device_creator_1942(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new _1942_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_1942(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new _1942_state(mconfig, type, tag); }
 
 
         //                                                     creator,             rom       YEAR,   NAME,   PARENT,  MACHINE,           INPUT,                        INIT,                    MONITOR,  COMPANY,  FULLNAME,            FLAGS

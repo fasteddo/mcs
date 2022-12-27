@@ -22,7 +22,6 @@ using static mame.emuopts_global;
 using static mame.gamedrv_global;
 using static mame.language_global;
 using static mame.osdfile_global;
-using static mame.ui.auditmenu_global;
 using static mame.unicode_global;
 using static mame.util;
 using static mame.utils_global;

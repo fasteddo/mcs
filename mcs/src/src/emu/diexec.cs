@@ -466,7 +466,7 @@ namespace mame
         bool executing() { return scheduler().currently_executing() == this; }
         s32 cycles_remaining() { return executing() ? m_icountptr.i : 0; }  // *m_icountptr : 0; } // cycles remaining in this timeslice
         public void eat_cycles(int cycles) { if (executing()) m_icountptr.i = (cycles > m_icountptr.i) ? 0 : (m_icountptr.i - cycles); }  // *m_icountptr = (cycles > *m_icountptr) ? 0 : (*m_icountptr - cycles); }
-        void adjust_icount(int delta) { if (executing()) m_icountptr.i += delta; }  // *m_icountptr += delta;
+        public void adjust_icount(int delta) { if (executing()) m_icountptr.i += delta; }  // *m_icountptr += delta;
 
 
         //-------------------------------------------------

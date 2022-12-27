@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using int32_t = System.Int32;
 using PointerU8 = mame.Pointer<System.Byte>;
 using size_t = System.UInt64;

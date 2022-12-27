@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using int8_t = System.SByte;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using u16 = System.UInt16;
@@ -66,7 +67,7 @@ namespace mame
 
         const u32 DK2B_PALETTE_LENGTH     = 256+256+8+1; /*  (256) */
         //#define DK4B_PALETTE_LENGTH     (256+256+8+1) /*  (256) */
-        //#define DK3_PALETTE_LENGTH      (256+256+8+1) /*  (256) */
+        const u32 DK3_PALETTE_LENGTH      = 256+256+8+1; /*  (256) */
         //#define RS_PALETTE_LENGTH       (256+256+8+1)
 
 
@@ -74,8 +75,8 @@ namespace mame
         required_device<cpu_device> m_maincpu;
         optional_device<mcs48_cpu_device> m_soundcpu;
         optional_device<eeprom_serial_93cxx_device> m_eeprom;
-        optional_device<intref> m_dev_n2a03a; /* dkong3 */  //optional_device<n2a03_device> m_dev_n2a03a; /* dkong3 */
-        optional_device<intref> m_dev_n2a03b; /* dkong3 */  //optional_device<n2a03_device> m_dev_n2a03b; /* dkong3 */
+        optional_device<n2a03_device> m_dev_n2a03a; /* dkong3 */
+        optional_device<n2a03_device> m_dev_n2a03b; /* dkong3 */
         optional_device<latch8_device> m_dev_vp2;   /* dkong2, virtual port 2 */
         optional_device<latch8_device> m_dev_6h;    /* dkong2 */
         optional_device<latch8_device> m_ls175_3d;  /* dkong2b_audio */
@@ -151,7 +152,7 @@ namespace mame
         required_device<gfxdecode_device> m_gfxdecode;
         required_device<screen_device> m_screen;
         required_device<palette_device> m_palette;
-        optional_device<intref> m_z80dma;  //optional_device<z80dma_device> m_z80dma;
+        optional_device<z80dma_device> m_z80dma;
         optional_device<i8257_device> m_dma8257;
         memory_bank_creator m_bank1;
         memory_bank_creator m_bank2;
@@ -166,8 +167,8 @@ namespace mame
             m_maincpu = new required_device<cpu_device>(this, "maincpu");
             m_soundcpu = new optional_device<mcs48_cpu_device>(this, "soundcpu");
             m_eeprom = new optional_device<eeprom_serial_93cxx_device>(this, "eeprom");
-            m_dev_n2a03a = new optional_device<intref>(this, "n2a03a");
-            m_dev_n2a03b = new optional_device<intref>(this, "n2a03b");
+            m_dev_n2a03a = new optional_device<n2a03_device>(this, "n2a03a");
+            m_dev_n2a03b = new optional_device<n2a03_device>(this, "n2a03b");
             m_dev_vp2 = new optional_device<latch8_device>(this, "virtual_p2");
             m_dev_6h = new optional_device<latch8_device>(this, "ls259.6h");
             m_ls175_3d = new optional_device<latch8_device>(this, "ls175.3d");
@@ -193,7 +194,7 @@ namespace mame
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
             m_screen = new required_device<screen_device>(this, "screen");
             m_palette = new required_device<palette_device>(this, "palette");
-            m_z80dma = new optional_device<intref>(this, "z80dma");
+            m_z80dma = new optional_device<z80dma_device>(this, "z80dma");
             m_dma8257 = new optional_device<i8257_device>(this, "dma8257");
             m_bank1 = new memory_bank_creator(this, "bank1");
             m_bank2 = new memory_bank_creator(this, "bank2");

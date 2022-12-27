@@ -27,7 +27,7 @@ namespace mame
         PointerRef<u8> m_base;  //uX *m_base;
 
 
-        public handler_entry_read_memory(address_space space, PointerU8 base_) : base(space, 0)  //handler_entry_read_memory(address_space *space, void *base) : handler_entry_read_address<Width, AddrShift>(space, 0), m_base(reinterpret_cast<uX *>(base)) {}
+        public handler_entry_read_memory(address_space space, u16 flags, PointerU8 base_) : base(space, flags)  //handler_entry_read_memory(address_space *space, u16 flags, void *base) : handler_entry_read_address<Width, AddrShift>(space, flags), m_base(reinterpret_cast<uX *>(base)) {}
         {
             m_base = new PointerRef<u8>(base_);  //m_base(reinterpret_cast<uX *>(base))
         }
@@ -47,6 +47,9 @@ namespace mame
                 default: throw new emu_unimplemented();
             }
         }
+
+
+        protected override std.pair<uX, u16> read_flags(offs_t offset, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         public override object get_ptr(offs_t offset)
@@ -70,7 +73,7 @@ namespace mame
         PointerRef<u8> m_base;  //uX *m_base;
 
 
-        public handler_entry_write_memory(address_space space, object base_) : base(space, 0)  //handler_entry_write_memory(address_space *space, void *base) : handler_entry_write_address<Width, AddrShift>(space, 0), m_base(reinterpret_cast<uX *>(base)) {}
+        public handler_entry_write_memory(address_space space, u16 flags, object base_) : base(space, flags)  //handler_entry_write_memory(address_space *space, u16 flags, void *base) : handler_entry_write_address<Width, AddrShift>(space, flags), m_base(reinterpret_cast<uX *>(base)) {}
         {
             m_base = new PointerRef<u8>((Pointer<u8>)base_);  //m_base(reinterpret_cast<uX *>(base))
         }
@@ -109,6 +112,9 @@ namespace mame
         //}
 
 
+        protected override u16 write_flags(offs_t offset, uX data, uX mem_mask) { throw new emu_unimplemented(); }
+
+
         public override object get_ptr(offs_t offset)
         {
             throw new emu_unimplemented();
@@ -134,7 +140,7 @@ namespace mame
         memory_bank m_bank;
 
 
-        public handler_entry_read_memory_bank(address_space space, memory_bank bank) : base(space, 0) { m_bank = bank; }
+        public handler_entry_read_memory_bank(address_space space, u16 flags, memory_bank bank) : base(space, flags) { m_bank = bank; }  //handler_entry_read_memory_bank(address_space *space, u16 flags, memory_bank &bank) : handler_entry_read_address<Width, AddrShift>(space, flags), m_bank(bank) {}
         //~handler_entry_read_memory_bank() = default;
 
 
@@ -150,6 +156,9 @@ namespace mame
                 default: throw new emu_unimplemented();
             }
         }
+
+
+        protected override std.pair<uX, u16> read_flags(offs_t offset, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         public override object get_ptr(offs_t offset)
@@ -173,7 +182,7 @@ namespace mame
         memory_bank m_bank;
 
 
-        public handler_entry_write_memory_bank(address_space space, memory_bank bank) : base(space, 0) { m_bank = bank; }
+        public handler_entry_write_memory_bank(address_space space, u16 flags, memory_bank bank) : base(space, flags) { m_bank = bank; }  //handler_entry_write_memory_bank(address_space *space, u16 flags, memory_bank &bank) : handler_entry_write_address<Width, AddrShift>(space, flags), m_bank(bank) {}
         //~handler_entry_write_memory_bank() = default;
 
 
@@ -198,6 +207,9 @@ namespace mame
                 }
             }
         }
+
+
+        protected override u16 write_flags(offs_t offset, uX data, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         public override object get_ptr(offs_t offset)

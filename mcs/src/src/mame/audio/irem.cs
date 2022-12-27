@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -10,14 +11,17 @@ using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
 using static mame.ay8910_global;
-using static mame.device_creator_helper_global;
 using static mame.device_global;
 using static mame.diexec_global;
 using static mame.discrete_global;
 using static mame.disound_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.irem_global;
+using static mame.m6801_global;
+using static mame.msm5205_global;
 using static mame.rescap_global;
+using static mame.speaker_global;
 
 
 namespace mame
@@ -354,8 +358,7 @@ namespace mame
     public class m52_soundc_audio_device : irem_audio_device
     {
         //DEFINE_DEVICE_TYPE(IREM_M52_SOUNDC_AUDIO, m52_soundc_audio_device, "m52_soundc_audio", "Irem M52 SoundC Audio")
-        static device_t device_creator_m52_soundc_audio_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m52_soundc_audio_device(mconfig, tag, owner, clock); }
-        public static readonly device_type IREM_M52_SOUNDC_AUDIO = DEFINE_DEVICE_TYPE(device_creator_m52_soundc_audio_device, "m52_soundc_audio", "Irem M52 SoundC Audio");
+        public static readonly emu.detail.device_type_impl IREM_M52_SOUNDC_AUDIO = DEFINE_DEVICE_TYPE("m52_soundc_audio", "Irem M52 SoundC Audio", (type, mconfig, tag, owner, clock) => { return new m52_soundc_audio_device(mconfig, tag, owner, clock); });
 
 
         m52_soundc_audio_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
@@ -397,5 +400,11 @@ namespace mame
 
             DISCRETE(config, "filtermix", m52_sound_c_discrete).disound.add_route(ALL_OUTPUTS, "mono", 1.0);
         }
+    }
+
+
+    static class irem_global
+    {
+        public static m52_soundc_audio_device IREM_M52_SOUNDC_AUDIO(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<m52_soundc_audio_device>(mconfig, tag, m52_soundc_audio_device.IREM_M52_SOUNDC_AUDIO, clock); }
     }
 }

@@ -9,6 +9,7 @@ using u32 = System.UInt32;
 
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.mb14241_global;
 
 
 namespace mame
@@ -16,8 +17,7 @@ namespace mame
     public class mb14241_device : device_t
     {
         //DEFINE_DEVICE_TYPE(MB14241, mb14241_device, "mb14241", "MB14241 Data Shifter")
-        static device_t device_creator_mb14241_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb14241_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB14241 = DEFINE_DEVICE_TYPE(device_creator_mb14241_device, "mb14241", "MB14241 Data Shifter");
+        public static readonly emu.detail.device_type_impl MB14241 = DEFINE_DEVICE_TYPE("mb14241", "MB14241 Data Shifter", (type, mconfig, tag, owner, clock) => { return new mb14241_device(mconfig, tag, owner, clock); });
 
 
         // internal state
@@ -62,5 +62,11 @@ namespace mame
             m_shift_data = 0;
             m_shift_count = 0;
         }
+    }
+
+
+    static class mb14241_global
+    {
+        public static mb14241_device MB14241<bool_Required>(machine_config mconfig, device_finder<mb14241_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb14241_device.MB14241, 0); }
     }
 }

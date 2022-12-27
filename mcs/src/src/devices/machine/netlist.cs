@@ -5,6 +5,7 @@ using System;
 using System.IO;
 
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using int64_t = System.Int64;
 using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
@@ -38,7 +39,7 @@ namespace mame
     public delegate void func_type(netlist.nlparse_t setup);  //using func_type = std::function<void(netlist::nlparse_t &)>;
 
 
-    public static class netlist_global
+    static partial class netlist_global
     {
         //#define NETLIST_LOGIC_PORT_CHANGED(_base, _tag)  PORT_CHANGED_MEMBER(_base ":" _tag, netlist_mame_logic_input_device, input_changed, 0)
         //#define NETLIST_INT_PORT_CHANGED(_base, _tag)    PORT_CHANGED_MEMBER(_base ":" _tag, netlist_mame_logic_input_device, input_changed, 0)
@@ -85,8 +86,7 @@ namespace mame
     public class netlist_mame_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NETLIST_CORE,  netlist_mame_device,       "netlist_core",  "Netlist Core Device")
-        static device_t device_creator_netlist_mame_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_CORE = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_device, "netlist_core",  "Netlist Core Device");
+        public static readonly emu.detail.device_type_impl NETLIST_CORE = DEFINE_DEVICE_TYPE("netlist_core", "Netlist Core Device", (type, mconfig, tag, owner, clock) => { return new netlist_mame_device(mconfig, tag, owner, clock); });
 
 
         //using func_type = std::function<void(netlist::nlparse_t &)>;
@@ -492,8 +492,7 @@ namespace mame
                                            //device_memory_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_CPU,   netlist_mame_cpu_device,   "netlist_cpu",   "Netlist CPU Device")
-        static device_t device_creator_netlist_mame_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_CPU = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_cpu_device, "netlist_cpu", "Netlist CPU Device");
+        public static readonly emu.detail.device_type_impl NETLIST_CPU = DEFINE_DEVICE_TYPE("netlist_cpu", "Netlist CPU Device", (type, mconfig, tag, owner, clock) => { return new netlist_mame_cpu_device(mconfig, tag, owner, clock); });
 
 
         public class device_execute_interface_netlist_mame : device_execute_interface
@@ -757,8 +756,7 @@ namespace mame
                                              //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_SOUND, netlist_mame_sound_device, "netlist_sound", "Netlist Sound Device")
-        static device_t device_creator_netlist_mame_sound_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_sound_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_SOUND = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_sound_device, "netlist_sound", "Netlist Sound Device");
+        public static readonly emu.detail.device_type_impl NETLIST_SOUND = DEFINE_DEVICE_TYPE("netlist_sound", "Netlist Sound Device", (type, mconfig, tag, owner, clock) => { return new netlist_mame_sound_device(mconfig, tag, owner, clock); });
 
 
         public class device_sound_interface_netlist_mame_sound : device_sound_interface
@@ -1039,8 +1037,7 @@ namespace mame
                                                     //netlist_mame_sub_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_ANALOG_INPUT,  netlist_mame_analog_input_device,  "nl_analog_in",  "Netlist Analog Input")
-        static device_t device_creator_netlist_mame_analog_input_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_analog_input_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_ANALOG_INPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_analog_input_device, "nl_analog_in",  "Netlist Analog Input");
+        public static readonly emu.detail.device_type_impl NETLIST_ANALOG_INPUT = DEFINE_DEVICE_TYPE("nl_analog_in", "Netlist Analog Input", (type, mconfig, tag, owner, clock) => { return new netlist_mame_analog_input_device(mconfig, tag, owner, clock); });
 
 
         netlist.param_num_t<nl_fptype, netlist.param_num_t_operators_double> m_param;  //netlist::param_num_t<netlist::nl_fptype> *m_param;
@@ -1143,8 +1140,7 @@ namespace mame
                                                      //netlist_mame_sub_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_ANALOG_OUTPUT, netlist_mame_analog_output_device, "nl_analog_out", "Netlist Analog Output")
-        static device_t device_creator_netlist_mame_analog_output_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_analog_output_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_ANALOG_OUTPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_analog_output_device, "nl_analog_out",  "Netlist Analog Output");
+        public static readonly emu.detail.device_type_impl NETLIST_ANALOG_OUTPUT = DEFINE_DEVICE_TYPE("nl_analog_out", "Netlist Analog Output", (type, mconfig, tag, owner, clock) => { return new netlist_mame_analog_output_device(mconfig, tag, owner, clock); });
 
 
         public delegate void output_delegate(double data, attotime time);  //typedef device_delegate<void (const double, const attotime &)> output_delegate;
@@ -1220,8 +1216,7 @@ namespace mame
                                                     //netlist_mame_sub_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_LOGIC_OUTPUT,  netlist_mame_logic_output_device,  "nl_logic_out",  "Netlist Logic Output")
-        static device_t device_creator_netlist_mame_logic_output_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_logic_output_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_LOGIC_OUTPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_logic_output_device, "nl_logic_out",  "Netlist Logic Output");
+        public static readonly emu.detail.device_type_impl NETLIST_LOGIC_OUTPUT = DEFINE_DEVICE_TYPE("nl_logic_out", "Netlist Logic Output", (type, mconfig, tag, owner, clock) => { return new netlist_mame_logic_output_device(mconfig, tag, owner, clock); });
 
 
         public delegate void output_delegate(int data, attotime time);  //typedef device_delegate<void(const int, const attotime &)> output_delegate;
@@ -1304,8 +1299,7 @@ namespace mame
                                                    //netlist_mame_sub_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_LOGIC_INPUT,   netlist_mame_logic_input_device,   "nl_logic_in",   "Netlist Logic Input")
-        static device_t device_creator_netlist_mame_logic_input_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_logic_input_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_LOGIC_INPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_logic_input_device, "nl_logic_in",  "Netlist Logic Input");
+        public static readonly emu.detail.device_type_impl NETLIST_LOGIC_INPUT = DEFINE_DEVICE_TYPE("nl_logic_in", "Netlist Logic Input", (type, mconfig, tag, owner, clock) => { return new netlist_mame_logic_input_device(mconfig, tag, owner, clock); });
 
 
         netlist.param_num_t<bool, netlist.param_num_t_operators_bool> m_param;
@@ -1409,8 +1403,7 @@ namespace mame
                                                     //netlist_mame_sub_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_STREAM_INPUT,  netlist_mame_stream_input_device,  "nl_stream_in",  "Netlist Stream Input")
-        static device_t device_creator_netlist_mame_stream_input_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_stream_input_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_STREAM_INPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_stream_input_device, "nl_stream_in",  "Netlist Stream Input");
+        public static readonly emu.detail.device_type_impl NETLIST_STREAM_INPUT = DEFINE_DEVICE_TYPE("nl_stream_in", "Netlist Stream Input", (type, mconfig, tag, owner, clock) => { return new netlist_mame_stream_input_device(mconfig, tag, owner, clock); });
 
 
         uint32_t m_channel;
@@ -1504,8 +1497,7 @@ namespace mame
                                                      //netlist_mame_sub_interface
     {
         //DEFINE_DEVICE_TYPE(NETLIST_STREAM_OUTPUT, netlist_mame_stream_output_device, "nl_stream_out", "Netlist Stream Output")
-        static device_t device_creator_netlist_mame_stream_output_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new netlist_mame_stream_output_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NETLIST_STREAM_OUTPUT = DEFINE_DEVICE_TYPE(device_creator_netlist_mame_stream_output_device, "nl_stream_out", "Netlist Stream Output");
+        public static readonly emu.detail.device_type_impl NETLIST_STREAM_OUTPUT = DEFINE_DEVICE_TYPE("nl_stream_out", "Netlist Stream Output", (type, mconfig, tag, owner, clock) => { return new netlist_mame_stream_output_device(mconfig, tag, owner, clock); });
 
 
         uint32_t m_channel;
@@ -1709,5 +1701,39 @@ namespace mame
         public nld_sound_in(object owner, string name)
             : base(owner, name)
         { }
+    }
+
+
+    static partial class netlist_global
+    {
+        public static netlist_mame_cpu_device NETLIST_CPU(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_cpu_device>(mconfig, tag, netlist_mame_cpu_device.NETLIST_CPU, clock); }
+        public static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
+        public static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
+        public static netlist_mame_analog_input_device NETLIST_ANALOG_INPUT(machine_config mconfig, string tag, string param_name)
+        {
+            var device = emu.detail.device_type_impl.op<netlist_mame_analog_input_device>(mconfig, tag, netlist_mame_analog_input_device.NETLIST_ANALOG_INPUT, 0);
+            device.set_name(param_name);
+            return device;
+        }
+        public static netlist_mame_analog_output_device NETLIST_ANALOG_OUTPUT(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_analog_output_device>(mconfig, tag, netlist_mame_analog_output_device.NETLIST_ANALOG_OUTPUT, clock); }
+        public static netlist_mame_logic_output_device NETLIST_LOGIC_OUTPUT(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_logic_output_device>(mconfig, tag, netlist_mame_logic_output_device.NETLIST_LOGIC_OUTPUT, clock); }
+        public static netlist_mame_logic_input_device NETLIST_LOGIC_INPUT(machine_config mconfig, string tag, string param_name, uint32_t shift)
+        {
+            var device = emu.detail.device_type_impl.op<netlist_mame_logic_input_device>(mconfig, tag, netlist_mame_logic_input_device.NETLIST_LOGIC_INPUT, 0);
+            device.set_params(param_name, shift);
+            return device;
+        }
+        public static netlist_mame_stream_input_device NETLIST_STREAM_INPUT(machine_config mconfig, string tag, int channel, string param_name)
+        {
+            var device = emu.detail.device_type_impl.op<netlist_mame_stream_input_device>(mconfig, tag, netlist_mame_stream_input_device.NETLIST_STREAM_INPUT, 0);
+            device.set_params(channel, param_name);
+            return device;
+        }
+        public static netlist_mame_stream_output_device NETLIST_STREAM_OUTPUT(machine_config mconfig, string tag, int channel, string out_name)
+        {
+            var device = emu.detail.device_type_impl.op<netlist_mame_stream_output_device>(mconfig, tag, netlist_mame_stream_output_device.NETLIST_STREAM_OUTPUT, 0);
+            device.set_params(channel, out_name);
+            return device;
+        }
     }
 }

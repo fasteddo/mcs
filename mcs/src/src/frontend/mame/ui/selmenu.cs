@@ -1360,7 +1360,7 @@ namespace mame.ui
                     }
                     else
                     {
-                        m_info_buffer = "";
+                        m_info_buffer = m_info_buffer.clear_();
                         mame_machine_manager.instance().lua().call_plugin("data", m_info_view - 1, out m_info_buffer);
                     }
                 }
@@ -1650,9 +1650,9 @@ namespace mame.ui
 
                 // if everything looks good, schedule the new driver
                 if (audit_passed(summary))
-                    str += __("ROM Audit Result\tOK\n");
+                    str += __("Media Audit Result\tOK\n");
                 else
-                    str += __("ROM Audit Result\tBAD\n");
+                    str += __("Media Audit Result\tBAD\n");
 
                 if (summary_samples == media_auditor.summary.NONE_NEEDED)
                     str += __("Samples Audit Result\tNone Needed\n");
@@ -1663,7 +1663,7 @@ namespace mame.ui
             }
             else
             {
-                str += __("ROM Audit \tDisabled\nSamples Audit \tDisabled\n");
+                str += __("Media Audit \tDisabled\nSamples Audit \tDisabled\n");
             }
 
             buffer = str;

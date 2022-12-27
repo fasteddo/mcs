@@ -39,8 +39,7 @@ namespace mame
                                          //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(CASSETTE, cassette_image_device, "cassette_image", "Cassette")
-        static device_t device_creator_cassette_image_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new cassette_image_device(mconfig, tag, owner, clock); }
-        public static readonly device_type CASSETTE = DEFINE_DEVICE_TYPE(device_creator_cassette_image_device, "cassette_image", "Cassette");
+        public static readonly emu.detail.device_type_impl CASSETTE = DEFINE_DEVICE_TYPE("cassette_image", "Cassette", (type, mconfig, tag, owner, clock) => { return new cassette_image_device(mconfig, tag, owner, clock); });
 
 
         //cassette_image::ptr m_cassette;

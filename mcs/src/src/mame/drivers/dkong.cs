@@ -8,20 +8,25 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
-using static mame.device_creator_helper_global;
 using static mame.diexec_global;
 using static mame.digfx_global;
+using static mame.drawgfx_global;
 using static mame.driver_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.emupal_global;
 using static mame.gamedrv_global;
 using static mame.generic_global;
 using static mame.hash_global;
+using static mame.i8257_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
 using static mame.romentry_global;
 using static mame.screen_global;
+using static mame.z80_global;
+using static mame.watchdog_global;
+using static mame.z80dma_global;
 
 
 namespace mame
@@ -61,6 +66,13 @@ namespace mame
 
             save_item(NAME(new { m_decrypt_counter }));
             save_item(NAME(new { m_dma_latch }));
+        }
+
+
+        //MACHINE_START_MEMBER(dkong_state,dkong3)
+        void machine_start_dkong3()
+        {
+            m_hardware_type = HARDWARE_TKG04;
         }
 
 
@@ -170,6 +182,72 @@ namespace mame
             map.op(0x7d84, 0x7d84).w(nmi_mask_w);
             map.op(0x7d85, 0x7d85).w(p8257_drq_w);          /* P8257 ==> /DRQ0 /DRQ1 */
             map.op(0x7d86, 0x7d87).w(dkong_palettebank_w);
+        }
+
+
+        void dkongjr_map(address_map map, device_t device)
+        {
+            map.op(0x0000, 0x5fff).rom();
+            map.op(0x6000, 0x6bff).ram();
+            map.op(0x6c00, 0x6fff).ram();                                              /* DK3 bootleg only */
+            map.op(0x7000, 0x73ff).ram().share("sprite_ram"); /* sprite set 1 */
+            map.op(0x7400, 0x77ff).ram().w(dkong_videoram_w).share("video_ram");
+            map.op(0x7800, 0x780f).rw(m_dma8257, (offset) => { return m_dma8257.op0.read(offset); }, (offset, data) => { m_dma8257.op0.write(offset, data); });  /* P8257 control registers */
+
+            map.op(0x7c00, 0x7c00).portr("IN0").w("ls174.3d", (offset, data) => { ((latch8_device)subdevice("ls174.3d")).write(offset, data); });    /* IN0, sound interface */
+
+            map.op(0x7c80, 0x7c87).w("ls259.4h", (offset, data) => { ((latch8_device)subdevice("ls259.4h")).bit0_w(offset, data); });     /* latch for sound and signals above */
+            map.op(0x7c80, 0x7c80).portr("IN1").w(dkongjr_gfxbank_w);
+
+            map.op(0x7d00, 0x7d00).r(dkong_in2_r);                                /* IN2 */
+            map.op(0x7d00, 0x7d07).w(m_dev_6h, (offset, data) => { m_dev_6h.op0.bit0_w(offset, data); });      /* Sound addrs */
+
+            map.op(0x7d80, 0x7d87).w("ls259.5h", (offset, data) => { ((latch8_device)subdevice("ls259.5h")).bit0_w(offset, data); });     /* latch for sound and signals above*/
+            map.op(0x7d80, 0x7d80).portr("DSW0").w(dkong_audio_irq_w);   /* DSW0 */
+            map.op(0x7d82, 0x7d82).w(dkong_flipscreen_w);
+            map.op(0x7d83, 0x7d83).w(dkong_spritebank_w);                       /* 2 PSL Signal */
+            map.op(0x7d84, 0x7d84).w(nmi_mask_w);
+            map.op(0x7d85, 0x7d85).w(p8257_drq_w);        /* P8257 ==> /DRQ0 /DRQ1 */
+            map.op(0x7d86, 0x7d87).w(dkong_palettebank_w);
+
+            map.op(0x8000, 0x9fff).rom();                                             /* bootleg DKjr only */
+            map.op(0xb000, 0xbfff).rom();                                             /* pestplce only */
+            map.op(0xd000, 0xdfff).rom();                                             /* DK3 bootleg only */
+        }
+
+
+        void dkong3_map(address_map map, device_t device)
+        {
+            throw new emu_unimplemented();
+#if false
+            map(0x0000, 0x5fff).rom();
+            map(0x6000, 0x67ff).ram();
+            map(0x6800, 0x6fff).ram();
+            map(0x7000, 0x73ff).ram().share("sprite_ram"); /* sprite set 1 */
+            map(0x7400, 0x77ff).ram().w(FUNC(dkong_state::dkong_videoram_w)).share("video_ram");
+            map(0x7c00, 0x7c00).portr("IN0").w("latch1", FUNC(latch8_device::write));
+            map(0x7c80, 0x7c80).portr("IN1").w("latch2", FUNC(latch8_device::write));
+            map(0x7d00, 0x7d00).portr("DSW0").w("latch3", FUNC(latch8_device::write));
+            map(0x7d80, 0x7d80).portr("DSW1").w(FUNC(dkong_state::dkong3_2a03_reset_w));
+            map(0x7e80, 0x7e80).w(FUNC(dkong_state::dkong3_coin_counter_w));
+            map(0x7e81, 0x7e81).w(FUNC(dkong_state::dkong3_gfxbank_w));
+            map(0x7e82, 0x7e82).w(FUNC(dkong_state::dkong_flipscreen_w));
+            map(0x7e83, 0x7e83).w(FUNC(dkong_state::dkong_spritebank_w));                 /* 2 PSL Signal */
+            map(0x7e84, 0x7e84).w(FUNC(dkong_state::nmi_mask_w));
+            map(0x7e85, 0x7e85).w(FUNC(dkong_state::dkong_z80dma_rdy_w));  /* ==> DMA Chip */
+            map(0x7e86, 0x7e87).w(FUNC(dkong_state::dkong_palettebank_w));
+            map(0x8000, 0x9fff).rom();                                       /* DK3 and bootleg DKjr only */
+#endif
+        }
+
+
+        void dkong3_io_map(address_map map, device_t device)
+        {
+            throw new emu_unimplemented();
+#if false
+            map.global_mask(0xff);
+            map(0x00, 0x00).rw(m_z80dma, FUNC(z80dma_device::read), FUNC(z80dma_device::write));  /* dma controller */
+#endif
         }
     }
 
@@ -312,6 +390,107 @@ namespace mame
 
             INPUT_PORTS_END();
         }
+
+
+        //static INPUT_PORTS_START( dkong3 )
+        void construct_ioport_dkong3(device_t owner, ioport_list portlist, ref string errorbuf)
+        {
+            INPUT_PORTS_START(owner, portlist, ref errorbuf);
+
+            throw new emu_unimplemented();
+#if false
+            PORT_START("IN0")      /* IN0 */
+            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY
+            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
+            PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY
+            PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+            PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+            PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
+
+            PORT_START("IN1")      /* IN1 */
+            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
+            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
+            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
+            PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
+            PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+            PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
+            PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)
+            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+            PORT_START("DSW0")      /* DSW0 */
+            PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ) )          PORT_DIPLOCATION("SW2:!1,!2,!3")
+            PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+            PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+            PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+            PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+            PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+            PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+            PORT_DIPSETTING(    0x05, DEF_STR( 1C_5C ) )
+            PORT_DIPSETTING(    0x07, DEF_STR( 1C_6C ) )
+            PORT_DIPUNKNOWN_DIPLOC( 0x08, 0x00, "SW2:!4" )
+            PORT_DIPUNKNOWN_DIPLOC( 0x10, 0x00, "SW2:!5" )
+            PORT_DIPUNKNOWN_DIPLOC( 0x20, 0x00, "SW2:!6" )
+            PORT_SERVICE_DIPLOC( 0x40, IP_ACTIVE_HIGH, "SW2:!7" )
+            PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )          PORT_DIPLOCATION("SW2:!8")
+            PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+            PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+            PORT_START("DSW1")      /* DSW1 */
+            PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )            PORT_DIPLOCATION("SW1:!1,!2")
+            PORT_DIPSETTING(    0x00, "3" )
+            PORT_DIPSETTING(    0x01, "4" )
+            PORT_DIPSETTING(    0x02, "5" )
+            PORT_DIPSETTING(    0x03, "6" )
+            PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )       PORT_DIPLOCATION("SW1:!3,!4")
+            PORT_DIPSETTING(    0x00, "30000" )
+            PORT_DIPSETTING(    0x04, "40000" )
+            PORT_DIPSETTING(    0x08, "50000" )
+            PORT_DIPSETTING(    0x0c, DEF_STR( None ) )
+            PORT_DIPNAME( 0x30, 0x00, "Additional Bonus" )          PORT_DIPLOCATION("SW1:!5,!6")
+            PORT_DIPSETTING(    0x00, "30000" )
+            PORT_DIPSETTING(    0x10, "40000" )
+            PORT_DIPSETTING(    0x20, "50000" )
+            PORT_DIPSETTING(    0x30, DEF_STR( None ) )
+            PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )       PORT_DIPLOCATION("SW1:!7,!8")
+            PORT_DIPSETTING(    0x00, "1" )
+            PORT_DIPSETTING(    0x40, "2" )
+            PORT_DIPSETTING(    0x80, "3" )
+            PORT_DIPSETTING(    0xc0, "4" )
+#endif
+            INPUT_PORTS_END();
+        }
+
+
+        //static INPUT_PORTS_START( dkongjr )
+        void construct_ioport_dkongjr(device_t owner, ioport_list portlist, ref string errorbuf)
+        {
+            INPUT_PORTS_START(owner, portlist, ref errorbuf);
+
+            PORT_INCLUDE( construct_ioport_dkong_in0_4, ref errorbuf );
+            PORT_INCLUDE( construct_ioport_dkong_in1_4, ref errorbuf );
+            PORT_INCLUDE( construct_ioport_dkong_in2, ref errorbuf );
+
+            PORT_MODIFY("IN2");
+            PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_CUSTOM);   /* dkongjr does not have the mcu line connected */
+
+            PORT_INCLUDE( construct_ioport_dkong_dsw0, ref errorbuf );
+            PORT_MODIFY("DSW0");
+            PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) );   PORT_DIPLOCATION( "SW1:!3,!4" );
+            PORT_DIPSETTING(    0x00, "10000" );
+            PORT_DIPSETTING(    0x04, "15000" );
+            PORT_DIPSETTING(    0x08, "20000" );
+            PORT_DIPSETTING(    0x0c, "25000" );
+
+#if DEBUG_DISC_SOUND
+            PORT_START("TST")      /* TST */
+            PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_CODE(KEYCODE_A)
+            PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_CODE(KEYCODE_B)
+#endif
+
+            INPUT_PORTS_END();
+        }
     }
 
 
@@ -416,6 +595,52 @@ namespace mame
 
             WATCHDOG_TIMER(config, m_watchdog);
         }
+
+
+        public void dkong3(machine_config config)
+        {
+            /* basic machine hardware */
+            Z80(config, m_maincpu, new XTAL(8_000_000) / 2); /* verified in schematics */
+            m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, dkong3_map);
+            m_maincpu.op0.memory().set_addrmap(AS_IO, dkong3_io_map);
+
+            MCFG_MACHINE_START_OVERRIDE(config, machine_start_dkong3);
+
+            Z80DMA(config, m_z80dma, CLOCK_1H);
+            m_z80dma.op0.out_busreq_callback().set_inputline(m_maincpu, INPUT_LINE_HALT);
+            m_z80dma.op0.in_mreq_callback().set(memory_read_byte);
+            m_z80dma.op0.out_mreq_callback().set(memory_write_byte);
+
+            /* video hardware */
+            SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+            m_screen.op0.set_raw(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART);
+            m_screen.op0.set_screen_update(screen_update_dkong);
+            m_screen.op0.set_palette(m_palette);
+            m_screen.op0.screen_vblank().set((write_line_delegate)vblank_irq);
+            m_screen.op0.screen_vblank().append_inputline(m_dev_n2a03a, INPUT_LINE_NMI);
+            m_screen.op0.screen_vblank().append_inputline(m_dev_n2a03b, INPUT_LINE_NMI);
+
+            GFXDECODE(config, m_gfxdecode, m_palette, gfx_dkong);
+            PALETTE(config, m_palette, dkong3_palette, DK3_PALETTE_LENGTH);
+
+            MCFG_VIDEO_START_OVERRIDE(config, video_start_dkong);
+
+            /* sound hardware */
+            dkong3_audio(config);
+        }
+
+
+        public void dkongjr(machine_config config)
+        {
+            dkong_base(config);
+
+            m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, dkongjr_map);
+
+            /* sound hardware */
+            dkongjr_audio(config);
+
+            WATCHDOG_TIMER(config, m_watchdog);
+        }
     }
 
 
@@ -460,13 +685,93 @@ namespace mame
         };
 
 
+        //ROM_START( dkongjr )
+        static readonly MemoryContainer<tiny_rom_entry> rom_dkongjr = new MemoryContainer<tiny_rom_entry>()
+        {
+            ROM_REGION( 0x10000, "maincpu", 0 ),
+            ROM_LOAD( "djr1-c_5b_f-2.5b", 0x0000, 0x1000, CRC("dea28158") + SHA1("08baf84ae6f9b40a2c743fe1d8c158c74a40e95a") ),
+            ROM_CONTINUE(                 0x3000, 0x1000 ),
+            ROM_LOAD( "djr1-c_5c_f-2.5c", 0x2000, 0x0800, CRC("6fb5faf6") + SHA1("ce1cfde71a9e2a8b5896a6301d386f72869a1d2e") ),
+            ROM_CONTINUE(                 0x4800, 0x0800 ),
+            ROM_CONTINUE(                 0x1000, 0x0800 ),
+            ROM_CONTINUE(                 0x5800, 0x0800 ),
+            ROM_LOAD( "djr1-c_5e_f-2.5e", 0x4000, 0x0800, CRC("d042b6a8") + SHA1("57ac237d273496b44220b4437118115ef11dbd9f") ),
+            ROM_CONTINUE(                 0x2800, 0x0800 ),
+            ROM_CONTINUE(                 0x5000, 0x0800 ),
+            ROM_CONTINUE(                 0x1800, 0x0800 ),
+            //empty socket on position 5A on pcb 0x8000, 0x1000
+
+            ROM_REGION( 0x1000, "soundcpu", 0 ), /* sound */
+            ROM_LOAD( "djr1-c_3h.3h",     0x0000, 0x1000, CRC("715da5f8") + SHA1("f708c3fd374da65cbd9fe2e191152f5d865414a0") ),
+
+            ROM_REGION( 0x2000, "gfx1", 0 ),
+            ROM_LOAD( "djr1-v.3n",        0x0000, 0x1000, CRC("8d51aca9") + SHA1("64887564b079d98e98aafa53835e398f34fe4e3f") ),
+            ROM_LOAD( "djr1-v.3p",        0x1000, 0x1000, CRC("4ef64ba5") + SHA1("41a7a4005087951f57f62c9751d62a8c495e6bb3") ),
+
+            ROM_REGION( 0x2000, "gfx2", 0 ),
+            ROM_LOAD( "djr1-v_7c.7c",     0x0000, 0x0800, CRC("dc7f4164") + SHA1("07a6242e95b5c3b8dfdcd4b4950f463dba16dd77") ),
+            ROM_LOAD( "djr1-v_7d.7d",     0x0800, 0x0800, CRC("0ce7dcf6") + SHA1("0654b77526c49f0dfa077ac4f1f69cf5cb2e2f64") ),
+            ROM_LOAD( "djr1-v_7e.7e",     0x1000, 0x0800, CRC("24d1ff17") + SHA1("696854bf3dc5447d33b4815db357e6ce3834d867") ),
+            ROM_LOAD( "djr1-v_7f.7f",     0x1800, 0x0800, CRC("0f8c083f") + SHA1("0b688ae9da296b2447fffa5e135fd6a56ec3e790") ),
+
+            ROM_REGION( 0x0300, "proms", 0 ),
+            ROM_LOAD( "djr1-c-2e.2e",     0x0000, 0x0100, CRC("463dc7ad") + SHA1("b2c9f22facc8885be2d953b056eb8dcddd4f34cb") ),   /* palette low 4 bits (inverted) */
+            ROM_LOAD( "djr1-c-2f.2f",     0x0100, 0x0100, CRC("47ba0042") + SHA1("dbec3f4b8013628c5b8f83162e5f8b1f82f6ee5f") ),   /* palette high 4 bits (inverted) */
+            ROM_LOAD( "djr1-v-2n.2n",     0x0200, 0x0100, CRC("dbf185bf") + SHA1("2697a991a4afdf079dd0b7e732f71c7618f43b70") ),   /* character color codes on a per-column basis */
+
+            ROM_END,
+        };
+
+
+        //ROM_START( dkong3 )
+        static readonly MemoryContainer<tiny_rom_entry> rom_dkong3 = new MemoryContainer<tiny_rom_entry>()
+        {
+            ROM_REGION( 0x10000, "maincpu", 0 ),
+            ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, CRC("38d5f38e") + SHA1("5a6bb0e5070211515e3d56bd7d4c2d1655ac1621") ),
+            ROM_LOAD( "dk3c.7c",      0x2000, 0x2000, CRC("c9134379") + SHA1("ecddb3694b93cb3dc98c3b1aeeee928e27529aba") ),
+            ROM_LOAD( "dk3c.7d",      0x4000, 0x2000, CRC("d22e2921") + SHA1("59a4a1a36aaca19ee0a7255d832df9d042ba34fb") ),
+            ROM_LOAD( "dk3c.7e",      0x8000, 0x2000, CRC("615f14b7") + SHA1("145674073e95d97c9131b6f2b03303eadb57ca78") ),
+
+            ROM_REGION( 0x10000, "n2a03a", 0 ),  /* sound #1 */
+            ROM_LOAD( "dk3c.5l",      0xe000, 0x2000, CRC("7ff88885") + SHA1("d530581778aab260e21f04c38e57ba34edea7c64") ),
+
+            ROM_REGION( 0x10000, "n2a03b", 0 ),  /* sound #2 */
+            ROM_LOAD( "dk3c.6h",      0xe000, 0x2000, CRC("36d7200c") + SHA1("7965fcb9bc1c0fdcae8a8e79df9c7b7439c506d8") ),
+
+            ROM_REGION( 0x2000, "gfx1", 0 ),
+            ROM_LOAD( "dk3v.3n",      0x0000, 0x1000, CRC("415a99c7") + SHA1("e0855b03bb1dc0d8ae46da9fe33ca30ecf6a2e96") ),
+            ROM_LOAD( "dk3v.3p",      0x1000, 0x1000, CRC("25744ea0") + SHA1("4866e43e80b010ccf2c8cc94c232786521f9e26e") ),
+
+            ROM_REGION( 0x4000, "gfx2", 0 ),
+            ROM_LOAD( "dk3v.7c",      0x0000, 0x1000, CRC("8ffa1737") + SHA1("fa5896124227d412fbdf83f129ddffa32cf2053b") ),
+            ROM_LOAD( "dk3v.7d",      0x1000, 0x1000, CRC("9ac84686") + SHA1("a089376b9c23094490703152ad98ed27f519402d") ),
+            ROM_LOAD( "dk3v.7e",      0x2000, 0x1000, CRC("0c0af3fb") + SHA1("03e0c3f51bc3c20f95cb02f76f2d80188d5dbe36") ),
+            ROM_LOAD( "dk3v.7f",      0x3000, 0x1000, CRC("55c58662") + SHA1("7f3d5a1b386cc37d466e42392ffefc928666a8dc") ),
+
+            ROM_REGION( 0x0500, "proms", 0 ),
+            ROM_LOAD( "dkc1-c.1d",    0x0000, 0x0200, CRC("df54befc") + SHA1("7912dbf0a0c8ef68f4ae0f95e55ab164da80e4a1") ), /* palette red & green component */
+            ROM_LOAD( "dkc1-c.1c",    0x0200, 0x0200, CRC("66a77f40") + SHA1("c408d65990f0edd78c4590c447426f383fcd2d88") ), /* palette blue component */
+            ROM_LOAD( "dkc1-v.2n",    0x0400, 0x0100, CRC("50e33434") + SHA1("b63da9bed9dc4c7da78e4c26d4ba14b65f2b7e72") ), /* character color codes on a per-column basis */
+
+            ROM_REGION( 0x0020, "adrdecode", 0 ),
+            /* address decode prom 18s030 - this has inverted outputs. The dump does not reflect this. */
+            ROM_LOAD( "dkc1-v.5e",    0x0000, 0x0020, CRC("d3e2eaf8") + SHA1("87bb298137c26570dafb4ac495c87e82441e70e5") ),
+
+            ROM_END,
+        };
+
+
         static void dkong_state_dkong2b(machine_config config, device_t device) { dkong_state dkong_state = (dkong_state)device; dkong_state.dkong2b(config); }
+        static void dkong_state_dkongjr(machine_config config, device_t device) { dkong_state dkong_state = (dkong_state)device; dkong_state.dkongjr(config); }
+        static void dkong_state_dkong3(machine_config config, device_t device) { dkong_state dkong_state = (dkong_state)device; dkong_state.dkong3(config); }
 
 
         static dkong m_dkong = new dkong();
 
 
-        static device_t device_creator_dkong(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dkong_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_dkong(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dkong_state(mconfig, type, tag); }
+        static device_t device_creator_dkongjr(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dkong_state(mconfig, type, tag); }
+        static device_t device_creator_dkong3(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dkong_state(mconfig, type, tag); }
 
 
         /*************************************
@@ -475,7 +780,9 @@ namespace mame
          *
          *************************************/
 
-        //                                                      creator,              rom        YEAR,   NAME,       PARENT,  MACHINE,             INPUT,                          INIT,                      MONITOR, COMPANY,               FULLNAME,                 FLAGS
-        public static readonly game_driver driver_dkong = GAME( device_creator_dkong, rom_dkong, "1981", "dkong",    "0",     dkong_state_dkong2b, m_dkong.construct_ioport_dkong, driver_device.empty_init,  ROT270,  "Nintendo of America", "Donkey Kong (US set 1)", MACHINE_SUPPORTS_SAVE );
+        //                                                       creator,                rom          YEAR,   NAME,      PARENT,  MACHINE,             INPUT,                            INIT,                     MONITOR, COMPANY,               FULLNAME,                          FLAGS
+        public static readonly game_driver driver_dkong   = GAME(device_creator_dkong,   rom_dkong,   "1981", "dkong",   "0",     dkong_state_dkong2b, m_dkong.construct_ioport_dkong,   driver_device.empty_init, ROT270,  "Nintendo of America", "Donkey Kong (US set 1)",          MACHINE_SUPPORTS_SAVE);
+        public static readonly game_driver driver_dkongjr = GAME(device_creator_dkongjr, rom_dkongjr, "1982", "dkongjr", "0",     dkong_state_dkongjr, m_dkong.construct_ioport_dkongjr, driver_device.empty_init, ROT270,  "Nintendo of America", "Donkey Kong Junior (US set F-2)", MACHINE_SUPPORTS_SAVE);
+        public static readonly game_driver driver_dkong3  = GAME(device_creator_dkong3,  rom_dkong3,  "1983", "dkong3",  "0",     dkong_state_dkong3,  m_dkong.construct_ioport_dkong3,  driver_device.empty_init, ROT270,  "Nintendo of America", "Donkey Kong 3 (US)",              MACHINE_SUPPORTS_SAVE);
     }
 }

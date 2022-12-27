@@ -660,6 +660,13 @@ namespace mame
         public Pointer<dac_16bit_r2r_twos_complement_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_deco_cpu7_device : object_finder_operations<deco_cpu7_device>
+    {
+        public deco_cpu7_device cast(device_t device) { return (deco_cpu7_device)device; }
+        public deco_cpu7_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<deco_cpu7_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_digitalker_device : object_finder_operations<digitalker_device>
     {
         public digitalker_device cast(device_t device) { return (digitalker_device)device; }
@@ -751,6 +758,13 @@ namespace mame
         public Pointer<latch8_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_ls157_device : object_finder_operations<ls157_device>
+    {
+        public ls157_device cast(device_t device) { return (ls157_device)device; }
+        public ls157_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<ls157_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_ls259_device : object_finder_operations<ls259_device>
     {
         public ls259_device cast(device_t device) { return (ls259_device)device; }
@@ -772,11 +786,25 @@ namespace mame
         public Pointer<m6803_cpu_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_m6808_cpu_device : object_finder_operations<m6808_cpu_device>
+    {
+        public m6808_cpu_device cast(device_t device) { return (m6808_cpu_device)device; }
+        public m6808_cpu_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<m6808_cpu_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_m68705p_device : object_finder_operations<m68705p_device>
     {
         public m68705p_device cast(device_t device) { return (m68705p_device)device; }
         public m68705p_device cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<m68705p_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_mathbox_device : object_finder_operations<mathbox_device>
+    {
+        public mathbox_device cast(device_t device) { return (mathbox_device)device; }
+        public mathbox_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<mathbox_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
     public class object_finder_operations_mb14241_device : object_finder_operations<mb14241_device>
@@ -791,6 +819,13 @@ namespace mame
         public mb88_cpu_device cast(device_t device) { return (mb88_cpu_device)device; }
         public mb88_cpu_device cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<mb88_cpu_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_mc6809e_device : object_finder_operations<mc6809e_device>
+    {
+        public mc6809e_device cast(device_t device) { return (mc6809e_device)device; }
+        public mc6809e_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<mc6809e_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
     public class object_finder_operations_mcs48_cpu_device : object_finder_operations<mcs48_cpu_device>
@@ -842,6 +877,20 @@ namespace mame
         public Pointer<palette_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_pokey_device : object_finder_operations<pokey_device>
+    {
+        public pokey_device cast(device_t device) { return (pokey_device)device; }
+        public pokey_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<pokey_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_pia6821_device : object_finder_operations<pia6821_device>
+    {
+        public pia6821_device cast(device_t device) { return (pia6821_device)device; }
+        public pia6821_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<pia6821_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_samples_device : object_finder_operations<samples_device>
     {
         public samples_device cast(device_t device) { return (samples_device)device; }
@@ -877,6 +926,13 @@ namespace mame
         public Pointer<ttl153_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
+    public class object_finder_operations_ttl7474_device : object_finder_operations<ttl7474_device>
+    {
+        public ttl7474_device cast(device_t device) { return (ttl7474_device)device; }
+        public ttl7474_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<ttl7474_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
     public class object_finder_operations_vector_device : object_finder_operations<vector_device>
     {
         public vector_device cast(device_t device) { return (vector_device)device; }
@@ -889,6 +945,13 @@ namespace mame
         public taito_sj_security_mcu_device cast(device_t device) { return (taito_sj_security_mcu_device)device; }
         public taito_sj_security_mcu_device cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<taito_sj_security_mcu_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+    public class object_finder_operations_timeplt_audio_device : object_finder_operations<timeplt_audio_device>
+    {
+        public timeplt_audio_device cast(device_t device) { return (timeplt_audio_device)device; }
+        public timeplt_audio_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<timeplt_audio_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
     public class object_finder_operations_watchdog_timer_device : object_finder_operations<watchdog_timer_device>
@@ -931,6 +994,7 @@ namespace mame
             else if (typeof(ObjectClass) == typeof(cpu_device))                 return (object_finder_operations<ObjectClass>)new object_finder_operations_cpu_device();
             else if (typeof(ObjectClass) == typeof(dac_8bit_r2r_device))        return (object_finder_operations<ObjectClass>)new object_finder_operations_dac_8bit_r2r_device();
             else if (typeof(ObjectClass) == typeof(dac_16bit_r2r_twos_complement_device)) return (object_finder_operations<ObjectClass>)new object_finder_operations_dac_16bit_r2r_twos_complement_device();
+            else if (typeof(ObjectClass) == typeof(deco_cpu7_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_deco_cpu7_device();
             else if (typeof(ObjectClass) == typeof(digitalker_device))          return (object_finder_operations<ObjectClass>)new object_finder_operations_digitalker_device();
             else if (typeof(ObjectClass) == typeof(discrete_device))            return (object_finder_operations<ObjectClass>)new object_finder_operations_discrete_device();
             else if (typeof(ObjectClass) == typeof(discrete_sound_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_discrete_sound_device();
@@ -946,12 +1010,16 @@ namespace mame
             else if (typeof(ObjectClass) == typeof(i8257_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_i8257_device();
             else if (typeof(ObjectClass) == typeof(input_merger_device))        return (object_finder_operations<ObjectClass>)new object_finder_operations_input_merger_device();
             else if (typeof(ObjectClass) == typeof(latch8_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_latch8_device();
+            else if (typeof(ObjectClass) == typeof(ls157_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_ls157_device();
             else if (typeof(ObjectClass) == typeof(ls259_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_ls259_device();
             else if (typeof(ObjectClass) == typeof(m6502_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_m6502_device();
             else if (typeof(ObjectClass) == typeof(m6803_cpu_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_m6803_cpu_device();
+            else if (typeof(ObjectClass) == typeof(m6808_cpu_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_m6808_cpu_device();
             else if (typeof(ObjectClass) == typeof(m68705p_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_m68705p_device();
+            else if (typeof(ObjectClass) == typeof(mathbox_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_mathbox_device();
             else if (typeof(ObjectClass) == typeof(mb14241_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_mb14241_device();
             else if (typeof(ObjectClass) == typeof(mb88_cpu_device))            return (object_finder_operations<ObjectClass>)new object_finder_operations_mb88_cpu_device();
+            else if (typeof(ObjectClass) == typeof(mc6809e_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_mc6809e_device();
             else if (typeof(ObjectClass) == typeof(mcs48_cpu_device))           return (object_finder_operations<ObjectClass>)new object_finder_operations_mcs48_cpu_device();
             else if (typeof(ObjectClass) == typeof(msm5205_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_msm5205_device();
             else if (typeof(ObjectClass) == typeof(namco_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_namco_device();
@@ -959,12 +1027,16 @@ namespace mame
             else if (typeof(ObjectClass) == typeof(netlist_mame_logic_input_device)) return (object_finder_operations<ObjectClass>)new object_finder_operations_netlist_mame_logic_input_device();
             else if (typeof(ObjectClass) == typeof(netlist_mame_sound_device))  return (object_finder_operations<ObjectClass>)new object_finder_operations_netlist_mame_sound_device();
             else if (typeof(ObjectClass) == typeof(palette_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_palette_device();
+            else if (typeof(ObjectClass) == typeof(pokey_device))               return (object_finder_operations<ObjectClass>)new object_finder_operations_pokey_device();
+            else if (typeof(ObjectClass) == typeof(pia6821_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_pia6821_device();
             else if (typeof(ObjectClass) == typeof(samples_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_samples_device();
             else if (typeof(ObjectClass) == typeof(screen_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_screen_device();
             else if (typeof(ObjectClass) == typeof(sn76477_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_sn76477_device();
             else if (typeof(ObjectClass) == typeof(starfield_05xx_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_starfield_05xx_device();
             else if (typeof(ObjectClass) == typeof(taito_sj_security_mcu_device)) return (object_finder_operations<ObjectClass>)new object_finder_operations_taito_sj_security_mcu_device();
+            else if (typeof(ObjectClass) == typeof(timeplt_audio_device))       return (object_finder_operations<ObjectClass>)new object_finder_operations_timeplt_audio_device();
             else if (typeof(ObjectClass) == typeof(ttl153_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_ttl153_device();
+            else if (typeof(ObjectClass) == typeof(ttl7474_device))             return (object_finder_operations<ObjectClass>)new object_finder_operations_ttl7474_device();
             else if (typeof(ObjectClass) == typeof(vector_device))              return (object_finder_operations<ObjectClass>)new object_finder_operations_vector_device();
             else if (typeof(ObjectClass) == typeof(watchdog_timer_device))      return (object_finder_operations<ObjectClass>)new object_finder_operations_watchdog_timer_device();
 
@@ -1767,7 +1839,7 @@ namespace mame
         ///
         /// \return Length in units of bytes or zero if no matching memory
         ///   region has been found.
-        //size_t bytes() const { return m_length * sizeof(PointerType); }
+        public size_t bytes() { return m_length * (size_t)sizeof_(typeof(PointerType)); }  //size_t bytes() const { return m_length * sizeof(PointerType); }
 
 
         /// \brief Find memory region base pointer

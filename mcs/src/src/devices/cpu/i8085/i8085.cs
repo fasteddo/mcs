@@ -7,6 +7,7 @@ using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using uint32_t = System.UInt32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -18,6 +19,7 @@ using static mame.diexec_global;
 using static mame.distate_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.i8085_global;
 
 
 namespace mame
@@ -25,8 +27,7 @@ namespace mame
     public class i8085a_cpu_device : cpu_device
     {
         //DEFINE_DEVICE_TYPE(I8085A, i8085a_cpu_device, "i8085a", "Intel 8085A")
-        static device_t device_creator_i8085a_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8085a_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type I8085A = DEFINE_DEVICE_TYPE(device_creator_i8085a_cpu_device, "i8085a", "Intel 8085A");
+        public static readonly emu.detail.device_type_impl I8085A = DEFINE_DEVICE_TYPE("i8085a", "Intel 8085A", (type, mconfig, tag, owner, clock) => { return new i8085a_cpu_device(mconfig, tag, owner, clock); });
 
 
         const int VERBOSE = 0;
@@ -1621,8 +1622,7 @@ namespace mame
     public class i8080_cpu_device : i8085a_cpu_device
     {
         //DEFINE_DEVICE_TYPE(I8080,  i8080_cpu_device,  "i8080",  "Intel 8080")
-        static device_t device_creator_i8080_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8080_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type I8080 = DEFINE_DEVICE_TYPE(device_creator_i8080_cpu_device, "i8080", "Intel 8080");
+        public static readonly emu.detail.device_type_impl I8080 = DEFINE_DEVICE_TYPE("i8080", "Intel 8080", (type, mconfig, tag, owner, clock) => { return new i8080_cpu_device(mconfig, tag, owner, clock); });
 
 
         // construction/destruction
@@ -1639,4 +1639,11 @@ namespace mame
 
 
     //class i8080a_cpu_device : public i8085a_cpu_device
+
+
+    static class i8085_global
+    {
+        public static i8080_cpu_device I8080<bool_Required>(machine_config mconfig, device_finder<i8080_cpu_device, bool_Required> finder, double clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8080_cpu_device.I8080, new XTAL(clock)); }
+        public static i8085a_cpu_device I8085A<bool_Required>(machine_config mconfig, device_finder<i8085a_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8085a_cpu_device.I8085A, clock); }
+    }
 }

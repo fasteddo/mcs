@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using uint8_t = System.Byte;
 
 
@@ -26,11 +27,11 @@ namespace mame
         optional_shared_ptr<uint8_t> m_spriteram;
 
         /* video-related */
-        uint8_t                m_bg1xpos;
-        uint8_t                m_bg1ypos;
-        uint8_t                m_bg2xpos;
-        uint8_t                m_bg2ypos;
-        uint8_t                m_bgcontrol;
+        uint8_t m_bg1xpos;
+        uint8_t m_bg1ypos;
+        uint8_t m_bg2xpos;
+        uint8_t m_bg2ypos;
+        uint8_t m_bgcontrol;
 
 
         required_device<gfxdecode_device> m_sp_gfxdecode;

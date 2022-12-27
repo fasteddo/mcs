@@ -60,7 +60,7 @@ namespace mame
                 bit1 = BIT(color_prom[256], 1);
                 bit2 = BIT(color_prom[256], 2);
                 bit3 = BIT(color_prom[256], 3);
-                int gr = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+                int g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
                 // blue component
                 bit0 = BIT(color_prom[2*256], 0);
                 bit1 = BIT(color_prom[2*256], 1);
@@ -68,7 +68,7 @@ namespace mame
                 bit3 = BIT(color_prom[2*256], 3);
                 int b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-                palette.set_indirect_color(i, new rgb_t((u8)r, (u8)gr, (u8)b));
+                palette.set_indirect_color(i, new rgb_t((u8)r, (u8)g, (u8)b));
                 color_prom++;
             }
 

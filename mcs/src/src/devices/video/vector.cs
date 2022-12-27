@@ -11,6 +11,7 @@ using static mame.device_global;
 using static mame.palette_global;
 using static mame.render_global;
 using static mame.rendertypes_global;
+using static mame.vector_global;
 
 
 namespace mame
@@ -40,8 +41,7 @@ namespace mame
                                  //device_video_interface
     {
         //DEFINE_DEVICE_TYPE(VECTOR, vector_device, "vector_device", "VECTOR")
-        static device_t device_creator_vector_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new vector_device(mconfig, tag, owner, clock); }
-        public static readonly device_type VECTOR = DEFINE_DEVICE_TYPE(device_creator_vector_device, "vector_device", "VECTOR");
+        public static readonly emu.detail.device_type_impl VECTOR = DEFINE_DEVICE_TYPE("vector_device", "VECTOR", (type, mconfig, tag, owner, clock) => { return new vector_device(mconfig, tag, owner, clock); });
 
 
         /* The vertices are buffered here */
@@ -207,5 +207,11 @@ namespace mame
             // valid for n and k in range of -1.0 and 1.0
             return (n - n * k) / (k - fabs(n) * 2.0f * k + 1.0f);
         }
+    }
+
+
+    static class vector_global
+    {
+        public static vector_device VECTOR(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<vector_device>(mconfig, tag, vector_device.VECTOR, 0); }
     }
 }

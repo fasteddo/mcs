@@ -287,7 +287,7 @@ namespace mame
                 {
                     foreach (ioport_field field in port.Value.fields())
                     {
-                        if (field.type() == ioport_type.IPT_DIPSWITCH && std.strcmp(field.name(), service_mode_dipname) == 0)
+                        if ((field.type() == ioport_type.IPT_DIPSWITCH) && (field.name() == service_mode_dipname)) // FIXME: probably breaks with localisation, also issues with multiple devices
                             field.set_defseq(machine.ioport().type_seq(ioport_type.IPT_SERVICE));
                     }
                 }

@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 
 using default_layout_map = mame.std.map<string, mame.internal_layout>;  //std::map<char const *, internal_layout const *, bool (*)(char const *, char const *)> default_layout_map;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using maximum_quantum_map = mame.std.map<string, mame.attotime>;  //std::map<char const *, attotime, bool (*)(char const *, char const *)> maximum_quantum_map;
 using slot_interface_enumerator = mame.device_interface_enumerator<mame.device_slot_interface>;  //typedef device_interface_enumerator<device_slot_interface> slot_interface_enumerator;
 using u8 = System.Byte;
@@ -449,24 +450,23 @@ namespace mame
             device_t owner = m_current_device;
 
             // if the device path is absolute, start from the root
-            if (tag[0] == ':')
-            {
-                tag = tag.Remove(0);  //tag++;
-                owner = m_root_device;
-            }
+            if (string.IsNullOrEmpty(tag) || (':' == tag[0]) || ('^' == tag[0]))  //if (!*tag || (':' == *tag) || ('^' == *tag))
+                throw new emu_fatalerror("Attempting to add device with tag containing parent references '{0}'\n", orig_tag);
 
             // go down the path until we're done with it
-            while (tag.IndexOf(':', 0) != -1)  //while (global.strchr(tag, ':'))
+            int nextIdx;  //char const *next;
+            while ((nextIdx = tag.IndexOf(':')) != -1)  //while ((next = strchr(tag, ':')) != nullptr)
             {
-                string next = tag.Substring(tag.IndexOf(':', 0));  //const char *next = strchr(tag, ':');
-                assert(next != tag);
-                string part = tag.Substring(0, tag.IndexOf(':', 0));  //std::string_view part(tag, next - tag);
+                assert(nextIdx != 0);  //assert(next != tag);
+                string part = tag.Substring(0, nextIdx);  //std::string_view part(tag, next - tag);
                 owner = owner.subdevices().find(part);
                 if (owner == null)
-                    throw new emu_fatalerror("Could not find {0} when looking up path for device {1}\n", part, orig_tag);
-                tag = next.Substring(1);  //tag = next + 1;
+                    throw new emu_fatalerror("Could not find '{0}' when looking up path for device '{1}'\n", part, orig_tag);
+                tag = tag.Substring(nextIdx + 1);  //tag = next + 1;
+                if ('^' == tag[0])  //if ('^' == *tag)
+                    throw new emu_fatalerror("Attempting to add device with tag containing parent references '{0}'\n", orig_tag);
             }
-            assert(!string.IsNullOrEmpty(tag));  //global.assert(tag[0] != '\0');
+            assert(!string.IsNullOrEmpty(tag) && tag[0] != '\0');  //assert(*tag != '\0');
 
             return std.make_pair(tag, owner);
         }

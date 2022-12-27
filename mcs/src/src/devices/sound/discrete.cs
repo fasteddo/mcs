@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using discrete_device_node_list_t = mame.std.vector<mame.discrete_base_node>;  //typedef std::vector<std::unique_ptr<discrete_base_node> > node_list_t;
 using discrete_device_node_step_list_t = mame.std.vector<mame.discrete_step_interface>;  //typedef std::vector<discrete_step_interface *> node_step_list_t;
 using discrete_device_sound_block_list_t = mame.std.vector<mame.discrete_block>;  //typedef std::vector<const discrete_block *> sound_block_list_t;
@@ -29,7 +30,7 @@ using static mame.osdcore_global;
 
 namespace mame
 {
-    public static partial class discrete_global
+    static partial class discrete_global
     {
         /*************************************
          *
@@ -280,23 +281,23 @@ namespace mame
                                                               /* Used only internally in module. */
 
         /* LS624 output flags */
-        //#define DISC_LS624_OUT_SQUARE               0x01
-        //#define DISC_LS624_OUT_ENERGY               0x02
-        //#define DISC_LS624_OUT_LOGIC                0x03
-        //#define DISC_LS624_OUT_LOGIC_X              0x04
-        //#define DISC_LS624_OUT_COUNT_F              0x05
-        //#define DISC_LS624_OUT_COUNT_R              0x06
-        //#define DISC_LS624_OUT_COUNT_F_X            0x07
-        //#define DISC_LS624_OUT_COUNT_R_X            0x08
+        public const int DISC_LS624_OUT_SQUARE               = 0x01;
+        public const int DISC_LS624_OUT_ENERGY               = 0x02;
+        public const int DISC_LS624_OUT_LOGIC                = 0x03;
+        public const int DISC_LS624_OUT_LOGIC_X              = 0x04;
+        public const int DISC_LS624_OUT_COUNT_F              = 0x05;
+        public const int DISC_LS624_OUT_COUNT_R              = 0x06;
+        public const int DISC_LS624_OUT_COUNT_F_X            = 0x07;
+        public const int DISC_LS624_OUT_COUNT_R_X            = 0x08;
 
         /* Oneshot types */
         //#define DISC_ONESHOT_FEDGE                  0x00
-        //#define DISC_ONESHOT_REDGE                  0x01
+        public const int DISC_ONESHOT_REDGE                  = 0x01;
 
         //#define DISC_ONESHOT_NORETRIG               0x00
-        //#define DISC_ONESHOT_RETRIG                 0x02
+        public const int DISC_ONESHOT_RETRIG                 = 0x02;
 
-        //#define DISC_OUT_ACTIVE_LOW                 0x04
+        public const int DISC_OUT_ACTIVE_LOW                 = 0x04;
         //#define DISC_OUT_ACTIVE_HIGH                0x00
 
         //#define DISC_CD4066_THRESHOLD               2.75
@@ -607,7 +608,7 @@ namespace mame
         public const int NODE_08 = 0x40000000 + 8 * DISCRETE_MAX_OUTPUTS; const int NODE_08_00 = NODE_08; const int NODE_08_01 = NODE_08 + 1; const int NODE_08_02 = NODE_08 + 2; const int NODE_08_03 = NODE_08 + 3; const int NODE_08_04 = NODE_08 + 4; const int NODE_08_05 = NODE_08 + 5; const int NODE_08_06 = NODE_08 + 6; const int NODE_08_07 = NODE_08 + 7;
         public const int NODE_09 = 0x40000000 + 9 * DISCRETE_MAX_OUTPUTS; const int NODE_09_00 = NODE_09; const int NODE_09_01 = NODE_09 + 1; const int NODE_09_02 = NODE_09 + 2; const int NODE_09_03 = NODE_09 + 3; const int NODE_09_04 = NODE_09 + 4; const int NODE_09_05 = NODE_09 + 5; const int NODE_09_06 = NODE_09 + 6; const int NODE_09_07 = NODE_09 + 7;
 
-        public const int NODE_10 = 0x40000000 + 10 * DISCRETE_MAX_OUTPUTS; const int NODE_10_00 = NODE_10; const int NODE_10_01 = NODE_10 + 1; const int NODE_10_02 = NODE_10 + 2; const int NODE_10_03 = NODE_10 + 3; const int NODE_10_04 = NODE_10 + 4; const int NODE_10_05 = NODE_10 + 5; const int NODE_10_06 = NODE_10 + 6; const int NODE_10_07 = NODE_10 + 7;
+        public const int NODE_10 = 0x40000000 + 10 * DISCRETE_MAX_OUTPUTS; public const int NODE_10_00 = NODE_10; public const int NODE_10_01 = NODE_10 + 1; public const int NODE_10_02 = NODE_10 + 2; const int NODE_10_03 = NODE_10 + 3; public const int NODE_10_04 = NODE_10 + 4; public const int NODE_10_05 = NODE_10 + 5; const int NODE_10_06 = NODE_10 + 6; public const int NODE_10_07 = NODE_10 + 7;
         public const int NODE_11 = 0x40000000 + 11 * DISCRETE_MAX_OUTPUTS; const int NODE_11_00 = NODE_11; const int NODE_11_01 = NODE_11 + 1; const int NODE_11_02 = NODE_11 + 2; const int NODE_11_03 = NODE_11 + 3; const int NODE_11_04 = NODE_11 + 4; const int NODE_11_05 = NODE_11 + 5; const int NODE_11_06 = NODE_11 + 6; const int NODE_11_07 = NODE_11 + 7;
         public const int NODE_12 = 0x40000000 + 12 * DISCRETE_MAX_OUTPUTS; const int NODE_12_00 = NODE_12; const int NODE_12_01 = NODE_12 + 1; const int NODE_12_02 = NODE_12 + 2; const int NODE_12_03 = NODE_12 + 3; const int NODE_12_04 = NODE_12 + 4; const int NODE_12_05 = NODE_12 + 5; const int NODE_12_06 = NODE_12 + 6; const int NODE_12_07 = NODE_12 + 7;
         public const int NODE_13 = 0x40000000 + 13 * DISCRETE_MAX_OUTPUTS; const int NODE_13_00 = NODE_13; const int NODE_13_01 = NODE_13 + 1; const int NODE_13_02 = NODE_13 + 2; const int NODE_13_03 = NODE_13 + 3; const int NODE_13_04 = NODE_13 + 4; const int NODE_13_05 = NODE_13 + 5; const int NODE_13_06 = NODE_13 + 6; const int NODE_13_07 = NODE_13 + 7;
@@ -631,7 +632,7 @@ namespace mame
 
         public const int NODE_30 = 0x40000000 + 30 * DISCRETE_MAX_OUTPUTS; const int NODE_30_00 = NODE_30; const int NODE_30_01 = NODE_30 + 1; const int NODE_30_02 = NODE_30 + 2; const int NODE_30_03 = NODE_30 + 3; const int NODE_30_04 = NODE_30 + 4; const int NODE_30_05 = NODE_30 + 5; const int NODE_30_06 = NODE_30 + 6; const int NODE_30_07 = NODE_30 + 7;
         public const int NODE_31 = 0x40000000 + 31 * DISCRETE_MAX_OUTPUTS; const int NODE_31_00 = NODE_31; const int NODE_31_01 = NODE_31 + 1; const int NODE_31_02 = NODE_31 + 2; const int NODE_31_03 = NODE_31 + 3; const int NODE_31_04 = NODE_31 + 4; const int NODE_31_05 = NODE_31 + 5; const int NODE_31_06 = NODE_31 + 6; const int NODE_31_07 = NODE_31 + 7;
-        public const int NODE_32 = 0x40000000 + 32 * DISCRETE_MAX_OUTPUTS; const int NODE_32_00 = NODE_32; const int NODE_32_01 = NODE_32 + 1; const int NODE_32_02 = NODE_32 + 2; const int NODE_32_03 = NODE_32 + 3; const int NODE_32_04 = NODE_32 + 4; const int NODE_32_05 = NODE_32 + 5; const int NODE_32_06 = NODE_32 + 6; const int NODE_32_07 = NODE_32 + 7;
+        public const int NODE_32 = 0x40000000 + 32 * DISCRETE_MAX_OUTPUTS; public const int NODE_32_00 = NODE_32; public const int NODE_32_01 = NODE_32 + 1; public const int NODE_32_02 = NODE_32 + 2; public const int NODE_32_03 = NODE_32 + 3; const int NODE_32_04 = NODE_32 + 4; const int NODE_32_05 = NODE_32 + 5; const int NODE_32_06 = NODE_32 + 6; const int NODE_32_07 = NODE_32 + 7;
         public const int NODE_33 = 0x40000000 + 33 * DISCRETE_MAX_OUTPUTS; const int NODE_33_00 = NODE_33; const int NODE_33_01 = NODE_33 + 1; const int NODE_33_02 = NODE_33 + 2; const int NODE_33_03 = NODE_33 + 3; const int NODE_33_04 = NODE_33 + 4; const int NODE_33_05 = NODE_33 + 5; const int NODE_33_06 = NODE_33 + 6; const int NODE_33_07 = NODE_33 + 7;
         public const int NODE_34 = 0x40000000 + 34 * DISCRETE_MAX_OUTPUTS; const int NODE_34_00 = NODE_34; const int NODE_34_01 = NODE_34 + 1; const int NODE_34_02 = NODE_34 + 2; const int NODE_34_03 = NODE_34 + 3; const int NODE_34_04 = NODE_34 + 4; const int NODE_34_05 = NODE_34 + 5; const int NODE_34_06 = NODE_34 + 6; const int NODE_34_07 = NODE_34 + 7;
         public const int NODE_35 = 0x40000000 + 35 * DISCRETE_MAX_OUTPUTS; const int NODE_35_00 = NODE_35; const int NODE_35_01 = NODE_35 + 1; const int NODE_35_02 = NODE_35 + 2; const int NODE_35_03 = NODE_35 + 3; const int NODE_35_04 = NODE_35 + 4; const int NODE_35_05 = NODE_35 + 5; const int NODE_35_06 = NODE_35 + 6; const int NODE_35_07 = NODE_35 + 7;
@@ -667,11 +668,11 @@ namespace mame
         public const int NODE_62 = 0x40000000 + 62 * DISCRETE_MAX_OUTPUTS; const int NODE_62_00 = NODE_62; const int NODE_62_01 = NODE_62 + 1; const int NODE_62_02 = NODE_62 + 2; const int NODE_62_03 = NODE_62 + 3; const int NODE_62_04 = NODE_62 + 4; const int NODE_62_05 = NODE_62 + 5; const int NODE_62_06 = NODE_62 + 6; const int NODE_62_07 = NODE_62 + 7;
         public const int NODE_63 = 0x40000000 + 63 * DISCRETE_MAX_OUTPUTS; const int NODE_63_00 = NODE_63; const int NODE_63_01 = NODE_63 + 1; const int NODE_63_02 = NODE_63 + 2; const int NODE_63_03 = NODE_63 + 3; const int NODE_63_04 = NODE_63 + 4; const int NODE_63_05 = NODE_63 + 5; const int NODE_63_06 = NODE_63 + 6; const int NODE_63_07 = NODE_63 + 7;
         public const int NODE_64 = 0x40000000 + 64 * DISCRETE_MAX_OUTPUTS; const int NODE_64_00 = NODE_64; const int NODE_64_01 = NODE_64 + 1; const int NODE_64_02 = NODE_64 + 2; const int NODE_64_03 = NODE_64 + 3; const int NODE_64_04 = NODE_64 + 4; const int NODE_64_05 = NODE_64 + 5; const int NODE_64_06 = NODE_64 + 6; const int NODE_64_07 = NODE_64 + 7;
-        const int NODE_65 = 0x40000000 + 65 * DISCRETE_MAX_OUTPUTS; const int NODE_65_00 = NODE_65; const int NODE_65_01 = NODE_65 + 1; const int NODE_65_02 = NODE_65 + 2; const int NODE_65_03 = NODE_65 + 3; const int NODE_65_04 = NODE_65 + 4; const int NODE_65_05 = NODE_65 + 5; const int NODE_65_06 = NODE_65 + 6; const int NODE_65_07 = NODE_65 + 7;
-        const int NODE_66 = 0x40000000 + 66 * DISCRETE_MAX_OUTPUTS; const int NODE_66_00 = NODE_66; const int NODE_66_01 = NODE_66 + 1; const int NODE_66_02 = NODE_66 + 2; const int NODE_66_03 = NODE_66 + 3; const int NODE_66_04 = NODE_66 + 4; const int NODE_66_05 = NODE_66 + 5; const int NODE_66_06 = NODE_66 + 6; const int NODE_66_07 = NODE_66 + 7;
-        const int NODE_67 = 0x40000000 + 67 * DISCRETE_MAX_OUTPUTS; const int NODE_67_00 = NODE_67; const int NODE_67_01 = NODE_67 + 1; const int NODE_67_02 = NODE_67 + 2; const int NODE_67_03 = NODE_67 + 3; const int NODE_67_04 = NODE_67 + 4; const int NODE_67_05 = NODE_67 + 5; const int NODE_67_06 = NODE_67 + 6; const int NODE_67_07 = NODE_67 + 7;
-        const int NODE_68 = 0x40000000 + 68 * DISCRETE_MAX_OUTPUTS; const int NODE_68_00 = NODE_68; const int NODE_68_01 = NODE_68 + 1; const int NODE_68_02 = NODE_68 + 2; const int NODE_68_03 = NODE_68 + 3; const int NODE_68_04 = NODE_68 + 4; const int NODE_68_05 = NODE_68 + 5; const int NODE_68_06 = NODE_68 + 6; const int NODE_68_07 = NODE_68 + 7;
-        const int NODE_69 = 0x40000000 + 69 * DISCRETE_MAX_OUTPUTS; const int NODE_69_00 = NODE_69; const int NODE_69_01 = NODE_69 + 1; const int NODE_69_02 = NODE_69 + 2; const int NODE_69_03 = NODE_69 + 3; const int NODE_69_04 = NODE_69 + 4; const int NODE_69_05 = NODE_69 + 5; const int NODE_69_06 = NODE_69 + 6; const int NODE_69_07 = NODE_69 + 7;
+        public const int NODE_65 = 0x40000000 + 65 * DISCRETE_MAX_OUTPUTS; const int NODE_65_00 = NODE_65; const int NODE_65_01 = NODE_65 + 1; const int NODE_65_02 = NODE_65 + 2; const int NODE_65_03 = NODE_65 + 3; const int NODE_65_04 = NODE_65 + 4; const int NODE_65_05 = NODE_65 + 5; const int NODE_65_06 = NODE_65 + 6; const int NODE_65_07 = NODE_65 + 7;
+        public const int NODE_66 = 0x40000000 + 66 * DISCRETE_MAX_OUTPUTS; const int NODE_66_00 = NODE_66; const int NODE_66_01 = NODE_66 + 1; const int NODE_66_02 = NODE_66 + 2; const int NODE_66_03 = NODE_66 + 3; const int NODE_66_04 = NODE_66 + 4; const int NODE_66_05 = NODE_66 + 5; const int NODE_66_06 = NODE_66 + 6; const int NODE_66_07 = NODE_66 + 7;
+        public const int NODE_67 = 0x40000000 + 67 * DISCRETE_MAX_OUTPUTS; const int NODE_67_00 = NODE_67; const int NODE_67_01 = NODE_67 + 1; const int NODE_67_02 = NODE_67 + 2; const int NODE_67_03 = NODE_67 + 3; const int NODE_67_04 = NODE_67 + 4; const int NODE_67_05 = NODE_67 + 5; const int NODE_67_06 = NODE_67 + 6; const int NODE_67_07 = NODE_67 + 7;
+        public const int NODE_68 = 0x40000000 + 68 * DISCRETE_MAX_OUTPUTS; const int NODE_68_00 = NODE_68; const int NODE_68_01 = NODE_68 + 1; const int NODE_68_02 = NODE_68 + 2; const int NODE_68_03 = NODE_68 + 3; const int NODE_68_04 = NODE_68 + 4; const int NODE_68_05 = NODE_68 + 5; const int NODE_68_06 = NODE_68 + 6; const int NODE_68_07 = NODE_68 + 7;
+        public const int NODE_69 = 0x40000000 + 69 * DISCRETE_MAX_OUTPUTS; const int NODE_69_00 = NODE_69; const int NODE_69_01 = NODE_69 + 1; const int NODE_69_02 = NODE_69 + 2; const int NODE_69_03 = NODE_69 + 3; const int NODE_69_04 = NODE_69 + 4; const int NODE_69_05 = NODE_69 + 5; const int NODE_69_06 = NODE_69 + 6; const int NODE_69_07 = NODE_69 + 7;
 
         public const int NODE_70 = 0x40000000 + 70 * DISCRETE_MAX_OUTPUTS; const int NODE_70_00 = NODE_70; const int NODE_70_01 = NODE_70 + 1; const int NODE_70_02 = NODE_70 + 2; const int NODE_70_03 = NODE_70 + 3; const int NODE_70_04 = NODE_70 + 4; const int NODE_70_05 = NODE_70 + 5; const int NODE_70_06 = NODE_70 + 6; const int NODE_70_07 = NODE_70 + 7;
         public const int NODE_71 = 0x40000000 + 71 * DISCRETE_MAX_OUTPUTS; const int NODE_71_00 = NODE_71; const int NODE_71_01 = NODE_71 + 1; const int NODE_71_02 = NODE_71 + 2; const int NODE_71_03 = NODE_71 + 3; const int NODE_71_04 = NODE_71 + 4; const int NODE_71_05 = NODE_71 + 5; const int NODE_71_06 = NODE_71 + 6; const int NODE_71_07 = NODE_71 + 7;
@@ -707,26 +708,26 @@ namespace mame
         const int NODE_99 = 0x40000000 + 99 * DISCRETE_MAX_OUTPUTS; const int NODE_99_00 = NODE_99; const int NODE_99_01 = NODE_99 + 1; const int NODE_99_02 = NODE_99 + 2; const int NODE_99_03 = NODE_99 + 3; const int NODE_99_04 = NODE_99 + 4; const int NODE_99_05 = NODE_99 + 5; const int NODE_99_06 = NODE_99 + 6; const int NODE_99_07 = NODE_99 + 7;
 
         public const int NODE_100 = 0x40000000 + 100 * DISCRETE_MAX_OUTPUTS; const int NODE_100_00 = NODE_100; const int NODE_100_01 = NODE_100 + 1; const int NODE_100_02 = NODE_100 + 2; const int NODE_100_03 = NODE_100 + 3; const int NODE_100_04 = NODE_100 + 4; const int NODE_100_05 = NODE_100 + 5; const int NODE_100_06 = NODE_100 + 6; const int NODE_100_07 = NODE_100 + 7;
-        const int NODE_101 = 0x40000000 + 101 * DISCRETE_MAX_OUTPUTS; const int NODE_101_00 = NODE_101; const int NODE_101_01 = NODE_101 + 1; const int NODE_101_02 = NODE_101 + 2; const int NODE_101_03 = NODE_101 + 3; const int NODE_101_04 = NODE_101 + 4; const int NODE_101_05 = NODE_101 + 5; const int NODE_101_06 = NODE_101 + 6; const int NODE_101_07 = NODE_101 + 7;
-        const int NODE_102 = 0x40000000 + 102 * DISCRETE_MAX_OUTPUTS; const int NODE_102_00 = NODE_102; const int NODE_102_01 = NODE_102 + 1; const int NODE_102_02 = NODE_102 + 2; const int NODE_102_03 = NODE_102 + 3; const int NODE_102_04 = NODE_102 + 4; const int NODE_102_05 = NODE_102 + 5; const int NODE_102_06 = NODE_102 + 6; const int NODE_102_07 = NODE_102 + 7;
-        const int NODE_103 = 0x40000000 + 103 * DISCRETE_MAX_OUTPUTS; const int NODE_103_00 = NODE_103; const int NODE_103_01 = NODE_103 + 1; const int NODE_103_02 = NODE_103 + 2; const int NODE_103_03 = NODE_103 + 3; const int NODE_103_04 = NODE_103 + 4; const int NODE_103_05 = NODE_103 + 5; const int NODE_103_06 = NODE_103 + 6; const int NODE_103_07 = NODE_103 + 7;
-        const int NODE_104 = 0x40000000 + 104 * DISCRETE_MAX_OUTPUTS; const int NODE_104_00 = NODE_104; const int NODE_104_01 = NODE_104 + 1; const int NODE_104_02 = NODE_104 + 2; const int NODE_104_03 = NODE_104 + 3; const int NODE_104_04 = NODE_104 + 4; const int NODE_104_05 = NODE_104 + 5; const int NODE_104_06 = NODE_104 + 6; const int NODE_104_07 = NODE_104 + 7;
+        public const int NODE_101 = 0x40000000 + 101 * DISCRETE_MAX_OUTPUTS; const int NODE_101_00 = NODE_101; const int NODE_101_01 = NODE_101 + 1; const int NODE_101_02 = NODE_101 + 2; const int NODE_101_03 = NODE_101 + 3; const int NODE_101_04 = NODE_101 + 4; const int NODE_101_05 = NODE_101 + 5; const int NODE_101_06 = NODE_101 + 6; const int NODE_101_07 = NODE_101 + 7;
+        public const int NODE_102 = 0x40000000 + 102 * DISCRETE_MAX_OUTPUTS; const int NODE_102_00 = NODE_102; const int NODE_102_01 = NODE_102 + 1; const int NODE_102_02 = NODE_102 + 2; const int NODE_102_03 = NODE_102 + 3; const int NODE_102_04 = NODE_102 + 4; const int NODE_102_05 = NODE_102 + 5; const int NODE_102_06 = NODE_102 + 6; const int NODE_102_07 = NODE_102 + 7;
+        public const int NODE_103 = 0x40000000 + 103 * DISCRETE_MAX_OUTPUTS; const int NODE_103_00 = NODE_103; const int NODE_103_01 = NODE_103 + 1; const int NODE_103_02 = NODE_103 + 2; const int NODE_103_03 = NODE_103 + 3; const int NODE_103_04 = NODE_103 + 4; const int NODE_103_05 = NODE_103 + 5; const int NODE_103_06 = NODE_103 + 6; const int NODE_103_07 = NODE_103 + 7;
+        public const int NODE_104 = 0x40000000 + 104 * DISCRETE_MAX_OUTPUTS; const int NODE_104_00 = NODE_104; const int NODE_104_01 = NODE_104 + 1; const int NODE_104_02 = NODE_104 + 2; const int NODE_104_03 = NODE_104 + 3; const int NODE_104_04 = NODE_104 + 4; const int NODE_104_05 = NODE_104 + 5; const int NODE_104_06 = NODE_104 + 6; const int NODE_104_07 = NODE_104 + 7;
         public const int NODE_105 = 0x40000000 + 105 * DISCRETE_MAX_OUTPUTS; const int NODE_105_00 = NODE_105; const int NODE_105_01 = NODE_105 + 1; const int NODE_105_02 = NODE_105 + 2; const int NODE_105_03 = NODE_105 + 3; const int NODE_105_04 = NODE_105 + 4; const int NODE_105_05 = NODE_105 + 5; const int NODE_105_06 = NODE_105 + 6; const int NODE_105_07 = NODE_105 + 7;
-        const int NODE_106 = 0x40000000 + 106 * DISCRETE_MAX_OUTPUTS; const int NODE_106_00 = NODE_106; const int NODE_106_01 = NODE_106 + 1; const int NODE_106_02 = NODE_106 + 2; const int NODE_106_03 = NODE_106 + 3; const int NODE_106_04 = NODE_106 + 4; const int NODE_106_05 = NODE_106 + 5; const int NODE_106_06 = NODE_106 + 6; const int NODE_106_07 = NODE_106 + 7;
-        const int NODE_107 = 0x40000000 + 107 * DISCRETE_MAX_OUTPUTS; const int NODE_107_00 = NODE_107; const int NODE_107_01 = NODE_107 + 1; const int NODE_107_02 = NODE_107 + 2; const int NODE_107_03 = NODE_107 + 3; const int NODE_107_04 = NODE_107 + 4; const int NODE_107_05 = NODE_107 + 5; const int NODE_107_06 = NODE_107 + 6; const int NODE_107_07 = NODE_107 + 7;
+        public const int NODE_106 = 0x40000000 + 106 * DISCRETE_MAX_OUTPUTS; const int NODE_106_00 = NODE_106; const int NODE_106_01 = NODE_106 + 1; const int NODE_106_02 = NODE_106 + 2; const int NODE_106_03 = NODE_106 + 3; const int NODE_106_04 = NODE_106 + 4; const int NODE_106_05 = NODE_106 + 5; const int NODE_106_06 = NODE_106 + 6; const int NODE_106_07 = NODE_106 + 7;
+        public const int NODE_107 = 0x40000000 + 107 * DISCRETE_MAX_OUTPUTS; const int NODE_107_00 = NODE_107; const int NODE_107_01 = NODE_107 + 1; const int NODE_107_02 = NODE_107 + 2; const int NODE_107_03 = NODE_107 + 3; const int NODE_107_04 = NODE_107 + 4; const int NODE_107_05 = NODE_107 + 5; const int NODE_107_06 = NODE_107 + 6; const int NODE_107_07 = NODE_107 + 7;
         const int NODE_108 = 0x40000000 + 108 * DISCRETE_MAX_OUTPUTS; const int NODE_108_00 = NODE_108; const int NODE_108_01 = NODE_108 + 1; const int NODE_108_02 = NODE_108 + 2; const int NODE_108_03 = NODE_108 + 3; const int NODE_108_04 = NODE_108 + 4; const int NODE_108_05 = NODE_108 + 5; const int NODE_108_06 = NODE_108 + 6; const int NODE_108_07 = NODE_108 + 7;
         const int NODE_109 = 0x40000000 + 109 * DISCRETE_MAX_OUTPUTS; const int NODE_109_00 = NODE_109; const int NODE_109_01 = NODE_109 + 1; const int NODE_109_02 = NODE_109 + 2; const int NODE_109_03 = NODE_109 + 3; const int NODE_109_04 = NODE_109 + 4; const int NODE_109_05 = NODE_109 + 5; const int NODE_109_06 = NODE_109 + 6; const int NODE_109_07 = NODE_109 + 7;
 
         public const int NODE_110 = 0x40000000 + 110 * DISCRETE_MAX_OUTPUTS; const int NODE_110_00 = NODE_110; const int NODE_110_01 = NODE_110 + 1; const int NODE_110_02 = NODE_110 + 2; const int NODE_110_03 = NODE_110 + 3; const int NODE_110_04 = NODE_110 + 4; const int NODE_110_05 = NODE_110 + 5; const int NODE_110_06 = NODE_110 + 6; const int NODE_110_07 = NODE_110 + 7;
         public const int NODE_111 = 0x40000000 + 111 * DISCRETE_MAX_OUTPUTS; const int NODE_111_00 = NODE_111; const int NODE_111_01 = NODE_111 + 1; const int NODE_111_02 = NODE_111 + 2; const int NODE_111_03 = NODE_111 + 3; const int NODE_111_04 = NODE_111 + 4; const int NODE_111_05 = NODE_111 + 5; const int NODE_111_06 = NODE_111 + 6; const int NODE_111_07 = NODE_111 + 7;
         const int NODE_112 = 0x40000000 + 112 * DISCRETE_MAX_OUTPUTS; const int NODE_112_00 = NODE_112; const int NODE_112_01 = NODE_112 + 1; const int NODE_112_02 = NODE_112 + 2; const int NODE_112_03 = NODE_112 + 3; const int NODE_112_04 = NODE_112 + 4; const int NODE_112_05 = NODE_112 + 5; const int NODE_112_06 = NODE_112 + 6; const int NODE_112_07 = NODE_112 + 7;
-        const int NODE_113 = 0x40000000 + 113 * DISCRETE_MAX_OUTPUTS; const int NODE_113_00 = NODE_113; const int NODE_113_01 = NODE_113 + 1; const int NODE_113_02 = NODE_113 + 2; const int NODE_113_03 = NODE_113 + 3; const int NODE_113_04 = NODE_113 + 4; const int NODE_113_05 = NODE_113 + 5; const int NODE_113_06 = NODE_113 + 6; const int NODE_113_07 = NODE_113 + 7;
+        public const int NODE_113 = 0x40000000 + 113 * DISCRETE_MAX_OUTPUTS; const int NODE_113_00 = NODE_113; const int NODE_113_01 = NODE_113 + 1; const int NODE_113_02 = NODE_113 + 2; const int NODE_113_03 = NODE_113 + 3; const int NODE_113_04 = NODE_113 + 4; const int NODE_113_05 = NODE_113 + 5; const int NODE_113_06 = NODE_113 + 6; const int NODE_113_07 = NODE_113 + 7;
         const int NODE_114 = 0x40000000 + 114 * DISCRETE_MAX_OUTPUTS; const int NODE_114_00 = NODE_114; const int NODE_114_01 = NODE_114 + 1; const int NODE_114_02 = NODE_114 + 2; const int NODE_114_03 = NODE_114 + 3; const int NODE_114_04 = NODE_114 + 4; const int NODE_114_05 = NODE_114 + 5; const int NODE_114_06 = NODE_114 + 6; const int NODE_114_07 = NODE_114 + 7;
         public const int NODE_115 = 0x40000000 + 115 * DISCRETE_MAX_OUTPUTS; const int NODE_115_00 = NODE_115; const int NODE_115_01 = NODE_115 + 1; const int NODE_115_02 = NODE_115 + 2; const int NODE_115_03 = NODE_115 + 3; const int NODE_115_04 = NODE_115 + 4; const int NODE_115_05 = NODE_115 + 5; const int NODE_115_06 = NODE_115 + 6; const int NODE_115_07 = NODE_115 + 7;
         public const int NODE_116 = 0x40000000 + 116 * DISCRETE_MAX_OUTPUTS; const int NODE_116_00 = NODE_116; const int NODE_116_01 = NODE_116 + 1; const int NODE_116_02 = NODE_116 + 2; const int NODE_116_03 = NODE_116 + 3; const int NODE_116_04 = NODE_116 + 4; const int NODE_116_05 = NODE_116 + 5; const int NODE_116_06 = NODE_116 + 6; const int NODE_116_07 = NODE_116 + 7;
         public const int NODE_117 = 0x40000000 + 117 * DISCRETE_MAX_OUTPUTS; const int NODE_117_00 = NODE_117; const int NODE_117_01 = NODE_117 + 1; const int NODE_117_02 = NODE_117 + 2; const int NODE_117_03 = NODE_117 + 3; const int NODE_117_04 = NODE_117 + 4; const int NODE_117_05 = NODE_117 + 5; const int NODE_117_06 = NODE_117 + 6; const int NODE_117_07 = NODE_117 + 7;
-        const int NODE_118 = 0x40000000 + 118 * DISCRETE_MAX_OUTPUTS; const int NODE_118_00 = NODE_118; const int NODE_118_01 = NODE_118 + 1; const int NODE_118_02 = NODE_118 + 2; const int NODE_118_03 = NODE_118 + 3; const int NODE_118_04 = NODE_118 + 4; const int NODE_118_05 = NODE_118 + 5; const int NODE_118_06 = NODE_118 + 6; const int NODE_118_07 = NODE_118 + 7;
-        const int NODE_119 = 0x40000000 + 119 * DISCRETE_MAX_OUTPUTS; const int NODE_119_00 = NODE_119; const int NODE_119_01 = NODE_119 + 1; const int NODE_119_02 = NODE_119 + 2; const int NODE_119_03 = NODE_119 + 3; const int NODE_119_04 = NODE_119 + 4; const int NODE_119_05 = NODE_119 + 5; const int NODE_119_06 = NODE_119 + 6; const int NODE_119_07 = NODE_119 + 7;
+        public const int NODE_118 = 0x40000000 + 118 * DISCRETE_MAX_OUTPUTS; const int NODE_118_00 = NODE_118; const int NODE_118_01 = NODE_118 + 1; const int NODE_118_02 = NODE_118 + 2; const int NODE_118_03 = NODE_118 + 3; const int NODE_118_04 = NODE_118 + 4; const int NODE_118_05 = NODE_118 + 5; const int NODE_118_06 = NODE_118 + 6; const int NODE_118_07 = NODE_118 + 7;
+        public const int NODE_119 = 0x40000000 + 119 * DISCRETE_MAX_OUTPUTS; const int NODE_119_00 = NODE_119; const int NODE_119_01 = NODE_119 + 1; const int NODE_119_02 = NODE_119 + 2; const int NODE_119_03 = NODE_119 + 3; const int NODE_119_04 = NODE_119 + 4; const int NODE_119_05 = NODE_119 + 5; const int NODE_119_06 = NODE_119 + 6; const int NODE_119_07 = NODE_119 + 7;
 
         public const int NODE_120 = 0x40000000 + 120 * DISCRETE_MAX_OUTPUTS; const int NODE_120_00 = NODE_120; const int NODE_120_01 = NODE_120 + 1; const int NODE_120_02 = NODE_120 + 2; const int NODE_120_03 = NODE_120 + 3; const int NODE_120_04 = NODE_120 + 4; const int NODE_120_05 = NODE_120 + 5; const int NODE_120_06 = NODE_120 + 6; const int NODE_120_07 = NODE_120 + 7;
         const int NODE_121 = 0x40000000 + 121 * DISCRETE_MAX_OUTPUTS; const int NODE_121_00 = NODE_121; const int NODE_121_01 = NODE_121 + 1; const int NODE_121_02 = NODE_121 + 2; const int NODE_121_03 = NODE_121 + 3; const int NODE_121_04 = NODE_121 + 4; const int NODE_121_05 = NODE_121 + 5; const int NODE_121_06 = NODE_121 + 6; const int NODE_121_07 = NODE_121 + 7;
@@ -869,7 +870,7 @@ namespace mame
         const int NODE_246 = 0x40000000 + 246 * DISCRETE_MAX_OUTPUTS; const int NODE_246_00 = NODE_246; const int NODE_246_01 = NODE_246 + 1; const int NODE_246_02 = NODE_246 + 2; const int NODE_246_03 = NODE_246 + 3; const int NODE_246_04 = NODE_246 + 4; const int NODE_246_05 = NODE_246 + 5; const int NODE_246_06 = NODE_246 + 6; const int NODE_246_07 = NODE_246 + 7;
         const int NODE_247 = 0x40000000 + 247 * DISCRETE_MAX_OUTPUTS; const int NODE_247_00 = NODE_247; const int NODE_247_01 = NODE_247 + 1; const int NODE_247_02 = NODE_247 + 2; const int NODE_247_03 = NODE_247 + 3; const int NODE_247_04 = NODE_247 + 4; const int NODE_247_05 = NODE_247 + 5; const int NODE_247_06 = NODE_247 + 6; const int NODE_247_07 = NODE_247 + 7;
         const int NODE_248 = 0x40000000 + 248 * DISCRETE_MAX_OUTPUTS; const int NODE_248_00 = NODE_248; const int NODE_248_01 = NODE_248 + 1; const int NODE_248_02 = NODE_248 + 2; const int NODE_248_03 = NODE_248 + 3; const int NODE_248_04 = NODE_248 + 4; const int NODE_248_05 = NODE_248 + 5; const int NODE_248_06 = NODE_248 + 6; const int NODE_248_07 = NODE_248 + 7;
-        const int NODE_249 = 0x40000000 + 249 * DISCRETE_MAX_OUTPUTS; const int NODE_249_00 = NODE_249; const int NODE_249_01 = NODE_249 + 1; const int NODE_249_02 = NODE_249 + 2; const int NODE_249_03 = NODE_249 + 3; const int NODE_249_04 = NODE_249 + 4; const int NODE_249_05 = NODE_249 + 5; const int NODE_249_06 = NODE_249 + 6; const int NODE_249_07 = NODE_249 + 7;
+        public const int NODE_249 = 0x40000000 + 249 * DISCRETE_MAX_OUTPUTS; const int NODE_249_00 = NODE_249; const int NODE_249_01 = NODE_249 + 1; const int NODE_249_02 = NODE_249 + 2; const int NODE_249_03 = NODE_249 + 3; const int NODE_249_04 = NODE_249 + 4; const int NODE_249_05 = NODE_249 + 5; const int NODE_249_06 = NODE_249 + 6; const int NODE_249_07 = NODE_249 + 7;
 
         public const int NODE_250 = 0x40000000 + 250 * DISCRETE_MAX_OUTPUTS; const int NODE_250_00 = NODE_250; const int NODE_250_01 = NODE_250 + 1; const int NODE_250_02 = NODE_250 + 2; const int NODE_250_03 = NODE_250 + 3; const int NODE_250_04 = NODE_250 + 4; const int NODE_250_05 = NODE_250 + 5; const int NODE_250_06 = NODE_250 + 6; const int NODE_250_07 = NODE_250 + 7;
         const int NODE_251 = 0x40000000 + 251 * DISCRETE_MAX_OUTPUTS; const int NODE_251_00 = NODE_251; const int NODE_251_01 = NODE_251 + 1; const int NODE_251_02 = NODE_251 + 2; const int NODE_251_03 = NODE_251 + 3; const int NODE_251_04 = NODE_251 + 4; const int NODE_251_05 = NODE_251 + 5; const int NODE_251_06 = NODE_251 + 6; const int NODE_251_07 = NODE_251 + 7;
@@ -964,8 +965,8 @@ namespace mame
 
         /* Some Pre-defined nodes for convenience */
 
-        public static int NODE_(int x) { return NODE_00 + x * DISCRETE_MAX_OUTPUTS; }
-        //#define NODE_SUB(_x, _y) ((_x) + (_y))
+        public static int NODE_(int _x) { return NODE_00 + _x * DISCRETE_MAX_OUTPUTS; }
+        public static int NODE_SUB(int _x, int _y) { return _x + _y; }
 
         //#if DISCRETE_MAX_OUTPUTS == 8
         public static int NODE_CHILD_NODE_NUM(int x) { return x & 7; }
@@ -977,7 +978,7 @@ namespace mame
 
         public static int NODE_RELATIVE(int x, int y) { return NODE_(NODE_INDEX(x) + y); }
 
-        const int NODE_NC = NODE_00;
+        public const int NODE_NC = NODE_00;
         public static readonly int NODE_SPECIAL = NODE_(DISCRETE_MAX_NODES);
 
         public const int NODE_START = NODE_00;
@@ -1779,8 +1780,7 @@ namespace mame
                                          //public device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(DISCRETE, discrete_sound_device, "discrete", "Discrete Sound")
-        static device_t device_creator_discrete_sound_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new discrete_sound_device(mconfig, tag, owner, clock); }
-        public static readonly device_type DISCRETE = DEFINE_DEVICE_TYPE(device_creator_discrete_sound_device, "discrete", "Discrete Sound");
+        public static readonly emu.detail.device_type_impl DISCRETE = DEFINE_DEVICE_TYPE("discrete", "Discrete Sound", (type, mconfig, tag, owner, clock) => { return new discrete_sound_device(mconfig, tag, owner, clock); });
 
 
         //typedef std::vector<discrete_dss_input_stream_node *> istream_node_list_t;
@@ -2179,7 +2179,7 @@ namespace mame
         /* from disc_mth.inc */
         /* generic modules */
         public static discrete_block DISCRETE_ADDER2(int NODE, double ENAB, double INP0, double INP1) { return DSC_SND_ENTRY<discrete_dst_adder_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)INP0,(int)INP1 ), DSE( ENAB,INP0,INP1 ), null, "DISCRETE_ADDER2" ); }
-        //#define DISCRETE_ADDER3(NODE,ENAB,INP0,INP1,INP2)                       DSC_SND_ENTRY( NODE, dst_adder       , DSS_NODE        , 4, DSE( ENAB,INP0,INP1,INP2 ), DSE( ENAB,INP0,INP1,INP2 ), NULL, "DISCRETE_ADDER3" ),
+        public static discrete_block DISCRETE_ADDER3(int NODE, double ENAB, double INP0, double INP1, double INP2) { return DSC_SND_ENTRY<discrete_dst_adder_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,(int)INP1,(int)INP2 ), DSE( ENAB,INP0,INP1,INP2 ), null, "DISCRETE_ADDER3" ); }
         public static discrete_block DISCRETE_ADDER4(int NODE, double ENAB, double INP0, double INP1, double INP2, double INP3) { return DSC_SND_ENTRY<discrete_dst_adder_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)ENAB,(int)INP0,(int)INP1,(int)INP2,(int)INP3 ), DSE( ENAB,INP0,INP1,INP2,INP3 ), null, "DISCRETE_ADDER4" ); }
         public static discrete_block DISCRETE_CLAMP(int NODE, double INP0, double MIN, double MAX) { return DSC_SND_ENTRY<discrete_dst_clamp_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)MIN,(int)MAX ), DSE( INP0,MIN,MAX ), null, "DISCRETE_CLAMP" ); }
         public static discrete_block DISCRETE_DIVIDE(int NODE, double ENAB, double INP0, double INP1) { return DSC_SND_ENTRY<discrete_dst_divide_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)INP0,(int)INP1 ), DSE( ENAB,INP0,INP1 ), null, "DISCRETE_DIVIDE" ); }
@@ -2187,7 +2187,7 @@ namespace mame
         //#define DISCRETE_INVERT(NODE,INP0)                                      DSC_SND_ENTRY( NODE, dst_gain        , DSS_NODE        , 3, DSE( INP0,NODE_NC,NODE_NC ), DSE( INP0,-1,0 ), NULL, "DISCRETE_INVERT" ),
         public static discrete_block DISCRETE_LOGIC_INVERT(int NODE, double INP0) {return DSC_SND_ENTRY<discrete_dst_logic_inv_node>( NODE, (int)discrete_node_type.DSS_NODE        , 1, DSE( (int)INP0 ), DSE( INP0 ), null, "DISCRETE_LOGIC_INVERT" ); }
 
-        //#define DISCRETE_BIT_DECODE(NODE, INP, BIT_N, VOUT)                     DSC_SND_ENTRY( NODE, dst_bits_decode , DSS_NODE        , 4, DSE( INP,NODE_NC,NODE_NC,NODE_NC ), DSE( INP,BIT_N,BIT_N,VOUT ), NULL, "DISCRETE_BIT_DECODE" ),
+        public static discrete_block DISCRETE_BIT_DECODE(int NODE, double INP, double BIT_N, double VOUT) { return DSC_SND_ENTRY<discrete_dst_bits_decode_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)INP,NODE_NC,NODE_NC,NODE_NC ), DSE( INP,BIT_N,BIT_N,VOUT ), null, "DISCRETE_BIT_DECODE" ); }
         public static discrete_block DISCRETE_BITS_DECODE(int NODE, double INP, double BIT_FROM, double BIT_TO, double VOUT) { return DSC_SND_ENTRY<discrete_dst_bits_decode_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)INP,NODE_NC,NODE_NC,NODE_NC ), DSE( INP,BIT_FROM,BIT_TO,VOUT ), null, "DISCRETE_BITS_DECODE" ); }
 
         //#define DISCRETE_LOGIC_AND(NODE,INP0,INP1)                              DSC_SND_ENTRY( NODE, dst_logic_and   , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,1.0,1.0 ), NULL, "DISCRETE_LOGIC_AND" ),
@@ -2195,7 +2195,7 @@ namespace mame
         //#define DISCRETE_LOGIC_AND4(NODE,INP0,INP1,INP2,INP3)                   DSC_SND_ENTRY( NODE, dst_logic_and   , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ) ,NULL, "DISCRETE_LOGIC_AND4" ),
         //#define DISCRETE_LOGIC_NAND(NODE,INP0,INP1)                             DSC_SND_ENTRY( NODE, dst_logic_nand  , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,1.0,1.0 ), NULL, "DISCRETE_LOGIC_NAND" ),
         //#define DISCRETE_LOGIC_NAND3(NODE,INP0,INP1,INP2)                       DSC_SND_ENTRY( NODE, dst_logic_nand  , DSS_NODE        , 4, DSE( INP0,INP1,INP2,NODE_NC ), DSE( INP0,INP1,INP2,1.0 ), NULL, "DISCRETE_LOGIC_NAND3" ),
-        //#define DISCRETE_LOGIC_NAND4(NODE,INP0,INP1,INP2,INP3)                  DSC_SND_ENTRY( NODE, dst_logic_nand  , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ), NULL, ")DISCRETE_LOGIC_NAND4" ),
+        public static discrete_block DISCRETE_LOGIC_NAND4(int NODE, double INP0, double INP1, double INP2, double INP3) { return DSC_SND_ENTRY<discrete_dst_logic_nand_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)INP0,(int)INP1,(int)INP2,(int)INP3 ), DSE( INP0,INP1,INP2,INP3 ), null, ")DISCRETE_LOGIC_NAND4" ); }
         //#define DISCRETE_LOGIC_OR(NODE,INP0,INP1)                               DSC_SND_ENTRY( NODE, dst_logic_or    , DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,0.0,0.0 ), NULL, "DISCRETE_LOGIC_OR" ),
         //#define DISCRETE_LOGIC_OR3(NODE,INP0,INP1,INP2)                         DSC_SND_ENTRY( NODE, dst_logic_or    , DSS_NODE        , 4, DSE( INP0,INP1,INP2,NODE_NC ), DSE( INP0,INP1,INP2,0.0 ), NULL, "DISCRETE_LOGIC_OR3" ),
         //#define DISCRETE_LOGIC_OR4(NODE,INP0,INP1,INP2,INP3)                    DSC_SND_ENTRY( NODE, dst_logic_or    , DSS_NODE        , 4, DSE( INP0,INP1,INP2,INP3 ), DSE( INP0,INP1,INP2,INP3 ), NULL, "DISCRETE_LOGIC_OR4" ),
@@ -2214,11 +2214,11 @@ namespace mame
         public static discrete_block DISCRETE_MULTIPLY(int NODE, double INP0, double INP1) { return DSC_SND_ENTRY<discrete_dst_gain_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)INP1,NODE_NC ), DSE( INP0,INP1,0 ), null, "DISCRETE_MULTIPLY" ); }
         public static discrete_block DISCRETE_MULTADD(int NODE, double INP0, double INP1, double INP2) { return DSC_SND_ENTRY<discrete_dst_gain_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)INP1,(int)INP2 ), DSE( INP0,INP1,INP2 ), null, "DISCRETE_MULTADD" ); }
         //#define DISCRETE_ONESHOT(NODE,TRIG,AMPL,WIDTH,TYPE)                     DSC_SND_ENTRY( NODE, dst_oneshot     , DSS_NODE        , 5, DSE( 0,TRIG,AMPL,WIDTH,NODE_NC ), DSE( 0,TRIG,AMPL,WIDTH,TYPE ), NULL, "DISCRETE_ONESHOT" ),
-        //#define DISCRETE_ONESHOTR(NODE,RESET,TRIG,AMPL,WIDTH,TYPE)              DSC_SND_ENTRY( NODE, dst_oneshot     , DSS_NODE        , 5, DSE( RESET,TRIG,AMPL,WIDTH,NODE_NC ), DSE( RESET,TRIG,AMPL,WIDTH,TYPE ), NULL, "One Shot Resetable" ),
+        public static discrete_block DISCRETE_ONESHOTR(int NODE, double RESET, double TRIG, double AMPL, double WIDTH, double TYPE) { return DSC_SND_ENTRY<discrete_dst_oneshot_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)RESET,(int)TRIG,(int)AMPL,(int)WIDTH,NODE_NC ), DSE( RESET,TRIG,AMPL,WIDTH,TYPE ), null, "One Shot Resetable" ); }
         //#define DISCRETE_ONOFF(NODE,ENAB,INP0)                                  DSC_SND_ENTRY( NODE, dst_gain        , DSS_NODE        , 3, DSE( ENAB,INP0,NODE_NC ), DSE( 0,1,0 ), NULL, "DISCRETE_ONOFF" ),
         public static discrete_block DISCRETE_RAMP(int NODE, double ENAB, double RAMP, double GRAD, double START, double END, double CLAMP) { return DSC_SND_ENTRY<discrete_dst_ramp_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)RAMP,(int)GRAD,(int)START,(int)END,(int)CLAMP ), DSE( ENAB,RAMP,GRAD,START,END,CLAMP ), null, "DISCRETE_RAMP" ); }
         public static discrete_block DISCRETE_SAMPLHOLD(int NODE, double INP0, double CLOCK, double CLKTYPE) { return DSC_SND_ENTRY<discrete_dst_samphold_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)CLOCK,NODE_NC ), DSE( INP0,CLOCK,CLKTYPE ), null, "DISCRETE_SAMPLHOLD" ); }
-        //#define DISCRETE_SWITCH(NODE,ENAB,SWITCH,INP0,INP1)                     DSC_SND_ENTRY( NODE, dst_switch      , DSS_NODE        , 4, DSE( ENAB,SWITCH,INP0,INP1 ), DSE( ENAB,SWITCH,INP0,INP1 ), NULL, "DISCRETE_SWITCH" ),
+        public static discrete_block DISCRETE_SWITCH(int NODE, double ENAB, double SWITCH, double INP0, double INP1) { return DSC_SND_ENTRY<discrete_dst_switch_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)SWITCH,(int)INP0,(int)INP1 ), DSE( ENAB,SWITCH,INP0,INP1 ), null, "DISCRETE_SWITCH" ); }
         //#define DISCRETE_ASWITCH(NODE,CTRL,INP,THRESHOLD)                       DSC_SND_ENTRY( NODE, dst_aswitch     , DSS_NODE        , 3, DSE( CTRL,INP,THRESHOLD ), DSE( CTRL,INP, THRESHOLD), NULL, "Analog Switch" ),
         public static discrete_block DISCRETE_TRANSFORM2(int NODE, double INP0, double INP1, string FUNCT) { return DSC_SND_ENTRY<discrete_dst_transform_node>( NODE, (int)discrete_node_type.DSS_NODE        , 2, DSE( (int)INP0,(int)INP1 ), DSE( INP0,INP1 ), FUNCT, "DISCRETE_TRANSFORM2" ); }
         public static discrete_block DISCRETE_TRANSFORM3(int NODE, double INP0, double INP1, double INP2, string FUNCT) { return DSC_SND_ENTRY<discrete_dst_transform_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,(int)INP1,(int)INP2 ), DSE( INP0,INP1,INP2 ), FUNCT, "DISCRETE_TRANSFORM3" ); }
@@ -2243,12 +2243,12 @@ namespace mame
         public static discrete_block DISCRETE_OP_AMP_TRIG_VCA(int NODE, double TRG0, double TRG1, double TRG2, double IN0, double IN1, discrete_op_amp_tvca_info INFO) { return DSC_SND_ENTRY<discrete_dst_tvca_op_amp_node>( NODE,  (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)TRG0,(int)TRG1,(int)TRG2,(int)IN0,(int)IN1 ), DSE( TRG0,TRG1,TRG2,IN0,IN1 ), INFO, "DISCRETE_OP_AMP_TRIG_VCA" ); }
         //#define DISCRETE_VCA(NODE,ENAB,IN0,CTRL,TYPE)                           DSC_SND_ENTRY( NODE, dst_vca         , DSS_NODE        , 4, DSE( ENAB,IN0,CTRL,NODE_NC ), DSE( ENAB,IN0,CTRL,TYPE ), NULL, "DISCRETE_VCA" ),
         //#define DISCRETE_XTIME_BUFFER(NODE,IN0,LOW,HIGH)                        DSC_SND_ENTRY( NODE, dst_xtime_buffer, DSS_NODE        , 4, DSE( IN0,LOW,HIGH,NODE_NC ), DSE( IN0,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_BUFFER" ),
-        //#define DISCRETE_XTIME_INVERTER(NODE,IN0,LOW,HIGH)                      DSC_SND_ENTRY( NODE, dst_xtime_buffer, DSS_NODE        , 4, DSE( IN0,LOW,HIGH,NODE_NC ), DSE( IN0,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_INVERTER" ),
+        public static discrete_block DISCRETE_XTIME_INVERTER(int NODE, double IN0, double LOW, double HIGH) { return DSC_SND_ENTRY<discrete_dst_xtime_buffer_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)IN0,(int)LOW,(int)HIGH,NODE_NC ), DSE( IN0,LOW,HIGH,1 ), null, "DISCRETE_XTIME_INVERTER" ); }
         //#define DISCRETE_XTIME_AND(NODE,IN0,IN1,LOW,HIGH)                       DSC_SND_ENTRY( NODE, dst_xtime_and   , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_AND" ),
-        //#define DISCRETE_XTIME_NAND(NODE,IN0,IN1,LOW,HIGH)                      DSC_SND_ENTRY( NODE, dst_xtime_and   , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_NAND" ),
+        public static discrete_block DISCRETE_XTIME_NAND(int NODE, double IN0, double IN1, double LOW, double HIGH) { return DSC_SND_ENTRY<discrete_dst_xtime_and_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)IN0,(int)IN1,(int)LOW,(int)HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,1 ), null, "DISCRETE_XTIME_NAND" ); }
         //#define DISCRETE_XTIME_OR(NODE,IN0,IN1,LOW,HIGH)                        DSC_SND_ENTRY( NODE, dst_xtime_or    , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_OR" ),
         //#define DISCRETE_XTIME_NOR(NODE,IN0,IN1,LOW,HIGH)                       DSC_SND_ENTRY( NODE, dst_xtime_or    , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_NOR" ),
-        //#define DISCRETE_XTIME_XOR(NODE,IN0,IN1,LOW,HIGH)                       DSC_SND_ENTRY( NODE, dst_xtime_xor   , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,0 ), NULL, "DISCRETE_XTIME_XOR" ),
+        public static discrete_block DISCRETE_XTIME_XOR(int NODE, double IN0, double IN1, double LOW, double HIGH) { return DSC_SND_ENTRY<discrete_dst_xtime_xor_node>( NODE, (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)IN0,(int)IN1,(int)LOW,(int)HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,0 ), null, "DISCRETE_XTIME_XOR" ); }
         //#define DISCRETE_XTIME_XNOR(NODE,IN0,IN1,LOW,HIGH)                      DSC_SND_ENTRY( NODE, dst_xtime_xnor  , DSS_NODE        , 5, DSE( IN0,IN1,LOW,HIGH,NODE_NC ), DSE( IN0,IN1,LOW,HIGH,1 ), NULL, "DISCRETE_XTIME_XNOR" ),
 
         /* from disc_flt.inc */
@@ -2258,12 +2258,12 @@ namespace mame
         /* Component specific */
         public static discrete_block DISCRETE_SALLEN_KEY_FILTER(int NODE, double ENAB, double INP0, double TYPE, discrete_op_amp_filt_info INFO) { return DSC_SND_ENTRY<discrete_dst_sallen_key_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)ENAB,(int)INP0,NODE_NC ), DSE( ENAB,INP0,TYPE ), INFO, "DISCRETE_SALLEN_KEY_FILTER" ); }
         public static discrete_block DISCRETE_CRFILTER(int NODE, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_crfilter_node>( NODE, (int)discrete_node_type.DSS_NODE        , 3, DSE( (int)INP0,OPT_NODE(RVAL),OPT_NODE(CVAL) ), DSE( INP0,RVAL,CVAL ), null, "DISCRETE_CRFILTER" ); }
-        //#define DISCRETE_CRFILTER_VREF(NODE,INP0,RVAL,CVAL,VREF)                DSC_SND_ENTRY( NODE, dst_crfilter    , DSS_NODE        , 4, DSE( INP0,OPT_NODE(RVAL),OPT_NODE(CVAL),VREF ), DSE( INP0,RVAL,CVAL,VREF ), NULL, "DISCRETE_CRFILTER_VREF" ),
+        public static discrete_block DISCRETE_CRFILTER_VREF(int NODE, double INP0, double RVAL, double CVAL, double VREF) { return DSC_SND_ENTRY<discrete_dst_crfilter_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)INP0,OPT_NODE(RVAL),OPT_NODE(CVAL),(int)VREF ), DSE( INP0,RVAL,CVAL,VREF ), null, "DISCRETE_CRFILTER_VREF" ); }
         public static discrete_block DISCRETE_OP_AMP_FILTER(int NODE, double ENAB, double INP0, double INP1, double TYPE, discrete_op_amp_filt_info INFO) { return DSC_SND_ENTRY<discrete_dst_op_amp_filt_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,(int)INP1,NODE_NC ), DSE( ENAB,INP0,INP1,TYPE ), INFO, "DISCRETE_OP_AMP_FILTER" ); }
-        //#define DISCRETE_RC_CIRCUIT_1(NODE,INP0,INP1,RVAL,CVAL)                 DSC_SND_ENTRY( NODE, dst_rc_circuit_1, DSS_NODE        , 4, DSE( INP0,INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,RVAL,CVAL ), NULL, "DISCRETE_RC_CIRCUIT_1" ),
+        public static discrete_block DISCRETE_RC_CIRCUIT_1(int NODE, double INP0, double INP1, double RVAL, double CVAL){ return DSC_SND_ENTRY<discrete_dst_rc_circuit_1_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)INP0,(int)INP1,NODE_NC,NODE_NC ), DSE( INP0,INP1,RVAL,CVAL ), null, "DISCRETE_RC_CIRCUIT_1" ); }
         public static discrete_block DISCRETE_RCDISC(int NODE, double ENAB, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcdisc_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL,CVAL ), null, "DISCRETE_RCDISC" ); }
         public static discrete_block DISCRETE_RCDISC2(int NODE, double SWITCH, double INP0, double RVAL0, double INP1, double RVAL1, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcdisc2_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)SWITCH,(int)INP0,NODE_NC,(int)INP1,NODE_NC,NODE_NC ), DSE( SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL ), null, "DISCRETE_RCDISC2" ); }
-        //#define DISCRETE_RCDISC3(NODE,ENAB,INP0,RVAL0,RVAL1,CVAL,DJV)           DSC_SND_ENTRY( NODE, dst_rcdisc3     , DSS_NODE        , 6, DSE( ENAB,INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL0,RVAL1,CVAL,DJV ), NULL, "DISCRETE_RCDISC3" ),
+        public static discrete_block DISCRETE_RCDISC3(int NODE, double ENAB, double INP0, double RVAL0, double RVAL1, double CVAL, double DJV) { return DSC_SND_ENTRY<discrete_dst_rcdisc3_node>( NODE, (int)discrete_node_type.DSS_NODE        , 6, DSE( (int)ENAB,(int)INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL0,RVAL1,CVAL,DJV ), null, "DISCRETE_RCDISC3" ); }
         //#define DISCRETE_RCDISC4(NODE,ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE) DSC_SND_ENTRY( NODE, dst_rcdisc4     , DSS_NODE        , 8, DSE( ENAB,INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE ), NULL, "DISCRETE_RCDISC4" ),
         public static discrete_block DISCRETE_RCDISC5(int NODE, double ENAB, double INP0, double RVAL, double CVAL) { return DSC_SND_ENTRY<discrete_dst_rcdisc5_node>( NODE, (int)discrete_node_type.DSS_NODE        , 4, DSE( (int)ENAB,(int)INP0,NODE_NC,NODE_NC ), DSE( ENAB,INP0,RVAL,CVAL ), null, "DISCRETE_RCDISC5" ); }
         public static discrete_block DISCRETE_RCDISC_MODULATED(int NODE, double INP0, double INP1, double RVAL0, double RVAL1, double RVAL2, double RVAL3, double CVAL, double VP) { return DSC_SND_ENTRY<discrete_dst_rcdisc_mod_node>( NODE, (int)discrete_node_type.DSS_NODE        , 8, DSE( (int)INP0,(int)INP1,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( INP0,INP1,RVAL0,RVAL1,RVAL2,RVAL3,CVAL,VP ), null, "DISCRETE_RCDISC_MODULATED" ); }
@@ -2286,7 +2286,7 @@ namespace mame
         //#define DISCRETE_CUSTOM6(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,IN5,INFO)             DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 6, DSE( IN0,IN1,IN2,IN3,IN4,IN5 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5 ), INFO, "DISCRETE_CUSTOM6" ),
         //#define DISCRETE_CUSTOM7(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,IN5,IN6,INFO)         DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 7, DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6 ), INFO, "DISCRETE_CUSTOM7" ),
         public static discrete_block DISCRETE_CUSTOM8<CLASS>(int NODE, double IN0, double IN1, double IN2, double IN3, double IN4, double IN5, double IN6, double IN7, object INFO) where CLASS : discrete_base_node, new() { return DSC_SND_ENTRY<CLASS>( NODE, (int)discrete_node_type.DST_CUSTOM      , 8, DSE( (int)IN0,(int)IN1,(int)IN2,(int)IN3,(int)IN4,(int)IN5,(int)IN6,(int)IN7 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7 ), INFO, "DISCRETE_CUSTOM8" ); }
-        //#define DISCRETE_CUSTOM9(NODE,CLASS,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8,INFO) DSC_SND_ENTRY( NODE, CLASS, DST_CUSTOM      , 9, DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8 ), INFO, "DISCRETE_CUSTOM9" ),
+        public static discrete_block DISCRETE_CUSTOM9<CLASS>(int NODE, double IN0, double IN1, double IN2, double IN3, double IN4, double IN5, double IN6, double IN7, double IN8, object INFO) where CLASS : discrete_base_node, new() { return DSC_SND_ENTRY<CLASS>( NODE, (int)discrete_node_type.DST_CUSTOM      , 9, DSE( (int)IN0,(int)IN1,(int)IN2,(int)IN3,(int)IN4,(int)IN5,(int)IN6,(int)IN7,(int)IN8 ), DSE( IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8 ), INFO, "DISCRETE_CUSTOM9" ); }
 
         /* Component specific */
         public static discrete_block DISCRETE_555_ASTABLE(int NODE, double RESET, double R1, double R2, double C, discrete_555_desc OPTIONS) { return DSC_SND_ENTRY<discrete_dsd_555_astbl_node>( NODE,    (int)discrete_node_type.DSS_NODE        , 5, DSE( (int)RESET,(int)R1,(int)R2,(int)C,NODE_NC ), DSE( RESET,R1,R2,C,-1 ), OPTIONS, "DISCRETE_555_ASTABLE" ); }
@@ -2296,7 +2296,7 @@ namespace mame
         //#define DISCRETE_555_VCO1(NODE,RESET,VIN,OPTIONS)                       DSC_SND_ENTRY( NODE, dsd_555_vco1    , DSS_NODE        , 3, DSE( RESET,VIN,NODE_NC ), DSE( RESET,VIN,-1 ), OPTIONS, "DISCRETE_555_VCO1" ),
         //#define DISCRETE_555_VCO1_CV(NODE,RESET,VIN,CTRLV,OPTIONS)              DSC_SND_ENTRY( NODE, dsd_555_vco1    , DSS_NODE        , 3, DSE( RESET,VIN,CTRLV ), DSE( RESET,VIN,CTRLV ), OPTIONS, "DISCRETE_555_VCO1_CV" ),
         //#define DISCRETE_566(NODE,VMOD,R,C,VPOS,VNEG,VCHARGE,OPTIONS)           DSC_SND_ENTRY( NODE, dsd_566         , DSS_NODE        , 7, DSE( VMOD,R,C,NODE_NC,NODE_NC,VCHARGE,NODE_NC ), DSE( VMOD,R,C,VPOS,VNEG,VCHARGE,OPTIONS ), NULL, "DISCRETE_566" ),
-        //#define DISCRETE_74LS624(NODE,ENAB,VMOD,VRNG,C,R_FREQ_IN,C_FREQ_IN,R_RNG_IN,OUTTYPE) DSC_SND_ENTRY( NODE, dsd_ls624   , DSS_NODE        , 8, DSE( ENAB,VMOD,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,VMOD,VRNG,C,R_FREQ_IN,C_FREQ_IN,R_RNG_IN,OUTTYPE ), NULL, "DISCRETE_74LS624" ),
+        public static discrete_block DISCRETE_74LS624(int NODE, double ENAB, double VMOD, double VRNG, double C, double R_FREQ_IN, double C_FREQ_IN, double R_RNG_IN, double OUTTYPE) { return DSC_SND_ENTRY<discrete_dsd_ls624_node>( NODE, (int)discrete_node_type.DSS_NODE        , 8, DSE( (int)ENAB,(int)VMOD,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC ), DSE( ENAB,VMOD,VRNG,C,R_FREQ_IN,C_FREQ_IN,R_RNG_IN,OUTTYPE ), null, "DISCRETE_74LS624" ); }
 
         /* NOP */
         //#define DISCRETE_NOP(NODE)                                              DSC_SND_ENTRY( NODE, dss_nop         , DSS_NOP         , 0, DSE( 0 ), DSE( 0 ), NULL, "DISCRETE_NOP" ),
@@ -2613,6 +2613,25 @@ namespace mame
             {
                 sn.ptr = new Pointer<double>(sn.linked_outbuf.node_buf);
             }
+        }
+    }
+
+
+    static partial class discrete_global
+    {
+        public static discrete_sound_device DISCRETE(machine_config mconfig, string tag, discrete_block [] intf)
+        {
+            var device = emu.detail.device_type_impl.op<discrete_sound_device>(mconfig, tag, discrete_sound_device.DISCRETE, 0);
+            device.set_intf(intf);
+            return device;
+        }
+        public static discrete_sound_device DISCRETE<bool_Required>(machine_config mconfig, device_finder<discrete_sound_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, discrete_sound_device.DISCRETE, 0); }
+        public static discrete_sound_device DISCRETE<bool_Required>(machine_config mconfig, device_finder<discrete_sound_device, bool_Required> finder, discrete_block [] intf)
+            where bool_Required : bool_const, new()
+        {
+            var device = DISCRETE(mconfig, finder);
+            device.set_intf(intf);
+            return device;
         }
     }
 }

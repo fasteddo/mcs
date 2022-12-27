@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using fixedfreq_monitor_state_time_type = System.Double;  //using time_type = double;
 using int32_t = System.Int32;
 using ioport_value = System.UInt32;  //typedef u32 ioport_value;
@@ -15,6 +16,7 @@ using unsigned = System.UInt32;
 using static mame.attotime_global;
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.fixfreq_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.render_global;
@@ -249,8 +251,7 @@ namespace mame
                                     fixedfreq_monitor_intf
     {
         //DEFINE_DEVICE_TYPE(FIXFREQ, fixedfreq_device, "fixfreq", "Fixed-Frequency Monochrome Monitor")
-        static device_t device_creator_fixedfreq_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new fixedfreq_device(mconfig, tag, owner, clock); }
-        public static readonly device_type FIXFREQ = DEFINE_DEVICE_TYPE(device_creator_fixedfreq_device, "fixfreq", "Fixed-Frequency Monochrome Monitor");
+        public static readonly emu.detail.device_type_impl FIXFREQ = DEFINE_DEVICE_TYPE("fixfreq", "Fixed-Frequency Monochrome Monitor", (type, mconfig, tag, owner, clock) => { return new fixedfreq_device(mconfig, tag, owner, clock); });
 
 
         //using time_type = fixedfreq_monitor_state::time_type;
@@ -711,5 +712,11 @@ namespace mame
             m_divideo.screen().configure(m_monitor.htotal_scaled(), m_monitor.vtotal(), visarea, DOUBLE_TO_ATTOSECONDS(refresh_limited));
             m_divideo.screen().reset_origin(m_state.m_last_y - (m_monitor.vsync_width() + m_monitor.vbackporch_width()), 0);
         }
+    }
+
+
+    static class fixfreq_global
+    {
+        public static fixedfreq_device FIXFREQ<bool_Required>(machine_config mconfig, device_finder<fixedfreq_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, fixedfreq_device.FIXFREQ, 0); }
     }
 }

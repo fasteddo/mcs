@@ -9,6 +9,7 @@ using uint32_t = System.UInt32;
 
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.er2055_global;
 
 
 namespace mame
@@ -17,10 +18,8 @@ namespace mame
     public class er2055_device : device_t
                                  //public device_nvram_interface
     {
-        // device type definition
         //DEFINE_DEVICE_TYPE(ER2055, er2055_device, "er2055", "ER2055 EAROM (64x8)")
-        static device_t device_creator_er2055_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new er2055_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ER2055 = DEFINE_DEVICE_TYPE(device_creator_er2055_device, "er2055", "ER2055 EAROM (64x8)");
+        public static readonly emu.detail.device_type_impl ER2055 = DEFINE_DEVICE_TYPE("er2055", "ER2055 EAROM (64x8)", (type, mconfig, tag, owner, clock) => { return new er2055_device(mconfig, tag, owner, clock); });
 
 
         const int VERBOSE = 0;
@@ -213,5 +212,11 @@ namespace mame
                     break;
             }
         }
+    }
+
+
+    static class er2055_global
+    {
+        public static er2055_device ER2055<bool_Required>(machine_config mconfig, device_finder<er2055_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, er2055_device.ER2055, 0); }
     }
 }

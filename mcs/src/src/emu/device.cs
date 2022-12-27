@@ -9,6 +9,7 @@ using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using device_t_feature = mame.emu.detail.device_feature;  //using feature = emu::detail::device_feature;
 using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using seconds_t = System.Int32;  //typedef s32 seconds_t;
 using size_t = System.UInt64;
@@ -180,7 +181,7 @@ namespace mame
         public class device_tag_struct
         {
             //typedef DeviceClass type; 
-            public device_type_impl.create_func m_creator;
+            public device_type_impl_base.create_func m_creator;
             public string ShortName;
             public string FullName;
             public string Source;
@@ -189,7 +190,7 @@ namespace mame
             public device_type_impl_base DeviceClass_parent_rom_device_type;
 
             public device_tag_struct(
-                device_type_impl.create_func creator,
+                device_type_impl_base.create_func creator,
                 string ShortName,
                 string FullName,
                 string Source,
@@ -202,7 +203,7 @@ namespace mame
         public class driver_tag_struct
         {
             //typedef DriverClass type; 
-            public device_type_impl.create_func m_creator;
+            public device_type_impl_base.create_func m_creator;
             public string ShortName;
             public string FullName;
             public string Source;
@@ -213,7 +214,7 @@ namespace mame
             public device_type_impl_base DriverClass_parent_rom_device_type;
 
             public driver_tag_struct(
-                device_type_impl.create_func creator,
+                device_type_impl_base.create_func creator,
                 string ShortName,
                 string FullName,
                 string Source,
@@ -351,6 +352,9 @@ namespace mame
             //using device_type_impl_base::device_type_impl_base;
             //using device_type_impl_base::create;
 
+            public device_type_impl(device_tag_struct device_tag) : base(device_tag) { }
+
+
             //template <typename... Params>
             //std::unique_ptr<DeviceClass> create(machine_config &mconfig, char const *tag, device_t *owner, Params &&... args) const
             //{
@@ -423,14 +427,6 @@ namespace mame
 
     // device types
     //typedef emu::detail::device_type_impl_base const &device_type;
-    public class device_type : emu.detail.device_type_impl_base
-    {
-        public device_type() : base() { }
-        public device_type(emu.detail.device_tag_struct device_tag) : base(device_tag) { }
-        public device_type(emu.detail.driver_tag_struct driver_tag) : base(driver_tag) { }
-    }
-
-
     //typedef std::add_pointer_t<device_type> device_type_ptr;
 
 
@@ -585,11 +581,11 @@ namespace mame
         //        emu::detail::device_type_impl<Class> const Type = device_creator<Class, (Type##_device_traits::shortname), (Type##_device_traits::fullname), (Type##_device_traits::source)>; \
         //        template class device_finder<Class, false>; \
         //        template class device_finder<Class, true>;
-        public static device_type DEFINE_DEVICE_TYPE(device_type.create_func func, string shortname, string fullname)
+        public static emu.detail.device_type_impl DEFINE_DEVICE_TYPE(string shortname, string fullname, emu.detail.device_type_impl.create_func func)
         {
             var traits = new game_traits(shortname, fullname);
 
-            return new device_type(new device_creator(func, traits.shortname, traits.fullname, traits.source, device_t.unemulated_features(), device_t.imperfect_features()).device_tag());
+            return new emu.detail.device_type_impl(new device_creator(func, traits.shortname, traits.fullname, traits.source, device_t.unemulated_features(), device_t.imperfect_features()).device_tag());
         }
 
         /// \brief Define a device type with a private implementation class
@@ -2719,8 +2715,5 @@ namespace mame
     }
 
 
-    public static partial class device_global
-    {
-        public delegate void clock_update_delegate(u32 param);  //typedef device_delegate<void (u32)> clock_update_delegate;
-    }
+    public delegate void clock_update_delegate(u32 param);  //typedef device_delegate<void (u32)> clock_update_delegate;
 }

@@ -75,7 +75,7 @@ namespace mame
                 bit0 = (~val >> 3) & 0x01;
                 bit1 = (~val >> 4) & 0x01;
                 bit2 = (~val >> 5) & 0x01;
-                int gr = combine_weights(gweights, bit0, bit1, bit2);
+                int g = combine_weights(gweights, bit0, bit1, bit2);
 
                 // blue component
                 val = m_paletteram.op[(i << 1) | 0x01];
@@ -84,7 +84,7 @@ namespace mame
                 bit2 = (~val >> 2) & 0x01;
                 int b = combine_weights(bweights, bit0, bit1, bit2);
 
-                m_palette.op0.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)gr, (u8)b));
+                m_palette.op0.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)g, (u8)b));
             }
         }
 

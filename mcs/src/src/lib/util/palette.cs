@@ -578,7 +578,7 @@ namespace mame
         //  palexpand - expand a palette value to 8 bits
         //-------------------------------------------------
         //template<int _NumBits>
-        static uint8_t palexpand<int__NumBits>(uint8_t bits)
+        public static uint8_t palexpand<int__NumBits>(uint8_t bits)
             where int__NumBits : int_const, new()
         {
             int _NumBits = new int__NumBits().value;

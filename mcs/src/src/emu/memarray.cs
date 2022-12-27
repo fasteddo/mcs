@@ -6,6 +6,7 @@ using System;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using PointerU8 = mame.Pointer<System.Byte>;
+using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 
@@ -142,14 +143,15 @@ namespace mame
         //u16 read16(offs_t offset) const { return reinterpret_cast<u16 *>(m_base)[offset]; }
         //u32 read32(offs_t offset) const { return reinterpret_cast<u32 *>(m_base)[offset]; }
         //u64 read64(offs_t offset) const { return reinterpret_cast<u64 *>(m_base)[offset]; }
-        //void write8(offs_t offset, u8 data) { reinterpret_cast<u8 *>(m_base)[offset] = data; }
+        public void write8(offs_t offset, u8 data) { m_base[offset] = data; }  //{ reinterpret_cast<u8 *>(m_base)[offset] = data; }
         public void write16(offs_t offset, u16 data, u16 mem_mask = 0xffff) { var temp = m_base.GetUInt16((int)offset); COMBINE_DATA(ref temp, data, mem_mask); m_base.SetUInt16((int)offset, temp); }  //{ COMBINE_DATA(&reinterpret_cast<u16 *>(m_base)[offset]); }
         //void write32(offs_t offset, u32 data, u32 mem_mask = 0xffffffff) { COMBINE_DATA(&reinterpret_cast<u32 *>(m_base)[offset]); }
         //void write64(offs_t offset, u64 data, u64 mem_mask = 0xffffffffffffffffU) { COMBINE_DATA(&reinterpret_cast<u64 *>(m_base)[offset]); }
 
 
         // internal read/write helpers for 1 byte entries
-        u32 read8_from_8(int index) { throw new emu_unimplemented(); }     void write8_to_8(int index, u32 data) { throw new emu_unimplemented(); }
+        u32 read8_from_8(int index) { return m_base[index]; }
+        void write8_to_8(int index, u32 data) { throw new emu_unimplemented(); }
         u32 read8_from_16le(int index) { throw new emu_unimplemented(); }  void write8_to_16le(int index, u32 data) { throw new emu_unimplemented(); }
         u32 read8_from_16be(int index) { throw new emu_unimplemented(); }  void write8_to_16be(int index, u32 data) { throw new emu_unimplemented(); }
         u32 read8_from_32le(int index) { throw new emu_unimplemented(); }  void write8_to_32le(int index, u32 data) { throw new emu_unimplemented(); }

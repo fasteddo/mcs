@@ -112,14 +112,14 @@ namespace mame
                 bit0 = BIT(color_prom[i], 3);
                 bit1 = BIT(color_prom[i], 4);
                 bit2 = BIT(color_prom[i], 5);
-                int gr = combine_weights(gweights, bit0, bit1, bit2);
+                int g = combine_weights(gweights, bit0, bit1, bit2);
 
                 // blue component
                 bit0 = BIT(color_prom[i], 6);
                 bit1 = BIT(color_prom[i], 7);
                 int b = combine_weights(bweights, bit0, bit1);
 
-                palette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
+                palette.set_indirect_color(i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
             }
 
             // color_prom now points to the beginning of the lookup table

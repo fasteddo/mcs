@@ -8,11 +8,12 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
-using static mame.device_creator_helper_global;
 using static mame.device_global;
 using static mame.diexec_global;
 using static mame.emucore_global;
 using static mame.hash_global;
+using static mame.mb88xx_global;
+using static mame.namco50_global;
 using static mame.romentry_global;
 
 
@@ -22,8 +23,7 @@ namespace mame
     public class namco_50xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NAMCO_50XX, namco_50xx_device, "namco50", "Namco 50xx")
-        static device_t device_creator_namco_50xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_50xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NAMCO_50XX = DEFINE_DEVICE_TYPE(device_creator_namco_50xx_device, "namco50", "Namco 50xx");
+        public static readonly emu.detail.device_type_impl NAMCO_50XX = DEFINE_DEVICE_TYPE("namco50", "Namco 50xx", (type, mconfig, tag, owner, clock) => { return new namco_50xx_device(mconfig, tag, owner, clock); });
 
 
         //ROM_START( namco_50xx )
@@ -158,5 +158,11 @@ namespace mame
         {
             m_cmd = (uint8_t)param;
         }
+    }
+
+
+    static class namco50_global
+    {
+        public static namco_50xx_device NAMCO_50XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_50xx_device>(mconfig, tag, namco_50xx_device.NAMCO_50XX, clock); }
     }
 }

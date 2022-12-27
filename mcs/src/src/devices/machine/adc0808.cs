@@ -6,12 +6,14 @@ using System;
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using size_t = System.UInt64;
 using u8 = System.Byte;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
+using static mame.adc0808_global;
 using static mame.device_global;
 using static mame.emucore_global;
 
@@ -24,8 +26,7 @@ namespace mame
     public class adc0808_device : device_t
     {
         //DEFINE_DEVICE_TYPE(ADC0808, adc0808_device, "adc0808", "ADC0808 A/D Converter")
-        static device_t device_creator_adc0808_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new adc0808_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ADC0808 = DEFINE_DEVICE_TYPE(device_creator_adc0808_device, "adc0808", "ADC0808 A/D Converter");
+        public static readonly emu.detail.device_type_impl ADC0808 = DEFINE_DEVICE_TYPE("adc0808", "ADC0808 A/D Converter", (type, mconfig, tag, owner, clock) => { return new adc0808_device(mconfig, tag, owner, clock); });
 
 
         const bool VERBOSE = false;
@@ -222,16 +223,19 @@ namespace mame
     public class adc0809_device : adc0808_device
     {
         //DEFINE_DEVICE_TYPE(ADC0809, adc0809_device, "adc0809", "ADC0809 A/D Converter")
-        static device_t device_creator_adc0809_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new adc0809_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ADC0809 = DEFINE_DEVICE_TYPE(device_creator_adc0809_device, "adc0809", "ADC0809 A/D Converter");
-
+        public static readonly emu.detail.device_type_impl ADC0809 = DEFINE_DEVICE_TYPE("adc0809", "ADC0809 A/D Converter", (type, mconfig, tag, owner, clock) => { return new adc0809_device(mconfig, tag, owner, clock); });
 
         adc0809_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
             : base(mconfig, ADC0809, tag, owner, clock)
-        {
-        }
+        { }
     }
 
 
     //class m58990_device : public adc0808_device
+
+
+    static class adc0808_global
+    {
+        public static adc0809_device ADC0809(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<adc0809_device>(mconfig, tag, adc0809_device.ADC0809, clock); }
+    }
 }

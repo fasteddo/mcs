@@ -63,45 +63,33 @@ namespace mame
     [StructLayout(LayoutKind.Explicit)]
     public struct PAIR_B
     {
-        [FieldOffset(0)]
-        public u8 l;
-        [FieldOffset(1)]
-        public u8 h;
-        [FieldOffset(2)]
-        public u8 h2;
-        [FieldOffset(3)]
-        public u8 h3;
+        [FieldOffset(0)] public u8 l;
+        [FieldOffset(1)] public u8 h;
+        [FieldOffset(2)] public u8 h2;
+        [FieldOffset(3)] public u8 h3;
     }
 
     [StructLayout(LayoutKind.Explicit)]
     public struct PAIR_W
     {
-        [FieldOffset(0)]
-        public u16 l;
-        [FieldOffset(2)]
-        public u16 h;
+        [FieldOffset(0)] public u16 l;
+        [FieldOffset(2)] public u16 h;
     }
 
     [StructLayout(LayoutKind.Explicit)]
     public struct PAIR_SB
     {
-        [FieldOffset(0)]
-        public s8 l;
-        [FieldOffset(1)]
-        public s8 h;
-        [FieldOffset(2)]
-        public s8 h2;
-        [FieldOffset(3)]
-        public s8 h3;
+        [FieldOffset(0)] public s8 l;
+        [FieldOffset(1)] public s8 h;
+        [FieldOffset(2)] public s8 h2;
+        [FieldOffset(3)] public s8 h3;
     }
 
     [StructLayout(LayoutKind.Explicit)]
     public struct PAIR_SW
     {
-        [FieldOffset(0)]
-        public s16 l;
-        [FieldOffset(2)]
-        public s16 h;
+        [FieldOffset(0)] public s16 l;
+        [FieldOffset(2)] public s16 h;
     }
 
     // PAIR is an endian-safe union useful for representing 32-bit CPU registers
@@ -109,31 +97,52 @@ namespace mame
     public struct PAIR  //union PAIR
     {
         //#ifdef LSB_FIRST
-        [FieldOffset(0)]
-        public PAIR_B b;    //struct { UINT8 l,h,h2,h3; } b;
-        [FieldOffset(0)]
-        public PAIR_W w;    //struct { UINT16 l,h; } w;
-        [FieldOffset(0)]
-        public PAIR_SB sb;  //struct { INT8 l,h,h2,h3; } sb;
-        [FieldOffset(0)]
-        public PAIR_SW sw;  //struct { INT16 l,h; } sw;
+        [FieldOffset(0)] public PAIR_B b;    //struct { u8 l,h,h2,h3; } b;
+        [FieldOffset(0)] public PAIR_W w;    //struct { u16 l,h; } w;
+        [FieldOffset(0)] public PAIR_SB sb;  //struct { s8 l,h,h2,h3; } sb;
+        [FieldOffset(0)] public PAIR_SW sw;  //struct { s16 l,h; } sw;
         //#else
-        //struct { UINT8 h3,h2,h,l; } b;
-        //struct { INT8 h3,h2,h,l; } sb;
-        //struct { UINT16 h,l; } w;
-        //struct { INT16 h,l; } sw;
+        //struct { u8 h3,h2,h,l; } b;
+        //struct { s8 h3,h2,h,l; } sb;
+        //struct { u16 h,l; } w;
+        //struct { s16 h,l; } sw;
         //#endif
 
-        [FieldOffset(0)]
-        public u32 d;
-
-        [FieldOffset(0)]
-        public s32 sd;
+        [FieldOffset(0)] public u32 d;
+        [FieldOffset(0)] public s32 sd;
     }
 
 
+    [StructLayout(LayoutKind.Explicit)]
+    public struct PAIR16_B
+    {
+        [FieldOffset(0)] public u8 l;
+        [FieldOffset(1)] public u8 h;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct PAIR16_SB
+    {
+        [FieldOffset(0)] public s8 l;
+        [FieldOffset(1)] public s8 h;
+    }
+
     // PAIR16 is a 16-bit extension of a PAIR
-    //union PAIR16
+    [StructLayout(LayoutKind.Explicit)]
+    public struct PAIR16  //union PAIR16
+    {
+        //#ifdef LSB_FIRST
+        [FieldOffset(0)] public PAIR16_B  b;   //struct { u8 l,h; } b;
+        [FieldOffset(0)] public PAIR16_SB sb;  //struct { s8 l,h; } sb;
+        //#else
+        //struct { u8 h,l; } b;
+        //struct { s8 h,l; } sb;
+        //#endif
+
+        [FieldOffset(0)] public u16 w;
+        [FieldOffset(0)] public s16 sw;
+    }
+
 
     // PAIR64 is a 64-bit extension of a PAIR
     //union PAIR64

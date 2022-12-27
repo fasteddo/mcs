@@ -5,10 +5,11 @@ using System;
 
 using uint8_t = System.Byte;
 
-using static mame.device_creator_helper_global;
+using static mame._74259_global;
 using static mame.discrete_global;
 using static mame.disound_global;
 using static mame.rescap_global;
+using static mame.speaker_global;
 
 
 namespace mame

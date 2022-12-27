@@ -4,12 +4,14 @@
 using System;
 
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.gen_latch_global;
 
 
 namespace mame
@@ -117,9 +119,7 @@ namespace mame
     public class generic_latch_8_device : generic_latch_base_device
     {
         //DEFINE_DEVICE_TYPE(GENERIC_LATCH_8, generic_latch_8_device, "generic_latch_8", "Generic 8-bit latch")
-        static device_t device_creator_generic_latch_8_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new generic_latch_8_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GENERIC_LATCH_8 = DEFINE_DEVICE_TYPE(device_creator_generic_latch_8_device, "generic_latch_8", "Generic 8-bit latch");
-
+        public static readonly emu.detail.device_type_impl GENERIC_LATCH_8 = DEFINE_DEVICE_TYPE("generic_latch_8", "Generic 8-bit latch", (type, mconfig, tag, owner, clock) => { return new generic_latch_8_device(mconfig, tag, owner, clock); });
 
 
         u8 m_latched_value;
@@ -190,8 +190,7 @@ namespace mame
     class generic_latch_16_device : generic_latch_base_device
     {
         //DEFINE_DEVICE_TYPE(GENERIC_LATCH_16, generic_latch_16_device, "generic_latch_16", "Generic 16-bit latch")
-        static device_t device_creator_generic_latch_16_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new generic_latch_16_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GENERIC_LATCH_16 = DEFINE_DEVICE_TYPE(device_creator_generic_latch_16_device, "generic_latch_16", "Generic 16-bit latch");
+        public static readonly emu.detail.device_type_impl GENERIC_LATCH_16 = DEFINE_DEVICE_TYPE("generic_latch_16", "Generic 16-bit latch", (type, mconfig, tag, owner, clock) => { return new generic_latch_16_device(mconfig, tag, owner, clock); });
 
 
         u16 m_latched_value;
@@ -229,5 +228,12 @@ namespace mame
 
 
         //void sync_callback(void *ptr, s32 param);
+    }
+
+
+    static class gen_latch_global
+    {
+        public static generic_latch_8_device GENERIC_LATCH_8(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<generic_latch_8_device>(mconfig, tag, generic_latch_8_device.GENERIC_LATCH_8, 0); }
+        public static generic_latch_8_device GENERIC_LATCH_8<bool_Required>(machine_config mconfig, device_finder<generic_latch_8_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, generic_latch_8_device.GENERIC_LATCH_8, 0); }
     }
 }

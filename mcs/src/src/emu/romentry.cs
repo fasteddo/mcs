@@ -38,7 +38,7 @@ namespace mame
         public const u32 ROMREGION_WIDTHMASK         = 0x00000300;          /* native width of region, as power of 2 */
         //#define     ROMREGION_8BIT          0x00000000          /*    (non-CPU regions only) */
         //#define     ROMREGION_16BIT         0x00000100
-        //#define     ROMREGION_32BIT         0x00000200
+        public const u32 ROMREGION_32BIT             = 0x00000200;
         //#define     ROMREGION_64BIT         0x00000300
 
         public const u32 ROMREGION_ENDIANMASK        = 0x00000400;          /* endianness of the region */
@@ -90,15 +90,15 @@ namespace mame
         //#define     ROM_NOSKIP              ROM_SKIP(0)
 
         public const u32 ROM_BITWIDTHMASK            = 0x000f0000;          /* width of data in bits */
-        //#define     ROM_BITWIDTH(n)         (((n) & 15) << 16)
-        //#define     ROM_NIBBLE              ROM_BITWIDTH(4)
+        static u32 ROM_BITWIDTH(u32 n) { return (n & 15) << 16; }
+        public static readonly u32 ROM_NIBBLE        = ROM_BITWIDTH(4);
         //#define     ROM_FULLBYTE            ROM_BITWIDTH(8)
 
         public const u32 ROM_BITSHIFTMASK            = 0x00f00000;          /* left-shift count for the bits */
-        //#define     ROM_BITSHIFT(n)         (((n) & 15) << 20)
+        static u32 ROM_BITSHIFT(u32 n) { return (n & 15) << 20; }
         //#define     ROM_NOSHIFT             ROM_BITSHIFT(0)
-        //#define     ROM_SHIFT_NIBBLE_LO     ROM_BITSHIFT(0)
-        //#define     ROM_SHIFT_NIBBLE_HI     ROM_BITSHIFT(4)
+        public static readonly u32 ROM_SHIFT_NIBBLE_LO = ROM_BITSHIFT(0);
+        public static readonly u32 ROM_SHIFT_NIBBLE_HI = ROM_BITSHIFT(4);
 
         public const u32 ROM_BIOSFLAGSMASK           = 0xff000000;          /* only loaded if value matches device bios value */
         //#define     ROM_BIOS(n)             ((((n) + 1) & 255) << 24)
@@ -117,7 +117,7 @@ namespace mame
         //#define ROM_REGION16_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_16BIT | ROMREGION_LE)
         //#define ROM_REGION16_BE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_16BIT | ROMREGION_BE)
         //#define ROM_REGION32_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_32BIT | ROMREGION_LE)
-        //#define ROM_REGION32_BE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_32BIT | ROMREGION_BE)
+        public static tiny_rom_entry ROM_REGION32_BE(u32 length, string tag, u32 flags) { return ROM_REGION(length, tag, (flags) | ROMREGION_32BIT | ROMREGION_BE); }
         //#define ROM_REGION64_LE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_64BIT | ROMREGION_LE)
         //#define ROM_REGION64_BE(length,tag,flags)           ROM_REGION(length, tag, (flags) | ROMREGION_64BIT | ROMREGION_BE)
 

@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
@@ -173,8 +174,7 @@ namespace mame
     public class eeprom_parallel_2804_device : eeprom_parallel_28xx_device
     {
         //DEFINE_DEVICE_TYPE(EEPROM_##_uppercase, eeprom_parallel_##_lowercase##_device, #_lowercase, "Parallel EEPROM " #_uppercase " (" #_cells "x" #_bits ")")
-        static device_t device_creator_eeprom_parallel_2804_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new eeprom_parallel_2804_device(mconfig, tag, owner, clock); }
-        public static readonly device_type EEPROM_2804 = DEFINE_DEVICE_TYPE(device_creator_eeprom_parallel_2804_device, "2804", "Parallel EEPROM 2804 (512x8)");
+        public static readonly emu.detail.device_type_impl EEPROM_2804 = DEFINE_DEVICE_TYPE("2804", "Parallel EEPROM 2804 (512x8)", (type, mconfig, tag, owner, clock) => { return new eeprom_parallel_2804_device(mconfig, tag, owner, clock); });
 
         //DEFINE_PARALLEL_EEPROM_DEVICE(28xx, 2804, 2804, 8, 512)
         eeprom_parallel_2804_device(machine_config mconfig, string tag, device_t owner, uint32_t clock = 0)

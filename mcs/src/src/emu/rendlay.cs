@@ -882,32 +882,6 @@ namespace mame
         }
 
 
-        // row of dots for a dotmatrix
-        class dotmatrix_component : component
-        {
-            // internal state
-            int m_dots;
-
-
-            // construction/destruction
-            public dotmatrix_component(int dots, layout_element_environment env, util.xml.data_node compnode)
-                : base(env, compnode)
-            {
-                m_dots = dots;
-            }
-
-
-            // overrides
-            public override int maxstate() { return (1 << m_dots) - 1; }
-
-
-            protected override void draw_aligned(running_machine machine, bitmap_argb32 dest, rectangle bounds, int state)
-            {
-                throw new emu_unimplemented();
-            }
-        }
-
-
         // simple counter
         class simplecounter_component : component
         {
@@ -966,6 +940,8 @@ namespace mame
                 m_dirname = env.directory_name() != null ? env.directory_name() : "";
 
 
+                osd_printf_warning("Warning: layout file contains deprecated reel component\n");
+
                 string symbollist = env.get_attribute_string(compnode, "symbollist", "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15");
 
                 // split out position names from string and figure out our number of symbols
@@ -1023,9 +999,6 @@ namespace mame
         {
             { "image",         make_component<image_component>         },
             { "text",          make_component<text_component>          },
-            { "dotmatrix",     make_dotmatrix_component<int_const_8>   },
-            { "dotmatrix5dot", make_dotmatrix_component<int_const_5>   },
-            { "dotmatrixdot",  make_dotmatrix_component<int_const_1>   },
             { "simplecounter", make_component<simplecounter_component> },
             { "reel",          make_component<reel_component>          },
             { "led7seg",       make_component<led7seg_component>       },
@@ -1183,15 +1156,6 @@ namespace mame
                 return new image_component(env, compnode);
             else
                 throw new emu_unimplemented();
-        }
-
-
-        //template <int D>
-        static component make_dotmatrix_component<int_D>(layout_element_environment env, util.xml.data_node compnode)  //static component::ptr make_dotmatrix_component(environment &env, util::xml::data_node const &compnode);
-            where int_D : int_const, new()
-        {
-            int D = new int_D().value;
-            return new dotmatrix_component(D, env, compnode);  //return std::make_unique<dotmatrix_component>(D, env, compnode);
         }
     }
 

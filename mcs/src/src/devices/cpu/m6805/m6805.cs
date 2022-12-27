@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using u8 = System.Byte;
 using u16 = System.UInt16;

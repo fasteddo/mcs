@@ -9,21 +9,34 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 
-using static mame.device_creator_helper_global;
+using static mame._74259_global;
 using static mame.diexec_global;
 using static mame.digfx_global;
 using static mame.discrete_global;
 using static mame.disound_global;
+using static mame.drawgfx_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.emupal_global;
+using static mame.er2055_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
+using static mame.namco_global;
+using static mame.namco06_global;
+using static mame.namco50_global;
+using static mame.namco51_global;
+using static mame.namco53_global;
+using static mame.namco54_global;
 using static mame.romentry_global;
 using static mame.screen_global;
+using static mame.speaker_global;
+using static mame.starfield_05xx_global;
 using static mame.util;
+using static mame.watchdog_global;
+using static mame.z80_global;
 
 
 namespace mame
@@ -174,7 +187,7 @@ namespace mame
             map.op(0x0000, 0x3fff).rom().nopw();         /* the only area different for each CPU */
             map.op(0x6800, 0x6807).r(bosco_dsw_r);
             map.op(0x6800, 0x681f).w(m_namco_sound, (offset, data) => { m_namco_sound.op0.pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
-            map.op(0x6820, 0x6827).w("misclatch", (offset, data) => { ((addressable_latch_device)subdevice("misclatch")).write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
+            map.op(0x6820, 0x6827).w("misclatch", (offset, data) => { ((ls259_device)subdevice("misclatch")).write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
             map.op(0x6830, 0x6830).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x7000, 0x70ff).rw("06xx", (offset) => { return ((namco_06xx_device)subdevice("06xx")).data_r(offset); }, (offset, data) => { ((namco_06xx_device)subdevice("06xx")).data_w(offset, data); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
             map.op(0x7100, 0x7100).rw("06xx", () => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(); }, (data) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(data); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
@@ -194,7 +207,7 @@ namespace mame
             map.op(0x0000, 0x3fff).rom().nopw();         /* the only area different for each CPU */
             map.op(0x6800, 0x6807).r(bosco_dsw_r);
             map.op(0x6800, 0x681f).w(m_namco_sound, (offset, data) => { m_namco_sound.op0.pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
-            map.op(0x6820, 0x6827).w("misclatch", (offset, data) => { ((addressable_latch_device)subdevice("misclatch")).write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
+            map.op(0x6820, 0x6827).w("misclatch", (offset, data) => { ((ls259_device)subdevice("misclatch")).write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
             map.op(0x6830, 0x6830).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x7000, 0x70ff).rw("06xx", (offset) => { return ((namco_06xx_device)subdevice("06xx")).data_r(offset); }, (offset, data) => { ((namco_06xx_device)subdevice("06xx")).data_w(offset, data); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
             map.op(0x7100, 0x7100).rw("06xx", () => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(); }, (data) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(data); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
@@ -218,7 +231,7 @@ namespace mame
         {
             map.op(0x0000, 0x3fff).rom().nopw();         /* the only area different for each CPU */
             map.op(0x6800, 0x681f).w(m_namco_sound, (offset, data) => { m_namco_sound.op0.pacman_sound_w(offset, data); });  //FUNC(namco_device::pacman_sound_w));
-            map.op(0x6820, 0x6827).w("misclatch", (offset, data) => { ((addressable_latch_device)subdevice("misclatch")).write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
+            map.op(0x6820, 0x6827).w("misclatch", (offset, data) => { ((ls259_device)subdevice("misclatch")).write_d0(offset, data); });  //FUNC(ls259_device::write_d0));
             map.op(0x6830, 0x6830).w("watchdog", (data) => { ((watchdog_timer_device)subdevice("watchdog")).reset_w(data); });  //FUNC(watchdog_timer_device::reset_w));
             map.op(0x7000, 0x70ff).rw("06xx", (offset) => { return ((namco_06xx_device)subdevice("06xx")).data_r(offset); }, (offset, data) => { ((namco_06xx_device)subdevice("06xx")).data_w(offset, data); });  //FUNC(namco_06xx_device::data_r), FUNC(namco_06xx_device::data_w));
             map.op(0x7100, 0x7100).rw("06xx", () => { return ((namco_06xx_device)subdevice("06xx")).ctrl_r(); }, (data) => { ((namco_06xx_device)subdevice("06xx")).ctrl_w(data); });  //FUNC(namco_06xx_device::ctrl_r), FUNC(namco_06xx_device::ctrl_w));
@@ -1027,9 +1040,9 @@ namespace mame
         static galaga m_galaga = new galaga();
 
 
-        static device_t device_creator_galaga(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaga_state(mconfig, (device_type)type, tag); }
-        static device_t device_creator_xevious(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new xevious_state(mconfig, (device_type)type, tag); }
-        static device_t device_creator_digdug(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new digdug_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_galaga(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaga_state(mconfig, type, tag); }
+        static device_t device_creator_xevious(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new xevious_state(mconfig, type, tag); }
+        static device_t device_creator_digdug(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new digdug_state(mconfig, type, tag); }
 
 
         /* Original Namco hardware, with Namco Customs */

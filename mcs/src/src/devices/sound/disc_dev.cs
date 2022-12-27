@@ -1019,4 +1019,228 @@ namespace mame
             m_flip_flop = flip_flop;
         }
     }
+
+
+#if false
+    DISCRETE_CLASS_STEP_RESET(dsd_555_vco1, 1,
+        int             m_ctrlv_is_node;
+        int             m_output_type;
+        int             m_output_is_ac;
+        double          m_ac_shift;                 /* DC shift needed to make waveform ac */
+        int             m_flip_flop;                /* flip/flop output state */
+        double          m_v_out_high;               /* 555 high voltage */
+        double          m_threshold;                /* falling threshold */
+        double          m_trigger;                  /* rising threshold */
+        double          m_i_charge;                 /* charge current */
+        double          m_i_discharge;              /* discharge current */
+        double          m_cap_voltage;              /* current capacitor voltage */
+    );
+#endif
+
+#if false
+    DISCRETE_CLASS_STEP_RESET(dsd_566, 1,
+        //unsigned int    m_state[2];                 /* keeps track of excess flip_flop changes during the current step */
+        int             m_flip_flop;                /* 566 flip/flop output state */
+        double          m_cap_voltage;              /* voltage on cap */
+        double          m_v_sqr_low;                /* voltage for a squarewave at low */
+        double          m_v_sqr_high;               /* voltage for a squarewave at high */
+        double          m_v_sqr_diff;
+        double          m_threshold_low;            /* falling threshold */
+        double          m_threshold_high;           /* rising threshold */
+        double          m_ac_shift;                 /* used to fake AC */
+        double          m_v_osc_stable;
+        double          m_v_osc_stop;
+        int             m_fake_ac;
+        int             m_out_type;
+    );
+#endif
+
+
+    //DISCRETE_CLASS_STEP_RESET(dsd_ls624, 1,
+    class discrete_dsd_ls624_node : discrete_base_node,
+                                    discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DSD_LS624__ENABLE { get { return DISCRETE_INPUT(0); } }
+        double DSD_LS624__VMOD { get { return DISCRETE_INPUT(1); } }
+        double DSD_LS624__VRNG { get { return DISCRETE_INPUT(2); } }
+        double DSD_LS624__C { get { return DISCRETE_INPUT(3); } }
+        double DSD_LS624__R_FREQ_IN { get { return DISCRETE_INPUT(4); } }
+        double DSD_LS624__C_FREQ_IN { get { return DISCRETE_INPUT(5); } }
+        double DSD_LS624__R_RNG_IN { get { return DISCRETE_INPUT(6); } }
+        double DSD_LS624__OUTTYPE { get { return DISCRETE_INPUT(7); } }
+
+        //#define LS624_R_EXT         600.0       /* as specified in data sheet */
+        const double LS624_OUT_HIGH            = 4.5;         /* measured */
+        static readonly double LS624_IN_R      = RES_K(90);   /* measured & 70K + 20k per data sheet */
+
+
+        double m_exponent;
+        double m_t_used;
+        double m_v_cap_freq_in;
+        double m_v_freq_scale;
+        double m_v_rng_scale;
+        int m_flip_flop;
+        int m_has_freq_in_cap;
+        int m_out_type;
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dsd_ls624_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dsd_ls624_node() { }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dsd_ls624)
+        public override void reset()
+        {
+            m_out_type = (int)DSD_LS624__OUTTYPE;
+
+            m_flip_flop = 0;
+            m_t_used = 0;
+            m_v_freq_scale = LS624_IN_R / (DSD_LS624__R_FREQ_IN + LS624_IN_R);
+            m_v_rng_scale = LS624_IN_R / (DSD_LS624__R_RNG_IN + LS624_IN_R);
+            if (DSD_LS624__C_FREQ_IN > 0)
+            {
+                m_has_freq_in_cap = 1;
+                m_exponent = RC_CHARGE_EXP(RES_2_PARALLEL(DSD_LS624__R_FREQ_IN, LS624_IN_R) * DSD_LS624__C_FREQ_IN);
+                m_v_cap_freq_in = 0;
+            }
+            else
+                m_has_freq_in_cap = 0;
+
+            set_output(0,  0);
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dsd_ls624)
+        public void step()
+        {
+            double x_time = 0;
+            double freq;
+            double t1;
+            double v_freq_2;
+            double v_freq_3;
+            double v_freq_4;
+            double t_used = m_t_used;
+            double dt = this.sample_time();
+            double v_freq = DSD_LS624__VMOD;
+            double v_rng = DSD_LS624__VRNG;
+            int count_f = 0;
+            int count_r = 0;
+
+            /* coefficients */
+            const double k1 = 1.9904769024796283E+03;
+            const double k2 = 1.2070059213983407E+03;
+            const double k3 = 1.3266985579561108E+03;
+            const double k4 = -1.5500979825922698E+02;
+            const double k5 = 2.8184536266938172E+00;
+            const double k6 = -2.3503421582744556E+02;
+            const double k7 = -3.3836786704527788E+02;
+            const double k8 = -1.3569136703258670E+02;
+            const double k9 = 2.9914575453819188E+00;
+            const double k10 = 1.6855569086173170E+00;
+
+            if (DSD_LS624__ENABLE == 0)
+                return;
+
+            /* scale due to input resistance */
+            v_freq *= m_v_freq_scale;
+            v_rng *= m_v_rng_scale;
+
+            /* apply cap if needed */
+            if (m_has_freq_in_cap != 0)
+            {
+                m_v_cap_freq_in += (v_freq - m_v_cap_freq_in) * m_exponent;
+                v_freq = m_v_cap_freq_in;
+            }
+
+            /* Polyfunctional3D_model created by zunzun.com using sum of squared absolute error */
+            v_freq_2 = v_freq * v_freq;
+            v_freq_3 = v_freq_2 * v_freq;
+            v_freq_4 = v_freq_3 * v_freq;
+            freq = k1;
+            freq += k2 * v_freq;
+            freq += k3 * v_freq_2;
+            freq += k4 * v_freq_3;
+            freq += k5 * v_freq_4;
+            freq += k6 * v_rng;
+            freq += k7 * v_rng * v_freq;
+            freq += k8 * v_rng * v_freq_2;
+            freq += k9 * v_rng * v_freq_3;
+            freq += k10 * v_rng * v_freq_4;
+
+            freq *= CAP_U(0.1) / DSD_LS624__C;
+
+            t1 = 0.5 / freq ;
+            t_used += this.sample_time();
+            do
+            {
+                dt = 0;
+                if (t_used > t1)
+                {
+                    /* calculate the overshoot time */
+                    t_used -= t1;
+                    m_flip_flop ^= 1;
+                    if (m_flip_flop != 0)
+                        count_r++;
+                    else
+                        count_f++;
+                    /* fix up any frequency increase change errors */
+                    while(t_used > this.sample_time())
+                        t_used -= this.sample_time();
+                    x_time = t_used;
+                    dt = t_used;
+                }
+            }while (dt != 0);
+
+            m_t_used = t_used;
+
+            /* Convert last switch time to a ratio */
+            x_time = x_time / this.sample_time();
+
+            switch (m_out_type)
+            {
+                case DISC_LS624_OUT_LOGIC_X:
+                    set_output(0,  m_flip_flop  + x_time);
+                    break;
+                case DISC_LS624_OUT_COUNT_F_X:
+                    set_output(0,  count_f != 0 ? count_f + x_time : count_f);
+                    break;
+                case DISC_LS624_OUT_COUNT_R_X:
+                    set_output(0,   count_r != 0 ? count_r + x_time : count_r);
+                    break;
+                case DISC_LS624_OUT_COUNT_F:
+                    set_output(0,  count_f);
+                    break;
+                case DISC_LS624_OUT_COUNT_R:
+                    set_output(0,  count_r);
+                    break;
+                case DISC_LS624_OUT_ENERGY:
+                    if (x_time == 0) x_time = 1.0;
+                    set_output(0,  LS624_OUT_HIGH * (m_flip_flop != 0 ? x_time : (1.0 - x_time)));
+                    break;
+                case DISC_LS624_OUT_LOGIC:
+                        set_output(0,  m_flip_flop);
+                    break;
+                case DISC_LS624_OUT_SQUARE:
+                    set_output(0,  m_flip_flop != 0 ? LS624_OUT_HIGH : 0);
+                    break;
+            }
+        }
+    }
 }

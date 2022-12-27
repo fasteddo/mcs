@@ -6,6 +6,7 @@
 using System;
 
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using int8_t = System.SByte;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -20,6 +21,7 @@ using static mame.diexec_global;
 using static mame.distate_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.m6502_global;
 using static mame.machine_global;
 
 
@@ -28,8 +30,7 @@ namespace mame
     public partial class m6502_device : cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6502, m6502_device, "m6502", "MOS Technology 6502")
-        static device_t device_creator_mb6502_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6502_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6502 = DEFINE_DEVICE_TYPE(device_creator_mb6502_cpu_device, "m6502", "MOS Technology 6502");
+        public static readonly emu.detail.device_type_impl M6502 = DEFINE_DEVICE_TYPE("m6502", "MOS Technology 6502", (type, mconfig, tag, owner, clock) => { return new m6502_device(mconfig, tag, owner, clock); });
 
 
         class device_execute_interface_m6502 : device_execute_interface
@@ -120,7 +121,7 @@ namespace mame
         //}
 
 
-        abstract class memory_interface
+        protected abstract class memory_interface
         {
             public memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache cprogram = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache cprogram;
             public memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache csprogram = new memory_access<int_const_16, int_const_0, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 0, 0, ENDIANNESS_LITTLE>::cache csprogram;
@@ -137,7 +138,7 @@ namespace mame
         }
 
 
-        class mi_default : memory_interface
+        protected class mi_default : memory_interface
         {
             //virtual ~mi_default() {}
 
@@ -180,7 +181,7 @@ namespace mame
         uint8_t IR;                     /* Prefetched instruction register */
         int inst_state_base;        /* Current instruction bank */
 
-        memory_interface mintf;
+        protected memory_interface mintf;
         int inst_state;
         int inst_substate;
         intref icount_ = new intref();  //int icount;
@@ -207,13 +208,17 @@ namespace mame
         }
 
 
-        m6502_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
+        protected m6502_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
             : base(mconfig, type, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_execute_interface_m6502(mconfig, this));
             m_class_interfaces.Add(new device_memory_interface_m6502(mconfig, this));
             m_class_interfaces.Add(new device_state_interface_m6502(mconfig, this));
             m_class_interfaces.Add(new device_disasm_interface_m6502(mconfig, this));
+
+            m_dimemory = GetClassInterface<device_memory_interface_m6502>();
+            m_diexec = GetClassInterface<device_execute_interface_m6502>();
+            m_distate = GetClassInterface<device_state_interface_m6502>();
 
 
             sync_w = new devcb_write_line(this);
@@ -250,7 +255,7 @@ namespace mame
         int icount { get { return icount_.i; } set { icount_.i = value; } }
 
 
-        //bool get_sync() const { return sync; }
+        public bool get_sync() { return sync; }
 
         //auto sync_cb() { return sync_w.bind(); }
 
@@ -331,11 +336,6 @@ namespace mame
         // device-level overrides
         protected override void device_start()
         {
-            m_dimemory = GetClassInterface<device_memory_interface_m6502>();
-            m_diexec = GetClassInterface<device_execute_interface_m6502>();
-            m_distate = GetClassInterface<device_state_interface_m6502>();
-
-
             mintf = m_dimemory.space(AS_PROGRAM).addr_width() > 14 ? new mi_default() : new mi_default14();
 
             init();
@@ -857,4 +857,11 @@ namespace mame
     //class m6502_mcu_device : public m6502_device {
 
     //class m6512_device : public m6502_device {
+
+
+    static class m6502_global
+    {
+        public static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
+        public static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
+    }
 }

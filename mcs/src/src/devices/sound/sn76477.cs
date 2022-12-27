@@ -11,6 +11,7 @@ using static mame.cpp_global;
 using static mame.device_global;
 using static mame.emucore_global;
 using static mame.rescap_global;
+using static mame.sn76477_global;
 
 
 namespace mame
@@ -25,8 +26,7 @@ namespace mame
                                   //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(SN76477, sn76477_device, "sn76477", "TI SN76477 CSG")
-        static device_t device_creator_sn76477_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new sn76477_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SN76477 = DEFINE_DEVICE_TYPE(device_creator_sn76477_device, "sn76477", "TI SN76477 CSG");
+        public static readonly emu.detail.device_type_impl SN76477 = DEFINE_DEVICE_TYPE("sn76477", "TI SN76477 CSG", (type, mconfig, tag, owner, clock) => { return new sn76477_device(mconfig, tag, owner, clock); });
 
 
         public class device_sound_interface_sn76477 : device_sound_interface
@@ -1513,5 +1513,11 @@ namespace mame
 
             save_item(NAME(new { m_rng }));
         }
+    }
+
+
+    static class sn76477_global
+    {
+        public static sn76477_device SN76477<bool_Required>(machine_config mconfig, device_finder<sn76477_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, sn76477_device.SN76477, 0); }
     }
 }

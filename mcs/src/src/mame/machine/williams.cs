@@ -4,6 +4,7 @@
 using System;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
+using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
 
 
@@ -51,12 +52,9 @@ namespace mame
 
         protected override void machine_start()
         {
-            throw new emu_unimplemented();
-#if false
             /* configure the memory bank */
-            m_mainbank->configure_entry(1, memregion("maincpu")->base() + 0x10000);
-            m_mainbank->configure_entry(0, m_videoram);
-#endif
+            m_mainbank.op0.configure_entry(1, new PointerU8(memregion("maincpu").base_()) + 0x10000);
+            m_mainbank.op0.configure_entry(0, m_videoram.op);
         }
     }
 
@@ -159,8 +157,10 @@ namespace mame
          *      1001 = right/down 2/3
          *      1000 = right/down full
          */
-
-        //u8 williams_state::port_0_49way_r()
+        protected u8 port_0_49way_r()
+        {
+            throw new emu_unimplemented();
+        }
 
 
         /*************************************
@@ -254,22 +254,25 @@ namespace mame
         //u8 mayday_state::protection_r(offs_t offset)
 
 
-#if false
+    partial class sinistar_state : williams_state
+    {
         /*************************************
          *
          *  Sinistar-specific routines
          *
          *************************************/
-
-        void sinistar_state::vram_select_w(u8 data)
+        protected override void vram_select_w(u8 data)
         {
+            throw new emu_unimplemented();
+#if false
             /* low two bits are standard */
             williams_state::vram_select_w(data);
 
             /* window enable from bit 2 (clips to 0x7400) */
             m_blitter_window_enable = data & 0x04;
-        }
 #endif
+        }
+    }
 
 
         /*************************************

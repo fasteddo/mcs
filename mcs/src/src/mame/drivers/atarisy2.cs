@@ -12,20 +12,35 @@ using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 
-using static mame.device_creator_helper_global;
+using static mame.adc0808_global;
+using static mame.atarimo_global;
 using static mame.diexec_global;
 using static mame.digfx_global;
 using static mame.disound_global;
+using static mame.drawgfx_global;
+using static mame.eeprom_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.emupal_global;
 using static mame.gamedrv_global;
+using static mame.gen_latch_global;
 using static mame.hash_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
+using static mame.m6502_global;
+using static mame.pokey_global;
 using static mame.romentry_global;
 using static mame.screen_global;
+using static mame.slapstic_global;
+using static mame.speaker_global;
+using static mame.t11_global;
+using static mame.tilemap_global;
+using static mame.timer_global;
+using static mame.tms5220_global;
 using static mame.util;
+using static mame.watchdog_global;
+using static mame.ymopm_global;
 
 
 namespace mame
@@ -824,7 +839,7 @@ namespace mame
         public void paperboy(machine_config config)
         {
             atarisy2(config);
-            SLAPSTIC<bool_const_true>(config, m_slapstic, 105);
+            SLAPSTIC(config, m_slapstic, 105);
             m_slapstic.op0.set_range(m_maincpu, AS_PROGRAM, 0100000, 0100777, 0);
             m_slapstic.op0.set_view(m_vmmu);
         }
@@ -837,7 +852,7 @@ namespace mame
                issues with the sound CPU; temporarily increasing the sound CPU frequency
                to ~2.2MHz "fixes" the problem */
 
-            SLAPSTIC<bool_const_true>(config, m_slapstic, 107);
+            SLAPSTIC(config, m_slapstic, 107);
             m_slapstic.op0.set_range(m_maincpu, AS_PROGRAM, 0100000, 0100777, 0);
             m_slapstic.op0.set_view(m_vmmu);
         }
@@ -1058,7 +1073,7 @@ namespace mame
     {
         static atarisy2 m_atarisy2 = new atarisy2();
 
-        static device_t device_creator_paperboy(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new atarisy2_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_paperboy(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new atarisy2_state(mconfig, type, tag); }
         static void atarisy2_state_paperboy(machine_config config, device_t device) { ((atarisy2_state)device).paperboy(config); }
         static void atarisy2_state_init_paperboy(device_t owner) { ((atarisy2_state)owner).init_paperboy(); }
 
@@ -1066,7 +1081,7 @@ namespace mame
         public static readonly game_driver driver_paperboy = GAME( device_creator_paperboy, rom_paperboy, "1984", "paperboy", "0",    atarisy2_state_paperboy, m_atarisy2.construct_ioport_paperboy, atarisy2_state_init_paperboy, ROT0,   "Atari Games", "Paperboy (rev 3)", MACHINE_SUPPORTS_SAVE );
 
 
-        static device_t device_creator_720(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new atarisy2_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_720(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new atarisy2_state(mconfig, type, tag); }
         static void atarisy2_state__720(machine_config config, device_t device) { ((atarisy2_state)device)._720(config); }
         static void atarisy2_state_init_720(device_t owner) { ((atarisy2_state)owner).init_720(); }
 

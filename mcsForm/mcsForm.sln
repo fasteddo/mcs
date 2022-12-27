@@ -13,24 +13,42 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svg", "..\mcs\3rdparty\SVG\
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_Unsafe|Any CPU = Debug_Unsafe|Any CPU
 		Debug|Any CPU = Debug|Any CPU
+		Release_Unsafe|Any CPU = Release_Unsafe|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BB041F85-9DAF-4791-81B8-731C1B8E7D1B}.Debug_Unsafe|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB041F85-9DAF-4791-81B8-731C1B8E7D1B}.Debug_Unsafe|Any CPU.Build.0 = Debug|Any CPU
 		{BB041F85-9DAF-4791-81B8-731C1B8E7D1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BB041F85-9DAF-4791-81B8-731C1B8E7D1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB041F85-9DAF-4791-81B8-731C1B8E7D1B}.Release_Unsafe|Any CPU.ActiveCfg = Release|Any CPU
+		{BB041F85-9DAF-4791-81B8-731C1B8E7D1B}.Release_Unsafe|Any CPU.Build.0 = Release|Any CPU
 		{BB041F85-9DAF-4791-81B8-731C1B8E7D1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BB041F85-9DAF-4791-81B8-731C1B8E7D1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29E3884E-3EED-4A26-8155-BD93E576E2CD}.Debug_Unsafe|Any CPU.ActiveCfg = Debug_Unsafe|Any CPU
+		{29E3884E-3EED-4A26-8155-BD93E576E2CD}.Debug_Unsafe|Any CPU.Build.0 = Debug_Unsafe|Any CPU
 		{29E3884E-3EED-4A26-8155-BD93E576E2CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{29E3884E-3EED-4A26-8155-BD93E576E2CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29E3884E-3EED-4A26-8155-BD93E576E2CD}.Release_Unsafe|Any CPU.ActiveCfg = Release_Unsafe|Any CPU
+		{29E3884E-3EED-4A26-8155-BD93E576E2CD}.Release_Unsafe|Any CPU.Build.0 = Release_Unsafe|Any CPU
 		{29E3884E-3EED-4A26-8155-BD93E576E2CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{29E3884E-3EED-4A26-8155-BD93E576E2CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Debug_Unsafe|Any CPU.ActiveCfg = Debug|Any CPU
+		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Debug_Unsafe|Any CPU.Build.0 = Debug|Any CPU
 		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Release_Unsafe|Any CPU.ActiveCfg = Release|Any CPU
+		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Release_Unsafe|Any CPU.Build.0 = Release|Any CPU
 		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{044B4CDD-3E5C-49EA-89A5-AD1A43166025}.Release|Any CPU.Build.0 = Release|Any CPU
+		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Debug_Unsafe|Any CPU.ActiveCfg = Debug|Any CPU
+		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Debug_Unsafe|Any CPU.Build.0 = Debug|Any CPU
 		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Release_Unsafe|Any CPU.ActiveCfg = Release|Any CPU
+		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Release_Unsafe|Any CPU.Build.0 = Release|Any CPU
 		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{886A98C5-37C0-4E8B-885E-30C1D2F98B47}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

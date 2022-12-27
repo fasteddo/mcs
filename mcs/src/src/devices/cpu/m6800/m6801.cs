@@ -4,6 +4,7 @@
 using System;
 using System.Reflection;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
@@ -17,6 +18,7 @@ using static mame.device_global;
 using static mame.diexec_global;
 using static mame.emucore_global;
 using static mame.m6800_global;
+using static mame.m6801_global;
 
 
 namespace mame
@@ -24,8 +26,7 @@ namespace mame
     public class m6801_cpu_device : m6800_cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6801, m6801_cpu_device, "m6801", "Motorola MC6801")
-        static device_t device_creator_m6801_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new m6801_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6801 = DEFINE_DEVICE_TYPE(device_creator_m6801_cpu_device, "m6801", "Motorola MC6801");
+        public static readonly emu.detail.device_type_impl M6801 = DEFINE_DEVICE_TYPE("m6801", "Motorola MC6801", (type, mconfig, tag, owner, clock) => { return new m6801_cpu_device(mconfig, tag, owner, clock); });
 
 
         class device_execute_interface_m6801 : device_execute_interface_m6800
@@ -294,6 +295,10 @@ namespace mame
             m_class_interfaces.Add(new device_execute_interface_m6801(mconfig, this));
             m_class_interfaces.Add(new device_memory_interface_m6800(mconfig, this));
             m_class_interfaces.Add(new device_state_interface_m6800(mconfig, this));
+
+            m_diexec = GetClassInterface<device_execute_interface_m6801>();
+            m_dimemory = GetClassInterface<device_memory_interface_m6800>();
+            m_distate = GetClassInterface<device_state_interface_m6800>();
 
             init_m6803_insn();
 
@@ -1156,8 +1161,7 @@ namespace mame
     public class m6803_cpu_device : m6801_cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6803, m6803_cpu_device, "m6803", "Motorola MC6803")
-        static device_t device_creator_m6803_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new m6803_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6803 = DEFINE_DEVICE_TYPE(device_creator_m6803_cpu_device, "m6803", "Motorola MC6803");
+        public static readonly emu.detail.device_type_impl M6803 = DEFINE_DEVICE_TYPE("m6803", "Motorola MC6803", (type, mconfig, tag, owner, clock) => { return new m6803_cpu_device(mconfig, tag, owner, clock); });
 
 
         class device_disasm_interface_m6803 : device_disasm_interface_m6801
@@ -1251,4 +1255,10 @@ namespace mame
     //DECLARE_DEVICE_TYPE(HD6303R, hd6303r_cpu_device)
     //DECLARE_DEVICE_TYPE(HD6303X, hd6303x_cpu_device)
     //DECLARE_DEVICE_TYPE(HD6303Y, hd6303y_cpu_device)
+
+
+    static class m6801_global
+    {
+        public static m6803_cpu_device M6803<bool_Required>(machine_config mconfig, device_finder<m6803_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
+    }
 }

@@ -11,10 +11,13 @@ using pen_t = System.UInt32;  //typedef u32 pen_t;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
+using uint8_t = System.Byte;
 
 using static mame.cpp_global;
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.emupal_global;
+using static mame.palette_global;
 
 
 namespace mame
@@ -59,17 +62,29 @@ namespace mame
             u8 const b = palexpand<BlueBits>(raw >> BlueShift);
             return rgb_t(r, g, b);
         }
+#endif
 
         // data-inverted generic raw-to-RGB conversion helpers
-        template<int RedBits, int GreenBits, int BlueBits, int RedShift, int GreenShift, int BlueShift>
-        static rgb_t inverted_rgb_decoder(u32 raw)
+        //template<int RedBits, int GreenBits, int BlueBits, int RedShift, int GreenShift, int BlueShift>
+        public static rgb_t inverted_rgb_decoder<int_RedBits, int_GreenBits, int_BlueBits, int_RedShift, int_GreenShift, int_BlueShift>(u32 raw)
+            where int_RedBits : int_const, new()
+            where int_GreenBits : int_const, new()
+            where int_BlueBits : int_const, new()
+            where int_RedShift : int_const, new()
+            where int_GreenShift : int_const, new()
+            where int_BlueShift : int_const, new()
         {
-            u8 const r = palexpand<RedBits>(~raw >> RedShift);
-            u8 const g = palexpand<GreenBits>(~raw >> GreenShift);
-            u8 const b = palexpand<BlueBits>(~raw >> BlueShift);
-            return rgb_t(r, g, b);
+            int RedShift = new int_RedShift().value;
+            int GreenShift = new int_GreenShift().value;
+            int BlueShift = new int_BlueShift().value;
+
+            u8 r = palexpand<int_RedBits>((uint8_t)(~raw >> RedShift));
+            u8 g = palexpand<int_GreenBits>((uint8_t)(~raw >> GreenShift));
+            u8 b = palexpand<int_BlueBits>((uint8_t)(~raw >> BlueShift));
+            return new rgb_t(r, g, b);
         }
 
+#if false
         template<int IntBits, int RedBits, int GreenBits, int BlueBits, int IntShift, int RedShift, int GreenShift, int BlueShift>
         static rgb_t standard_irgb_decoder(u32 raw)
         {
@@ -114,8 +129,7 @@ namespace mame
                                   //device_palette_interface
     {
         //DEFINE_DEVICE_TYPE(PALETTE, palette_device, "palette", "palette")
-        static device_t device_creator_palette_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new palette_device(mconfig, tag, owner); }
-        public static readonly device_type PALETTE = DEFINE_DEVICE_TYPE(device_creator_palette_device, "palette", "palette");
+        public static readonly emu.detail.device_type_impl PALETTE = DEFINE_DEVICE_TYPE("palette", "palette", (type, mconfig, tag, owner, clock) => { return new palette_device(mconfig, tag, owner, clock); });
 
 
         //typedef device_delegate<void (palette_device &)> init_delegate;
@@ -142,7 +156,7 @@ namespace mame
         //enum rgb_332_t      { RGB_332, RRRGGGBB };
         //enum bgr_233_t      { BGR_233, BBGGGRRR };
         //enum rgb_332_inv_t  { RGB_332_inverted, RRRGGGBB_inverted };
-        //enum bgr_233_inv_t  { BGR_233_inverted, BBGGGRRR_inverted };
+        public enum bgr_233_inv_t  { BGR_233_inverted, BBGGGRRR_inverted }
 
         // 15-bit
         //enum rgb_555_t      { RGB_555, RRRRRGGGGGBBBBB };
@@ -319,7 +333,13 @@ namespace mame
         //palette_device &set_format(rgb_332_t, u32 entries);
         //palette_device &set_format(bgr_233_t, u32 entries);
         //palette_device &set_format(rgb_332_inv_t, u32 entries);
-        //palette_device &set_format(bgr_233_inv_t, u32 entries);
+
+        public palette_device set_format(bgr_233_inv_t _, u32 entries)
+        {
+            set_format(1, raw_to_rgb_converter.inverted_rgb_decoder<int_const_3,int_const_3,int_const_2, int_const_0,int_const_3,int_const_6>, entries);
+            return this;
+        }
+
         //palette_device &set_format(xrgb_333_t, u32 entries);
         //palette_device &set_format(xrbg_333_t, u32 entries);
         //palette_device &set_format(xbgr_333_t, u32 entries);
@@ -361,7 +381,7 @@ namespace mame
         //palette_device &set_entries(u32 entries) { m_entries = entries; return *this; }
         //palette_device &set_entries(u32 entries, u32 indirect) { m_entries = entries; m_indirect_entries = indirect; return *this; }
         //palette_device &set_indirect_entries(u32 entries) { m_indirect_entries = entries; return *this; }
-        //palette_device &enable_shadows() { m_enable_shadows = true; return *this; }
+        public palette_device enable_shadows() { m_enable_shadows = true; return this; }
         //palette_device &enable_hilights() { m_enable_hilights = true; return *this; }
         //template <typename T> palette_device &set_prom_region(T &&region) { m_prom_region.set_tag(std::forward<T>(region)); return *this; }
 
@@ -397,7 +417,15 @@ namespace mame
         // generic read/write handlers
         //u8 read8(offs_t offset);
         //u8 read8_ext(offs_t offset);
-        //void write8(offs_t offset, u8 data);
+
+
+        public void write8(offs_t offset, u8 data)
+        {
+            m_paletteram.write8(offset, data);
+            update_for_write(offset, 1);
+        }
+
+
         //void write8_ext(offs_t offset, u8 data);
         //void write_indirect(offs_t offset, u8 data);
         //void write_indirect_ext(offs_t offset, u8 data);
@@ -537,6 +565,20 @@ namespace mame
                 else
                     set_pen_color(base_ + (offs_t)index, m_raw_to_rgb.op(read_entry(base_ + (offs_t)index)));
             }
+        }
+    }
+
+
+    static class emupal_global
+    {
+        public static palette_device PALETTE(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<palette_device>(mconfig, tag, palette_device.PALETTE, 0); }
+        public static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0); }
+        public static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder, palette_device.init_delegate init, u32 entries = 0U, u32 indirect = 0U)
+            where bool_Required : bool_const, new()
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0);
+            device.palette_device_after_ctor(init, entries, indirect);
+            return device;
         }
     }
 }

@@ -10,6 +10,7 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 
+using static mame.bankdev_global;
 using static mame.device_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
@@ -21,8 +22,7 @@ namespace mame
                                            //device_memory_interface
     {
         //DEFINE_DEVICE_TYPE(ADDRESS_MAP_BANK, address_map_bank_device, "address_map_bank", "Address Map Bank")
-        static device_t device_creator_address_map_bank_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new address_map_bank_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ADDRESS_MAP_BANK = DEFINE_DEVICE_TYPE(device_creator_address_map_bank_device, "address_map_bank", "Address Map Bank");
+        public static readonly emu.detail.device_type_impl ADDRESS_MAP_BANK = DEFINE_DEVICE_TYPE("address_map_bank", "Address Map Bank", (type, mconfig, tag, owner, clock) => { return new address_map_bank_device(mconfig, tag, owner, clock); });
 
 
         public class device_memory_interface_address_map_bank : device_memory_interface
@@ -146,5 +146,11 @@ namespace mame
                 std.make_pair(AS_PROGRAM, m_program_config)
             };
         }
+    }
+
+
+    static class bankdev_global
+    {
+        public static address_map_bank_device ADDRESS_MAP_BANK<bool_Required>(machine_config mconfig, device_finder<address_map_bank_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, address_map_bank_device.ADDRESS_MAP_BANK, 0); }
     }
 }

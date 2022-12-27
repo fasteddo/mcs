@@ -59,13 +59,13 @@ namespace mame
                 bit0 = BIT(color_prom.op, 3);
                 bit1 = BIT(color_prom.op, 4);
                 bit2 = BIT(color_prom.op, 5);
-                int gr = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+                int g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
                 bit0 = 0;
                 bit1 = BIT(color_prom.op, 6);
                 bit2 = BIT(color_prom.op, 7);
                 int b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-                palette.set_indirect_color(i, new rgb_t((u8)r, (u8)gr, (u8)b));
+                palette.set_indirect_color(i, new rgb_t((u8)r, (u8)g, (u8)b));
                 color_prom++;
             }
 

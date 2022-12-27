@@ -42,7 +42,6 @@ using unsigned = System.UInt32;
 using uX = mame.FlexPrim;
 
 using static mame.cpp_global;
-using static mame.device_creator_helper_global;
 using static mame.emucore_global;
 using static mame.osdcore_global;
 
@@ -142,297 +141,6 @@ namespace mame
     public interface endianness_t_const { endianness_t value { get; } }
     public class endianness_t_const_ENDIANNESS_LITTLE : endianness_t_const { public endianness_t value { get { return ENDIANNESS_LITTLE; } } }
     public class endianness_t_const_ENDIANNESS_BIG : endianness_t_const { public endianness_t value { get { return ENDIANNESS_BIG; } } }
-
-
-    public static class device_creator_helper_global
-    {
-        // _6821pia
-        public static pia6821_device PIA6821<bool_Required>(machine_config mconfig, device_finder<pia6821_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, pia6821_device.PIA6821, clock); }
-
-        // _74153
-        public static ttl153_device TTL153<bool_Required>(machine_config mconfig, device_finder<ttl153_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ttl153_device.TTL153, 0); }
-
-        // _74259
-        public static ls259_device LS259(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<ls259_device>(mconfig, tag, ls259_device.LS259, clock); }
-        public static ls259_device LS259<bool_Required>(machine_config mconfig, device_finder<ls259_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ls259_device.LS259, clock); }
-
-        // adc0808
-        public static adc0809_device ADC0809(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<adc0809_device>(mconfig, tag, adc0809_device.ADC0809, clock); }
-
-        // atarimo
-        public static atari_motion_objects_device ATARI_MOTION_OBJECTS<bool_Required>(machine_config mconfig, device_finder<atari_motion_objects_device, bool_Required> finder, uint32_t clock, device_finder<screen_device, bool_Required> screen_tag, atari_motion_objects_config config)
-            where bool_Required : bool_const, new()
-        {
-            var device = emu.detail.device_type_impl.op(mconfig, finder, atari_motion_objects_device.ATARI_MOTION_OBJECTS, 0);
-            device.atari_motion_objects_device_after_ctor(screen_tag, config);
-            return device;
-        }
-
-        // avgdvg
-        public static dvg_device DVG<bool_Required>(machine_config mconfig, device_finder<dvg_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dvg_device.DVG, clock); }
-
-        // ay8910
-        public static ay8910_device AY8910(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
-        public static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
-
-        // bankdev
-        public static address_map_bank_device ADDRESS_MAP_BANK<bool_Required>(machine_config mconfig, device_finder<address_map_bank_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, address_map_bank_device.ADDRESS_MAP_BANK, 0); }
-
-        // dac
-        public static dac_mc1408_device MC1408(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<dac_mc1408_device>(mconfig, tag, dac_mc1408_device.MC1408, clock); }
-        public static dac_8bit_r2r_device DAC_8BIT_R2R<bool_Required>(machine_config mconfig, device_finder<dac_8bit_r2r_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
-        public static dac_16bit_r2r_twos_complement_device DAC_16BIT_R2R_TWOS_COMPLEMENT<bool_Required>(machine_config mconfig, device_finder<dac_16bit_r2r_twos_complement_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_16bit_r2r_twos_complement_device.DAC_16BIT_R2R_TWOS_COMPLEMENT, clock); }
-
-        // discrete
-        public static discrete_sound_device DISCRETE(machine_config mconfig, string tag, discrete_block [] intf)
-        {
-            var device = emu.detail.device_type_impl.op<discrete_sound_device>(mconfig, tag, discrete_sound_device.DISCRETE, 0);
-            device.set_intf(intf);
-            return device;
-        }
-        public static discrete_sound_device DISCRETE<bool_Required>(machine_config mconfig, device_finder<discrete_sound_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, discrete_sound_device.DISCRETE, 0); }
-        public static discrete_sound_device DISCRETE<bool_Required>(machine_config mconfig, device_finder<discrete_sound_device, bool_Required> finder, discrete_block [] intf)
-            where bool_Required : bool_const, new()
-        {
-            var device = DISCRETE(mconfig, finder);
-            device.set_intf(intf);
-            return device;
-        }
-
-        // drawgfx
-        public static gfxdecode_device GFXDECODE(machine_config mconfig, string tag, string palette_tag, gfx_decode_entry [] gfxinfo)
-        {
-            var device = emu.detail.device_type_impl.op<gfxdecode_device>(mconfig, tag, gfxdecode_device.GFXDECODE, 0);
-            device.gfxdecode_device_after_ctor(palette_tag, gfxinfo);
-            return device;
-        }
-        public static gfxdecode_device GFXDECODE<bool_Required>(machine_config mconfig, device_finder<gfxdecode_device, bool_Required> finder, finder_base palette, gfx_decode_entry [] gfxinfo)
-            where bool_Required : bool_const, new()
-        {
-            var device = emu.detail.device_type_impl.op(mconfig, finder, gfxdecode_device.GFXDECODE, 0);
-            device.gfxdecode_device_after_ctor(palette, gfxinfo);
-            return device;
-        }
-
-        // eeprom
-        public static eeprom_parallel_2804_device EEPROM_2804(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<eeprom_parallel_2804_device>(mconfig, tag, eeprom_parallel_2804_device.EEPROM_2804, clock); }
-
-        // emupal
-        public static palette_device PALETTE(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<palette_device>(mconfig, tag, palette_device.PALETTE, 0); }
-        public static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0); }
-        public static palette_device PALETTE<bool_Required>(machine_config mconfig, device_finder<palette_device, bool_Required> finder, palette_device.init_delegate init, u32 entries = 0U, u32 indirect = 0U)
-            where bool_Required : bool_const, new()
-        {
-            var device = emu.detail.device_type_impl.op(mconfig, finder, palette_device.PALETTE, 0);
-            device.palette_device_after_ctor(init, entries, indirect);
-            return device;
-        }
-
-        // er2055
-        public static er2055_device ER2055<bool_Required>(machine_config mconfig, device_finder<er2055_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, er2055_device.ER2055, clock); }
-
-        // fixfreq
-        public static fixedfreq_device FIXFREQ<bool_Required>(machine_config mconfig, device_finder<fixedfreq_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, fixedfreq_device.FIXFREQ, 0); }
-
-        // galaxian
-        public static galaxian_sound_device GALAXIAN_SOUND(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<galaxian_sound_device>(mconfig, tag, galaxian_sound_device.GALAXIAN_SOUND, clock); }
-
-        // gen_latch
-        public static generic_latch_8_device GENERIC_LATCH_8<bool_Required>(machine_config mconfig, device_finder<generic_latch_8_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, generic_latch_8_device.GENERIC_LATCH_8, clock); }
-
-        // i8085
-        public static i8080_cpu_device I8080<bool_Required>(machine_config mconfig, device_finder<i8080_cpu_device, bool_Required> finder, double clock) where bool_Required : bool_const, new() { return I8080(mconfig, finder, new XTAL(clock)); }
-        public static i8080_cpu_device I8080<bool_Required>(machine_config mconfig, device_finder<i8080_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8080_cpu_device.I8080, clock); }
-
-        // i8255
-        public static i8255_device I8255A<bool_Required>(machine_config mconfig, device_finder<i8255_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8255_device.I8255A, clock); }
-
-        // i8257
-        public static i8257_device I8257<bool_Required>(machine_config mconfig, device_finder<i8257_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8257_device.I8257, clock); }
-
-        // input_merger
-        public static input_merger_device INPUT_MERGER_ANY_HIGH(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<input_merger_device>(mconfig, tag, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, clock); }
-        public static input_merger_device INPUT_MERGER_ANY_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_any_high_device.INPUT_MERGER_ANY_HIGH, clock); }
-        public static input_merger_device INPUT_MERGER_ALL_HIGH<bool_Required>(machine_config mconfig, device_finder<input_merger_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, input_merger_all_high_device.INPUT_MERGER_ALL_HIGH, clock); }
-
-        // irem
-        public static m52_soundc_audio_device IREM_M52_SOUNDC_AUDIO(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<m52_soundc_audio_device>(mconfig, tag, m52_soundc_audio_device.IREM_M52_SOUNDC_AUDIO, clock); }
-
-        // latch8
-        public static latch8_device LATCH8<bool_Required>(machine_config mconfig, device_finder<latch8_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, latch8_device.LATCH8, clock); }
-
-        // m6502
-        public static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
-        public static m6502_device M6502<bool_Required>(machine_config mconfig, device_finder<m6502_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6502_device.M6502, clock); }
-
-        // m6800
-        public static m6808_cpu_device M6808<bool_Required>(machine_config mconfig, device_finder<m6808_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6808_cpu_device.M6808, clock); }
-
-        // m6801
-        public static m6803_cpu_device M6803<bool_Required>(machine_config mconfig, device_finder<m6803_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6803_cpu_device.M6803, clock); }
-
-        // m6809
-        public static mc6809e_device MC6809E<bool_Required>(machine_config mconfig, device_finder<mc6809e_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mc6809e_device.MC6809E, clock); }
-
-        // m68705
-        public static m68705p_device M68705P5<bool_Required>(machine_config mconfig, device_finder<m68705p_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m68705p5_device.M68705P5, clock); }
-
-        // mb14241
-        public static mb14241_device MB14241<bool_Required>(machine_config mconfig, device_finder<mb14241_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb14241_device.MB14241, 0); }
-
-        // mb88xx
-        public static mb88_cpu_device MB8842<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8842_cpu_device.MB8842, clock); }
-        public static mb88_cpu_device MB8843<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8843_cpu_device.MB8843, clock); }
-        public static mb88_cpu_device MB8844<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8844_cpu_device.MB8844, clock); }
-
-        // mcs48
-        public static mcs48_cpu_device MB8884<bool_Required>(machine_config mconfig, device_finder<mcs48_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8884_device.MB8884, clock); }
-
-        // msm5205
-        public static msm5205_device MSM5205<bool_Required>(machine_config mconfig, device_finder<msm5205_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, msm5205_device.MSM5205, clock); }
-
-        // mw8080bw
-        public static gunfight_audio_device GUNFIGHT_AUDIO<bool_Required>(machine_config mconfig, device_finder<gunfight_audio_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, gunfight_audio_device.GUNFIGHT_AUDIO, 0); }
-        public static invaders_audio_device INVADERS_AUDIO(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<invaders_audio_device>(mconfig, tag, invaders_audio_device.INVADERS_AUDIO, 0); }
-
-        // namco
-        public static namco_device NAMCO<bool_Required>(machine_config mconfig, device_finder<namco_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
-
-        // namco06
-        public static namco_06xx_device NAMCO_06XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_06xx_device>(mconfig, tag, namco_06xx_device.NAMCO_06XX, clock); }
-
-        // namco50
-        public static namco_50xx_device NAMCO_50XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_50xx_device>(mconfig, tag, namco_50xx_device.NAMCO_50XX, clock); }
-
-        // namco51
-        public static namco_51xx_device NAMCO_51XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_51xx_device>(mconfig, tag, namco_51xx_device.NAMCO_51XX, clock); }
-
-        // namco53
-        public static namco_53xx_device NAMCO_53XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_53xx_device>(mconfig, tag, namco_53xx_device.NAMCO_53XX, clock); }
-
-        // namco54
-        public static namco_54xx_device NAMCO_54XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_54xx_device>(mconfig, tag, namco_54xx_device.NAMCO_54XX, clock); }
-
-        // netlist
-        public static netlist_mame_cpu_device NETLIST_CPU(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_cpu_device>(mconfig, tag, netlist_mame_cpu_device.NETLIST_CPU, clock); }
-        public static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
-        public static netlist_mame_sound_device NETLIST_SOUND(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<netlist_mame_sound_device>(mconfig, tag, netlist_mame_sound_device.NETLIST_SOUND, clock); }
-        public static netlist_mame_analog_input_device NETLIST_ANALOG_INPUT(machine_config mconfig, string tag, string param_name)
-        {
-            var device = emu.detail.device_type_impl.op<netlist_mame_analog_input_device>(mconfig, tag, netlist_mame_analog_input_device.NETLIST_ANALOG_INPUT, 0);
-            device.set_name(param_name);
-            return device;
-        }
-        public static netlist_mame_analog_output_device NETLIST_ANALOG_OUTPUT(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_analog_output_device>(mconfig, tag, netlist_mame_analog_output_device.NETLIST_ANALOG_OUTPUT, clock); }
-        public static netlist_mame_logic_output_device NETLIST_LOGIC_OUTPUT(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<netlist_mame_logic_output_device>(mconfig, tag, netlist_mame_logic_output_device.NETLIST_LOGIC_OUTPUT, clock); }
-        public static netlist_mame_logic_input_device NETLIST_LOGIC_INPUT(machine_config mconfig, string tag, string param_name, uint32_t shift)
-        {
-            var device = emu.detail.device_type_impl.op<netlist_mame_logic_input_device>(mconfig, tag, netlist_mame_logic_input_device.NETLIST_LOGIC_INPUT, 0);
-            device.set_params(param_name, shift);
-            return device;
-        }
-        public static netlist_mame_stream_input_device NETLIST_STREAM_INPUT(machine_config mconfig, string tag, int channel, string param_name)
-        {
-            var device = emu.detail.device_type_impl.op<netlist_mame_stream_input_device>(mconfig, tag, netlist_mame_stream_input_device.NETLIST_STREAM_INPUT, 0);
-            device.set_params(channel, param_name);
-            return device;
-        }
-        public static netlist_mame_stream_output_device NETLIST_STREAM_OUTPUT(machine_config mconfig, string tag, int channel, string out_name)
-        {
-            var device = emu.detail.device_type_impl.op<netlist_mame_stream_output_device>(mconfig, tag, netlist_mame_stream_output_device.NETLIST_STREAM_OUTPUT, 0);
-            device.set_params(channel, out_name);
-            return device;
-        }
-
-        // nvram
-        public static nvram_device NVRAM(machine_config mconfig, string tag, nvram_device.default_value value)
-        {
-            var device = emu.detail.device_type_impl.op<nvram_device>(mconfig, tag, nvram_device.NVRAM, 0);
-            device.set_default_value(value);
-            return device;
-        }
-
-        // output_latch
-        public static output_latch_device OUTPUT_LATCH(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<output_latch_device>(mconfig, tag, output_latch_device.OUTPUT_LATCH, 0); }
-
-        // pokey
-        public static pokey_device POKEY(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<pokey_device>(mconfig, tag, pokey_device.POKEY, clock); }
-        public static pokey_device POKEY<bool_Required>(machine_config mconfig, device_finder<pokey_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, pokey_device.POKEY, clock); }
-
-        // screen
-        public static screen_device SCREEN(machine_config mconfig, string tag, screen_type_enum type)
-        {
-            var device = emu.detail.device_type_impl.op<screen_device>(mconfig, tag, screen_device.SCREEN, 0);
-            device.screen_device_after_ctor(type);
-            return device;
-        }
-        public static screen_device SCREEN<bool_Required>(machine_config mconfig, device_finder<screen_device, bool_Required> finder, screen_type_enum type)
-            where bool_Required : bool_const, new()
-        {
-            var device = emu.detail.device_type_impl.op(mconfig, finder, screen_device.SCREEN, 0);
-            device.screen_device_after_ctor(type);
-            return device;
-        }
-
-        // slapstic
-        public static atari_slapstic_device SLAPSTIC<bool_Required>(machine_config mconfig, device_finder<atari_slapstic_device, bool_Required> finder, int chipnum)
-            where bool_Required : bool_const, new()
-        {
-            var device = emu.detail.device_type_impl.op<atari_slapstic_device, bool_Required>(mconfig, finder, atari_slapstic_device.SLAPSTIC, 0);
-            device.atari_slapstic_device_after_ctor(chipnum);
-            return device;
-        }
-
-        // sn76477
-        public static sn76477_device SN76477<bool_Required>(machine_config mconfig, device_finder<sn76477_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, sn76477_device.SN76477, 0); }
-
-        // speaker
-        public static speaker_device SPEAKER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<speaker_device>(mconfig, tag, speaker_device.SPEAKER, 0); }
-
-        // starfield
-        public static starfield_05xx_device STARFIELD_05XX<bool_Required>(machine_config mconfig, device_finder<starfield_05xx_device, bool_Required> finder, uint32_t clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, starfield_05xx_device.STARFIELD_05XX, clock); }
-
-        // t11
-        public static t11_device T11<bool_Required>(machine_config mconfig, device_finder<t11_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, t11_device.T11, clock); }
-
-        // taitosjsec
-        public static taito_sj_security_mcu_device TAITO_SJ_SECURITY_MCU<bool_Required>(machine_config mconfig, device_finder<taito_sj_security_mcu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, taito_sj_security_mcu_device.TAITO_SJ_SECURITY_MCU, clock); }
-
-        // tilemap
-        public static tilemap_device TILEMAP<bool_Required>(machine_config mconfig, device_finder<tilemap_device, bool_Required> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows)
-            where bool_Required : bool_const, new()
-        {
-            var device = emu.detail.device_type_impl.op(mconfig, finder, tilemap_device.TILEMAP, 0);
-            device.tilemap_device_after_ctor(gfxtag, entrybytes, tilewidth, tileheight, mapper, columns, rows);
-            return device;
-        }
-        public static tilemap_device TILEMAP<bool_Required>(machine_config mconfig, device_finder<tilemap_device, bool_Required> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows, pen_t transpen)
-            where bool_Required : bool_const, new()
-        {
-            var device = emu.detail.device_type_impl.op(mconfig, finder, tilemap_device.TILEMAP, 0);
-            device.tilemap_device_after_ctor(gfxtag, entrybytes, tilewidth, tileheight, mapper, columns, rows, transpen);
-            return device;
-        }
-
-        // timer
-        public static timer_device TIMER(machine_config mconfig, string tag, u32 clock = 0) { return emu.detail.device_type_impl.op<timer_device>(mconfig, tag, timer_device.TIMER, clock); }
-
-        // tms5220
-        public static tms5220c_device TMS5220C<bool_Required>(machine_config mconfig, device_finder<tms5220c_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, tms5220c_device.TMS5220C, clock); }
-
-        // vector
-        public static vector_device VECTOR(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<vector_device>(mconfig, tag, vector_device.VECTOR, 0); }
-
-        // watchdog
-        public static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<watchdog_timer_device>(mconfig, tag, watchdog_timer_device.WATCHDOG_TIMER, 0); }
-        public static watchdog_timer_device WATCHDOG_TIMER<bool_Required>(machine_config mconfig, device_finder<watchdog_timer_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, watchdog_timer_device.WATCHDOG_TIMER, 0); }
-
-        // ym2151
-        public static ym2151_device YM2151<bool_Required>(machine_config mconfig, device_finder<ym2151_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ym2151_device.YM2151, clock); }
-
-        // z80
-        public static cpu_device Z80<bool_Required>(machine_config mconfig, device_finder<cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
-    }
 
 
     public static class cpp_global
@@ -911,8 +619,8 @@ namespace mame
         // c++ error_category
         public class error_category
         {
-            public virtual string name() { throw new emu_unimplemented(); }
-            public virtual string message(int condition) { throw new emu_unimplemented(); }
+            public virtual string name() { return "error_category.name() - TODO needs implementation"; }  //{ throw new emu_unimplemented(); }
+            public virtual string message(int condition) { return string.Format("error_category.message({0}) - TODO needs implementation", condition); }  //{ throw new emu_unimplemented(); }
         }
 
         class generic_category : error_category
@@ -1286,6 +994,7 @@ namespace mame
         public MemoryContainer() : this(0) { }
         public MemoryContainer(int capacity, bool allocate = false) { m_data = new T [capacity]; m_memory = new Memory<T>(m_data); if (allocate) Resize(capacity); }
         public MemoryContainer(IEnumerable<T> collection) : this() { foreach (var item in collection) Add(item); }
+        public MemoryContainer(T [] collection) : this() { SetInternal(collection); }
 
 
         // IList
@@ -1299,7 +1008,7 @@ namespace mame
             var newMemory = m_memory;
             if (Count + 1 > Capacity)
             {
-                int newSize = Math.Min(Count + 1024, (Count + 1) * 2);  // cap the growth
+                int newSize = GetNextCapacitySize(Count);
                 newData = new T [newSize];
                 newMemory = new Memory<T>(newData);
                 if (Capacity > 0)
@@ -1316,14 +1025,7 @@ namespace mame
         public virtual void Add(T item)
         {
             if (Count + 1 > Capacity)
-            {
-                int newSize = Math.Min(Count + 1024, (Count + 1) * 2);  // cap the growth
-                var newData = new T [newSize];
-                var newMemory = new Memory<T>(newData);
-                m_memory.CopyTo(newMemory);
-                m_data = newData;
-                m_memory = newMemory;
-            }
+                Capacity = GetNextCapacitySize(Count);
 
             m_data[m_actualLength] = item;
             m_actualLength++;
@@ -1353,7 +1055,22 @@ namespace mame
 
         // List
 
-        public virtual int Capacity { get { return m_data.Length; } set { } }
+        public virtual int Capacity
+        {
+            get { return m_data.Length; }
+            set
+            {
+                if (value < Count)
+                    throw new ArgumentOutOfRangeException();
+
+                int newSize = value;
+                var newData = new T [newSize];
+                var newMemory = new Memory<T>(newData);
+                m_memory.CopyTo(newMemory);
+                m_data = newData;
+                m_memory = newMemory;
+            }
+        }
         public virtual void CopyTo(int index, T[] array, int arrayIndex, int count) { CopyTo(index, new Span<T>(array, arrayIndex, count), count); }
         public virtual int FindIndex(int startIndex, int count, Predicate<T> match) { return Array.FindIndex(m_data, startIndex, count, match); }
         public virtual int FindIndex(int startIndex, Predicate<T> match) { return Array.FindIndex(m_data, startIndex, Count - startIndex, match); }
@@ -1383,6 +1100,7 @@ namespace mame
         public virtual T[] ToArray() { T [] newData = new T [Count]; Array.Copy(m_data, newData, Count); return newData; }
 
 
+        public T [] data_raw { get { return m_data; } }
         public Memory<T> memory { get { return m_memory; } }
 
 
@@ -1447,8 +1165,10 @@ namespace mame
                 if (count > Capacity)
                     Capacity = count;
 
-                for (int i = 0; i < count - current; i++)
-                    Add(data);
+                // Short cut for not calling Add() for each element.
+                // If Fill() adds checks for Count, then we will need to call a FillInternal() instead.
+                Fill(data, Count, count - current);
+                m_actualLength = count;
             }
         }
 
@@ -1467,6 +1187,14 @@ namespace mame
                 for (int i = 0; i < count - current; i++)
                     Add(creator());
             }
+        }
+
+
+        protected virtual void SetInternal(T [] collection)
+        {
+            m_data = collection;
+            m_memory = new Memory<T>(m_data);
+            m_actualLength = m_data.Length;
         }
 
 
@@ -1490,6 +1218,9 @@ namespace mame
             for (int i = 0; i < Count; i++)
                 this[i] = creator();
         }
+
+
+        static int GetNextCapacitySize(int current) { return Math.Min(current + 1024, (current + 1) * 2); }  // cap the growth
     }
 
 
@@ -1701,22 +1432,60 @@ namespace mame
         public static void SetUInt16Offs8(this MemoryContainer<byte> container, int offset8, UInt16 value)
         {
             assert_slow(offset8 < container.Count);
+#if MEMORY_BYTE_USE_BINARY_PRIMITIVES
             var span = container.memory.Slice(offset8, 2).Span;
             BinaryPrimitives.WriteUInt16LittleEndian(span, value);
+#else
+            var bytes = BitConverter.GetBytes(value);
+#if MEMORY_BYTE_USE_ARRAY_COPY
+            Array.Copy(bytes, 0, container.data, offset8, 2);
+#else
+            container.data_raw[offset8 + 1] = bytes[1];
+            container.data_raw[offset8]     = bytes[0];
+#endif
+#endif
         }
 
         public static void SetUInt32Offs8(this MemoryContainer<byte> container, int offset8, UInt32 value)
         {
             assert_slow(offset8 < container.Count);
+#if MEMORY_BYTE_USE_BINARY_PRIMITIVES
             var span = container.memory.Slice(offset8, 4).Span;
             BinaryPrimitives.WriteUInt32LittleEndian(span, value);
+#else
+            var bytes = BitConverter.GetBytes(value);
+#if MEMORY_BYTE_USE_ARRAY_COPY
+            Array.Copy(bytes, 0, container.data, offset8, 4);
+#else
+            container.data_raw[offset8 + 3] = bytes[3];
+            container.data_raw[offset8 + 2] = bytes[2];
+            container.data_raw[offset8 + 1] = bytes[1];
+            container.data_raw[offset8] = bytes[0];
+#endif
+#endif
         }
 
         public static void SetUInt64Offs8(this MemoryContainer<byte> container, int offset8, UInt64 value)
         {
             assert_slow(offset8 < container.Count);
+#if MEMORY_BYTE_USE_BINARY_PRIMITIVES
             var span = container.memory.Slice(offset8, 8).Span;
             BinaryPrimitives.WriteUInt64LittleEndian(span, value);
+#else
+            var bytes = BitConverter.GetBytes(value);
+#if MEMORY_BYTE_USE_ARRAY_COPY
+            Array.Copy(bytes, 0, container.data, offset8, 8);
+#else
+            container.data_raw[offset8 + 7] = bytes[7];
+            container.data_raw[offset8 + 6] = bytes[6];
+            container.data_raw[offset8 + 5] = bytes[5];
+            container.data_raw[offset8 + 4] = bytes[4];
+            container.data_raw[offset8 + 3] = bytes[3];
+            container.data_raw[offset8 + 2] = bytes[2];
+            container.data_raw[offset8 + 1] = bytes[1];
+            container.data_raw[offset8]     = bytes[0];
+#endif
+#endif
         }
 
         public static UInt16 GetUInt16(this MemoryContainer<byte> container, int offset16 = 0) { return container.GetUInt16Offs8(offset16 << 1); }
@@ -1726,22 +1495,34 @@ namespace mame
         public static UInt16 GetUInt16Offs8(this MemoryContainer<byte> container, int offset8 = 0)
         {
             assert_slow(offset8 < container.Count);
+#if MEMORY_BYTE_USE_BINARY_PRIMITIVES
             var span = container.memory.Slice(offset8, 2).Span;
             return BinaryPrimitives.ReadUInt16LittleEndian(span);
+#else
+            return BitConverter.ToUInt16(container.data_raw, offset8);
+#endif
         }
 
         public static UInt32 GetUInt32Offs8(this MemoryContainer<byte> container, int offset8 = 0)
         {
             assert_slow(offset8 < container.Count);
+#if MEMORY_BYTE_USE_BINARY_PRIMITIVES
             var span = container.memory.Slice(offset8, 4).Span;
             return BinaryPrimitives.ReadUInt32LittleEndian(span);
+#else
+            return BitConverter.ToUInt32(container.data_raw, offset8);
+#endif
         }
 
         public static UInt64 GetUInt64Offs8(this MemoryContainer<byte> container, int offset8 = 0)
         {
             assert_slow(offset8 < container.Count);
+#if MEMORY_BYTE_USE_BINARY_PRIMITIVES
             var span = container.memory.Slice(offset8, 8).Span;
-            return BinaryPrimitives.ReadUInt16LittleEndian(span);
+            return BinaryPrimitives.ReadUInt64LittleEndian(span);
+#else
+            return BitConverter.ToUInt64(container.data_raw, offset8);
+#endif
         }
     }
 

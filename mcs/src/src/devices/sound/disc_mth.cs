@@ -7,7 +7,7 @@ using osd_ticks_t = System.UInt64;  //typedef uint64_t osd_ticks_t;
 using uint8_t = System.Byte;
 
 using static mame.cpp_global;
-using static mame.disc_mth_global;
+using static mame.disc_mth_internal;
 using static mame.discrete_global;
 using static mame.emucore_global;
 using static mame.rescap_global;
@@ -200,7 +200,7 @@ namespace mame
     }
 
 
-    static class disc_mth_global
+    static partial class disc_mth_internal
     {
         public static int dst_trigger_function(int trig0, int trig1, int trig2, int function)
         {
@@ -439,6 +439,43 @@ namespace mame
 
 
     //DISCRETE_CLASS_STEP(dst_logic_nand, 1, /* no context */ );
+    class discrete_dst_logic_nand_node : discrete_base_node,
+                                         discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        bool DST_LOGIC_NAND__IN0 { get { return DISCRETE_INPUT(0) != 0; } }
+        bool DST_LOGIC_NAND__IN1 { get { return DISCRETE_INPUT(1) != 0; } }
+        bool DST_LOGIC_NAND__IN2 { get { return DISCRETE_INPUT(2) != 0; } }
+        bool DST_LOGIC_NAND__IN3 { get { return DISCRETE_INPUT(3) != 0; } }
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dst_logic_nand_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dst_logic_nand_node() { }
+
+
+        // discrete_base_node
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_logic_nand)
+        public void step()
+        {
+            set_output(0, (DST_LOGIC_NAND__IN0 && DST_LOGIC_NAND__IN1 && DST_LOGIC_NAND__IN2 && DST_LOGIC_NAND__IN3) ? 0.0 : 1.0);
+        }
+    }
+
 
     //DISCRETE_CLASS_STEP(dst_logic_or, 1, /* no context */ );
 
@@ -529,12 +566,116 @@ namespace mame
     //    int             m_size;
     //);
 
+
     //DISCRETE_CLASS_STEP_RESET(dst_oneshot, 1,
-    //    double          m_countdown;
-    //    int             m_state;
-    //    int             m_last_trig;
-    //    int             m_type;
-    //);
+    class discrete_dst_oneshot_node : discrete_base_node,
+                                      discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_ONESHOT__RESET { get { return DISCRETE_INPUT(0); } }
+        double DST_ONESHOT__TRIG { get { return DISCRETE_INPUT(1); } }
+        double DST_ONESHOT__AMP { get { return DISCRETE_INPUT(2); } }
+        double DST_ONESHOT__WIDTH { get { return DISCRETE_INPUT(3); } }
+        int DST_ONESHOT__TYPE { get { return (int)DISCRETE_INPUT(4); } }
+
+
+        double m_countdown;
+        int m_state;
+        int m_last_trig;
+        int m_type;
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dst_oneshot_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dst_oneshot_node() { }
+
+
+        // discrete_base_node
+
+        //DISCRETE_RESET(dst_oneshot)
+        public override void reset()
+        {
+            m_countdown = 0;
+            m_state     = 0;
+
+            m_last_trig = 0;
+            m_type = DST_ONESHOT__TYPE;
+
+            set_output(0,  (m_type & DISC_OUT_ACTIVE_LOW) != 0 ? DST_ONESHOT__AMP : 0);
+        }
+
+
+        protected override int max_output() { return _maxout; }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set; }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_oneshot)
+        public void step()
+        {
+            int trigger = (DST_ONESHOT__TRIG != 0) ? 1 : 0;
+
+            /* If the state is triggered we will need to countdown later */
+            int do_count = m_state;
+
+            if (DST_ONESHOT__RESET != 0)
+            {
+                /* Hold in Reset */
+                set_output(0, 0);
+                m_state  = 0;
+            }
+            else
+            {
+                /* are we at an edge? */
+                if (trigger != m_last_trig)
+                {
+                    /* There has been a trigger edge */
+                    m_last_trig = trigger;
+
+                    /* Is it the proper edge trigger */
+                    if ((m_type & DISC_ONESHOT_REDGE) != 0 ? (trigger != 0) : (trigger == 0))
+                    {
+                        if (m_state == 0)
+                        {
+                            /* We have first trigger */
+                            m_state     = 1;
+                            set_output(0, (m_type & DISC_OUT_ACTIVE_LOW) != 0 ? 0 : DST_ONESHOT__AMP);
+                            m_countdown = DST_ONESHOT__WIDTH;
+                        }
+                        else
+                        {
+                            /* See if we retrigger */
+                            if ((m_type & DISC_ONESHOT_RETRIG) != 0)
+                            {
+                                /* Retrigger */
+                                m_countdown = DST_ONESHOT__WIDTH;
+                                do_count = 0;
+                            }
+                        }
+                    }
+                }
+
+                if (do_count != 0)
+                {
+                    m_countdown -= this.sample_time();
+                    if(m_countdown <= 0.0)
+                    {
+                        set_output(0, (m_type & DISC_OUT_ACTIVE_LOW) != 0 ? DST_ONESHOT__AMP : 0);
+                        m_countdown = 0;
+                        m_state     = 0;
+                    }
+                }
+            }
+        }
+    }
 
 
     //DISCRETE_CLASS_STEP_RESET(dst_ramp, 1,
@@ -696,6 +837,45 @@ namespace mame
 
 
     //DISCRETE_CLASS_STEP(dst_switch, 1, /* no context */ );
+    class discrete_dst_switch_node : discrete_base_node,
+                                     discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        bool DST_SWITCH__ENABLE { get { return DISCRETE_INPUT(0) != 0; } }
+        bool DST_SWITCH__SWITCH { get { return DISCRETE_INPUT(1) != 0; } }
+        double DST_SWITCH__IN0 { get { return DISCRETE_INPUT(2); } }
+        double DST_SWITCH__IN1 { get { return DISCRETE_INPUT(3); } }
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dst_switch_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dst_switch_node() { }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set;  }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_switch)
+        public void step()
+        {
+            if (DST_SWITCH__ENABLE)
+            {
+                set_output(0, DST_SWITCH__SWITCH ? DST_SWITCH__IN1 : DST_SWITCH__IN0);
+            }
+            else
+            {
+                set_output(0, 0);
+            }
+        }
+    }
+
 
     //DISCRETE_CLASS_STEP(dst_aswitch, 1, /* no context */ );
 
@@ -2099,10 +2279,634 @@ namespace mame
 
 
     //DISCRETE_CLASS_STEP(dst_xtime_buffer, 1, /* no context */ );
+    class discrete_dst_xtime_buffer_node : discrete_base_node,
+                                           discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_XTIME_BUFFER__IN { get { return DISCRETE_INPUT(0); } }
+        double DST_XTIME_BUFFER_OUT_LOW { get { return DISCRETE_INPUT(1); } }
+        double DST_XTIME_BUFFER_OUT_HIGH { get { return DISCRETE_INPUT(2); } }
+        double DST_XTIME_BUFFER_INVERT { get { return DISCRETE_INPUT(3); } }
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dst_xtime_buffer_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dst_xtime_buffer_node() { }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set;  }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_xtime_buffer)
+        public void step()
+        {
+            int in0 = (int)DST_XTIME_BUFFER__IN;
+            int out_ = in0;
+            int out_is_energy = 1;
+
+            double x_time = DST_XTIME_BUFFER__IN - in0;
+
+            double out_low = DST_XTIME_BUFFER_OUT_LOW;
+            double out_high = DST_XTIME_BUFFER_OUT_HIGH;
+
+            if (out_low ==0 && out_high == 0)
+                out_is_energy = 0;
+
+            if (DST_XTIME_BUFFER_INVERT != 0)
+                out_ ^= 1;
+
+            if (out_is_energy != 0)
+            {
+                if (x_time > 0)
+                {
+                    double diff = out_high - out_low;
+                    diff = out_ != 0 ? diff * x_time : diff * (1.0 - x_time);
+                    set_output(0,  out_low + diff);
+                }
+                else
+                {
+                    set_output(0,  out_ != 0 ? out_high : out_low);
+                }
+            }
+            else
+            {
+                set_output(0,  out_ + x_time);
+            }
+        }
+    }
+
 
     //DISCRETE_CLASS_STEP(dst_xtime_and, 1, /* no context */ );
+    class discrete_dst_xtime_and_node : discrete_base_node,
+                                        discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_XTIME_AND__IN0 { get { return DISCRETE_INPUT(0); } }
+        double DST_XTIME_AND__IN1 { get { return DISCRETE_INPUT(1); } }
+        double DST_XTIME_AND_OUT_LOW { get { return DISCRETE_INPUT(2); } }
+        double DST_XTIME_AND_OUT_HIGH { get { return DISCRETE_INPUT(3); } }
+        double DST_XTIME_AND_INVERT { get { return DISCRETE_INPUT(4); } }
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dst_xtime_and_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dst_xtime_and_node() { }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set;  }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_xtime_and)
+        public void step()
+        {
+            int in0 = (int)DST_XTIME_AND__IN0;
+            int in1 = (int)DST_XTIME_AND__IN1;
+            int out_ = 0;
+            int out_is_energy = 1;
+
+            double x_time = 0;
+            double x_time0 = DST_XTIME_AND__IN0 - in0;
+            double x_time1 = DST_XTIME_AND__IN1 - in1;
+
+            int in0_has_xtime = x_time0 > 0 ? 1 : 0;
+            int in1_has_xtime = x_time1 > 0 ? 1 : 0;
+
+            double out_low = DST_XTIME_AND_OUT_LOW;
+            double out_high = DST_XTIME_AND_OUT_HIGH;
+
+            if (out_low ==0 && out_high == 0)
+                out_is_energy = 0;
+
+            switch ((in0 << 3) | (in1 << 2) | ((in0_has_xtime < 1) ? 1 : 0) | in1_has_xtime)
+            {
+                // these are all 0
+                //case XTIME__IN0_0__IN1_0__IN0_NOX__IN1_NOX:
+                //case XTIME__IN0_0__IN1_1__IN0_NOX__IN1_NOX:
+                //case XTIME__IN0_1__IN1_0__IN0_NOX__IN1_NOX:
+                //case XTIME__IN0_0__IN1_0__IN0_NOX__IN1_X:
+                //case XTIME__IN0_0__IN1_0__IN0_X__IN1_NOX:
+                //case XTIME__IN0_0__IN1_1__IN0_NOX__IN1_X:
+                //case XTIME__IN0_1__IN1_0__IN0_X__IN1_NOX:
+                //  break;
+
+                case XTIME__IN0_1__IN1_1__IN0_NOX__IN1_NOX:
+                    out_ = 1;
+                    break;
+
+                case XTIME__IN0_0__IN1_1__IN0_X__IN1_NOX:
+                    /*
+                     * in0  1   ------
+                     *      0         -------
+                     *          ...^....^...
+                     *
+                     * in1  1   -------------
+                     *      0
+                     *          ...^....^...
+                     *
+                     * out  1   ------
+                     *      0         ------
+                     *          ...^....^...
+                     */
+                    x_time = x_time0;
+                    break;
+
+                case XTIME__IN0_1__IN1_0__IN0_NOX__IN1_X:
+                    /*
+                     * in0  1   -------------
+                     *      0
+                     *          ...^....^...
+                     *
+                     * in1  1   ------
+                     *      0         -------
+                     *          ...^....^...
+                     *
+                     * out  1   ------
+                     *      0         ------
+                     *          ...^....^...
+                     */
+                    x_time = x_time1;
+                    break;
+
+                case XTIME__IN0_0__IN1_0__IN0_X__IN1_X:
+                    /*
+                     * in0  1   -----              -------
+                     *      0        --------             ------
+                     *          ...^....^...       ...^....^...
+                     *
+                     * in1  1   -------            -----
+                     *      0          ------           --------
+                     *          ...^....^...       ...^....^...
+                     *
+                     * out  1   -----              -----
+                     *      0        -------            -------
+                     *          ...^....^...       ...^....^...
+                     */
+                    // use x_time of input that went to 0 first/longer
+                    if (x_time0 >= x_time1)
+                        x_time = x_time0;
+                    else
+                        x_time = x_time1;
+                    break;
+
+                case XTIME__IN0_0__IN1_1__IN0_X__IN1_X:
+                    /*
+                     * in0  1   -------           -----
+                     *      0          -----           -------
+                     *          ...^....^...      ...^....^...
+                     *
+                     * in1  1        -------             -----
+                     *      0   -----             -------
+                     *          ...^....^...      ...^....^...
+                     *
+                     * out  1        --
+                     *      0   -----  -----      ------------
+                     *          ...^....^...      ...^....^...
+                     */
+                    // may have went high for a bit in this cycle
+                    //if (x_time0 < x_time1)
+                    //  x_time = time1 - x_time0;
+                    break;
+
+                case XTIME__IN0_1__IN1_0__IN0_X__IN1_X:
+                    /*
+                     * in0  1        -------             -----
+                     *      0   -----             -------
+                     *          ...^....^...      ...^....^...
+                     *
+                     * in1  1   -------           -----
+                     *      0          -----           -------
+                     *          ...^....^...      ...^....^...
+                     *
+                     * out  1        --
+                     *      0   -----  -----      ------------
+                     *          ...^....^...      ...^....^...
+                     */
+                    // may have went high for a bit in this cycle
+                    //if (x_time0 > x_time1)
+                    //  x_time = x_time0 - x_time1;
+                    break;
+
+                case XTIME__IN0_1__IN1_1__IN0_NOX__IN1_X:
+                    /*
+                     * in0  1   ------------
+                     *      0
+                     *          ...^....^...
+                     *
+                     * in1  1         ------
+                     *      0   ------
+                     *          ...^....^...
+                     *
+                     * out  1         ------
+                     *      0   ------
+                     *          ...^....^...
+                     */
+                    out_ = 1;
+                    x_time = x_time1;
+                    break;
+
+                case XTIME__IN0_1__IN1_1__IN0_X__IN1_NOX:
+                    /*
+                     * in1  0         ------
+                     *      0   ------
+                     *          ...^....^...
+                     *
+                     * in1  1   ------------
+                     *      0
+                     *          ...^....^...
+                     *
+                     * out  1         ------
+                     *      0   ------
+                     *          ...^....^...
+                     */
+                    out_ = 1;
+                    x_time = x_time0;
+                    break;
+
+                case XTIME__IN0_1__IN1_1__IN0_X__IN1_X:
+                    /*
+                     * in0  1         ------          --------
+                     *      0   ------            ----
+                     *          ...^....^...      ...^....^...
+                     *
+                     * in1  1       --------            ------
+                     *      0   ----              ------
+                     *          ...^....^...      ...^....^...
+                     *
+                     * out  1         ------            ------
+                     *      0   ------            ------
+                     *          ...^....^...      ...^....^...
+                     */
+                    out_ = 1;
+                    if (x_time0 < x_time1)
+                        x_time = x_time0;
+                    else
+                        x_time = x_time1;
+                    break;
+            }
+
+            if (DST_XTIME_AND_INVERT != 0)
+                out_ ^= 1;
+
+            if (out_is_energy != 0)
+            {
+                if (x_time > 0)
+                {
+                    double diff = out_high - out_low;
+                    diff = out_ != 0 ? diff * x_time : diff * (1.0 - x_time);
+                    set_output(0,  out_low + diff);
+                }
+                else
+                {
+                    set_output(0,  out_ != 0 ? out_high : out_low);
+                }
+            }
+            else
+            {
+                set_output(0,  out_ + x_time);
+            }
+        }
+    }
+
 
     //DISCRETE_CLASS_STEP(dst_xtime_or, 1, /* no context */ );
+    class discrete_dst_xtime_or_node : discrete_base_node,
+                                       discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dst_xtime_or_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dst_xtime_or_node() { }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set;  }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_xtime_or)
+        public void step()
+        {
+            throw new emu_unimplemented();
+        }
+    }
+
 
     //DISCRETE_CLASS_STEP(dst_xtime_xor, 1, /* no context */ );
+    class discrete_dst_xtime_xor_node : discrete_base_node,
+                                        discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_XTIME_XOR__IN0 { get { return DISCRETE_INPUT(0); } }
+        double DST_XTIME_XOR__IN1 { get { return DISCRETE_INPUT(1); } }
+        double DST_XTIME_XOR_OUT_LOW { get { return DISCRETE_INPUT(2); } }
+        double DST_XTIME_XOR_OUT_HIGH { get { return DISCRETE_INPUT(3); } }
+        double DST_XTIME_XOR_INVERT { get { return DISCRETE_INPUT(4); } }
+
+
+        //DISCRETE_CLASS_CONSTRUCTOR(_name, base)                             \
+        public discrete_dst_xtime_xor_node() : base() { }
+
+        //DISCRETE_CLASS_DESTRUCTOR(_name)                                    \
+        //~discrete_dst_xtime_xor_node() { }
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set;  }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_xtime_xor)
+        public void step()
+        {
+            int in0 = (int)DST_XTIME_XOR__IN0;
+            int in1 = (int)DST_XTIME_XOR__IN1;
+            int out_ = 1;
+            int out_is_energy = 1;
+
+            double x_time = 0;
+            double x_time0 = DST_XTIME_XOR__IN0 - in0;
+            double x_time1 = DST_XTIME_XOR__IN1 - in1;
+
+            int in0_has_xtime = x_time0 > 0 ? 1 : 0;
+            int in1_has_xtime = x_time1 > 0 ? 1 : 0;
+
+            double out_low = DST_XTIME_XOR_OUT_LOW;
+            double out_high = DST_XTIME_XOR_OUT_HIGH;
+
+            if (out_low ==0 && out_high == 0)
+                out_is_energy = 0;
+
+            switch ((in0 << 3) | (in1 << 2) | ((in0_has_xtime < 1) ? 1 : 0) | in1_has_xtime)
+            {
+                // these are all 1
+                //case XTIME__IN0_0__IN1_1__IN0_NOX__IN1_NOX:
+                //case XTIME__IN0_1__IN1_0__IN0_NOX__IN1_NOX:
+                //  break;
+
+                case XTIME__IN0_1__IN1_1__IN0_NOX__IN1_NOX:
+                case XTIME__IN0_0__IN1_0__IN0_NOX__IN1_NOX:
+                    out_ = 0;
+                    break;
+
+                case XTIME__IN0_1__IN1_0__IN0_X__IN1_NOX:
+                    /*
+                     * in0  1         ------
+                     *      0   ------
+                     *          ...^....^...
+                     *
+                     * in1  1
+                     *      0   ------------
+                     *          ...^....^...
+                     *
+                     * out  1         ------
+                     *      0   ------
+                     *          ...^....^...
+                     */
+                case XTIME__IN0_0__IN1_1__IN0_X__IN1_NOX:
+                    /*
+                     * in0  1   ------
+                     *      0         -------
+                     *          ...^....^...
+                     *
+                     * in1  1   -------------
+                     *      0
+                     *          ...^....^...
+                     *
+                     * out  1         ------
+                     *      0   ------
+                     *          ...^....^...
+                     */
+                    x_time = x_time0;
+                    break;
+
+                case XTIME__IN0_0__IN1_1__IN0_NOX__IN1_X:
+                    /*
+                     * in0  1
+                     *      0   ------------
+                     *          ...^....^...
+                     *
+                     * in1  1         ------
+                     *      0   ------
+                     *          ...^....^...
+                     *
+                     * out  1         ------
+                     *      0   ------
+                     *          ...^....^...
+                     */
+                case XTIME__IN0_1__IN1_0__IN0_NOX__IN1_X:
+                    /*
+                     * in0  1   -------------
+                     *      0
+                     *          ...^....^...
+                     *
+                     * in1  1   ------
+                     *      0         -------
+                     *          ...^....^...
+                     *
+                     * out  1         ------
+                     *      0   ------
+                     *          ...^....^...
+                     */
+                    x_time = x_time1;
+                    break;
+
+                case XTIME__IN0_0__IN1_0__IN0_X__IN1_NOX:
+                    /*
+                     * in0  1   ------
+                     *      0         ------
+                     *          ...^....^...
+                     *
+                     * in1  1
+                     *      0   ------------
+                     *          ...^....^...
+                     *
+                     * out  1   ------
+                     *      0         ------
+                     *          ...^....^...
+                     */
+                case XTIME__IN0_1__IN1_1__IN0_X__IN1_NOX:
+                    /*
+                     * in1  0         ------
+                     *      0   ------
+                     *          ...^....^...
+                     *
+                     * in1  1   ------------
+                     *      0
+                     *          ...^....^...
+                     *
+                     * out  1   ------
+                     *      0         ------
+                     *          ...^....^...
+                     */
+                    out_ = 0;
+                    x_time = x_time0;
+                    break;
+
+                case XTIME__IN0_0__IN1_0__IN0_NOX__IN1_X:
+                    /*
+                     * in0  1
+                     *      0   ------------
+                     *          ...^....^...
+                     *
+                     * in1  1   ------
+                     *      0         ------
+                     *          ...^....^...
+                     *
+                     * out  1   ------
+                     *      0         ------
+                     *          ...^....^...
+                     */
+                case XTIME__IN0_1__IN1_1__IN0_NOX__IN1_X:
+                    /*
+                     * in0  1   ------------
+                     *      0
+                     *          ...^....^...
+                     *
+                     * in1  1         ------
+                     *      0   ------
+                     *          ...^....^...
+                     *
+                     * out  1   ------
+                     *      0         ------
+                     *          ...^....^...
+                     */
+                    out_ = 0;
+                    x_time = x_time1;
+                    break;
+
+                case XTIME__IN0_0__IN1_0__IN0_X__IN1_X:
+                    /*
+                     * in0  1   -----              -------
+                     *      0        -------              -----
+                     *          ...^....^...       ...^....^...
+                     *
+                     * in1  1   -------            -----
+                     *      0          -----            -------
+                     *          ...^....^...       ...^....^...
+                     *
+                     * out  1        --                 --
+                     *      0   -----  -----       -----  -----
+                     *          ...^....^...       ...^....^...
+                     */
+                case XTIME__IN0_1__IN1_1__IN0_X__IN1_X:
+                    /*
+                     * in0  1         ------          --------
+                     *      0   ------            ----
+                     *          ...^....^...      ...^....^...
+                     *
+                     * in1  1       --------            ------
+                     *      0   ----              ------
+                     *          ...^....^...      ...^....^...
+                     *
+                     * out  1       --                --
+                     *      0   ----  ------      ----  ------
+                     *          ...^....^...      ...^....^...
+                     */
+                    out_ = 0;
+                    /* Not sure if it is better to use 0
+                     * or the total energy which would smear the switch points together.
+                     * Let's try just using 0 */
+                    // x_time = abs(x_time0 - x_time1);
+                    break;
+
+                case XTIME__IN0_0__IN1_1__IN0_X__IN1_X:
+                    /*
+                     * in0  1   -------           -----
+                     *      0          -----           -------
+                     *          ...^....^...      ...^....^...
+                     *
+                     * in1  1        -------             -----
+                     *      0   -----             -------
+                     *          ...^....^...      ...^....^...
+                     *
+                     * out  1   -----  -----      -----  -----
+                     *      0        --                --
+                     *          ...^....^...      ...^....^...
+                     */
+                case XTIME__IN0_1__IN1_0__IN0_X__IN1_X:
+                    /*
+                     * in0  1        -------             -----
+                     *      0   -----             -------
+                     *          ...^....^...      ...^....^...
+                     *
+                     * in1  1   -------           -----
+                     *      0          -----           -------
+                     *          ...^....^...      ...^....^...
+                     *
+                     * out  1   -----  -----      -----  -----
+                     *      0        --                --
+                     *          ...^....^...      ...^....^...
+                     */
+                    /* Not sure if it is better to use 1
+                     * or the total energy which would smear the switch points together.
+                     * Let's try just using 1 */
+                    // x_time = 1.0 - abs(x_time0 - x_time1);
+                    break;
+            }
+
+            if (DST_XTIME_XOR_INVERT != 0)
+                out_ ^= 1;
+
+            if (out_is_energy != 0)
+            {
+                if (x_time > 0)
+                {
+                    double diff = out_high - out_low;
+                    diff = out_ != 0 ? diff * x_time : diff * (1.0 - x_time);
+                    set_output(0,  out_low + diff);
+                }
+                else
+                    set_output(0,  out_ != 0 ? out_high : out_low);
+            }
+            else
+                set_output(0,  out_ + x_time);
+        }
+    }
+
+
+    static partial class disc_mth_internal
+    {
+        /* the different logic and xtime states */
+        //enum
+        //{
+            public const int XTIME__IN0_0__IN1_0__IN0_NOX__IN1_NOX =  0;
+            public const int XTIME__IN0_0__IN1_0__IN0_NOX__IN1_X   =  1;
+            public const int XTIME__IN0_0__IN1_0__IN0_X__IN1_NOX   =  2;
+            public const int XTIME__IN0_0__IN1_0__IN0_X__IN1_X     =  3;
+            const int XTIME__IN0_0__IN1_1__IN0_NOX__IN1_NOX =  4;
+            public const int XTIME__IN0_0__IN1_1__IN0_NOX__IN1_X   =  5;
+            public const int XTIME__IN0_0__IN1_1__IN0_X__IN1_NOX   =  6;
+            public const int XTIME__IN0_0__IN1_1__IN0_X__IN1_X     =  7;
+            const int XTIME__IN0_1__IN1_0__IN0_NOX__IN1_NOX =  8;
+            public const int XTIME__IN0_1__IN1_0__IN0_NOX__IN1_X   =  9;
+            public const int XTIME__IN0_1__IN1_0__IN0_X__IN1_NOX   = 10;
+            public const int XTIME__IN0_1__IN1_0__IN0_X__IN1_X     = 11;
+            public const int XTIME__IN0_1__IN1_1__IN0_NOX__IN1_NOX = 12;
+            public const int XTIME__IN0_1__IN1_1__IN0_NOX__IN1_X   = 13;
+            public const int XTIME__IN0_1__IN1_1__IN0_X__IN1_NOX   = 14;
+            public const int XTIME__IN0_1__IN1_1__IN0_X__IN1_X     = 15;
+        //};
+    }
 }

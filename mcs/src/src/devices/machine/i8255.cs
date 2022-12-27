@@ -5,6 +5,7 @@ using System;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
@@ -12,6 +13,7 @@ using uint32_t = System.UInt32;
 
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.i8255_global;
 using static mame.util;
 
 
@@ -21,10 +23,9 @@ namespace mame
     public class i8255_device : device_t
     {
         //DEFINE_DEVICE_TYPE(I8255, i8255_device, "i8255", "Intel 8255 PPI")
-        static device_t device_creator_i8255_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8255_device(mconfig, tag, owner, clock); }
-        public static readonly device_type I8255 = DEFINE_DEVICE_TYPE(device_creator_i8255_device, "i8255", "Intel 8255 PPI");
+        public static readonly emu.detail.device_type_impl I8255 = DEFINE_DEVICE_TYPE("i8255", "Intel 8255 PPI", (type, mconfig, tag, owner, clock) => { return new i8255_device(mconfig, tag, owner, clock); });
 
-        public static readonly device_type I8255A = I8255;  //decltype(I8255) I8255A = I8255;
+        public static readonly emu.detail.device_type_impl I8255A = I8255;  //decltype(I8255) I8255A = I8255;
 
 
         const int VERBOSE = 0;  //#define VERBOSE 1
@@ -879,5 +880,11 @@ namespace mame
 
             output_pc();
         }
+    }
+
+
+    static class i8255_global
+    {
+        public static i8255_device I8255A<bool_Required>(machine_config mconfig, device_finder<i8255_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8255_device.I8255A, 0); }
     }
 }

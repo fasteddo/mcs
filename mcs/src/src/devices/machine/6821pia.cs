@@ -7,11 +7,15 @@ using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
+using static mame._6821pia_global;
 using static mame.device_global;
+using static mame.diexec_global;
+using static mame.emucore_global;
 
 
 namespace mame
@@ -24,8 +28,7 @@ namespace mame
     public class pia6821_device : device_t
     {
         //DEFINE_DEVICE_TYPE(PIA6821, pia6821_device, "pia6821", "6821 PIA")
-        static device_t device_creator_pia6821_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pia6821_device(mconfig, tag, owner, clock); }
-        public static readonly device_type PIA6821 = DEFINE_DEVICE_TYPE(device_creator_pia6821_device, "pia6821", "6821 PIA");
+        public static readonly emu.detail.device_type_impl PIA6821 = DEFINE_DEVICE_TYPE("pia6821", "6821 PIA", (type, mconfig, tag, owner, clock) => { return new pia6821_device(mconfig, tag, owner, clock); });
 
 
         devcb_read8 m_in_a_handler;
@@ -153,13 +156,13 @@ namespace mame
         public devcb_write8.binder writepb_handler() { return m_out_b_handler.bind(); }  //auto writepb_handler() { return m_out_b_handler.bind(); }
         //auto tspb_handler() { return m_ts_b_handler.bind(); }
 
-        //auto ca2_handler() { return m_ca2_handler.bind(); }
-        //auto cb2_handler() { return m_cb2_handler.bind(); }
+        public devcb_write_line.binder ca2_handler() { return m_ca2_handler.bind(); }  //auto ca2_handler() { return m_ca2_handler.bind(); }
+        public devcb_write_line.binder cb2_handler() { return m_cb2_handler.bind(); }  //auto cb2_handler() { return m_cb2_handler.bind(); }
         public devcb_write_line.binder irqa_handler() { return m_irqa_handler.bind(); }  //auto irqa_handler() { return m_irqa_handler.bind(); }
         public devcb_write_line.binder irqb_handler() { return m_irqb_handler.bind(); }  //auto irqb_handler() { return m_irqb_handler.bind(); }
 
-        //uint8_t read(offs_t offset);
-        //void write(offs_t offset, uint8_t data);
+        public uint8_t read(offs_t offset) { throw new emu_unimplemented(); }
+        public void write(offs_t offset, uint8_t data) { throw new emu_unimplemented(); }
         //uint8_t read_alt(offs_t offset) { return read(((offset << 1) & 0x02) | ((offset >> 1) & 0x01)); }
         //void write_alt(offs_t offset, uint8_t data) { write(((offset << 1) & 0x02) | ((offset >> 1) & 0x01), data); }
 
@@ -210,9 +213,121 @@ namespace mame
 
 
         // device-level overrides
-        protected override void device_resolve_objects() { throw new emu_unimplemented(); }
-        protected override void device_start() { throw new emu_unimplemented(); }
-        protected override void device_reset() { throw new emu_unimplemented(); }
+        protected override void device_resolve_objects()
+        {
+            // resolve callbacks
+            m_in_a_handler.resolve();
+            m_in_b_handler.resolve();
+            m_in_ca1_handler.resolve();
+            m_in_cb1_handler.resolve();
+            m_in_ca2_handler.resolve();
+            m_out_a_handler.resolve();
+            m_out_b_handler.resolve();
+            m_ts_b_handler.resolve();
+            m_ca2_handler.resolve();
+            m_cb2_handler.resolve();
+            m_irqa_handler.resolve_safe();
+            m_irqb_handler.resolve_safe();
+        }
+
+
+        protected override void device_start()
+        {
+            m_in_a = 0xff;
+            m_in_b = 0;
+            m_in_ca1 = 1;  //true;
+            m_in_ca2 = 1;  //true;
+            m_in_cb1 = 0;
+            m_in_cb2 = 0;
+            m_in_a_pushed = false;
+            m_out_a_needs_pulled = false;
+            m_in_ca1_pushed = false;
+            m_in_ca2_pushed = false;
+            m_out_ca2_needs_pulled = false;
+            m_in_b_pushed = false;
+            m_out_b_needs_pulled = false;
+            m_in_cb1_pushed = false;
+            m_in_cb2_pushed = false;
+            m_out_cb2_needs_pulled = false;
+            m_logged_port_a_not_connected = false;
+            m_logged_port_b_not_connected = false;
+            m_logged_ca1_not_connected = false;
+            m_logged_ca2_not_connected = false;
+            m_logged_cb1_not_connected = false;
+            m_logged_cb2_not_connected = false;
+
+            save_item(NAME(new { m_in_a }));
+            save_item(NAME(new { m_in_ca1 }));
+            save_item(NAME(new { m_in_ca2 }));
+            save_item(NAME(new { m_out_a }));
+            save_item(NAME(new { m_out_ca2 }));
+            save_item(NAME(new { m_ddr_a }));
+            save_item(NAME(new { m_ctl_a }));
+            save_item(NAME(new { m_irq_a1 }));
+            save_item(NAME(new { m_irq_a2 }));
+            save_item(NAME(new { m_irq_a_state }));
+            save_item(NAME(new { m_in_b }));
+            save_item(NAME(new { m_in_cb1 }));
+            save_item(NAME(new { m_in_cb2 }));
+            save_item(NAME(new { m_out_b }));
+            save_item(NAME(new { m_out_cb2 }));
+            save_item(NAME(new { m_last_out_cb2_z }));
+            save_item(NAME(new { m_ddr_b }));
+            save_item(NAME(new { m_ctl_b }));
+            save_item(NAME(new { m_irq_b1 }));
+            save_item(NAME(new { m_irq_b2 }));
+            save_item(NAME(new { m_irq_b_state }));
+            save_item(NAME(new { m_in_a_pushed }));
+            save_item(NAME(new { m_out_a_needs_pulled }));
+            save_item(NAME(new { m_in_ca1_pushed }));
+            save_item(NAME(new { m_in_ca2_pushed }));
+            save_item(NAME(new { m_out_ca2_needs_pulled }));
+            save_item(NAME(new { m_in_b_pushed }));
+            save_item(NAME(new { m_out_b_needs_pulled }));
+            save_item(NAME(new { m_in_cb1_pushed }));
+            save_item(NAME(new { m_in_cb2_pushed }));
+            save_item(NAME(new { m_out_cb2_needs_pulled }));
+        }
+
+
+        protected override void device_reset()
+        {
+            //
+            // set default read values.
+            //
+            // ports A,CA1,CA2 default to 1
+            // ports B,CB1,CB2 are three-state and undefined (set to 0)
+            //
+            m_out_a = 0;
+            m_out_ca2 = 0;
+            m_ddr_a = 0;
+            m_ctl_a = 0;
+            m_irq_a1 = false;
+            m_irq_a2 = false;
+            m_irq_a_state = 0;
+            m_out_b = 0;
+            m_out_cb2 = 0;
+            m_last_out_cb2_z = 0;
+            m_ddr_b = 0;
+            m_ctl_b = 0;
+            m_irq_b1 = false;
+            m_irq_b2 = false;
+            m_irq_b_state = 0;
+
+            // clear the IRQs
+            m_irqa_handler.op_s32(CLEAR_LINE);
+            m_irqb_handler.op_s32(CLEAR_LINE);
+
+            // reset port A to internal pullups
+            if (!m_out_a_handler.isnull())
+                m_out_a_handler.op_u8(0xff);
+            if (!m_ca2_handler.isnull())
+                m_ca2_handler.op_s32(1);
+
+            // reset port B to three-state outputs
+            if (!m_out_b_handler.isnull() && !m_ts_b_handler.isnull())
+                m_out_b_handler.op_u8((offs_t)0, m_ts_b_handler.op().u8, 0);
+        }
 
 
         //void update_interrupts();
@@ -260,5 +375,11 @@ namespace mame
         //static bool c2_strobe_mode(uint8_t c);
         //static bool c2_output(uint8_t c);
         //static bool c2_input(uint8_t c);
+    }
+
+
+    static class _6821pia_global
+    {
+        public static pia6821_device PIA6821<bool_Required>(machine_config mconfig, device_finder<pia6821_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, pia6821_device.PIA6821, clock); }
     }
 }

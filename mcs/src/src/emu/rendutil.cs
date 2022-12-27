@@ -10,6 +10,7 @@ using u64 = System.UInt64;
 using static mame.cpp_global;
 using static mame.emucore_global;
 using static mame.rendutil_global;
+using static mame.rendutil_internal;
 
 
 namespace mame
@@ -341,6 +342,14 @@ namespace mame
             float result = apply_brightness_contrast_gamma_fp(srcval, brightness, contrast, gamma);
             return (u8)(result * 255.0f);
         }
+    }
+
+
+    static class rendutil_internal
+    {
+        //struct jpeg_corefile_source : public jpeg_source_mgr
+
+        //struct jpeg_setjmp_error_mgr : public jpeg_error_mgr
 
 
         /*-------------------------------------------------
@@ -348,7 +357,11 @@ namespace mame
             by performing a true weighted average over
             all contributing pixels
         -------------------------------------------------*/
-        static void resample_argb_bitmap_average(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_average(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
+#if USE_UNSAFE
+        public unsafe static void resample_argb_bitmap_average(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_average(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
+#else
+        public static void resample_argb_bitmap_average(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_average(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
+#endif
         {
             u64 sumscale = (u64)dx * (u64)dy;
             u32 r;
@@ -364,80 +377,93 @@ namespace mame
             b = (u32)(color.b * color.a * 256.0f);
             a = (u32)(color.a * 256.0f);
 
-            /* loop over the target vertically */
-            for (y = 0; y < dheight; y++)
+#if USE_UNSAFE
+            fixed(u8 * dest_u8_zero = dest.Buffer.data_raw,
+                       source_u8_zero = source.Buffer.data_raw)
             {
-                u32 starty = y * dy;
+                u32 * dest_u32 = (u32 *)(dest_u8_zero + dest.Offset);
+                u32 * source_u32 = (u32 *)(source_u8_zero + source.Offset);
+#else
+            {
+                PointerU32 dest_u32 = dest;
+                PointerU32 source_u32 = source;
+#endif
 
-                /* loop over the target horizontally */
-                for (x = 0; x < dwidth; x++)
+                /* loop over the target vertically */
+                for (y = 0; y < dheight; y++)
                 {
-                    u64 sumr = 0;
-                    u64 sumg = 0;
-                    u64 sumb = 0;
-                    u64 suma = 0;
-                    u32 startx = x * dx;
-                    u32 xchunk;
-                    u32 ychunk;
-                    u32 curx;
-                    u32 cury;
+                    u32 starty = y * dy;
 
-                    u32 yremaining = dy;
-
-                    /* accumulate all source pixels that contribute to this pixel */
-                    for (cury = starty; yremaining != 0; cury += ychunk)
+                    /* loop over the target horizontally */
+                    for (x = 0; x < dwidth; x++)
                     {
-                        u32 xremaining = dx;
+                        u64 sumr = 0;
+                        u64 sumg = 0;
+                        u64 sumb = 0;
+                        u64 suma = 0;
+                        u32 startx = x * dx;
+                        u32 xchunk;
+                        u32 ychunk;
+                        u32 curx;
+                        u32 cury;
 
-                        /* determine the Y contribution, clamping to the amount remaining */
-                        ychunk = 0x1000 - (cury & 0xfff);
-                        if (ychunk > yremaining)
-                            ychunk = yremaining;
-                        yremaining -= ychunk;
+                        u32 yremaining = dy;
 
-                        /* loop over all source pixels in the X direction */
-                        for (curx = startx; xremaining != 0; curx += xchunk)
+                        /* accumulate all source pixels that contribute to this pixel */
+                        for (cury = starty; yremaining != 0; cury += ychunk)
                         {
-                            u32 factor;
+                            u32 xremaining = dx;
 
-                            /* determine the X contribution, clamping to the amount remaining */
-                            xchunk = 0x1000 - (curx & 0xfff);
-                            if (xchunk > xremaining)
-                                xchunk = xremaining;
-                            xremaining -= xchunk;
+                            /* determine the Y contribution, clamping to the amount remaining */
+                            ychunk = 0x1000 - (cury & 0xfff);
+                            if (ychunk > yremaining)
+                                ychunk = yremaining;
+                            yremaining -= ychunk;
 
-                            /* total contribution = x * y */
-                            factor = xchunk * ychunk;
+                            /* loop over all source pixels in the X direction */
+                            for (curx = startx; xremaining != 0; curx += xchunk)
+                            {
+                                u32 factor;
 
-                            /* fetch the source pixel */
-                            rgb_t pix = new rgb_t(source[(cury >> 12) * srowpixels + (curx >> 12)]);  //rgb_t pix = source[(cury >> 12) * srowpixels + (curx >> 12)];
+                                /* determine the X contribution, clamping to the amount remaining */
+                                xchunk = 0x1000 - (curx & 0xfff);
+                                if (xchunk > xremaining)
+                                    xchunk = xremaining;
+                                xremaining -= xchunk;
 
-                            /* accumulate the RGBA values */
-                            sumr += factor * pix.r();
-                            sumg += factor * pix.g();
-                            sumb += factor * pix.b();
-                            suma += factor * pix.a();
+                                /* total contribution = x * y */
+                                factor = xchunk * ychunk;
+
+                                /* fetch the source pixel */
+                                rgb_t pix = new rgb_t(source_u32[(cury >> 12) * srowpixels + (curx >> 12)]);  //rgb_t pix = source[(cury >> 12) * srowpixels + (curx >> 12)];
+
+                                /* accumulate the RGBA values */
+                                sumr += factor * pix.r();
+                                sumg += factor * pix.g();
+                                sumb += factor * pix.b();
+                                suma += factor * pix.a();
+                            }
                         }
+
+                        /* apply scaling */
+                        suma = (suma / sumscale) * a / 256;
+                        sumr = (sumr / sumscale) * r / 256;
+                        sumg = (sumg / sumscale) * g / 256;
+                        sumb = (sumb / sumscale) * b / 256;
+
+                        /* if we're translucent, add in the destination pixel contribution */
+                        if (a < 256)
+                        {
+                            rgb_t dpix = new rgb_t(dest_u32[y * drowpixels + x]);  //rgb_t dpix = dest[y * drowpixels + x];
+                            suma += dpix.a() * (256 - a);
+                            sumr += dpix.r() * (256 - a);
+                            sumg += dpix.g() * (256 - a);
+                            sumb += dpix.b() * (256 - a);
+                        }
+
+                        /* store the target pixel, dividing the RGBA values by the overall scale factor */
+                        dest_u32[y * drowpixels + x] = new rgb_t((u8)suma, (u8)sumr, (u8)sumg, (u8)sumb);  //dest[y * drowpixels + x] = rgb_t(suma, sumr, sumg, sumb);
                     }
-
-                    /* apply scaling */
-                    suma = (suma / sumscale) * a / 256;
-                    sumr = (sumr / sumscale) * r / 256;
-                    sumg = (sumg / sumscale) * g / 256;
-                    sumb = (sumb / sumscale) * b / 256;
-
-                    /* if we're translucent, add in the destination pixel contribution */
-                    if (a < 256)
-                    {
-                        rgb_t dpix = new rgb_t(dest[y * drowpixels + x]);  //rgb_t dpix = dest[y * drowpixels + x];
-                        suma += dpix.a() * (256 - a);
-                        sumr += dpix.r() * (256 - a);
-                        sumg += dpix.g() * (256 - a);
-                        sumb += dpix.b() * (256 - a);
-                    }
-
-                    /* store the target pixel, dividing the RGBA values by the overall scale factor */
-                    dest[y * drowpixels + x] = new rgb_t((u8)suma, (u8)sumr, (u8)sumg, (u8)sumb);  //dest[y * drowpixels + x] = rgb_t(suma, sumr, sumg, sumb);
                 }
             }
         }
@@ -447,7 +473,11 @@ namespace mame
             resample_argb_bitmap_bilinear - perform texture
             sampling via a bilinear filter
         -------------------------------------------------*/
-        static void resample_argb_bitmap_bilinear(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_bilinear(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
+#if USE_UNSAFE
+        public unsafe static void resample_argb_bitmap_bilinear(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_bilinear(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
+#else
+        public static void resample_argb_bitmap_bilinear(PointerU32 dest, u32 drowpixels, u32 dwidth, u32 dheight, PointerU32 source, u32 srowpixels, u32 swidth, u32 sheight, render_color color, u32 dx, u32 dy)  //static void resample_argb_bitmap_bilinear(u32 *dest, u32 drowpixels, u32 dwidth, u32 dheight, const u32 *source, u32 srowpixels, u32 swidth, u32 sheight, const render_color &color, u32 dx, u32 dy)
+#endif
         {
             u32 maxx = swidth << 12;
             u32 maxy = sheight << 12;
@@ -464,99 +494,112 @@ namespace mame
             b = (u32)(color.b * color.a * 256.0f);
             a = (u32)(color.a * 256.0f);
 
-            /* loop over the target vertically */
-            for (y = 0; y < dheight; y++)
+#if USE_UNSAFE
+            fixed(u8 * dest_u8_zero = dest.Buffer.data_raw,
+                       source_u8_zero = source.Buffer.data_raw)
             {
-                u32 starty = y * dy;
+                u32 * dest_u32 = (u32 *)(dest_u8_zero + dest.Offset);
+                u32 * source_u32 = (u32 *)(source_u8_zero + source.Offset);
+#else
+            {
+                PointerU32 dest_u32 = dest;
+                PointerU32 source_u32 = source;
+#endif
 
-                /* loop over the target horizontally */
-                for (x = 0; x < dwidth; x++)
+                /* loop over the target vertically */
+                for (y = 0; y < dheight; y++)
                 {
-                    u32 startx = x * dx;
-                    rgb_t pix0;
-                    rgb_t pix1;
-                    rgb_t pix2;
-                    rgb_t pix3;
-                    u32 sumr;
-                    u32 sumg;
-                    u32 sumb;
-                    u32 suma;
-                    u32 nextx;
-                    u32 nexty;
-                    u32 curx;
-                    u32 cury;
-                    u32 factor;
+                    u32 starty = y * dy;
 
-                    /* adjust start to the center; note that this math will tend to produce */
-                    /* negative results on the first pixel, which is why we clamp below */
-                    curx = startx + dx / 2 - 0x800;
-                    cury = starty + dy / 2 - 0x800;
-
-                    /* compute the neighboring pixel */
-                    nextx = curx + 0x1000;
-                    nexty = cury + 0x1000;
-
-                    /* fetch the four relevant pixels */
-                    pix0 = pix1 = pix2 = pix3 = new rgb_t(0);
-                    if ((int)cury >= 0 && cury < maxy && (int)curx >= 0 && curx < maxx)
-                        pix0 = new rgb_t(source[(cury >> 12) * srowpixels + (curx >> 12)]);  //pix0 = source[(cury >> 12) * srowpixels + (curx >> 12)];
-                    if ((int)cury >= 0 && cury < maxy && (int)nextx >= 0 && nextx < maxx)
-                        pix1 = new rgb_t(source[(cury >> 12) * srowpixels + (nextx >> 12)]);  //pix1 = source[(cury >> 12) * srowpixels + (nextx >> 12)];
-                    if ((int)nexty >= 0 && nexty < maxy && (int)curx >= 0 && curx < maxx)
-                        pix2 = new rgb_t(source[(nexty >> 12) * srowpixels + (curx >> 12)]);  //pix2 = source[(nexty >> 12) * srowpixels + (curx >> 12)];
-                    if ((int)nexty >= 0 && nexty < maxy && (int)nextx >= 0 && nextx < maxx)
-                        pix3 = new rgb_t(source[(nexty >> 12) * srowpixels + (nextx >> 12)]);  //pix3 = source[(nexty >> 12) * srowpixels + (nextx >> 12)];
-
-                    /* compute the x/y scaling factors */
-                    curx &= 0xfff;
-                    cury &= 0xfff;
-
-                    /* contributions from pixel 0 (top,left) */
-                    factor = (0x1000 - curx) * (0x1000 - cury);
-                    sumr = factor * pix0.r();
-                    sumg = factor * pix0.g();
-                    sumb = factor * pix0.b();
-                    suma = factor * pix0.a();
-
-                    /* contributions from pixel 1 (top,right) */
-                    factor = curx * (0x1000 - cury);
-                    sumr += factor * pix1.r();
-                    sumg += factor * pix1.g();
-                    sumb += factor * pix1.b();
-                    suma += factor * pix1.a();
-
-                    /* contributions from pixel 2 (bottom,left) */
-                    factor = (0x1000 - curx) * cury;
-                    sumr += factor * pix2.r();
-                    sumg += factor * pix2.g();
-                    sumb += factor * pix2.b();
-                    suma += factor * pix2.a();
-
-                    /* contributions from pixel 3 (bottom,right) */
-                    factor = curx * cury;
-                    sumr += factor * pix3.r();
-                    sumg += factor * pix3.g();
-                    sumb += factor * pix3.b();
-                    suma += factor * pix3.a();
-
-                    /* apply scaling */
-                    suma = (suma >> 24) * a / 256;
-                    sumr = (sumr >> 24) * r / 256;
-                    sumg = (sumg >> 24) * g / 256;
-                    sumb = (sumb >> 24) * b / 256;
-
-                    /* if we're translucent, add in the destination pixel contribution */
-                    if (a < 256)
+                    /* loop over the target horizontally */
+                    for (x = 0; x < dwidth; x++)
                     {
-                        rgb_t dpix = new rgb_t(dest[y * drowpixels + x]);  //rgb_t dpix = dest[y * drowpixels + x];
-                        suma += dpix.a() * (256 - a);
-                        sumr += dpix.r() * (256 - a);
-                        sumg += dpix.g() * (256 - a);
-                        sumb += dpix.b() * (256 - a);
-                    }
+                        u32 startx = x * dx;
+                        rgb_t pix0;
+                        rgb_t pix1;
+                        rgb_t pix2;
+                        rgb_t pix3;
+                        u32 sumr;
+                        u32 sumg;
+                        u32 sumb;
+                        u32 suma;
+                        u32 nextx;
+                        u32 nexty;
+                        u32 curx;
+                        u32 cury;
+                        u32 factor;
 
-                    /* store the target pixel, dividing the RGBA values by the overall scale factor */
-                    dest[y * drowpixels + x] = new rgb_t((u8)suma, (u8)sumr, (u8)sumg, (u8)sumb);  //dest[y * drowpixels + x] = rgb_t(suma, sumr, sumg, sumb);
+                        /* adjust start to the center; note that this math will tend to produce */
+                        /* negative results on the first pixel, which is why we clamp below */
+                        curx = startx + dx / 2 - 0x800;
+                        cury = starty + dy / 2 - 0x800;
+
+                        /* compute the neighboring pixel */
+                        nextx = curx + 0x1000;
+                        nexty = cury + 0x1000;
+
+                        /* fetch the four relevant pixels */
+                        pix0 = pix1 = pix2 = pix3 = new rgb_t(0);
+                        if ((int)cury >= 0 && cury < maxy && (int)curx >= 0 && curx < maxx)
+                            pix0 = new rgb_t(source_u32[(cury >> 12) * srowpixels + (curx >> 12)]);  //pix0 = source[(cury >> 12) * srowpixels + (curx >> 12)];
+                        if ((int)cury >= 0 && cury < maxy && (int)nextx >= 0 && nextx < maxx)
+                            pix1 = new rgb_t(source_u32[(cury >> 12) * srowpixels + (nextx >> 12)]);  //pix1 = source[(cury >> 12) * srowpixels + (nextx >> 12)];
+                        if ((int)nexty >= 0 && nexty < maxy && (int)curx >= 0 && curx < maxx)
+                            pix2 = new rgb_t(source_u32[(nexty >> 12) * srowpixels + (curx >> 12)]);  //pix2 = source[(nexty >> 12) * srowpixels + (curx >> 12)];
+                        if ((int)nexty >= 0 && nexty < maxy && (int)nextx >= 0 && nextx < maxx)
+                            pix3 = new rgb_t(source_u32[(nexty >> 12) * srowpixels + (nextx >> 12)]);  //pix3 = source[(nexty >> 12) * srowpixels + (nextx >> 12)];
+
+                        /* compute the x/y scaling factors */
+                        curx &= 0xfff;
+                        cury &= 0xfff;
+
+                        /* contributions from pixel 0 (top,left) */
+                        factor = (0x1000 - curx) * (0x1000 - cury);
+                        sumr = factor * pix0.r();
+                        sumg = factor * pix0.g();
+                        sumb = factor * pix0.b();
+                        suma = factor * pix0.a();
+
+                        /* contributions from pixel 1 (top,right) */
+                        factor = curx * (0x1000 - cury);
+                        sumr += factor * pix1.r();
+                        sumg += factor * pix1.g();
+                        sumb += factor * pix1.b();
+                        suma += factor * pix1.a();
+
+                        /* contributions from pixel 2 (bottom,left) */
+                        factor = (0x1000 - curx) * cury;
+                        sumr += factor * pix2.r();
+                        sumg += factor * pix2.g();
+                        sumb += factor * pix2.b();
+                        suma += factor * pix2.a();
+
+                        /* contributions from pixel 3 (bottom,right) */
+                        factor = curx * cury;
+                        sumr += factor * pix3.r();
+                        sumg += factor * pix3.g();
+                        sumb += factor * pix3.b();
+                        suma += factor * pix3.a();
+
+                        /* apply scaling */
+                        suma = (suma >> 24) * a / 256;
+                        sumr = (sumr >> 24) * r / 256;
+                        sumg = (sumg >> 24) * g / 256;
+                        sumb = (sumb >> 24) * b / 256;
+
+                        /* if we're translucent, add in the destination pixel contribution */
+                        if (a < 256)
+                        {
+                            rgb_t dpix = new rgb_t(dest_u32[y * drowpixels + x]);  //rgb_t dpix = dest[y * drowpixels + x];
+                            suma += dpix.a() * (256 - a);
+                            sumr += dpix.r() * (256 - a);
+                            sumg += dpix.g() * (256 - a);
+                            sumb += dpix.b() * (256 - a);
+                        }
+
+                        /* store the target pixel, dividing the RGBA values by the overall scale factor */
+                        dest_u32[y * drowpixels + x] = new rgb_t((u8)suma, (u8)sumr, (u8)sumg, (u8)sumb);  //dest[y * drowpixels + x] = rgb_t(suma, sumr, sumg, sumb);
+                    }
                 }
             }
         }

@@ -3,16 +3,17 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
-using static mame.device_creator_helper_global;
 using static mame.device_global;
 using static mame.discrete_global;
 using static mame.disound_global;
 using static mame.emucore_global;
+using static mame.galaxian_global;
 using static mame.rescap_global;
 
 
@@ -21,8 +22,7 @@ namespace mame
     public class galaxian_sound_device : device_t
     {
         //DEFINE_DEVICE_TYPE(GALAXIAN_SOUND, galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound")
-        static device_t device_creator_galaxian_sound_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new galaxian_sound_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GALAXIAN_SOUND = DEFINE_DEVICE_TYPE(device_creator_galaxian_sound_device, "galaxian_sound", "Galaxian Custom Sound");
+        public static readonly emu.detail.device_type_impl GALAXIAN_SOUND = DEFINE_DEVICE_TYPE("galaxian_sound", "Galaxian Custom Sound", (type, mconfig, tag, owner, clock) => { return new galaxian_sound_device(mconfig, tag, owner, clock); });
 
 
         // internal state
@@ -489,5 +489,11 @@ namespace mame
 
             DISCRETE_SOUND_END,
         }; }
+    }
+
+
+    static class galaxian_global
+    {
+        public static galaxian_sound_device GALAXIAN_SOUND(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<galaxian_sound_device>(mconfig, tag, galaxian_sound_device.GALAXIAN_SOUND, clock); }
     }
 }

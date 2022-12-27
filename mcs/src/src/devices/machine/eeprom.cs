@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using optional_memory_region = mame.memory_region_finder<mame.bool_const_false>;  //using optional_memory_region = memory_region_finder<false>;
@@ -11,6 +12,7 @@ using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
 using static mame.device_global;
+using static mame.eeprom_global;
 using static mame.emucore_global;
 using static mame.osdcore_global;
 
@@ -271,5 +273,11 @@ namespace mame
 
         //virtual void nvram_read(emu_file &file) override;
         //virtual void nvram_write(emu_file &file) override;
+    }
+
+
+    static class eeprom_global
+    {
+        public static eeprom_parallel_2804_device EEPROM_2804(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<eeprom_parallel_2804_device>(mconfig, tag, eeprom_parallel_2804_device.EEPROM_2804, 0); }
     }
 }

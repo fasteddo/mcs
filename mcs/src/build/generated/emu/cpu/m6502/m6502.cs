@@ -16181,7 +16181,7 @@ namespace mame
             inst_substate = 0;
         }
 
-        void do_exec_full()
+        protected virtual void do_exec_full()
         {
             switch(inst_state) {
 
@@ -16446,7 +16446,7 @@ namespace mame
         }
 
 
-        void do_exec_partial()
+        protected virtual void do_exec_partial()
         {
             switch(inst_state) {
 

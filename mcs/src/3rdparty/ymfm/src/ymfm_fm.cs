@@ -410,6 +410,7 @@ namespace mame.ymfm
         uint8_t m_irq_mask;              // mask of which bits signal IRQs
         uint8_t m_irq_state;             // current IRQ state
         uint8_t [] m_timer_running = new uint8_t[2];      // current timer running state
+        //uint8_t m_total_clocks;          // low 8 bits of the total number of clocks processed
         uint32_t m_active_channels;      // mask of active channels (computed by prepare)
         uint32_t m_modified_channels;    // mask of channels that have been modified
         uint32_t m_prepare_count;        // counter to do periodic prepare sweeps
@@ -544,6 +545,6 @@ namespace mame.ymfm
 
 
         // update the state of the given timer
-        //void update_timer(uint32_t which, uint32_t enable);
+        //void update_timer(uint32_t which, uint32_t enable, int32_t delta_clocks);
     }
 }

@@ -4,6 +4,7 @@
 using System;
 
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u16 = System.UInt16;

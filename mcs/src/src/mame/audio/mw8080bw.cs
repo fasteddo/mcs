@@ -9,12 +9,15 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
-using static mame.device_creator_helper_global;
 using static mame.device_global;
 using static mame.discrete_global;
 using static mame.disound_global;
 using static mame.emucore_global;
+using static mame.mw8080bw_global;
+using static mame.netlist_global;
 using static mame.rescap_global;
+using static mame.sn76477_global;
+using static mame.speaker_global;
 using static mame.util;
 
 
@@ -28,8 +31,7 @@ namespace mame
     public class gunfight_audio_device : device_t
     {
         //DEFINE_DEVICE_TYPE(GUNFIGHT_AUDIO, gunfight_audio_device, "gunfight_audio", "Midway Gun Fight Audio")
-        static device_t device_creator_gunfight_audio_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gunfight_audio_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GUNFIGHT_AUDIO = DEFINE_DEVICE_TYPE(device_creator_gunfight_audio_device, "gunfight_audio", "Midway Gun Fight Audio");
+        public static readonly emu.detail.device_type_impl GUNFIGHT_AUDIO = DEFINE_DEVICE_TYPE("gunfight_audio", "Midway Gun Fight Audio", (type, mconfig, tag, owner, clock) => { return new gunfight_audio_device(mconfig, tag, owner, clock); });
 
 
         required_device<netlist_mame_logic_input_device> m_left_shot;
@@ -167,8 +169,7 @@ namespace mame
     public class invaders_audio_device : device_t
     {
         //DEFINE_DEVICE_TYPE(INVADERS_AUDIO, invaders_audio_device, "invaders_audio", "Taito Space Invaders Audio")
-        static device_t device_creator_invaders_audio_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new invaders_audio_device(mconfig, tag, owner, clock); }
-        public static readonly device_type INVADERS_AUDIO = DEFINE_DEVICE_TYPE(device_creator_invaders_audio_device, "invaders_audio", "Taito Space Invaders Audio");
+        public static readonly emu.detail.device_type_impl INVADERS_AUDIO = DEFINE_DEVICE_TYPE("invaders_audio", "Taito Space Invaders Audio", (type, mconfig, tag, owner, clock) => { return new invaders_audio_device(mconfig, tag, owner, clock); });
 
 
         static readonly discrete_lfsr_desc midway_lfsr = new discrete_lfsr_desc
@@ -948,4 +949,11 @@ namespace mame
     //class zzzap_audio_device : public zzzap_common_audio_device
 
     //class lagunar_audio_device : public zzzap_common_audio_device
+
+
+    static class mw8080bw_global
+    {
+        public static gunfight_audio_device GUNFIGHT_AUDIO<bool_Required>(machine_config mconfig, device_finder<gunfight_audio_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, gunfight_audio_device.GUNFIGHT_AUDIO, 0); }
+        public static invaders_audio_device INVADERS_AUDIO(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<invaders_audio_device>(mconfig, tag, invaders_audio_device.INVADERS_AUDIO, 0); }
+    }
 }

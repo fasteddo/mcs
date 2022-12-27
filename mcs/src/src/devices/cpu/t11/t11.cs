@@ -7,6 +7,7 @@ using System;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using uint8_t = System.Byte;
@@ -18,6 +19,7 @@ using static mame.diexec_global;
 using static mame.distate_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.t11_global;
 using static mame.util;
 
 
@@ -32,14 +34,14 @@ namespace mame
     public partial class t11_device : cpu_device
     {
         //DEFINE_DEVICE_TYPE(T11,      t11_device,      "t11",      "DEC T11")
-        static device_t device_creator_t11_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new t11_device(mconfig, tag, owner, clock); }
-        public static readonly device_type T11 = DEFINE_DEVICE_TYPE(device_creator_t11_device, "t11", "DEC T11");
+        public static readonly emu.detail.device_type_impl T11 = DEFINE_DEVICE_TYPE("t11", "DEC T11", (type, mconfig, tag, owner, clock) => { return new t11_device(mconfig, tag, owner, clock); });
 
 
         static uint8_t OCTAL_U8(int value) { return Convert.ToByte(value.ToString(), 8); }
         static uint16_t OCTAL_U16(int value) { return Convert.ToUInt16(value.ToString(), 8); }
 
 
+        // T11 input lines
         //enum
         //{
         const int CP0_LINE = 0;           // -AI4 (at PI time)
@@ -50,6 +52,11 @@ namespace mame
         const int PF_LINE  = 5;            // -AI6 (at PI time)
         const int HLT_LINE = 6;            // -AI7 (at PI time)
         //};
+
+
+        // generic hardware traps
+        //static constexpr uint8_t POWER_FAIL = PF_LINE;
+        const uint8_t BUS_ERROR = 8;
 
 
         //enum
@@ -129,8 +136,8 @@ namespace mame
 
             protected override uint32_t execute_min_cycles() { return 12; }
             protected override uint32_t execute_max_cycles() { return 114; }
-            protected override uint32_t execute_input_lines() { return 7; }
-            protected override bool execute_input_edge_triggered(int inputnum) { return inputnum == PF_LINE || inputnum == HLT_LINE; }
+            protected override uint32_t execute_input_lines() { return 8; }
+            protected override bool execute_input_edge_triggered(int inputnum) { return inputnum == PF_LINE || inputnum == HLT_LINE || inputnum == BUS_ERROR; }
             protected override void execute_run() { ((t11_device)device()).device_execute_interface_execute_run(); }
             protected override void execute_set_input(int inputnum, int state) { ((t11_device)device()).device_execute_interface_execute_set_input(inputnum, state); }
         }
@@ -176,8 +183,10 @@ namespace mame
         uint8_t m_cp_state;
         bool m_vec_active;
         bool m_pf_active;
+        bool m_berr_active;
         bool m_hlt_active;
         bool m_power_fail;
+        bool m_bus_error;
         bool m_ext_halt;
         intref m_icount = new intref();  //int m_icount;
         memory_access<int_const_16, int_const_1, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache m_cache = new memory_access<int_const_16, int_const_1, int_const_0, endianness_t_const_ENDIANNESS_LITTLE>.cache();  //memory_access<16, 1, 0, ENDIANNESS_LITTLE>::cache m_cache;
@@ -229,6 +238,7 @@ namespace mame
             m_cp_state = 0;
             m_vec_active = false;
             m_pf_active = false;
+            m_berr_active = false;
             m_hlt_active = false;
             m_out_reset_func = new devcb_write_line(this);
             m_in_iack_func = new devcb_read8(this);
@@ -332,6 +342,7 @@ namespace mame
 
             m_wait_state = 0;
             m_power_fail = false;
+            m_bus_error = false;
             m_ext_halt = false;
         }
 
@@ -417,6 +428,12 @@ namespace mame
                 if (state != CLEAR_LINE && !m_pf_active)
                     m_power_fail = true;
                 m_pf_active = (state != CLEAR_LINE);
+                break;
+
+            case BUS_ERROR:
+                if (state != CLEAR_LINE && !m_berr_active)
+                    m_bus_error = true;
+                m_berr_active = (state != CLEAR_LINE);
                 break;
 
             case HLT_LINE:
@@ -562,9 +579,14 @@ namespace mame
                 return;
             }
 
-            // PF has next-highest priority
-            int priority = PSW & 0340;
-            if (m_power_fail && priority != 0340)
+            // non-maskable hardware traps
+            if (m_bus_error)
+            {
+                m_bus_error = false;
+                take_interrupt(T11_TIMEOUT);
+                return;
+            }
+            else if (m_power_fail)
             {
                 m_power_fail = false;
                 take_interrupt(T11_PWRFAIL);
@@ -573,7 +595,7 @@ namespace mame
 
             // compare the priority of the CP interrupt to the PSW
             ref irq_table_entry irq = ref irq_table[m_cp_state & 15];
-            if (irq.priority > priority)
+            if (irq.priority > (PSW & 0340))
             {
                 // call the callback
                 standard_irq_callback(m_cp_state & 15);
@@ -607,4 +629,10 @@ namespace mame
 
     //DECLARE_DEVICE_TYPE(T11,      t11_device)
     //DECLARE_DEVICE_TYPE(K1801VM2, k1801vm2_device)
+
+
+    static class t11_global
+    {
+        public static t11_device T11<bool_Required>(machine_config mconfig, device_finder<t11_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, t11_device.T11, clock); }
+    }
 }

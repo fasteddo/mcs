@@ -54,7 +54,7 @@ namespace mame
     }
 
 
-    public static class screen_global
+    static partial class screen_global
     {
         public const screen_type_enum SCREEN_TYPE_RASTER = screen_type_enum.SCREEN_TYPE_RASTER;
         public const screen_type_enum SCREEN_TYPE_VECTOR = screen_type_enum.SCREEN_TYPE_VECTOR;
@@ -201,8 +201,7 @@ namespace mame
     public class screen_device : device_t
     {
         //DEFINE_DEVICE_TYPE(SCREEN, screen_device, "screen", "Video Screen")
-        static device_t device_creator_screen_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new screen_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SCREEN = DEFINE_DEVICE_TYPE(device_creator_screen_device, "screen", "Video Screen");
+        public static readonly emu.detail.device_type_impl SCREEN = DEFINE_DEVICE_TYPE("screen", "Video Screen", (type, mconfig, tag, owner, clock) => { return new screen_device(mconfig, tag, owner, clock); });
 
 
         const bool VERBOSE = false;
@@ -1267,9 +1266,9 @@ namespace mame
                     osd_printf_error("Non-raster display cannot have a variable width\n");
             }
 
-            // check for zero frame rate
-            if (m_refresh == 0)
-                osd_printf_error("Invalid (zero) refresh rate\n");
+            // check for invalid frame rate
+            if (m_refresh == 0 || m_refresh > ATTOSECONDS_PER_SECOND)
+                osd_printf_error("Invalid (under 1Hz) refresh rate\n");
 
             texture_format texformat = m_screen_update_ind16 != null ? texture_format.TEXFORMAT_PALETTE16 : texture_format.TEXFORMAT_RGB32;
             if (m_palette.finder_tag() != finder_base.DUMMY_TAG)
@@ -1525,7 +1524,7 @@ namespace mame
             s32 effwidth = std.max(per_scanline ? m_max_width : m_width, m_visarea.right() + 1);
             s32 effheight = std.max(m_height, m_visarea.bottom() + 1);
 
-            // reize all registered screen bitmaps
+            // resize all registered screen bitmaps
             foreach (var item in m_auto_bitmap_list)
                 item.m_bitmap.resize(effwidth, effheight);
 
@@ -1734,4 +1733,22 @@ namespace mame
 
     // iterator helper
     //typedef device_type_enumerator<screen_device> screen_device_enumerator;
+
+
+    static partial class screen_global
+    {
+        public static screen_device SCREEN(machine_config mconfig, string tag, screen_type_enum type)
+        {
+            var device = emu.detail.device_type_impl.op<screen_device>(mconfig, tag, screen_device.SCREEN, 0);
+            device.screen_device_after_ctor(type);
+            return device;
+        }
+        public static screen_device SCREEN<bool_Required>(machine_config mconfig, device_finder<screen_device, bool_Required> finder, screen_type_enum type)
+            where bool_Required : bool_const, new()
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, screen_device.SCREEN, 0);
+            device.screen_device_after_ctor(type);
+            return device;
+        }
+    }
 }

@@ -5,6 +5,7 @@ using System;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
+using u16 = System.UInt16;
 using uX = mame.FlexPrim;
 
 
@@ -22,7 +23,7 @@ namespace mame
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
-        public handler_entry_read_unmapped(address_space space) : base(space, handler_entry.F_UNMAP) { }
+        public handler_entry_read_unmapped(address_space space, u16 flags) : base(space, handler_entry.F_UNMAP | flags) { }
         //~handler_entry_read_unmapped() = default;
 
 
@@ -39,6 +40,9 @@ namespace mame
         }
 
 
+        protected override std.pair<uX, u16> read_flags(offs_t offset, uX mem_mask) { throw new emu_unimplemented(); }
+
+
         protected override string name() { throw new emu_unimplemented(); }
     }
 
@@ -51,7 +55,7 @@ namespace mame
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
-        public handler_entry_write_unmapped(address_space space) : base(space, handler_entry.F_UNMAP) { }
+        public handler_entry_write_unmapped(address_space space, u16 flags) : base(space, handler_entry.F_UNMAP | flags) { }
         //~handler_entry_write_unmapped() = default;
 
 
@@ -66,6 +70,9 @@ namespace mame
                                                 2 << Width, data,
                                                 2 << Width, mem_mask);
         }
+
+
+        protected override u16 write_flags(offs_t offset, uX data, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         protected override string name() { throw new emu_unimplemented(); }
@@ -85,7 +92,7 @@ namespace mame
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
-        public handler_entry_read_nop(address_space space) : base(space, 0) { }
+        public handler_entry_read_nop(address_space space, u16 flags) : base(space, flags) { }
         //~handler_entry_read_nop() = default;
 
 
@@ -93,6 +100,9 @@ namespace mame
         {
             return new uX(Width, m_space.unmap());
         }
+
+
+        protected override std.pair<uX, u16> read_flags(offs_t offset, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         protected override string name() { throw new emu_unimplemented(); }
@@ -107,13 +117,16 @@ namespace mame
         //using uX = typename emu::detail::handler_entry_size<Width>::uX;
 
 
-        public handler_entry_write_nop(address_space space) : base(space, 0) { }
+        public handler_entry_write_nop(address_space space, u16 flags) : base(space, flags) { }
         //~handler_entry_write_nop() = default;
 
 
         public override void write(offs_t offset, uX data, uX mem_mask)
         {
         }
+
+
+        protected override u16 write_flags(offs_t offset, uX data, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         protected override string name() { throw new emu_unimplemented(); }

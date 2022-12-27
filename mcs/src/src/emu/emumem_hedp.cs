@@ -5,6 +5,7 @@ using System;
 
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
+using u16 = System.UInt16;
 using uX = mame.FlexPrim;
 
 
@@ -32,7 +33,7 @@ namespace mame
         read16s_delegate m_delegate16s;
 
 
-        public handler_entry_read_delegate(address_space space, object /*READ*/ delegate_) : base(space, 0)
+        public handler_entry_read_delegate(address_space space, u16 flags, object /*READ*/ delegate_) : base(space, flags)
         {
             if      (delegate_ is read8_delegate)    m_delegate8    = (read8_delegate)delegate_;
             else if (delegate_ is read8m_delegate)   m_delegate8m   = (read8m_delegate)delegate_;
@@ -59,6 +60,9 @@ namespace mame
             else if (m_delegate16s != null)  return read_impl(m_delegate16s,  offset, mem_mask);
             else throw new emu_unimplemented();
         }
+
+
+        protected override std.pair<uX, u16> read_flags(offs_t offset, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         protected override string name() { throw new emu_unimplemented(); }
@@ -154,6 +158,7 @@ namespace mame
 
         //WRITE m_delegate;
         write8_delegate     m_delegate8;
+        write8m_delegate    m_delegate8m;
         write8sm_delegate   m_delegate8sm;
         write8smo_delegate  m_delegate8smo;
         write16_delegate    m_delegate16;
@@ -161,9 +166,10 @@ namespace mame
         write16smo_delegate m_delegate16smo;
 
 
-        public handler_entry_write_delegate(address_space space, object /*WRITE*/ delegate_) : base(space, 0)
+        public handler_entry_write_delegate(address_space space, u16 flags, object /*WRITE*/ delegate_) : base(space, flags)
         {
-            if (delegate_ is write8_delegate)          m_delegate8 = (write8_delegate)delegate_;
+            if      (delegate_ is write8_delegate)     m_delegate8 = (write8_delegate)delegate_;
+            else if (delegate_ is write8m_delegate)    m_delegate8m = (write8m_delegate)delegate_;
             else if (delegate_ is write8sm_delegate)   m_delegate8sm = (write8sm_delegate)delegate_;
             else if (delegate_ is write8smo_delegate)  m_delegate8smo = (write8smo_delegate)delegate_;
             else if (delegate_ is write16_delegate)    m_delegate16 = (write16_delegate)delegate_;
@@ -178,7 +184,8 @@ namespace mame
         public override void write(offs_t offset, uX data, uX mem_mask)
         {
             //write_impl<WRITE>(offset, data, mem_mask);
-            if (m_delegate8 != null)          write_impl(m_delegate8,     offset, data, mem_mask);
+            if      (m_delegate8 != null)     write_impl(m_delegate8,     offset, data, mem_mask);
+            else if (m_delegate8m != null)    write_impl(m_delegate8m,    offset, data, mem_mask);
             else if (m_delegate8sm != null)   write_impl(m_delegate8sm,   offset, data, mem_mask);
             else if (m_delegate8smo != null)  write_impl(m_delegate8smo,  offset, data, mem_mask);
             else if (m_delegate16 != null)    write_impl(m_delegate16,    offset, data, mem_mask);
@@ -186,6 +193,9 @@ namespace mame
             else if (m_delegate16smo != null) write_impl(m_delegate16smo, offset, data, mem_mask);
             else throw new emu_unimplemented();
         }
+
+
+        protected override u16 write_flags(offs_t offset, uX data, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         protected override string name() { throw new emu_unimplemented(); }
@@ -213,6 +223,10 @@ namespace mame
         //                     std::is_same<W, write32m_delegate>::value ||
         //                     std::is_same<W, write64m_delegate>::value,
         //                     void> write_impl(offs_t offset, uX data, uX mem_mask);
+        void write_impl(write8m_delegate delegate_, offs_t offset, uX data, uX mem_mask)
+        {
+            m_delegate8m(m_space, ((offset - m_address_base) & m_address_mask) >> (Width + AddrShift), data.u8);  //m_delegate(*this->m_space, ((offset - this->m_address_base) & this->m_address_mask) >> (Width + AddrShift), data);
+        }
 
         //template<typename W>
         //    std::enable_if_t<std::is_same<W, write8s_delegate>::value ||
@@ -276,7 +290,7 @@ namespace mame
         ioport_port m_port;
 
 
-        public handler_entry_read_ioport(address_space space, ioport_port port) : base(space, 0) { m_port = port; }
+        public handler_entry_read_ioport(address_space space, u16 flags, ioport_port port) : base(space, flags) { m_port = port; }
         //~handler_entry_read_ioport() = default;
 
 
@@ -284,6 +298,9 @@ namespace mame
         {
             return new uX(Width, m_port.read());
         }
+
+
+        protected override std.pair<uX, u16> read_flags(offs_t offset, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         protected override string name() { throw new emu_unimplemented(); }
@@ -301,7 +318,7 @@ namespace mame
         ioport_port m_port;
 
 
-        public handler_entry_write_ioport(address_space space, ioport_port port) : base(space, 0) { m_port = port; }
+        public handler_entry_write_ioport(address_space space, u16 flags, ioport_port port) : base(space, flags) { m_port = port; }
         //~handler_entry_write_ioport() = default;
 
 
@@ -309,6 +326,9 @@ namespace mame
         {
             throw new emu_unimplemented();
         }
+
+
+        protected override u16 write_flags(offs_t offset, uX data, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         protected override string name() { throw new emu_unimplemented(); }

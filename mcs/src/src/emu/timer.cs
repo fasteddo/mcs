@@ -10,6 +10,7 @@ using u32 = System.UInt32;
 using static mame.device_global;
 using static mame.emucore_global;
 using static mame.osdcore_global;
+using static mame.timer_global;
 
 
 namespace mame
@@ -18,8 +19,7 @@ namespace mame
     public class timer_device : device_t
     {
         //DEFINE_DEVICE_TYPE(TIMER, timer_device, "timer", "Timer")
-        static device_t device_creator_timer_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new timer_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TIMER = DEFINE_DEVICE_TYPE(device_creator_timer_device, "timer", "Timer");
+        public static readonly emu.detail.device_type_impl TIMER = DEFINE_DEVICE_TYPE("timer", "Timer", (type, mconfig, tag, owner, clock) => { return new timer_device(mconfig, tag, owner, clock); });
 
 
         // a timer callbacks look like this
@@ -307,5 +307,11 @@ namespace mame
                 }
             }
         }
+    }
+
+
+    static class timer_global
+    {
+        public static timer_device TIMER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<timer_device>(mconfig, tag, timer_device.TIMER, 0); }
     }
 }

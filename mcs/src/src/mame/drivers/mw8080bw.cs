@@ -9,19 +9,22 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
-using static mame.device_creator_helper_global;
 using static mame.device_global;
 using static mame.driver_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
+using static mame.i8085_global;
 using static mame.input_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
+using static mame.mb14241_global;
+using static mame.mw8080bw_global;
 using static mame.romentry_global;
 using static mame.screen_global;
+using static mame.watchdog_global;
 
 
 namespace mame
@@ -861,8 +864,8 @@ namespace mame
 
         static mw8080bw m_mw8080bw = new mw8080bw();
 
-        static device_t device_creator_mw8080bw(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mw8080bw_state(mconfig, (device_type)type, tag); }
-        static device_t device_creator_gunfight(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gunfight_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_mw8080bw(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mw8080bw_state(mconfig, type, tag); }
+        static device_t device_creator_gunfight(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gunfight_state(mconfig, type, tag); }
 
 
         // PCB #                                                             creator                  rom           year    name        parent machine                  inp                                   init                      monitor company,                            fullname,                            flags                  layout

@@ -3,9 +3,9 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using u32 = System.UInt32;
 
-using static mame.device_creator_helper_global;
 using static mame.emucore_global;
 using static mame.gamedrv_global;
 using static mame.romentry_global;

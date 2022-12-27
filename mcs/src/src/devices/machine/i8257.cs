@@ -16,6 +16,7 @@ using uint32_t = System.UInt32;
 using static mame.device_global;
 using static mame.diexec_global;
 using static mame.emucore_global;
+using static mame.i8257_global;
 using static mame.util;
 
 
@@ -25,8 +26,7 @@ namespace mame
                                 //device_execute_interface
     {
         //DEFINE_DEVICE_TYPE(I8257, i8257_device, "i8257", "Intel 8257 DMA Controller")
-        static device_t device_creator_i8257_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new i8257_device(mconfig, tag, owner, clock); }
-        public static readonly device_type I8257 = DEFINE_DEVICE_TYPE(device_creator_i8257_device, "i8257", "Intel 8257 DMA Controller");
+        public static readonly emu.detail.device_type_impl I8257 = DEFINE_DEVICE_TYPE("i8257", "Intel 8257 DMA Controller", (type, mconfig, tag, owner, clock) => { return new i8257_device(mconfig, tag, owner, clock); });
 
 
         class device_execute_interface_i8257 : device_execute_interface
@@ -609,5 +609,11 @@ namespace mame
 
             return false;
         }
+    }
+
+
+    static class i8257_global
+    {
+        public static i8257_device I8257<bool_Required>(machine_config mconfig, device_finder<i8257_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, i8257_device.I8257, clock); }
     }
 }

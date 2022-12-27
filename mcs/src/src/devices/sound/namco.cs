@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;  //using offs_t = u32;
@@ -16,7 +17,7 @@ using static mame.namco_global;
 
 namespace mame
 {
-    public static class namco_global
+    static partial class namco_global
     {
         /* quality parameter: internal sample rate is 192 KHz, output is 48 KHz */
         public const int INTERNAL_RATE = 192000;
@@ -483,8 +484,7 @@ namespace mame
     public class namco_device : namco_audio_device
     {
         //DEFINE_DEVICE_TYPE(NAMCO,       namco_device,       "namco",       "Namco")
-        static device_t device_creator_namco_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NAMCO = DEFINE_DEVICE_TYPE(device_creator_namco_device, "namco",       "Namco");
+        public static readonly emu.detail.device_type_impl NAMCO = DEFINE_DEVICE_TYPE("namco", "Namco", (type, mconfig, tag, owner, clock) => { return new namco_device(mconfig, tag, owner, clock); });
 
 
         uint8_t [] m_soundregs;  //std::unique_ptr<uint8_t[]> m_soundregs;
@@ -579,4 +579,10 @@ namespace mame
     //class namco_15xx_device : public namco_audio_device
 
     //class namco_cus30_device : public namco_audio_device
+
+
+    static partial class namco_global
+    {
+        public static namco_device NAMCO<bool_Required>(machine_config mconfig, device_finder<namco_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, namco_device.NAMCO, clock); }
+    }
 }

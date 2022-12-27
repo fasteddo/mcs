@@ -5,6 +5,7 @@ using System;
 
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using int8_t = System.SByte;
 using u32 = System.UInt32;
@@ -20,6 +21,7 @@ using static mame.emucore_global;
 using static mame.emumem_global;
 using static mame.osdcore_global;
 using static mame.util;
+using static mame.z80_global;
 
 
 /* On an NMOS Z80, if LD A,I or LD A,R is interrupted, P/V flag gets reset,
@@ -34,8 +36,7 @@ namespace mame
                               //z80_daisy_chain_interface
     {
         //DEFINE_DEVICE_TYPE(Z80, z80_device, "z80", "Zilog Z80")
-        static device_t device_creator_z80_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new z80_device(mconfig, tag, owner, clock); }
-        public static readonly device_type Z80 = DEFINE_DEVICE_TYPE(device_creator_z80_device, "z80", "Zilog Z80");
+        public static readonly emu.detail.device_type_impl Z80 = DEFINE_DEVICE_TYPE("z80", "Zilog Z80", (type, mconfig, tag, owner, clock) => { return new z80_device(mconfig, tag, owner, clock); });
 
 
         public class device_execute_interface_z80 : device_execute_interface
@@ -4140,5 +4141,11 @@ namespace mame
             m_icount.i -= 11;
             m_nmi_pending = false;
         }
+    }
+
+
+    static class z80_global
+    {
+        public static cpu_device Z80<bool_Required>(machine_config mconfig, device_finder<cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, z80_device.Z80, clock); }
     }
 }

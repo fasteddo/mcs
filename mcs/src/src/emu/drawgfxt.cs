@@ -12,6 +12,7 @@ using u32 = System.UInt32;
 using u64 = System.UInt64;
 
 using static mame.cpp_global;
+using static mame.drawgfx_global;
 using static mame.drawgfxt_global;
 using static mame.profiler_global;
 
@@ -106,6 +107,21 @@ namespace mame
         public static void PIXEL_OP_REBASE_OPAQUE(u32 color, ref u32 DEST, u8 SOURCE) { DEST = color + SOURCE; }
         public static void PIXEL_OP_REBASE_OPAQUE(u32 color, ref u32 DEST, u16 SOURCE) { DEST = color + SOURCE; }
         public static void PIXEL_OP_REBASE_OPAQUE(u32 color, ref u32 DEST, u32 SOURCE) { DEST = color + SOURCE; }
+
+        //#define PIXEL_OP_REBASE_OPAQUE_PRIORITY(DEST, PRIORITY, SOURCE)                     \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                                  \
+        //        (DEST) = color + (SOURCE);                                                  \
+        //    (PRIORITY) = 31;                                                                \
+        //}                                                                                   \
+        //while (0)
+        public static void PIXEL_OP_REBASE_OPAQUE_PRIORITY(u32 pmask, u32 color, ref u16 DEST, ref u8 PRIORITY, u8 SOURCE)
+        {
+            if (((1U << (PRIORITY & 0x1f)) & pmask) == 0)
+                DEST = (u16)(color + SOURCE);
+            PRIORITY = 31;
+        }
 
 
         /*-------------------------------------------------
@@ -276,125 +292,161 @@ namespace mame
             if (((trans_mask >> (int)srcdata) & 1) == 0)
                 DEST = color + srcdata;
         }
+
+        //#define PIXEL_OP_REBASE_TRANSMASK_PRIORITY(DEST, PRIORITY, SOURCE)                  \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if (((trans_mask >> srcdata) & 1) == 0)                                         \
+        //    {                                                                               \
+        //        if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
+        //            (DEST) = color + srcdata;                                               \
+        //        (PRIORITY) = 31;                                                            \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
+        public static void PIXEL_OP_REBASE_TRANSMASK_PRIORITY(u32 pmask, u32 trans_mask, u32 color, ref u16 DEST, ref u8 PRIORITY, u8 SOURCE)
+        {
+            u32 srcdata = SOURCE;
+            if (((trans_mask >> (int)srcdata) & 1) == 0)
+            {
+                if (((1U << (PRIORITY & 0x1f)) & pmask) == 0)
+                    DEST = (u16)(color + srcdata);
+                PRIORITY = 31;
+            }
+        }
+
+
+        /*-------------------------------------------------
+            PIXEL_OP_REBASE_TRANSTABLE - look up each pen in
+            'pentable'; if the entry is DRAWMODE_NONE,
+            don't draw it; if the entry is DRAWMODE_SOURCE,
+            add 'color' to the pen value; if the entry is
+            DRAWMODE_SHADOW, generate a shadow of the
+            destination pixel using 'shadowtable'
+
+            PIXEL_OP_REMAP_TRANSTABLE - look up each pen in
+            'pentable'; if the entry is DRAWMODE_NONE,
+            don't draw it; if the entry is DRAWMODE_SOURCE,
+            look up the pen via the 'paldata' array; if the
+            entry is DRAWMODE_SHADOW, generate a shadow of
+            the destination pixel using 'shadowtable'
+        -------------------------------------------------*/
+        //#define PIXEL_OP_REBASE_TRANSTABLE16(DEST, SOURCE)                                  \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    u32 entry = pentable[srcdata];                                                  \
+        //    if (entry != DRAWMODE_NONE)                                                     \
+        //    {                                                                               \
+        //        if (entry == DRAWMODE_SOURCE)                                               \
+        //            (DEST) = color + srcdata;                                               \
+        //        else                                                                        \
+        //            (DEST) = shadowtable[DEST];                                             \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
+        public static void PIXEL_OP_REBASE_TRANSTABLE16(u8 [] pentable, u32 color, Pointer<pen_t> shadowtable, ref u16 DEST, u8 SOURCE)
+        {
+            u32 srcdata = SOURCE;
+            u32 entry = pentable[srcdata];
+            if (entry != DRAWMODE_NONE)
+            {
+                if (entry == DRAWMODE_SOURCE)
+                    DEST = (u16)(color + srcdata);
+                else
+                    DEST = (u16)shadowtable[DEST];
+            }
+        }
+
+        //#define PIXEL_OP_REMAP_TRANSTABLE32(DEST, SOURCE)                                   \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    u32 entry = pentable[srcdata];                                                  \
+        //    if (entry != DRAWMODE_NONE)                                                     \
+        //    {                                                                               \
+        //        if (entry == DRAWMODE_SOURCE)                                               \
+        //            (DEST) = paldata[srcdata];                                              \
+        //        else                                                                        \
+        //            (DEST) = shadowtable[rgb_t(DEST).as_rgb15()];                           \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
+        //#define PIXEL_OP_REBASE_TRANSTABLE16_PRIORITY(DEST, PRIORITY, SOURCE)               \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    u32 entry = pentable[srcdata];                                                  \
+        //    if (entry != DRAWMODE_NONE)                                                     \
+        //    {                                                                               \
+        //        u8 pridata = (PRIORITY);                                                    \
+        //        if (entry == DRAWMODE_SOURCE)                                               \
+        //        {                                                                           \
+        //            if (((1 << (pridata & 0x1f)) & pmask) == 0)                             \
+        //                (DEST) = color + srcdata;                                           \
+        //            (PRIORITY) = 31;                                                        \
+        //        }                                                                           \
+        //        else if ((pridata & 0x80) == 0 && ((1 << (pridata & 0x1f)) & pmask) == 0)   \
+        //        {                                                                           \
+        //            (DEST) = shadowtable[DEST];                                             \
+        //            (PRIORITY) = pridata | 0x80;                                            \
+        //        }                                                                           \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
+        //#define PIXEL_OP_REMAP_TRANSTABLE32_PRIORITY(DEST, PRIORITY, SOURCE)                \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    u32 entry = pentable[srcdata];                                                  \
+        //    if (entry != DRAWMODE_NONE)                                                     \
+        //    {                                                                               \
+        //        u8 pridata = (PRIORITY);                                                    \
+        //        if (entry == DRAWMODE_SOURCE)                                               \
+        //        {                                                                           \
+        //            if (((1 << (pridata & 0x1f)) & pmask) == 0)                             \
+        //                (DEST) = paldata[srcdata];                                          \
+        //            (PRIORITY) = 31;                                                        \
+        //        }                                                                           \
+        //        else if ((pridata & 0x80) == 0 && ((1 << (pridata & 0x1f)) & pmask) == 0)   \
+        //        {                                                                           \
+        //            (DEST) = shadowtable[rgb_t(DEST).as_rgb15()];                           \
+        //            (PRIORITY) = pridata | 0x80;                                            \
+        //        }                                                                           \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
+
+
+        /*-------------------------------------------------
+            PIXEL_OP_REMAP_TRANSPEN_ALPHA - render all
+            pixels except those matching 'transpen',
+            mapping the pen to via the 'paldata' array;
+            the resulting color is RGB alpha blended
+            against the destination using 'alpha'
+        -------------------------------------------------*/
+        //#define PIXEL_OP_REMAP_TRANSPEN_ALPHA32(DEST, SOURCE)                               \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if (srcdata != trans_pen)                                                       \
+        //        (DEST) = alpha_blend_r32((DEST), paldata[srcdata], alpha_val);              \
+        //}                                                                                   \
+        //while (0)
+        //#define PIXEL_OP_REMAP_TRANSPEN_ALPHA32_PRIORITY(DEST, PRIORITY, SOURCE)            \
+        //do                                                                                  \
+        //{                                                                                   \
+        //    u32 srcdata = (SOURCE);                                                         \
+        //    if (srcdata != trans_pen)                                                       \
+        //    {                                                                               \
+        //        if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
+        //            (DEST) = alpha_blend_r32((DEST), paldata[srcdata], alpha_val);          \
+        //        (PRIORITY) = 31;                                                            \
+        //    }                                                                               \
+        //}                                                                                   \
+        //while (0)
     }
-
-
-    /*-------------------------------------------------
-        PIXEL_OP_REBASE_TRANSTABLE - look up each pen in
-        'pentable'; if the entry is DRAWMODE_NONE,
-        don't draw it; if the entry is DRAWMODE_SOURCE,
-        add 'color' to the pen value; if the entry is
-        DRAWMODE_SHADOW, generate a shadow of the
-        destination pixel using 'shadowtable'
-
-        PIXEL_OP_REMAP_TRANSTABLE - look up each pen in
-        'pentable'; if the entry is DRAWMODE_NONE,
-        don't draw it; if the entry is DRAWMODE_SOURCE,
-        look up the pen via the 'paldata' array; if the
-        entry is DRAWMODE_SHADOW, generate a shadow of
-        the destination pixel using 'shadowtable'
-    -------------------------------------------------*/
-    //#define PIXEL_OP_REBASE_TRANSTABLE16(DEST, SOURCE)                                  \
-    //do                                                                                  \
-    //{                                                                                   \
-    //    u32 srcdata = (SOURCE);                                                         \
-    //    u32 entry = pentable[srcdata];                                                  \
-    //    if (entry != DRAWMODE_NONE)                                                     \
-    //    {                                                                               \
-    //        if (entry == DRAWMODE_SOURCE)                                               \
-    //            (DEST) = color + srcdata;                                               \
-    //        else                                                                        \
-    //            (DEST) = shadowtable[DEST];                                             \
-    //    }                                                                               \
-    //}                                                                                   \
-    //while (0)
-    //#define PIXEL_OP_REMAP_TRANSTABLE32(DEST, SOURCE)                                   \
-    //do                                                                                  \
-    //{                                                                                   \
-    //    u32 srcdata = (SOURCE);                                                         \
-    //    u32 entry = pentable[srcdata];                                                  \
-    //    if (entry != DRAWMODE_NONE)                                                     \
-    //    {                                                                               \
-    //        if (entry == DRAWMODE_SOURCE)                                               \
-    //            (DEST) = paldata[srcdata];                                              \
-    //        else                                                                        \
-    //            (DEST) = shadowtable[rgb_t(DEST).as_rgb15()];                           \
-    //    }                                                                               \
-    //}                                                                                   \
-    //while (0)
-    //#define PIXEL_OP_REBASE_TRANSTABLE16_PRIORITY(DEST, PRIORITY, SOURCE)               \
-    //do                                                                                  \
-    //{                                                                                   \
-    //    u32 srcdata = (SOURCE);                                                         \
-    //    u32 entry = pentable[srcdata];                                                  \
-    //    if (entry != DRAWMODE_NONE)                                                     \
-    //    {                                                                               \
-    //        u8 pridata = (PRIORITY);                                                    \
-    //        if (entry == DRAWMODE_SOURCE)                                               \
-    //        {                                                                           \
-    //            if (((1 << (pridata & 0x1f)) & pmask) == 0)                             \
-    //                (DEST) = color + srcdata;                                           \
-    //            (PRIORITY) = 31;                                                        \
-    //        }                                                                           \
-    //        else if ((pridata & 0x80) == 0 && ((1 << (pridata & 0x1f)) & pmask) == 0)   \
-    //        {                                                                           \
-    //            (DEST) = shadowtable[DEST];                                             \
-    //            (PRIORITY) = pridata | 0x80;                                            \
-    //        }                                                                           \
-    //    }                                                                               \
-    //}                                                                                   \
-    //while (0)
-    //#define PIXEL_OP_REMAP_TRANSTABLE32_PRIORITY(DEST, PRIORITY, SOURCE)                \
-    //do                                                                                  \
-    //{                                                                                   \
-    //    u32 srcdata = (SOURCE);                                                         \
-    //    u32 entry = pentable[srcdata];                                                  \
-    //    if (entry != DRAWMODE_NONE)                                                     \
-    //    {                                                                               \
-    //        u8 pridata = (PRIORITY);                                                    \
-    //        if (entry == DRAWMODE_SOURCE)                                               \
-    //        {                                                                           \
-    //            if (((1 << (pridata & 0x1f)) & pmask) == 0)                             \
-    //                (DEST) = paldata[srcdata];                                          \
-    //            (PRIORITY) = 31;                                                        \
-    //        }                                                                           \
-    //        else if ((pridata & 0x80) == 0 && ((1 << (pridata & 0x1f)) & pmask) == 0)   \
-    //        {                                                                           \
-    //            (DEST) = shadowtable[rgb_t(DEST).as_rgb15()];                           \
-    //            (PRIORITY) = pridata | 0x80;                                            \
-    //        }                                                                           \
-    //    }                                                                               \
-    //}                                                                                   \
-    //while (0)
-
-
-    /*-------------------------------------------------
-        PIXEL_OP_REMAP_TRANSPEN_ALPHA - render all
-        pixels except those matching 'transpen',
-        mapping the pen to via the 'paldata' array;
-        the resulting color is RGB alpha blended
-        against the destination using 'alpha'
-    -------------------------------------------------*/
-    //#define PIXEL_OP_REMAP_TRANSPEN_ALPHA32(DEST, SOURCE)                               \
-    //do                                                                                  \
-    //{                                                                                   \
-    //    u32 srcdata = (SOURCE);                                                         \
-    //    if (srcdata != trans_pen)                                                       \
-    //        (DEST) = alpha_blend_r32((DEST), paldata[srcdata], alpha_val);              \
-    //}                                                                                   \
-    //while (0)
-    //#define PIXEL_OP_REMAP_TRANSPEN_ALPHA32_PRIORITY(DEST, PRIORITY, SOURCE)            \
-    //do                                                                                  \
-    //{                                                                                   \
-    //    u32 srcdata = (SOURCE);                                                         \
-    //    if (srcdata != trans_pen)                                                       \
-    //    {                                                                               \
-    //        if (((1 << ((PRIORITY) & 0x1f)) & pmask) == 0)                              \
-    //            (DEST) = alpha_blend_r32((DEST), paldata[srcdata], alpha_val);          \
-    //        (PRIORITY) = 31;                                                            \
-    //    }                                                                               \
-    //}                                                                                   \
-    //while (0)
 
 
     public partial class gfx_element
@@ -425,13 +477,15 @@ namespace mame
             public delegate void func32x8(ref u32 destp, u8 srcp);
             public delegate void func32x16(ref u32 destp, u16 srcp);
             public delegate void func32x32(ref u32 destp, u32 srcp);
+            public delegate void func16x8x8(ref u16 destp, ref u8 pri, u8 srcp);
 
-            func8x8   m_func8x8;
-            func16x8  m_func16x8;
-            func16x16 m_func16x16;
-            func32x8  m_func32x8;
-            func32x16 m_func32x16;
-            func32x32 m_func32x32;
+            func8x8    m_func8x8;
+            func16x8   m_func16x8;
+            func16x16  m_func16x16;
+            func32x8   m_func32x8;
+            func32x16  m_func32x16;
+            func32x32  m_func32x32;
+            func16x8x8 m_func16x8x8;
 
             public FunctionClass(func8x8 func) { m_func8x8 = func; }
             public FunctionClass(func16x8 func) { m_func16x8 = func; }
@@ -439,6 +493,7 @@ namespace mame
             public FunctionClass(func32x8 func) { m_func32x8 = func; }
             public FunctionClass(func32x16 func) { m_func32x16 = func; }
             public FunctionClass(func32x32 func) { m_func32x32 = func; }
+            public FunctionClass(func16x8x8 func) { m_func16x8x8 = func; }
 
             public void op8x8(ref u8 destp, u8 srcp) { m_func8x8(ref destp, srcp); }
             public void op16x8(ref u16 destp, u8 srcp) { m_func16x8(ref destp, srcp); }
@@ -446,6 +501,7 @@ namespace mame
             public void op32x8(ref u32 destp, u8 srcp) { m_func32x8(ref destp, srcp); }
             public void op32x16(ref u32 destp, u16 srcp) { m_func32x16(ref destp, srcp); }
             public void op32x32(ref u32 destp, u32 srcp) { m_func32x32(ref destp, srcp); }
+            public void op16x8x8(ref u16 destp, ref u8 pri, u8 srcp) { m_func16x8x8(ref destp, ref pri, srcp); }
         }
 
 
@@ -739,7 +795,7 @@ namespace mame
 
         //template <typename BitmapType, typename PriorityType, typename FunctionClass>
         //inline void gfx_element::drawgfx_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, PriorityType &priority, FunctionClass pixel_op)
-        void drawgfx_core<BitmapType, BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer, PriorityType>
+        void drawgfx_core<BitmapType, BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer, PriorityType, PriorityType_PixelType, PriorityType_PixelType_OPS, PriorityType_PixelTypePointer>
         (
             BitmapType dest,
             rectangle cliprect,
@@ -754,8 +810,318 @@ namespace mame
             where BitmapType : bitmap_specific<BitmapType_PixelType, BitmapType_PixelType_OPS, BitmapType_PixelTypePointer> 
             where BitmapType_PixelType_OPS : PixelType_operators, new()
             where BitmapType_PixelTypePointer : PointerU8
+            where PriorityType : bitmap_specific<PriorityType_PixelType, PriorityType_PixelType_OPS, PriorityType_PixelTypePointer> 
+            where PriorityType_PixelType_OPS : PixelType_operators, new()
+            where PriorityType_PixelTypePointer : PointerU8
         {
-            throw new emu_unimplemented();
+            g_profiler.start(profile_type.PROFILER_DRAWGFX);
+
+            do {
+                assert(dest.valid());
+                assert(priority.valid());
+                assert(dest.cliprect().contains(cliprect));
+                assert(code < elements());
+
+                // ignore empty/invalid cliprects
+                if (cliprect.empty())
+                    break;
+
+                // compute final pixel in X and exit if we are entirely clipped
+                s32 destendx = destx + width() - 1;
+                if (destx > cliprect.right() || destendx < cliprect.left())
+                    break;
+
+                // apply left clip
+                s32 srcx = 0;
+                if (destx < cliprect.left())
+                {
+                    srcx = cliprect.left() - destx;
+                    destx = cliprect.left();
+                }
+
+                // apply right clip
+                if (destendx > cliprect.right())
+                    destendx = cliprect.right();
+
+                // compute final pixel in Y and exit if we are entirely clipped
+                s32 destendy = desty + height() - 1;
+                if (desty > cliprect.bottom() || destendy < cliprect.top())
+                    break;
+
+                // apply top clip
+                s32 srcy = 0;
+                if (desty < cliprect.top())
+                {
+                    srcy = cliprect.top() - desty;
+                    desty = cliprect.top();
+                }
+
+                // apply bottom clip
+                if (destendy > cliprect.bottom())
+                    destendy = cliprect.bottom();
+
+                // apply X flipping
+                if (flipx != 0)
+                    srcx = width() - 1 - srcx;
+
+                // apply Y flipping
+                s32 dy = (s32)rowbytes();
+                if (flipy != 0)
+                {
+                    srcy = height() - 1 - srcy;
+                    dy = -dy;
+                }
+
+                // fetch the source data
+                PointerU8 srcdata = get_data(code);  //const u8 *srcdata = get_data(code);
+
+                // compute how many blocks of 4 pixels we have
+                u32 numblocks = (u32)((destendx + 1 - destx) / 4);
+                u32 leftovers = (u32)((destendx + 1 - destx) - 4 * numblocks);
+
+                // adjust srcdata to point to the first source pixel of the row
+                srcdata += srcy * (int)rowbytes() + srcx;
+
+                // non-flipped 8bpp case
+                if (flipx == 0)
+                {
+                    // iterate over pixels in Y
+                    for (s32 cury = desty; cury <= destendy; cury++)
+                    {
+                        //auto *priptr = &priority.pix(cury, destx);
+                        PointerU8 priptr8 = null;
+                        PointerU16 priptr16 = null;
+                        PointerU32 priptr32 = null;
+                        PointerU64 priptr64 = null;
+                        switch (priority.bpp())
+                        {
+                            case 8:  priptr8 = priority.pix8(cury, destx); break;
+                            case 16: throw new emu_unimplemented();
+                            case 32: throw new emu_unimplemented();
+                            case 64: throw new emu_unimplemented();
+                            default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", priority.bpp());
+                        }
+
+                        //auto *destptr = &dest.pix(cury, destx);
+                        PointerU8 destptr8 = null;
+                        PointerU16 destptr16 = null;
+                        PointerU32 destptr32 = null;
+                        PointerU64 destptr64 = null;
+                        switch (dest.bpp())
+                        {
+                            case 8:  destptr8 = dest.pix8(cury, destx); break;
+                            case 16: destptr16 = dest.pix16(cury, destx); break;
+                            case 32: destptr32 = dest.pix32(cury, destx); break;
+                            case 64: destptr64 = dest.pix64(cury, destx); break;
+                            default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
+                        }
+
+                        PointerU8 srcptr = new PointerU8(srcdata);  //const u8 *srcptr = srcdata;
+                        srcdata += dy;
+
+                        // iterate over unrolled blocks of 4
+                        for (s32 curx = 0; curx < numblocks; curx++)
+                        {
+                            //pixel_op(destptr[0], priptr[0], srcptr[0]);
+                            //pixel_op(destptr[1], priptr[1], srcptr[1]);
+                            //pixel_op(destptr[2], priptr[2], srcptr[2]);
+                            //pixel_op(destptr[3], priptr[3], srcptr[3]);
+                            switch (dest.bpp())
+                            {
+                                case 8: throw new emu_unimplemented();
+                                case 16:
+                                {
+                                    var destptrTemp0 = destptr16[0]; var priptrTemp0 = priptr8[0]; pixel_op.op16x8x8(ref destptrTemp0, ref priptrTemp0, srcptr[0]); destptr16[0] = destptrTemp0; priptr8[0] = priptrTemp0;
+                                    var destptrTemp1 = destptr16[1]; var priptrTemp1 = priptr8[1]; pixel_op.op16x8x8(ref destptrTemp1, ref priptrTemp1, srcptr[1]); destptr16[1] = destptrTemp1; priptr8[1] = priptrTemp1;
+                                    var destptrTemp2 = destptr16[2]; var priptrTemp2 = priptr8[2]; pixel_op.op16x8x8(ref destptrTemp2, ref priptrTemp2, srcptr[2]); destptr16[2] = destptrTemp2; priptr8[2] = priptrTemp2;
+                                    var destptrTemp3 = destptr16[3]; var priptrTemp3 = priptr8[3]; pixel_op.op16x8x8(ref destptrTemp3, ref priptrTemp3, srcptr[3]); destptr16[3] = destptrTemp3; priptr8[3] = priptrTemp3;
+                                    break;
+                                }
+                                case 32: throw new emu_unimplemented();
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
+                            }
+
+                            srcptr += 4;
+
+                            //destptr += 4;
+                            switch (dest.bpp())
+                            {
+                                case 8:  destptr8 += 4; break;
+                                case 16: destptr16 += 4; break;
+                                case 32: destptr32 += 4; break;
+                                case 64: destptr64 += 4; break;
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
+                            }
+
+                            //priptr += 4;
+                            switch (priority.bpp())
+                            {
+                                case 8:  priptr8 += 4; break;
+                                case 16: priptr16 += 4; break;
+                                case 32: priptr32 += 4; break;
+                                case 64: priptr64 += 4; break;
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", priority.bpp());
+                            }
+                        }
+
+                        // iterate over leftover pixels
+                        for (s32 curx = 0; curx < leftovers; curx++)
+                        {
+                            //pixel_op(destptr[0], priptr[0], srcptr[0]);
+                            switch (dest.bpp())
+                            {
+                                case 8: throw new emu_unimplemented();
+                                case 16: { var destptrTemp0 = destptr16[0]; var priptrTemp0 = priptr8[0]; pixel_op.op16x8x8(ref destptrTemp0, ref priptrTemp0, srcptr[0]); destptr16[0] = destptrTemp0; priptr8[0] = priptrTemp0; break; }
+                                case 32: throw new emu_unimplemented();
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
+                            }
+
+                            srcptr++;
+
+                            //destptr++;
+                            switch (dest.bpp())
+                            {
+                                case 8:  destptr8++; break;
+                                case 16: destptr16++; break;
+                                case 32: destptr32++; break;
+                                case 64: destptr64++; break;
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
+                            }
+
+                            //priptr++;
+                            switch (priority.bpp())
+                            {
+                                case 8:  priptr8++; break;
+                                case 16: priptr16++; break;
+                                case 32: priptr32++; break;
+                                case 64: priptr64++; break;
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", priority.bpp());
+                            }
+                        }
+                    }
+                }
+
+                // flipped 8bpp case
+                else
+                {
+                    // iterate over pixels in Y
+                    for (s32 cury = desty; cury <= destendy; cury++)
+                    {
+                        //auto *priptr = &priority.pix(cury, destx);
+                        PointerU8 priptr8 = null;
+                        PointerU16 priptr16 = null;
+                        PointerU32 priptr32 = null;
+                        PointerU64 priptr64 = null;
+                        switch (priority.bpp())
+                        {
+                            case 8:  priptr8 = priority.pix8(cury, destx); break;
+                            case 16: throw new emu_unimplemented();
+                            case 32: throw new emu_unimplemented();
+                            case 64: throw new emu_unimplemented();
+                            default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", priority.bpp());
+                        }
+
+                        //auto *destptr = &dest.pix(cury, destx);
+                        PointerU8 destptr8 = null;
+                        PointerU16 destptr16 = null;
+                        PointerU32 destptr32 = null;
+                        PointerU64 destptr64 = null;
+                        switch (dest.bpp())
+                        {
+                            case 8:  destptr8 = dest.pix8(cury, destx); break;
+                            case 16: destptr16 = dest.pix16(cury, destx); break;
+                            case 32: destptr32 = dest.pix32(cury, destx); break;
+                            case 64: destptr64 = dest.pix64(cury, destx); break;
+                            default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
+                        }
+
+                        PointerU8 srcptr = new PointerU8(srcdata);  //const u8 *srcptr = srcdata;
+                        srcdata += dy;
+
+                        // iterate over unrolled blocks of 4
+                        for (s32 curx = 0; curx < numblocks; curx++)
+                        {
+                            //pixel_op(destptr[0], priptr[0], srcptr[ 0]);
+                            //pixel_op(destptr[1], priptr[1], srcptr[-1]);
+                            //pixel_op(destptr[2], priptr[2], srcptr[-2]);
+                            //pixel_op(destptr[3], priptr[3], srcptr[-3]);
+                            switch (dest.bpp())
+                            {
+                                case 8: throw new emu_unimplemented();
+                                case 16:
+                                {
+                                    var destptrTemp0 = destptr16[0]; var priptrTemp0 = priptr8[0]; pixel_op.op16x8x8(ref destptrTemp0, ref priptrTemp0, srcptr[0]); destptr16[0] = destptrTemp0; priptr8[0] = priptrTemp0;
+                                    var destptrTemp1 = destptr16[1]; var priptrTemp1 = priptr8[1]; pixel_op.op16x8x8(ref destptrTemp1, ref priptrTemp1, srcptr[-1]); destptr16[1] = destptrTemp1; priptr8[1] = priptrTemp1;
+                                    var destptrTemp2 = destptr16[2]; var priptrTemp2 = priptr8[2]; pixel_op.op16x8x8(ref destptrTemp2, ref priptrTemp2, srcptr[-2]); destptr16[2] = destptrTemp2; priptr8[2] = priptrTemp2;
+                                    var destptrTemp3 = destptr16[3]; var priptrTemp3 = priptr8[3]; pixel_op.op16x8x8(ref destptrTemp3, ref priptrTemp3, srcptr[-3]); destptr16[3] = destptrTemp3; priptr8[3] = priptrTemp3;
+                                    break;
+                                }
+                                case 32: throw new emu_unimplemented();
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
+                            }
+
+                            srcptr -= 4;
+
+                            //destptr += 4;
+                            switch (dest.bpp())
+                            {
+                                case 8:  destptr8 += 4; break;
+                                case 16: destptr16 += 4; break;
+                                case 32: destptr32 += 4; break;
+                                case 64: destptr64 += 4; break;
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
+                            }
+
+                            //priptr += 4;
+                            switch (priority.bpp())
+                            {
+                                case 8:  priptr8 += 4; break;
+                                case 16: priptr16 += 4; break;
+                                case 32: priptr32 += 4; break;
+                                case 64: priptr64 += 4; break;
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", priority.bpp());
+                            }
+                        }
+
+                        // iterate over leftover pixels
+                        for (s32 curx = 0; curx < leftovers; curx++)
+                        {
+                            //pixel_op(destptr[0], priptr[0], srcptr[0]);
+                            switch (dest.bpp())
+                            {
+                                case 8: throw new emu_unimplemented();
+                                case 16: { var destptrTemp0 = destptr16[0]; var priptrTemp0 = priptr8[0]; pixel_op.op16x8x8(ref destptrTemp0, ref priptrTemp0, srcptr[0]); destptr16[0] = destptrTemp0; priptr8[0] = priptrTemp0; break; }
+                                case 32: throw new emu_unimplemented();
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
+                            }
+
+                            srcptr--;
+
+                            //destptr++;
+                            switch (dest.bpp())
+                            {
+                                case 8:  destptr8++; break;
+                                case 16: destptr16++; break;
+                                case 32: destptr32++; break;
+                                case 64: destptr64++; break;
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", dest.bpp());
+                            }
+
+                            //priptr++;
+                            switch (priority.bpp())
+                            {
+                                case 8:  priptr8++; break;
+                                case 16: priptr16++; break;
+                                case 32: priptr32++; break;
+                                case 64: priptr64++; break;
+                                default: throw new emu_fatalerror("drawgfx_core() - unknown bpp - {0}\n", priority.bpp());
+                            }
+                        }
+                    }
+                }
+            } while (false);
+
+            g_profiler.stop();
         }
     }
 

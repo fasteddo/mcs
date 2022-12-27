@@ -11,11 +11,11 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 
-using static mame.device_creator_helper_global;
 using static mame.device_global;
 using static mame.diexec_global;
 using static mame.emucore_global;
 using static mame.m68705_global;
+using static mame.taitosjsec_global;
 using static mame.util;
 
 
@@ -24,8 +24,7 @@ namespace mame
     public class taito_sj_security_mcu_device : device_t
     {
         //DEFINE_DEVICE_TYPE(TAITO_SJ_SECURITY_MCU,  taito_sj_security_mcu_device, "taitosjsecmcu", "Taito SJ Security MCU Interface")
-        static device_t device_creator_taito_sj_security_mcu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taito_sj_security_mcu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TAITO_SJ_SECURITY_MCU = DEFINE_DEVICE_TYPE(device_creator_taito_sj_security_mcu_device, "taitosjsecmcu", "Taito SJ Security MCU Interface");
+        public static readonly emu.detail.device_type_impl TAITO_SJ_SECURITY_MCU = DEFINE_DEVICE_TYPE("taitosjsecmcu", "Taito SJ Security MCU Interface", (type, mconfig, tag, owner, clock) => { return new taito_sj_security_mcu_device(mconfig, tag, owner, clock); });
 
 
         public enum int_mode
@@ -308,5 +307,11 @@ namespace mame
                     m_mcu.op0.set_input_line(M68705_IRQ_LINE, ASSERT_LINE);
             }
         }
+    }
+
+
+    static class taitosjsec_global
+    {
+        public static taito_sj_security_mcu_device TAITO_SJ_SECURITY_MCU<bool_Required>(machine_config mconfig, device_finder<taito_sj_security_mcu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, taito_sj_security_mcu_device.TAITO_SJ_SECURITY_MCU, clock); }
     }
 }

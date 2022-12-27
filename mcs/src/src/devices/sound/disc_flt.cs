@@ -666,6 +666,88 @@ namespace mame
     }
 
 
+    //DISCRETE_CLASS_STEP_RESET(dst_rc_circuit_1, 1,
+    class discrete_dst_rc_circuit_1_node : discrete_base_node,
+                                           discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        double DST_RC_CIRCUIT_1__IN0 { get { return DISCRETE_INPUT(0); } }
+        double DST_RC_CIRCUIT_1__IN1 { get { return DISCRETE_INPUT(1); } }
+        double DST_RC_CIRCUIT_1__R { get { return DISCRETE_INPUT(2); } }
+        double DST_RC_CIRCUIT_1__C { get { return DISCRETE_INPUT(3); } }
+
+        const double CD4066_R_ON = 270;
+
+
+        double m_v_cap;
+        double m_v_charge_1_2;
+        double m_v_drop;
+        double m_exp_1;
+        double m_exp_1_2;
+        double m_exp_2;
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set;  }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP( dst_rc_circuit_1 )
+        public void step()
+        {
+            if (DST_RC_CIRCUIT_1__IN0 == 0)
+                if (DST_RC_CIRCUIT_1__IN1 == 0)
+                    /* cap is floating and does not change charge */
+                    /* output is pulled to ground */
+                    set_output(0,  0);
+                else
+                {
+                    /* cap is discharged */
+                    m_v_cap -= m_v_cap * m_exp_2;
+                    set_output(0,  m_v_cap * m_v_drop);
+                }
+            else
+                if (DST_RC_CIRCUIT_1__IN1 == 0)
+                {
+                    /* cap is charged */
+                    m_v_cap += (5.0 - m_v_cap) * m_exp_1;
+                    /* output is pulled to ground */
+                    set_output(0,  0);
+                }
+                else
+                {
+                    /* cap is charged slightly less */
+                    m_v_cap += (m_v_charge_1_2 - m_v_cap) * m_exp_1_2;
+                    set_output(0,  m_v_cap * m_v_drop);
+                }
+        }
+
+
+        //DISCRETE_RESET( dst_rc_circuit_1 )
+        public override void reset()
+        {
+            /* the charging voltage across the cap based on in2*/
+            m_v_drop = RES_VOLTAGE_DIVIDER(CD4066_R_ON, CD4066_R_ON + DST_RC_CIRCUIT_1__R);
+            m_v_charge_1_2 = 5.0 * m_v_drop;
+            m_v_cap = 0;
+
+            /* precalculate charging exponents */
+            /* discharge cap - in1 = 0, in2 = 1*/
+            m_exp_2 = RC_CHARGE_EXP((CD4066_R_ON + DST_RC_CIRCUIT_1__R) * DST_RC_CIRCUIT_1__C);
+            /* charge cap - in1 = 1, in2 = 0 */
+            m_exp_1 = RC_CHARGE_EXP(CD4066_R_ON * DST_RC_CIRCUIT_1__C);
+            /* charge cap - in1 = 1, in2 = 1 */
+            m_exp_1_2 = RC_CHARGE_EXP(RES_2_PARALLEL(CD4066_R_ON, CD4066_R_ON + DST_RC_CIRCUIT_1__R) * DST_RC_CIRCUIT_1__C);
+
+            /* starts at 0 until cap starts charging */
+            set_output(0, 0);
+        }
+    }
+
+
     //DISCRETE_CLASS_STEP_RESET(dst_rcdisc, 1,
     class discrete_dst_rcdisc_node : discrete_base_node,
                                      discrete_step_interface
@@ -811,16 +893,99 @@ namespace mame
     }
 
 
-#if false
-    DISCRETE_CLASS_STEP_RESET(dst_rcdisc3, 1,
-        int             m_state;
-        double          m_v_out;
-        double          m_t;                    /* time */
-        double          m_exponent0;
-        double          m_exponent1;
-        double          m_v_diode;              /* rcdisc3 */
-    );
-#endif
+    //DISCRETE_CLASS_STEP_RESET(dst_rcdisc3, 1,
+    class discrete_dst_rcdisc3_node : discrete_base_node,
+                                      discrete_step_interface
+    {
+        const int _maxout = 1;
+
+
+        bool DST_RCDISC3__ENABLE { get { return DISCRETE_INPUT(0) != 0; } }
+        double DST_RCDISC3__IN { get { return DISCRETE_INPUT(1); } }
+        double DST_RCDISC3__R1 { get { return DISCRETE_INPUT(2); } }
+        double DST_RCDISC3__R2 { get { return DISCRETE_INPUT(3); } }
+        double DST_RCDISC3__C { get { return DISCRETE_INPUT(4); } }
+        double DST_RCDISC3__DJV { get { return DISCRETE_INPUT(5); } }
+
+
+        int m_state;
+        double m_v_out;
+        double m_t;                    /* time */
+        double m_exponent0;
+        double m_exponent1;
+        double m_v_diode;              /* rcdisc3 */
+
+
+        // discrete_step_interface
+
+        public osd_ticks_t run_time { get; set;  }
+        public discrete_base_node self { get; set; }
+
+
+        //DISCRETE_STEP(dst_rcdisc3)
+        public void step()
+        {
+            double diff;
+
+            /* Exponential based in difference between input/output   */
+
+            if (DST_RCDISC3__ENABLE)
+            {
+                diff = DST_RCDISC3__IN - m_v_out;
+                if (m_v_diode > 0)
+                {
+                    if (diff > 0)
+                    {
+                        diff = diff * m_exponent0;
+                    }
+                    else if (diff < -m_v_diode)
+                    {
+                        diff = diff * m_exponent1;
+                    }
+                    else
+                    {
+                        diff = diff * m_exponent0;
+                    }
+                }
+                else
+                {
+                    if (diff < 0)
+                    {
+                        diff = diff * m_exponent0;
+                    }
+                    else if (diff > -m_v_diode)
+                    {
+                        diff = diff * m_exponent1;
+                    }
+                    else
+                    {
+                        diff = diff * m_exponent0;
+                    }
+                }
+
+                m_v_out += diff;
+                set_output(0, m_v_out);
+            }
+            else
+            {
+                set_output(0, 0);
+            }
+        }
+
+
+        //DISCRETE_RESET(dst_rcdisc3)
+        public override void reset()
+        {
+            m_v_out = 0;
+
+            m_state = 0;
+            m_t = 0;
+            m_v_diode = DST_RCDISC3__DJV;
+            m_exponent0 = RC_CHARGE_EXP(DST_RCDISC3__R1 * DST_RCDISC3__C);
+            m_exponent1 = RC_CHARGE_EXP(RES_2_PARALLEL(DST_RCDISC3__R1, DST_RCDISC3__R2) * DST_RCDISC3__C);
+        }
+    }
+
 
 #if false
     DISCRETE_CLASS_STEP_RESET(dst_rcdisc4, 1,

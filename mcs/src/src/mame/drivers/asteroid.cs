@@ -6,7 +6,8 @@ using System;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
-using static mame.device_creator_helper_global;
+using static mame._74153_global;
+using static mame.avgdvg_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
 using static mame.gamedrv_global;
@@ -15,9 +16,13 @@ using static mame.input_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
+using static mame.m6502_global;
+using static mame.output_latch_global;
 using static mame.romentry_global;
 using static mame.screen_global;
 using static mame.util;
+using static mame.vector_global;
+using static mame.watchdog_global;
 
 
 namespace mame
@@ -346,7 +351,7 @@ namespace mame
 
         static asteroid m_asteroid = new asteroid();
 
-        static device_t device_creator_asteroid(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new asteroid_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_asteroid(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new asteroid_state(mconfig, type, tag); }
 
 
         //                                                        creator,                 rom           YEAR    NAME          PARENT      MACHINE                  INPUT                                 INIT                      ROT   COMPANY, FULLNAME,            FLAGS                  LAYOUT

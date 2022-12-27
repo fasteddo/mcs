@@ -5,6 +5,7 @@ using System;
 
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using s32 = System.Int32;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u8 = System.Byte;
@@ -16,6 +17,7 @@ using static mame.cpp_global;
 using static mame.device_global;
 using static mame.disound_global;
 using static mame.emucore_global;
+using static mame.msm5205_global;
 using static mame.util;
 
 
@@ -25,8 +27,7 @@ namespace mame
                                   //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(MSM5205, msm5205_device, "msm5205", "OKI MSM5205 ADPCM")
-        static device_t device_creator_msm5205_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new msm5205_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MSM5205 = DEFINE_DEVICE_TYPE(device_creator_msm5205_device, "msm5205", "OKI MSM5205 ADPCM");
+        public static readonly emu.detail.device_type_impl MSM5205 = DEFINE_DEVICE_TYPE("msm5205", "OKI MSM5205 ADPCM", (type, mconfig, tag, owner, clock) => { return new msm5205_device(mconfig, tag, owner, clock); });
 
 
         public class device_sound_interface_msm5205 : device_sound_interface
@@ -361,4 +362,10 @@ namespace mame
 
 
     //class msm6585_device : public msm5205_device
+
+
+    static class msm5205_global
+    {
+        public static msm5205_device MSM5205<bool_Required>(machine_config mconfig, device_finder<msm5205_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, msm5205_device.MSM5205, clock); }
+    }
 }

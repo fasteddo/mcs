@@ -5,6 +5,7 @@ using System;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using s8 = System.SByte;
 using s16 = System.Int16;
@@ -22,7 +23,7 @@ using static mame.util;
 
 namespace mame
 {
-    public static class ay8910_global
+    static partial class ay8910_global
     {
         /* Internal resistance at Volume level 7. */
 
@@ -51,8 +52,7 @@ namespace mame
                                  //public device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(AY8910, ay8910_device, "ay8910", "AY-3-8910A PSG")
-        static device_t device_creator_ay8910_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8910_device(mconfig, tag, owner, clock); }
-        public static readonly device_type AY8910 = DEFINE_DEVICE_TYPE(device_creator_ay8910_device, "ay8910", "AY-3-8910A PSG");
+        public static readonly emu.detail.device_type_impl AY8910 = DEFINE_DEVICE_TYPE("ay8910", "AY-3-8910A PSG", (type, mconfig, tag, owner, clock) => { return new ay8910_device(mconfig, tag, owner, clock); });
 
 
         public class device_sound_interface_ay8910 : device_sound_interface
@@ -862,7 +862,17 @@ namespace mame
         }
 
 
-        void noise_rng_tick() { throw new emu_unimplemented(); }
+        void noise_rng_tick()
+        {
+            // The Random Number Generator of the 8910 is a 17-bit shift
+            // register. The input to the shift register is bit0 XOR bit3
+            // (bit0 is the output). This was verified on AY-3-8910 and YM2149 chips.
+
+            if ((m_feature & (int)config_t.PSG_HAS_EXPANDED_MODE) != 0) // AY8930 LFSR algorithm is slightly different, verified from manual
+                m_rng = (m_rng >> 1) | ((BIT(m_rng, 0) ^ BIT(m_rng, 2)) << 16);
+            else
+                m_rng = (m_rng >> 1) | ((BIT(m_rng, 0) ^ BIT(m_rng, 3)) << 16);
+        }
 
 
         // inlines
@@ -1307,8 +1317,7 @@ namespace mame
     class ay8914_device : ay8910_device
     {
         //DEFINE_DEVICE_TYPE(AY8914, ay8914_device, "ay8914", "AY-3-8914A PSG")
-        static device_t device_creator_ay8914_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ay8914_device(mconfig, tag, owner, clock); }
-        public static readonly device_type AY8914 = DEFINE_DEVICE_TYPE(device_creator_ay8914_device, "ay8914", "AY-3-8914A PSG");
+        public static readonly emu.detail.device_type_impl AY8914 = DEFINE_DEVICE_TYPE("ay8914", "AY-3-8914A PSG", (type, mconfig, tag, owner, clock) => { return new ay8914_device(mconfig, tag, owner, clock); });
 
 
         static readonly u8 [] mapping8914to8910 = new u8[16] { 0, 2, 4, 11, 1, 3, 5, 12, 7, 6, 13, 8, 9, 10, 14, 15 };
@@ -1335,5 +1344,13 @@ namespace mame
             address_w(mapping8914to8910[offset & 0xf]);
             data_w((u8)(data & 0xff));
         }
+    }
+
+
+    static partial class ay8910_global
+    {
+        public static ay8910_device AY8910(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
+        public static ay8910_device AY8910(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<ay8910_device>(mconfig, tag, ay8910_device.AY8910, clock); }
+        public static ay8910_device AY8910<bool_Required>(machine_config mconfig, device_finder<ay8910_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ay8910_device.AY8910, clock); }
     }
 }

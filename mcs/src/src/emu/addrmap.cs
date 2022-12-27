@@ -105,6 +105,7 @@ namespace mame
         public offs_t m_addrselect;           // select bits
         public u64 m_mask;                 // mask for which lanes apply
         public int m_cswidth;              // chip select width override
+        public u16 m_flags;                // user flags
         public map_handler_data m_read = new map_handler_data();                 // data for read handler
         public map_handler_data m_write = new map_handler_data();                // data for write handler
         public string m_share;                // tag of a shared memory block
@@ -191,6 +192,7 @@ namespace mame
             m_addrselect = 0;
             m_mask = 0;
             m_cswidth = 0;
+            m_flags = 0;
             m_share = null;
             m_region = null;
             m_rgnoffs = 0;
@@ -312,6 +314,10 @@ namespace mame
 
         // chip select width setting
         public address_map_entry cswidth(int _cswidth) { m_cswidth = _cswidth; return this; }
+
+
+        // flags setting
+        public address_map_entry flags(u16 _flags) { m_flags = _flags; return this; }
 
 
         // I/O port configuration
@@ -444,6 +450,7 @@ namespace mame
         public address_map_entry r(string tag, read16_delegate func) { return r(func); }
         public address_map_entry r(string tag, read8s_delegate func) { return r(func); }
         public address_map_entry r(string tag, read16s_delegate func) { return r(func); }
+        public address_map_entry r(string tag, read8sm_delegate func) { return r(func); }
         public address_map_entry r(string tag, read8mo_delegate func) { return r(func); }
         public address_map_entry r(string tag, read8smo_delegate func) { return r(func); }
 
@@ -1136,7 +1143,7 @@ namespace mame
         //----------------------------------------------------------
         //  address_map - constructor dynamic device mapping case
         //----------------------------------------------------------
-        public address_map(address_space space, offs_t start, offs_t end, u64 unitmask, int cswidth, device_t device, address_map_constructor submap_delegate)
+        public address_map(address_space space, offs_t start, offs_t end, u64 unitmask, int cswidth, u16 flags, device_t device, address_map_constructor submap_delegate)
         {
             m_spacenum = space.spacenum();
             m_device = device;
@@ -1146,7 +1153,7 @@ namespace mame
             m_globalmask = space.addrmask();
 
 
-            op(start, end).m(DEVICE_SELF, submap_delegate).umask64(unitmask).cswidth(cswidth);
+            op(start, end).m(DEVICE_SELF, submap_delegate).umask64(unitmask).cswidth(cswidth).flags(flags);
         }
 
 
@@ -1305,6 +1312,7 @@ namespace mame
                             }
 
                             subentry.m_cswidth = std.max(subentry.m_cswidth, entry.m_cswidth);
+                            subentry.m_flags = (u16)(subentry.m_flags | entry.m_flags);
 
                             if (subentry.m_addrend > max_end)
                                 subentry.m_addrend = max_end;

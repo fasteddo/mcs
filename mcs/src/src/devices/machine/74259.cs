@@ -5,11 +5,13 @@ using System;
 
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
 
+using static mame._74259_global;
 using static mame.device_global;
 using static mame.emucore_global;
 using static mame.util;
@@ -273,13 +275,19 @@ namespace mame
     public class ls259_device : addressable_latch_device
     {
         //DEFINE_DEVICE_TYPE(LS259, ls259_device, "ls259", "74LS259 Addressable Latch")
-        static device_t device_creator_ls259_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ls259_device(mconfig, tag, owner, clock); }
-        public static readonly device_type LS259 = DEFINE_DEVICE_TYPE(device_creator_ls259_device, "ls259", "74LS259 Addressable Latch");
+        public static readonly emu.detail.device_type_impl LS259 = DEFINE_DEVICE_TYPE("ls259", "74LS259 Addressable Latch", (type, mconfig, tag, owner, clock) => { return new ls259_device(mconfig, tag, owner, clock); });
 
 
         ls259_device(machine_config mconfig, string tag, device_t owner, u32 clock = 0)
             : base(mconfig, LS259, tag, owner, clock, false)
         {
         }
+    }
+
+
+    static class _74259_global
+    {
+        public static ls259_device LS259(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<ls259_device>(mconfig, tag, ls259_device.LS259, 0); }
+        public static ls259_device LS259<bool_Required>(machine_config mconfig, device_finder<ls259_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ls259_device.LS259, clock); }
     }
 }

@@ -28,7 +28,7 @@ namespace mame
         //-------------------------------------------------
         //  device_z80daisy_interface - constructor
         //-------------------------------------------------
-        device_z80daisy_interface(machine_config mconfig, device_t device)
+        protected device_z80daisy_interface(machine_config mconfig, device_t device)
             : base(device, "z80daisy")
         {
             m_daisy_next = null;

@@ -7,6 +7,7 @@ using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using int8_t = System.SByte;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
@@ -19,6 +20,7 @@ using unsigned_char = System.Byte;
 using static mame.device_global;
 using static mame.emucore_global;
 using static mame.tms5110r_global;
+using static mame.tms5220_global;
 
 
 namespace mame
@@ -27,8 +29,7 @@ namespace mame
                                   //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(TMS5220,   tms5220_device,   "tms5220",   "TMS5220")
-        static device_t device_creator_tms5220_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new tms5220_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TMS5220 = DEFINE_DEVICE_TYPE(device_creator_tms5220_device, "tms5220", "TMS5220");
+        public static readonly emu.detail.device_type_impl TMS5220 = DEFINE_DEVICE_TYPE("tms5220", "TMS5220", (type, mconfig, tag, owner, clock) => { return new tms5220_device(mconfig, tag, owner, clock); });
 
 
         /* *****debugging defines***** */
@@ -1837,8 +1838,7 @@ namespace mame
     public class tms5220c_device : tms5220_device
     {
         //DEFINE_DEVICE_TYPE(TMS5220C,  tms5220c_device,  "tms5220c",  "TMS5220C")
-        static device_t device_creator_tms5220c_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new tms5220c_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TMS5220C = DEFINE_DEVICE_TYPE(device_creator_tms5220c_device, "tms5220c", "TMS5220C");
+        public static readonly emu.detail.device_type_impl TMS5220C = DEFINE_DEVICE_TYPE("tms5220c", "TMS5220C", (type, mconfig, tag, owner, clock) => { return new tms5220c_device(mconfig, tag, owner, clock); });
 
         tms5220c_device(machine_config mconfig, string tag, device_t owner, uint32_t clock) : base(mconfig, TMS5220C, tag, owner, clock, TMS5220_IS_5220C) { }
     }
@@ -1854,4 +1854,10 @@ namespace mame
     //DECLARE_DEVICE_TYPE(CD2501E,   cd2501e_device)
     //DECLARE_DEVICE_TYPE(TMS5200,   tms5200_device)
     //DECLARE_DEVICE_TYPE(CD2501ECD, cd2501ecd_device)
+
+
+    static class tms5220_global
+    {
+        public static tms5220c_device TMS5220C<bool_Required>(machine_config mconfig, device_finder<tms5220c_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, tms5220c_device.TMS5220C, clock); }
+    }
 }

@@ -26,7 +26,7 @@ using static mame.tilemap_global;
 
 namespace mame
 {
-    public static partial class tilemap_global
+    static partial class tilemap_global
     {
         // maximum number of groups
         public const int TILEMAP_NUM_GROUPS              = 256;
@@ -490,7 +490,7 @@ namespace mame
         //  a foreground mask (mapping to layer 0) and a
         //  background mask (mapping to layer 1)
         //-------------------------------------------------
-        void set_transmask(int group, u32 fgmask, u32 bgmask)
+        public void set_transmask(int group, u32 fgmask, u32 bgmask)
         {
             // iterate over all 32 pens specified
             for (pen_t pen = 0; pen < 32; pen++)
@@ -1717,8 +1717,7 @@ namespace mame
                                   //tilemap_t
     {
         //DEFINE_DEVICE_TYPE(TILEMAP, tilemap_device, "tilemap", "Tilemap")
-        static device_t device_creator_tilemap_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new tilemap_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TILEMAP = DEFINE_DEVICE_TYPE(device_creator_tilemap_device, "tilemap", "Tilemap");
+        public static readonly emu.detail.device_type_impl TILEMAP = DEFINE_DEVICE_TYPE("tilemap", "Tilemap", (type, mconfig, tag, owner, clock) => { return new tilemap_device(mconfig, tag, owner, clock); });
 
 
         tilemap_t m_tilemap_t;
@@ -1941,7 +1940,7 @@ namespace mame
     }
 
 
-    public static partial class tilemap_global
+    static partial class tilemap_global
     {
         //**************************************************************************
         //  MACROS
@@ -1955,14 +1954,28 @@ namespace mame
         //#define TILE_GET_INFO_MEMBER(_name)     void _name(tilemap_t &tilemap, tile_data &tileinfo, tilemap_memory_index tile_index)
 
         // function definition for a logical-to-memory mapper
-        //#define TILEMAP_MAPPER_MEMBER(_name)    tilemap_memory_index _name(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
+        //#define TILEMAP_MAPPER_MEMBER(_name)    tilemap_memory_index _name(u32 col, u32 row, u32 num_cols, u32 num_rows)
 
         // Helpers for setting tile attributes in the TILE_GET_INFO callback:
         //   TILE_FLIP_YX assumes that flipy is in bit 1 and flipx is in bit 0
         //   TILE_FLIP_XY assumes that flipy is in bit 0 and flipx is in bit 1
-        //template <typename T> constexpr u8 TILE_FLIPYX(T yx) { return u8(yx & 3); }
-        public static u8 TILE_FLIPYX(int yx) { return (u8)(yx & 3); }
-
+        public static u8 TILE_FLIPYX(int yx) { return (u8)(yx & 3); }  //template <typename T> constexpr u8 TILE_FLIPYX(T yx) { return u8(yx & 3); }
         //template <typename T> constexpr u8 TILE_FLIPXY(T xy) { return u8(((xy & 2) >> 1) | ((xy & 1) << 1)); }
+
+
+        public static tilemap_device TILEMAP<bool_Required>(machine_config mconfig, device_finder<tilemap_device, bool_Required> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows)
+            where bool_Required : bool_const, new()
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, tilemap_device.TILEMAP, 0);
+            device.tilemap_device_after_ctor(gfxtag, entrybytes, tilewidth, tileheight, mapper, columns, rows);
+            return device;
+        }
+        public static tilemap_device TILEMAP<bool_Required>(machine_config mconfig, device_finder<tilemap_device, bool_Required> finder, string gfxtag, int entrybytes, u16 tilewidth, u16 tileheight, tilemap_standard_mapper mapper, u32 columns, u32 rows, pen_t transpen)
+            where bool_Required : bool_const, new()
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, tilemap_device.TILEMAP, 0);
+            device.tilemap_device_after_ctor(gfxtag, entrybytes, tilewidth, tileheight, mapper, columns, rows, transpen);
+            return device;
+        }
     }
 }

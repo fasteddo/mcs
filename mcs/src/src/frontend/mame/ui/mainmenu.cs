@@ -48,7 +48,7 @@ namespace mame.ui
 
             item_append(__("Input (general)"), 0, INPUT_GROUPS);
 
-            item_append(__("Input (this Machine)"), 0, INPUT_SPECIFIC);
+            item_append(__("Input (this machine)"), 0, INPUT_SPECIFIC);
 
             if (ui().machine_info().has_analog())
                 item_append(__("Analog Controls"), 0, ANALOG);
@@ -82,7 +82,7 @@ namespace mame.ui
                 item_append(_("Tape Control"), 0, (void *)TAPE_CONTROL);
 
             if (pty_interface_enumerator(machine().root_device()).first() != nullptr)
-                item_append(_("Pseudo terminals"), 0, (void *)PTY_INFO);
+                item_append(_("Pseudo Terminals"), 0, (void *)PTY_INFO);
 #endif
 
             if (ui().machine_info().has_bioses())

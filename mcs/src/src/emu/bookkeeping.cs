@@ -87,7 +87,7 @@ namespace mame
         /*-------------------------------------------------
             coin_lockout_w - locks out one coin input
         -------------------------------------------------*/
-        void coin_lockout_w(int num, int on)
+        public void coin_lockout_w(int num, int on)
         {
             if (num >= (int)std.size(m_coinlockedout))
                 return;

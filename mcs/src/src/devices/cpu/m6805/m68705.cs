@@ -5,6 +5,7 @@ using System;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using size_t = System.UInt64;
 using u8 = System.Byte;
@@ -26,7 +27,7 @@ using static mame.util;
 
 namespace mame
 {
-    static class m68705_global
+    static partial class m68705_global
     {
         //enum : u16 {
         public const u16 M68705_VECTOR_BOOTSTRAP  = 0xfff6;
@@ -851,8 +852,7 @@ namespace mame
     class m68705p5_device : m68705p_device
     {
         //DEFINE_DEVICE_TYPE(M68705P5, m68705p5_device, "m68705p5", "Motorola MC68705P5")
-        static device_t device_creator_m68705p5_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m68705p5_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M68705P5 = DEFINE_DEVICE_TYPE(device_creator_m68705p5_device, "m68705p5", "Motorola MC68705P5");
+        public static readonly emu.detail.device_type_impl M68705P5 = DEFINE_DEVICE_TYPE("m68705p5", "Motorola MC68705P5", (type, mconfig, tag, owner, clock) => { return new m68705p5_device(mconfig, tag, owner, clock); });
 
 
         //ROM_START( m68705p5 )
@@ -878,5 +878,11 @@ namespace mame
         {
             return get_user_rom()[0x0784];
         }
+    }
+
+
+    static partial class m68705_global
+    {
+        public static m68705p_device M68705P5<bool_Required>(machine_config mconfig, device_finder<m68705p_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m68705p5_device.M68705P5, clock); }
     }
 }

@@ -9,6 +9,7 @@ using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
 using static mame.device_global;
+using static mame.ymopm_global;
 
 
 namespace mame
@@ -17,8 +18,7 @@ namespace mame
     public class ym2151_device : ymfm_device_base<ymfm.ym2151, ymfm.opm_registers, ymfm.fm_engine_base_operators_opm_registers>
     {
         //DEFINE_DEVICE_TYPE(YM2151, ym2151_device, "ym2151", "YM2151 OPM")
-        static device_t device_creator_ym2151_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new ym2151_device(mconfig, tag, owner, clock); }
-        public static readonly device_type YM2151 = DEFINE_DEVICE_TYPE(device_creator_ym2151_device, "ym2151", "YM2151 OPM");
+        public static readonly emu.detail.device_type_impl YM2151 = DEFINE_DEVICE_TYPE("ym2151", "YM2151 OPM", (type, mconfig, tag, owner, clock) => { return new ym2151_device(mconfig, tag, owner, clock); });
 
 
         //using parent = ymfm_device_base<ymfm::ym2151>;
@@ -54,4 +54,10 @@ namespace mame
     // ======================> ym2164_device
     //DECLARE_DEVICE_TYPE(YM2164, ym2164_device);
     //class ym2164_device : public ymfm_device_base<ymfm::ym2164>
+
+
+    static class ymopm_global
+    {
+        public static ym2151_device YM2151<bool_Required>(machine_config mconfig, device_finder<ym2151_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ym2151_device.YM2151, clock); }
+    }
 }

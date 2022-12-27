@@ -11,6 +11,7 @@ using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 
+using static mame.atarimo_global;
 using static mame.device_global;
 using static mame.emucore_global;
 
@@ -147,10 +148,8 @@ namespace mame
                                                //device_video_interface,
                                                //atari_motion_objects_config
     {
-        // device type definition
         //DEFINE_DEVICE_TYPE(ATARI_MOTION_OBJECTS, atari_motion_objects_device, "atarimo", "Atari Motion Objects")
-        static device_t device_creator_atari_motion_objects_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new atari_motion_objects_device(mconfig, tag, owner, clock); }
-        public static readonly device_type ATARI_MOTION_OBJECTS = DEFINE_DEVICE_TYPE(device_creator_atari_motion_objects_device, "atarimo", "Atari Motion Objects");
+        public static readonly emu.detail.device_type_impl ATARI_MOTION_OBJECTS = DEFINE_DEVICE_TYPE("atarimo", "Atari Motion Objects", (type, mconfig, tag, owner, clock) => { return new atari_motion_objects_device(mconfig, tag, owner, clock); });
 
 
         // timer IDs
@@ -877,6 +876,18 @@ namespace mame
             gfx.set_granularity((u16)save_granularity);
             gfx.set_colorbase((u16)save_colorbase);
             gfx.set_colors((u32)save_colors);
+        }
+    }
+
+
+    static class atarimo_global
+    {
+        public static atari_motion_objects_device ATARI_MOTION_OBJECTS<bool_Required>(machine_config mconfig, device_finder<atari_motion_objects_device, bool_Required> finder, uint32_t clock, device_finder<screen_device, bool_Required> screen_tag, atari_motion_objects_config config)
+            where bool_Required : bool_const, new()
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, atari_motion_objects_device.ATARI_MOTION_OBJECTS, 0);
+            device.atari_motion_objects_device_after_ctor(screen_tag, config);
+            return device;
         }
     }
 }

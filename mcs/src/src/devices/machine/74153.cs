@@ -4,10 +4,10 @@
 using System;
 
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
-using u32 = System.UInt32;
 using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 
+using static mame._74153_global;
 using static mame.device_global;
 using static mame.util;
 
@@ -20,8 +20,7 @@ namespace mame
     public class ttl153_device : device_t
     {
         //DEFINE_DEVICE_TYPE(TTL153, ttl153_device, "ttl153", "SN54/74153")
-        static device_t device_creator_ttl153_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new ttl153_device(mconfig, tag, owner, clock); }
-        public static readonly device_type TTL153 = DEFINE_DEVICE_TYPE(device_creator_ttl153_device, "ttl153", "SN54/74153");
+        public static readonly emu.detail.device_type_impl TTL153 = DEFINE_DEVICE_TYPE("ttl153", "SN54/74153", (type, mconfig, tag, owner, clock) => { return new ttl153_device(mconfig, tag, owner, clock); });
 
 
         // callbacks
@@ -228,5 +227,11 @@ namespace mame
 
             m_z[1] = zb;
         }
+    }
+
+
+    static class _74153_global
+    {
+        public static ttl153_device TTL153<bool_Required>(machine_config mconfig, device_finder<ttl153_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ttl153_device.TTL153, 0); }
     }
 }

@@ -15,6 +15,7 @@ using unsigned = System.UInt32;
 using static mame.cpp_global;
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.latch8_global;
 using static mame.util;
 
 
@@ -23,8 +24,7 @@ namespace mame
     public class latch8_device : device_t
     {
         //DEFINE_DEVICE_TYPE(LATCH8, latch8_device, "latch8", "8-bit latch")
-        static device_t device_creator_latch8_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new latch8_device(mconfig, tag, owner, clock); }
-        public static readonly device_type LATCH8 = DEFINE_DEVICE_TYPE(device_creator_latch8_device, "latch8", "8-bit latch");
+        public static readonly emu.detail.device_type_impl LATCH8 = DEFINE_DEVICE_TYPE("latch8", "8-bit latch", (type, mconfig, tag, owner, clock) => { return new latch8_device(mconfig, tag, owner, clock); });
 
 
         devcb_write_line.array<u64_const_8> m_write_cb;
@@ -108,12 +108,12 @@ namespace mame
         // read bit x
         // FIXME: does not honour read callbacks or XOR mask
         //DECLARE_READ_LINE_MEMBER( bit0_r ) { return BIT(m_value, 0); }
-        //DECLARE_READ_LINE_MEMBER( bit1_r ) { return BIT(m_value, 1); }
+        public int bit1_r() { return BIT(m_value, 1); }  //DECLARE_READ_LINE_MEMBER( bit1_r ) { return BIT(m_value, 1); }
         //DECLARE_READ_LINE_MEMBER( bit2_r ) { return BIT(m_value, 2); }
         public int bit3_r() { return BIT(m_value, 3); }  //DECLARE_READ_LINE_MEMBER( bit3_r ) { return BIT(m_value, 3); }
         //DECLARE_READ_LINE_MEMBER( bit4_r ) { return BIT(m_value, 4); }
         //DECLARE_READ_LINE_MEMBER( bit5_r ) { return BIT(m_value, 5); }
-        //DECLARE_READ_LINE_MEMBER( bit6_r ) { return BIT(m_value, 6); }
+        public int bit6_r() { return BIT(m_value, 6); }  //DECLARE_READ_LINE_MEMBER( bit6_r ) { return BIT(m_value, 6); }
         //DECLARE_READ_LINE_MEMBER( bit7_r ) { return BIT(m_value, 7); }
 
         // read inverted bit
@@ -217,5 +217,12 @@ namespace mame
             else
                 machine().scheduler().synchronize(timerproc, (mask << 8) | masked_data);
         }
+    }
+
+
+    static class latch8_global
+    {
+        public static latch8_device LATCH8(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<latch8_device>(mconfig, tag, latch8_device.LATCH8, 0); }
+        public static latch8_device LATCH8<bool_Required>(machine_config mconfig, device_finder<latch8_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, latch8_device.LATCH8, 0); }
     }
 }

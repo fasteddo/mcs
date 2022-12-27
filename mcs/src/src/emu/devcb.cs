@@ -2498,6 +2498,14 @@ namespace mame
                 return set_inputline(tag, linenum);
             }
 
+            //template <typename... Params>
+            public inputline_builder append_inputline<T, bool_R>(device_finder<T, bool_R> finder, int linenum)  //auto append_inputline(Params &&... args)
+                where bool_R : bool_const, new()
+            {
+                m_append = true;
+                return set_inputline(finder, linenum);
+            }
+
 
             //template <typename... Params>
             //ioport_builder set_ioport(Params &&... args)

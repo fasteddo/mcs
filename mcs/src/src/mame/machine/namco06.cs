@@ -15,6 +15,7 @@ using unsigned = System.UInt32;
 using static mame.diexec_global;
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.namco06_global;
 using static mame.util;
 
 
@@ -24,8 +25,7 @@ namespace mame
     public class namco_06xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(NAMCO_06XX, namco_06xx_device, "namco06", "Namco 06xx")
-        static device_t device_creator_namco_06xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new namco_06xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type NAMCO_06XX = DEFINE_DEVICE_TYPE(device_creator_namco_06xx_device, "namco06", "Namco 06xx");
+        public static readonly emu.detail.device_type_impl NAMCO_06XX = DEFINE_DEVICE_TYPE("namco06", "Namco 06xx", (type, mconfig, tag, owner, clock) => { return new namco_06xx_device(mconfig, tag, owner, clock); });
 
 
         const bool VERBOSE = false;
@@ -228,5 +228,11 @@ namespace mame
             m_nmi_stretch = false;
             m_rw_stretch = false;
         }
+    }
+
+
+    static class namco06_global
+    {
+        public static namco_06xx_device NAMCO_06XX(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<namco_06xx_device>(mconfig, tag, namco_06xx_device.NAMCO_06XX, clock); }
     }
 }

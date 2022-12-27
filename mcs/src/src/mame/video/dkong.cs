@@ -68,6 +68,29 @@ namespace mame
         );
 
 
+        static readonly res_net_decode_info dkong3_decode_info = new res_net_decode_info
+        (
+            1,      /*  one prom needed to contruct color */
+            0,      /*  start at 0 */
+            255,    /*  end at 255 */
+            /*   R,   G,   B */
+            new u16 [] {    0,    0,  512 },      /*  offsets */
+            new s16 [] {    4,    0,    0 },      /*  shifts */
+            new u16 [] { 0x0F, 0x0F, 0x0F }           /*  masks */
+        );
+
+
+        static readonly res_net_info dkong3_net_info = new res_net_info
+        (
+            RES_NET_VCC_5V | RES_NET_VBIAS_5V | RES_NET_VIN_MB7052 |  RES_NET_MONITOR_SANYO_EZV20,
+            new res_net_channel_info [] {
+                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470,      0, 4, new double [] { 2200, 1000, 470, 220 } ),
+                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470,      0, 4, new double [] { 2200, 1000, 470, 220 } ),
+                new res_net_channel_info( RES_NET_AMP_DARLINGTON, 470,      0, 4, new double [] { 2200, 1000, 470, 220 } )
+            }
+        );
+
+
         const double TRS_J1  = 1;         // (1) = Closed (0) = Open
 
 
@@ -143,10 +166,10 @@ namespace mame
             {
                 if ((i & 0x03) == 0x00)  // NOR => CS=1 => Tristate => real black
                 {
-                    int r  = compute_res_net(1, 0, dkong_net_bck_info);
-                    int gr = compute_res_net(1, 1, dkong_net_bck_info);
-                    int b  = compute_res_net(1, 2, dkong_net_bck_info);
-                    palette.set_pen_color((pen_t)i, (u8)r, (u8)gr, (u8)b);
+                    int r = compute_res_net(1, 0, dkong_net_bck_info);
+                    int g = compute_res_net(1, 1, dkong_net_bck_info);
+                    int b = compute_res_net(1, 2, dkong_net_bck_info);
+                    palette.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
                 }
             }
 
@@ -165,13 +188,13 @@ namespace mame
             for (int i = 0; i < 256; i++)
             {
                 // red component
-                int r  = compute_res_net((color_prom[256] >> 1) & 0x07, 0, radarscp_net_info);
+                int r = compute_res_net((color_prom[256] >> 1) & 0x07, 0, radarscp_net_info);
                 // green component
-                int gr = compute_res_net(((color_prom[256] << 2) & 0x04) | ((color_prom[0] >> 2) & 0x03), 1, radarscp_net_info);
+                int g = compute_res_net(((color_prom[256] << 2) & 0x04) | ((color_prom[0] >> 2) & 0x03), 1, radarscp_net_info);
                 // blue component
-                int b  = compute_res_net((color_prom[0] >> 0) & 0x03, 2, radarscp_net_info);
+                int b = compute_res_net((color_prom[0] >> 0) & 0x03, 2, radarscp_net_info);
 
-                palette.set_pen_color((pen_t)i, (u8)r, (u8)gr, (u8)b);
+                palette.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
                 color_prom++;
             }
 
@@ -181,10 +204,10 @@ namespace mame
             {
                 if ((m_vidhw != DKONG_RADARSCP_CONVERSION) && ((i & 0x03) == 0x00))  //  NOR => CS=1 => Tristate => real black
                 {
-                    int r  = compute_res_net( 1, 0, radarscp_net_bck_info );
-                    int gr = compute_res_net( 1, 1, radarscp_net_bck_info );
-                    int b  = compute_res_net( 1, 2, radarscp_net_bck_info );
-                    palette.set_pen_color((pen_t)i, (u8)r, (u8)gr, (u8)b);
+                    int r = compute_res_net( 1, 0, radarscp_net_bck_info );
+                    int g = compute_res_net( 1, 1, radarscp_net_bck_info );
+                    int b = compute_res_net( 1, 2, radarscp_net_bck_info );
+                    palette.set_pen_color((pen_t)i, (u8)r, (u8)g, (u8)b);
                 }
             }
 
@@ -197,26 +220,41 @@ namespace mame
             // Oscillating background
             for (int i = 0; i < 256; i++)
             {
-                int r  = compute_res_net( 0, 0, radarscp_blue_net_info );
-                int gr = compute_res_net( 0, 1, radarscp_blue_net_info );
-                int b  = compute_res_net( i, 2, radarscp_blue_net_info );
+                int r = compute_res_net( 0, 0, radarscp_blue_net_info );
+                int g = compute_res_net( 0, 1, radarscp_blue_net_info );
+                int b = compute_res_net( i, 2, radarscp_blue_net_info );
 
-                palette.set_pen_color(RADARSCP_BCK_COL_OFFSET + (pen_t)i, (u8)r, (u8)gr, (u8)b);
+                palette.set_pen_color(RADARSCP_BCK_COL_OFFSET + (pen_t)i, (u8)r, (u8)g, (u8)b);
             }
 
             // Grid
             for (int i = 0; i < 8; i++)
             {
-                int r  = compute_res_net( BIT(i, 0), 0, radarscp_grid_net_info );
-                int gr = compute_res_net( BIT(i, 1), 1, radarscp_grid_net_info );
-                int b  = compute_res_net( BIT(i, 2), 2, radarscp_grid_net_info );
+                int r = compute_res_net( BIT(i, 0), 0, radarscp_grid_net_info );
+                int g = compute_res_net( BIT(i, 1), 1, radarscp_grid_net_info );
+                int b = compute_res_net( BIT(i, 2), 2, radarscp_grid_net_info );
 
-                palette.set_pen_color(RADARSCP_GRID_COL_OFFSET + (pen_t)i, (u8)r, (u8)gr, (u8)b);
+                palette.set_pen_color(RADARSCP_GRID_COL_OFFSET + (pen_t)i, (u8)r, (u8)g, (u8)b);
             }
 
             palette.palette().normalize_range(0, RADARSCP_GRID_COL_OFFSET + 7);
 
             color_prom += 256;
+            // color_prom now points to the beginning of the character color codes
+            m_color_codes = color_prom; // we'll need it later
+        }
+
+
+        void dkong3_palette(palette_device palette)
+        {
+            Pointer<uint8_t> color_prom = new Pointer<uint8_t>(memregion("proms").base_());  //const uint8_t *color_prom = memregion("proms")->base();
+
+            std.vector<rgb_t> rgb;
+            compute_res_net_all(out rgb, color_prom, dkong3_decode_info, dkong3_net_info);
+            palette.set_pen_colors(0, rgb);
+            palette.palette().normalize_range(0, 255);
+
+            color_prom += 1024;
             // color_prom now points to the beginning of the character color codes
             m_color_codes = color_prom; // we'll need it later
         }
@@ -259,7 +297,16 @@ namespace mame
         }
 
 
-        //void dkong_state::dkongjr_gfxbank_w(uint8_t data)
+        void dkongjr_gfxbank_w(uint8_t data)
+        {
+            if (m_gfx_bank != (data & 0x01))
+            {
+                m_gfx_bank = (uint8_t)(data & 0x01);
+                m_bg_tilemap.mark_all_dirty();
+            }
+        }
+
+
         //void dkong_state::dkong3_gfxbank_w(uint8_t data)
 
 

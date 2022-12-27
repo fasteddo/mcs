@@ -640,6 +640,7 @@ namespace mame
         // safely write a sample to the buffer
         public void put(s32 start, stream_buffer_sample_t sample)
         {
+            sound_assert((u32)start < samples());
             m_buffer.put((s32)index_to_buffer_index(start), sample);
         }
 
@@ -669,6 +670,7 @@ namespace mame
         // safely add a sample to the buffer
         void add(s32 start, stream_buffer_sample_t sample)
         {
+            sound_assert((u32)start < samples());
             u32 index = index_to_buffer_index(start);
             m_buffer.put((s32)index, m_buffer.get((s32)index) + sample);
         }
@@ -736,8 +738,6 @@ namespace mame
         // given a stream starting offset, return the buffer index
         u32 index_to_buffer_index(s32 start)
         {
-            sound_assert((u32)start < samples());
-
             u32 index = (u32)(start + m_start);
             if (index >= m_buffer.size())
                 index -= m_buffer.size();

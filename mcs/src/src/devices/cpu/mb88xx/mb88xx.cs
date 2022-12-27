@@ -7,6 +7,7 @@ using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u32 = System.UInt32;
@@ -20,6 +21,7 @@ using static mame.diexec_global;
 using static mame.distate_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.mb88xx_global;
 using static mame.util;
 
 
@@ -1127,77 +1129,53 @@ namespace mame
     }
 
 
-#if false
-    class mb88201_cpu_device : public mb88_cpu_device
-    {
-    public:
-        // construction/destruction
-        mb88201_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
-    };
-#endif
+    //class mb88201_cpu_device : public mb88_cpu_device
 
+    //class mb88202_cpu_device : public mb88_cpu_device
 
-#if false
-    class mb88202_cpu_device : public mb88_cpu_device
-    {
-    public:
-        // construction/destruction
-        mb88202_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
-    };
-#endif
-
-
-#if false
-    class mb8841_cpu_device : public mb88_cpu_device
-    {
-    public:
-        // construction/destruction
-        mb8841_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
-    };
-#endif
+    //class mb8841_cpu_device : public mb88_cpu_device
 
 
     class mb8842_cpu_device : mb88_cpu_device
     {
         //DEFINE_DEVICE_TYPE(MB8842,  mb8842_cpu_device,  "mb8842",  "Fujitsu MB8842")
-        static device_t device_creator_mb8842_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8842_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8842 = DEFINE_DEVICE_TYPE(device_creator_mb8842_cpu_device, "mb8842",  "Fujitsu MB8842");
-
+        public static readonly emu.detail.device_type_impl MB8842 = DEFINE_DEVICE_TYPE("mb8842", "Fujitsu MB8842", (type, mconfig, tag, owner, clock) => { return new mb8842_cpu_device(mconfig, tag, owner, clock); });
 
         // construction/destruction
         mb8842_cpu_device(machine_config mconfig, string tag, device_t owner, u32 clock)
             : base(mconfig, MB8842, tag, owner, clock, 11, 7)
-        {
-        }
+        { }
     }
 
 
     class mb8843_cpu_device : mb88_cpu_device
     {
         //DEFINE_DEVICE_TYPE(MB8843,  mb8843_cpu_device,  "mb8843",  "Fujitsu MB8843")
-        static device_t device_creator_mb8843_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8843_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8843 = DEFINE_DEVICE_TYPE(device_creator_mb8843_cpu_device, "mb8843",  "Fujitsu MB8843");
-
+        public static readonly emu.detail.device_type_impl MB8843 = DEFINE_DEVICE_TYPE("mb8843", "Fujitsu MB8843", (type, mconfig, tag, owner, clock) => { return new mb8843_cpu_device(mconfig, tag, owner, clock); });
 
         // construction/destruction
         mb8843_cpu_device(machine_config mconfig, string tag, device_t owner, u32 clock)
             : base(mconfig, MB8843, tag, owner, clock, 10, 6)
-        {
-        }
+        { }
     }
 
 
     class mb8844_cpu_device : mb88_cpu_device
     {
         //DEFINE_DEVICE_TYPE(MB8844,  mb8844_cpu_device,  "mb8844",  "Fujitsu MB8844")
-        static device_t device_creator_mb8844_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8844_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8844 = DEFINE_DEVICE_TYPE(device_creator_mb8844_cpu_device, "mb8844", "Fujitsu MB8844");
-
+        public static readonly emu.detail.device_type_impl MB8844 = DEFINE_DEVICE_TYPE("mb8844", "Fujitsu MB8844", (type, mconfig, tag, owner, clock) => { return new mb8844_cpu_device(mconfig, tag, owner, clock); });
 
         // construction/destruction
         mb8844_cpu_device(machine_config mconfig, string tag, device_t owner, u32 clock)
             : base(mconfig, MB8844, tag, owner, clock, 10, 6)
-        {
-        }
+        { }
+    }
+
+
+    static class mb88xx_global
+    {
+        public static mb88_cpu_device MB8842<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8842_cpu_device.MB8842, clock); }
+        public static mb88_cpu_device MB8843<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8843_cpu_device.MB8843, clock); }
+        public static mb88_cpu_device MB8844<bool_Required>(machine_config mconfig, device_finder<mb88_cpu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8844_cpu_device.MB8844, clock); }
     }
 }

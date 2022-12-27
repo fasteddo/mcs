@@ -158,6 +158,9 @@ namespace mame
         }
 
 
+        protected override std.pair<uX, u16> read_flags(offs_t offset, uX mem_mask) { throw new emu_unimplemented(); }
+
+
         protected override string name() { throw new emu_unimplemented(); }
 
 
@@ -324,6 +327,9 @@ namespace mame
 
             this.unref();
         }
+
+
+        protected override u16 write_flags(offs_t offset, uX data, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         protected override string name() { throw new emu_unimplemented(); }

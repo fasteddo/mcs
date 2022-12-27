@@ -11,6 +11,7 @@ using uint32_t = System.UInt32;
 
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.watchdog_global;
 
 
 namespace mame
@@ -19,8 +20,7 @@ namespace mame
     public class watchdog_timer_device : device_t
     {
         //DEFINE_DEVICE_TYPE(WATCHDOG_TIMER, watchdog_timer_device, "watchdog", "Watchdog Timer")
-        static device_t device_creator_watchdog_timer_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new watchdog_timer_device(mconfig, tag, owner, clock); }
-        public static readonly device_type WATCHDOG_TIMER = DEFINE_DEVICE_TYPE(device_creator_watchdog_timer_device, "watchdog", "Watchdog Timer");
+        public static readonly emu.detail.device_type_impl WATCHDOG_TIMER = DEFINE_DEVICE_TYPE("watchdog", "Watchdog Timer", (type, mconfig, tag, owner, clock) => { return new watchdog_timer_device(mconfig, tag, owner, clock); });
 
 
         // configuration data
@@ -177,5 +177,12 @@ namespace mame
                         watchdog_fired();
             }
         }
+    }
+
+
+    static class watchdog_global
+    {
+        public static watchdog_timer_device WATCHDOG_TIMER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<watchdog_timer_device>(mconfig, tag, watchdog_timer_device.WATCHDOG_TIMER, 0); }
+        public static watchdog_timer_device WATCHDOG_TIMER<bool_Required>(machine_config mconfig, device_finder<watchdog_timer_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, watchdog_timer_device.WATCHDOG_TIMER, 0); }
     }
 }

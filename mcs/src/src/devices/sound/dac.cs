@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using s32 = System.Int32;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
@@ -21,7 +22,7 @@ using static mame.util;
 
 namespace mame
 {
-    static class dac_global
+    static partial class dac_global
     {
         //**************************************************************************
         //  CONSTANTS
@@ -297,8 +298,7 @@ namespace mame
     public class dac_mc1408_device : dac_byte_device_base
     {
         //DEFINE_DEVICE_TYPE(_dac_type, _dac_class, _dac_shortname, _dac_description)
-        static device_t device_creator_dac_mc1408_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dac_mc1408_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MC1408 = DEFINE_DEVICE_TYPE(device_creator_dac_mc1408_device, "mc1408", "MC1408 DAC");
+        public static readonly emu.detail.device_type_impl MC1408 = DEFINE_DEVICE_TYPE("mc1408", "MC1408 DAC", (type, mconfig, tag, owner, clock) => { return new dac_mc1408_device(mconfig, tag, owner, clock); });
 
         dac_mc1408_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
             : base(mconfig, MC1408, tag, owner, clock, 8, dac_mapper_unsigned, dac_gain_r2r)
@@ -311,8 +311,7 @@ namespace mame
     public class dac_8bit_r2r_device : dac_byte_device_base
     {
         //DEFINE_DEVICE_TYPE(_dac_type, _dac_class, _dac_shortname, _dac_description)
-        static device_t device_creator_dac_8bit_r2r_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dac_8bit_r2r_device(mconfig, tag, owner, clock); }
-        public static readonly device_type DAC_8BIT_R2R = DEFINE_DEVICE_TYPE(device_creator_dac_8bit_r2r_device, "dac_8bit_r2r", "8-Bit R-2R DAC");
+        public static readonly emu.detail.device_type_impl DAC_8BIT_R2R = DEFINE_DEVICE_TYPE("dac_8bit_r2r", "8-Bit R-2R DAC", (type, mconfig, tag, owner, clock) => { return new dac_8bit_r2r_device(mconfig, tag, owner, clock); });
 
         dac_8bit_r2r_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
             : base(mconfig, DAC_8BIT_R2R, tag, owner, clock, 8, dac_mapper_unsigned, dac_gain_r2r)
@@ -324,11 +323,18 @@ namespace mame
     public class dac_16bit_r2r_twos_complement_device : dac_word_device_base
     {
         //DEFINE_DEVICE_TYPE(_dac_type, _dac_class, _dac_shortname, _dac_description)
-        static device_t device_creator_dac_16bit_r2r_twos_complement_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new dac_16bit_r2r_twos_complement_device(mconfig, tag, owner, clock); }
-        public static readonly device_type DAC_16BIT_R2R_TWOS_COMPLEMENT = DEFINE_DEVICE_TYPE(device_creator_dac_16bit_r2r_twos_complement_device, "dac_16bit_r2r_tc", "16-Bit R-2R Twos Complement DAC");
+        public static readonly emu.detail.device_type_impl DAC_16BIT_R2R_TWOS_COMPLEMENT = DEFINE_DEVICE_TYPE("dac_16bit_r2r_tc", "16-Bit R-2R Twos Complement DAC", (type, mconfig, tag, owner, clock) => { return new dac_16bit_r2r_twos_complement_device(mconfig, tag, owner, clock); });
 
         dac_16bit_r2r_twos_complement_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
             : base(mconfig, DAC_16BIT_R2R_TWOS_COMPLEMENT, tag, owner, clock, 16, dac_mapper_signed, dac_gain_r2r)
         { }
+    }
+
+
+    static partial class dac_global
+    {
+        public static dac_mc1408_device MC1408(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<dac_mc1408_device>(mconfig, tag, dac_mc1408_device.MC1408, clock); }
+        public static dac_8bit_r2r_device DAC_8BIT_R2R<bool_Required>(machine_config mconfig, device_finder<dac_8bit_r2r_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
+        public static dac_16bit_r2r_twos_complement_device DAC_16BIT_R2R_TWOS_COMPLEMENT<bool_Required>(machine_config mconfig, device_finder<dac_16bit_r2r_twos_complement_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_16bit_r2r_twos_complement_device.DAC_16BIT_R2R_TWOS_COMPLEMENT, clock); }
     }
 }

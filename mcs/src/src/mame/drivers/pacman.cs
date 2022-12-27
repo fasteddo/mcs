@@ -10,22 +10,28 @@ using u16 = System.UInt16;
 using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
-using static mame.device_creator_helper_global;
+using static mame._74259_global;
 using static mame.diexec_global;
 using static mame.digfx_global;
 using static mame.disound_global;
+using static mame.drawgfx_global;
 using static mame.driver_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.emupal_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
 using static mame.input_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
+using static mame.namco_global;
 using static mame.romentry_global;
 using static mame.screen_global;
+using static mame.speaker_global;
 using static mame.util;
+using static mame.watchdog_global;
+using static mame.z80_global;
 
 
 namespace mame
@@ -691,10 +697,10 @@ namespace mame
         static pacman m_pacman = new pacman();
 
 
-        static device_t device_creator_puckman(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, (device_type)type, tag); }
-        static device_t device_creator_pacman(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, (device_type)type, tag); }
-        static device_t device_creator_mspacman(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, (device_type)type, tag); }
-        static device_t device_creator_pacplus(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_puckman(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, type, tag); }
+        static device_t device_creator_pacman(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, type, tag); }
+        static device_t device_creator_mspacman(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, type, tag); }
+        static device_t device_creator_pacplus(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pacman_state(mconfig, type, tag); }
 
 
         //                                                                                                        rom         parent     machine                inp                                 init

@@ -15,8 +15,7 @@ namespace mame
                                      //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(DIGITALKER, digitalker_device, "digitalker", "MM54104 Digitalker")
-        static device_t device_creator_digitalker_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new digitalker_device(mconfig, tag, owner, clock); }
-        public static readonly device_type DIGITALKER = DEFINE_DEVICE_TYPE(device_creator_digitalker_device, "digitalker", "MM54104 Digitalker");
+        public static readonly emu.detail.device_type_impl DIGITALKER = DEFINE_DEVICE_TYPE("digitalker", "MM54104 Digitalker", (type, mconfig, tag, owner, clock) => { return new digitalker_device(mconfig, tag, owner, clock); });
 
 
         class device_sound_interface_digitalker : device_sound_interface

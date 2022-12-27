@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
@@ -21,6 +22,7 @@ using static mame.emucore_global;
 using static mame.osdcomm_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;
+using static mame.samples_global;
 using static mame.sound_global;
 
 
@@ -31,11 +33,10 @@ namespace mame
                                   //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(SAMPLES, samples_device, "samples", "Samples")
-        static device_t device_creator_samples_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock = 0) { return new samples_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SAMPLES = DEFINE_DEVICE_TYPE(device_creator_samples_device, "samples", "Samples");
+        public static readonly emu.detail.device_type_impl SAMPLES = DEFINE_DEVICE_TYPE("samples", "Samples", (type, mconfig, tag, owner, clock) => { return new samples_device(mconfig, tag, owner, clock); });
 
 
-        class device_sound_interface_samples : device_sound_interface
+        public class device_sound_interface_samples : device_sound_interface
         {
             public device_sound_interface_samples(machine_config mconfig, device_t device) : base(mconfig, device) { }
 
@@ -64,7 +65,7 @@ namespace mame
             public int32_t source_num;
             public uint32_t source_len;
             public double pos;
-            uint32_t basefreq;
+            public uint32_t basefreq;
             public uint32_t curfreq;
             public bool loop;
             public bool paused;
@@ -73,8 +74,8 @@ namespace mame
 
         // internal constants
         const uint8_t FRAC_BITS = 24;
-        //static const UINT32 FRAC_ONE = 1 << FRAC_BITS;
-        //static const UINT32 FRAC_MASK = FRAC_ONE - 1;
+        //static constexpr uint32_t FRAC_ONE = 1 << FRAC_BITS;
+        //static constexpr uint32_t FRAC_MASK = FRAC_ONE - 1;
 
 
         device_sound_interface_samples m_disound;
@@ -102,6 +103,7 @@ namespace mame
             : base(mconfig, type, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_sound_interface_samples(mconfig, this));
+            m_disound = GetClassInterface<device_sound_interface_samples>();
 
             m_channels = 0;
             m_names = null;
@@ -109,23 +111,50 @@ namespace mame
         }
 
 
+        public device_sound_interface_samples disound { get { return m_disound; } }
+
+
         // configuration helpers
-        //void set_channels(uint8_t channels) { m_channels = channels; }
-        //void set_samples_names(const char *const *names) { m_names = names; }
+        public void set_channels(uint8_t channels) { m_channels = channels; }
+        public void set_samples_names(string [] names) { m_names = names; }
 
         // start callback helpers
-        //template <typename... T> void set_samples_start_callback(T &&...args) { m_samples_start_cb.set(std::forward<T>(args)...); }
+        public void set_samples_start_callback(start_cb_delegate args) { m_samples_start_cb = args; }  //template <typename... T> void set_samples_start_callback(T &&...args) { m_samples_start_cb.set(std::forward<T>(args)...); }
 
 
         // getters
-        //bool playing(UINT8 channel) const;
-        //UINT32 base_frequency(UINT8 channel) const;
+        //bool playing(uint8_t channel) const;
+        //uint32_t base_frequency(uint8_t channel) const;
 
 
         // start/stop helpers
-        //void start(UINT8 channel, UINT32 samplenum, bool loop = false);
-        //void start_raw(UINT8 channel, const INT16 *sampledata, UINT32 samples, UINT32 frequency, bool loop = false);
-        //void pause(UINT8 channel, bool pause = true);
+        public void start(uint8_t channel, uint32_t samplenum, bool loop = false)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        public void start_raw(uint8_t channel, Pointer<int16_t> sampledata, uint32_t samples, uint32_t frequency, bool loop = false)
+        {
+            assert(channel < m_channels);
+
+            // force an update before we start
+            channel_t chan = m_channel[channel];
+            chan.stream.update();
+
+            // update the parameters
+            chan.source = sampledata;
+            chan.source_num = -1;
+            chan.source_len = samples;
+            chan.pos = 0;
+            chan.basefreq = frequency;
+            chan.curfreq = frequency;
+            chan.loop = loop;
+        }
+
+
+        //void pause(uint8_t channel, bool pause = true);
+
 
         //-------------------------------------------------
         //  stop - stop playback on a channel
@@ -153,8 +182,8 @@ namespace mame
 
 
         // dynamic control
-        //void set_frequency(UINT8 channel, UINT32 frequency);
-        //void set_volume(UINT8 channel, float volume);
+        //void set_frequency(uint8_t channel, uint32_t frequency);
+        //void set_volume(uint8_t channel, float volume);
 
 
         // helpers
@@ -193,13 +222,11 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            m_disound = GetClassInterface<device_sound_interface_samples>();
-
             // read audio samples
             load_samples();
 
             // allocate channels
-            m_channel.resize(m_channels);
+            m_channel.resize(m_channels, () => { return new channel_t(); });
             for (int channel = 0; channel < m_channels; channel++)
             {
                 // initialize channel
@@ -654,5 +681,11 @@ namespace mame
 
             return result;
         }
+    }
+
+
+    static class samples_global
+    {
+        public static samples_device SAMPLES<bool_Required>(machine_config mconfig, device_finder<samples_device, bool_Required> finder) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, samples_device.SAMPLES, 0); }
     }
 }

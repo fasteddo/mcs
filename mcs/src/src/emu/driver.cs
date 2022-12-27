@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 using size_t = System.UInt64;
@@ -318,7 +319,7 @@ namespace mame
         {
             // normalize to all 1
             if (on != 0)
-                on = u32.MaxValue;  // ~0;
+                on = u32.MaxValue;  //~0;
 
             // if something's changed, handle it
             if (m_flip_screen_x != on || m_flip_screen_y != on)
@@ -328,11 +329,37 @@ namespace mame
             }
         }
 
-        //void flip_screen_x_set(u32 on);
-        //void flip_screen_y_set(u32 on);
+        protected void flip_screen_x_set(u32 on)
+        {
+            // normalize to all 1
+            if (on != 0)
+                on = u32.MaxValue;  //~0;
+
+            // if something's changed, handle it
+            if (m_flip_screen_x != on)
+            {
+                m_flip_screen_x = (u8)on;
+                updateflip();
+            }
+        }
+
+        protected void flip_screen_y_set(u32 on)
+        {
+            // normalize to all 1
+            if (on != 0)
+                on = u32.MaxValue;  //~0;
+
+            // if something's changed, handle it
+            if (m_flip_screen_y != on)
+            {
+                m_flip_screen_y = (u8)on;
+                updateflip();
+            }
+        }
+
         public u32 flip_screen() { return m_flip_screen_x; }
-        //u32 flip_screen_x() const { return m_flip_screen_x; }
-        //u32 flip_screen_y() const { return m_flip_screen_y; }
+        protected u32 flip_screen_x() { return m_flip_screen_x; }
+        protected u32 flip_screen_y() { return m_flip_screen_y; }
 
 
         // helpers

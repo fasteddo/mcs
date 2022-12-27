@@ -140,7 +140,7 @@ namespace mame
         public u32 seqid;              // sequence ID
         public u64 unique_id;          // unique identifier to pass to osd
         public u64 old_id;             // previously allocated id, if applicable
-        public MemoryContainer<rgb_t> palette;  // const rgb_t *       palette;            // palette for PALETTE16 textures, bcg lookup table for RGB32/YUY16
+        public Pointer<rgb_t> palette;  // const rgb_t *       palette;            // palette for PALETTE16 textures, bcg lookup table for RGB32/YUY16
         public u32 palette_length;
     }
 
@@ -682,7 +682,7 @@ namespace mame
         //  get_adjusted_palette - return the adjusted
         //  palette for a texture
         //-------------------------------------------------
-        public MemoryContainer<rgb_t> get_adjusted_palette(render_container container, ref u32 out_length)  //const rgb_t *get_adjusted_palette(render_container &container, u32 &out_length);
+        public Pointer<rgb_t> get_adjusted_palette(render_container container, ref u32 out_length)  //const rgb_t *get_adjusted_palette(render_container &container, u32 &out_length);
         {
             // override the palette with our adjusted palette
             switch (m_format)
@@ -716,10 +716,8 @@ namespace mame
 
     // ======================> render_container
     // a render_container holds a list of items and an orientation for the entire collection
-    public class render_container : simple_list_item<render_container>,
-                                    IDisposable
+    public class render_container : IDisposable
     {
-        //friend class simple_list<render_container>;
         //friend class render_manager;
         //friend class render_target;
 
@@ -796,7 +794,6 @@ namespace mame
 
 
         // internal state
-        render_container m_next;                 // the next container in the list
         render_manager m_manager;              // reference back to the owning manager
         simple_list<item> m_itemlist = new simple_list<item>();             // head of the item list
         fixed_allocator<item> m_item_allocator = new fixed_allocator<item>();       // free container items
@@ -816,7 +813,6 @@ namespace mame
         //-------------------------------------------------
         public render_container(render_manager manager, screen_device screen = null)
         {
-            m_next = null;
             m_manager = manager;
             m_screen = screen;
             m_overlaybitmap = null;
@@ -862,10 +858,6 @@ namespace mame
 
 
         // getters
-        public render_container next() { return m_next; }
-        public render_container m_next_get() { return m_next; }
-        public void m_next_set(render_container value) { m_next = value; }
-
         public screen_device screen() { return m_screen; }
         public render_manager manager() { return m_manager; }
         public render_texture overlay() { return m_overlaytexture; }
@@ -981,7 +973,7 @@ namespace mame
         //  brightness/contrast/gamma lookup table for a
         //  given texture mode
         //-------------------------------------------------
-        public MemoryContainer<rgb_t> bcg_lookup_table(texture_format texformat, out u32 out_length, palette_t palette = null)  //const rgb_t *bcg_lookup_table(int texformat, u32 &out_length, palette_t *palette = nullptr);
+        public Pointer<rgb_t> bcg_lookup_table(texture_format texformat, out u32 out_length, palette_t palette = null)  //const rgb_t *bcg_lookup_table(int texformat, u32 &out_length, palette_t *palette = nullptr);
         {
             switch (texformat)
             {
@@ -994,13 +986,13 @@ namespace mame
                     }
                     //assert (palette == &m_palclient->palette());
                     out_length = (u32)palette.max_index();
-                    return m_bcglookup;
+                    return new Pointer<rgb_t>(m_bcglookup);
 
                 case texture_format.TEXFORMAT_RGB32:
                 case texture_format.TEXFORMAT_ARGB32:
                 case texture_format.TEXFORMAT_YUY16:
                     out_length = (u32)std.size(m_bcglookup256);
-                    return m_bcglookup256;
+                    return new Pointer<rgb_t>(m_bcglookup256);
 
                 default:
                     out_length = 0;
@@ -1209,7 +1201,6 @@ namespace mame
         render_layer_config m_base_layerconfig = new render_layer_config();         // the layer configuration at the time of first frame
         int m_maxtexwidth;              // maximum width of a texture
         int m_maxtexheight;             // maximum height of a texture
-        simple_list<render_container> m_debug_containers = new simple_list<render_container>();   // list of debug containers
         s32 m_clear_extent_count;       // number of clear extents
         s32 [] m_clear_extents = new s32[MAX_CLEAR_EXTENTS]; // array of clear extents
         bool m_transform_container;      // determines whether the screen container is transformed by the core renderer,
@@ -1688,10 +1679,6 @@ namespace mame
         //-------------------------------------------------
         public render_primitive_list get_primitives()
         {
-            // remember the base values if this is the first frame
-            if (m_base_view == null)
-                m_base_view = current_view();
-
             // switch to the next primitive list
             render_primitive_list list = m_primlist[m_listindex];
             m_listindex = (m_listindex + 1) % (int)std.size(m_primlist);
@@ -1766,24 +1753,6 @@ namespace mame
                     prim.flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
                     list.append(prim);
                 }
-            }
-
-            // process the debug containers
-            foreach (render_container debug in m_debug_containers)
-            {
-                object_transform ui_xform = new object_transform();
-                ui_xform.xoffs = 0;
-                ui_xform.yoffs = 0;
-                ui_xform.xscale = (float)m_width;
-                ui_xform.yscale = (float)m_height;
-                ui_xform.color = new render_color();
-                ui_xform.color.r = ui_xform.color.g = ui_xform.color.b = 1.0f;
-                ui_xform.color.a = 0.9f;
-                ui_xform.orientation = m_orientation;
-                ui_xform.no_center = true;
-
-                // add UI elements
-                add_container_primitives(list, root_xform, ui_xform, debug, BLENDMODE_ALPHA);
             }
 
             // process the UI if we are the UI target
@@ -1976,12 +1945,6 @@ namespace mame
 
         //using view_mask_pair = std::pair<std::reference_wrapper<layout_view>, u32>;
         //using view_mask_vector = std::vector<view_mask_pair>;
-
-
-        // debug containers
-        //render_container *debug_alloc();
-        //void debug_free(render_container &container);
-        //void debug_append(render_container &container);
 
 
         // private classes declared in render.cpp
@@ -2803,7 +2766,7 @@ namespace mame
 
 
         // config callbacks
-        //void config_load(xml_data_node &targetnode);
+        //void config_load(util::xml::data_node const *targetnode);
         //bool config_save(xml_data_node &targetnode);
 
 
@@ -3133,7 +3096,7 @@ namespace mame
 
         // containers for the UI and for screens
         render_container m_ui_container;     // UI container
-        simple_list<render_container> m_screen_container_list = new simple_list<render_container>(); // list of containers for the screen
+        std.list<render_container> m_screen_container_list = new std.list<render_container>(); // list of containers for the screen
 
 
         // construction/destruction
@@ -3155,7 +3118,7 @@ namespace mame
 
             // create one container per screen
             foreach (screen_device screen in new screen_device_enumerator(machine.root_device()))
-                screen.set_container(container_alloc(screen));
+                screen.set_container(m_screen_container_list.emplace_back(new render_container(this, screen)).Value);
         }
 
         ~render_manager()
@@ -3168,10 +3131,10 @@ namespace mame
         {
             // free all the containers since they may own textures
             m_ui_container.Dispose();
-            container_free(m_ui_container);
+            m_ui_container = null;
             foreach (var container in m_screen_container_list)
                 container.Dispose();
-            m_screen_container_list.reset();
+            m_screen_container_list.clear();
 
             //throw new emu_unimplemented();
 #if false
@@ -3399,29 +3362,6 @@ namespace mame
             {
                 target.resolve_tags();
             }
-        }
-
-
-        // containers
-
-        //-------------------------------------------------
-        //  container_alloc - allocate a new container
-        //-------------------------------------------------
-        render_container container_alloc(screen_device screen = null)
-        {
-            render_container container = new render_container(this, screen);
-            if (screen != null)
-                m_screen_container_list.append(container);
-
-            return container;
-        }
-
-        //-------------------------------------------------
-        //  container_free - release a container
-        //-------------------------------------------------
-        void container_free(render_container container)
-        {
-            m_screen_container_list.remove(container);
         }
 
 

@@ -3,6 +3,7 @@
 
 using System;
 
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using int16_t = System.Int16;
 using u32 = System.UInt32;
@@ -22,7 +23,7 @@ using static mame.m6800_global;
 
 namespace mame
 {
-    class m6800_global
+    static partial class m6800_global
     {
         //enum
         //{
@@ -44,8 +45,7 @@ namespace mame
     public partial class m6800_cpu_device : cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6800, m6800_cpu_device, "m6800", "Motorola MC6800")
-        static device_t device_creator_m6800_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6800_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6800 = DEFINE_DEVICE_TYPE(device_creator_m6800_cpu_device, "m6800", "Motorola MC6800");
+        public static readonly emu.detail.device_type_impl M6800 = DEFINE_DEVICE_TYPE("m6800", "Motorola MC6800", (type, mconfig, tag, owner, clock) => { return new m6800_cpu_device(mconfig, tag, owner, clock); });
 
 
         protected class device_execute_interface_m6800 : device_execute_interface
@@ -359,9 +359,9 @@ namespace mame
         //static const op_func nsc8105_insn[256];
 
 
-        device_memory_interface_m6800 m_dimemory;
-        device_execute_interface_m6800 m_diexec;
-        device_state_interface_m6800 m_distate;
+        protected device_execute_interface_m6800 m_diexec;
+        protected device_memory_interface_m6800 m_dimemory;
+        protected device_state_interface_m6800 m_distate;
 
 
         // construction/destruction
@@ -373,8 +373,8 @@ namespace mame
             m_class_interfaces.Add(new device_state_interface_m6800(mconfig, this));
             m_class_interfaces.Add(new device_disasm_interface_m6800(mconfig, this));
 
-            m_dimemory = GetClassInterface<device_memory_interface_m6800>();
             m_diexec = GetClassInterface<device_execute_interface_m6800>();
+            m_dimemory = GetClassInterface<device_memory_interface_m6800>();
             m_distate = GetClassInterface<device_state_interface_m6800>();
         }
 
@@ -392,7 +392,6 @@ namespace mame
         protected uint8_t cc { get { return m_cc; } }
         protected uint8_t wai_state { get { return m_wai_state; } set { m_wai_state = value; } }
         protected uint8_t [] irq_state { get { return m_irq_state; } }
-        protected device_execute_interface_m6800 diexec { get { return m_diexec; } }
 
 
         // device-level overrides
@@ -634,8 +633,7 @@ namespace mame
     public class m6802_cpu_device : m6800_cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6802, m6802_cpu_device, "m6802", "Motorola MC6802")
-        static device_t device_creator_m6802_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6802_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6802 = DEFINE_DEVICE_TYPE(device_creator_m6802_cpu_device, "m6802", "Motorola MC6802");
+        public static readonly emu.detail.device_type_impl M6802 = DEFINE_DEVICE_TYPE("m6802", "Motorola MC6802", (type, mconfig, tag, owner, clock) => { return new m6802_cpu_device(mconfig, tag, owner, clock); });
 
 
         protected class device_execute_interface_m6802 : device_execute_interface_m6800
@@ -647,9 +645,7 @@ namespace mame
         }
 
 
-        device_memory_interface_m6800 m_dimemory;
-        device_execute_interface_m6802 m_diexec;
-        device_state_interface_m6800 m_distate;
+        new device_execute_interface_m6802 m_diexec;
 
 
         bool m_ram_enable;
@@ -663,8 +659,8 @@ namespace mame
             m_class_interfaces.Add(new device_state_interface_m6800(mconfig, this));
             m_class_interfaces.Add(new device_disasm_interface_m6800(mconfig, this));
 
-            m_dimemory = GetClassInterface<device_memory_interface_m6800>();
             m_diexec = GetClassInterface<device_execute_interface_m6802>();
+            m_dimemory = GetClassInterface<device_memory_interface_m6800>();
             m_distate = GetClassInterface<device_state_interface_m6800>();
         }
 
@@ -684,20 +680,20 @@ namespace mame
         //virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
 
 
-        static void ram_map(address_map map, device_t owner) { throw new emu_unimplemented(); }
+        static void ram_map(address_map map, device_t owner)
+        {
+            m6802_cpu_device this_ = (m6802_cpu_device)owner;
+
+            if (this_.m_ram_enable)
+                map.op(0x0000, 0x007f).ram();
+        }
     }
 
 
     public class m6808_cpu_device : m6802_cpu_device
     {
         //DEFINE_DEVICE_TYPE(M6808, m6808_cpu_device, "m6808", "Motorola MC6808")
-        static device_t device_creator_m6808_cpu_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m6808_cpu_device(mconfig, tag, owner, clock); }
-        public static readonly device_type M6808 = DEFINE_DEVICE_TYPE(device_creator_m6808_cpu_device, "m6808", "Motorola MC6808");
-
-
-        device_memory_interface_m6800 m_dimemory;
-        device_execute_interface_m6802 m_diexec;
-        device_state_interface_m6800 m_distate;
+        public static readonly emu.detail.device_type_impl M6808 = DEFINE_DEVICE_TYPE("m6808", "Motorola MC6808", (type, mconfig, tag, owner, clock) => { return new m6808_cpu_device(mconfig, tag, owner, clock); });
 
 
         m6808_cpu_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
@@ -708,8 +704,8 @@ namespace mame
             m_class_interfaces.Add(new device_state_interface_m6800(mconfig, this));
             m_class_interfaces.Add(new device_disasm_interface_m6800(mconfig, this));
 
-            m_dimemory = GetClassInterface<device_memory_interface_m6800>();
             m_diexec = GetClassInterface<device_execute_interface_m6802>();
+            m_dimemory = GetClassInterface<device_memory_interface_m6800>();
             m_distate = GetClassInterface<device_state_interface_m6800>();
 
 
@@ -728,4 +724,10 @@ namespace mame
     //DECLARE_DEVICE_TYPE(M6802, m6802_cpu_device)
     //DECLARE_DEVICE_TYPE(M6808, m6808_cpu_device)
     //DECLARE_DEVICE_TYPE(NSC8105, nsc8105_cpu_device)
+
+
+    static partial class m6800_global
+    {
+        public static m6808_cpu_device M6808<bool_Required>(machine_config mconfig, device_finder<m6808_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, m6808_cpu_device.M6808, clock); }
+    }
 }

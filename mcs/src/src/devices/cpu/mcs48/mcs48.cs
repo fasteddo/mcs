@@ -8,6 +8,7 @@ using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8
 using devcb_read_line = mame.devcb_read<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_read_line = devcb_read<int, 1U>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
+using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using u8 = System.Byte;
@@ -23,6 +24,7 @@ using static mame.diexec_global;
 using static mame.distate_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.mcs48_global;
 
 
 namespace mame
@@ -1302,13 +1304,17 @@ namespace mame
     class mb8884_device : mcs48_cpu_device
     {
         //DEFINE_DEVICE_TYPE(MB8884, mb8884_device, "mb8884", "MB8884")
-        static device_t device_creator_mb8884_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mb8884_device(mconfig, tag, owner, clock); }
-        public static readonly device_type MB8884 = DEFINE_DEVICE_TYPE(device_creator_mb8884_device, "mb8884", "MB8884");
+        public static readonly emu.detail.device_type_impl MB8884 = DEFINE_DEVICE_TYPE("mb8884", "MB8884", (type, mconfig, tag, owner, clock) => { return new mb8884_device(mconfig, tag, owner, clock); });
 
         // construction/destruction
         mb8884_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
             : base(mconfig, MB8884, tag, owner, clock, 0, 64, I8048_FEATURE, s_mcs48_opcodes)
-        {
-        }
+        { }
+    }
+
+
+    static class mcs48_global
+    {
+        public static mcs48_cpu_device MB8884<bool_Required>(machine_config mconfig, device_finder<mcs48_cpu_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mb8884_device.MB8884, clock); }
     }
 }

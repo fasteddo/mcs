@@ -4,6 +4,7 @@
 using System;
 
 using pen_t = System.UInt32;  //typedef u32 pen_t;
+using PointerU8 = mame.Pointer<System.Byte>;
 using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
@@ -20,20 +21,24 @@ using static mame.drawgfxt_global;
 
 namespace mame
 {
-    //enum
-    //{
-    //    DRAWMODE_NONE,
-    //    DRAWMODE_SOURCE,
-    //    DRAWMODE_SHADOW
-    //};
+    static partial class drawgfx_global
+    {
+        //enum
+        //{
+        public const int DRAWMODE_NONE   = 0;
+        public const int DRAWMODE_SOURCE = 1;
+        public const int DRAWMODE_SHADOW = 2;
+        //};
 
-    //enum
-    //{
-    //    GFX_PMASK_1  = 0xaaaa,
-    //    GFX_PMASK_2  = 0xcccc,
-    //    GFX_PMASK_4  = 0xf0f0,
-    //    GFX_PMASK_8  = 0xff00
-    //};
+
+        //enum
+        //{
+        //    GFX_PMASK_1  = 0xaaaa,
+        //    GFX_PMASK_2  = 0xcccc,
+        //    GFX_PMASK_4  = 0xf0f0,
+        //    GFX_PMASK_8  = 0xff00
+        //};
+    }
 
 
     public partial class gfx_element
@@ -286,7 +291,7 @@ namespace mame
             opaque - render a gfx element with
             no transparency
         -------------------------------------------------*/
-        void opaque(bitmap_ind16 dest, rectangle cliprect,
+        public void opaque(bitmap_ind16 dest, rectangle cliprect,
                 u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty)
         {
             color = colorbase() + granularity() * (color % colors());
@@ -478,9 +483,25 @@ namespace mame
         }
 
 
-        //void transtable(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, const UINT8 *pentable);
-        //void transtable(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, const UINT8 *pentable);
-        //void alpha(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 transpen, UINT8 alpha);
+        /*-------------------------------------------------
+            transtable - render a gfx element
+            using a table to look up which pens are
+            transparent, opaque, or shadowing
+        -------------------------------------------------*/
+        public void transtable(bitmap_ind16 dest, rectangle cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u8 [] pentable)
+        {
+            assert(pentable != null);
+
+            // render
+            color = colorbase() + granularity() * (color % colors());
+            Pointer<pen_t> shadowtable = m_palette.shadow_table();  //const pen_t *shadowtable = m_palette->shadow_table();
+            code %= elements();
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16>(dest, cliprect, code, flipx, flipy, destx, desty, new FunctionClass((ref u16 destp, u8 srcp) => { PIXEL_OP_REBASE_TRANSTABLE16(pentable, color, shadowtable, ref destp, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, [pentable, color, shadowtable](u16 &destp, const u8 &srcp) { PIXEL_OP_REBASE_TRANSTABLE16(destp, srcp); });
+        }
+
+
+        //void transtable(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, const u8 *pentable);
+        //void alpha(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 transpen, u8 alpha);
 
         // ----- zoomed graphics drawing -----
 
@@ -488,17 +509,17 @@ namespace mame
         //template <typename BitmapType, typename FunctionClass> void drawgfxzoom_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, FunctionClass pixel_op);
 
         // specific zoom implementations for each transparency type
-        //void zoom_opaque(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley);
-        //void zoom_opaque(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley);
-        //void zoom_transpen(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, UINT32 transpen);
-        //void zoom_transpen(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, UINT32 transpen);
-        //void zoom_transpen_raw(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, UINT32 transpen);
-        //void zoom_transpen_raw(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, UINT32 transpen);
-        //void zoom_transmask(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, UINT32 transmask);
-        //void zoom_transmask(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, UINT32 transmask);
-        //void zoom_transtable(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, const UINT8 *pentable);
-        //void zoom_transtable(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, const UINT8 *pentable);
-        //void zoom_alpha(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, UINT32 transpen, UINT8 alpha);
+        //void zoom_opaque(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley);
+        //void zoom_opaque(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley);
+        //void zoom_transpen(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, u32 transpen);
+        //void zoom_transpen(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, u32 transpen);
+        //void zoom_transpen_raw(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, u32 transpen);
+        //void zoom_transpen_raw(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, u32 transpen);
+        //void zoom_transmask(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, u32 transmask);
+        //void zoom_transmask(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, u32 transmask);
+        //void zoom_transtable(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, const u8 *pentable);
+        //void zoom_transtable(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, const u8 *pentable);
+        //void zoom_alpha(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, u32 transpen, u8 alpha);
 
         // ----- priority masked graphics drawing -----
 
@@ -506,17 +527,74 @@ namespace mame
         //template <typename BitmapType, typename PriorityType, typename FunctionClass> void drawgfx_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, PriorityType &priority, FunctionClass pixel_op);
 
         // specific prio implementations for each transparency type
-        //void prio_opaque(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask);
-        //void prio_opaque(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask);
-        //void prio_transpen(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen);
-        //void prio_transpen(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen);
-        //void prio_transpen_raw(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen);
-        //void prio_transpen_raw(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen);
-        //void prio_transmask(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, UINT32 transmask);
-        //void prio_transmask(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, UINT32 transmask);
-        //void prio_transtable(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, const UINT8 *pentable);
-        //void prio_transtable(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, const UINT8 *pentable);
-        //void prio_alpha(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen, UINT8 alpha);
+        /*-------------------------------------------------
+            prio_opaque - render a gfx element with
+            no transparency, checking against the priority
+            bitmap
+        -------------------------------------------------*/
+        void prio_opaque(bitmap_ind16 dest, rectangle cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 priority, u32 pmask)
+        {
+            // high bit of the mask is implicitly on
+            pmask |= 1U << 31;
+
+            // render
+            color = colorbase() + granularity() * (color % colors());
+            code %= elements();
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16, bitmap_ind8, u8, PixelType_operators_u8, PointerU8>(dest, cliprect, code, flipx, flipy, destx, desty, priority, new FunctionClass((ref u16 destp, ref u8 pri, u8 srcp) => { PIXEL_OP_REBASE_OPAQUE_PRIORITY(pmask, color, ref destp, ref pri, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, priority, [pmask, color](u16 &destp, u8 &pri, const u8 &srcp) { PIXEL_OP_REBASE_OPAQUE_PRIORITY(destp, pri, srcp); });
+        }
+
+
+        //void prio_opaque(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 &priority, u32 pmask);
+        //void prio_transpen(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+        //void prio_transpen(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+        //void prio_transpen_raw(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+        //void prio_transpen_raw(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+
+
+        /*-------------------------------------------------
+            prio_transmask - render a gfx element
+            with a multiple transparent pens provided as
+            a mask, checking against the priority bitmap
+        -------------------------------------------------*/
+        public void prio_transmask(bitmap_ind16 dest, rectangle cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 priority, u32 pmask, u32 trans_mask)
+        {
+            // special case 0 mask to opaque
+            if (trans_mask == 0)
+            {
+                prio_opaque(dest, cliprect, code, color, flipx, flipy, destx, desty, priority, pmask);
+                return;
+            }
+
+            // use pen usage to optimize
+            code %= elements();
+            if (has_pen_usage())
+            {
+                // fully transparent; do nothing
+                u32 usage = pen_usage(code);
+                if ((usage & ~trans_mask) == 0)
+                    return;
+
+                // fully opaque; draw as such
+                if ((usage & trans_mask) == 0)
+                {
+                    prio_opaque(dest, cliprect, code, color, flipx, flipy, destx, desty, priority, pmask);
+                    return;
+                }
+            }
+
+            // high bit of the mask is implicitly on
+            pmask |= 1U << 31;
+
+            // render
+            color = colorbase() + granularity() * (color % colors());
+            drawgfx_core<bitmap_ind16, u16, PixelType_operators_u16, PointerU16, bitmap_ind8, u8, PixelType_operators_u8, PointerU8>(dest, cliprect, code, flipx, flipy, destx, desty, priority, new FunctionClass((ref u16 destp, ref u8 pri, u8 srcp) => { PIXEL_OP_REBASE_TRANSMASK_PRIORITY(pmask, trans_mask, color, ref destp, ref pri, srcp); }));  //drawgfx_core(dest, cliprect, code, flipx, flipy, destx, desty, priority, [pmask, trans_mask, color](u16 &destp, u8 &pri, const u8 &srcp) { PIXEL_OP_REBASE_TRANSMASK_PRIORITY(destp, pri, srcp); });
+        }
+
+
+        //void prio_transmask(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 &priority, u32 pmask, u32 transmask);
+        //void prio_transtable(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 &priority, u32 pmask, const u8 *pentable);
+        //void prio_transtable(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 &priority, u32 pmask, const u8 *pentable);
+        //void prio_alpha(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 &priority, u32 pmask, u32 transpen, u8 alpha);
 
         // ----- priority masked zoomed graphics drawing -----
 
@@ -524,22 +602,22 @@ namespace mame
         //template <typename BitmapType, typename PriorityType, typename FunctionClass> void drawgfxzoom_core(BitmapType &dest, const rectangle &cliprect, u32 code, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, PriorityType &priority, FunctionClass pixel_op);
 
         // specific prio_zoom implementations for each transparency type
-        //void prio_zoom_opaque(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask);
-        //void prio_zoom_opaque(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask);
-        //void prio_zoom_transpen(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen);
-        //void prio_zoom_transpen(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen);
-        //void prio_zoom_transpen_raw(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen);
-        //void prio_zoom_transpen_raw(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen);
-        //void prio_zoom_transmask(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask, UINT32 transmask);
-        //void prio_zoom_transmask(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask, UINT32 transmask);
-        //void prio_zoom_transtable(bitmap_ind16 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask, const UINT8 *pentable);
-        //void prio_zoom_transtable(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask, const UINT8 *pentable);
-        //void prio_zoom_alpha(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, UINT32 scalex, UINT32 scaley, bitmap_ind8 &priority, UINT32 pmask, UINT32 transpen, UINT8 alpha);
+        //void prio_zoom_opaque(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask);
+        //void prio_zoom_opaque(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask);
+        //void prio_zoom_transpen(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+        //void prio_zoom_transpen(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+        //void prio_zoom_transpen_raw(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+        //void prio_zoom_transpen_raw(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask, u32 transpen);
+        //void prio_zoom_transmask(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask, u32 transmask);
+        //void prio_zoom_transmask(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask, u32 transmask);
+        //void prio_zoom_transtable(bitmap_ind16 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask, const u8 *pentable);
+        //void prio_zoom_transtable(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask, const u8 *pentable);
+        //void prio_zoom_alpha(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask, u32 transpen, u8 alpha);
 
         // implementations moved here from specific drivers
-        //void prio_transpen_additive(bitmap_rgb32 &dest, const rectangle &cliprect, UINT32 code, UINT32 color, int flipx, int flipy, INT32 destx, INT32 desty, bitmap_ind8 &priority, UINT32 pmask, UINT32 trans_pen);
-        //void alphastore(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, int fixedalpha, u8 *alphatable);
+        //void prio_transpen_additive(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, bitmap_ind8 &priority, u32 pmask, u32 trans_pen);
         //void prio_zoom_transpen_additive(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, u32 scalex, u32 scaley, bitmap_ind8 &priority, u32 pmask, u32 trans_pen);
+        //void alphastore(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, int fixedalpha, u8 *alphatable);
         //void alphatable(bitmap_rgb32 &dest, const rectangle &cliprect, u32 code, u32 color, int flipx, int flipy, s32 destx, s32 desty, int fixedalpha, u8 *alphatable);
 
 
@@ -605,7 +683,7 @@ namespace mame
     }
 
 
-    static class drawgfx_global
+    static partial class drawgfx_global
     {
         // ----- scanline copying -----
 
@@ -804,8 +882,7 @@ namespace mame
                                     //device_gfx_interface
     {
         //DEFINE_DEVICE_TYPE(GFXDECODE, gfxdecode_device, "gfxdecode", "gfxdecode")
-        static device_t device_creator_gfxdecode_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gfxdecode_device(mconfig, tag, owner, clock); }
-        public static readonly device_type GFXDECODE = DEFINE_DEVICE_TYPE(device_creator_gfxdecode_device, "gfxdecode", "gfxdecode");
+        public static readonly emu.detail.device_type_impl GFXDECODE = DEFINE_DEVICE_TYPE("gfxdecode", "gfxdecode", (type, mconfig, tag, owner, clock) => { return new gfxdecode_device(mconfig, tag, owner, clock); });
 
 
         device_gfx_interface m_digfx;
@@ -849,6 +926,30 @@ namespace mame
 
 
         protected override void device_start() { }
+    }
+
+
+    static partial class drawgfx_global
+    {
+        public static gfxdecode_device GFXDECODE(machine_config mconfig, string tag, string palette_tag, gfx_decode_entry [] gfxinfo)
+        {
+            var device = emu.detail.device_type_impl.op<gfxdecode_device>(mconfig, tag, gfxdecode_device.GFXDECODE, 0);
+            device.gfxdecode_device_after_ctor(palette_tag, gfxinfo);
+            return device;
+        }
+        public static gfxdecode_device GFXDECODE(machine_config mconfig, string tag, finder_base palette, gfx_decode_entry [] gfxinfo)
+        {
+            var device = emu.detail.device_type_impl.op<gfxdecode_device>(mconfig, tag, gfxdecode_device.GFXDECODE, 0);
+            device.gfxdecode_device_after_ctor(palette, gfxinfo);
+            return device;
+        }
+        public static gfxdecode_device GFXDECODE<bool_Required>(machine_config mconfig, device_finder<gfxdecode_device, bool_Required> finder, finder_base palette, gfx_decode_entry [] gfxinfo)
+            where bool_Required : bool_const, new()
+        {
+            var device = emu.detail.device_type_impl.op(mconfig, finder, gfxdecode_device.GFXDECODE, 0);
+            device.gfxdecode_device_after_ctor(palette, gfxinfo);
+            return device;
+        }
     }
 
 

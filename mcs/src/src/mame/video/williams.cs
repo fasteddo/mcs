@@ -3,9 +3,18 @@
 
 using System;
 
+using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using pen_t = System.UInt32;  //typedef u32 pen_t;
+using PointerU8 = mame.Pointer<System.Byte>;
 using u8 = System.Byte;
+using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
+
+using static mame.emucore_global;
+using static mame.resnet_global;
+using static mame.util;
+using static mame.williams_global;
 
 
 namespace mame
@@ -18,16 +27,19 @@ namespace mame
          *
          *************************************/
 
-        //void williams_state::state_save_register()
+        void state_save_register()
+        {
+            save_item(NAME(new { m_blitter_window_enable }));
+            save_item(NAME(new { m_cocktail }));
+            save_item(NAME(new { m_blitterram }));
+            save_item(NAME(new { m_blitter_remap_index }));
+        }
 
 
         protected override void video_start()
         {
-            throw new emu_unimplemented();
-#if false
-            blitter_init(m_blitter_config, nullptr);
+            blitter_init(m_blitter_config, null);
             state_save_register();
-#endif
         }
     }
 
@@ -82,17 +94,38 @@ namespace mame
         //uint32_t mysticm_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect)
 
 
+    partial class williams_state : driver_device
+    {
         /*************************************
          *
          *  Williams palette I/O
          *
          *************************************/
-
-    partial class williams_state : driver_device
-    {
         void palette_init(palette_device palette)
         {
-            throw new emu_unimplemented();
+            int [] resistances_rg = new int [3] { 1200, 560, 330 };  //static constexpr int resistances_rg[3] = { 1200, 560, 330 };
+            int [] resistances_b = new int [2]  { 560, 330 };
+
+            // compute palette information
+            // note that there really are pullup/pulldown resistors, but this situation is complicated
+            // by the use of transistors, so we ignore that and just use the relative resistor weights
+            double [] weights_r = new double [3];
+            double [] weights_g = new double [3];
+            double [] weights_b = new double [2];
+            compute_resistor_weights(0, 255, -1.0,
+                    3, resistances_rg, out weights_r, 0, 0,
+                    3, resistances_rg, out weights_g, 0, 0,
+                    2, resistances_b,  out weights_b, 0, 0);
+
+            // build a palette lookup
+            for (int i = 0; i < 256; i++)
+            {
+                int r = combine_weights(weights_r, BIT(i, 0), BIT(i, 1), BIT(i, 2));
+                int g = combine_weights(weights_g, BIT(i, 3), BIT(i, 4), BIT(i, 5));
+                int b = combine_weights(weights_b, BIT(i, 6), BIT(i, 7));
+
+                palette.set_pen_color((pen_t)i, new rgb_t((u8)r, (u8)g, (u8)b));
+            }
         }
     }
 
@@ -171,15 +204,44 @@ namespace mame
         //void blaster_state::video_control_w(u8 data)
 
 
+    partial class williams_state : driver_device
+    {
         /*************************************
          *
          *  Blitter setup and control
          *
          *************************************/
 
-        //void williams_state::blitter_init(int blitter_config, const uint8_t *remap_prom)
+        void blitter_init(int blitter_config, PointerU8 remap_prom)  //void williams_state::blitter_init(int blitter_config, const uint8_t *remap_prom)
+        {
+            std.fill(m_blitterram, (u8)0);
+            MemoryU8 dummy_table = new MemoryU8() { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };  //static const uint8_t dummy_table[] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 
-        //void williams_state::blitter_w(address_space &space, offs_t offset, u8 data)
+            /* by default, there is no clipping window - this will be touched only by games that have one */
+            m_blitter_window_enable = 0;
+
+            /* switch off the video config */
+            m_blitter_xor = (blitter_config == WILLIAMS_BLITTER_SC1) ? (uint8_t)4 : (uint8_t)0;
+
+            /* create the remap table; if no PROM, make an identity remap table */
+            m_blitter_remap_lookup = new MemoryU8(256 * 256, true);  //m_blitter_remap_lookup = std::make_unique<uint8_t[]>(256 * 256);
+            m_blitter_remap_index = 0;
+            m_blitter_remap = new PointerU8(m_blitter_remap_lookup);
+            for (int i = 0; i < 256; i++)
+            {
+                PointerU8 table = remap_prom != null ? (remap_prom + (i & 0x7f) * 16) : new PointerU8(dummy_table);  //const uint8_t *table = remap_prom ? (remap_prom + (i & 0x7f) * 16) : dummy_table;
+                for (int j = 0; j < 256; j++)
+                    m_blitter_remap_lookup[i * 256 + j] = (u8)((table[j >> 4] << 4) | table[j & 0x0f]);
+            }
+        }
+
+
+        void blitter_w(address_space space, offs_t offset, u8 data)
+        {
+            throw new emu_unimplemented();
+        }
+    }
+
 
         //void williams2_state::blit_window_enable_w(u8 data)
 

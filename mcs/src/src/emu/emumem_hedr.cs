@@ -6,6 +6,7 @@ using System;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using s32 = System.Int32;
 using u8 = System.Byte;
+using u16 = System.UInt16;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
 using uX = mame.FlexPrim;
@@ -157,6 +158,9 @@ namespace mame
         {
             return dispatch_read<int_const_Level, int_Width, int_AddrShift>(HIGHMASK, offset, mem_mask, m_a_dispatch);
         }
+
+
+        protected override std.pair<uX, u16> read_flags(offs_t offset, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         public override object get_ptr(offs_t offset)

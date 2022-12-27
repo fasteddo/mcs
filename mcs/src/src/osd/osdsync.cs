@@ -96,10 +96,11 @@ namespace mame
         //============================================================
         //  osd_num_processors
         //============================================================
-        static int osd_get_num_processors()
+        static int osd_get_num_processors(bool heavy_mt)
         {
+            int threads = Environment.ProcessorCount;  //unsigned int threads = std::thread::hardware_concurrency();
             // max out at 4 for now since scaling above that seems to do poorly
-            return std.min(Environment.ProcessorCount, 4);  //return std::min(std::thread::hardware_concurrency(), 4U);
+            return heavy_mt ? threads : std.min(Environment.ProcessorCount, 4);  //return heavy_mt ? threads : std::min(std::thread::hardware_concurrency(), 4U);
         }
 
 
@@ -145,7 +146,7 @@ namespace mame
         public static osd_work_queue osd_work_queue_alloc(int flags)
         {
             int threadnum;
-            int numprocs = effective_num_processors();
+            int numprocs = effective_num_processors((flags & osdcore_interface.WORK_QUEUE_FLAG_HIGH_FREQ) == 0);
             osd_work_queue queue;
             int osdthreadnum = 0;
             int allocthreadnum;
@@ -477,10 +478,9 @@ namespace mame
                 {
                     work_thread_info thread = queue.thread[threadnum];
 
-                    // if this thread is not active, wake him up
-                    if (thread.active == 0)
+                    // Attempt to wake the thread
+                    if (thread.wakeevent.set())
                     {
-                        thread.wakeevent.set();
 #if KEEP_STATISTICS
                         add_to_stat(queue.setevents, 1);
 #endif
@@ -577,9 +577,9 @@ namespace mame
         //============================================================
         //  effective_num_processors
         //============================================================
-        static int effective_num_processors()
+        static int effective_num_processors(bool heavy_mt)
         {
-            int physprocs = osd_get_num_processors();
+            int physprocs = osd_get_num_processors(heavy_mt);
 
             // osd_num_processors == 0 for 'auto'
             if (osd_num_processors > 0)
@@ -633,7 +633,6 @@ namespace mame
                     break;
 
                 // indicate that we are live
-                thread.active = 1;  //true;
                 ++queue.livethreads;
 
                 // process work items
@@ -665,7 +664,7 @@ namespace mame
                 }
 
                 // decrement the live thread count
-                thread.active = 0;  //false;
+                thread.wakeevent.reset();
                 --queue.livethreads;
             }
 
@@ -797,8 +796,8 @@ namespace mame
     {
         Mutex m_mutex = new Mutex();  //std::mutex               m_mutex;
         ManualResetEvent m_cond;  //std::condition_variable  m_cond;
-        int m_autoreset;  //std::atomic<int32_t>       m_autoreset;
-        int m_signalled;  //std::atomic<int32_t>       m_signalled;
+        int32_t m_autoreset;
+        int32_t m_signalled;
 
 
         /*-----------------------------------------------------------------------------
@@ -917,16 +916,17 @@ namespace mame
 
             Return value:
 
-                None
+                Whether or not the event was actually signalled (false if the event had already been signalled)
 
             Notes:
 
                 All threads waiting for the event will be signalled.
         -----------------------------------------------------------------------------*/
-        public void set()
+        public bool set()
         {
             m_mutex.WaitOne();  //m_mutex.lock();
-            if (m_signalled == 0)  //false)
+            bool needs_signal = m_signalled == 0;
+            if (needs_signal)
             {
                 m_signalled = 1;  //true;
                 if (m_autoreset != 0)
@@ -935,6 +935,7 @@ namespace mame
                     m_cond.Reset();  // ??? //m_cond.notify_all();
             }
             m_mutex.ReleaseMutex();  //m_mutex.unlock();
+            return needs_signal;
         }
     }
 
@@ -944,7 +945,6 @@ namespace mame
         public osd_work_queue queue;          // pointer back to the queue
         public Thread handle;  //std::thread *       handle;         // handle to the thread
         public osd_event wakeevent;      // wake event for the thread
-        public int32_t active;  //std::atomic<int32_t>  active;         // are we actively processing work?
         public uint32_t id;
 
 #if KEEP_STATISTICS
@@ -961,8 +961,7 @@ namespace mame
             queue = aqueue;
 
             handle = null;
-            wakeevent = new osd_event(0, 0);  //(false, false);  // auto-reset, not signalled
-            active = 0;
+            wakeevent = new osd_event(1, 0);  //, wakeevent(true, false)  // manual reset, not signalled
             id = aid;
 #if KEEP_STATISTICS
             , itemsdone(0)

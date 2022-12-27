@@ -58,40 +58,112 @@ namespace mame
         static readonly bool BilinearFilter = new bool_BilinearFilter().value;
 
 
+#if USE_UNSAFE
+        unsafe interface PixelType_operations
+#else
         interface PixelType_operations
+#endif
         {
             PointerU8 GetPointer(PointerU8 dstdata, int offset);
             u32 GetValue(PointerU8 dest);
             void SetValue(PointerU8 dest, u32 value);
             void SetValueAndIncrement(PointerU8 dest, u32 value);
             void Increment(PointerU8 dest);
+
+#if USE_UNSAFE
+            u8 * UnsafeGetPointer(u8 * dstdata, int offset);
+            u32 UnsafeGetValue(u8 * dest);
+            void UnsafeSetValue(u8 * dest, u32 value);
+            void UnsafeSetValueAndIncrement(ref u8 * dest, u32 value);
+            void UnsafeIncrement(ref u8 * dest);
+#else
+            PointerU8 UnsafeGetPointer(PointerU8 dstdata, int offset);
+            u32 UnsafeGetValue(PointerU8 dest);
+            void UnsafeSetValue(PointerU8 dest, u32 value);
+            void UnsafeSetValueAndIncrement(ref PointerU8 dest, u32 value);
+            void UnsafeIncrement(ref PointerU8 dest);
+#endif
         }
 
+#if USE_UNSAFE
+        unsafe class PixelType_operations_u8 : PixelType_operations
+#else
         class PixelType_operations_u8 : PixelType_operations
+#endif
         {
             public PointerU8 GetPointer(PointerU8 dstdata, int offset) { return new PointerU8(dstdata, offset); }
             public u32 GetValue(PointerU8 dest) { return dest[0]; }
             public void SetValue(PointerU8 dest, u32 value) { dest[0] = (u8)value; }
             public void SetValueAndIncrement(PointerU8 dest, u32 value) { dest[0] = (u8)value; dest++; }
             public void Increment(PointerU8 dest) { dest++; }
+
+#if USE_UNSAFE
+            public u8 * UnsafeGetPointer(u8 * dstdata, int offset) { return dstdata + offset; }
+            public u32 UnsafeGetValue(u8 * dest) { return dest[0]; }
+            public void UnsafeSetValue(u8 * dest, u32 value) { dest[0] = (u8)value; }
+            public void UnsafeSetValueAndIncrement(ref u8 * dest, u32 value) { dest[0] = (u8)value; dest++; }
+            public void UnsafeIncrement(ref u8 * dest) { dest++; }
+#else
+            public PointerU8 UnsafeGetPointer(PointerU8 dstdata, int offset) { return GetPointer(dstdata, offset); }
+            public u32 UnsafeGetValue(PointerU8 dest) { return GetValue(dest); }
+            public void UnsafeSetValue(PointerU8 dest, u32 value) { SetValue(dest, value); }
+            public void UnsafeSetValueAndIncrement(ref PointerU8 dest, u32 value) { SetValueAndIncrement(dest, value); }
+            public void UnsafeIncrement(ref PointerU8 dest) { Increment(dest); }
+#endif
         }
 
+#if USE_UNSAFE
+        unsafe class PixelType_operations_u16 : PixelType_operations
+#else
         class PixelType_operations_u16 : PixelType_operations
+#endif
         {
             public PointerU8 GetPointer(PointerU8 dstdata, int offset) { return new PointerU16(dstdata, offset); }
             public u32 GetValue(PointerU8 dest) { return ((PointerU16)dest)[0]; }
             public void SetValue(PointerU8 dest, u32 value) { var dest16 = (PointerU16)dest; dest16[0] = (u16)value; }
             public void SetValueAndIncrement(PointerU8 dest, u32 value) { var dest16 = (PointerU16)dest; dest16[0] = (u16)value; dest16++; }
             public void Increment(PointerU8 dest) { var dest16 = (PointerU16)dest; dest16++; }
+
+#if USE_UNSAFE
+            public u8 * UnsafeGetPointer(u8 * dstdata, int offset) { return dstdata + (offset * 2); }
+            public u32 UnsafeGetValue(u8 * dest) { return ((u16 *)dest)[0]; }
+            public void UnsafeSetValue(u8 * dest, u32 value) { ((u16 *)dest)[0] = (u16)value; }
+            public void UnsafeSetValueAndIncrement(ref u8 * dest, u32 value) { ((u16 *)dest)[0] = (u16)value; dest += 2; }
+            public void UnsafeIncrement(ref u8 * dest) { dest += 2; }
+#else
+            public PointerU8 UnsafeGetPointer(PointerU8 dstdata, int offset) { return GetPointer(dstdata, offset); }
+            public u32 UnsafeGetValue(PointerU8 dest) { return GetValue(dest); }
+            public void UnsafeSetValue(PointerU8 dest, u32 value) { SetValue(dest, value); }
+            public void UnsafeSetValueAndIncrement(ref PointerU8 dest, u32 value) { SetValueAndIncrement(dest, value); }
+            public void UnsafeIncrement(ref PointerU8 dest) { Increment(dest); }
+#endif
         }
 
+#if USE_UNSAFE
+        unsafe class PixelType_operations_u32 : PixelType_operations
+#else
         class PixelType_operations_u32 : PixelType_operations
+#endif
         {
             public PointerU8 GetPointer(PointerU8 dstdata, int offset) { return new PointerU32(dstdata, offset); }
             public u32 GetValue(PointerU8 dest) { return ((PointerU32)dest)[0]; }
             public void SetValue(PointerU8 dest, u32 value) { var dest32 = (PointerU32)dest; dest32[0] = value; }
             public void SetValueAndIncrement(PointerU8 dest, u32 value) { var dest32 = (PointerU32)dest; dest32[0] = (u32)value; dest32++; }
             public void Increment(PointerU8 dest) { var dest32 = (PointerU32)dest; dest32++; }
+
+#if USE_UNSAFE
+            public u8 * UnsafeGetPointer(u8 * dstdata, int offset) { return dstdata + (offset * 4); }
+            public u32 UnsafeGetValue(u8 * dest) { return ((u32 *)dest)[0]; }
+            public void UnsafeSetValue(u8 * dest, u32 value) { ((u32 *)dest)[0] = (u32)value; }
+            public void UnsafeSetValueAndIncrement(ref u8 * dest, u32 value) { ((u32 *)dest)[0] = (u32)value; dest += 4; }
+            public void UnsafeIncrement(ref u8 * dest) { dest += 4; }
+#else
+            public PointerU8 UnsafeGetPointer(PointerU8 dstdata, int offset) { return GetPointer(dstdata, offset); }
+            public u32 UnsafeGetValue(PointerU8 dest) { return GetValue(dest); }
+            public void UnsafeSetValue(PointerU8 dest, u32 value) { SetValue(dest, value); }
+            public void UnsafeSetValueAndIncrement(ref PointerU8 dest, u32 value) { SetValueAndIncrement(dest, value); }
+            public void UnsafeIncrement(ref PointerU8 dest) { Increment(dest); }
+#endif
         }
 
         static PixelType_operations GetPixelType_operations()
@@ -260,9 +332,13 @@ namespace mame
         //  get_texel_palette16 - return a texel from a
         //  palettized 16bpp source
         //-------------------------------------------------
-        static u32 get_texel_palette16(render_texinfo texture, s32 curu, s32 curv)
+#if USE_UNSAFE
+        unsafe static u32 get_texel_palette16(render_texinfo texture, s32 curu, s32 curv, u16 * texbase_u16)
+#else
+        static u32 get_texel_palette16(render_texinfo texture, s32 curu, s32 curv, PointerU16 unused)
+#endif
         {
-            Pointer<rgb_t> palbase = new Pointer<rgb_t>(texture.palette);  //const rgb_t *palbase = texture.palette;
+            Pointer<rgb_t> palbase = texture.palette;  //rgb_t const *const palbase = texture.palette;
             if (BilinearFilter)
             {
                 s32 u0 = curu >> 16;
@@ -291,36 +367,50 @@ namespace mame
                     v1 = 0;
                 }
 
-                PointerU16 texbase = new PointerU16(texture.base_);  //const u16 *texbase = reinterpret_cast<const u16 *>(texture.base);
-                texbase += v0 * (s32)texture.rowpixels + u0;
+#if USE_UNSAFE
+                {
+                    var texbase = texbase_u16;  //u16 const *texbase = reinterpret_cast<u16 const *>(texture.base);
+#else
+                {
+                    var texbase = new PointerU16(texture.base_);  //u16 const *texbase = reinterpret_cast<u16 const *>(texture.base);
+#endif
 
-                u32 pix00 = palbase[texbase[0]];
-                u32 pix01 = palbase[texbase[u1]];
-                u32 pix10 = palbase[texbase[v1]];
-                u32 pix11 = palbase[texbase[u1 + v1]];
-                return rgbaint_t.bilinear_filter(pix00, pix01, pix10, pix11, (u8)(curu >> 8), (u8)(curv >> 8));
+                    texbase += v0 * (s32)texture.rowpixels + u0;
+
+                    u32 pix00 = palbase[texbase[0]];
+                    u32 pix01 = palbase[texbase[u1]];
+                    u32 pix10 = palbase[texbase[v1]];
+                    u32 pix11 = palbase[texbase[u1 + v1]];
+                    return rgbaint_t.bilinear_filter(pix00, pix01, pix10, pix11, (u8)(curu >> 8), (u8)(curv >> 8));
+                }
             }
             else
             {
-                PointerU16 texbase = new PointerU16(texture.base_) + (curv >> 16) * (s32)texture.rowpixels + (curu >> 16);  //const u16 *texbase = reinterpret_cast<const u16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
-                return palbase[texbase[0]];
+#if USE_UNSAFE
+                {
+                    var texbase = texbase_u16 + (curv >> 16) * texture.rowpixels + (curu >> 16);  //u16 const *const texbase = reinterpret_cast<u16 const *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
+#else
+                {
+                    var texbase = new PointerU16(texture.base_) + (curv >> 16) * (s32)texture.rowpixels + (curu >> 16);  //u16 const *const texbase = reinterpret_cast<u16 const *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
+#endif
+
+                    return palbase[texbase[0]];
+                }
             }
         }
 
-#if false
+
         //-------------------------------------------------
         //  get_texel_palette16a - return a texel from a
         //  palettized 16bpp source with alpha
         //-------------------------------------------------
-        static inline UINT32 get_texel_palette16a(const render_texinfo &texture, INT32 curu, INT32 curv)
-#endif
-#if false
+        //static inline UINT32 get_texel_palette16a(const render_texinfo &texture, INT32 curu, INT32 curv)
+
         //-------------------------------------------------
         //  get_texel_yuy16 - return a texel from a 16bpp
         //  YCbCr source (pixel is returned as Cr-Cb-Y)
         //-------------------------------------------------
-        static inline UINT32 get_texel_yuy16(const render_texinfo &texture, INT32 curu, INT32 curv)
-#endif
+        //static inline UINT32 get_texel_yuy16(const render_texinfo &texture, INT32 curu, INT32 curv)
 
 
         //-------------------------------------------------
@@ -408,11 +498,12 @@ namespace mame
         //  ARGB source
         //-------------------------------------------------
         //template <bool Wrap>
-        static u32 get_texel_argb32<bool_Wrap>(render_texinfo texture, s32 curu, s32 curv)
-            where bool_Wrap : bool_const, new()
+#if USE_UNSAFE
+        unsafe static u32 get_texel_argb32(bool Wrap, render_texinfo texture, s32 curu, s32 curv)
+#else
+        static u32 get_texel_argb32(bool Wrap, render_texinfo texture, s32 curu, s32 curv)
+#endif
         {
-            bool Wrap = new bool_Wrap().value;
-
             if (BilinearFilter)
             {
                 s32 u0;
@@ -451,10 +542,22 @@ namespace mame
                         v1 = v0 + 1;
                 }
 
+#if USE_UNSAFE
+                fixed(u8 * texbase_u8_zero = texture.base_.Buffer.data_raw)
+                {
+                    u8 * texbase_u8 = texbase_u8_zero + texture.base_.Offset;
+
+                    u32 * texbase = (u32 *)texbase_u8;  //u32 const *const texbase = reinterpret_cast<u32 const *>(texture.base);
+                    u32 * row0base = texbase + (v0 * texture.rowpixels);  //u32 const *const row0base = texbase + (v0 * texture.rowpixels);
+                    u32 * row1base = texbase + (v1 * texture.rowpixels);  //u32 const *const row1base = texbase + (v1 * texture.rowpixels);
+                    return rgbaint_t.bilinear_filter(row0base[u0], row0base[u1], row1base[u0], row1base[u1], (u8)(curu >> 8), (u8)(curv >> 8));  //return rgbaint_t::bilinear_filter(row0base[u0], row0base[u1], row1base[u0], row1base[u1], curu >> 8, curv >> 8);
+                }
+#else
                 PointerU32 texbase = new PointerU32(texture.base_);  //u32 const *const texbase = reinterpret_cast<u32 const *>(texture.base);
                 PointerU32 row0base = texbase + (v0 * (s32)texture.rowpixels);  //u32 const *const row0base = texbase + (v0 * texture.rowpixels);
                 PointerU32 row1base = texbase + (v1 * (s32)texture.rowpixels);  //u32 const *const row1base = texbase + (v1 * texture.rowpixels);
                 return rgbaint_t.bilinear_filter(row0base[u0], row0base[u1], row1base[u0], row1base[u1], (u8)(curu >> 8), (u8)(curv >> 8));  //return rgbaint_t::bilinear_filter(row0base[u0], row0base[u1], row1base[u0], row1base[u1], curu >> 8, curv >> 8);
+#endif
             }
             else
             {
@@ -477,8 +580,18 @@ namespace mame
                     v = std.clamp(curv >> 16, 0, (s32)texture.height - 1);
                 }
 
+#if USE_UNSAFE
+                fixed(u8 * rowbase_u8_zero = texture.base_.Buffer.data_raw)
+                {
+                    u8 * rowbase_u8 = rowbase_u8_zero + texture.base_.Offset;
+
+                    u32 * rowbase = (u32 *)rowbase_u8 + (v * texture.rowpixels);  //u32 const *const rowbase = reinterpret_cast<u32 const *>(texture.base) + (v * texture.rowpixels);
+                    return rowbase[u];
+                }
+#else
                 PointerU32 rowbase = new PointerU32(texture.base_) + (v * (s32)texture.rowpixels);  //u32 const *const rowbase = reinterpret_cast<u32 const *>(texture.base) + (v * texture.rowpixels);
                 return rowbase[u];
+#endif
             }
         }
 
@@ -507,7 +620,7 @@ namespace mame
         //-------------------------------------------------
         //  draw_line - draw a line or point
         //-------------------------------------------------
-        static void draw_line(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_line(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
+        static void draw_line(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_line(render_primitive const &prim, PixelType *dstdata, s32 width, s32 height, u32 pitch)
         {
             // compute the start/end coordinates
             int x1 = (int)(prim.bounds.x0 * 65536.0f);
@@ -661,7 +774,11 @@ namespace mame
         //-------------------------------------------------
         //  draw_rect - draw a solid rectangle
         //-------------------------------------------------
-        static void draw_rect(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_rect(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
+#if USE_UNSAFE
+        unsafe static void draw_rect(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_rect(render_primitive const &prim, PixelType *dstdata, s32 width, s32 height, u32 pitch)
+#else
+        static void draw_rect(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void draw_rect(render_primitive const &prim, PixelType *dstdata, s32 width, s32 height, u32 pitch)
+#endif
         {
             render_bounds fpos = prim.bounds;
 
@@ -669,88 +786,90 @@ namespace mame
             assert(fpos.y0 <= fpos.y1);
 
             // clamp to integers
-            s32 startx = (s32)round_nearest(fpos.x0);
-            s32 starty = (s32)round_nearest(fpos.y0);
-            s32 endx = (s32)round_nearest(fpos.x1);
-            s32 endy = (s32)round_nearest(fpos.y1);
-
-            // ensure we fit
-            if (startx < 0) startx = 0;
-            if (startx >= width) startx = width;
-            if (endx < 0) endx = 0;
-            if (endx >= width) endx = width;
-            if (starty < 0) starty = 0;
-            if (starty >= height) starty = height;
-            if (endy < 0) endy = 0;
-            if (endy >= height) endy = height;
+            s32 startx = std.clamp((s32)round_nearest(fpos.x0), 0, width);
+            s32 starty = std.clamp((s32)round_nearest(fpos.y0), 0, height);
+            s32 endx = std.clamp((s32)round_nearest(fpos.x1), 0, width);
+            s32 endy = std.clamp((s32)round_nearest(fpos.y1), 0, height);
 
             // bail if nothing left
-            if (fpos.x0 > fpos.x1 || fpos.y0 > fpos.y1)
+            if ((startx > endx) || (starty > endy))
                 return;
 
             // only support alpha and "none" blendmodes
             assert(PRIMFLAG_GET_BLENDMODE(prim.flags) == BLENDMODE_NONE || PRIMFLAG_GET_BLENDMODE(prim.flags) == BLENDMODE_ALPHA);
 
-            // fast case: no alpha
-            if (PRIMFLAG_GET_BLENDMODE(prim.flags) == BLENDMODE_NONE || is_opaque(prim.color.a))
+            if ((PRIMFLAG_GET_BLENDMODE(prim.flags) == BLENDMODE_NONE) || is_opaque(prim.color.a))
             {
-                u32 r = (u32)(256.0f * prim.color.r);
-                u32 g = (u32)(256.0f * prim.color.g);
-                u32 b = (u32)(256.0f * prim.color.b);
-                u32 pix;
+                // fast case: no alpha
 
                 // clamp R,G,B to 0-256 range
-                if (r > 0xff) { if ((s32)r < 0) r = 0; else r = 0xff; }
-                if (g > 0xff) { if ((s32)g < 0) g = 0; else g = 0xff; }
-                if (b > 0xff) { if ((s32)b < 0) b = 0; else b = 0xff; }
-                pix = dest_rgb_to_pixel32(r, g, b);
+                u32 r = (u32)(std.clamp(256.0f * prim.color.r, 0.0f, 255.0f));
+                u32 g = (u32)(std.clamp(256.0f * prim.color.g, 0.0f, 255.0f));
+                u32 b = (u32)(std.clamp(256.0f * prim.color.b, 0.0f, 255.0f));
+                u32 pix = dest_rgb_to_pixel32(r, g, b);
 
-                // loop over rows
-                for (s32 y = starty; y < endy; y++)
+#if USE_UNSAFE
+                fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw)
                 {
-                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + startx);  //_PixelType *dest = dstdata + y * pitch + startx;
+                    u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;
+#else
+                {
+                    PointerU8 dstdata_u8 = dstdata;
+#endif
 
-                    // loop over cols
-                    for (s32 x = startx; x < endx; x++)
-                        ops.SetValueAndIncrement(dest, pix);  //*dest++ = pix;
+                    // loop over rows
+                    for (s32 y = starty; y < endy; y++)
+                    {
+                        var dest = ops.UnsafeGetPointer(dstdata_u8, y * (int)pitch + startx);  //PixelType *dest = dstdata + y * pitch + startx;
+
+                        // loop over cols
+                        for (s32 x = startx; x < endx; x++)
+                            ops.UnsafeSetValueAndIncrement(ref dest, pix);  //*dest++ = pix;
+                    }
                 }
             }
-
-            // alpha and/or coloring case
             else if (!is_transparent(prim.color.a))
             {
+                // alpha and/or coloring case
+
                 u32 rmask = dest_rgb_to_pixel32(0xff, 0x00, 0x00);
                 u32 gmask = dest_rgb_to_pixel32(0x00, 0xff, 0x00);
                 u32 bmask = dest_rgb_to_pixel32(0x00, 0x00, 0xff);
-                u32 r = (u32)(256.0f * prim.color.r * prim.color.a);
-                u32 g = (u32)(256.0f * prim.color.g * prim.color.a);
-                u32 b = (u32)(256.0f * prim.color.b * prim.color.a);
-                u32 inva = (u32)(256.0f * (1.0f - prim.color.a));
 
                 // clamp R,G,B and inverse A to 0-256 range
-                if (r > 0xff) { if ((s32)(r) < 0) r = 0; else r = 0xff; }
-                if (g > 0xff) { if ((s32)(g) < 0) g = 0; else g = 0xff; }
-                if (b > 0xff) { if ((s32)(b) < 0) b = 0; else b = 0xff; }
-                if (inva > 0x100) { if ((s32)(inva) < 0) inva = 0; else inva = 0x100; }
+                u32 r = (u32)(std.clamp(256.0f * prim.color.r * prim.color.a, 0.0f, 255.0f));
+                u32 g = (u32)(std.clamp(256.0f * prim.color.g * prim.color.a, 0.0f, 255.0f));
+                u32 b = (u32)(std.clamp(256.0f * prim.color.b * prim.color.a, 0.0f, 255.0f));
+                u32 inva = (u32)(std.clamp(256.0f * (1.0f - prim.color.a), 0.0f, 256.0f));
 
                 // pre-shift the RGBA pieces
                 r = dest_rgb_to_pixel32(r, 0, 0) << 8;
                 g = dest_rgb_to_pixel32(0, g, 0) << 8;
                 b = dest_rgb_to_pixel32(0, 0, b) << 8;
 
-                // loop over rows
-                for (s32 y = starty; y < endy; y++)
+#if USE_UNSAFE
+                fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw)
                 {
-                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + startx);  //_PixelType *dest = dstdata + y * pitch + startx;
+                    u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;
+#else
+                {
+                    PointerU8 dstdata_u8 = dstdata;
+#endif
 
-                    // loop over cols
-                    for (s32 x = startx; x < endx; x++)
+                    // loop over rows
+                    for (s32 y = starty; y < endy; y++)
                     {
-                        u32 dpix = NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
-                        u32 dr = (r + ((dpix & rmask) * inva)) & (rmask << 8);
-                        u32 dg = (g + ((dpix & gmask) * inva)) & (gmask << 8);
-                        u32 db = (b + ((dpix & bmask) * inva)) & (bmask << 8);
-                        ops.SetValueAndIncrement(dest, (dr | dg | db) >> 8);  //*dest++ = (dr | dg | db) >> 8;
+                        var dest = ops.UnsafeGetPointer(dstdata_u8, y * (int)pitch + startx);  //PixelType *dest = dstdata + y * pitch + startx;
+
+                        // loop over cols
+                        for (s32 x = startx; x < endx; x++)
+                        {
+                            u32 dpix = NoDestRead ? 0U : ops.UnsafeGetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
+                            u32 dr = (r + ((dpix & rmask) * inva)) & (rmask << 8);
+                            u32 dg = (g + ((dpix & gmask) * inva)) & (gmask << 8);
+                            u32 db = (b + ((dpix & bmask) * inva)) & (bmask << 8);
+                            ops.UnsafeSetValueAndIncrement(ref dest, (dr | dg | db) >> 8);  //*dest++ = (dr | dg | db) >> 8;
+                        }
                     }
                 }
             }
@@ -765,98 +884,133 @@ namespace mame
         //  draw_quad_palette16_none - perform
         //  rasterization of a 16bpp palettized texture
         //-------------------------------------------------
-        static void draw_quad_palette16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_none(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data &setup)
+#if USE_UNSAFE
+        unsafe static void draw_quad_palette16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_none(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
+#else
+        static void draw_quad_palette16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_none(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
+#endif
         {
             // ensure all parameters are valid
             assert(prim.texture.palette != null);
 
-            // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
             {
-                // loop over rows
-                for (s32 y = setup.starty; y < setup.endy; y++)
+                // fast case: no coloring, no alpha
+#if USE_UNSAFE
+                fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw,
+                           texbase_u8_zero = prim.texture.base_.Buffer.data_raw)
                 {
-                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;
+                    u16 * texbase_u16 = (u16 *)(texbase_u8_zero + prim.texture.base_.Offset);
+#else
+                {
+                    PointerU8 dstdata_u8 = dstdata;
+                    PointerU16 texbase_u16 = null;
+#endif
 
-                    // loop over cols
-                    for (s32 x = setup.startx; x < setup.endx; x++)
+                    // loop over rows
+                    for (s32 y = setup.starty; y < setup.endy; y++)
                     {
-                        u32 pix = get_texel_palette16(prim.texture, curu, curv);
-                        ops.SetValueAndIncrement(dest, source32_to_dest32(pix));  //*dest++ = source32_to_dest(pix);
-                        curu += setup.dudx;
-                        curv += setup.dvdx;
+                        var dest = ops.UnsafeGetPointer(dstdata_u8, y * (int)pitch + setup.startx);  //PixelType *dest = dstdata + y * pitch + setup.startx;
+                        s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                        s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
+
+                        // loop over cols
+                        for (s32 x = setup.startx; x < setup.endx; x++)
+                        {
+                            u32 pix = get_texel_palette16(prim.texture, curu, curv, texbase_u16);
+                            ops.UnsafeSetValueAndIncrement(ref dest, source32_to_dest32(pix));  //*dest++ = source32_to_dest(pix);
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
+                        }
                     }
                 }
             }
-            // coloring-only case
             else if (is_opaque(prim.color.a))
             {
-                u32 sr = (u32)(256.0f * prim.color.r);
-                u32 sg = (u32)(256.0f * prim.color.g);
-                u32 sb = (u32)(256.0f * prim.color.b);
+                // coloring-only case
 
                 // clamp R,G,B to 0-256 range
-                if (sr > 0x100) { if ((s32)sr < 0) sr = 0; else sr = 0x100; }
-                if (sg > 0x100) { if ((s32)sg < 0) sg = 0; else sg = 0x100; }
-                if (sb > 0x100) { if ((s32)sb < 0) sb = 0; else sb = 0x100; }
+                u32 sr = (u32)(std.clamp(256.0f * prim.color.r, 0.0f, 256.0f));
+                u32 sg = (u32)(std.clamp(256.0f * prim.color.g, 0.0f, 256.0f));
+                u32 sb = (u32)(std.clamp(256.0f * prim.color.b, 0.0f, 256.0f));
 
-                // loop over rows
-                for (s32 y = setup.starty; y < setup.endy; y++)
+#if USE_UNSAFE
+                fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw,
+                           texbase_u8_zero = prim.texture.base_.Buffer.data_raw)
                 {
-                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;
+                    u16 * texbase_u16 = (u16 *)(texbase_u8_zero + prim.texture.base_.Offset);
+#else
+                {
+                    PointerU8 dstdata_u8 = dstdata;
+                    PointerU16 texbase_u16 = null;
+#endif
 
-                    // loop over cols
-                    for (s32 x = setup.startx; x < setup.endx; x++)
+                    // loop over rows
+                    for (s32 y = setup.starty; y < setup.endy; y++)
                     {
-                        u32 pix = get_texel_palette16(prim.texture, curu, curv);
-                        u32 r = (source32_r(pix) * sr) >> 8;
-                        u32 g = (source32_g(pix) * sg) >> 8;
-                        u32 b = (source32_b(pix) * sb) >> 8;
+                        var dest = ops.UnsafeGetPointer(dstdata_u8, y * (int)pitch + setup.startx);  //PixelType *dest = dstdata + y * pitch + setup.startx;
+                        s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                        s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
-                        ops.SetValueAndIncrement(dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
-                        curu += setup.dudx;
-                        curv += setup.dvdx;
+                        // loop over cols
+                        for (s32 x = setup.startx; x < setup.endx; x++)
+                        {
+                            u32 pix = get_texel_palette16(prim.texture, curu, curv, texbase_u16);
+                            u32 r = (source32_r(pix) * sr) >> 8;
+                            u32 g = (source32_g(pix) * sg) >> 8;
+                            u32 b = (source32_b(pix) * sb) >> 8;
+
+                            ops.UnsafeSetValueAndIncrement(ref dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
+                        }
                     }
                 }
             }
-            // alpha and/or coloring case
             else if (!is_transparent(prim.color.a))
             {
-                u32 sr = (u32)(256.0f * prim.color.r * prim.color.a);
-                u32 sg = (u32)(256.0f * prim.color.g * prim.color.a);
-                u32 sb = (u32)(256.0f * prim.color.b * prim.color.a);
-                u32 invsa = (u32)(256.0f * (1.0f - prim.color.a));
+                // alpha and/or coloring case
 
                 // clamp R,G,B and inverse A to 0-256 range
-                if (sr > 0x100) { if ((s32)sr < 0) sr = 0; else sr = 0x100; }
-                if (sg > 0x100) { if ((s32)sg < 0) sg = 0; else sg = 0x100; }
-                if (sb > 0x100) { if ((s32)sb < 0) sb = 0; else sb = 0x100; }
-                if (invsa > 0x100) { if ((s32)invsa < 0) invsa = 0; else invsa = 0x100; }
+                u32 sr = (u32)(std.clamp(256.0f * prim.color.r * prim.color.a, 0.0f, 256.0f));
+                u32 sg = (u32)(std.clamp(256.0f * prim.color.g * prim.color.a, 0.0f, 256.0f));
+                u32 sb = (u32)(std.clamp(256.0f * prim.color.b * prim.color.a, 0.0f, 256.0f));
+                u32 invsa = (u32)(std.clamp(256.0f * (1.0f - prim.color.a), 0.0f, 256.0f));
 
-                // loop over rows
-                for (s32 y = setup.starty; y < setup.endy; y++)
+#if USE_UNSAFE
+                fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw,
+                           texbase_u8_zero = prim.texture.base_.Buffer.data_raw)
                 {
-                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;
+                    u16 * texbase_u16 = (u16 *)(texbase_u8_zero + prim.texture.base_.Offset);
+#else
+                {
+                    PointerU8 dstdata_u8 = dstdata;
+                    PointerU16 texbase_u16 = null;
+#endif
 
-                    // loop over cols
-                    for (s32 x = setup.startx; x < setup.endx; x++)
+                    // loop over rows
+                    for (s32 y = setup.starty; y < setup.endy; y++)
                     {
-                        u32 pix = get_texel_palette16(prim.texture, curu, curv);
+                        var dest = ops.UnsafeGetPointer(dstdata_u8, y * (int)pitch + setup.startx);  //PixelType *dest = dstdata + y * pitch + setup.startx;
+                        s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                        s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
-                        u32 dpix = NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
-                        u32 r = (source32_r(pix) * sr + dest_r32(dpix) * invsa) >> 8;
-                        u32 g = (source32_g(pix) * sg + dest_g32(dpix) * invsa) >> 8;
-                        u32 b = (source32_b(pix) * sb + dest_b32(dpix) * invsa) >> 8;
+                        // loop over cols
+                        for (s32 x = setup.startx; x < setup.endx; x++)
+                        {
+                            u32 pix = get_texel_palette16(prim.texture, curu, curv, texbase_u16);
+                            u32 dpix = NoDestRead ? 0 : ops.UnsafeGetValue(dest);  //u32 const dpix = NoDestRead ? 0 : *dest;
+                            u32 r = (source32_r(pix) * sr + dest_r32(dpix) * invsa) >> 8;
+                            u32 g = (source32_g(pix) * sg + dest_g32(dpix) * invsa) >> 8;
+                            u32 b = (source32_b(pix) * sb + dest_b32(dpix) * invsa) >> 8;
 
-                        ops.SetValueAndIncrement(dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
-                        curu += setup.dudx;
-                        curv += setup.dvdx;
+                            ops.UnsafeSetValueAndIncrement(ref dest, dest_assemble_rgb32(r, g, b));  //*dest++ = dest_assemble_rgb(r, g, b);
+                            curu += setup.dudx;
+                            curv += setup.dvdx;
+                        }
                     }
                 }
             }
@@ -866,7 +1020,7 @@ namespace mame
         //  draw_quad_palette16_add - perform
         //  rasterization of a 16bpp palettized texture
         //-------------------------------------------------
-        static void draw_quad_palette16_add(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_add(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
+        static void draw_quad_palette16_add(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_palette16_add(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
         {
             // ensure all parameters are valid
             assert(prim.texture.palette != null);
@@ -883,7 +1037,7 @@ namespace mame
         //  draw_quad_yuy16_none - perform
         //  rasterization of a 16bpp YUY image
         //-------------------------------------------------
-        static void draw_quad_yuy16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_yuy16_none(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
+        static void draw_quad_yuy16_none(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_yuy16_none(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
         {
             throw new emu_unimplemented();
         }
@@ -894,7 +1048,7 @@ namespace mame
         //  rasterization by using RGB add after YUY
         //  conversion
         //-------------------------------------------------
-        static void draw_quad_yuy16_add(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_yuy16_add(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
+        static void draw_quad_yuy16_add(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_yuy16_add(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
         {
             throw new emu_unimplemented();
         }
@@ -912,7 +1066,7 @@ namespace mame
         static void draw_quad_rgb32<bool_Wrap>(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_rgb32(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
             where bool_Wrap : bool_const, new()
         {
-            MemoryContainer<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
+            Pointer<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
 
             // fast case: no coloring, no alpha
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
@@ -1099,69 +1253,85 @@ namespace mame
         //  rasterization using standard alpha blending
         //-------------------------------------------------
         //template <bool Wrap>
-        static void draw_quad_argb32_alpha<bool_Wrap>(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_argb32_alpha(const render_primitive &prim, _PixelType *dstdata, u32 pitch, const quad_setup_data&setup)
+#if USE_UNSAFE
+        unsafe static void draw_quad_argb32_alpha<bool_Wrap>(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_argb32_alpha(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
+#else
+        static void draw_quad_argb32_alpha<bool_Wrap>(render_primitive prim, PointerU8 dstdata, u32 pitch, quad_setup_data setup)  //static void draw_quad_argb32_alpha(render_primitive const &prim, PixelType *dstdata, u32 pitch, quad_setup_data const &setup)
+#endif
             where bool_Wrap : bool_const, new()
         {
-            MemoryContainer<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
+            Pointer<rgb_t> palbase = prim.texture.palette;  //const rgb_t *palbase = prim.texture.palette;
 
             if (prim.color.r >= 1.0f && prim.color.g >= 1.0f && prim.color.b >= 1.0f && is_opaque(prim.color.a))
             {
                 // fast case: no coloring, no alpha
 
-                // loop over rows
-                for (s32 y = setup.starty; y < setup.endy; y++)
+                bool Wrap = new bool_Wrap().value;
+
+#if USE_UNSAFE
+                fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw)
                 {
-                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;
+#else
+                {
+                    PointerU8 dstdata_u8 = dstdata;
+#endif
 
-                    if (palbase == null)
+                    // loop over rows
+                    for (s32 y = setup.starty; y < setup.endy; y++)
                     {
-                        // no lookup case
+                        var dest = ops.UnsafeGetPointer(dstdata_u8, y * (int)pitch + setup.startx);  //PixelType *dest = dstdata + y * pitch + setup.startx;
+                        s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                        s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
-                        // loop over cols
-                        for (s32 x = setup.startx; x < setup.endx; x++)
+                        if (palbase == null)
                         {
-                            u32 pix = get_texel_argb32<bool_Wrap>(prim.texture, curu, curv);
-                            u32 ta = pix >> 24;
-                            if (ta != 0)
-                            {
-                                u32 dpix = NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
-                                u32 invta = 0x100 - ta;
-                                u32 r = (source32_r(pix) * ta + dest_r32(dpix) * invta) >> 8;
-                                u32 g = (source32_g(pix) * ta + dest_g32(dpix) * invta) >> 8;
-                                u32 b = (source32_b(pix) * ta + dest_b32(dpix) * invta) >> 8;
-                                ops.SetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
-                            }
+                            // no lookup case
 
-                            ops.Increment(dest);  //dest++;
-                            curu += setup.dudx;
-                            curv += setup.dvdx;
+                            // loop over cols
+                            for (s32 x = setup.startx; x < setup.endx; x++)
+                            {
+                                u32 pix = get_texel_argb32(Wrap, prim.texture, curu, curv);
+                                u32 ta = pix >> 24;
+                                if (ta != 0)
+                                {
+                                    u32 dpix = NoDestRead ? 0 : ops.UnsafeGetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
+                                    u32 invta = 0x100 - ta;
+                                    u32 r = (source32_r(pix) * ta + dest_r32(dpix) * invta) >> 8;
+                                    u32 g = (source32_g(pix) * ta + dest_g32(dpix) * invta) >> 8;
+                                    u32 b = (source32_b(pix) * ta + dest_b32(dpix) * invta) >> 8;
+                                    ops.UnsafeSetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
+                                }
+
+                                ops.UnsafeIncrement(ref dest);  //dest++;
+                                curu += setup.dudx;
+                                curv += setup.dvdx;
+                            }
                         }
-                    }
-                    else
-                    {
-                        // lookup case
-
-                        // loop over cols
-                        for (s32 x = setup.startx; x < setup.endx; x++)
+                        else
                         {
-                            u32 pix = get_texel_argb32<bool_Wrap>(prim.texture, curu, curv);
-                            u32 ta = pix >> 24;
-                            if (ta != 0)
+                            // lookup case
+
+                            // loop over cols
+                            for (s32 x = setup.startx; x < setup.endx; x++)
                             {
-                                u32 dpix = NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
-                                u32 invta = 0x100 - ta;
-                                u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> SrcShiftR) * ta + dest_r32(dpix) * invta) >> 8;
-                                u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> SrcShiftG) * ta + dest_g32(dpix) * invta) >> 8;
-                                u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> SrcShiftB) * ta + dest_b32(dpix) * invta) >> 8;
+                                u32 pix = get_texel_argb32(Wrap, prim.texture, curu, curv);
+                                u32 ta = pix >> 24;
+                                if (ta != 0)
+                                {
+                                    u32 dpix = NoDestRead ? 0 : ops.UnsafeGetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
+                                    u32 invta = 0x100 - ta;
+                                    u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> SrcShiftR) * ta + dest_r32(dpix) * invta) >> 8;
+                                    u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> SrcShiftG) * ta + dest_g32(dpix) * invta) >> 8;
+                                    u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> SrcShiftB) * ta + dest_b32(dpix) * invta) >> 8;
 
-                                ops.SetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
+                                    ops.UnsafeSetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
+                                }
+
+                                ops.UnsafeIncrement(ref dest);  //dest++;
+                                curu += setup.dudx;
+                                curv += setup.dvdx;
                             }
-
-                            ops.Increment(dest);  //dest++;
-                            curu += setup.dudx;
-                            curv += setup.dvdx;
                         }
                     }
                 }
@@ -1170,67 +1340,79 @@ namespace mame
             {
                 // alpha and/or coloring case
 
-                // clamp R,G,B and inverse A to 0-256 range
-                u32 sr = (u32)(std.clamp(256.0f * prim.color.r, 0.0f, 256.0f));
-                u32 sg = (u32)(std.clamp(256.0f * prim.color.g, 0.0f, 256.0f));
-                u32 sb = (u32)(std.clamp(256.0f * prim.color.b, 0.0f, 256.0f));
-                u32 sa = (u32)(std.clamp(256.0f * prim.color.a, 0.0f, 256.0f));
+                bool Wrap = new bool_Wrap().value;
 
-                // loop over rows
-                for (s32 y = setup.starty; y < setup.endy; y++)
+#if USE_UNSAFE
+                fixed(u8 * dstdata_u8_zero = dstdata.Buffer.data_raw)
                 {
-                    PointerU8 dest = ops.GetPointer(dstdata, y * (int)pitch + setup.startx);  //_PixelType *dest = dstdata + y * pitch + setup.startx;
-                    s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
-                    s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
+                    u8 * dstdata_u8 = dstdata_u8_zero + dstdata.Offset;
+#else
+                {
+                    PointerU8 dstdata_u8 = dstdata;
+#endif
 
-                    if (palbase == null)
+                    // clamp R,G,B and inverse A to 0-256 range
+                    u32 sr = (u32)(std.clamp(256.0f * prim.color.r, 0.0f, 256.0f));
+                    u32 sg = (u32)(std.clamp(256.0f * prim.color.g, 0.0f, 256.0f));
+                    u32 sb = (u32)(std.clamp(256.0f * prim.color.b, 0.0f, 256.0f));
+                    u32 sa = (u32)(std.clamp(256.0f * prim.color.a, 0.0f, 256.0f));
+
+                    // loop over rows
+                    for (s32 y = setup.starty; y < setup.endy; y++)
                     {
-                        // no lookup case
+                        var dest = ops.UnsafeGetPointer(dstdata_u8, y * (int)pitch + setup.startx);  //PixelType *dest = dstdata + y * pitch + setup.startx;
+                        s32 curu = setup.startu + (y - setup.starty) * setup.dudy;
+                        s32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
-                        // loop over cols
-                        for (s32 x = setup.startx; x < setup.endx; x++)
+                        if (palbase == null)
                         {
-                            u32 pix = get_texel_argb32<bool_Wrap>(prim.texture, curu, curv);
-                            u32 ta = (pix >> 24) * sa;
-                            if (ta != 0)
+                            // no lookup case
+
+                            // loop over cols
+                            for (s32 x = setup.startx; x < setup.endx; x++)
                             {
-                                u32 dpix = NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
-                                u32 invsta = (0x10000 - ta) << 8;
-                                u32 r = (source32_r(pix) * sr * ta + dest_r32(dpix) * invsta) >> 24;
-                                u32 g = (source32_g(pix) * sg * ta + dest_g32(dpix) * invsta) >> 24;
-                                u32 b = (source32_b(pix) * sb * ta + dest_b32(dpix) * invsta) >> 24;
+                                u32 pix = get_texel_argb32(Wrap, prim.texture, curu, curv);
+                                u32 ta = (pix >> 24) * sa;
+                                if (ta != 0)
+                                {
+                                    u32 dpix = NoDestRead ? 0 : ops.UnsafeGetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
+                                    u32 invsta = (0x10000 - ta) << 8;
+                                    u32 r = (source32_r(pix) * sr * ta + dest_r32(dpix) * invsta) >> 24;
+                                    u32 g = (source32_g(pix) * sg * ta + dest_g32(dpix) * invsta) >> 24;
+                                    u32 b = (source32_b(pix) * sb * ta + dest_b32(dpix) * invsta) >> 24;
 
-                                ops.SetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
+                                    ops.UnsafeSetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
+                                }
+
+                                ops.UnsafeIncrement(ref dest);  //dest++;
+                                curu += setup.dudx;
+                                curv += setup.dvdx;
                             }
-
-                            ops.Increment(dest);  //dest++;
-                            curu += setup.dudx;
-                            curv += setup.dvdx;
                         }
-                    }
-                    else
-                    {
-                        // lookup case
-
-                        // loop over cols
-                        for (s32 x = setup.startx; x < setup.endx; x++)
+                        else
                         {
-                            u32 pix = get_texel_argb32<bool_Wrap>(prim.texture, curu, curv);
-                            u32 ta = (pix >> 24) * sa;
-                            if (ta != 0)
+                            // lookup case
+
+                            // loop over cols
+                            for (s32 x = setup.startx; x < setup.endx; x++)
                             {
-                                u32 dpix = NoDestRead ? 0 : ops.GetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
-                                u32 invsta = (0x10000 - ta) << 8;
-                                u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> SrcShiftR) * sr * ta + dest_r32(dpix) * invsta) >> 24;
-                                u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> SrcShiftG) * sg * ta + dest_g32(dpix) * invsta) >> 24;
-                                u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> SrcShiftB) * sb * ta + dest_b32(dpix) * invsta) >> 24;
+                                u32 pix = get_texel_argb32(Wrap, prim.texture, curu, curv);
+                                u32 ta = (pix >> 24) * sa;
+                                if (ta != 0)
+                                {
+                                    u32 dpix = NoDestRead ? 0 : ops.UnsafeGetValue(dest);  //u32 dpix = NoDestRead ? 0 : *dest;
+                                    u32 invsta = (0x10000 - ta) << 8;
+                                    u32 r = ((palbase[(int)((pix >> 16) & 0xff)] >> SrcShiftR) * sr * ta + dest_r32(dpix) * invsta) >> 24;
+                                    u32 g = ((palbase[(int)((pix >> 8) & 0xff)] >> SrcShiftG) * sg * ta + dest_g32(dpix) * invsta) >> 24;
+                                    u32 b = ((palbase[(int)((pix >> 0) & 0xff)] >> SrcShiftB) * sb * ta + dest_b32(dpix) * invsta) >> 24;
 
-                                ops.SetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
+                                    ops.UnsafeSetValue(dest, dest_assemble_rgb32(r, g, b));  //*dest = dest_assemble_rgb(r, g, b);
+                                }
+
+                                ops.UnsafeIncrement(ref dest);  //dest++;
+                                curu += setup.dudx;
+                                curv += setup.dvdx;
                             }
-
-                            ops.Increment(dest);  //dest++;
-                            curu += setup.dudx;
-                            curv += setup.dvdx;
                         }
                     }
                 }
@@ -1258,7 +1440,7 @@ namespace mame
         //  and then dispatch to a texture-mode-specific
         //  drawing routine
         //-------------------------------------------------
-        static void setup_and_draw_textured_quad(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void setup_and_draw_textured_quad(const render_primitive &prim, _PixelType *dstdata, s32 width, s32 height, u32 pitch)
+        static void setup_and_draw_textured_quad(render_primitive prim, PointerU8 dstdata, s32 width, s32 height, u32 pitch)  //static void setup_and_draw_textured_quad(render_primitive const &prim, PixelType *dstdata, s32 width, s32 height, u32 pitch)
         {
             assert(prim.bounds.x0 <= prim.bounds.x1);
             assert(prim.bounds.y0 <= prim.bounds.y1);
@@ -1370,7 +1552,7 @@ namespace mame
         //  draw_primitives - draw a series of primitives
         //  using a software rasterizer
         //-------------------------------------------------
-        public static void draw_primitives(render_primitive_list primlist, PointerU8 dstdata, u32 width, u32 height, u32 pitch)  //static void draw_primitives(const render_primitive_list &primlist, void *dstdata, u32 width, u32 height, u32 pitch)
+        public static void draw_primitives(render_primitive_list primlist, PointerU8 dstdata, u32 width, u32 height, u32 pitch)  //static void draw_primitives(render_primitive_list const &primlist, void *dstdata, u32 width, u32 height, u32 pitch)
         {
             // loop over the list and render each element
             for (render_primitive prim = primlist.first(); prim != null; prim = prim.next())

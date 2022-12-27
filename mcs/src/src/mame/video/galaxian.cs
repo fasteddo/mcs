@@ -100,14 +100,14 @@ namespace mame
                 bit0 = (uint8_t)BIT(color_prom[i], 3);
                 bit1 = (uint8_t)BIT(color_prom[i], 4);
                 bit2 = (uint8_t)BIT(color_prom[i], 5);
-                int gr = combine_weights(gweights, bit0, bit1, bit2);
+                int g = combine_weights(gweights, bit0, bit1, bit2);
 
                 /* blue component */
                 bit0 = (uint8_t)BIT(color_prom[i], 6);
                 bit1 = (uint8_t)BIT(color_prom[i], 7);
                 int b = combine_weights(bweights, bit0, bit1);
 
-                palette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b));
+                palette.set_pen_color((pen_t)i, new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b));
             }
 
             /*
@@ -152,7 +152,7 @@ namespace mame
                 // bit 3 = green @ 150 Ohm, bit 2 = green @ 100 Ohm
                 bit0 = (uint8_t)BIT(i,3);
                 bit1 = (uint8_t)BIT(i,2);
-                int gr = starmap[(bit1 << 1) | bit0];
+                int g = starmap[(bit1 << 1) | bit0];
 
                 // bit 1 = blue @ 150 Ohm, bit 0 = blue @ 100 Ohm
                 bit0 = (uint8_t)BIT(i,1);
@@ -160,7 +160,7 @@ namespace mame
                 int b = starmap[(bit1 << 1) | bit0];
 
                 // set the RGB color
-                m_star_color[i] = new rgb_t((uint8_t)r, (uint8_t)gr, (uint8_t)b);
+                m_star_color[i] = new rgb_t((uint8_t)r, (uint8_t)g, (uint8_t)b);
             }
 
             // default bullet colors are white for the first 7, and yellow for the last one

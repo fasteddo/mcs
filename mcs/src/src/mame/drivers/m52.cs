@@ -6,18 +6,21 @@ using System;
 using u32 = System.UInt32;
 using uint32_t = System.UInt32;
 
-using static mame.device_creator_helper_global;
 using static mame.digfx_global;
+using static mame.drawgfx_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.emupal_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
+using static mame.irem_global;
 using static mame.iremipt_global;
 using static mame.romentry_global;
 using static mame.screen_global;
+using static mame.z80_global;
 
 
 namespace mame
@@ -388,7 +391,7 @@ namespace mame
         static m52 m_m52 = new m52();
 
 
-        static device_t device_creator_m52(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m52_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_m52(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new m52_state(mconfig, type, tag); }
 
 
         //                                                       creator,            rom          YEAR,   NAME,       PARENT,  MACHINE,        INPUT,                           INIT,                     MONITOR, COMPANY, FULLNAME,      FLAGS

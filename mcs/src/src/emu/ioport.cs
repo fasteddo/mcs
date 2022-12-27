@@ -31,6 +31,7 @@ using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_internal;
 using static mame.ioport_ioport_type_helper;
+using static mame.language_global;
 using static mame.osdcomm_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;
@@ -827,7 +828,20 @@ namespace mame
         public ioport_group group() { return m_group; }
         public u8 player() { return m_player; }
         //const char *token() const { return m_token; }
-        public string name() { return m_name; }
+
+        public string name()
+        {
+            //using util::lang_translate;
+
+            if (string.IsNullOrEmpty(m_name))
+                return "";
+            else if ((group() < ioport_group.IPG_PLAYER1) || (group() > ioport_group.IPG_PLAYER10))
+                return __("input-name", m_name);
+            else
+                return substitute_player(__("input-name", m_name), player());
+        }
+
+
         input_seq defseq(input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD) { return m_defseq[(int)seqtype]; }
         public input_seq seq(input_seq_type seqtype = input_seq_type.SEQ_TYPE_STANDARD) { return m_seq[(int)seqtype]; }
         //const std::string &cfg(input_seq_type seqtype = SEQ_TYPE_STANDARD) const noexcept { return m_cfg[seqtype]; }
@@ -1073,6 +1087,7 @@ namespace mame
         {
             m_condition = condition;
             m_tag = tag;
+            m_port = null;
             m_mask = mask;
             m_value = value;
         }
@@ -1332,15 +1347,23 @@ namespace mame
         //-------------------------------------------------
         public string name()
         {
-            // if we have a non-default name, use that
-            if (m_live != null && !string.IsNullOrEmpty(m_live.name))
+            //using util::lang_translate;
+
+            // if we have an overridden name, use that
+            if (m_live != null && !m_live.name.empty())
                 return m_live.name;
 
-            if (m_name != null)
+            // if no specific name, use the generic name for the type
+            if (string.IsNullOrEmpty(m_name))
+                return manager().type_name(m_type, m_player);
+
+            // return name for non-controller fields as-is
+            ioport_group group = manager().type_group(m_type, m_player);
+            if ((group < ioport_group.IPG_PLAYER1) || (group > ioport_group.IPG_PLAYER10))
                 return m_name;
 
-            // otherwise, return the name associated with the type
-            return manager().type_name(m_type, m_player);
+            // substitute the player number in if necessary
+            return substitute_player(m_name, m_player);
         }
 
         public string specific_name() { return m_name; }
@@ -1515,7 +1538,7 @@ namespace mame
         {
             // inputs associated with specific players
             ioport_group group = manager().type_group(m_type, m_player);
-            if (group >= ioport_group.IPG_PLAYER1 && group <= ioport_group.IPG_PLAYER10)
+            if ((group >= ioport_group.IPG_PLAYER1) && (group <= ioport_group.IPG_PLAYER10))
                 return ioport_type_class.INPUT_CLASS_CONTROLLER;
 
             // keys (names derived from character codes)
@@ -3039,13 +3062,19 @@ namespace mame
         //-------------------------------------------------
         public string type_name(ioport_type type, u8 player)
         {
+            //using util::lang_translate;
+
             // if we have a machine, use the live state and quick lookup
             input_type_entry entry = m_type_to_entry[(int)type, player];
-            if (entry != null && entry.name() != null)
-                return entry.name();
+            if (entry != null)
+            {
+                string name = entry.name();
+                if (!name.empty())
+                    return name;
+            }
 
             // if we find nothing, return a default string (not a null pointer)
-            return "???";
+            return __("input-name", "???");
         }
 
 
@@ -4160,6 +4189,15 @@ namespace mame
         };
 
 
+        //inline bool input_seq_good(running_machine &machine, input_seq const &seq)
+
+
+        public static string substitute_player(string name, u8 player)
+        {
+            throw new emu_unimplemented();
+        }
+
+
         // XML attributes for the different types
         static readonly string [] seqtypestrings = { "standard", "increment", "decrement" };
     }
@@ -4253,11 +4291,20 @@ namespace mame
         public const ioport_type IPT_JOYSTICK_DOWN = ioport_type.IPT_JOYSTICK_DOWN;
         public const ioport_type IPT_JOYSTICK_LEFT = ioport_type.IPT_JOYSTICK_LEFT;
         public const ioport_type IPT_JOYSTICK_RIGHT = ioport_type.IPT_JOYSTICK_RIGHT;
+        public const ioport_type IPT_JOYSTICKRIGHT_UP = ioport_type.IPT_JOYSTICKRIGHT_UP;
+        public const ioport_type IPT_JOYSTICKRIGHT_DOWN = ioport_type.IPT_JOYSTICKRIGHT_DOWN;
+        public const ioport_type IPT_JOYSTICKRIGHT_LEFT = ioport_type.IPT_JOYSTICKRIGHT_LEFT;
+        public const ioport_type IPT_JOYSTICKRIGHT_RIGHT = ioport_type.IPT_JOYSTICKRIGHT_RIGHT;
+        public const ioport_type IPT_JOYSTICKLEFT_UP = ioport_type.IPT_JOYSTICKLEFT_UP;
+        public const ioport_type IPT_JOYSTICKLEFT_DOWN = ioport_type.IPT_JOYSTICKLEFT_DOWN;
+        public const ioport_type IPT_JOYSTICKLEFT_LEFT = ioport_type.IPT_JOYSTICKLEFT_LEFT;
+        public const ioport_type IPT_JOYSTICKLEFT_RIGHT = ioport_type.IPT_JOYSTICKLEFT_RIGHT;
         public const ioport_type IPT_BUTTON1 = ioport_type.IPT_BUTTON1;
         public const ioport_type IPT_BUTTON2 = ioport_type.IPT_BUTTON2;
         public const ioport_type IPT_BUTTON3 = ioport_type.IPT_BUTTON3;
         public const ioport_type IPT_BUTTON4 = ioport_type.IPT_BUTTON4;
         public const ioport_type IPT_BUTTON5 = ioport_type.IPT_BUTTON5;
+        public const ioport_type IPT_BUTTON6 = ioport_type.IPT_BUTTON6;
         public const ioport_type IPT_AD_STICK_X = ioport_type.IPT_AD_STICK_X;
         public const ioport_type IPT_AD_STICK_Y = ioport_type.IPT_AD_STICK_Y;
         public const ioport_type IPT_PADDLE = ioport_type.IPT_PADDLE;

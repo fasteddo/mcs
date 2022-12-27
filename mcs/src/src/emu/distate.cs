@@ -284,7 +284,7 @@ namespace mame
 
     class device_state_register_operators_u32 : device_state_register_operators<u32>
     {
-        public u64 cast_u64(u32 value) { throw new emu_unimplemented(); }
+        public u64 cast_u64(u32 value) { return value; }
         public u8 sizeof_() { return sizeof(u32); }
         public u64 max() { return u32.MaxValue; }
         public u8 flags() { return 0; }

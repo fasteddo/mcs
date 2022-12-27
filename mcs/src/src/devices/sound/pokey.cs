@@ -17,6 +17,7 @@ using uint32_t = System.UInt32;
 using static mame.cpp_global;
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.pokey_global;
 
 
 namespace mame
@@ -28,8 +29,7 @@ namespace mame
                                 //device_state_interface
     {
         //DEFINE_DEVICE_TYPE(POKEY, pokey_device, "pokey", "Atari C012294 POKEY")
-        static pokey_device device_creator_pokey_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pokey_device(mconfig, tag, owner, clock); }
-        public static readonly device_type POKEY = DEFINE_DEVICE_TYPE(device_creator_pokey_device, "pokey", "Atari C012294 POKEY");
+        public static readonly emu.detail.device_type_impl POKEY = DEFINE_DEVICE_TYPE("pokey", "Atari C012294 POKEY", (type, mconfig, tag, owner, clock) => { return new pokey_device(mconfig, tag, owner, clock); });
 
 
         public class device_sound_interface_pokey : device_sound_interface
@@ -490,13 +490,13 @@ namespace mame
 
 
         // analog output configuration
-        //void set_output_rc(double r, double c, double v)
-        //{
-        //    m_output_type = pokey_device::RC_LOWPASS;
-        //    m_r_pullup = r;
-        //    m_cap = c;
-        //    m_v_ref = v;
-        //}
+        public void set_output_rc(double r, double c, double v)
+        {
+            m_output_type = output_type.RC_LOWPASS;
+            m_r_pullup = r;
+            m_cap = c;
+            m_v_ref = v;
+        }
 
         /* C ignored, please see pokey.c */
         //void set_output_opamp(double r, double c, double v)
@@ -1474,5 +1474,13 @@ namespace mame
              ************************************************************/
 
         }
+    }
+
+
+    static class pokey_global
+    {
+        public static pokey_device POKEY(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<pokey_device>(mconfig, tag, pokey_device.POKEY, clock); }
+        public static pokey_device POKEY(machine_config mconfig, string tag, XTAL clock) { return emu.detail.device_type_impl.op<pokey_device>(mconfig, tag, pokey_device.POKEY, clock); }
+        public static pokey_device POKEY<bool_Required>(machine_config mconfig, device_finder<pokey_device, bool_Required> finder, XTAL clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, pokey_device.POKEY, clock); }
     }
 }

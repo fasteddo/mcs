@@ -62,7 +62,7 @@ namespace mame
         std.vector<float> m_save_contrast = new std.vector<float>();      // brightness for save/restore
 
         std.vector<rgb_t> m_pen_array = new std.vector<rgb_t>();  // std::vector<pen_t> m_pen_array;
-        std.vector<pen_t> m_shadow_array;
+        std.vector<pen_t> m_shadow_array = new std.vector<pen_t>();
         std.vector<pen_t> m_hilight_array;
 
 
@@ -81,6 +81,10 @@ namespace mame
             m_hilight_group = 0;
             m_white_pen = 0;
             m_black_pen = 0;
+
+
+            for (int i = 0; i < m_shadow_tables.Length; i++)
+                m_shadow_tables[i] = new shadow_table_data();
         }
 
 
@@ -90,7 +94,7 @@ namespace mame
         public palette_t palette() { return m_palette; }
         //const pen_t &pen(int index) const { return m_pens[index]; }
         public Pointer<rgb_t> pens() { return m_pens; }  //const pen_t *pens() const { return m_pens; }
-        //pen_t *shadow_table() const { return m_shadow_table; }
+        public Pointer<pen_t> shadow_table() { return new Pointer<pen_t>(m_shadow_table); }
         //rgb_t pen_color(pen_t pen) const { return m_palette->entry_color(pen); }
         //double pen_contrast(pen_t pen) const { return m_palette->entry_contrast(pen); }
         public pen_t black_pen() { return m_black_pen; }
@@ -436,7 +440,7 @@ namespace mame
             }
 
             // set the default table
-            m_shadow_table = m_shadow_tables[0] != null ? new Pointer<pen_t>(m_shadow_tables[0].base_) : null;
+            m_shadow_table = m_shadow_tables[0].base_ != null ? new Pointer<pen_t>(m_shadow_tables[0].base_) : null;
         }
 
 

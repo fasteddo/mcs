@@ -343,10 +343,16 @@ namespace mame.ui
                     }
                     else
                     {
-                        string hz = std.to_string((float)screen.frame_period().as_hz());
-                        size_t last = hz.find_last_not_of('0');
-                        size_t dpos = hz.find_last_of('.');
-                        hz = hz.substr(0, last + (last != dpos ? 1U : 0U));
+                        u32 rate = (u32)(screen.frame_period().as_hz() * 1_000_000 + 0.5);
+                        bool valid = rate >= 1_000_000;
+                        string hz = valid ? std.to_string(rate) : "?";
+                        if (valid)
+                        {
+                            size_t dpos = hz.length() - 6;
+                            hz = hz.insert_(dpos, ".");
+                            size_t last = hz.find_last_not_of('0');
+                            hz = hz.substr(0, last + (last != dpos ? 1U : 0U));
+                        }
 
                         rectangle visarea = screen.visible_area();
                         detail = util.string_format("{0} X {1} ({2}) {3} Hz",  //detail = string_format("%d " UTF8_MULTIPLY " %d (%s) %s" UTF8_NBSP "Hz",

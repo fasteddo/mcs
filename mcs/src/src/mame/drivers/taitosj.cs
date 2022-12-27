@@ -10,23 +10,30 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
 using static mame.attotime_global;
+using static mame.ay8910_global;
 using static mame.dac_global;
-using static mame.device_creator_helper_global;
 using static mame.device_global;
 using static mame.diexec_global;
 using static mame.digfx_global;
 using static mame.discrete_global;
 using static mame.disound_global;
+using static mame.drawgfx_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
+using static mame.emupal_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
+using static mame.input_merger_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
 using static mame.rescap_global;
 using static mame.romentry_global;
 using static mame.screen_global;
+using static mame.speaker_global;
+using static mame.taitosjsec_global;
+using static mame.watchdog_global;
+using static mame.z80_global;
 
 
 namespace mame
@@ -831,9 +838,9 @@ namespace mame
         static taitosj m_taitosj = new taitosj();
 
 
-        static device_t device_creator_junglek(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, (device_type)type, tag); }
-        static device_t device_creator_jungleh(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, (device_type)type, tag); }
-        static device_t device_creator_elevator(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, (device_type)type, tag); }
+        static device_t device_creator_junglek(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, type, tag); }
+        static device_t device_creator_jungleh(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, type, tag); }
+        static device_t device_creator_elevator(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new taitosj_state(mconfig, type, tag); }
 
 
         //                                                                                                           rom          parent      machine               inp                                  init

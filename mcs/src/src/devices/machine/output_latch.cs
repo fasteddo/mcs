@@ -10,6 +10,7 @@ using unsigned = System.UInt32;
 
 using static mame.device_global;
 using static mame.emucore_global;
+using static mame.output_latch_global;
 using static mame.util;
 
 
@@ -18,8 +19,7 @@ namespace mame
     public class output_latch_device : device_t
     {
         //DEFINE_DEVICE_TYPE(OUTPUT_LATCH, output_latch_device, "output_latch", "Output Latch")
-        static device_t device_creator_output_latch_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new output_latch_device(mconfig, tag, owner, clock); }
-        public static readonly device_type OUTPUT_LATCH = DEFINE_DEVICE_TYPE(device_creator_output_latch_device, "output_latch", "Output Latch");
+        public static readonly emu.detail.device_type_impl OUTPUT_LATCH = DEFINE_DEVICE_TYPE("output_latch", "Output Latch", (type, mconfig, tag, owner, clock) => { return new output_latch_device(mconfig, tag, owner, clock); });
 
 
         devcb_write_line.array<u64_const_8> m_bit_handlers;
@@ -65,5 +65,11 @@ namespace mame
         {
             save_item(NAME(new { m_bits }));
         }
+    }
+
+
+    static class output_latch_global
+    {
+        public static output_latch_device OUTPUT_LATCH(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<output_latch_device>(mconfig, tag, output_latch_device.OUTPUT_LATCH, 0); }
     }
 }

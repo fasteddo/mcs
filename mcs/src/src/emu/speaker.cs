@@ -11,6 +11,7 @@ using u32 = System.UInt32;
 using static mame.device_global;
 using static mame.osdcore_global;
 using static mame.sound_global;
+using static mame.speaker_global;
 
 
 namespace mame
@@ -29,8 +30,7 @@ namespace mame
                                   //public device_mixer_interface
     {
         //DEFINE_DEVICE_TYPE(SPEAKER, speaker_device, "speaker", "Speaker")
-        static device_t device_creator_speaker_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new speaker_device(mconfig, tag, owner, clock); }
-        public static readonly device_type SPEAKER = DEFINE_DEVICE_TYPE(device_creator_speaker_device, "speaker", "Speaker");
+        public static readonly emu.detail.device_type_impl SPEAKER = DEFINE_DEVICE_TYPE("speaker", "Speaker", (type, mconfig, tag, owner, clock) => { return new speaker_device(mconfig, tag, owner, clock); });
 
 
         device_mixer_interface m_dimixer;
@@ -239,4 +239,10 @@ namespace mame
 
 
     //using speaker_device_enumerator = device_type_enumerator<speaker_device>;
+
+
+    static class speaker_global
+    {
+        public static speaker_device SPEAKER(machine_config mconfig, string tag) { return emu.detail.device_type_impl.op<speaker_device>(mconfig, tag, speaker_device.SPEAKER, 0); }
+    }
 }

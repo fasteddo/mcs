@@ -9,7 +9,7 @@ using uint32_t = System.UInt32;
 
 using static mame.device_global;
 using static mame.emucore_global;
-
+using static mame.starfield_05xx_global;
 using static mame.util;
 
 
@@ -19,8 +19,7 @@ namespace mame
     public class starfield_05xx_device : device_t
     {
         //DEFINE_DEVICE_TYPE(STARFIELD_05XX, starfield_05xx_device, "namco_05xx_starfield", "Namco 05xx Starfield")
-        static device_t device_creator_starfield_05xx_device(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, uint32_t clock) { return new starfield_05xx_device(mconfig, tag, owner, clock); }
-        public static readonly device_type STARFIELD_05XX = DEFINE_DEVICE_TYPE(device_creator_starfield_05xx_device, "namco_05xx_starfield", "Namco 05xx Starfield");
+        public static readonly emu.detail.device_type_impl STARFIELD_05XX = DEFINE_DEVICE_TYPE("namco_05xx_starfield", "Namco 05xx Starfield", (type, mconfig, tag, owner, clock) => { return new starfield_05xx_device(mconfig, tag, owner, clock); });
 
 
         const uint16_t STARS_COLOR_BASE = 64*4+64*4;
@@ -224,5 +223,11 @@ namespace mame
 
             return lfsr;
         }
+    }
+
+
+    static class starfield_05xx_global
+    {
+        public static starfield_05xx_device STARFIELD_05XX<bool_Required>(machine_config mconfig, device_finder<starfield_05xx_device, bool_Required> finder, uint32_t clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, starfield_05xx_device.STARFIELD_05XX, clock); }
     }
 }
