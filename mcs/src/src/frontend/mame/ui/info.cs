@@ -70,7 +70,7 @@ namespace mame.ui
             foreach (device_t device in new device_enumerator(config.root_device()))
             {
                 // the "no sound hardware" warning doesn't make sense when you plug in a sound card
-                if (device.GetClassInterface<device_sound_interface>() != null)  // dynamic_cast<device_sound_interface *>(&device))
+                if (device is speaker_device)  //if (dynamic_cast<speaker_device *>(&device))
                     m_flags &= ~machine_flags.type.NO_SOUND_HW;
 
                 // build overall emulation status

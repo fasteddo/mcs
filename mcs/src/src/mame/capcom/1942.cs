@@ -386,7 +386,7 @@ namespace mame
 
     partial class _1942_state : driver_device
     {
-        public override void driver_init()
+        public void driver_init()
         {
             PointerU8 ROM = new PointerU8(memregion("maincpu").base_());  //uint8_t *ROM = memregion("maincpu")->base();
             membank("bank1").configure_entries(0, 4, new PointerU8(ROM, 0x10000), 0x4000);  //membank("bank1")->configure_entries(0, 4, &ROM[0x10000], 0x4000);

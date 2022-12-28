@@ -29,6 +29,7 @@ namespace mame
         required_shared_ptr<uint8_t> m_sprite_position;
 
         protected required_device<samples_device> m_samples;
+        optional_device<discrete_device> m_discrete;
 
         protected required_device<gfxdecode_device> m_gfxdecode;
         protected required_device<screen_device> m_screen;
@@ -68,6 +69,7 @@ namespace mame
             m_videoram = new required_shared_ptr<uint8_t>(this, "videoram");
             m_sprite_position = new required_shared_ptr<uint8_t>(this, "spritepos");
             m_samples = new required_device<samples_device>(this, "samples");
+            m_discrete = new optional_device<discrete_device>(this, "discrete");
             m_gfxdecode = new required_device<gfxdecode_device>(this, "gfxdecode");
             m_screen = new required_device<screen_device>(this, "screen");
             m_digits = new output_finder<u32_const_32>(this, "digit{0}", 0U);

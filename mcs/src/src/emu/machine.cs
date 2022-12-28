@@ -1131,7 +1131,7 @@ namespace mame
             foreach (device_nvram_interface nvram in new nvram_interface_enumerator(root_device()))
             {
                 emu_file file = new emu_file(options().nvram_directory(), OPEN_FLAG_READ);
-                if (!file.open(nvram_filename(nvram.device())))
+                if (nvram.nvram_backup_enabled() && !file.open(nvram_filename(nvram.device())))
                 {
                     if (!nvram.nvram_load(file.core_file_))
                         osd_printf_error("Error reading NVRAM file {0}\n", file.filename());

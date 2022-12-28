@@ -161,6 +161,7 @@ namespace mame
 
 
         protected override std.pair<uX, u16> read_flags(offs_t offset, uX mem_mask) { throw new emu_unimplemented(); }
+        protected override u16 lookup_flags(offs_t offset, uX mem_mask) { throw new emu_unimplemented(); }
 
 
         public override object get_ptr(offs_t offset)

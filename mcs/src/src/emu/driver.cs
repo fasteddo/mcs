@@ -24,12 +24,13 @@ namespace mame
 
         // core machine callbacks
         public static void MCFG_MACHINE_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_device.static_set_callback(config.root_device(), driver_device.callback_type.CB_MACHINE_START, func); }  //driver_callback_delegate(&_class::MACHINE_START_NAME(_func), #_class "::machine_start_" #_func, downcast<_class *>(owner)));
+        //#define MCFG_MACHINE_START_REMOVE() driver_device::static_set_callback(config.root_device(), driver_device::CB_MACHINE_START, driver_callback_delegate());
         public static void MCFG_MACHINE_RESET_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_device.static_set_callback(config.root_device(), driver_device.callback_type.CB_MACHINE_RESET, func); }  //driver_callback_delegate(&_class::MACHINE_RESET_NAME(_func), #_class "::machine_reset_" #_func, downcast<_class *>(owner)));
         //define MCFG_MACHINE_RESET_REMOVE()             driver_device::static_set_callback(config.root_device(), driver_device::CB_MACHINE_RESET, driver_callback_delegate());
 
         // core video callbacks
         public static void MCFG_VIDEO_START_OVERRIDE(machine_config config, driver_callback_delegate func) { driver_device.static_set_callback(config.root_device(), driver_device.callback_type.CB_VIDEO_START, func); }  //driver_callback_delegate(&_class::VIDEO_START_NAME(_func), #_class "::video_start_" #_func, downcast<_class *>(owner)));
-        //define MCFG_VIDEO_RESET_OVERRIDE(_class, _func)             driver_device::static_set_callback(config.root_device(), driver_device::CB_VIDEO_RESET, driver_callback_delegate(&_class::VIDEO_RESET_NAME(_func), #_class "::video_reset_" #_func, downcast<_class *>(owner)));
+        //#define MCFG_VIDEO_START_REMOVE() driver_device::static_set_callback(config.root_device(), driver_device::CB_VIDEO_START, driver_callback_delegate());
 
 
         //**************************************************************************
@@ -50,11 +51,6 @@ namespace mame
         //#define VIDEO_START_CALL_MEMBER(name)       VIDEO_START_NAME(name)()
         //#define DECLARE_VIDEO_START(name)   void VIDEO_START_NAME(name)() ATTR_COLD
         //#define VIDEO_START_MEMBER(cls,name) void cls::VIDEO_START_NAME(name)()
-
-        //#define VIDEO_RESET_NAME(name)      video_reset_##name
-        //#define VIDEO_RESET_CALL_MEMBER(name)       VIDEO_RESET_NAME(name)()
-        //#define DECLARE_VIDEO_RESET(name)   void VIDEO_RESET_NAME(name)()
-        //#define VIDEO_RESET_MEMBER(cls,name) void cls::VIDEO_RESET_NAME(name)()
     }
 
 
@@ -78,7 +74,6 @@ namespace mame
             CB_MACHINE_START,
             CB_MACHINE_RESET,
             CB_VIDEO_START,
-            CB_VIDEO_RESET,
             CB_COUNT
         }
 
@@ -145,7 +140,6 @@ namespace mame
         //-------------------------------------------------
         public static void empty_init(device_t owner)
         {
-            ((driver_device)owner).driver_init();
         }
 
 
@@ -198,9 +192,6 @@ namespace mame
         {
             return m_searchpath;
         }
-
-
-        public virtual void driver_init() { }
 
 
         // helpers called at startup
@@ -303,11 +294,7 @@ namespace mame
                 machine_reset();
 
             sound_reset();
-
-            if (m_callbacks[(int)callback_type.CB_VIDEO_RESET] != null)
-                m_callbacks[(int)callback_type.CB_VIDEO_RESET]();
-            else
-                video_reset();
+            video_reset();
         }
 
 

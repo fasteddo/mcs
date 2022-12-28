@@ -2115,15 +2115,6 @@ namespace mame
                 else
                     m_external_artwork = true;
 
-                // if a default view has been specified, use that as a fallback
-                bool have_default = false;
-                if (system.default_layout != null)
-                    have_default |= load_layout_file(null, system.default_layout);
-
-                m_manager.machine().config().apply_default_layouts(
-                        /*[this, have_default]*/ (device_t dev, internal_layout layout) =>
-                        { have_default |= load_layout_file(null, layout, dev); });
-
                 // try to load another file based on the parent driver name
                 int cloneof = driver_list.clone(system);
                 while (0 <= cloneof)
@@ -2140,6 +2131,14 @@ namespace mame
                     game_driver parent = driver_list.driver((size_t)cloneof);
                     cloneof = driver_list.clone(parent);
                 }
+
+                // if a default view has been specified, use that as a fallback
+                bool have_default = false;
+                if (system.default_layout != null)
+                    have_default |= load_layout_file(null, system.default_layout);
+                m_manager.machine().config().apply_default_layouts(
+                        /*[this, &have_default]*/ (device_t dev, internal_layout layout) =>
+                        { have_default |= load_layout_file(null, layout, dev); });
 
                 have_artwork |= m_external_artwork;
 

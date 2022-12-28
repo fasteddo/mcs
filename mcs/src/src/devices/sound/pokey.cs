@@ -20,6 +20,7 @@ using static mame.cpp_global;
 using static mame.device_global;
 using static mame.emucore_global;
 using static mame.pokey_global;
+using static mame.util;
 
 
 namespace mame
@@ -121,14 +122,13 @@ namespace mame
 
         class pokey_channel
         {
-            public pokey_device m_parent;
             public uint8_t m_INTMask;
-            public uint8_t m_AUDF;           /* AUDFx (D200, D202, D204, D206) */
-            public uint8_t m_AUDC;           /* AUDCx (D201, D203, D205, D207) */
-            int32_t m_borrow_cnt;     /* borrow counter */
-            int32_t m_counter;        /* channel counter */
-            public uint8_t m_output;         /* channel output signal (1 active, 0 inactive) */
-            public uint8_t m_filter_sample;  /* high-pass filter sample */
+            public uint8_t m_AUDF;           // AUDFx (D200, D202, D204, D206)
+            public uint8_t m_AUDC;           // AUDCx (D201, D203, D205, D207)
+            public int32_t m_borrow_cnt;     // borrow counter
+            int32_t m_counter;        // channel counter
+            public uint8_t m_output;         // channel output signal (1 active, 0 inactive)
+            public uint8_t m_filter_sample;  // high-pass filter sample
 
 
             public pokey_channel()
@@ -143,18 +143,18 @@ namespace mame
 
 
             public void sample()            { m_filter_sample = m_output; }
-            public void reset_channel()     { m_counter = m_AUDF ^ 0xff; }
+            public void reset_channel()     { m_counter = m_AUDF ^ 0xff; m_borrow_cnt = 0; }
 
-            public void inc_chan()
+            public void inc_chan(pokey_device host, int cycles)
             {
                 m_counter = (m_counter + 1) & 0xff;
                 if (m_counter == 0 && m_borrow_cnt == 0)
                 {
-                    m_borrow_cnt = 3;
-                    if ((m_parent.m_IRQEN & m_INTMask) != 0)
+                    m_borrow_cnt = cycles;
+                    if ((host.m_IRQEN & m_INTMask) != 0)
                     {
                         /* Exposed state has changed: This should only be updated after a resync ... */
-                        m_parent.machine().scheduler().synchronize(m_parent.sync_set_irqst, m_INTMask);
+                        host.machine().scheduler().synchronize(host.sync_set_irqst, m_INTMask);
                     }
                 }
             }
@@ -237,7 +237,7 @@ namespace mame
         /* SKCTL (W/D20F) */
         const int SK_BREAK    = 0x80;    /* serial out break signal */
         const int SK_BPS      = 0x70;    /* bits per second */
-        const int SK_FM       = 0x08;    /* FM mode */
+        const int SK_TWOTONE  = 0x08;    /* Two tone mode */
         const int SK_PADDLE   = 0x04;    /* fast paddle a/d conversion */
         const int SK_RESET    = 0x03;    /* reset serial/keyboard interface */
         const int SK_KEYSCAN  = 0x02;    /* key scanning enabled ? */
@@ -251,9 +251,6 @@ namespace mame
         const int CLK_1 = 0;
         const int CLK_28 = 1;
         const int CLK_114 = 2;
-
-
-        //constexpr unsigned pokey_device::FREQ_17_EXACT;
 
 
         device_sound_interface_pokey m_disound;
@@ -531,12 +528,11 @@ namespace mame
         {
             //int sample_rate = clock();
 
-            /* Setup channels */
-            for (int i = 0; i < POKEY_CHANNELS; i++)
+            // Set up channels
+            for (int i = 0; i < POKEY_CHANNELS; i++)  //for (pokey_channel &chan : m_channel)
             {
                 m_channel[i] = new pokey_channel();
 
-                m_channel[i].m_parent = this;
                 m_channel[i].m_INTMask = 0;
             }
             m_channel[CHAN1].m_INTMask = IRQ_TIMR1;
@@ -559,20 +555,30 @@ namespace mame
              */
 
             /* initialize the poly counters */
-            poly_init_4_5(m_poly4, 4, 1, 0);
-            poly_init_4_5(m_poly5, 5, 2, 1);
+            poly_init_4_5(m_poly4, 4);
+            poly_init_4_5(m_poly5, 5);
 
             /* initialize 9 / 17 arrays */
             poly_init_9_17(m_poly9,   9);
             poly_init_9_17(m_poly17, 17);
             vol_init();
 
+            for (int i = 0; i < 4; i++)
+                m_channel[i].m_AUDC = 0xb0;
+
             /* The pokey does not have a reset line. These should be initialized
              * with random values.
              */
 
-            m_KBCODE = 0x09;         /* Atari 800 'no key' */
-            m_SKCTL = SK_RESET;  /* let the RNG run after reset */
+            m_KBCODE = 0x09; // Atari 800 'no key'
+            m_SKCTL = 0;
+
+            // TODO, remove this line:
+            m_SKCTL = SK_RESET;
+            // It's left in place to accomodate demos that don't explicitly reset pokey.
+            // See https://atariage.com/forums/topic/337317-a7800-52-release/ and
+            // https://atariage.com/forums/topic/268458-a7800-the-atari-7800-emulator/?do=findComment&comment=5079170)
+
             m_SKSTAT = 0;
             /* This bit should probably get set later. Acid5200 pokey_setoc test tests this. */
             m_IRQST = IRQ_SEROC;
@@ -811,10 +817,10 @@ namespace mame
          */
         void step_one_clock()
         {
-            /* Clocks only count if we are not in a reset */
-
             if ((m_SKCTL & SK_RESET) != 0)
             {
+                /* Clocks only count if we are not in a reset */
+
                 /* polynom pointers */
                 if (++m_p4 == 0x0000f)
                     m_p4 = 0;
@@ -842,21 +848,36 @@ namespace mame
                     clock_triggered[CLK_114] = 1;
                 }
 
-                int base_clock = (m_AUDCTL & CLK_15KHZ) != 0 ? CLK_114 : CLK_28;
-                int clk = (m_AUDCTL & CH1_HICLK) != 0 ? CLK_1 : base_clock;
-                if (clock_triggered[clk] != 0)
-                    m_channel[CHAN1].inc_chan();
+                if ((m_AUDCTL & CH1_HICLK) != 0 && (clock_triggered[CLK_1] != 0))
+                {
+                    if ((m_AUDCTL & CH12_JOINED) != 0)
+                        m_channel[CHAN1].inc_chan(this, 7);
+                    else
+                        m_channel[CHAN1].inc_chan(this, 4);
+                }
 
-                clk = (m_AUDCTL & CH3_HICLK) != 0 ? CLK_1 : base_clock;
-                if (clock_triggered[clk] != 0)
-                    m_channel[CHAN3].inc_chan();
+                int base_clock = (m_AUDCTL & CLK_15KHZ) != 0 ? CLK_114 : CLK_28;
+
+                if (((m_AUDCTL & CH1_HICLK) == 0) && (clock_triggered[base_clock] != 0))
+                    m_channel[CHAN1].inc_chan(this, 1);
+
+                if ((m_AUDCTL & CH3_HICLK) != 0 && (clock_triggered[CLK_1] != 0))
+                {
+                    if ((m_AUDCTL & CH34_JOINED) != 0)
+                        m_channel[CHAN3].inc_chan(this, 7);
+                    else
+                        m_channel[CHAN3].inc_chan(this, 4);
+                }
+
+                if (((m_AUDCTL & CH3_HICLK) == 0) && (clock_triggered[base_clock] != 0))
+                    m_channel[CHAN3].inc_chan(this, 1);
 
                 if (clock_triggered[base_clock] != 0)
                 {
                     if ((m_AUDCTL & CH12_JOINED) == 0)
-                        m_channel[CHAN2].inc_chan();
+                        m_channel[CHAN2].inc_chan(this, 1);
                     if ((m_AUDCTL & CH34_JOINED) == 0)
-                        m_channel[CHAN4].inc_chan();
+                        m_channel[CHAN4].inc_chan(this, 1);
                 }
 
                 /* Potentiometer handling */
@@ -868,63 +889,77 @@ namespace mame
                     step_keyboard();
             }
 
-            /* do CHAN2 before CHAN1 because CHAN1 may set borrow! */
-            if (m_channel[CHAN2].check_borrow() != 0)
-            {
-                bool isJoined = (m_AUDCTL & CH12_JOINED) != 0;
-                if (isJoined)
-                    m_channel[CHAN1].reset_channel();
-                m_channel[CHAN2].reset_channel();
-                process_channel(CHAN2);
-
-                /* check if some of the requested timer interrupts are enabled */
-                if ((m_IRQST & IRQ_TIMR2) != 0 && m_irq_f != null)
-                        m_irq_f(IRQ_TIMR2);
-            }
-
-            if (m_channel[CHAN1].check_borrow() != 0)
-            {
-                bool isJoined = (m_AUDCTL & CH12_JOINED) != 0;
-                if (isJoined)
-                    m_channel[CHAN2].inc_chan();
-                else
-                    m_channel[CHAN1].reset_channel();
-                process_channel(CHAN1);
-                /* check if some of the requested timer interrupts are enabled */
-                if ((m_IRQST & IRQ_TIMR1) != 0 && m_irq_f != null)
-                    m_irq_f(IRQ_TIMR1);
-            }
-
-            /* do CHAN4 before CHAN3 because CHAN3 may set borrow! */
-            if (m_channel[CHAN4].check_borrow() != 0)
-            {
-                bool isJoined = (m_AUDCTL & CH34_JOINED) != 0;
-                if (isJoined)
-                    m_channel[CHAN3].reset_channel();
-                m_channel[CHAN4].reset_channel();
-                process_channel(CHAN4);
-                /* is this a filtering channel (3/4) and is the filter active? */
-                if ((m_AUDCTL & CH2_FILTER) != 0)
-                    m_channel[CHAN2].sample();
-                else
-                    m_channel[CHAN2].m_filter_sample = 1;
-                if ((m_IRQST & IRQ_TIMR4) != 0 && m_irq_f != null)
-                    m_irq_f(IRQ_TIMR4);
-            }
-
             if (m_channel[CHAN3].check_borrow() != 0)
             {
-                bool isJoined = (m_AUDCTL & CH34_JOINED) != 0;
-                if (isJoined)
-                    m_channel[CHAN4].inc_chan();
+                if ((m_AUDCTL & CH34_JOINED) != 0)
+                    m_channel[CHAN4].inc_chan(this, 1);
                 else
                     m_channel[CHAN3].reset_channel();
+
                 process_channel(CHAN3);
                 /* is this a filtering channel (3/4) and is the filter active? */
                 if ((m_AUDCTL & CH1_FILTER) != 0)
                     m_channel[CHAN1].sample();
                 else
                     m_channel[CHAN1].m_filter_sample = 1;
+
+                m_old_raw_inval = true;
+            }
+
+            if (m_channel[CHAN4].check_borrow() != 0)
+            {
+                if ((m_AUDCTL & CH34_JOINED) != 0)
+                    m_channel[CHAN3].reset_channel();
+
+                m_channel[CHAN4].reset_channel();
+                process_channel(CHAN4);
+
+                /* is this a filtering channel (3/4) and is the filter active? */
+                if ((m_AUDCTL & CH2_FILTER) != 0)
+                    m_channel[CHAN2].sample();
+                else
+                    m_channel[CHAN2].m_filter_sample = 1;
+
+                if ((m_IRQST & IRQ_TIMR4) != 0 && m_irq_f != null)
+                    m_irq_f(IRQ_TIMR4);
+
+                m_old_raw_inval = true;
+            }
+
+            if ((m_SKCTL & SK_TWOTONE) != 0 && (m_channel[CHAN2].m_borrow_cnt == 1))
+            {
+                m_channel[CHAN1].reset_channel();
+                m_old_raw_inval = true;
+            }
+
+            if (m_channel[CHAN1].check_borrow() != 0)
+            {
+                if ((m_AUDCTL & CH12_JOINED) != 0)
+                    m_channel[CHAN2].inc_chan(this, 1);
+                else
+                    m_channel[CHAN1].reset_channel();
+
+                // TODO: If two-tone is enabled *and* serial output == 1 then reset the channel 2 timer.
+
+                process_channel(CHAN1);
+
+                // check if some of the requested timer interrupts are enabled
+                if ((m_IRQST & IRQ_TIMR1) != 0 && m_irq_f != null)
+                    m_irq_f(IRQ_TIMR1);
+            }
+
+            if (m_channel[CHAN2].check_borrow() != 0)
+            {
+                if ((m_AUDCTL & CH12_JOINED) != 0)
+                    m_channel[CHAN1].reset_channel();
+
+                m_channel[CHAN2].reset_channel();
+
+                process_channel(CHAN2);
+
+                // check if some of the requested timer interrupts are enabled
+                if ((m_IRQST & IRQ_TIMR2) != 0 && m_irq_f != null)
+                    m_irq_f(IRQ_TIMR2);
             }
 
             if (m_old_raw_inval)
@@ -936,10 +971,7 @@ namespace mame
                 }
 
                 if (m_out_raw != sum)
-                {
-                    //printf("forced update %08d %08x\n", m_icount, m_out_raw);
                     m_stream.update();
-                }
 
                 m_old_raw_inval = false;
                 m_out_raw = sum;
@@ -1062,64 +1094,59 @@ namespace mame
         }
 
 
-        void poly_init_4_5(uint32_t [] poly, int size, int xorbit, int invert)
+        void poly_init_4_5(uint32_t [] poly, int size)
         {
+            LOG_POLY("poly {0}\n", size);
+
             int mask = (1 << size) - 1;
-            int i;
             uint32_t lfsr = 0;
 
+            int xorbit = size - 1;
             int polyIdx = 0;
-
-            LOG_POLY("poly {0}\n", size);
-            for (i = 0; i < mask; i++)
+            for (int i = 0; i < mask; i++)
             {
-                /* calculate next bit */
-                int in_ = (int)((((lfsr >> 0) & 1) == 0 ? 1U : 0U) ^ ((lfsr >> xorbit) & 1));
-                lfsr = lfsr >> 1;
-                lfsr = ((uint32_t)in_ << (size-1)) | lfsr;
-                poly[polyIdx] = lfsr ^ (uint32_t)invert;
-                LOG_POLY("{0}: {1}\n", i, poly[polyIdx]);  // %05x: %02x
-                polyIdx++;
+                lfsr = (lfsr << 1) | (~((lfsr >> 2) ^ (lfsr >> xorbit)) & 1);
+                poly[polyIdx] = lfsr & (uint32_t)mask;  //*poly = lfsr & mask;
+                polyIdx++;  //poly++;
             }
         }
 
 
         void poly_init_9_17(uint32_t [] poly, int size)
         {
-            int mask = (1 << size) - 1;
-            int i;
-            uint32_t lfsr = (uint32_t)mask;
-
-            int polyIdx = 0;
-
             LOG_RAND("rand {0}\n", size);
+
+            uint32_t mask = util.make_bitmask32(size);
+            uint32_t lfsr = mask;
 
             if (size == 17)
             {
-                for (i = 0; i < mask; i++)
+                int polyIdx = 0;
+                for (uint32_t i = 0; i < mask; i++)
                 {
-                    /* calculate next bit @ 7 */
-                    int in8 = (int)(((lfsr >> 8) & 1) ^ ((lfsr >> 13) & 1));
-                    int in_ = (int)(lfsr & 1);
+                    // calculate next bit @ 7
+                    uint32_t in8 = BIT(lfsr, 8) ^ BIT(lfsr, 13);
+                    uint32_t in_ = BIT(lfsr, 0);
                     lfsr = lfsr >> 1;
                     lfsr = (lfsr & 0xff7f) | ((uint32_t)in8 << 7);
                     lfsr = ((uint32_t)in_ << 16) | lfsr;
-                    poly[polyIdx] = lfsr;
+                    poly[polyIdx] = lfsr;  //*poly = lfsr;
                     LOG_RAND("{0}: {1}\n", i, poly[polyIdx]);  // %05x: %02x
-                    polyIdx++;
+                    polyIdx++;  //poly++;
                 }
             }
-            else
+            else // size == 9
             {
-                for (i = 0; i < mask; i++)
+                int polyIdx = 0;
+                for (uint32_t i = 0; i < mask; i++)
                 {
-                    /* calculate next bit */
-                    int in_ = (int)(((lfsr >> 0) & 1) ^ ((lfsr >> 5) & 1));
+                    // calculate next bit
+                    uint32_t in_ = BIT(lfsr, 0) ^ BIT(lfsr, 5);
                     lfsr = lfsr >> 1;
                     lfsr = ((uint32_t)in_ << 8) | lfsr;
-                    poly[polyIdx] = lfsr;
+                    poly[polyIdx] = lfsr;  //*poly = lfsr;
                     LOG_RAND("{0}: {1}\n", i, poly[polyIdx]);  // %05x: %02x
-                    polyIdx++;
+                    polyIdx++;  //poly++;
                 }
             }
         }
@@ -1192,9 +1219,7 @@ namespace mame
 
         void pokey_potgo()
         {
-            int pot;
-
-            if( (m_SKCTL & SK_RESET) == 0)
+            if ((m_SKCTL & SK_RESET) == 0)
                 return;
 
             LOG("POKEY #{0} pokey_potgo\n", this);  // #%p
@@ -1202,18 +1227,17 @@ namespace mame
             m_ALLPOT = 0x00;
             m_pot_counter = 0;
 
-            for( pot = 0; pot < 8; pot++ )
+            for (int pot = 0; pot < 8; pot++)
             {
                 m_POTx[pot] = 228;
-                if( !m_pot_r_cb[pot].isnull() )
+                if (!m_pot_r_cb[pot].isnull())
                 {
                     int r = m_pot_r_cb[pot].op_u8((offs_t)pot);
 
                     LOG("POKEY {0} pot_r({1}) returned {2}\n", tag(), pot, r);  // $%02x
                     if (r >= 228)
-                    {
                         r = 228;
-                    }
+
                     if (r == 0)
                     {
                         /* immediately set the ready - bit of m_ALLPOT
@@ -1232,22 +1256,20 @@ namespace mame
         string audc2str(int val)
         {
             string buff = "";  //static char buff[80];
-            if(( val & NOTPOLY5 ) != 0)
+            if ((val & NOTPOLY5) != 0)
             {
-                if(( val & PURE ) != 0)
+                if ((val & PURE) != 0)
                     buff = "pure";
-                else
-                if(( val & POLY4 ) != 0)
+                else if ((val & POLY4) != 0)
                     buff = "poly4";
                 else
                     buff = "poly9/17";
             }
             else
             {
-                if(( val & PURE ) != 0)
+                if ((val & PURE) != 0)
                     buff = "poly5";
-                else
-                if(( val & POLY4 ) != 0)
+                else if ((val & POLY4) != 0)
                     buff = "poly4+poly5";
                 else
                     buff = "poly9/17+poly5";
@@ -1260,24 +1282,26 @@ namespace mame
         string audctl2str(int val)
         {
             string buff = "";  //static char buff[80];
-            if(( val & POLY9 ) != 0)
+            if ((val & POLY9) != 0)
                 buff = "poly9";
             else
                 buff = "poly17";
-            if(( val & CH1_HICLK ) != 0)
+
+            if ((val & CH1_HICLK) != 0)
                 buff += "+ch1hi";
-            if(( val & CH3_HICLK ) != 0)
+            if ((val & CH3_HICLK) != 0)
                 buff += "+ch3hi";
-            if(( val & CH12_JOINED ) != 0)
+            if ((val & CH12_JOINED) != 0)
                 buff += "+ch1/2";
-            if(( val & CH34_JOINED ) != 0)
+            if ((val & CH34_JOINED) != 0)
                 buff += "+ch3/4";
-            if(( val & CH1_FILTER ) != 0)
+            if ((val & CH1_FILTER) != 0)
                 buff += "+ch1filter";
-            if(( val & CH2_FILTER ) != 0)
+            if ((val & CH2_FILTER) != 0)
                 buff += "+ch2filter";
-            if(( val & CLK_15KHZ ) != 0)
+            if ((val & CLK_15KHZ) != 0)
                 buff += "+clk15";
+
             return buff;
         }
 
@@ -1332,11 +1356,11 @@ namespace mame
                 break;
 
             case AUDCTL_C:
-                if( data == m_AUDCTL )
+                if (data == m_AUDCTL)
                     return;
                 LOG_SOUND("POKEY '{0}' AUDCTL {1} ({2})\n", tag(), data, audctl2str(data));
                 m_AUDCTL = data;
-
+                m_old_raw_inval = true;
                 break;
 
             case STIMER_C:
@@ -1386,7 +1410,7 @@ namespace mame
                 LOG("POKEY '{0}' IRQEN  {1}\n", tag(), data);
 
                 /* acknowledge one or more IRQST bits ? */
-                if(( m_IRQST & ~data ) != 0)
+                if ((m_IRQST & ~data) != 0)
                 {
                     /* reset IRQST bits that are masked now, except the SEROC bit (acid5200 pokey_seroc test) */
                     m_IRQST &= (uint8_t)(IRQ_SEROC | data);
@@ -1402,12 +1426,12 @@ namespace mame
                 break;
 
             case SKCTL_C:
-                if( data == m_SKCTL )
+                if (data == m_SKCTL)
                     return;
 
                 LOG("POKEY '{0}' SKCTL  {1}\n", tag(), data);
                 m_SKCTL = data;
-                if( (data & SK_RESET) == 0 )
+                if ((data & SK_RESET) == 0)
                 {
                     write_internal(IRQEN_C,  0);
                     write_internal(SKREST_C, 0);
@@ -1425,9 +1449,9 @@ namespace mame
                     m_clock_cnt[0] = 0;
                     m_clock_cnt[1] = 0;
                     m_clock_cnt[2] = 0;
-                    m_old_raw_inval = true;
                     /* FIXME: Serial port reset ! */
                 }
+                m_old_raw_inval = true;
                 break;
             }
 

@@ -147,8 +147,8 @@ namespace mame
 
         public static string strtrimspace(string str)
         {
-            //std::string_view str2 = strtrimleft(str, [](char c) { return !isspace(uint8_t(c)); });
-            //return strtrimright(str2, [](char c) { return !isspace(uint8_t(c)); });
+            //std::string_view str2 = strtrimleft(str, [] (char c) { return !isspace(uint8_t(c)); });
+            //return strtrimright(str2, [] (char c) { return !isspace(uint8_t(c)); });
             return str.Trim();
         }
 
@@ -189,6 +189,27 @@ namespace mame
 
     public static partial class util
     {
+        //bool strequpper(std::string_view str, std::string_view ucstr);
+
+
+        /**
+         * @fn  bool streqlower(std::string_view str, std::string_view lcstr)
+         *
+         * @brief   Tests whether a mixed-case string matches a lowercase string.
+         *
+         * @param [in]  str   First string to compare (may be mixed-case).
+         * @param [in]  lcstr Second string to compare (must be all lowercase).
+         *
+         * @return  True if the strings match regardless of case.
+         */
+        public static bool streqlower(string str, string lcstr)
+        {
+            //return std::equal(str.begin(), str.end(), lcstr.begin(), lcstr.end(),
+            //                    [] (unsigned char c1, unsigned char c2) { return std::tolower(c1) == c2; });
+            return string.Compare(str, lcstr, StringComparison.CurrentCultureIgnoreCase) == 0;
+        }
+
+
         /**
          * @fn  double edit_distance(std::u32string const &lhs, std::u32string const &rhs)
          *

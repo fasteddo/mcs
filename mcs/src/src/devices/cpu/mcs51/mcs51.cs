@@ -542,6 +542,13 @@ namespace mame
 
         // construction/destruction
         protected mcs51_cpu_device(machine_config mconfig, device_type type, string tag, device_t owner, uint32_t clock, int program_width, int data_width, uint8_t features = 0)
+            : this(mconfig, type, tag, owner, clock, null, null, program_width, data_width, features)
+        {
+            mcs51_cpu_device_after_ctor(program_internal, data_internal);
+        }
+
+
+        protected mcs51_cpu_device(machine_config mconfig, device_type type, string tag, device_t owner, uint32_t clock, address_map_constructor program_map, address_map_constructor data_map, int program_width, int data_width, uint8_t features = 0)
             : base(mconfig, type, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_execute_interface_mcs51(mconfig, this));
@@ -553,8 +560,10 @@ namespace mame
             m_distate = GetClassInterface<device_state_interface_mcs51>();
 
 
-            m_program_config = new address_space_config("program", ENDIANNESS_LITTLE, 8, 16, 0, program_internal);
-            m_data_config = new address_space_config("data", ENDIANNESS_LITTLE, 8, 9, 0, data_internal);
+            // MCS - see mcs51_cpu_device_after_ctor()
+            //m_program_config = new address_space_config("program", ENDIANNESS_LITTLE, 8, 16, 0, program_map);
+            //m_data_config = new address_space_config("data", ENDIANNESS_LITTLE, 8, 9, 0, data_map);
+
             m_io_config = new address_space_config("io", ENDIANNESS_LITTLE, 8, (features & FEATURE_DS5002FP) != 0 ? (uint8_t)17 : (uint8_t)16, 0);
             m_pc = 0;
             m_features = features;
@@ -577,6 +586,14 @@ namespace mame
             /* default to standard cmos interfacing */
             //for (auto & elem : m_forced_inputs)
             //    elem = 0;
+        }
+
+
+        // MCS - this function is needed when passing in a non-static address_map_constructor in the ctor.  'this' isn't available
+        protected void mcs51_cpu_device_after_ctor(address_map_constructor program_map, address_map_constructor data_map)
+        {
+            m_program_config = new address_space_config("program", ENDIANNESS_LITTLE, 8, 16, 0, program_map);
+            m_data_config = new address_space_config("data", ENDIANNESS_LITTLE, 8, 9, 0, data_map);
         }
 
 
@@ -987,7 +1004,7 @@ namespace mame
         //void clear_current_irq();
         //uint8_t r_acc();
         //uint8_t r_psw();
-        //offs_t external_ram_iaddr(offs_t offset, offs_t mem_mask);
+        //virtual offs_t external_ram_iaddr(offs_t offset, offs_t mem_mask);
         //uint8_t iram_read(size_t offset);
 
 

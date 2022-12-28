@@ -376,7 +376,7 @@ namespace mame
         }
 
 
-        // this function is needed when passing in a non-static address_map_constructor in the ctor.  'this' isn't available
+        // MCS - this function is needed when passing in a non-static address_map_constructor in the ctor.  'this' isn't available
         protected void m6805_base_device_after_ctor(address_map_constructor internal_map)
         {
             m_program_config = new address_space_config("program", ENDIANNESS_BIG, 8, (u8)m_params.m_addr_width, 0, internal_map);

@@ -17,7 +17,6 @@ using u32 = System.UInt32;
 using u64 = System.UInt64;
 using uX = mame.FlexPrim;
 
-using static mame.device_global;
 using static mame.emu.detail.emumem_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
@@ -660,6 +659,8 @@ namespace mame
 
         protected abstract std.pair<uX, u16> read_flags(offs_t offset, uX mem_mask);
 
+        protected abstract u16 lookup_flags(offs_t offset, uX mem_mask);
+
 
         public virtual object get_ptr(offs_t offset)  //virtual void *get_ptr(offs_t offset) const;
         {
@@ -808,6 +809,8 @@ namespace mame
         public abstract void write(offs_t offset, uX data, uX mem_mask);
 
         protected abstract u16 write_flags(offs_t offset, uX data, uX mem_mask);
+
+        protected abstract u16 lookup_flags(offs_t offset, uX mem_mask);
 
 
         public virtual object get_ptr(offs_t offset)  //virtual void *get_ptr(offs_t offset) const;
@@ -1134,6 +1137,11 @@ namespace mame
         }
 
 
+        //##############################################
+        // generic direct read flags lookup
+        //template<int Width, int AddrShift, endianness_t Endian, int TargetWidth, bool Aligned, typename TF> u16 lookup_memory_read_generic_flags(TF lropf, offs_t address, typename emu::detail::handler_entry_size<TargetWidth>::uX mask)
+
+
         // ======================> Direct dispatching
 
         public static uX dispatch_read<int_Level, int_Width, int_AddrShift>(offs_t mask, offs_t offset, uX mem_mask, Pointer<handler_entry_read<int_Width, int_AddrShift>> dispatch)  //template<int Level, int Width, int AddrShift> typename emu::detail::handler_entry_size<Width>::uX dispatch_read(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_read<Width, AddrShift> *const *dispatch)
@@ -1182,6 +1190,11 @@ namespace mame
         {
             throw new emu_unimplemented();
         }
+
+
+        //template<int Level, int Width, int AddrShift> u16 dispatch_lookup_read_flags(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_read<Width, AddrShift> *const *dispatch)
+
+        //template<int Level, int Width, int AddrShift> u16 dispatch_lookup_write_flags(offs_t mask, offs_t offset, typename emu::detail::handler_entry_size<Width>::uX mem_mask, const handler_entry_write<Width, AddrShift> *const *dispatch)
     }
 
 
@@ -1238,8 +1251,10 @@ namespace mame
 
         Func<offs_t, uX, uX> rop()  { return (offs_t offset, uX mask) => { return read_native(offset, mask); }; }  //auto rop()  { return [this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }; }
         //auto ropf() { return [this](offs_t offset, NativeType mask) -> std::pair<NativeType, u16> { return read_native_flags(offset, mask); }; }
+        //auto lropf() { return [this](offs_t offset, NativeType mask) -> u16 { return lookup_read_native_flags(offset, mask); }; }
         Action<offs_t, uX, uX> wop()  { return (offs_t offset, uX data, uX mask) => { write_native(offset, data, mask); }; }  //auto wop()  { return [this](offs_t offset, NativeType data, NativeType mask) -> void { write_native(offset, data, mask); }; }
         //auto wopf() { return [this](offs_t offset, NativeType data, NativeType mask) -> u16 { return write_native_flags(offset, data, mask); }; }
+        //auto lwopf() { return [this](offs_t offset, NativeType mask) -> u16 { return lookup_write_native_flags(offset, mask); }; }
 
 
         public u8  read_byte(offs_t address) { if (Width == 0) return read_native(address & ~NATIVE_MASK).u8; else return memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>(rop(), address, new uX(0, 0xff)).u8; }  //u8  read_byte(offs_t address) { if constexpr(Width == 0) return read_native(address & ~NATIVE_MASK); else return memory_read_generic<Width, AddrShift, Endian, 0, true>(rop(), address, 0xff); }
@@ -1298,6 +1313,34 @@ namespace mame
         //u16 write_qword_unaligned_flags(offs_t address, u64 data) { return memory_write_generic_flags<Width, AddrShift, Endian, 3, false>(wopf(), address, data, 0xffffffffffffffffU); }
         //u16 write_qword_unaligned_flags(offs_t address, u64 data, u64 mask) { return memory_write_generic_flags<Width, AddrShift, Endian, 3, false>(wopf(), address, data, mask); }
 
+        //u16 lookup_read_byte_flags(offs_t address) { if constexpr(Width == 0) return lookup_read_native_flags(address & ~NATIVE_MASK); else return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 0, true>(lropf(), address, 0xff); }
+        //u16 lookup_read_word_flags(offs_t address) { if constexpr(Width == 1) return lookup_read_native_flags(address & ~NATIVE_MASK); else return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 1, true>(lropf(), address, 0xffff); }
+        //u16 lookup_read_word_flags(offs_t address, u16 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 1, true>(lropf(), address, mask); }
+        //u16 lookup_read_word_unaligned_flags(offs_t address) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 1, false>(lropf(), address, 0xffff); }
+        //u16 lookup_read_word_unaligned_flags(offs_t address, u16 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 1, false>(lropf(), address, mask); }
+        //u16 lookup_read_dword_flags(offs_t address) { if constexpr(Width == 2) return lookup_read_native_flags(address & ~NATIVE_MASK); else return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 2, true>(lropf(), address, 0xffffffff); }
+        //u16 lookup_read_dword_flags(offs_t address, u32 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 2, true>(lropf(), address, mask); }
+        //u16 lookup_read_dword_unaligned_flags(offs_t address) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 2, false>(lropf(), address, 0xffffffff); }
+        //u16 lookup_read_dword_unaligned_flags(offs_t address, u32 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 2, false>(lropf(), address, mask); }
+        //u16 lookup_read_qword_flags(offs_t address) { if constexpr(Width == 3) return lookup_read_native_flags(address & ~NATIVE_MASK); else return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 3, true>(lropf(), address, 0xffffffffffffffffU); }
+        //u16 lookup_read_qword_flags(offs_t address, u64 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 3, true>(lropf(), address, mask); }
+        //u16 lookup_read_qword_unaligned_flags(offs_t address) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 3, false>(lropf(), address, 0xffffffffffffffffU); }
+        //u16 lookup_read_qword_unaligned_flags(offs_t address, u64 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 3, false>(lropf(), address, mask); }
+
+        //u16 lookup_write_byte_flags(offs_t address) { if constexpr(Width == 0) return lookup_write_native_flags(address & ~NATIVE_MASK); else return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 0, true>(lwopf(), address, 0xff); }
+        //u16 lookup_write_word_flags(offs_t address) { if constexpr(Width == 1) return lookup_write_native_flags(address & ~NATIVE_MASK); else return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 1, true>(lwopf(), address, 0xffff); }
+        //u16 lookup_write_word_flags(offs_t address, u16 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 1, true>(lwopf(), address, mask); }
+        //u16 lookup_write_word_unaligned_flags(offs_t address) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 1, false>(lwopf(), address, 0xffff); }
+        //u16 lookup_write_word_unaligned_flags(offs_t address, u16 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 1, false>(lwopf(), address, mask); }
+        //u16 lookup_write_dword_flags(offs_t address) { if constexpr(Width == 2) return lookup_write_native_flags(address & ~NATIVE_MASK); else return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 2, true>(lwopf(), address, 0xffffffff); }
+        //u16 lookup_write_dword_flags(offs_t address, u32 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 2, true>(lwopf(), address, mask); }
+        //u16 lookup_write_dword_unaligned_flags(offs_t address) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 2, false>(lwopf(), address, 0xffffffff); }
+        //u16 lookup_write_dword_unaligned_flags(offs_t address, u32 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 2, false>(lwopf(), address, mask); }
+        //u16 lookup_write_qword_flags(offs_t address) { if constexpr(Width == 3) return lookup_write_native_flags(address & ~NATIVE_MASK); else return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 3, true>(lwopf(), address, 0xffffffffffffffffU); }
+        //u16 lookup_write_qword_flags(offs_t address, u64 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 3, true>(wop(), address, mask); }
+        //u16 lookup_write_qword_unaligned_flags(offs_t address) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 3, false>(lwopf(), address, 0xffffffffffffffffU); }
+        //u16 lookup_write_qword_unaligned_flags(offs_t address, u64 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 3, false>(lwopf(), address, mask); }
+
 
         uX read_native(offs_t address) { return read_native(address, ~new uX(Width, 0)); }
         uX read_native(offs_t address, uX mask)  //NativeType read_native(offs_t address, NativeType mask = ~NativeType(0)) {
@@ -1319,6 +1362,14 @@ namespace mame
 
         //u16 write_native_flags(offs_t address, NativeType data, NativeType mask = ~NativeType(0)) {
         //    return dispatch_write_flags<Level, Width, AddrShift>(offs_t(-1), address & m_addrmask, data, mask, m_dispatch_write);
+        //}
+
+        //u16 lookup_read_native_flags(offs_t address, NativeType mask = ~NativeType(0)) {
+        //    return dispatch_lookup_read_flags<Level, Width, AddrShift>(offs_t(-1), address & m_addrmask, mask, m_dispatch_read);
+        //}
+
+        //u16 lookup_write_native_flags(offs_t address, NativeType mask = ~NativeType(0)) {
+        //    return dispatch_lookup_write_flags<Level, Width, AddrShift>(offs_t(-1), address & m_addrmask, mask, m_dispatch_write);
         //}
 
 
@@ -1416,8 +1467,10 @@ namespace mame
 
         Func<offs_t, uX, uX> rop()  { return (offs_t offset, uX mask) => { return read_native(offset, mask); }; }  //auto rop()  { return [this](offs_t offset, NativeType mask) -> NativeType { return read_native(offset, mask); }; }
         //auto ropf() { return [this](offs_t offset, NativeType mask) -> std::pair<NativeType, u16> { return read_native_flags(offset, mask); }; }
+        //auto lropf() { return [this](offs_t offset, NativeType mask) -> u16 { return lookup_read_native_flags(offset, mask); }; }
         //auto wop()  { return [this](offs_t offset, NativeType data, NativeType mask) -> void { write_native(offset, data, mask); }; }
         //auto wopf() { return [this](offs_t offset, NativeType data, NativeType mask) -> u16 { return write_native_flags(offset, data, mask); }; }
+        //auto lwopf() { return [this](offs_t offset, NativeType mask) -> u16 { return lookup_write_native_flags(offset, mask); }; }
 
         public u8  read_byte(offs_t address) { if (Width == 0) return read_native(address & ~NATIVE_MASK).u8; else return memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_0, bool_const_true>(rop(), address, new uX(0, 0xff)).u8; }
         public u16 read_word(offs_t address) { if (Width == 1) return read_native(address & ~NATIVE_MASK).u16; else return memory_read_generic<int_Width, int_AddrShift, endianness_t_Endian, int_const_1, bool_const_true>(rop(), address, new uX(1, 0xffff)).u16; }
@@ -1476,6 +1529,34 @@ namespace mame
         //u16 write_qword_unaligned_flags(offs_t address, u64 data) { return memory_write_generic_flags<Width, AddrShift, Endian, 3, false>(wopf(), address, data, 0xffffffffffffffffU); }
         //u16 write_qword_unaligned_flags(offs_t address, u64 data, u64 mask) { return memory_write_generic_flags<Width, AddrShift, Endian, 3, false>(wopf(), address, data, mask); }
 
+        //u16 lookup_read_byte_flags(offs_t address) { if constexpr(Width == 0) return lookup_read_native_flags(address & ~NATIVE_MASK); else return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 0, true>(lropf(), address, 0xff); }
+        //u16 lookup_read_word_flags(offs_t address) { if constexpr(Width == 1) return lookup_read_native_flags(address & ~NATIVE_MASK); else return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 1, true>(lropf(), address, 0xffff); }
+        //u16 lookup_read_word_flags(offs_t address, u16 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 1, true>(lropf(), address, mask); }
+        //u16 lookup_read_word_unaligned_flags(offs_t address) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 1, false>(lropf(), address, 0xffff); }
+        //u16 lookup_read_word_unaligned_flags(offs_t address, u16 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 1, false>(lropf(), address, mask); }
+        //u16 lookup_read_dword_flags(offs_t address) { if constexpr(Width == 2) return lookup_read_native_flags(address & ~NATIVE_MASK); else return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 2, true>(lropf(), address, 0xffffffff); }
+        //u16 lookup_read_dword_flags(offs_t address, u32 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 2, true>(lropf(), address, mask); }
+        //u16 lookup_read_dword_unaligned_flags(offs_t address) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 2, false>(lropf(), address, 0xffffffff); }
+        //u16 lookup_read_dword_unaligned_flags(offs_t address, u32 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 2, false>(lropf(), address, mask); }
+        //u16 lookup_read_qword_flags(offs_t address) { if constexpr(Width == 3) return lookup_read_native_flags(address & ~NATIVE_MASK); else return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 3, true>(lropf(), address, 0xffffffffffffffffU); }
+        //u16 lookup_read_qword_flags(offs_t address, u64 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 3, true>(lropf(), address, mask); }
+        //u16 lookup_read_qword_unaligned_flags(offs_t address) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 3, false>(lropf(), address, 0xffffffffffffffffU); }
+        //u16 lookup_read_qword_unaligned_flags(offs_t address, u64 mask) { return lookup_memory_read_generic_flags<Width, AddrShift, Endian, 3, false>(lropf(), address, mask); }
+
+        //u16 lookup_write_byte_flags(offs_t address) { if constexpr(Width == 0) return lookup_write_native_flags(address & ~NATIVE_MASK); else return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 0, true>(lwopf(), address, 0xff); }
+        //u16 lookup_write_word_flags(offs_t address) { if constexpr(Width == 1) return lookup_write_native_flags(address & ~NATIVE_MASK); else return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 1, true>(lwopf(), address, 0xffff); }
+        //u16 lookup_write_word_flags(offs_t address, u16 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 1, true>(lwopf(), address, mask); }
+        //u16 lookup_write_word_unaligned_flags(offs_t address) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 1, false>(lwopf(), address, 0xffff); }
+        //u16 lookup_write_word_unaligned_flags(offs_t address, u16 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 1, false>(lwopf(), address, mask); }
+        //u16 lookup_write_dword_flags(offs_t address) { if constexpr(Width == 2) return lookup_write_native_flags(address & ~NATIVE_MASK); else return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 2, true>(lwopf(), address, 0xffffffff); }
+        //u16 lookup_write_dword_flags(offs_t address, u32 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 2, true>(lwopf(), address, mask); }
+        //u16 lookup_write_dword_unaligned_flags(offs_t address) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 2, false>(lwopf(), address, 0xffffffff); }
+        //u16 lookup_write_dword_unaligned_flags(offs_t address, u32 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 2, false>(lwopf(), address, mask); }
+        //u16 lookup_write_qword_flags(offs_t address) { if constexpr(Width == 3) return lookup_write_native_flags(address & ~NATIVE_MASK); else return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 3, true>(lwopf(), address, 0xffffffffffffffffU); }
+        //u16 lookup_write_qword_flags(offs_t address, u64 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 3, true>(wop(), address, mask); }
+        //u16 lookup_write_qword_unaligned_flags(offs_t address) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 3, false>(lwopf(), address, 0xffffffffffffffffU); }
+        //u16 lookup_write_qword_unaligned_flags(offs_t address, u64 mask) { return lookup_memory_write_generic_flags<Width, AddrShift, Endian, 3, false>(lwopf(), address, mask); }
+
 
         uX read_native(offs_t address) { return read_native(address, ~new uX(Width, 0)); }
         uX read_native(offs_t address, uX mask)  //NativeType read_native(offs_t address, NativeType mask = ~NativeType(0));
@@ -1490,6 +1571,8 @@ namespace mame
 
         //std::pair<NativeType, u16> read_native_flags(offs_t address, NativeType mask = ~NativeType(0));
         //u16 write_native_flags(offs_t address, NativeType data, NativeType mask = ~NativeType(0));
+        //u16 lookup_read_native_flags(offs_t address, NativeType mask = ~NativeType(0));
+        //u16 lookup_write_native_flags(offs_t address, NativeType mask = ~NativeType(0));
 
 
         public void set(address_space space, std.pair<object, object> rw)
@@ -2594,36 +2677,6 @@ namespace mame
         protected abstract void write_qword(offs_t address, u64 data, u64 mask);
         protected abstract void write_qword_unaligned(offs_t address, u64 data);
         protected abstract void write_qword_unaligned(offs_t address, u64 data, u64 mask);
-
-        // read accessors with flags
-        protected abstract std.pair<u8,  u16> read_byte_flags(offs_t address);
-        protected abstract std.pair<u16, u16> read_word_flags(offs_t address);
-        protected abstract std.pair<u16, u16> read_word_flags(offs_t address, u16 mask);
-        protected abstract std.pair<u16, u16> read_word_unaligned_flags(offs_t address);
-        protected abstract std.pair<u16, u16> read_word_unaligned_flags(offs_t address, u16 mask);
-        protected abstract std.pair<u32, u16> read_dword_flags(offs_t address);
-        protected abstract std.pair<u32, u16> read_dword_flags(offs_t address, u32 mask);
-        protected abstract std.pair<u32, u16> read_dword_unaligned_flags(offs_t address);
-        protected abstract std.pair<u32, u16> read_dword_unaligned_flags(offs_t address, u32 mask);
-        protected abstract std.pair<u64, u16> read_qword_flags(offs_t address);
-        protected abstract std.pair<u64, u16> read_qword_flags(offs_t address, u64 mask);
-        protected abstract std.pair<u64, u16> read_qword_unaligned_flags(offs_t address);
-        protected abstract std.pair<u64, u16> read_qword_unaligned_flags(offs_t address, u64 mask);
-
-        // write accessors with flags
-        protected abstract u16 write_byte_flags(offs_t address, u8 data);
-        protected abstract u16 write_word_flags(offs_t address, u16 data);
-        protected abstract u16 write_word_flags(offs_t address, u16 data, u16 mask);
-        protected abstract u16 write_word_unaligned_flags(offs_t address, u16 data);
-        protected abstract u16 write_word_unaligned_flags(offs_t address, u16 data, u16 mask);
-        protected abstract u16 write_dword_flags(offs_t address, u32 data);
-        protected abstract u16 write_dword_flags(offs_t address, u32 data, u32 mask);
-        protected abstract u16 write_dword_unaligned_flags(offs_t address, u32 data);
-        protected abstract u16 write_dword_unaligned_flags(offs_t address, u32 data, u32 mask);
-        protected abstract u16 write_qword_flags(offs_t address, u64 data);
-        protected abstract u16 write_qword_flags(offs_t address, u64 data, u64 mask);
-        protected abstract u16 write_qword_unaligned_flags(offs_t address, u64 data);
-        protected abstract u16 write_qword_unaligned_flags(offs_t address, u64 data, u64 mask);
 
 
         // setup

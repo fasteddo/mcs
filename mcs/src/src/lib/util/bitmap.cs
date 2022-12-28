@@ -266,6 +266,7 @@ namespace mame
             m_base = null;
 
             // reset all fields
+            m_allocbytes = 0;
             m_rowpixels = 0;
             m_width = 0;
             m_height = 0;
@@ -309,24 +310,28 @@ namespace mame
             reset();
 
             // handle empty requests cleanly
-            if (width <= 0 || height <= 0)
-                return;
+            if ((0 < width) && (0 < height))
+            {
+                // allocate memory for the bitmap itself
+                int32_t new_rowpixels = compute_rowpixels(width, xslop);
+                uint32_t new_allocbytes = (uint32_t)(new_rowpixels * (height + 2 * yslop) * m_bpp / 8);
+                m_alloc = new MemoryU8((int)new_allocbytes);  //m_alloc.reset(new (std::nothrow) uint8_t[new_allocbytes]);
+                if (m_alloc != null)
+                {
+                    // initialize fields
+                    m_allocbytes = new_allocbytes;
+                    m_rowpixels = new_rowpixels;
+                    m_width = width;
+                    m_height = height;
+                    m_cliprect.set(0, width - 1, 0, height - 1);
 
-            // initialize fields
-            m_rowpixels = compute_rowpixels(width, xslop);
-            m_width = width;
-            m_height = height;
-            m_cliprect.set(0, width - 1, 0, height - 1);
+                    // clear to 0 by default
+                    std.memset(m_alloc, (byte)0);  //memset(m_alloc.get(), 0, m_allocbytes);
 
-            // allocate memory for the bitmap itself
-            m_allocbytes = (uint32_t)(m_rowpixels * (m_height + 2 * yslop) * m_bpp / 8);
-            m_alloc = new MemoryU8((int)m_allocbytes, true);  //m_alloc = new byte[m_allocbytes];
-
-            // clear to 0 by default
-            std.memset(m_alloc, (uint8_t)0, m_allocbytes);
-
-            // compute the base
-            compute_base(xslop, yslop);
+                    // compute the base
+                    compute_base(xslop, yslop);
+                }
+            }
         }
 
 
@@ -349,11 +354,11 @@ namespace mame
             //assert(m_bpp == 8 || m_bpp == 16 || m_bpp == 32 || m_bpp == 64);
 
             // handle empty requests cleanly
-            if (width <= 0 || height <= 0)
+            if ((width <= 0) || (height <= 0))
                 width = height = 0;
 
             // determine how much memory we need for the new bitmap
-            int new_rowpixels = compute_rowpixels(width, xslop);
+            int32_t new_rowpixels = compute_rowpixels(width, xslop);
             uint32_t new_allocbytes = (uint32_t)(new_rowpixels * (height + 2 * yslop) * m_bpp / 8);
 
             if (new_allocbytes > m_allocbytes)
@@ -491,7 +496,7 @@ namespace mame
         //-------------------------------------------------
         void compute_base(int xslop, int yslop)
         {
-            m_base = new PointerU8(m_alloc, (m_rowpixels * yslop + xslop) * (m_bpp / 8));  // m_base = m_alloc + (m_rowpixels * yslop + xslop) * (m_bpp / 8);
+            m_base = new PointerU8(m_alloc, (m_rowpixels * yslop + xslop) * (m_bpp / 8));  //m_base = &m_alloc[(m_rowpixels * yslop + xslop) * (m_bpp / 8)];
         }
 
 

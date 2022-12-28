@@ -510,10 +510,32 @@ namespace mame
             ADDRESS_MAP_BANK(config, m_bankc000).set_map(bankc000_map).set_options(ENDIANNESS_BIG, 8, 16, 0x1000);
 
             m_screen.op0.set_visarea(12, 304 - 1, 7, 247 - 1);
+
+            m_blitter_config = WILLIAMS_BLITTER_NONE;
+            m_blitter_clip_address = 0x0000;
         }
 
 
         //void defender_state::jin(machine_config &config)  // needs a different screen size or the credit text is clipped
+    }
+
+
+    partial class williams_state : driver_device
+    {
+        public void stargate(machine_config config)
+        {
+            williams_base(config);
+            m_blitter_config = WILLIAMS_BLITTER_NONE;
+            m_blitter_clip_address = 0x0000;
+        }
+
+
+        public void robotron(machine_config config)
+        {
+            williams_base(config);
+            m_blitter_config = WILLIAMS_BLITTER_SC1;
+            m_blitter_clip_address = 0xc000;
+        }
     }
 
 
@@ -542,6 +564,17 @@ namespace mame
             m_mux1.op0.a_in_callback().set_ioport("INP2A").reg();
             m_mux1.op0.b_in_callback().set_ioport("INP1A").reg();
         }
+
+
+        public void joust(machine_config config)
+        {
+            williams_muxed(config);
+            m_blitter_config = WILLIAMS_BLITTER_SC1;
+            m_blitter_clip_address = 0xc000;
+        }
+
+
+        //void williams_muxed_state::splat(machine_config &config)
     }
 
 
@@ -567,6 +600,9 @@ namespace mame
 
             m_pia[2].op0.ca2_handler().set("cvsd", (int state) => { ((hc55516_device)subdevice("cvsd")).digit_w(state); }).reg();
             m_pia[2].op0.cb2_handler().set("cvsd", (int state) => { ((hc55516_device)subdevice("cvsd")).clock_w(state); }).reg();
+
+            m_blitter_config = WILLIAMS_BLITTER_SC1;
+            m_blitter_clip_address = 0x7400;
         }
     }
 
@@ -1276,116 +1312,18 @@ namespace mame
     }
 
 
-    partial class defender_state : williams_state
-    {
-        /*************************************
-         *
-         *  Defender hardware driver init
-         *
-         *************************************/
+        //void defndjeu_state::driver_start()
 
-        public override void driver_init()
-        {
-            throw new emu_unimplemented();
-#if false
-            m_blitter_config = WILLIAMS_BLITTER_NONE;
-            m_blitter_clip_address = 0x0000;
-#endif
-        }
-    }
-
-
-        //void defndjeu_state::driver_init()
-
-        //void mayday_state::driver_init()
-
-
-    partial class williams_state : driver_device
-    {
-        /*************************************
-         *
-         *  Standard hardware driver init
-         *
-         *************************************/
-
-        public void init_stargate()
-        {
-            m_blitter_config = WILLIAMS_BLITTER_NONE;
-            m_blitter_clip_address = 0x0000;
-        }
-
-
-        public void init_robotron()
-        {
-            m_blitter_config = WILLIAMS_BLITTER_SC1;
-            m_blitter_clip_address = 0xc000;
-        }
-    }
-
-
-    partial class williams_muxed_state : williams_state
-    {
-        public void init_joust()
-        {
-            m_blitter_config = WILLIAMS_BLITTER_SC1;
-            m_blitter_clip_address = 0xc000;
-        }
-    }
-
-
-        //void bubbles_state::driver_init()
-
-        //void williams_muxed_state::init_splat()
-
-
-    partial class sinistar_state : williams_state
-    {
-        public override void driver_init()
-        {
-            m_blitter_config = WILLIAMS_BLITTER_SC1;
-            m_blitter_clip_address = 0x7400;
-        }
-    }
-
-
-        //void playball_state::driver_init()
-
-        //void blaster_state::driver_init()
-
-        //void spdball_state::driver_init()
-
-        //void williams_muxed_state::init_alienar()
-
-        //void williams_muxed_state::init_alienaru()
-
-        //void williams_state::init_lottofun()
-
-
-        /*************************************
-         *
-         *  2nd gen hardware driver init
-         *
-         *************************************/
-
-        //void mysticm_state::driver_init()
-
-        //void tshoot_state::driver_init()
-
-        //void inferno_state::driver_init()
-
-        //void joust2_state::driver_init()
+        //void mayday_state::driver_start()
 
 
     partial class williams : construct_ioport_helper
     {
         static void defender_state_defender(machine_config config, device_t device) { defender_state defender_state = (defender_state)device; defender_state.defender(config); }
-        static void williams_state_williams_base(machine_config config, device_t device) { williams_state williams_state = (williams_state)device; williams_state.williams_base(config); }
-        static void williams_muxed_state_williams_muxed(machine_config config, device_t device) { williams_muxed_state williams_muxed_state = (williams_muxed_state)device; williams_muxed_state.williams_muxed(config); }
+        static void williams_state_stargate(machine_config config, device_t device) { williams_state williams_state = (williams_state)device; williams_state.stargate(config); }
+        static void williams_state_robotron(machine_config config, device_t device) { williams_state williams_state = (williams_state)device; williams_state.robotron(config); }
+        static void williams_muxed_state_joust(machine_config config, device_t device) { williams_muxed_state williams_muxed_state = (williams_muxed_state)device; williams_muxed_state.joust(config); }
         static void sinistar_state_sinistar(machine_config config, device_t device) { sinistar_state sinistar_state = (sinistar_state)device; sinistar_state.sinistar(config); }
-
-        static void williams_state_init_stargate(device_t owner) { williams_state williams_state = (williams_state)owner; williams_state.init_stargate(); }
-        static void williams_state_init_robotron(device_t owner) { williams_state williams_state = (williams_state)owner; williams_state.init_robotron(); }
-        static void williams_muxed_state_init_joust(device_t owner) { williams_muxed_state williams_muxed_state = (williams_muxed_state)owner; williams_muxed_state.init_joust(); }
 
         static williams m_williams = new williams();
 
@@ -1402,16 +1340,16 @@ namespace mame
          *************************************/
 
         // Defender hardware games
-        public static readonly game_driver driver_defender = GAME(device_creator_defender, rom_defender, "1980", "defender", "0", defender_state_defender,             m_williams.construct_ioport_defender, driver_device.empty_init,        ROT0,   "Williams",            "Defender (Red label)",              MACHINE_SUPPORTS_SAVE); // developers left Williams in 1981 and formed Vid Kidz
+        public static readonly game_driver driver_defender = GAME(device_creator_defender, rom_defender, "1980", "defender", "0", defender_state_defender,    m_williams.construct_ioport_defender, driver_device.empty_init, ROT0,   "Williams",            "Defender (Red label)",              MACHINE_SUPPORTS_SAVE); // developers left Williams in 1981 and formed Vid Kidz
 
 
         // Standard Williams hardware
-        public static readonly game_driver driver_stargate = GAME(device_creator_stargate, rom_stargate, "1981", "stargate", "0", williams_state_williams_base,        m_williams.construct_ioport_stargate, williams_state_init_stargate,    ROT0,   "Williams / Vid Kidz", "Stargate",                          MACHINE_SUPPORTS_SAVE);
+        public static readonly game_driver driver_stargate = GAME(device_creator_stargate, rom_stargate, "1981", "stargate", "0", williams_state_stargate,    m_williams.construct_ioport_stargate, driver_device.empty_init, ROT0,   "Williams / Vid Kidz", "Stargate",                          MACHINE_SUPPORTS_SAVE);
 
-        public static readonly game_driver driver_robotron = GAME(device_creator_robotron, rom_robotron, "1982", "robotron", "0", williams_state_williams_base,        m_williams.construct_ioport_robotron, williams_state_init_robotron,    ROT0,   "Williams / Vid Kidz", "Robotron: 2084 (Solid Blue label)", MACHINE_SUPPORTS_SAVE);
+        public static readonly game_driver driver_robotron = GAME(device_creator_robotron, rom_robotron, "1982", "robotron", "0", williams_state_robotron,    m_williams.construct_ioport_robotron, driver_device.empty_init, ROT0,   "Williams / Vid Kidz", "Robotron: 2084 (Solid Blue label)", MACHINE_SUPPORTS_SAVE);
 
-        public static readonly game_driver driver_joust    = GAME(device_creator_joust,    rom_joust,    "1982", "joust",    "0", williams_muxed_state_williams_muxed, m_williams.construct_ioport_joust,    williams_muxed_state_init_joust, ROT0,   "Williams",            "Joust (Green label)",               MACHINE_SUPPORTS_SAVE);
+        public static readonly game_driver driver_joust    = GAME(device_creator_joust,    rom_joust,    "1982", "joust",    "0", williams_muxed_state_joust, m_williams.construct_ioport_robotron, driver_device.empty_init, ROT0,   "Williams",            "Joust (Green label)",               MACHINE_SUPPORTS_SAVE);
 
-        public static readonly game_driver driver_sinistar = GAME(device_creator_sinistar, rom_sinistar, "1982", "sinistar", "0", sinistar_state_sinistar,             m_williams.construct_ioport_sinistar, driver_device.empty_init,        ROT270, "Williams",            "Sinistar (revision 3)",             MACHINE_SUPPORTS_SAVE);
+        public static readonly game_driver driver_sinistar = GAME(device_creator_sinistar, rom_sinistar, "1982", "sinistar", "0", sinistar_state_sinistar,    m_williams.construct_ioport_sinistar, driver_device.empty_init, ROT270, "Williams",            "Sinistar (revision 3)",             MACHINE_SUPPORTS_SAVE);
     }
 }

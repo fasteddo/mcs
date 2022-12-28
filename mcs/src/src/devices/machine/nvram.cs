@@ -29,7 +29,6 @@ namespace mame
             protected override void nvram_default() { ((nvram_device)device()).device_nvram_interface_nvram_default(); }
             protected override bool nvram_read(util.read_stream file) { return ((nvram_device)device()).device_nvram_interface_nvram_read(file); }
             protected override bool nvram_write(util.write_stream file) { return ((nvram_device)device()).device_nvram_interface_nvram_write(file); }
-            protected override bool nvram_can_write() { return ((nvram_device)device()).device_nvram_interface_nvram_can_write(); }
         }
 
 
@@ -156,7 +155,6 @@ namespace mame
 
         protected virtual bool device_nvram_interface_nvram_read(util.read_stream file) { throw new emu_unimplemented(); }
         protected virtual bool device_nvram_interface_nvram_write(util.write_stream file) { throw new emu_unimplemented(); }
-        protected virtual bool device_nvram_interface_nvram_can_write() { return m_base != null && m_length != 0; }
 
 
         // internal helpers

@@ -2047,7 +2047,8 @@ namespace mame
 
             static bool include_clones_default(string name)
             {
-                return core_stricmp(name, "category.ini") == 0 || core_stricmp(name, "alltime.ini") == 0;
+                //using namespace std::literals;
+                return util.streqlower(name, "category.ini") || util.streqlower(name, "alltime.ini");  //return util::streqlower(name, "category.ini"sv) || util::streqlower(name, "alltime.ini"sv);
             }
         }
 

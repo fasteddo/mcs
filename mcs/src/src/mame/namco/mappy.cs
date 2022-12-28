@@ -39,14 +39,14 @@ namespace mame
 
         static readonly XTAL PIXEL_CLOCK         = MASTER_CLOCK / 3;
 
-        /* H counts from 128->511, HBLANK starts at 144 and ends at 240 */
+        // H counts from 128->511, HBLANK starts at 144 and ends at 240
         const u16 HTOTAL              = 384;
-        const u16 HBEND               = 0;     /*(96+16)*/
-        const u16 HBSTART             = 288;   /*(16)*/
+        const u16 HBEND               = 0;     // (96+16)
+        const u16 HBSTART             = 288;   // (16)
 
         const u16 VTOTAL              = 264;
-        const u16 VBEND               = 0;     /*(16)*/
-        const u16 VBSTART             = 224;   /*(224+16)*/
+        const u16 VBEND               = 0;     // (16)
+        const u16 VBSTART             = 224;   // (224+16)
 
 
         /***************************************************************************/
@@ -127,13 +127,13 @@ namespace mame
         {
             throw new emu_unimplemented();
 #if false
-            map(0x0000, 0x07ff).ram().w(FUNC(mappy_state::superpac_videoram_w)).share("videoram"); /* video RAM */
-            map(0x0800, 0x1fff).ram().share("spriteram");       /* work RAM with embedded sprite RAM */
+            map(0x0000, 0x07ff).ram().w(FUNC(mappy_state::superpac_videoram_w)).share("videoram");
+            map(0x0800, 0x1fff).ram().share("spriteram");   // work RAM with embedded sprite RAM
             map(0x2000, 0x2000).rw(FUNC(mappy_state::superpac_flipscreen_r), FUNC(mappy_state::superpac_flipscreen_w));
-            map(0x4000, 0x43ff).rw(m_namco_15xx, FUNC(namco_15xx_device::sharedram_r), FUNC(namco_15xx_device::sharedram_w));  /* shared RAM with the sound CPU */
-            map(0x4800, 0x480f).rw("namcoio_1", FUNC(namcoio_device::read), FUNC(namcoio_device::write));      /* custom I/O chips interface */
-            map(0x4810, 0x481f).rw("namcoio_2", FUNC(namcoio_device::read), FUNC(namcoio_device::write));      /* custom I/O chips interface */
-            map(0x5000, 0x500f).w("mainlatch", FUNC(ls259_device::write_a0));               /* various control bits */
+            map(0x4000, 0x43ff).rw(m_namco_15xx, FUNC(namco_15xx_device::sharedram_r), FUNC(namco_15xx_device::sharedram_w));   // shared RAM with the sound CPU
+            map(0x4800, 0x480f).rw("namcoio_1", FUNC(namcoio_device::read), FUNC(namcoio_device::write));   // custom I/O chips interface
+            map(0x4810, 0x481f).rw("namcoio_2", FUNC(namcoio_device::read), FUNC(namcoio_device::write));   // custom I/O chips interface
+            map(0x5000, 0x500f).w("mainlatch", FUNC(ls259_device::write_a0));   // various control bits
             map(0x8000, 0x8000).w("watchdog", FUNC(watchdog_timer_device::reset_w));
             map(0xa000, 0xffff).rom();
 #endif
@@ -149,8 +149,8 @@ namespace mame
         {
             throw new emu_unimplemented();
 #if false
-            map(0x0000, 0x03ff).rw(m_namco_15xx, FUNC(namco_15xx_device::sharedram_r), FUNC(namco_15xx_device::sharedram_w));  /* shared RAM with the main CPU (also sound registers) */
-            map(0x2000, 0x200f).w("mainlatch", FUNC(ls259_device::write_a0));   /* various control bits */
+            map(0x0000, 0x03ff).rw(m_namco_15xx, FUNC(namco_15xx_device::sharedram_r), FUNC(namco_15xx_device::sharedram_w));   // shared RAM with the main CPU (also sound registers)
+            map(0x2000, 0x200f).w("mainlatch", FUNC(ls259_device::write_a0));   // various control bits
             map(0xe000, 0xffff).rom();
 #endif
         }
@@ -225,7 +225,7 @@ namespace mame
             NAMCO_56IN1
             NAMCO_56DSW0
 
-            PORT_START("DSW1")  /* 56XX #1 pins 22-29 */
+            PORT_START("DSW1")  // 56XX #1 pins 22-29
             PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Difficulty ) )   PORT_DIPLOCATION("SW1:1,2,3,4")
             PORT_DIPSETTING(    0x0f, "Rank 0-Normal" )
             PORT_DIPSETTING(    0x0e, "Rank 1-Easiest" )
@@ -244,47 +244,48 @@ namespace mame
             PORT_DIPSETTING(    0x01, "Rank E-Auto" )
             PORT_DIPSETTING(    0x00, "Rank F-Hard Auto" )
             PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_B ) )       PORT_DIPLOCATION("SW1:5,6")
-            PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
             PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-            PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
             PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+            PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+            PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
             PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )  PORT_DIPLOCATION("SW1:7")
-            PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
             PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-            PORT_DIPNAME( 0x80, 0x80, "Freeze" )            PORT_DIPLOCATION("SW1:8")
+            PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+            // When Freeze is on, press P1 button 1 to skip levels
+            PORT_DIPNAME( 0x80, 0x80, "Freeze / Rack Test (Cheat)" ) PORT_CODE(KEYCODE_F1) PORT_TOGGLE PORT_DIPLOCATION("SW1:8")
             PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
             PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-            PORT_START("DSW2")  /* 56XX #1 pins 38-41 multiplexed */
+            PORT_START("DSW2")  // 56XX #1 pins 38-41 multiplexed
             PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )       PORT_DIPLOCATION("SW2:1,2,3")
-            PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-            PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
             PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-            PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) )
             PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
             PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
             PORT_DIPSETTING(    0x04, DEF_STR( 1C_6C ) )
             PORT_DIPSETTING(    0x03, DEF_STR( 1C_7C ) )
+            PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+            PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) )
+            PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
             PORT_DIPNAME( 0x38, 0x38, DEF_STR( Bonus_Life ) )   PORT_DIPLOCATION("SW2:4,5,6")
-            PORT_DIPSETTING(    0x08, "30k Only" )          PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
-            PORT_DIPSETTING(    0x30, "30k & 80k Only" )        PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
-            PORT_DIPSETTING(    0x20, "30k, 80k & Every 80k" )  PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
-            PORT_DIPSETTING(    0x38, "30k & 100k Only" )       PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
+            PORT_DIPSETTING(    0x38, "30k & 100k Only" )           PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
+            PORT_DIPSETTING(    0x30, "30k & 80k Only" )            PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
+            PORT_DIPSETTING(    0x28, "30k & 120k Only" )           PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
+            PORT_DIPSETTING(    0x20, "30k, 80k & Every 80k" )      PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
             PORT_DIPSETTING(    0x18, "30k, 100k & Every 100k" )    PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
-            PORT_DIPSETTING(    0x28, "30k & 120k Only" )       PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
             PORT_DIPSETTING(    0x10, "30k, 120k & Every 120k" )    PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
-            PORT_DIPSETTING(    0x00, DEF_STR( None ) )
-            PORT_DIPSETTING(    0x10, "30k Only" )          PORT_CONDITION("DSW2",0xc0,EQUALS,0x00) /* Manual shows 100k only, Test Mode shows 30k which is what we use */
-            PORT_DIPSETTING(    0x38, "30k & 100k Only" )       PORT_CONDITION("DSW2",0xc0,EQUALS,0x00)
+            PORT_DIPSETTING(    0x08, "30k Only" )                  PORT_CONDITION("DSW2",0xc0,NOTEQUALS,0x00)
+            PORT_DIPSETTING(    0x38, "30k & 100k Only" )           PORT_CONDITION("DSW2",0xc0,EQUALS,0x00)
+            PORT_DIPSETTING(    0x30, "30k & 120k Only" )           PORT_CONDITION("DSW2",0xc0,EQUALS,0x00)
+            PORT_DIPSETTING(    0x28, "40k & 120k Only" )           PORT_CONDITION("DSW2",0xc0,EQUALS,0x00)
             PORT_DIPSETTING(    0x20, "30k, 100k & Every 100k" )    PORT_CONDITION("DSW2",0xc0,EQUALS,0x00)
-            PORT_DIPSETTING(    0x30, "30k & 120k Only" )       PORT_CONDITION("DSW2",0xc0,EQUALS,0x00)
-            PORT_DIPSETTING(    0x08, "40k Only" )          PORT_CONDITION("DSW2",0xc0,EQUALS,0x00)
-            PORT_DIPSETTING(    0x28, "40k & 120k Only" )       PORT_CONDITION("DSW2",0xc0,EQUALS,0x00)
             PORT_DIPSETTING(    0x18, "40k, 120k & Every 120k" )    PORT_CONDITION("DSW2",0xc0,EQUALS,0x00)
+            PORT_DIPSETTING(    0x10, "30k Only" )                  PORT_CONDITION("DSW2",0xc0,EQUALS,0x00) // Manual shows 100k only, Test Mode shows 30k which is what we use
+            PORT_DIPSETTING(    0x08, "40k Only" )                  PORT_CONDITION("DSW2",0xc0,EQUALS,0x00)
+            PORT_DIPSETTING(    0x00, DEF_STR( None ) )
             PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )        PORT_DIPLOCATION("SW2:7,8")
+            PORT_DIPSETTING(    0xc0, "3" )
             PORT_DIPSETTING(    0x80, "1" )
             PORT_DIPSETTING(    0x40, "2" )
-            PORT_DIPSETTING(    0xc0, "3" )
             PORT_DIPSETTING(    0x00, "5" )
 
             INPUT_PORTS_END
@@ -386,11 +387,11 @@ namespace mame
 
         void superpac_common(machine_config config)
         {
-            /* basic machine hardware */
-            MC6809E(config, m_maincpu, PIXEL_CLOCK / 4);  /* 1.536 MHz */
+            // basic machine hardware
+            MC6809E(config, m_maincpu, PIXEL_CLOCK / 4);  // 1.536 MHz
             m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, superpac_cpu1_map);
 
-            MC6809E(config, m_subcpu, PIXEL_CLOCK / 4);   /* 1.536 MHz */
+            MC6809E(config, m_subcpu, PIXEL_CLOCK / 4);   // 1.536 MHz
             m_subcpu.op0.memory().set_addrmap(AS_PROGRAM, superpac_cpu2_map);
 
             ls259_device mainlatch = LS259(config, "mainlatch"); // 2M on CPU board
@@ -409,7 +410,7 @@ namespace mame
             dipmux.a_in_callback().set_ioport("DSW2").reg();
             dipmux.b_in_callback().set_ioport("DSW2").rshift(4).reg();
 
-            /* video hardware */
+            // video hardware
             GFXDECODE(config, m_gfxdecode, m_palette, gfx_superpac);
             PALETTE(config, m_palette, superpac_palette, 64*4+64*4, 32);
 
@@ -421,7 +422,7 @@ namespace mame
 
             MCFG_VIDEO_START_OVERRIDE(config, video_start_superpac);
 
-            /* sound hardware */
+            // sound hardware
             SPEAKER(config, "speaker").front_center();
 
             NAMCO_15XX(config, m_namco_15xx, 18432000 / 768);
@@ -476,7 +477,7 @@ namespace mame
             ROM_LOAD( "sp1-2.1c",     0xc000, 0x2000, CRC("4bb33d9c") + SHA1("dd87f71b4db090a32a6b791079eedd17580cc741") ),
             ROM_LOAD( "sp1-1.1b",     0xe000, 0x2000, CRC("846fbb4a") + SHA1("f6bf90281986b9b7a3ef1dbbeddb722182e84d7c") ),
 
-            ROM_REGION( 0x10000, "sub", 0 ), /* 64k for the second CPU */
+            ROM_REGION( 0x10000, "sub", 0 ), // 64k for the second CPU
             ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, CRC("04445ddb") + SHA1("ce7d14963d5ddaefdeaf433a6f82c43cd1611d9b") ),
 
             ROM_REGION( 0x1000, "gfx1", 0 ),
@@ -486,11 +487,11 @@ namespace mame
             ROM_LOAD( "spv-2.3f",     0x0000, 0x2000, CRC("670a42f2") + SHA1("9171922df07e31fd1dc415766f7d2cc50a9d10dc") ),
 
             ROM_REGION( 0x0220, "proms", 0 ),
-            ROM_LOAD( "superpac.4c",  0x0000, 0x0020, CRC("9ce22c46") + SHA1("d97f53ef4c5ef26659a22ed0de4ce7ef3758c924") ), /* palette */
-            ROM_LOAD( "superpac.4e",  0x0020, 0x0100, CRC("1253c5c1") + SHA1("df46a90170e9761d45c90fbd04ef2aa1e8c9944b") ), /* chars */
-            ROM_LOAD( "superpac.3l",  0x0120, 0x0100, CRC("d4d7026f") + SHA1("a486573437c54bfb503424574ad82655491e85e1") ), /* sprites */
+            ROM_LOAD( "superpac.4c",  0x0000, 0x0020, CRC("9ce22c46") + SHA1("d97f53ef4c5ef26659a22ed0de4ce7ef3758c924") ), // palette
+            ROM_LOAD( "superpac.4e",  0x0020, 0x0100, CRC("1253c5c1") + SHA1("df46a90170e9761d45c90fbd04ef2aa1e8c9944b") ), // chars
+            ROM_LOAD( "superpac.3l",  0x0120, 0x0100, CRC("d4d7026f") + SHA1("a486573437c54bfb503424574ad82655491e85e1") ), // sprites
 
-            ROM_REGION( 0x0100, "namco", 0 ),    /* sound prom */
+            ROM_REGION( 0x0100, "namco", 0 ),    // sound prom
             ROM_LOAD( "superpac.3m",  0x0000, 0x0100, CRC("ad43688f") + SHA1("072f427453efb1dda8147da61804fff06e1bc4d5") ),
 
             ROM_END,
@@ -544,7 +545,7 @@ namespace mame
 
         static device_t device_creator_superpac(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mappy_state(mconfig, type, tag); }
 
-        /* 2x6809, static tilemap, 2bpp sprites (Super Pacman type)  */
+        // 2x6809, static tilemap, 2bpp sprites (Super Pacman type)
         public static readonly game_driver driver_superpac = GAME(device_creator_superpac, rom_superpac, "1982", "superpac", "0", mappy_state_superpac, m_mappy.construct_ioport_superpac, driver_device.empty_init, ROT90, "Namco", "Super Pac-Man", MACHINE_SUPPORTS_SAVE);
     }
 }

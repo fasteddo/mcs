@@ -12,6 +12,8 @@ using u32 = System.UInt32;
 using u64 = System.UInt64;
 using uX = mame.FlexPrim;
 
+using static mame.util;
+
 
 namespace mame
 {
