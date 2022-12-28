@@ -8,19 +8,13 @@ using MemoryU8 = mame.MemoryContainer<System.Byte>;
 using PointerU8 = mame.Pointer<System.Byte>;
 using size_t = System.UInt64;
 using software_list_device_enumerator = mame.device_type_enumerator<mame.software_list_device>;  //typedef device_type_enumerator<software_list_device> software_list_device_enumerator;
-using system_list_system_reference_vector = mame.std.vector<mame.ui_system_info>;  //using system_reference_vector = std::vector<system_reference>;
-using system_list_system_vector = mame.std.vector<mame.ui_system_info>;  //using system_vector = std::vector<ui_system_info>;
-using u32 = System.UInt32;
-using u64 = System.UInt64;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
 using unsigned = System.UInt32;
 
 using static mame.cpp_global;
-using static mame.emucore_global;
 using static mame.emuopts_global;
-using static mame.gamedrv_global;
 using static mame.language_global;
 using static mame.osdfile_global;
 using static mame.unicode_global;
@@ -330,7 +324,7 @@ namespace mame.ui
                 item_append(__("System Settings"), 0, CONF_MACHINE);
                 skip_main_items = 3;
 
-                if (m_prev_selected != null && !have_prev_selected)
+                if (m_prev_selected != null && !have_prev_selected && item_count() > 0)
                     m_prev_selected = item(0).ref_();
             }
             else

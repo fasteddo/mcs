@@ -147,10 +147,9 @@ namespace mame.netlist.analog
 
         //string m_name;
 
-        // owning object must save those ...
-        state_var<nl_fptype> m_Vd;
-        state_var<nl_fptype> m_Id;
-        state_var<nl_fptype> m_G;
+        nl_fptype m_Vd;
+        nl_fptype m_Id;
+        nl_fptype m_G;
 
         nl_fptype m_Vt;
         nl_fptype m_Vmin;
@@ -166,13 +165,13 @@ namespace mame.netlist.analog
 #endif
 
 
-        public generic_diode(diode_e TYPE_, core_device_t dev, string name)
+        public generic_diode(diode_e TYPE_)
         {
             TYPE = TYPE_;
 
-            m_Vd = new state_var<nl_fptype>(dev, name + ".m_Vd", nlconst.diode_start_voltage());
-            m_Id = new state_var<nl_fptype>(dev, name + ".m_Id", nlconst.zero());
-            m_G = new state_var<nl_fptype>(dev,  name + ".m_G", nlconst.cgminalt());
+            m_Vd = nlconst.diode_start_voltage();
+            m_Id = nlconst.zero();
+            m_G = nlconst.cgminalt();
             m_Vt = nlconst.zero();
             m_Vmin = nlconst.zero(); // not used in MOS model
             m_Is = nlconst.zero();
@@ -188,6 +187,15 @@ namespace mame.netlist.analog
               , nlconst.cgminalt()
               , nlconst.T0());
             //m_name = name;
+        }
+
+
+        public generic_diode(diode_e TYPE_, core_device_t dev, string name)
+            : this(TYPE_)
+        {
+            dev.state().save(dev, m_Vd, dev.name(), name + ".m_Vd");
+            dev.state().save(dev, m_Id, dev.name(), name + ".m_Id");
+            dev.state().save(dev, m_G, dev.name(), name + ".m_G");
         }
 
 
@@ -231,40 +239,40 @@ namespace mame.netlist.analog
                 }
 #else
                 //printf("%s: %g %g\n", m_name.c_str(), nVd, (nl_fptype) m_Vd);
-                m_Vd.op = nVd;
+                m_Vd = nVd;
                 if (nVd > m_Vcrit)
                 {
-                    m_Id.op = m_Icrit_p_Is - m_Is + (m_Vd.op - m_Vcrit) * m_Icrit_p_Is * m_VtInv;
-                    m_G.op = m_Icrit_p_Is * m_VtInv + m_gmin;
+                    m_Id = m_Icrit_p_Is - m_Is + (m_Vd - m_Vcrit) * m_Icrit_p_Is * m_VtInv;
+                    m_G = m_Icrit_p_Is * m_VtInv + m_gmin;
                 }
-                else if (m_Vd.op < m_Vmin)
+                else if (m_Vd < m_Vmin)
                 {
-                    m_G.op = m_gmin;
+                    m_G = m_gmin;
                     //m_Id = m_Imin + (m_Vd - m_Vmin) * m_gmin;
                     //m_Imin = m_gmin * m_Vt - m_Is;
-                    m_Id.op = (m_Vd.op - m_Vmin + m_Vt) * m_gmin - m_Is;
+                    m_Id = (m_Vd - m_Vmin + m_Vt) * m_gmin - m_Is;
                 }
                 else
                 {
-                    var IseVDVt = plib.pg.exp(m_logIs + m_Vd.op * m_VtInv);
-                    m_Id.op = IseVDVt - m_Is;
-                    m_G.op = IseVDVt * m_VtInv + m_gmin;
+                    var IseVDVt = plib.pg.exp(m_logIs + m_Vd * m_VtInv);
+                    m_Id = IseVDVt - m_Is;
+                    m_G = IseVDVt * m_VtInv + m_gmin;
                 }
 #endif
             }
             else if (TYPE == diode_e.MOS)
             {
-                m_Vd.op = nVd;
+                m_Vd = nVd;
                 if (nVd < nlconst.zero())
                 {
-                    m_G.op = m_Is * m_VtInv + m_gmin;
-                    m_Id.op = m_G.op * m_Vd.op;
+                    m_G = m_Is * m_VtInv + m_gmin;
+                    m_Id = m_G * m_Vd;
                 }
                 else // log stepping should already be done in mosfet
                 {
-                    var IseVDVt = plib.pg.exp(std.min(+fp_constants_double.DIODE_MAXVOLT(), m_logIs + m_Vd.op * m_VtInv));
-                    m_Id.op = IseVDVt - m_Is;
-                    m_G.op = IseVDVt * m_VtInv + m_gmin;
+                    var IseVDVt = plib.pg.exp(std.min(+fp_constants_double.DIODE_MAXVOLT(), m_logIs + m_Vd * m_VtInv));
+                    m_Id = IseVDVt - m_Is;
+                    m_G = IseVDVt * m_VtInv + m_gmin;
                 }
             }
         }
@@ -302,9 +310,9 @@ namespace mame.netlist.analog
         }
 
 
-        nl_fptype I() { return m_Id.op; }
-        public nl_fptype G() { return m_G.op; }
-        public nl_fptype Ieq() { return m_Id.op - m_Vd.op * m_G.op; }
-        nl_fptype Vd() { return m_Vd.op; }
+        nl_fptype I() { return m_Id; }
+        public nl_fptype G() { return m_G; }
+        public nl_fptype Ieq() { return m_Id - m_Vd * m_G; }
+        nl_fptype Vd() { return m_Vd; }
     }
 }

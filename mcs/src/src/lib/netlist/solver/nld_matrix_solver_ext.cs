@@ -6,12 +6,10 @@ using System;
 using matrix_solver_t_net_list_t = mame.std.vector<mame.netlist.analog_net_t>;  //using net_list_t =  std::vector<analog_net_t *>;
 using matrix_solver_t_fptype = System.Double;  //using fptype = nl_fptype;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
-using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using nl_fptype_ops = mame.plib.constants_operators_double;
 using size_t = System.UInt64;
 using unsigned = System.UInt32;
 
-using static mame.netlist.nl_config_global;
+using static mame.netlist.nl_errstr_global;
 
 
 namespace mame.netlist.solver

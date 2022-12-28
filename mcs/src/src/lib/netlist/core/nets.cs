@@ -339,10 +339,10 @@ namespace mame.netlist
             }
 
 
-            public bool core_terms_empty() { throw new emu_unimplemented(); }
-            //{
-            //    return core_terms_ref().empty();
-            //}
+            public bool core_terms_empty()
+            {
+                return core_terms_ref().empty();
+            }
 
 
             // only used for logic nets

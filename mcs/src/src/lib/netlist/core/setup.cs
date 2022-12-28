@@ -3,12 +3,11 @@
 
 using System;
 
-using abstract_t_link_t = mame.std.pair<string, string>;  //using link_t = std::pair<pstring, pstring>;
+using abstract_t_connection_t = mame.std.pair<string, string>;  //using connection_t = std::pair<pstring, pstring>;
 using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using models_t_map_t = mame.std.unordered_map<string, string>;  //using map_t = std::unordered_map<pstring, pstring>;
 using models_t_raw_map_t = mame.std.unordered_map<string, string>;  //using raw_map_t = std::unordered_map<pstring, pstring>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using psource_t_stream_ptr = mame.std.istream;  //using stream_ptr = plib::unique_ptr<std::istream>;
 using size_t = System.UInt64;
 using unsigned = System.UInt32;
 
@@ -189,16 +188,43 @@ namespace mame.netlist
 
     namespace detail
     {
-        // -----------------------------------------------------------------------------
-        // abstract_t
-        // -----------------------------------------------------------------------------
+        public class alias_t
+        {
+            alias_type m_type;
+            string m_alias;
+            string m_references;
+
+
+            public alias_t(alias_type type, string alias, string references)
+            {
+                m_type = type;
+                m_alias = alias;
+                m_references = references;
+            }
+
+            //alias_t(const alias_t &) = default;
+            //alias_t &operator=(const alias_t &) = default;
+            //alias_t(alias_t &&) noexcept = default;
+            //alias_t &operator=(alias_t &&) noexcept = default;
+
+            //pstring name() const { return m_alias; }
+            public string references() { return m_references; }
+            //alias_type type() const { return m_type; }
+        }
+
+
+        ///
+        /// \brief class containing the abstract net list
+        ///
+        /// After parsing a net list this class contains all raw
+        /// connections, parameter values and devices.
         public class abstract_t
         {
-            //using link_t = std::pair<pstring, pstring>;
+            //using connection_t = std::pair<pstring, pstring>;
 
 
-            public std.unordered_map<string, string> m_alias = new std.unordered_map<string, string>();
-            public std.vector<abstract_t_link_t> m_links = new std.vector<abstract_t_link_t>();
+            public std.unordered_map<string, alias_t> m_aliases = new std.unordered_map<string, alias_t>();
+            public std.vector<abstract_t_connection_t> m_connections = new std.vector<abstract_t_connection_t>();
             public std.unordered_map<string, string> m_param_values = new std.unordered_map<string, string>();
             public models_t_raw_map_t m_models = new models_t_map_t();
 
@@ -526,10 +552,10 @@ namespace mame.netlist
             {
                 ret = temp;
                 temp = "";
-                foreach (var e in m_abstract.m_alias)
+                foreach (var e in m_abstract.m_aliases)
                 {
                     // FIXME: this will resolve first one found
-                    if (e.second() == ret)
+                    if (e.second().references() == ret)
                     {
                         temp = e.first();
                         break;
@@ -801,16 +827,16 @@ namespace mame.netlist
             // std::string called from erase.
             //
 #else
-            while (!m_abstract.m_links.empty() && tries > 0)
+            while (!m_abstract.m_connections.empty() && tries > 0)
             {
-                for (size_t i = 0; i < m_abstract.m_links.size(); )
+                for (size_t i = 0; i < m_abstract.m_connections.size(); )
                 {
-                    string t1s = m_abstract.m_links[i].first;
-                    string t2s = m_abstract.m_links[i].second;
+                    string t1s = m_abstract.m_connections[i].first;
+                    string t2s = m_abstract.m_connections[i].second;
                     detail.core_terminal_t t1 = find_terminal(t1s);
                     detail.core_terminal_t t2 = find_terminal(t2s);
                     if (connect(t1, t2))
-                        m_abstract.m_links.erase((int)i);  //m_abstract.m_links.erase(m_abstract.m_links.begin() + plib::narrow_cast<std::ptrdiff_t>(i));
+                        m_abstract.m_connections.erase((int)i);  //m_abstract.m_links.erase(m_abstract.m_links.begin() + plib::narrow_cast<std::ptrdiff_t>(i));
                     else
                         i++;
                 }
@@ -821,7 +847,7 @@ namespace mame.netlist
 
             if (tries == 0)
             {
-                foreach (var link in m_abstract.m_links)
+                foreach (var link in m_abstract.m_connections)
                     log().warning.op(MF_CONNECTING_1_TO_2(de_alias(link.first), de_alias(link.second)));
 
                 log().fatal.op(MF_LINK_TRIES_EXCEEDED(m_netlist_params.m_max_link_loops.op()));
@@ -932,8 +958,8 @@ namespace mame.netlist
             do
             {
                 ret = temp;
-                var p = m_abstract.m_alias.find(ret);
-                temp = (p != default ? p : "");
+                var p = m_abstract.m_aliases.find(ret);
+                temp = (p != default ? p.references() : "");
             } while (!temp.empty() && temp != ret);
 
             log().debug.op("{0}==>{1}\n", name, ret);

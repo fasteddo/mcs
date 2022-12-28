@@ -1223,7 +1223,7 @@ namespace mame
             string dname = "OUT_" + pin;
 
             parser.register_dev(dname, dname);
-            parser.register_link(dname + ".IN", pin);
+            parser.register_connection(dname + ".IN", pin);
         }
     }
 
@@ -1300,7 +1300,7 @@ namespace mame
             string dname = "OUT_" + pin;
 
             parser.register_dev(dname, dname);
-            parser.register_link(dname + ".IN", pin);
+            parser.register_connection(dname + ".IN", pin);
         }
     }
 
@@ -1606,7 +1606,7 @@ namespace mame
             string dname = new plib.pfmt("STREAM_OUT_{0}").op(m_channel);
 
             parser.register_dev(dname, dname);
-            parser.register_link(dname + ".IN", m_out_name);
+            parser.register_connection(dname + ".IN", m_out_name);
         }
 
 

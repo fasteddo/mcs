@@ -15,7 +15,7 @@ using uint_least8_t = System.Byte;
 using uint_least64_t = System.UInt64;
 
 using static mame.cpp_global;
-using static mame.netlist.nl_config_global;
+using static mame.netlist.nl_errstr_global;
 
 
 namespace mame.netlist.factory

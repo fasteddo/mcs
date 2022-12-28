@@ -37,6 +37,32 @@ namespace mame
         static readonly XTAL CLOCK_3KHZ = MASTER_CLOCK / 4096;
 
 
+        /************************************************************************/
+        /* Lunar Lander Sound System Analog emulation by K.Wilkins Nov 2000     */
+        /* Questions/Suggestions to mame@esplexo.co.uk                          */
+        /************************************************************************/
+        //#define LLANDER_TONE3K_EN   NODE_01
+        //#define LLANDER_TONE6K_EN   NODE_02
+        //#define LLANDER_THRUST_DATA NODE_03
+        //#define LLANDER_EXPLOD_EN   NODE_04
+        //#define LLANDER_NOISE_RESET NODE_05
+
+        //#define LLANDER_NOISE               NODE_10
+        //#define LLANDER_TONE_3K_SND         NODE_11
+        //#define LLANDER_TONE_6K_SND         NODE_12
+        //#define LLANDER_THRUST_EXPLOD_SND   NODE_13
+
+        //static const discrete_lfsr_desc llander_lfsr =
+
+        //static DISCRETE_SOUND_START(llander_discrete)
+
+        //void asteroid_state::llander_snd_reset_w(uint8_t data)
+
+        //void asteroid_state::llander_sounds_w(uint8_t data)
+
+        //void asteroid_state::llander_sound(machine_config &config)
+
+
         /*************************************
          *
          *  Coin counters
@@ -60,7 +86,6 @@ namespace mame
         {
             machine().bookkeeping().coin_counter_w(2, state);
         }
-
 
 
         /*************************************

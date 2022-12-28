@@ -321,6 +321,7 @@ namespace mame
           22_321_000, /* 22.321_MHz_XTAL        Apple LaserWriter II NT */
           22_464_000, /* 22.464_MHz_XTAL        CIT-101 132-column display clock */
           22_579_000, /* 22.579_MHz_XTAL        Sega System H1 SCSP clock */
+          22_579_200, /* 22.5792_MHz_XTAL       (44100 * 512) */
           22_656_000, /* 22.656_MHz_XTAL        Super Pinball Action (~1440x NTSC line rate) */
           22_680_000, /* 22.680_MHz_XTAL        HDS200 80-columns display clock */
           22_896_000, /* 22.896_MHz_XTAL        DEC VT220 132-column display clock */

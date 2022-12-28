@@ -96,33 +96,45 @@ namespace mame.netlist
     //  Types needed by various includes
     //============================================================
 
-    /// \brief Time step type.
-    ///
-    /// May be either FORWARD or RESTORE
-    ///
-    public enum time_step_type
-    {
-        FORWARD,  ///< forward time
-        RESTORE   ///< restore state before last forward
-    }
-
-
-    /// \brief Delegate type for device notification.
-    ///
-    public delegate void nl_delegate();  //using nldelegate = plib::pmfp<void ()>;
-    public delegate void nl_delegate_ts(time_step_type param1, double param2);  //using nldelegate_ts = plib::pmfp<void (timestep_type, nl_fptype)>;
-    public delegate void nl_delegate_dyn();  //using nldelegate_dyn = plib::pmfp<void ()>;
-
-
     namespace detail
     {
+        /// \brief Time step type.
+        ///
+        /// May be either FORWARD or RESTORE
+        ///
+        public enum time_step_type
+        {
+            FORWARD,  //!< forward time
+            RESTORE   //!< restore state before last forward
+        }
+
+
         /// \brief Enum specifying the type of object
         ///
         public enum terminal_type
         {
-            TERMINAL = 0, ///< object is an analog terminal
-            INPUT    = 1, ///< object is an input
-            OUTPUT   = 2, ///< object is an output
+            TERMINAL = 0, //!< object is an analog terminal
+            INPUT    = 1, //!< object is an input
+            OUTPUT   = 2, //!< object is an output
+        }
+
+
+        ///
+        /// \brief The kind of alias
+        ///
+        /// The information should later be used to create a netlist from
+        /// an abstract net list representation.
+        ///
+        public enum alias_type
+        {
+            UNKNOWN,    //!< Used as a placeholder during code changes
+            INTERNAL,   //!< the alias references a internal pin
+            FUNCTIONAL, //!< Used for aliases e.g. in BJTs : ALIAS("B",
+                        //!< somesub.p())
+            PACKAGE_PIN, //!< the alias references a package pin, e.g. ALIAS(13,
+                         //!< B.CLK)
+            READABILITY, //!< the alias is used to improved readability, e.g.
+                         //!< ALIAS(hblank, IC3.3)
         }
     }
 
@@ -206,29 +218,5 @@ namespace mame.netlist
         public abstract netlist_time tRC(size_t N);
         public abstract netlist_time tCLR(size_t N);
         public abstract netlist_time tLDCNT(size_t N);
-    }
-
-
-    //============================================================
-    //  Exceptions
-    //============================================================
-
-    /// \brief Generic netlist exception.
-    ///  The exception is used in all events which are considered fatal.
-    public class nl_exception : plib.pexception
-    {
-        /// \brief Constructor.
-        ///  Allows a descriptive text to be passed to the exception
-        public nl_exception(string text) //!< text to be passed
-            : base(text)
-        { }
-
-        /// \brief Constructor.
-        ///  Allows to use \ref plib::pfmt logic to be used in exception
-        //template<typename... Args>
-        public nl_exception(string fmt,      //!< format to be used
-                            params object [] args)  //!< arguments to be passed
-            : base(string.Format(fmt, args))
-        { }
     }
 }

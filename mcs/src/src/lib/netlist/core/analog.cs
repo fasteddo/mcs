@@ -41,9 +41,9 @@ namespace mame.netlist
     ///
     public class terminal_t : analog_t
     {
-        Pointer<nl_fptype> m_Idr;  //nl_fptype *m_Idr; ///< drive current
-        Pointer<nl_fptype> m_go;  //nl_fptype *m_go;  ///< conductance for Voltage from other term
-        Pointer<nl_fptype> m_gt;  //nl_fptype *m_gt;  ///< conductance for total conductance
+        Pointer<nl_fptype> m_Idr;  //nl_fptype *m_Idr; //!< drive current
+        Pointer<nl_fptype> m_go;  //nl_fptype *m_go;  //!< conductance for Voltage from other term
+        Pointer<nl_fptype> m_gt;  //nl_fptype *m_gt;  //!< conductance for total conductance
 
 
         /// \brief constructor
@@ -134,9 +134,9 @@ namespace mame.netlist
     class analog_input_t : analog_t
     {
         /// \brief Constructor
-        public analog_input_t(core_device_t dev,  ///< owning device
-            string aname,       ///< name of terminal
-            nl_delegate delegate_) ///< delegate
+        public analog_input_t(core_device_t dev,  //!< owning device
+            string aname,       //!< name of terminal
+            nl_delegate delegate_) //!< delegate
             : base(dev, aname, state_e.STATE_INP_ACTIVE, delegate_)
         {
             state().setup().register_term(this);

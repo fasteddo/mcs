@@ -133,13 +133,23 @@ namespace mame
         }
 
 
+        /* trim functions */
+        //template<typename TPred>
+        //std::string_view strtrimleft(std::string_view str, TPred pred)
+
+        //template<typename TPred>
+        //std::string_view strtrimright(std::string_view str, TPred pred)
+
+
         //void strdelchr(std::string& str, char chr);
         //void strreplacechr(std::string& str, char ch, char newch);
 
 
         public static string strtrimspace(string str)
         {
-            return str.Trim();  //return internal_strtrimspace(str, false);
+            //std::string_view str2 = strtrimleft(str, [](char c) { return !isspace(uint8_t(c)); });
+            //return strtrimright(str2, [](char c) { return !isspace(uint8_t(c)); });
+            return str.Trim();
         }
 
 

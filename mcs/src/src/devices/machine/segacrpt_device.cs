@@ -15,7 +15,7 @@ using static mame.segacrpt_device_global;
 namespace mame
 {
     // base class
-    abstract class segacrpt_z80_device : z80_device
+    public abstract class segacrpt_z80_device : z80_device
     {
         string m_decrypted_tag = null;
         Pointer<uint8_t> m_decrypted_ptr;  //uint8_t* m_decrypted_ptr;
@@ -102,7 +102,7 @@ namespace mame
     //class sega_315_5018_device : public segacrpt_z80_device
 
 
-    class sega_315_5010_device : segacrpt_z80_device
+    public class sega_315_5010_device : segacrpt_z80_device
     {
         //DEFINE_DEVICE_TYPE(SEGA_315_5010, sega_315_5010_device, "sega_315_5010", "Sega 315-5010")
         public static readonly emu.detail.device_type_impl SEGA_315_5010 = DEFINE_DEVICE_TYPE("sega_315_5010", "Sega 315-5010", (type, mconfig, tag, owner, clock) => { return new sega_315_5010_device(mconfig, tag, owner, clock); });
@@ -122,7 +122,7 @@ namespace mame
     //class sega_315_5084_device : public segacrpt_z80_device
 
 
-    static partial class segacrpt_device_global
+    public static partial class segacrpt_device_global
     {
         public static sega_315_5010_device SEGA_315_5010<bool_Required>(emu.detail.machine_config_replace replace, device_finder<z80_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return (sega_315_5010_device)emu.detail.device_type_impl.op(replace, finder, sega_315_5010_device.SEGA_315_5010, clock); }
     }

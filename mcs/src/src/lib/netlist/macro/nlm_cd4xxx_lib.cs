@@ -3,6 +3,8 @@
 
 using System;
 
+using static mame.netlist.nl_setup_global;
+
 
 namespace mame
 {
@@ -907,125 +909,133 @@ namespace mame
         }
 
 
-        //static TRUTHTABLE_START(CD4001_GATE, 2, 1, "")
-        static void netlist_CD4001_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(CD4001_GATE, 2, 1, "")
+        static void netlist_CD4001_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "CD4001_GATE", 2, 1, "", netlist_CD4001_GATE_impl); }
+        static void netlist_CD4001_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "CD4001_GATE", 2, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A , B | Q ");
             h.TT_LINE("0,0|1|110");
             h.TT_LINE("X,1|0|120");
             h.TT_LINE("1,X|0|120");
             h.TT_FAMILY("CD4XXX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(CD4011_GATE, 2, 1, "")
-        static void netlist_CD4011_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(CD4011_GATE, 2, 1, "")
+        static void netlist_CD4011_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "CD4011_GATE", 2, 1, "", netlist_CD4011_GATE_impl); }
+        static void netlist_CD4011_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "CD4011_GATE", 2, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,X|1|100");
             h.TT_LINE("X,0|1|100");
             h.TT_LINE("1,1|0|100");
             h.TT_FAMILY("CD4XXX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(CD4030_GATE, 2, 1, "")
-        static void netlist_CD4030_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(CD4030_GATE, 2, 1, "")
+        static void netlist_CD4030_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "CD4030_GATE", 2, 1, "", netlist_CD4030_GATE_impl); }
+        static void netlist_CD4030_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "CD4030_GATE", 2, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,0|0|100");
             h.TT_LINE("0,1|1|100");
             h.TT_LINE("1,0|1|100");
             h.TT_LINE("1,1|0|100");
             h.TT_FAMILY("CD4XXX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(CD4049_GATE, 1, 1, "")
-        static void netlist_CD4049_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(CD4049_GATE, 1, 1, "")
+        static void netlist_CD4049_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "CD4049_GATE", 1, 1, "", netlist_CD4049_GATE_impl); }
+        static void netlist_CD4049_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "CD4049_GATE", 1, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A|Q ");
             h.TT_LINE("0|1|45");
             h.TT_LINE("1|0|45");
             h.TT_FAMILY("CD4XXX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(CD4069_GATE, 1, 1, "")
-        static void netlist_CD4069_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(CD4069_GATE, 1, 1, "")
+        static void netlist_CD4069_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "CD4069_GATE", 1, 1, "", netlist_CD4069_GATE_impl); }
+        static void netlist_CD4069_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "CD4069_GATE", 1, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A|Q ");
             h.TT_LINE("0|1|55");
             h.TT_LINE("1|0|55");
             h.TT_FAMILY("CD4XXX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(CD4070_GATE, 2, 1, "")
-        static void netlist_CD4070_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(CD4070_GATE, 2, 1, "")
+        static void netlist_CD4070_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "CD4070_GATE", 2, 1, "", netlist_CD4070_GATE_impl); }
+        static void netlist_CD4070_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "CD4070_GATE", 2, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,0|0|15");
             h.TT_LINE("0,1|1|22");
             h.TT_LINE("1,0|1|22");
             h.TT_LINE("1,1|0|15");
             h.TT_FAMILY("CD4XXX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(CD4071_GATE, 2, 1, "")
-        static void netlist_CD4071_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(CD4071_GATE, 2, 1, "")
+        static void netlist_CD4071_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "CD4071_GATE", 2, 1, "", netlist_CD4071_GATE_impl); }
+        static void netlist_CD4071_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "CD4071_GATE", 2, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,0|0|200");
             h.TT_LINE("0,1|1|200");
             h.TT_LINE("1,0|1|200");
             h.TT_LINE("1,1|1|200");
             h.TT_FAMILY("CD4XXX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(CD4081_GATE, 2, 1, "")
-        static void netlist_CD4081_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(CD4081_GATE, 2, 1, "")
+        static void netlist_CD4081_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "CD4081_GATE", 2, 1, "", netlist_CD4081_GATE_impl); }
+        static void netlist_CD4081_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "CD4081_GATE", 2, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,0|0|200");
             h.TT_LINE("0,1|0|200");
             h.TT_LINE("1,0|0|200");
             h.TT_LINE("1,1|1|200");
             h.TT_FAMILY("CD4XXX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 

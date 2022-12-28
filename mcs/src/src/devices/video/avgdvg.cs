@@ -1028,7 +1028,7 @@ namespace mame
     }
 
 
-    class avg_tempest_device : avg_device
+    public class avg_tempest_device : avg_device
     {
         //DEFINE_DEVICE_TYPE(AVG_TEMPEST,  avg_tempest_device,  "avg_tempest",  "Atari AVG (Tempest)")
         public static readonly emu.detail.device_type_impl AVG_TEMPEST = DEFINE_DEVICE_TYPE("avg_tempest", "Atari AVG (Tempest)", (type, mconfig, tag, owner, clock) => { return new avg_tempest_device(mconfig, tag, owner, clock); });
@@ -1184,7 +1184,7 @@ namespace mame
     }
 
 
-    static class avgdvg_global
+    public static class avgdvg_global
     {
         public static dvg_device DVG<bool_Required>(machine_config mconfig, device_finder<dvg_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dvg_device.DVG, clock); }
         public static avg_tempest_device AVG_TEMPEST<bool_Required>(machine_config mconfig, device_finder<avg_tempest_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, avg_tempest_device.AVG_TEMPEST, clock); }

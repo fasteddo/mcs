@@ -2,8 +2,6 @@
 // copyright-holders:Edward Fast
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 using device_t_feature = mame.emu.detail.device_feature;  //using feature = emu::detail::device_feature;
 using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
@@ -13,7 +11,7 @@ using size_t = System.UInt64;
 using sound_interface_enumerator = mame.device_interface_enumerator<mame.device_sound_interface>;  //typedef device_interface_enumerator<device_sound_interface> sound_interface_enumerator;
 using u32 = System.UInt32;
 
-using static mame.corefile_global;
+using static mame.cpp_global;
 using static mame.emucore_global;
 using static mame.language_global;
 using static mame.romload_global;
@@ -234,11 +232,17 @@ namespace mame.ui
             string buf = "";  //std::ostringstream buf;
 
             // print description, manufacturer, and CPU:
+            string src = m_machine.system().type.source();
+            var prefix = src.find("src/mame/");
+            if (npos == prefix)
+                prefix = src.find("src\\mame\\");
+            if (npos != prefix)
+                src = src.remove_prefix_(prefix + 9);
             util.stream_format(ref buf, __("{0}\n{1} {2}\nDriver: {3}\n\nCPU:\n"),  //util::stream_format(buf, _("%1$s\n%2$s %3$s\nDriver: %4$s\n\nCPU:\n"),
                     system_list.instance().systems()[driver_list.find(m_machine.system().name)].description,
                     m_machine.system().year,
                     m_machine.system().manufacturer,
-                    core_filename_extract_base(m_machine.system().type.source()));
+                    src);
 
             // loop over all CPUs
             execute_interface_enumerator execiter = new execute_interface_enumerator(m_machine.root_device());

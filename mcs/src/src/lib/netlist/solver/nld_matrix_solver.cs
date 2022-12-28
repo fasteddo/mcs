@@ -425,7 +425,7 @@ namespace mame.netlist.solver
             ++m_stat_vsolver_calls.op;
             if (dynamic_device_count() != 0)
             {
-                step(time_step_type.FORWARD, delta);
+                step(detail.time_step_type.FORWARD, delta);
                 var resched = solve_nr_base();
 
                 if (resched)
@@ -433,7 +433,7 @@ namespace mame.netlist.solver
             }
             else
             {
-                step(time_step_type.FORWARD, delta);
+                step(detail.time_step_type.FORWARD, delta);
                 this.m_stat_calculations.op++;
                 this.upstream_solve_non_dynamic();
                 this.store();
@@ -698,12 +698,12 @@ namespace mame.netlist.solver
             bool resched = false;
 
             restore();
-            step(time_step_type.RESTORE, delta);
+            step(detail.time_step_type.RESTORE, delta);
 
             for (size_t i = 0; i < 10; i++)
             {
                 backup();
-                step(time_step_type.FORWARD, netlist_time.from_fp(m_params.m_min_ts_ts.op()));
+                step(detail.time_step_type.FORWARD, netlist_time.from_fp(m_params.m_min_ts_ts.op()));
                 resched = solve_nr_base();
                 // update time step calculation
                 next_time_step = compute_next_time_step(m_params.m_min_ts_ts.op(), m_params.m_min_ts_ts.op(), m_params.m_max_time_step);
@@ -717,7 +717,7 @@ namespace mame.netlist.solver
                     next_time_step = delta;
 
                 backup();
-                step(time_step_type.FORWARD, next_time_step);
+                step(detail.time_step_type.FORWARD, next_time_step);
                 delta -= next_time_step;
                 resched = solve_nr_base();
                 next_time_step = compute_next_time_step(next_time_step.as_fp(), m_params.m_min_ts_ts.op(), m_params.m_max_time_step);
@@ -843,7 +843,7 @@ namespace mame.netlist.solver
         }
 
 
-        void step(time_step_type ts_type, netlist_time delta)
+        void step(detail.time_step_type ts_type, netlist_time delta)
         {
             var dd = delta.as_fp();
             foreach (var d in m_step_funcs)

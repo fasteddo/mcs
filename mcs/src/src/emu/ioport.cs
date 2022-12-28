@@ -43,10 +43,6 @@ using static mame.util;
 
 namespace mame
 {
-    // input ports support up to 32 bits each
-    //typedef u32 ioport_value;
-
-
     public static partial class ioport_global
     {
         // active high/low values for input ports

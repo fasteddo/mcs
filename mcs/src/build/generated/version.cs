@@ -11,7 +11,7 @@ namespace mame
 {
     public static class version_internal
     {
-        public const string BARE_BUILD_VERSION = "0.245";
+        public const string BARE_BUILD_VERSION = "0.246";
     }
 
     public static class version_global

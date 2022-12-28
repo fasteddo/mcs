@@ -7,7 +7,6 @@ using int64_t = System.Int64;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using size_t = System.UInt64;
 
-using static mame.cpp_global;
 using static mame.netlist.nl_config_global;
 
 
@@ -128,7 +127,7 @@ namespace mame.netlist
         /// brief default minimum alignment of mempool_arena
         ///
         /// 256 is the best compromise between logic applications like MAME
-        /// TTL games (e.g. pong) and analog applications like e.g. kidnikik
+        /// TTL games (e.g. pong) and analog applications like e.g. kidniki
         /// sound.
         ///
         /// Best performance for pong is achieved with a value of 16, but this
@@ -289,16 +288,5 @@ namespace mame.netlist
 
         public static string name() { return "double"; }
         public static string suffix() { return ""; }
-    }
-
-
-    public static partial class nl_config_global
-    {
-        //============================================================
-        //  Asserts
-        //============================================================
-
-        public static void nl_assert(bool x) { assert(x); }  //#define nl_assert(x)    do { if (NL_DEBUG) passert_always(x); } while (0)
-        public static void nl_assert_always(bool x, string msg) { assert(x, msg); }  //#define nl_assert_always(x, msg) passert_always_msg(x, msg)
     }
 }

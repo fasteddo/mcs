@@ -161,7 +161,7 @@ namespace mame.netlist
         }
 
 
-        public virtual void time_step(time_step_type ts_type, nl_fptype st) { }
+        public virtual void time_step(detail.time_step_type ts_type, nl_fptype st) { }
         public virtual void update_terminals() { }
 
         public virtual void update_param() { }
@@ -235,7 +235,8 @@ namespace mame.netlist
             string alias = this.name() + "." + name;
 
             // everything already fully qualified
-            state().parser().register_alias_no_fqn(alias, term.name());
+            //OLD state().parser().register_alias_no_fqn(alias, term.name());
+            state().parser().register_fqn_alias(detail.alias_type.FUNCTIONAL, alias, term.name());
         }
 
 
@@ -245,19 +246,20 @@ namespace mame.netlist
             string aliased_fqn = this.name() + "." + aliased;
 
             // everything already fully qualified
-            state().parser().register_alias_no_fqn(alias, aliased_fqn);
+            //OLD state().parser().register_alias_no_fqn(alias, aliased_fqn);
+            state().parser().register_fqn_alias(detail.alias_type.FUNCTIONAL, alias, aliased_fqn);
         }
 
 
         protected void connect(string t1, string t2)
         {
-            state().parser().register_link_fqn(name() + "." + t1, name() + "." + t2);
+            state().parser().register_connection_fqn(name() + "." + t1, name() + "." + t2);
         }
 
 
         protected void connect(detail.core_terminal_t t1, detail.core_terminal_t t2)
         {
-            state().parser().register_link_fqn(t1.name(), t2.name());
+            state().parser().register_connection_fqn(t1.name(), t2.name());
         }
 
 

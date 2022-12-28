@@ -23,7 +23,6 @@ using static mame.emuopts_global;
 using static mame.gamedrv_global;
 using static mame.language_global;
 using static mame.main_global;
-using static mame.options_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;
 using static mame.romload_global;
@@ -283,7 +282,26 @@ namespace mame
         {
             Action<device_type> list_system_source = (type) =>
             {
-                osd_printf_info("{0,-16} {1}\n", type.shortname(), core_filename_extract_base(type.source()));
+                string src = type.source();
+                var prefix = src.find("src/mame/");
+                if (npos == prefix)
+                    prefix = src.find("src\\mame\\");
+                if (npos != prefix)
+                {
+                    src = src.remove_prefix_(prefix + 9);
+                }
+                else
+                {
+                    var prefix2 = src.find("src/");
+                    if (npos == prefix2)
+                        prefix2 = src.find("src\\");
+                    if (npos != prefix2)
+                    {
+                        src = src.remove_prefix_(prefix2 + 4);
+                    }
+                }
+
+                osd_printf_info("{0,-16} {1}\n", type.shortname(), src);
             };
 
             apply_action(
@@ -385,11 +403,17 @@ namespace mame
             drivlist.reset();
             while (drivlist.next())
             {
+                string src = drivlist.driver().type.source();
+                var prefix = src.find("src/mame/");
+                if (npos == prefix)
+                    prefix = src.find("src\\mame\\");
+                if (npos != prefix)
+                    src = src.remove_prefix_(prefix + 9);
                 int clone_of = drivlist.clone();
                 if (clone_of != -1)
-                    osd_printf_info("{0,-20} {1,-16} {2}\n", core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name, (clone_of == -1 ? "" : driver_list.driver((size_t)clone_of).name));
+                    osd_printf_info("{0,-20} {1,-16} {2}\n", src, drivlist.driver().name, (clone_of == -1 ? "" : driver_list.driver((size_t)clone_of).name));
                 else
-                    osd_printf_info("{0,-20} {1}\n", core_filename_extract_base(drivlist.driver().type.source()), drivlist.driver().name);
+                    osd_printf_info("{0,-20} {1}\n", src, drivlist.driver().name);
             }
         }
 

@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 
 using endianness_t = mame.util.endianness;  //using endianness_t = util::endianness;
+using ioport_value = System.UInt32;  //typedef u32 ioport_value;
 using pen_t = System.UInt32;  //typedef u32 pen_t;
 using s8 = System.SByte;
 using s16 = System.Int16;
@@ -60,6 +61,9 @@ namespace mame
     //using util::DWORD_XOR_BE;
     //using util::DWORD_XOR_LE;
 
+
+    // input ports support up to 32 bits each
+    //typedef u32 ioport_value;
 
     // pen_t is used to represent pixel values in bitmaps
     //typedef u32 pen_t;

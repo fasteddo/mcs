@@ -6,11 +6,20 @@ using System;
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using object_t_props = mame.netlist.detail.property_store_t<mame.netlist.detail.object_t, string>;  //using props = property_store_t<object_t, pstring>;
-using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s32 = state_var<std::int32_t>;
 using state_var_sig = mame.netlist.state_var<System.UInt32>;  //using state_var_sig = state_var<netlist_sig_t>;  //using netlist_sig_t = std::uint32_t;
 using unsigned = System.UInt32;
 
 using static mame.netlist.nl_errstr_global;
+
+
+namespace mame.netlist
+{
+    /// \brief Delegate type for device notification.
+    ///
+    public delegate void nl_delegate();  //using nl_delegate = plib::pmfp<void()>;
+    public delegate void nl_delegate_ts(detail.time_step_type param1, nl_fptype param2);  //using nl_delegate_ts = plib::pmfp<void(detail::time_step_type, nl_fptype)>;
+    public delegate void nl_delegate_dyn();  //using nl_delegate_dyn = plib::pmfp<void()>;
+}
 
 
 namespace mame.netlist.detail

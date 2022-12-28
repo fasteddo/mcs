@@ -108,6 +108,7 @@ namespace mame.ymfm
                 m_lfo_waveform[2, index] = (int16_t)(am | (pm << 8));
 
                 // waveform 3 is noise; it is filled in dynamically
+                m_lfo_waveform[3, index] = 0;
             }
         }
 
@@ -193,7 +194,7 @@ namespace mame.ymfm
         // system-wide registers
         //uint32_t test() const                            { return byte(0x01, 0, 8); }
         //uint32_t lfo_reset() const                       { return byte(0x01, 1, 1); }
-        //uint32_t noise_frequency() const                 { return byte(0x0f, 0, 5); }
+        //uint32_t noise_frequency() const                 { return byte(0x0f, 0, 5) ^ 0x1f; }
         //uint32_t noise_enable() const                    { return byte(0x0f, 7, 1); }
         //uint32_t timer_a_value() const                   { return word(0x10, 0, 8, 0x11, 0, 2); }
         //uint32_t timer_b_value() const                   { return byte(0x12, 0, 8); }

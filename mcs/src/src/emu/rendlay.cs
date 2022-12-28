@@ -759,10 +759,14 @@ namespace mame
         // 7-segment LCD
         class led7seg_component : component
         {
+            int m_invert = 0;
+
+
             // construction/destruction
             led7seg_component(layout_element_environment env, util.xml.data_node compnode)
                 : base(env, compnode)
             {
+                m_invert = env.get_attribute_int(compnode, "invert", 0);
             }
 
 

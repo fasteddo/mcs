@@ -533,17 +533,16 @@ namespace mame
         }
 
 
-        //void memory_view::register_state()
-        //void memory_view::disable()
-        //void memory_view::select(int slot)
-        //int memory_view::id_to_slot(int id) const
-        //void memory_view::initialize_from_address_map(offs_t addrstart, offs_t addrend, const address_space_config &config)
-
-
         public void register_state()
         {
             throw new emu_unimplemented();
         }
+
+
+        //void memory_view::disable()
+        //void memory_view::select(int slot)
+        //int memory_view::id_to_slot(int id) const
+        //void memory_view::initialize_from_address_map(offs_t addrstart, offs_t addrend, const address_space_config &config)
     }
 
 

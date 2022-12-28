@@ -24,6 +24,8 @@ namespace mame.netlist
 
         parser_t_token_id_t m_tok_paren_left;
         parser_t_token_id_t m_tok_paren_right;
+        parser_t_token_id_t m_tok_brace_left;
+        parser_t_token_id_t m_tok_brace_right;
         parser_t_token_id_t m_tok_comma;
         parser_t_token_id_t m_tok_static;
         parser_t_token_id_t m_tok_ALIAS;
@@ -36,7 +38,6 @@ namespace mame.netlist
         parser_t_token_id_t m_tok_NET_MODEL;
         parser_t_token_id_t m_tok_NET_REGISTER_DEV;
         parser_t_token_id_t m_tok_NETLIST_START;
-        parser_t_token_id_t m_tok_NETLIST_END;
         parser_t_token_id_t m_tok_NETLIST_EXTERNAL;
         parser_t_token_id_t m_tok_SUBMODEL;
         parser_t_token_id_t m_tok_INCLUDE;
@@ -44,8 +45,7 @@ namespace mame.netlist
         parser_t_token_id_t m_tok_LOCAL_SOURCE;
         parser_t_token_id_t m_tok_LOCAL_LIB_ENTRY;
         parser_t_token_id_t m_tok_EXTERNAL_LIB_ENTRY;
-        parser_t_token_id_t m_tok_TRUTHTABLE_START;
-        parser_t_token_id_t m_tok_TRUTHTABLE_END;
+        parser_t_token_id_t m_tok_TRUTH_TABLE;
         parser_t_token_id_t m_tok_TRUTHTABLE_ENTRY;
         parser_t_token_id_t m_tok_TT_HEAD;
         parser_t_token_id_t m_tok_TT_LINE;
@@ -71,6 +71,8 @@ namespace mame.netlist
                 .comment("/*", "*/", "//");
             m_tok_paren_left = m_tokenizer.register_token("(");
             m_tok_paren_right = m_tokenizer.register_token(")");
+            m_tok_brace_left = m_tokenizer.register_token("{");
+            m_tok_brace_right = m_tokenizer.register_token("}");
             m_tok_comma = m_tokenizer.register_token(",");
 
             m_tok_static = m_tokenizer.register_token("static");
@@ -89,11 +91,9 @@ namespace mame.netlist
             m_tok_EXTERNAL_LIB_ENTRY = m_tokenizer.register_token("EXTERNAL_LIB_ENTRY");
             m_tok_SUBMODEL = m_tokenizer.register_token("SUBMODEL");
             m_tok_NETLIST_START = m_tokenizer.register_token("NETLIST_START");
-            m_tok_NETLIST_END = m_tokenizer.register_token("NETLIST_END");
             m_tok_NETLIST_EXTERNAL = m_tokenizer.register_token("NETLIST_EXTERNAL");
             m_tok_EXTERNAL_SOURCE = m_tokenizer.register_token("EXTERNAL_SOURCE");
-            m_tok_TRUTHTABLE_START = m_tokenizer.register_token("TRUTHTABLE_START");
-            m_tok_TRUTHTABLE_END = m_tokenizer.register_token("TRUTHTABLE_END");
+            m_tok_TRUTH_TABLE = m_tokenizer.register_token("TRUTH_TABLE");
             m_tok_TRUTHTABLE_ENTRY = m_tokenizer.register_token("TRUTHTABLE_ENTRY");
             m_tok_TT_HEAD = m_tokenizer.register_token("TT_HEAD");
             m_tok_TT_LINE = m_tokenizer.register_token("TT_LINE");
@@ -129,26 +129,16 @@ namespace mame.netlist
                     return false;
                 }
 
-                if (token.is_(m_tok_NETLIST_END) || token.is_(m_tok_TRUTHTABLE_END))
+                if (token.is_(m_tok_brace_right))  // Netlist ended?
                 {
                     if (!in_nl)
-                    {
                         error(MF_PARSER_UNEXPECTED_1(token.str()));
-                    }
                     else
-                    {
                         in_nl = false;
-                    }
-
-                    require_token(m_tok_paren_left);
-                    require_token(m_tok_paren_right);
 
                     m_cur_local.push_back(token);
-                    m_cur_local.push_back(new parser_t_token_t(m_tok_paren_left));
-                    m_cur_local.push_back(new parser_t_token_t(m_tok_paren_right));
-
                 }
-                else if (token.is_(m_tok_NETLIST_START) || token.is_(m_tok_TRUTHTABLE_START))
+                else if (token.is_(m_tok_NETLIST_START) || token.is_(m_tok_TRUTH_TABLE))
                 {
                     if (in_nl)
                         error(MF_PARSER_UNEXPECTED_1(token.str()));
@@ -157,15 +147,17 @@ namespace mame.netlist
                     parser_t_token_t name = get_token();
                     if (token.is_(m_tok_NETLIST_START) && (name.str() == nlname || nlname.empty()))
                     {
-                        require_token(m_tok_paren_right);
                         parse_netlist();
                         return true;
                     }
 
-                    if (token.is_(m_tok_TRUTHTABLE_START) && name.str() == nlname)
+                    if (token.is_(m_tok_TRUTH_TABLE))
                     {
-                        net_truth_table_start(nlname);
-                        return true;
+                        if (name.str() == nlname)
+                        {
+                            net_truth_table_start(nlname);
+                            return true;
+                        }
                     }
 
                     // create a new cached local store
@@ -180,6 +172,17 @@ namespace mame.netlist
                     m_cur_local.push_back(name);
                     //m_cur_local->push_back(token_t(m_tok_paren_right));
                     in_nl = true;
+                }
+                else if (token.is_(m_tok_brace_left))
+                {
+                    // FIXME - do nothing for now
+                    //throw new emu_unimplemented();
+#if false
+                    if (!in_nl)
+                        printf("FIXME\n");
+                    else
+#endif
+                        m_cur_local.push_back(token);
                 }
                 // FIXME: do we really need this going forward ? there should be no need
                 //        for NETLIST_EXTERNAL in netlist files
@@ -215,6 +218,9 @@ namespace mame.netlist
 
         void parse_netlist()
         {
+            require_token(m_tok_paren_right);
+            require_token(m_tok_brace_left);
+
             while (true)
             {
                 parser_t_token_t token = get_token();
@@ -261,14 +267,9 @@ namespace mame.netlist
                     require_token(m_tok_paren_right);
                 }
                 else if (token.is_(m_tok_NET_REGISTER_DEV))
-                {
                     net_register_dev();
-                }
-                else if (token.is_(m_tok_NETLIST_END))
-                {
-                    netdev_netlist_end();
+                else if (token.is_(m_tok_brace_right))
                     return;
-                }
                 else if (!token.is_type(parser_t_token_type.IDENTIFIER))
                 {
                     error(MF_EXPECTED_IDENTIFIER_GOT_1(token.str()));
@@ -334,7 +335,7 @@ namespace mame.netlist
             while (true)
             {
                 string t1 = get_identifier();
-                m_setup.register_link(first , t1);
+                m_setup.register_connection(first , t1);
                 m_setup.log().debug.op("Parser: Connect: {0} {1}\n", first, t1);
                 parser_t_token_t n = get_token();
                 if (n.is_(m_tok_paren_right))
@@ -380,14 +381,6 @@ namespace mame.netlist
             params_temp.Add(devname);
             params_temp.AddRange(params_);
             m_setup.register_dev(dev_type, params_temp.ToArray());  //m_setup.register_dev(dev_type, devname, params);
-        }
-
-
-        void netdev_netlist_end()
-        {
-            // don't do much
-            require_token(m_tok_paren_left);
-            require_token(m_tok_paren_right);
         }
 
 

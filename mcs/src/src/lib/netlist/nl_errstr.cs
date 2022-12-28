@@ -3,18 +3,47 @@
 
 using System;
 
+using static mame.cpp_global;
 using static mame.netlist.nl_errstr_global;
 using static mame.plib.pfmtlog_global;
 
 
 namespace mame.netlist
 {
-    public static class nl_errstr_global
+    public static partial class nl_errstr_global
     {
         public const string sHINT_NO_DEACTIVATE = ".HINT_NO_DEACTIVATE";
         public const string sHINT_NC = ".HINT_NC";
+    }
 
 
+    // -------------------------------------------------------------------------
+    // Exceptions
+    // -------------------------------------------------------------------------
+    /// \brief Generic netlist exception.
+    ///  The exception is used in all events which are considered fatal.
+    public class nl_exception : plib.pexception
+    {
+        /// \brief Constructor.
+        ///  Allows a descriptive text to be passed to the exception
+        public nl_exception(string text)  //!< text to be passed
+            : base(text)
+        {
+        }
+
+        /// \brief Constructor.
+        ///  Allows to use \ref plib::pfmt logic to be used in exception
+        //template <typename... Args>
+        public nl_exception(string fmt, //!< format to be used
+                            params object [] args)      //!< arguments to be passed
+            : base(string.Format(fmt, args))
+        {
+        }
+    }
+
+
+    public static partial class nl_errstr_global
+    {
         // nl_base.cpp
 
         public static string MF_DUPLICATE_NAME_DEVICE_LIST(params object [] args)   { return PERRMSGV(1, "Error adding {0} to device list. Duplicate name.", args); }
@@ -184,5 +213,12 @@ namespace mame.netlist
         // nl_tool.cpp
 
         //PERRMSGV(MF_FILE_OPEN_ERROR,                    1, "Error opening file: {1}")
+
+
+        //============================================================
+        //  Asserts
+        //============================================================
+        public static void nl_assert(bool x) { assert(x); }  //#define nl_assert(x)    do { if (NL_DEBUG) passert_always(x); } while (0)
+        public static void nl_assert_always(bool x, string msg) { assert(x, msg); }  //#define nl_assert_always(x, msg) passert_always_msg(x, msg)
     }
 }

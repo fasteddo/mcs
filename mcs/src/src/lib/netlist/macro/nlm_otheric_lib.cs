@@ -3,6 +3,8 @@
 
 using System;
 
+using static mame.netlist.nl_setup_global;
+
 
 namespace mame
 {
@@ -187,18 +189,19 @@ namespace mame
         }
 
 
-        //static TRUTHTABLE_START(MC14584B_GATE, 1, 1, "")
-        static void netlist_MC14584B_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(MC14584B_GATE, 1, 1, "")
+        static void netlist_MC14584B_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "MC14584B_GATE", 1, 1, "", netlist_MC14584B_GATE_impl); }
+        static void netlist_MC14584B_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "MC14584B_GATE", 1, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD(" A | Q ");
             h.TT_LINE(" 0 | 1 |100");
             h.TT_LINE(" 1 | 0 |100");
             // 2.1V negative going and 2.7V positive going at 5V
             h.TT_FAMILY("FAMILY(TYPE=CMOS IVL=0.42 IVH=0.54 OVL=0.05 OVH=0.05 ORL=10.0 ORH=10.0)");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 

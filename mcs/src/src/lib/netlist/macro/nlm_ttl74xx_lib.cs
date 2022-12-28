@@ -3,6 +3,8 @@
 
 using System;
 
+using static mame.netlist.nl_setup_global;
+
 
 namespace mame
 {
@@ -2225,11 +2227,11 @@ namespace mame
                 "A.E",  /*   /Ea |1     ++    16| VCC  */ "A.VCC",
                 "A.A",  /*   A0a |2           15| /Eb  */ "B.E",
                 "A.B",  /*   A1a |3           14| A0b  */ "B.A",
-                "A.0",  /*  /O0a |4   74139   13| A1b  */ "B.B",
-                "A.1",  /*  /O1a |5           12| /O0b */ "B.0",
-                "A.2",  /*  /O2a |6           11| /O1b */ "B.1",
-                "A.3",  /*  /O3a |7           10| /O2b */ "B.2",
-                "A.GND",/*   GND |8            9| /O3b */ "B.3"
+                "A.O0",  /*  /O0a |4   74139   13| A1b  */ "B.B",
+                "A.O1",  /*  /O1a |5           12| /O0b */ "B.O0",
+                "A.O2",  /*  /O2a |6           11| /O1b */ "B.O1",
+                "A.O3",  /*  /O3a |7           10| /O2b */ "B.O2",
+                "A.GND",/*   GND |8            9| /O3b */ "B.O3"
                       /*       +--------------+      */
             );
 
@@ -2344,13 +2346,13 @@ namespace mame
 
             h.DIPPINS(   /*       +--------------+      */
                   "A.C", /*    C1 |1     ++    16| VCC  */ "A.VCC",
-                  "A.G", /*    G1 |2           15| B4   */ "B.C",
-                  "A.B", /*     B |3           14| B4   */ "B.G",
-                  "A.3", /*   1Y3 |4   74155   13| A4   */ "B.A",
-                  "B.2", /*   1Y2 |5           12| Y4   */ "B.3",
-                  "B.1", /*   1Y1 |6           11| B3   */ "B.2",
-                  "B.0", /*   1Y0 |7           10| A3   */ "B.1",
-                "A.GND", /*   GND |8            9| Y3   */ "B.0"
+                  "A.G", /*    G1 |2           15| C2   */ "B.C",
+                  "A.B", /*     B |3           14| G2   */ "B.G",
+                  "A.Y3", /*   1Y3 |4   74155   13| A   */ "B.A",
+                  "B.Y2", /*   1Y2 |5           12| 2Y3   */ "B.Y3",
+                  "B.Y1", /*   1Y1 |6           11| 2Y2   */ "B.Y2",
+                  "B.Y0", /*   1Y0 |7           10| 2Y1   */ "B.Y1",
+                "A.GND", /*   GND |8            9| 2Y0   */ "B.Y0"
                        /*       +--------------+      */
             );
 
@@ -2413,11 +2415,11 @@ namespace mame
                   "A.C", /*    C1 |1     ++    16| VCC  */ "A.VCC",
                   "A.G", /*    G1 |2           15| B4   */ "B.C",
                   "A.B", /*     B |3           14| B4   */ "B.G",
-                  "A.3", /*   1Y3 |4   74156   13| A4   */ "B.A",
-                  "B.2", /*   1Y2 |5           12| Y4   */ "B.3",
-                  "B.1", /*   1Y1 |6           11| B3   */ "B.2",
-                  "B.0", /*   1Y0 |7           10| A3   */ "B.1",
-                "A.GND", /*   GND |8            9| Y3   */ "B.0"
+                  "A.Y3", /*   1Y3 |4   74156   13| A4   */ "B.A",
+                  "B.Y2", /*   1Y2 |5           12| Y4   */ "B.Y3",
+                  "B.Y1", /*   1Y1 |6           11| B3   */ "B.Y2",
+                  "B.Y0", /*   1Y0 |7           10| A3   */ "B.Y1",
+                "A.GND", /*   GND |8            9| Y3   */ "B.Y0"
                        /*       +--------------+      */
             );
 
@@ -3656,210 +3658,224 @@ namespace mame
         }
 
 
-        //static TRUTHTABLE_START(TTL_7400_NAND, 2, 1, "+A,+B,@VCC,@GND")
-        static void netlist_TTL_7400_NAND(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7400_NAND, 2, 1, "+A,+B,@VCC,@GND")
+        static void netlist_TTL_7400_NAND(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7400_NAND", 2, 1, "+A,+B,@VCC,@GND", netlist_TTL_7400_NAND_impl); }
+        static void netlist_TTL_7400_NAND_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7400_NAND", 2, 1, "+A,+B,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,X|1|22");
             h.TT_LINE("X,0|1|22");
             h.TT_LINE("1,1|0|15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7402_NOR, 2, 1, "+A,+B,@VCC,@GND")
-        static void netlist_TTL_7402_NOR(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7402_NOR, 2, 1, "+A,+B,@VCC,@GND")
+        static void netlist_TTL_7402_NOR(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7402_NOR", 2, 1, "+A,+B,@VCC,@GND", netlist_TTL_7402_NOR_impl); }
+        static void netlist_TTL_7402_NOR_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7402_NOR", 2, 1, "+A,+B,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,0|1|22");
             h.TT_LINE("X,1|0|15");
             h.TT_LINE("1,X|0|15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7404_INVERT, 1, 1, "+A,@VCC,@GND")
-        static void netlist_TTL_7404_INVERT(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7404_INVERT, 1, 1, "+A,@VCC,@GND")
+        static void netlist_TTL_7404_INVERT(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7404_INVERT", 1, 1, "+A,@VCC,@GND", netlist_TTL_7404_INVERT_impl); }
+        static void netlist_TTL_7404_INVERT_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7404_INVERT", 1, 1, "+A,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD(" A | Q ");
             h.TT_LINE(" 0 | 1 |22");
             h.TT_LINE(" 1 | 0 |15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7406_GATE, 1, 1, "")
-        static void netlist_TTL_7406_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7406_GATE, 1, 1, "")
+        static void netlist_TTL_7406_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7406_GATE", 1, 1, "", netlist_TTL_7406_GATE_impl); }
+        static void netlist_TTL_7406_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7406_GATE", 1, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A|Y ");
             h.TT_LINE("0|1|15");
             h.TT_LINE("1|0|23");
             /* Open Collector */
             h.TT_FAMILY("74XXOC");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7407_GATE, 1, 1, "")
-        static void netlist_TTL_7407_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7407_GATE, 1, 1, "")
+        static void netlist_TTL_7407_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7407_GATE", 1, 1, "", netlist_TTL_7407_GATE_impl); }
+        static void netlist_TTL_7407_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7407_GATE", 1, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A|Y ");
             h.TT_LINE("0|0|15");
             h.TT_LINE("1|1|23");
             /* Open Collector */
             h.TT_FAMILY("74XXOC");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7408_GATE, 2, 1, "")
-        static void netlist_TTL_7408_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7408_GATE, 2, 1, "")
+        static void netlist_TTL_7408_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7408_GATE", 2, 1, "", netlist_TTL_7408_GATE_impl); }
+        static void netlist_TTL_7408_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7408_GATE", 2, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,X|0|15");
             h.TT_LINE("X,0|0|15");
             h.TT_LINE("1,1|1|22");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7408_AND, 2, 1, "+A,+B,@VCC,@GND")
-        static void netlist_TTL_7408_AND(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7408_AND, 2, 1, "+A,+B,@VCC,@GND")
+        static void netlist_TTL_7408_AND(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7408_AND", 2, 1, "+A,+B,@VCC,@GND", netlist_TTL_7408_AND_impl); }
+        static void netlist_TTL_7408_AND_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7408_AND", 2, 1, "+A,+B,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,X|0|15");
             h.TT_LINE("X,0|0|15");
             h.TT_LINE("1,1|1|22");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7410_NAND, 3, 1, "+A,+B,+C,@VCC,@GND")
-        static void netlist_TTL_7410_NAND(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7410_NAND, 3, 1, "+A,+B,+C,@VCC,@GND")
+        static void netlist_TTL_7410_NAND(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7410_NAND", 3, 1, "+A,+B,+C,@VCC,@GND", netlist_TTL_7410_NAND_impl); }
+        static void netlist_TTL_7410_NAND_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7410_NAND", 3, 1, "+A,+B,+C,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B,C|Q ");
             h.TT_LINE("0,X,X|1|22");
             h.TT_LINE("X,0,X|1|22");
             h.TT_LINE("X,X,0|1|22");
             h.TT_LINE("1,1,1|0|15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7410_GATE, 3, 1, "")
-        static void netlist_TTL_7410_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7410_GATE, 3, 1, "")
+        static void netlist_TTL_7410_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7410_GATE", 3, 1, "", netlist_TTL_7410_GATE_impl); }
+        static void netlist_TTL_7410_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7410_GATE", 3, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B,C|Q ");
             h.TT_LINE("0,X,X|1|22");
             h.TT_LINE("X,0,X|1|22");
             h.TT_LINE("X,X,0|1|22");
             h.TT_LINE("1,1,1|0|15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7411_AND, 3, 1, "+A,+B,+C,@VCC,@GND")
-        static void netlist_TTL_7411_AND(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7411_AND, 3, 1, "+A,+B,+C,@VCC,@GND")
+        static void netlist_TTL_7411_AND(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7411_AND", 3, 1, "+A,+B,+C,@VCC,@GND", netlist_TTL_7411_AND_impl); }
+        static void netlist_TTL_7411_AND_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7411_AND", 3, 1, "+A,+B,+C,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B,C|Q ");
             h.TT_LINE("0,X,X|0|15");
             h.TT_LINE("X,0,X|0|15");
             h.TT_LINE("X,X,0|0|15");
             h.TT_LINE("1,1,1|1|22");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7411_GATE, 3, 1, "")
-        static void netlist_TTL_7411_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7411_GATE, 3, 1, "")
+        static void netlist_TTL_7411_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7411_GATE", 3, 1, "", netlist_TTL_7411_GATE_impl); }
+        static void netlist_TTL_7411_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7411_GATE", 3, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B,C|Q ");
             h.TT_LINE("0,X,X|0|15");
             h.TT_LINE("X,0,X|0|15");
             h.TT_LINE("X,X,0|0|15");
             h.TT_LINE("1,1,1|1|22");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7416_GATE, 1, 1, "")
-        static void netlist_TTL_7416_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7416_GATE, 1, 1, "")
+        static void netlist_TTL_7416_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7416_GATE", 1, 1, "", netlist_TTL_7416_GATE_impl); }
+        static void netlist_TTL_7416_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7416_GATE", 1, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A|Q");
             h.TT_LINE("0|1|15");
             h.TT_LINE("1|0|23");
             /* Open Collector */
             h.TT_FAMILY("74XXOC");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7417_GATE, 1, 1, "")
-        static void netlist_TTL_7417_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7417_GATE, 1, 1, "")
+        static void netlist_TTL_7417_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7417_GATE", 1, 1, "", netlist_TTL_7417_GATE_impl); }
+        static void netlist_TTL_7417_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7417_GATE", 1, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A|Q");
             h.TT_LINE("0|0|15");
             h.TT_LINE("1|1|23");
             /* Open Collector */
             h.TT_FAMILY("74XXOC");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7420_NAND, 4, 1, "+A,+B,+C,+D,@VCC,@GND")
-        static void netlist_TTL_7420_NAND(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7420_NAND, 4, 1, "+A,+B,+C,+D,@VCC,@GND")
+        static void netlist_TTL_7420_NAND(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7420_NAND", 4, 1, "+A,+B,+C,+D,@VCC,@GND", netlist_TTL_7420_NAND_impl); }
+        static void netlist_TTL_7420_NAND_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7420_NAND", 4, 1, "+A,+B,+C,+D,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B,C,D|Q ");
             h.TT_LINE("0,X,X,X|1|22");
             h.TT_LINE("X,0,X,X|1|22");
@@ -3867,16 +3883,17 @@ namespace mame
             h.TT_LINE("X,X,X,0|1|22");
             h.TT_LINE("1,1,1,1|0|15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7421_AND, 4, 1, "+A,+B,+C,+D,@VCC,@GND")
-        static void netlist_TTL_7421_AND(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7421_AND, 4, 1, "+A,+B,+C,+D,@VCC,@GND")
+        static void netlist_TTL_7421_AND(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7421_AND", 4, 1, "+A,+B,+C,+D,@VCC,@GND", netlist_TTL_7421_AND_impl); }
+        static void netlist_TTL_7421_AND_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7421_AND", 4, 1, "+A,+B,+C,+D,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B,C,D|Q ");
             h.TT_LINE("0,X,X,X|0|22");
             h.TT_LINE("X,0,X,X|0|22");
@@ -3884,16 +3901,17 @@ namespace mame
             h.TT_LINE("X,X,X,0|0|22");
             h.TT_LINE("1,1,1,1|1|15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7425_NOR, 4, 1, "+A,+B,+C,+D,@VCC,@GND")
-        static void netlist_TTL_7425_NOR(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7425_NOR, 4, 1, "+A,+B,+C,+D,@VCC,@GND")
+        static void netlist_TTL_7425_NOR(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7425_NOR", 4, 1, "+A,+B,+C,+D,@VCC,@GND", netlist_TTL_7425_NOR_impl); }
+        static void netlist_TTL_7425_NOR_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7425_NOR", 4, 1, "+A,+B,+C,+D,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B,C,D|Q ");
             h.TT_LINE("1,X,X,X|0|15");
             h.TT_LINE("X,1,X,X|0|15");
@@ -3901,32 +3919,34 @@ namespace mame
             h.TT_LINE("X,X,X,1|0|15");
             h.TT_LINE("0,0,0,0|1|22");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7427_NOR, 3, 1, "+A,+B,+C,@VCC,@GND")
-        static void netlist_TTL_7427_NOR(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7427_NOR, 3, 1, "+A,+B,+C,@VCC,@GND")
+        static void netlist_TTL_7427_NOR(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7427_NOR", 3, 1, "+A,+B,+C,@VCC,@GND", netlist_TTL_7427_NOR_impl); }
+        static void netlist_TTL_7427_NOR_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7427_NOR", 3, 1, "+A,+B,+C,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B,C|Q ");
             h.TT_LINE("1,X,X|0|15");
             h.TT_LINE("X,1,X|0|15");
             h.TT_LINE("X,X,1|0|15");
             h.TT_LINE("0,0,0|1|22");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7430_NAND, 8, 1, "+A,+B,+C,+D,+E,+F,+G,+H,@VCC,@GND")
-        static void netlist_TTL_7430_NAND(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7430_NAND, 8, 1, "+A,+B,+C,+D,+E,+F,+G,+H,@VCC,@GND")
+        static void netlist_TTL_7430_NAND(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7430_NAND", 8, 1, "+A,+B,+C,+D,+E,+F,+G,+H,@VCC,@GND", netlist_TTL_7430_NAND_impl); }
+        static void netlist_TTL_7430_NAND_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7430_NAND", 8, 1, "+A,+B,+C,+D,+E,+F,+G,+H,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B,C,D,E,F,G,H|Q ");
             h.TT_LINE("0,X,X,X,X,X,X,X|1|22");
             h.TT_LINE("X,0,X,X,X,X,X,X|1|22");
@@ -3938,22 +3958,23 @@ namespace mame
             h.TT_LINE("X,X,X,X,X,X,X,0|1|22");
             h.TT_LINE("1,1,1,1,1,1,1,1|0|15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7432_OR, 2, 1, "+A,+B,@VCC,@GND")
-        static void netlist_TTL_7432_OR(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7432_OR, 2, 1, "+A,+B,@VCC,@GND")
+        static void netlist_TTL_7432_OR(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7432_OR", 2, 1, "+A,+B,@VCC,@GND", netlist_TTL_7432_OR_impl); }
+        static void netlist_TTL_7432_OR_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7432_OR", 2, 1, "+A,+B,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("1,X|1|22");
             h.TT_LINE("X,1|1|22");
             h.TT_LINE("0,0|0|15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
@@ -3961,43 +3982,46 @@ namespace mame
          *         Netlist currently does not model over currents (should it ever?)
          */
 
-        //static TRUTHTABLE_START(TTL_7437_NAND, 2, 1, "+A,+B")
-        static void netlist_TTL_7437_NAND(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7437_NAND, 2, 1, "+A,+B")
+        static void netlist_TTL_7437_NAND(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7437_NAND", 2, 1, "+A,+B", netlist_TTL_7437_NAND_impl); }
+        static void netlist_TTL_7437_NAND_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7437_NAND", 2, 1, "+A,+B");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,X|1|22");
             h.TT_LINE("X,0|1|22");
             h.TT_LINE("1,1|0|15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7438_NAND, 2, 1, "+A,+B")
-        static void netlist_TTL_7438_NAND(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7438_NAND, 2, 1, "+A,+B")
+        static void netlist_TTL_7438_NAND(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7438_NAND", 2, 1, "+A,+B", netlist_TTL_7438_NAND_impl); }
+        static void netlist_TTL_7438_NAND_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7438_NAND", 2, 1, "+A,+B");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,X|1|22");
             h.TT_LINE("X,0|1|22");
             h.TT_LINE("1,1|0|15");
             /* Open Collector */
             h.TT_FAMILY("74XXOC");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7442, 4, 10, "")
-        static void netlist_TTL_7442(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7442, 4, 10, "")
+        static void netlist_TTL_7442(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7442", 4, 10, "", netlist_TTL_7442_impl); }
+        static void netlist_TTL_7442_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7442", 4, 10, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("D,C,B,A|0,1,2,3,4,5,6,7,8,9");
             h.TT_LINE("0,0,0,0|0,1,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
             h.TT_LINE("0,0,0,1|1,0,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
@@ -4011,50 +4035,53 @@ namespace mame
             h.TT_LINE("1,0,0,1|1,1,1,1,1,1,1,1,1,0|30,30,30,30,30,30,30,30,30,30");
             h.TT_LINE("1,0,1,X|1,1,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
             h.TT_LINE("1,1,X,X|1,1,1,1,1,1,1,1,1,1|30,30,30,30,30,30,30,30,30,30");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_7486_XOR, 2, 1, "+A,+B,@VCC,@GND")
-        static void netlist_TTL_7486_XOR(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_7486_XOR, 2, 1, "+A,+B,@VCC,@GND")
+        static void netlist_TTL_7486_XOR(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_7486_XOR", 2, 1, "+A,+B,@VCC,@GND", netlist_TTL_7486_XOR_impl); }
+        static void netlist_TTL_7486_XOR_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_7486_XOR", 2, 1, "+A,+B,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B|Q ");
             h.TT_LINE("0,0|0|15");
             h.TT_LINE("0,1|1|22");
             h.TT_LINE("1,0|1|22");
             h.TT_LINE("1,1|0|15");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_74139_GATE, 3, 4, "")
-        static void netlist_TTL_74139_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_74139_GATE, 3, 4, "")
+        static void netlist_TTL_74139_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_74139_GATE", 3, 4, "", netlist_TTL_74139_GATE_impl); }
+        static void netlist_TTL_74139_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_74139_GATE", 3, 4, "");
-            h.TT_HEAD("E,A,B|0,1,2,3");
+            h.TRUTH_TABLE(setup, desc);
+            h.TT_HEAD("E,A,B|O0,O1,O2,O3");
             h.TT_LINE("1,X,X|1,1,1,1|14");
             h.TT_LINE("0,0,0|0,1,1,1|14");
             h.TT_LINE("0,0,1|1,0,1,1|14");
             h.TT_LINE("0,1,0|1,1,0,1|14");
             h.TT_LINE("0,1,1|1,1,1,0|14");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_74155A_GATE, 4, 4, "")
-        static void netlist_TTL_74155A_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_74155A_GATE, 4, 4, "")
+        static void netlist_TTL_74155A_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_74155A_GATE", 4, 4, "", netlist_TTL_74155A_GATE_impl); }
+        static void netlist_TTL_74155A_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_74155A_GATE", 4, 4, "");
-            h.TT_HEAD("B,A,G,C|0,1,2,3");
+            h.TRUTH_TABLE(setup, desc);
+            h.TT_HEAD("B,A,G,C|Y0,Y1,Y2,Y3");
             h.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
             h.TT_LINE("X,X,0,0|1,1,1,1|13,13,13,13");
             h.TT_LINE("0,0,0,1|0,1,1,1|13,13,13,13");
@@ -4062,17 +4089,18 @@ namespace mame
             h.TT_LINE("1,0,0,1|1,1,0,1|13,13,13,13");
             h.TT_LINE("1,1,0,1|1,1,1,0|13,13,13,13");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_74155B_GATE, 4, 4, "")
-        static void netlist_TTL_74155B_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_74155B_GATE, 4, 4, "")
+        static void netlist_TTL_74155B_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_74155B_GATE", 4, 4, "", netlist_TTL_74155B_GATE_impl); }
+        static void netlist_TTL_74155B_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_74155B_GATE", 4, 4, "");
-            h.TT_HEAD("B,A,G,C|0,1,2,3");
+            h.TRUTH_TABLE(setup, desc);
+            h.TT_HEAD("B,A,G,C|Y0,Y1,Y2,Y3");
             h.TT_LINE("X,X,0,1|1,1,1,1|13,13,13,13");
             h.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
             h.TT_LINE("0,0,0,0|0,1,1,1|13,13,13,13");
@@ -4080,17 +4108,18 @@ namespace mame
             h.TT_LINE("1,0,0,0|1,1,0,1|13,13,13,13");
             h.TT_LINE("1,1,0,0|1,1,1,0|13,13,13,13");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_74156A_GATE, 4, 4, "")
-        static void netlist_TTL_74156A_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_74156A_GATE, 4, 4, "")
+        static void netlist_TTL_74156A_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_74156A_GATE", 4, 4, "", netlist_TTL_74156A_GATE_impl); }
+        static void netlist_TTL_74156A_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_74156A_GATE", 4, 4, "");
-            h.TT_HEAD("B,A,G,C|0,1,2,3");
+            h.TRUTH_TABLE(setup, desc);
+            h.TT_HEAD("B,A,G,C|Y0,Y1,Y2,Y3");
             h.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
             h.TT_LINE("X,X,0,0|1,1,1,1|13,13,13,13");
             h.TT_LINE("0,0,0,1|0,1,1,1|13,13,13,13");
@@ -4099,17 +4128,18 @@ namespace mame
             h.TT_LINE("1,1,0,1|1,1,1,0|13,13,13,13");
             /* Open Collector */
             h.TT_FAMILY("74XXOC");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_74156B_GATE, 4, 4, "")
-        static void netlist_TTL_74156B_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_74156B_GATE, 4, 4, "")
+        static void netlist_TTL_74156B_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_74156B_GATE", 4, 4, "", netlist_TTL_74156B_GATE_impl); }
+        static void netlist_TTL_74156B_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_74156B_GATE", 4, 4, "");
-            h.TT_HEAD("B,A,G,C|0,1,2,3");
+            h.TRUTH_TABLE(setup, desc);
+            h.TT_HEAD("B,A,G,C|Y0,Y1,Y2,Y3");
             h.TT_LINE("X,X,1,X|1,1,1,1|13,13,13,13");
             h.TT_LINE("X,X,0,1|1,1,1,1|13,13,13,13");
             h.TT_LINE("0,0,0,0|0,1,1,1|13,13,13,13");
@@ -4118,16 +4148,17 @@ namespace mame
             h.TT_LINE("1,1,0,0|1,1,1,0|13,13,13,13");
             /* Open Collector */
             h.TT_FAMILY("74XXOC");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_74157_GATE, 4, 4, "")
-        static void netlist_TTL_74157_GATE(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_74157_GATE, 4, 4, "")
+        static void netlist_TTL_74157_GATE(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_74157_GATE", 4, 4, "", netlist_TTL_74157_GATE_impl); }
+        static void netlist_TTL_74157_GATE_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_74157_GATE", 4, 4, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("E,S,I,J|O");
             h.TT_LINE("1,X,X,X|0|14");
             h.TT_LINE("0,1,X,0|0|14");
@@ -4135,16 +4166,17 @@ namespace mame
             h.TT_LINE("0,0,0,X|0|14");
             h.TT_LINE("0,0,1,X|1|14");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_74260_NOR, 5, 1, "+A,+B,+C,+D,+E,@VCC,@GND")
-        static void netlist_TTL_74260_NOR(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_74260_NOR, 5, 1, "+A,+B,+C,+D,+E,@VCC,@GND")
+        static void netlist_TTL_74260_NOR(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_74260_NOR", 5, 1, "+A,+B,+C,+D,+E,@VCC,@GND", netlist_TTL_74260_NOR_impl); }
+        static void netlist_TTL_74260_NOR_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_74260_NOR", 5, 1, "+A,+B,+C,+D,+E,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("A,B,C,D,E|Q");
             h.TT_LINE("0,0,0,0,0|1|10");
             h.TT_LINE("X,X,X,X,1|0|12");
@@ -4153,33 +4185,35 @@ namespace mame
             h.TT_LINE("X,1,X,X,X|0|12");
             h.TT_LINE("1,X,X,X,X|0|12");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
         // FIXME: We need "private" devices
-        //static TRUTHTABLE_START(TTL_74279A, 3, 1, "")
-        static void netlist_TTL_74279A(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_74279A, 3, 1, "")
+        static void netlist_TTL_74279A(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_74279A", 3, 1, "", netlist_TTL_74279A_impl); }
+        static void netlist_TTL_74279A_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_74279A", 3, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("S,R,_Q|Q");
             h.TT_LINE("0,X,X|1|22");
             h.TT_LINE("1,0,X|0|27");
             h.TT_LINE("1,1,0|0|27");
             h.TT_LINE("1,1,1|1|22");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_74279B, 4, 1, "")
-        static void netlist_TTL_74279B(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_74279B, 4, 1, "")
+        static void netlist_TTL_74279B(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_74279B", 4, 1, "", netlist_TTL_74279B_impl); }
+        static void netlist_TTL_74279B_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_74279B", 4, 1, "");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD("S1,S2,R,_Q|Q");
             h.TT_LINE("0,X,X,X|1|22");
             h.TT_LINE("X,0,X,X|1|22");
@@ -4187,16 +4221,17 @@ namespace mame
             h.TT_LINE("1,1,1,0|0|27");
             h.TT_LINE("1,1,1,1|1|22");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 
-        //static TRUTHTABLE_START(TTL_9312, 12, 2, "+A,+B,+C,+G,+D0,+D1,+D2,+D3,+D4,+D5,+D6,+D7,@VCC,@GND")
-        static void netlist_TTL_9312(netlist.nlparse_t setup)
+        //static TRUTH_TABLE(TTL_9312, 12, 2, "+A,+B,+C,+G,+D0,+D1,+D2,+D3,+D4,+D5,+D6,+D7,@VCC,@GND")
+        static void netlist_TTL_9312(netlist.nlparse_t setup) { TRUTH_TABLE(setup, "TTL_9312", 12, 2, "+A,+B,+C,+G,+D0,+D1,+D2,+D3,+D4,+D5,+D6,+D7,@VCC,@GND", netlist_TTL_9312_impl); }
+        static void netlist_TTL_9312_impl(netlist.nlparse_t setup, netlist.tt_desc desc)
         {
             netlist.helper h = new netlist.helper();
 
-            h.TRUTHTABLE_START(setup, "TTL_9312", 12, 2, "+A,+B,+C,+G,+D0,+D1,+D2,+D3,+D4,+D5,+D6,+D7,@VCC,@GND");
+            h.TRUTH_TABLE(setup, desc);
             h.TT_HEAD(" C, B, A, G,D0,D1,D2,D3,D4,D5,D6,D7| Y,YQ");
             h.TT_LINE(" X, X, X, 1, X, X, X, X, X, X, X, X| 0, 1|33,19");
             h.TT_LINE(" 0, 0, 0, 0, 0, X, X, X, X, X, X, X| 0, 1|33,28");
@@ -4216,7 +4251,7 @@ namespace mame
             h.TT_LINE(" 1, 1, 1, 0, X, X, X, X, X, X, X, 0| 0, 1|33,28");
             h.TT_LINE(" 1, 1, 1, 0, X, X, X, X, X, X, X, 1| 1, 0|33,28");
             h.TT_FAMILY("74XX");
-            h.TRUTHTABLE_END();
+            h.TRUTH_TABLE_END();
         }
 
 

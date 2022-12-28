@@ -155,8 +155,8 @@ namespace mame.ymfm
         where RegisterType : opm_registers, new()
         where RegisterType_OPS : fm_engine_base_operators, new()
     {
-        // "quiet" value, used to optimize when we can skip doing working
-        //static constexpr uint32_t EG_QUIET = 0x200;
+        // "quiet" value, used to optimize when we can skip doing work
+        //static constexpr uint32_t EG_QUIET = 0x380;
 
 
         // internal state
@@ -226,6 +226,7 @@ namespace mame.ymfm
         // simple getters for debugging
         //envelope_state debug_eg_state() const { return m_env_state; }
         //uint16_t debug_eg_attenuation() const { return m_env_attenuation; }
+        //uint8_t debug_ssg_inverted() const { return m_ssg_inverted; }
         //opdata_cache &debug_cache() { return m_cache; }
 
 

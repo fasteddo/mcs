@@ -110,37 +110,37 @@ namespace mame.netlist
     // -------------------------------------------------------------------------
     // FIXME: Rename
     // -------------------------------------------------------------------------
-    //template <typename CX>
-    class sub_device_wrapper<CX> where CX : core_device_t
+    //template <typename DEVICE>
+    class sub_device_wrapper<DEVICE> where DEVICE : core_device_t
     {
-        //using constructor_data_t = typename CX::constructor_data_t;
-        //using constructor_param_t = typename CX::constructor_param_t;
+        //using constructor_data_t = typename DEVICE::constructor_data_t;
+        //using constructor_param_t = typename DEVICE::constructor_param_t;
 
 
-        CX m_dev;  //device_arena::unique_ptr<CX> m_dev;
+        DEVICE m_dev;  //device_arena::unique_ptr<DEVICE> m_dev;
 
 
         //template <typename... Args>
-        public sub_device_wrapper(base_device_t owner, CX args)  //sub_device_wrapper(base_device_t &owner, const pstring &name, Args &&...args)
+        public sub_device_wrapper(base_device_t owner, DEVICE args)  //sub_device_wrapper(base_device_t &owner, const pstring &name, Args &&...args)
         {
-            // m_dev = owner.state().make_pool_object<CX>(owner, name,
+            // m_dev = owner.state().make_pool_object<DEVICE>(owner, name,
             // std::forward<Args>(args)...);
-            m_dev = args;  //m_dev = owner.state().make_pool_object<CX>(constructor_data_t{owner.state(), owner.name() + "." + name}, std::forward<Args>(args)...);
+            m_dev = args;  //m_dev = owner.state().make_pool_object<DEVICE>(constructor_data_t{owner.state(), owner.name() + "." + name}, std::forward<Args>(args)...);
             owner.state().register_device(m_dev.name(), m_dev);  //owner.state().register_device(m_dev->name(), device_arena::owned_ptr<core_device_t>(m_dev.get(), false));
         }
 
         //template <typename... Args>
-        public sub_device_wrapper(device_t owner, string name, CX args)  //sub_device_wrapper(device_t &owner, const pstring &name, Args &&...args)
+        public sub_device_wrapper(device_t owner, string name, DEVICE args)  //sub_device_wrapper(device_t &owner, const pstring &name, Args &&...args)
         {
-            // m_dev = owner.state().make_pool_object<CX>(owner, name,
+            // m_dev = owner.state().make_pool_object<DEVICE>(owner, name,
             // std::forward<Args>(args)...);
-            m_dev = args;  //m_dev = owner.state().make_pool_object<CX>(constructor_data_t{owner.state(), owner.name() + "." + name}, std::forward<Args>(args)...);
+            m_dev = args;  //m_dev = owner.state().make_pool_object<DEVICE>(constructor_data_t{owner.state(), owner.name() + "." + name}, std::forward<Args>(args)...);
             owner.state().register_device(m_dev.name(), m_dev);  //owner.state().register_device(m_dev->name(), device_arena::owned_ptr<core_device_t>(m_dev.get(), false));
         }
 
 
-        //CX &      operator()() { return *m_dev; }
-        //const CX &operator()() const { return *m_dev; }
-        public CX op() { return m_dev; }
+        //DEVICE &      operator()() { return *m_dev; }
+        //const DEVICE &operator()() const { return *m_dev; }
+        public DEVICE op() { return m_dev; }
     }
 }

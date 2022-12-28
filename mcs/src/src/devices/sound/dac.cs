@@ -53,8 +53,8 @@ namespace mame
 
 
         //-------------------------------------------------
-        //  dac_mapper_signed - map a signed value of
-        //  the given number of bits to a sample value
+        //  dac_mapper_signed - map a signed (2s complement)
+        //  value of the given number of bits to a sample value
         //-------------------------------------------------
         public static stream_buffer_sample_t dac_mapper_signed(u32 input, u8 bits)
         {
@@ -63,7 +63,6 @@ namespace mame
 
 
         //stream_buffer::sample_t dac_mapper_ones_complement(u32 input, u8 bits);
-        //stream_buffer::sample_t dac_mapper_sign_magnitude(u32 input, u8 bits);
     }
 
 
@@ -321,6 +320,7 @@ namespace mame
     //DAC_GENERATOR(DAC_1BIT,                      dac_1bit_device,                      dac_bit_device_base,  dac_mapper_unsigned,  1, 1.0,          "1-Bit DAC",                       "dac")
     //DAC_GENERATOR(DAC_2BIT_BINARY_WEIGHTED,      dac_2bit_binary_weighted_device,      dac_byte_device_base, dac_mapper_unsigned,  2, dac_gain_bw,  "2-Bit Binary Weighted DAC",       "dac_2bit_bw")
     //DAC_GENERATOR(DAC_2BIT_R2R,                  dac_2bit_r2r_device,                  dac_byte_device_base, dac_mapper_unsigned,  2, dac_gain_r2r, "2-Bit R-2R DAC",                  "dac_2bit_r2r")
+    //DAC_GENERATOR(DAC_2BIT_ONES_COMPLEMENT,      dac_2bit_ones_complement_device,      dac_byte_device_base, dac_mapper_ones_complement, 2, 1.0,          "2-Bit Ones Complement DAC",       "dac_2bit_oc")
     //DAC_GENERATOR(DAC_3BIT_BINARY_WEIGHTED,      dac_3bit_binary_weighted_device,      dac_byte_device_base, dac_mapper_unsigned,  3, dac_gain_bw,  "3-Bit Binary Weighted DAC",       "dac_3bit_bw")
     //DAC_GENERATOR(DAC_4BIT_BINARY_WEIGHTED,      dac_4bit_binary_weighted_device,      dac_byte_device_base, dac_mapper_unsigned,  4, dac_gain_bw,  "4-Bit Binary Weighted DAC",       "dac_4bit_bw")
 

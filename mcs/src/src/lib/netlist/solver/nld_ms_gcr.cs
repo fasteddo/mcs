@@ -6,12 +6,11 @@ using System;
 using mat_index_type = System.UInt16;  //using mat_index_type = typename plib::matrix_compressed_rows_t<FT, SIZE>::index_type;
 using matrix_solver_t_fptype = System.Double;  //using fptype = nl_fptype;
 using matrix_solver_t_net_list_t = mame.std.vector<mame.netlist.analog_net_t>;  //using net_list_t =  std::vector<analog_net_t *>;
-using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using size_t = System.UInt64;
 using uint16_t = System.UInt16;
 using unsigned = System.UInt32;
 
-using static mame.netlist.nl_config_global;
+using static mame.netlist.nl_errstr_global;
 
 
 namespace mame.netlist.solver

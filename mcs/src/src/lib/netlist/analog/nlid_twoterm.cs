@@ -5,9 +5,7 @@ using System;
 
 using base_device_t_constructor_data_t = mame.netlist.core_device_data_t;  //using constructor_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using base_device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = base_device_param_t;  //using base_device_param_t = const base_device_data_t &;  //using base_device_data_t = core_device_data_t;
-using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
 using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
@@ -102,7 +100,7 @@ namespace mame.netlist.analog
         }
 
 
-        protected nl_fptype deltaV()
+        public nl_fptype deltaV()
         {
             return m_P.net().Q_Analog() - m_N.net().Q_Analog();
         }
@@ -118,6 +116,14 @@ namespace mame.netlist.analog
             //               GO,  GT,     I
             m_P.set_go_gt_I(a12, a11, rhs1);
             m_N.set_go_gt_I(a21, a22, rhs2);
+        }
+
+
+        public void set_mat(std.array<std.array<nl_fptype, u64_const_3>, u64_const_2> a)
+        {
+            //                 GO,      GT,       I
+            m_P.set_go_gt_I(a[0][1], a[0][0], a[0][2]);
+            m_N.set_go_gt_I(a[1][0], a[1][1], a[1][2]);
         }
 
 
@@ -339,9 +345,9 @@ namespace mame.netlist.analog
 
 
         //NETLIB_TIMESTEPI()
-        public override void time_step(time_step_type ts_type, nl_fptype step)
+        public override void time_step(detail.time_step_type ts_type, nl_fptype step)
         {
-            if (ts_type == time_step_type.FORWARD)
+            if (ts_type == detail.time_step_type.FORWARD)
             {
                 // G, Ieq
                 var res = m_cap.time_step(m_C.op(), deltaV(), step);

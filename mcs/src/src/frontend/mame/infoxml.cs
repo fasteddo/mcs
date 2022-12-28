@@ -645,11 +645,13 @@ namespace mame
             util.stream_format(ref out_, "\t<{0} name=\"{1}\"", XML_TOP, normalize_string(driver.name));
 
             // strip away any path information from the source_file and output it
-            int startIdx = std.strrchr(driver.type.source(), '/');
-            if (startIdx == -1)
-                startIdx = std.strrchr(driver.type.source(), '\\');
-            string start = startIdx >= 0 ? driver.type.source()[(startIdx + 1)..] : driver.type.source();
-            util.stream_format(ref out_, " sourcefile=\"{0}\"", normalize_string(start));
+            string src = driver.type.source();
+            var prefix = src.find("src/mame/");
+            if (npos == prefix)
+                prefix = src.find("src\\mame\\");
+            if (npos != prefix)
+                src = src.remove_prefix_(prefix + 9);
+            util.stream_format(ref out_, " sourcefile=\"{0}\"", normalize_string(src));
 
             // append bios and runnable flags
             if ((driver.flags & machine_flags.type.IS_BIOS_ROOT) != 0)
@@ -746,7 +748,11 @@ namespace mame
             // start to output info
             util.stream_format(ref out_, "\t<{0} name=\"{1}\"", XML_TOP, normalize_string(device.shortname()));
             string src = device.source();
-            strreplace(ref src,"../", "");
+            var prefix = src.find("src/");
+            if (npos == prefix)
+                prefix = src.find("src\\");
+            if (npos != prefix)
+                src = src.remove_prefix_(prefix + 4);
             util.stream_format(ref out_, " sourcefile=\"{0}\" isdevice=\"yes\" runnable=\"no\"", normalize_string(src));
             var parent = device.type().parent_rom_device_type();
             if (parent != null)

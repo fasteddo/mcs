@@ -934,13 +934,28 @@ namespace mame
             // if we're past the "time-to-execute" requested, signal an exit
             if (m_seconds_to_run != 0 && emutime.seconds() >= m_seconds_to_run)
             {
-                // create a final screenshot
-                emu_file file = new emu_file(machine().options().snapshot_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-                std.error_condition filerr = open_next(file, "png");
-                if (!filerr)
-                    save_snapshot(null, file.core_file_);
+                if (m_snap_native)
+                {
+                    foreach (screen_device screen in new screen_device_enumerator(machine().root_device()))
+                    {
+                        emu_file file = new emu_file(machine().options().snapshot_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+                        std.error_condition filerr = open_next(file, "png");
+                        if (!filerr)
+                            save_snapshot(screen, file.core_file_);
 
-                file.close();
+                        file.close();
+                    }
+                }
+                else
+                {
+                    emu_file file = new emu_file(machine().options().snapshot_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+                    std.error_condition filerr = open_next(file, "png");
+                    if (!filerr)
+                        save_snapshot(null, file.core_file_);
+
+                    file.close();
+                }
+
 
                 //printf("Scheduled exit at %f\n", emutime.as_double());
 

@@ -53,7 +53,8 @@ namespace mame
             m_sync_threshold = 0.3;
             m_gain = 1.0 / 3.7;
             m_hscale = 1;
-            m_vsync_threshold = 0.600; // trigger at 91% of vsync length 1-exp(-0.6)
+            m_vsync_threshold = 0.600;
+            // trigger at 91% of vsync length 1-exp(-0.6)
             m_hvisible = 704;
             m_hfrontporch = 728;
             m_hsync = 791;
@@ -105,12 +106,13 @@ namespace mame
 
         //double vsync_filter_timeconst() const noexcept
         //{
-        //    return (double) (m_monitor_clock) / ((double) m_hbackporch * vsync_width());
+        //    return double(m_monitor_clock)
+        //        / (double(m_hbackporch) * vsync_width());
         //}
 
         //double hsync_filter_timeconst() const noexcept
         //{
-        //    return (double) m_monitor_clock /  (double) hsync_width();
+        //    return double(m_monitor_clock) / double(hsync_width());
         //}
     }
 
@@ -118,7 +120,7 @@ namespace mame
     interface fixedfreq_monitor_intf
     {
         //virtual ~fixedfreq_monitor_intf() = default;
-        void vsync_end_cb(double refresh_time);
+        void vsync_end_cb(double refresh_time, uint32_t field);
     }
 
 
@@ -210,13 +212,15 @@ namespace mame
 
             /* sync separator */
 
-            //m_vsync_threshold = (exp(- 3.0/(3.0+3.0))) - exp(-1.0);
-            //printf("trigger %f with len %f\n", m_vsync_threshold, 1e6 / m_vsync_filter_timeconst);
-            // Minimum frame period to be passed to video system ?
+            // m_vsync_threshold = (exp(- 3.0/(3.0+3.0))) - exp(-1.0);
+            // printf("trigger %f with len %f\n", m_vsync_threshold, 1e6 /
+            // m_vsync_filter_timeconst);
+            //  Minimum frame period to be passed to video system ?
 
             m_fragments.clear();
 
-            m_intf.vsync_end_cb(m_desc.clock_period() * m_desc.vtotal() * m_desc.htotal());
+            // m_intf.vsync_end_cb(m_desc.clock_period() * m_desc.vtotal() *
+            // m_desc.htotal(), 0);
         }
 
 
@@ -234,18 +238,17 @@ namespace mame
         }
 
 
-        //void update_sync_channel(const time_type &time, const double newval);
+        //void update_sync_channel(const time_type &time, double newval);
         //void update_bm(const time_type &time);
-        //void update_composite_monochrome(const time_type &time, const double newval);
-        //void update_red(const time_type &time, const double data);
-        //void update_green(const time_type &time, const double data);
-        //void update_blue(const time_type &time, const double data);
-        //void update_sync(const time_type &time, const double data);
+        //void update_composite_monochrome(const time_type &time, double newval);
+        //void update_red(const time_type &time, double data);
+        //void update_green(const time_type &time, double data);
+        //void update_blue(const time_type &time, double data);
+        //void update_sync(const time_type &time, double data);
     }
 
 
     // ======================> fixedfreq_device
-
     public class fixedfreq_device : device_t,
                                     //device_video_interface,
                                     fixedfreq_monitor_intf
@@ -283,6 +286,7 @@ namespace mame
         required_ioport m_enable;
         required_ioport m_vector;
         float m_scanline_height;
+        double m_last_rt;
 
         /* adjustable by drivers */
         fixedfreq_monitor_desc m_monitor;
@@ -306,40 +310,62 @@ namespace mame
             m_enable = new required_ioport(this, "ENABLE");
             m_vector = new required_ioport(this, "VECTOR");
             m_scanline_height = 1.0f;
+            m_last_rt = 0;
             m_monitor = new fixedfreq_monitor_desc();
             m_state = new fixedfreq_monitor_state(m_monitor, this);
         }
 
 
         // inline configuration helpers
-        public fixedfreq_device set_monitor_clock(uint32_t clock) { m_monitor.m_monitor_clock = clock; return this;}
-        public fixedfreq_device set_fieldcount(int count) { m_monitor.m_fieldcount = count; return this; }
-        public fixedfreq_device set_threshold(double threshold) { m_monitor.m_sync_threshold = threshold; return this; }
+        public fixedfreq_device set_monitor_clock(uint32_t clock)
+        {
+            m_monitor.m_monitor_clock = clock;
+            return this;
+        }
+
+        public fixedfreq_device set_fieldcount(int count)
+        {
+            m_monitor.m_fieldcount = count;
+            return this;
+        }
+
+        public fixedfreq_device set_threshold(double threshold)
+        {
+            m_monitor.m_sync_threshold = threshold;
+            return this;
+        }
+
         //fixedfreq_device &set_vsync_threshold(double threshold) { m_monitor.m_vsync_threshold = threshold; return *this; }
-        public fixedfreq_device set_gain(double gain) { m_monitor.m_gain = gain; return this; }
+
+        public fixedfreq_device set_gain(double gain)
+        {
+            m_monitor.m_gain = gain;
+            return this;
+        }
+
         public fixedfreq_device set_horz_params(int visible, int frontporch, int sync, int backporch)
         {
-            m_monitor.set_h_rel(
-                visible,
-                frontporch - visible,
-                sync - frontporch,
-                backporch - sync);
+            m_monitor.set_h_rel(visible, frontporch - visible, sync - frontporch, backporch - sync);
             return this;
         }
+
         public fixedfreq_device set_vert_params(int visible, int frontporch, int sync, int backporch)
         {
-            m_monitor.set_v_rel(
-                visible,
-                frontporch - visible,
-                sync - frontporch,
-                backporch - sync);
+            m_monitor.set_v_rel(visible, frontporch - visible, sync - frontporch, backporch - sync);
             return this;
         }
-        public fixedfreq_device set_horz_scale(int hscale) { m_monitor.m_hscale = hscale;  return this;}
+
+        public fixedfreq_device set_horz_scale(int hscale)
+        {
+            m_monitor.m_hscale = hscale;
+            return this;
+        }
 
 
         // pre-defined configurations
-        //fixedfreq_device &set_mode_ntsc720() //ModeLine "720x480@30i" 13.5 720 736 799 858 480 486 492 525 interlace -hsync -vsync
+        //fixedfreq_device &set_mode_ntsc720() // ModeLine "720x480@30i" 13.5 720 736
+        //                                     // 799 858 480 486 492 525 interlace
+        //                                     // -hsync -vsync
         //{
         //    set_monitor_clock(13500000);
         //    set_horz_params(720, 736, 799, 858);
@@ -348,7 +374,8 @@ namespace mame
         //    set_threshold(0.3);
         //    return *this;
         //}
-        //fixedfreq_device &set_mode_ntsc704() //ModeLine "704x480@30i" 13.5 704 728 791 858 480 486 492 525
+        //fixedfreq_device &set_mode_ntsc704() // ModeLine "704x480@30i" 13.5 704 728
+        //                                     // 791 858 480 486 492 525
         //{
         //    set_monitor_clock(13500000);
         //    set_horz_params(704, 728, 791, 858);
@@ -378,7 +405,7 @@ namespace mame
         {
             // Test pattern Grey scale
             const int stripes = 255;
-            //auto va(screen.visible_area());
+            // auto va(screen.visible_area());
             var va = cliprect;
 
             for (int i = 0; i < stripes; i++)
@@ -409,7 +436,10 @@ namespace mame
 
         protected virtual uint32_t screen_update(screen_device screen, bitmap_rgb32 bitmap, rectangle cliprect)
         {
-            //printf("%f %f\n", m_state.m_fragments[0].y, m_state.m_fragments[m_state.m_fragments.size()-1].y);
+            // printf("%f\n", machine().time().as_double());
+            // printf("%d %lu %f %f\n", m_state.m_sig_vsync, m_state.m_fragments.size(),
+            // m_state.m_fragments[0].y,
+            // m_state.m_fragments[m_state.m_fragments.size()-1].y);
             bool force_vector = screen.screen_type() == SCREEN_TYPE_VECTOR || (m_vector.op0.read() & 1) != 0;
             bool debug_timing = (m_enable.op0.read() & 2) == 2;
             bool test_pat = (m_enable.op0.read() & 4) == 4;
@@ -504,30 +534,18 @@ namespace mame
         {
             switch (param)
             {
-                case (unsigned)fixedfreq_tag_id_e.HVISIBLE:
-                    return (unsigned)m_monitor.hvisible_width();
-                case (unsigned)fixedfreq_tag_id_e.HFRONTPORCH:
-                    return (unsigned)m_monitor.hfrontporch_width();
-                case (unsigned)fixedfreq_tag_id_e.HSYNC:
-                    return (unsigned)m_monitor.hsync_width();
-                case (unsigned)fixedfreq_tag_id_e.HBACKPORCH:
-                    return (unsigned)m_monitor.hbackporch_width();
-                case (unsigned)fixedfreq_tag_id_e.VVISIBLE:
-                    return (unsigned)m_monitor.vvisible_width();
-                case (unsigned)fixedfreq_tag_id_e.VFRONTPORCH:
-                    return (unsigned)m_monitor.vfrontporch_width();
-                case (unsigned)fixedfreq_tag_id_e.VSYNC:
-                    return (unsigned)m_monitor.vsync_width();
-                case (unsigned)fixedfreq_tag_id_e.VBACKPORCH:
-                    return (unsigned)m_monitor.vbackporch_width();
-                case (unsigned)fixedfreq_tag_id_e.SYNCTHRESHOLD:
-                    return (unsigned)(m_monitor.m_sync_threshold * 1000.0);
-                case (unsigned)fixedfreq_tag_id_e.VSYNCTHRESHOLD:
-                    return (unsigned)(m_monitor.m_vsync_threshold * 1000.0);
-                case (unsigned)fixedfreq_tag_id_e.GAIN:
-                    return (unsigned)(m_monitor.m_gain * 100.0);
-                case (unsigned)fixedfreq_tag_id_e.SCANLINE_HEIGHT:
-                    return (unsigned)(m_scanline_height * 100.0);
+                case (unsigned)fixedfreq_tag_id_e.HVISIBLE: return (unsigned)m_monitor.hvisible_width();
+                case (unsigned)fixedfreq_tag_id_e.HFRONTPORCH: return (unsigned)m_monitor.hfrontporch_width();
+                case (unsigned)fixedfreq_tag_id_e.HSYNC: return (unsigned)m_monitor.hsync_width();
+                case (unsigned)fixedfreq_tag_id_e.HBACKPORCH: return (unsigned)m_monitor.hbackporch_width();
+                case (unsigned)fixedfreq_tag_id_e.VVISIBLE: return (unsigned)m_monitor.vvisible_width();
+                case (unsigned)fixedfreq_tag_id_e.VFRONTPORCH: return (unsigned)m_monitor.vfrontporch_width();
+                case (unsigned)fixedfreq_tag_id_e.VSYNC: return (unsigned)m_monitor.vsync_width();
+                case (unsigned)fixedfreq_tag_id_e.VBACKPORCH: return (unsigned)m_monitor.vbackporch_width();
+                case (unsigned)fixedfreq_tag_id_e.SYNCTHRESHOLD: return (unsigned)(m_monitor.m_sync_threshold * 1000.0);
+                case (unsigned)fixedfreq_tag_id_e.VSYNCTHRESHOLD: return (unsigned)(m_monitor.m_vsync_threshold * 1000.0);
+                case (unsigned)fixedfreq_tag_id_e.GAIN: return (unsigned)(m_monitor.m_gain * 100.0);
+                case (unsigned)fixedfreq_tag_id_e.SCANLINE_HEIGHT: return (unsigned)(m_scanline_height * 100.0);
             }
 
             return 0;
@@ -540,6 +558,19 @@ namespace mame
             if (!m_divideo.has_screen())
                 return;
 
+            // Video signal processing will be moved into netlist to avoid
+            // aborting cpu slices. When this is done, the monitor specifications
+            // need to move to the netlist as well.
+            //
+            // At the time of device_config_complete the monitor specification will
+            // not be known - the netlist is parsed during device_start.
+            // In this case we have to use some temporary fixed values, e.g.
+            // screen().set_raw(7158196, 454, 0, 454, 262, 0, 262);
+            // This will be overwritten during the first vblank anyhow.
+            //
+            // However the width and height determine the width of the mame window.
+            // It is therefore recommended to use `set_raw` in the mame driver
+            // to specify the window size.
             if (m_divideo.screen().refresh_attoseconds() == 0)
             {
                 m_divideo.screen().set_raw(m_monitor.m_monitor_clock, (u16)m_monitor.htotal(), 0,
@@ -556,6 +587,8 @@ namespace mame
 
         protected override void device_start()
         {
+            LOG("start\n");
+
             m_state.start();
 
             // FIXME: will be done by netlist going forward
@@ -571,11 +604,11 @@ namespace mame
 
             /* sync separator */
             save_item(NAME(new { m_state.m_vsync_filter }));
-
             save_item(NAME(new { m_state.m_sig_vsync }));
             save_item(NAME(new { m_state.m_sig_composite }));
             save_item(NAME(new { m_state.m_sig_field }));
-            LOG("start\n");
+
+            save_item(NAME(new { m_last_rt }));
         }
 
 
@@ -583,7 +616,7 @@ namespace mame
         {
             m_state.reset();
             LOG("Reset\n");
-            //ioport("YYY")->field(0xffff)->live().value = 20;
+            // ioport("YYY")->field(0xffff)->live().value = 20;
 #if false
             //IOPORT_ID(HVISIBLE)->field(~0)->set_value(m_monitor.m_hvisible);
             //IOPORT_ID(HVISIBLE)->update_defvalue(false);
@@ -639,6 +672,10 @@ namespace mame
                 PORT_CONFSETTING(    0x00, DEF_STR( Off ) );
                 PORT_CONFSETTING(    0x04, DEF_STR( On ) );
 
+                PORT_CONFNAME( 0x08, 0x00, "Interlace mode" ); PORT_CONDITION("VECTOR", 0x01, ioport_condition.condition_t.EQUALS, 0x00);
+                PORT_CONFSETTING(    0x00, "Interlaced" );
+                PORT_CONFSETTING(    0x08, "Progressive" );
+
                 PORT_ADJUSTERX(fixedfreq_tag_id_e.HVISIBLE, "H Visible", 10, 1000);
                 PORT_ADJUSTERX(fixedfreq_tag_id_e.HFRONTPORCH, "H Front porch width", 1, 100);
                 PORT_ADJUSTERX(fixedfreq_tag_id_e.HSYNC, "H Sync width", 1, 100);
@@ -650,7 +687,6 @@ namespace mame
                 PORT_ADJUSTERX(fixedfreq_tag_id_e.SYNCTHRESHOLD, "Sync threshold mV", 10, 2000);
                 PORT_ADJUSTERX(fixedfreq_tag_id_e.VSYNCTHRESHOLD, "V Sync threshold mV", 10, 1000);
                 PORT_ADJUSTERX(fixedfreq_tag_id_e.GAIN, "Signal Gain", 10, 1000);
-                PORT_ADJUSTERX(fixedfreq_tag_id_e.SCANLINE_HEIGHT, "Scanline Height", 10, 300);
 
                 INPUT_PORTS_END();
             }
@@ -668,6 +704,8 @@ namespace mame
 
                 PORT_INCLUDE(construct_ioport_fixedfreq_base_ports, ref errorbuf);
 
+                PORT_ADJUSTERX(fixedfreq_tag_id_e.SCANLINE_HEIGHT, "Scanline Height", 10, 300);
+
                 INPUT_PORTS_END();
             }
 
@@ -678,6 +716,8 @@ namespace mame
                 INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
                 PORT_INCLUDE(construct_ioport_fixedfreq_base_ports, ref errorbuf);
+
+                PORT_ADJUSTERX(fixedfreq_tag_id_e.SCANLINE_HEIGHT, "Scanline Height", 10, 300);
 
                 INPUT_PORTS_END();
             }
@@ -701,17 +741,36 @@ namespace mame
         }
 
 
-        public void vsync_end_cb(double refresh_time)
+        public void vsync_end_cb(double refresh_time, uint32_t field)
         {
             var expected_frame_period = m_monitor.clock_period() * m_monitor.vtotal() * m_monitor.htotal();
+            bool progressive = (m_enable.op0.read() & 8) == 8;
 
-            var refresh_limited = std.min(4.0 * expected_frame_period,
-                    std.max(refresh_time, 0.25 * expected_frame_period));
+            double mult = 0.5;
 
+            if (!progressive && (m_monitor.m_fieldcount == 2))
+            {
+                if (field == 0)
+                {
+                    m_last_rt = refresh_time;
+                    return;
+                }
+                else
+                    mult = 1.0;
+            }
+
+            var refresh_limited = std.min(4.0 * expected_frame_period, std.max((refresh_time + m_last_rt) * mult, 0.25 * expected_frame_period));
+
+            m_last_rt = refresh_time;
             rectangle visarea = new rectangle(m_monitor.minh(), m_monitor.maxh(), m_monitor.minv(), m_monitor.maxv());
 
-            m_divideo.screen().configure(m_monitor.htotal_scaled(), m_monitor.vtotal(), visarea, DOUBLE_TO_ATTOSECONDS(refresh_limited));
-            m_divideo.screen().reset_origin(m_state.m_last_y - (m_monitor.vsync_width() + m_monitor.vbackporch_width()), 0);
+            // reset_origin must be called first.
+            m_divideo.screen().reset_origin(
+                    m_state.m_last_y - (m_monitor.vsync_width() + m_monitor.vbackporch_width()),
+                    0);
+            m_divideo.screen().configure(
+                    m_monitor.htotal_scaled(), m_monitor.vtotal(), visarea,
+                    DOUBLE_TO_ATTOSECONDS(refresh_limited));
         }
     }
 
