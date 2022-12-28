@@ -114,6 +114,7 @@ namespace mame
            5_185_000, /* 5.185_MHz_XTAL         Intel INTELLEC® 4 */
            5_370_000, /* 5.37_MHz_XTAL          HP 95LX */
            5_460_000, /* 5.46_MHz_XTAL          ec1840 and ec1841 keyboard */
+           5_500_000, /* 5.5_MHz_XTAL           Yamaha PSS-480 */
            5_529_600, /* 5.5296_MHz_XTAL        Kontron PSI98 keyboard */
            5_626_000, /* 5.626_MHz_XTAL         RCA CDP1869 PAL dot clock */
            5_659_200, /* 5.6592_MHz_XTAL        Digilog 320 dot clock */

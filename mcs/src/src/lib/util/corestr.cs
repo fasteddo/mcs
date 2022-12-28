@@ -56,87 +56,44 @@ namespace mame
         }
 
 
-        /* additional string compare helper (up to 16 characters at the moment) */
         /*-------------------------------------------------
             core_strwildcmp - case-insensitive wildcard
-            string compare (up to 16 characters at the
-            moment)
+            string compare
         -------------------------------------------------*/
-        public static int core_strwildcmp(string sp1, string sp2)
+        public static int core_strwildcmp(string s1, string s2)
         {
-            char [] s1 = new char[17];
-            char [] s2 = new char[17];
-            int i;
-            int l1;
-            int l2;
-            int pIdx;  // char *p;
-
-            //assert(strlen(sp1) < 16);
-            //assert(strlen(sp2) < 16);
-
-            if (string.IsNullOrEmpty(sp1)) Array.Copy("*".ToCharArray(), s1, "*".Length);  // strcpy(s1, "*");
-            else { Array.Copy(sp1.ToCharArray(), s1, sp1.Length); }  // strncpy(s1, sp1, 16); s1[16] = 0; }
-
-            if (string.IsNullOrEmpty(sp2)) Array.Copy("*".ToCharArray(), s2, "*".Length);  //strcpy(s2, "*");
-            else { Array.Copy(sp2.ToCharArray(), s2, sp2.Length); }  // strncpy(s2, sp2, 16); s2[16] = 0; }
-
-            pIdx = new string(s1).IndexOf('*');  //p = strchr(s1, '*');
-            if (pIdx != -1)
+            // slight tweak of core_stricmp() logic
+            int s1_iterIdx = 0;  //auto s1_iter = s1.begin();
+            int s2_iterIdx = 0;  //auto s2_iter = s2.begin();
+            while (true)
             {
-                for (i = pIdx; i < 16; i++)  // for (i = p - s1; i < 16; i++) s1[i] = '?';
-                    s1[i] = '?';
+                if ((s1.Length != s1_iterIdx && s1[s1_iterIdx] == '*')  //if ((s1.end() != s1_iter && *s1_iter == '*')
+                    || (s2.Length != s2_iterIdx && s2[s2_iterIdx] == '*'))  //|| (s2.end() != s2_iter && *s2_iter == '*'))
+                    return 0;
 
-                s1[16] = '\0';
+                if (s1.Length == s1_iterIdx)  //if (s1.end() == s1_iter)
+                    return (s2.Length == s2_iterIdx) ? 0 : -1;  //return (s2.end() == s2_iter) ? 0 : -1;
+                else if (s2.Length == s2_iterIdx)  //else if (s2.end() == s2_iter)
+                    return 1;
+
+                char c1 = char.ToLower(s1[s1_iterIdx++]);  //const int c1 = tolower(uint8_t(*s1_iter++));
+                char c2 = char.ToLower(s2[s2_iterIdx++]);  //const int c2 = tolower(uint8_t(*s2_iter++));
+                int diff = (c1 != '?' && c2 != '?')
+                    ? c1 - c2
+                    : 0;
+                if (diff != 0)
+                    return diff;
             }
-
-            pIdx = new string(s2).IndexOf('*');  //p = strchr(s2, '*');
-            if (pIdx != -1)
-            {
-                for (i = pIdx; i < 16; i++)  // for (i = p - s2; i < 16; i++) s2[i] = '?';
-                    s2[i] = '?';
-
-                s2[16] = '\0';
-            }
-
-            l1 = s1.Length;
-            if (l1 < 16)
-            {
-                for (i = l1 + 1; i < 16; i++)  // for (i = l1 + 1; i < 16; i++) s1[i] = ' ';
-                    s1[i] = ' ';
-
-                s1[16] = '\0';
-            }
-
-            l2 = s2.Length;
-            if (l2 < 16)
-            {
-                for (i = l2 + 1; i < 16; i++)  // for (i = l2 + 1; i < 16; i++) s2[i] = ' ';
-                    s2[i] = ' ';
-
-                s2[16] = '\0';
-            }
-
-            for (i = 0; i < 16; i++)
-            {
-                if (s1[i] == '?' && s2[i] != '?')
-                    s1[i] = s2[i];
-
-                if (s2[i] == '?' && s1[i] != '?')
-                    s2[i] = s1[i];
-            }
-
-            return core_stricmp(new string(s1), new string(s2));
         }
 
 
         public static bool core_iswildstr(string sp)
         {
-            //for ( ; sp && *sp; sp++)
+            //auto iter = std::find_if(s.begin(), s.end(), [](char c)
             //{
-            //    if (('?' == *sp) || ('*' == *sp))
-            //        return true;
-            //}
-            //return false;
+            //    return c == '?' || c == '*';
+            //});
+            //return iter != s.end();
             return sp.IndexOfAny("?*".ToCharArray()) != -1;
         }
 

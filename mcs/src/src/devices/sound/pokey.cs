@@ -5,7 +5,7 @@ using System;
 
 using devcb_read8 = mame.devcb_read<mame.Type_constant_u8>;  //using devcb_read8 = devcb_read<u8>;
 using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_write8 = devcb_write<u8>;
-using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
+using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using s32 = System.Int32;
@@ -18,6 +18,7 @@ using unsigned = System.UInt32;
 
 using static mame.cpp_global;
 using static mame.device_global;
+using static mame.diexec_global;
 using static mame.emucore_global;
 using static mame.pokey_global;
 using static mame.util;
@@ -179,17 +180,23 @@ namespace mame
         const int POKEY_DEFAULT_GAIN = (32767/11/4);
 
 
-        const bool VERBOSE         = false;
-        const bool VERBOSE_SOUND   = false;
-        const bool VERBOSE_TIMER   = false;
-        const bool VERBOSE_POLY    = false;
-        const bool VERBOSE_RAND    = false;
+        const int VERBOSE_SOUND   = 1 << 1;
+        const int VERBOSE_TIMER   = 1 << 2;
+        const int VERBOSE_POLY    = 1 << 3;
+        const int VERBOSE_RAND    = 1 << 4;
+        const int VERBOSE_IRQ     = 1 << 5;
+        const int VERBOSE         = 0;
 
-        void LOG(string format, params object [] args) { if (VERBOSE) logerror(format, args); }
-        void LOG_SOUND(string format, params object [] args) { if (VERBOSE_SOUND) logerror(format, args); }
-        void LOG_TIMER(string format, params object [] args) { if (VERBOSE_TIMER) logerror(format, args); }
-        void LOG_POLY(string format, params object [] args) { if (VERBOSE_POLY) logerror(format, args); }
-        void LOG_RAND(string format, params object [] args) { if (VERBOSE_RAND) logerror(format, args); }
+        //#include "logmacro.h"
+        const int LOG_GENERAL = 1 << 0;
+        void LOG(string format, params object [] args) { logmacro_global.LOG(VERBOSE, this, format, args); }
+        void LOGMASKED(int mask, string format, params object [] args) { logmacro_global.LOGMASKED(VERBOSE, mask, this, format, args); }
+
+        void LOG_SOUND(string format, params object [] args) { LOGMASKED(VERBOSE_SOUND, format, args); }  //#define LOG_SOUND(...) LOGMASKED(VERBOSE_SOUND, __VA_ARGS__)
+        void LOG_TIMER(string format, params object [] args) { LOGMASKED(VERBOSE_TIMER, format, args); }  //#define LOG_TIMER(...) LOGMASKED(VERBOSE_TIMER, __VA_ARGS__)
+        void LOG_POLY(string format, params object [] args) { LOGMASKED(VERBOSE_POLY, format, args); }  //#define LOG_POLY(...) LOGMASKED(VERBOSE_POLY, __VA_ARGS__)
+        void LOG_RAND(string format, params object [] args) { LOGMASKED(VERBOSE_RAND, format, args); }  //#define LOG_RAND(...) LOGMASKED(VERBOSE_RAND, __VA_ARGS__)
+        void LOG_IRQ(string format, params object [] args) { LOGMASKED(VERBOSE_IRQ, format, args); }  //#define LOG_IRQ(...) LOGMASKED(VERBOSE_IRQ, __VA_ARGS__)
 
 
         const int CHAN1   = 0;
@@ -281,9 +288,9 @@ namespace mame
         devcb_read8 m_allpot_r_cb;
         devcb_read8 m_serin_r_cb;
         devcb_write8 m_serout_w_cb;
+        devcb_write_line m_irq_w_cb;
 
         kb_cb_delegate m_keyboard_r;
-        int_cb_delegate m_irq_f;
 
         uint8_t [] m_POTx = new uint8_t[8];        /* POTx   (R/D200-D207) */
         uint8_t m_AUDCTL;         /* AUDCTL (W/D208) */
@@ -340,8 +347,8 @@ namespace mame
             m_allpot_r_cb = new devcb_read8(this);
             m_serin_r_cb = new devcb_read8(this);
             m_serout_w_cb = new devcb_write8(this);
+            m_irq_w_cb = new devcb_write_line(this);
             m_keyboard_r = null;
-            m_irq_f = null;
             m_output_type = output_type.LEGACY_LINEAR;
             m_serout_ready_timer = null;
             m_serout_complete_timer = null;
@@ -360,6 +367,7 @@ namespace mame
 
         //auto serin_r() { return m_serin_r_cb.bind(); }
         //auto serout_w() { return m_serout_w_cb.bind(); }
+        //auto irq_w() { return m_irq_w_cb.bind(); }
 
 
         /* k543210 = k5 ... k0 returns bit0: kr1, bit1: kr2 */
@@ -369,11 +377,6 @@ namespace mame
         delegate uint8_t kb_cb_delegate(uint8_t k543210);
 
         //template <typename... T> void set_keyboard_callback(T &&... args) { m_keyboard_r.set(std::forward<T>(args)...); }
-
-        //typedef device_delegate<void (int mask)> int_cb_delegate;
-        delegate void int_cb_delegate(int mask);
-
-        //template <typename... T> void set_interrupt_callback(T &&... args) { m_irq_f.set(std::forward<T>(args)...); }
 
 
         //-------------------------------------------------
@@ -395,12 +398,12 @@ namespace mame
                 {
                     /* we have a value measured */
                     data = m_POTx[pot];
-                    LOG("POKEY '{0}' read POT{1} (final value)  {2}\n", tag(), pot, data);  // $%02x
+                    LOG("{0}: POKEY read POT{1} (final value)  {2}\n", machine().describe_context(), pot, data);  // $%02x
                 }
                 else
                 {
                     data = m_pot_counter;
-                    LOG("POKEY '{0}' read POT{1} (interpolated) {2}\n", tag(), pot, data);
+                    LOG("{0}: POKEY read POT{1} (interpolated) {2}\n", machine().describe_context(), pot, data);
                 }
                 break;
 
@@ -412,18 +415,18 @@ namespace mame
                 if ((m_SKCTL & SK_RESET) == 0)
                 {
                     data = m_ALLPOT;
-                    LOG("POKEY '{0}' ALLPOT internal {1} (reset)\n", tag(), data);
+                    LOG("{0}: POKEY ALLPOT internal {1} (reset)\n", machine().describe_context(), data);
                 }
                 else if (!m_allpot_r_cb.isnull())
                 {
                     data = m_allpot_r_cb.op_u8(offset);
                     m_ALLPOT = (uint8_t)data;
-                    LOG("{0}: POKEY '{1}' ALLPOT callback {2}\n", machine().describe_context(), tag(), data);
+                    LOG("{0}: POKEY ALLPOT callback {1}\n", machine().describe_context(), data);
                 }
                 else
                 {
                     data = m_ALLPOT ^ 0xff;
-                    LOG("POKEY '{0}' ALLPOT internal {1}\n", tag(), data);
+                    LOG("{0}: POKEY ALLPOT internal {1}\n", machine().describe_context(), data);
                 }
                 break;
 
@@ -435,12 +438,12 @@ namespace mame
                 if ((m_AUDCTL & POLY9) != 0)
                 {
                     data = (int)(m_poly9[m_p9] & 0xff);
-                    LOG_RAND("POKEY '{0}' rand9[{1}]: {2}\n", tag(), m_p9, data);  // $%05x  $%02x
+                    LOG_RAND("{0}: POKEY rand9[{1}]: {2}\n", machine().describe_context(), m_p9, data);  // $%05x  $%02x
                 }
                 else
                 {
                     data = (int)((m_poly17[m_p17] >> 8) & 0xff);
-                    LOG_RAND("POKEY '{0}' rand17[{1}]: {2}\n", tag(), m_p17, data);
+                    LOG_RAND("{0}: POKEY rand17[{1}]: {2}\n", machine().describe_context(), m_p17, data);
                 }
                 break;
 
@@ -448,24 +451,24 @@ namespace mame
                 if (!m_serin_r_cb.isnull())
                     m_SERIN = m_serin_r_cb.op_u8(offset);
                 data = m_SERIN;
-                LOG("POKEY '{0}' SERIN  {1}\n", tag(), data);
+                LOG("{0}: POKEY SERIN  {1}\n", machine().describe_context(), data);
                 break;
 
             case IRQST_C:
                 /* IRQST is an active low input port; we keep it active high */
                 /* internally to ease the (un-)masking of bits */
                 data = m_IRQST ^ 0xff;
-                LOG("POKEY '{0}' IRQST  {1}\n", tag(), data);
+                LOG("{0}: POKEY IRQST  {1}\n", machine().describe_context(), data);
                 break;
 
             case SKSTAT_C:
                 /* SKSTAT is also an active low input port */
                 data = m_SKSTAT ^ 0xff;
-                LOG("POKEY '{0}' SKSTAT {1}\n", tag(), data);
+                LOG("{0}: POKEY SKSTAT {1}\n", machine().describe_context(), data);
                 break;
 
             default:
-                LOG("POKEY '{0}' register {2}\n", tag(), offset);
+                LOG("{0}: POKEY register {2}\n", machine().describe_context(), offset);
                 data = 0xff;
                 break;
             }
@@ -543,7 +546,6 @@ namespace mame
             //throw new emu_unimplemented();
 #if false
             m_keyboard_r.resolve();
-            m_irq_f.resolve();
 #endif
 
             /* calculate the A/D times
@@ -605,6 +607,7 @@ namespace mame
             m_allpot_r_cb.resolve();
             m_serin_r_cb.resolve();
             m_serout_w_cb.resolve_safe();
+            m_irq_w_cb.resolve_safe();
 
             m_stream = m_disound.stream_alloc(0, 1, clock());
 
@@ -920,9 +923,6 @@ namespace mame
                 else
                     m_channel[CHAN2].m_filter_sample = 1;
 
-                if ((m_IRQST & IRQ_TIMR4) != 0 && m_irq_f != null)
-                    m_irq_f(IRQ_TIMR4);
-
                 m_old_raw_inval = true;
             }
 
@@ -942,10 +942,6 @@ namespace mame
                 // TODO: If two-tone is enabled *and* serial output == 1 then reset the channel 2 timer.
 
                 process_channel(CHAN1);
-
-                // check if some of the requested timer interrupts are enabled
-                if ((m_IRQST & IRQ_TIMR1) != 0 && m_irq_f != null)
-                    m_irq_f(IRQ_TIMR1);
             }
 
             if (m_channel[CHAN2].check_borrow() != 0)
@@ -956,10 +952,6 @@ namespace mame
                 m_channel[CHAN2].reset_channel();
 
                 process_channel(CHAN2);
-
-                // check if some of the requested timer interrupts are enabled
-                if ((m_IRQST & IRQ_TIMR2) != 0 && m_irq_f != null)
-                    m_irq_f(IRQ_TIMR2);
             }
 
             if (m_old_raw_inval)
@@ -999,9 +991,9 @@ namespace mame
                         /* check if the break IRQ is enabled */
                         if ((m_IRQEN & IRQ_BREAK) != 0)
                         {
+                            LOG_IRQ("POKEY BREAK IRQ raised\n");
                             m_IRQST |= IRQ_BREAK;
-                            if (m_irq_f != null)
-                                m_irq_f(IRQ_BREAK);
+                            m_irq_w_cb.op_s32(ASSERT_LINE);
                         }
                     }
                     break;
@@ -1039,9 +1031,9 @@ namespace mame
                                 /* last interrupt not acknowledged ? */
                                 if ((m_IRQST & IRQ_KEYBD) != 0)
                                     m_SKSTAT |= SK_KBERR;
+                                LOG_IRQ("POKEY KEYBD IRQ raised\n");
                                 m_IRQST |= IRQ_KEYBD;
-                                if (m_irq_f != null)
-                                    m_irq_f(IRQ_KEYBD);
+                                m_irq_w_cb.op_s32(ASSERT_LINE);
                             }
                             m_kbd_state++;
                         }
@@ -1176,13 +1168,13 @@ namespace mame
                 r_chan[j] = 1.0 / rTot;
             }
 
-            if (VERBOSE)
+            if (VERBOSE != 0 & LOG_GENERAL != 0)
             {
                 for (int j = 0; j < 16; j++)
                 {
                     rTot = 1.0 / r_chan[j] + 3.0 / r_chan[0];
                     rTot = 1.0 / rTot;
-                    LOG("{0}: {1} - {2}\n", tag(), j, rTot / (rTot+pull_up)*4.75);  // %s: %3d - %4.3f
+                    LOG("{0} - {1}\n", j, rTot / (rTot + pull_up) * 4.75);  // %s: %3d - %4.3f
                 }
             }
 
@@ -1222,7 +1214,7 @@ namespace mame
             if ((m_SKCTL & SK_RESET) == 0)
                 return;
 
-            LOG("POKEY #{0} pokey_potgo\n", this);  // #%p
+            LOG("pokey_potgo\n");
 
             m_ALLPOT = 0x00;
             m_pot_counter = 0;
@@ -1234,7 +1226,7 @@ namespace mame
                 {
                     int r = m_pot_r_cb[pot].op_u8((offs_t)pot);
 
-                    LOG("POKEY {0} pot_r({1}) returned {2}\n", tag(), pot, r);  // $%02x
+                    LOG("POKEY pot_r({0}) returned {1}\n", pot, r);  // $%02x
                     if (r >= 228)
                         r = 228;
 
@@ -1312,45 +1304,45 @@ namespace mame
             switch (offset & 15)
             {
             case AUDF1_C:
-                LOG_SOUND("POKEY '{0}' AUDF1  {1}\n", tag(), data);  // $%02x
+                LOG_SOUND("{0}: POKEY AUDF1 = {1}\n", machine().describe_context(), data);  // $%02x
                 m_channel[CHAN1].m_AUDF = data;
                 break;
 
             case AUDC1_C:
-                LOG_SOUND("POKEY '{0}' AUDC1  {1} ({2})\n", tag(), data, audc2str(data));  // $%02x (%s)
+                LOG_SOUND("{0}: POKEY AUDC1  {1} ({2})\n", machine().describe_context(), data, audc2str(data));  // $%02x (%s)
                 m_channel[CHAN1].m_AUDC = data;
                 m_old_raw_inval = true;
                 break;
 
             case AUDF2_C:
-                LOG_SOUND("POKEY '{0}' AUDF2  {1}\n", tag(), data);
+                LOG_SOUND("{0}: POKEY AUDF2  {1}\n", machine().describe_context(), data);
                 m_channel[CHAN2].m_AUDF = data;
                 break;
 
             case AUDC2_C:
-                LOG_SOUND("POKEY '{0}' AUDC2  {1} ({2})\n", tag(), data, audc2str(data));
+                LOG_SOUND("{0}: POKEY AUDC2  {1} ({2})\n", machine().describe_context(), data, audc2str(data));
                 m_channel[CHAN2].m_AUDC = data;
                 m_old_raw_inval = true;
                 break;
 
             case AUDF3_C:
-                LOG_SOUND("POKEY '{0}' AUDF3  {1}\n", tag(), data);
+                LOG_SOUND("{0}: POKEY AUDF3  {1}\n", machine().describe_context(), data);
                 m_channel[CHAN3].m_AUDF = data;
                 break;
 
             case AUDC3_C:
-                LOG_SOUND("POKEY '{0}' AUDC3  {1} ({2})\n", tag(), data, audc2str(data));
+                LOG_SOUND("{0}: POKEY AUDC3  {1} ({2})\n", machine().describe_context(), data, audc2str(data));
                 m_channel[CHAN3].m_AUDC = data;
                 m_old_raw_inval = true;
                 break;
 
             case AUDF4_C:
-                LOG_SOUND("POKEY '{0}' AUDF4  {1}\n", tag(), data);
+                LOG_SOUND("{0}: POKEY AUDF4  {1}\n", machine().describe_context(), data);
                 m_channel[CHAN4].m_AUDF = data;
                 break;
 
             case AUDC4_C:
-                LOG_SOUND("POKEY '{0}' AUDC4  {1} ({2})\n", tag(), data, audc2str(data));
+                LOG_SOUND("{0}: POKEY AUDC4  {1} ({2})\n", machine().describe_context(), data, audc2str(data));
                 m_channel[CHAN4].m_AUDC = data;
                 m_old_raw_inval = true;
                 break;
@@ -1358,13 +1350,13 @@ namespace mame
             case AUDCTL_C:
                 if (data == m_AUDCTL)
                     return;
-                LOG_SOUND("POKEY '{0}' AUDCTL {1} ({2})\n", tag(), data, audctl2str(data));
+                LOG_SOUND("{0}: POKEY AUDCTL {1} ({2})\n", machine().describe_context(), data, audctl2str(data));
                 m_AUDCTL = data;
                 m_old_raw_inval = true;
                 break;
 
             case STIMER_C:
-                LOG_TIMER("POKEY '{0}' STIMER {1}\n", tag(), data);
+                LOG_TIMER("{0}: POKEY STIMER {1}\n", machine().describe_context(), data);
 
                 /* From the pokey documentation:
                  * reset all counters to zero (side effect)
@@ -1383,17 +1375,23 @@ namespace mame
 
             case SKREST_C:
                 /* reset SKSTAT */
-                LOG("POKEY '{0}' SKREST {1}\n", tag(), data);
+                LOG("{0}: POKEY SKREST {1}\n", machine().describe_context(), data);
                 m_SKSTAT &= unchecked((uint8_t)~(SK_FRAME|SK_OVERRUN|SK_KBERR));
                 break;
 
             case POTGO_C:
-                LOG("POKEY '{0}' POTGO  {1}\n", tag(), data);
+                LOG("{0}: POKEY POTGO  {1}\n", machine().describe_context(), data);
                 pokey_potgo();
                 break;
 
             case SEROUT_C:
-                LOG("POKEY '{0}' SEROUT {1}\n", tag(), data);
+                LOG("{0}: POKEY SEROUT {1}\n", machine().describe_context(), data);
+
+                // TODO: convert to real serial comms, fix timings
+                // SEROC (1) serial out in progress (0) serial out complete
+                // in progress status is necessary for a800 telelnk2 to boot
+                m_IRQST &= unchecked((uint8_t)~IRQ_SEROC);
+
                 m_serout_w_cb.op_u8(offset, data);
                 m_SKSTAT |= SK_SEROUT;
                 /*
@@ -1407,7 +1405,7 @@ namespace mame
                 break;
 
             case IRQEN_C:
-                LOG("POKEY '{0}' IRQEN  {1}\n", tag(), data);
+                LOG("{0}: POKEY IRQEN  {1}\n", machine().describe_context(), data);
 
                 /* acknowledge one or more IRQST bits ? */
                 if ((m_IRQST & ~data) != 0)
@@ -1420,8 +1418,13 @@ namespace mame
                 /* if SEROC irq is enabled trigger an irq (acid5200 pokey_seroc test) */
                 if ((m_IRQEN & m_IRQST & IRQ_SEROC) != 0)
                 {
-                    if (m_irq_f != null)
-                        m_irq_f(IRQ_SEROC);
+                    LOG_IRQ("POKEY SEROC IRQ enabled\n");
+                    m_irq_w_cb.op_s32(ASSERT_LINE);
+                }
+                else if ((m_IRQEN & m_IRQST) == 0)
+                {
+                    LOG_IRQ("POKEY IRQs all cleared\n");
+                    m_irq_w_cb.op_s32(CLEAR_LINE);
                 }
                 break;
 
@@ -1429,7 +1432,7 @@ namespace mame
                 if (data == m_SKCTL)
                     return;
 
-                LOG("POKEY '{0}' SKCTL  {1}\n", tag(), data);
+                LOG("{0}: POKEY SKCTL  {1}\n", machine().describe_context(), data);
                 m_SKCTL = data;
                 if ((data & SK_RESET) == 0)
                 {

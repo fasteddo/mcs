@@ -394,12 +394,15 @@ namespace mame
             }
             catch (emu_fatalerror err)
             {
-                osd_printf_error("{0}\n", err);
+                osd_printf_error("{0}\nStack:\n{1}", err, err.StackTrace);
             }
+            //throw new emu_unimplemented();
+#if false
             catch (Exception err)
             {
-                osd_printf_error("{0}\n", err);
+                osd_printf_error("{0}\nStack:\n{1}\n", err, err.StackTrace);
             }
+#endif
 
             return null;  //return netlist::host_arena::unique_ptr<netlist::netlist_state_t>(nullptr);
         }

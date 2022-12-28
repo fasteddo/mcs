@@ -234,8 +234,8 @@ namespace mame
             m_bs_tilemap = machine().tilemap().create(m_gfxdecode.op0, cclimber_get_bs_tile_info, tilemap_standard_mapper.TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
             m_bs_tilemap.set_scroll_cols(1);
             m_bs_tilemap.set_scroll_rows(1);
-            m_bs_tilemap.set_transmask(0, 0x01, 0);    /* pen 0 is transaprent */
-            m_bs_tilemap.set_transmask(1, 0x0f, 0);  /* all 4 pens are transparent */
+            m_bs_tilemap.set_transmask(0, 0x01, 0);    // pen 0 is transparent
+            m_bs_tilemap.set_transmask(1, 0x0f, 0);  // all 4 pens are transparent
 
             save_item(NAME(new { m_flip_x }));
             save_item(NAME(new { m_flip_y }));

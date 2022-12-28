@@ -389,7 +389,10 @@ namespace mame
             int error = EMU_ERR_NONE;
 
             // use try/catch for deep error recovery
+            //throw new emu_unimplemented();
+#if false
             try
+#endif
             {
                 m_manager.http().clear();
 
@@ -522,16 +525,17 @@ namespace mame
                 error = EMU_ERR_FATALERROR;
             }
 #endif
+            //throw new emu_unimplemented();
 #if false
             catch (Exception e)
             {
                 OsdCore.osd_printf_error("Caught unhandled exception\n" + e);
                 error = machine_manager.MAMERR.MAMERR_FATALERROR;
             }
-#endif
             finally
             {
             }
+#endif
 
             // make sure our phase is set properly before cleaning up,
             // in case we got here via exception

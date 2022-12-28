@@ -15,11 +15,10 @@ using u64 = System.UInt64;
 using validity_checker_int_map = mame.std.unordered_map<string, object>;  //using int_map = std::unordered_map<std::string, uintptr_t>;
 using validity_checker_string_set = mame.std.unordered_set<string>;  //using string_set = std::unordered_set<std::string>;
 
-using static mame.corefile_global;
-using static mame.corestr_global;
 using static mame.cpp_global;
 using static mame.main_global;
 using static mame.osdcore_global;
+using static mame.util;
 
 
 namespace mame

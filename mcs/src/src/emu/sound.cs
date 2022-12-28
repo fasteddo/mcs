@@ -1992,6 +1992,11 @@ namespace mame
             if ((cfg_type != config_type.SYSTEM) || parentnode == null)
                 return;
 
+            // master volume attenuation
+            util.xml.data_node node = parentnode.get_child("attenuation");
+            if (node != null)
+                set_attenuation(std.clamp((int)node.get_attribute_int("value", 0), -32, 0));
+
             // iterate over channel nodes
             for (util.xml.data_node channelnode = parentnode.get_child("channel"); channelnode != null; channelnode = channelnode.get_next_sibling("channel"))
             {
@@ -2016,6 +2021,14 @@ namespace mame
             // we only save system-specific configuration
             if (cfg_type != config_type.SYSTEM)
                 return;
+
+            // master volume attenuation
+            if (m_attenuation != machine().options().volume())
+            {
+                util.xml.data_node node = parentnode.add_child("attenuation", null);
+                if (node != null)
+                    node.set_attribute_int("value", m_attenuation);
+            }
 
             // iterate over mixer channels
             for (int mixernum = 0; ; mixernum++)

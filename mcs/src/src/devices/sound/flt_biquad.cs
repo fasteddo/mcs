@@ -46,7 +46,8 @@ namespace mame
             NOTCH,
             PEAK,
             LOWSHELF,
-            HIGHSHELF
+            HIGHSHELF,
+            RAWPARAMS
         }
 
 
@@ -128,7 +129,12 @@ namespace mame
         //void modify(biquad_type type, double fc, double q, double gain);
         //void modify(biquad_params p);
 
-        // helper setup functions to create common filters representable by biquad filters:
+        // set up the filter with raw biquad coefficients
+        //filter_biquad_device& setup_raw(double a1, double a2, double b0, double b1, double b2);
+        //void modify_raw(double a1, double a2, double b0, double b1, double b2);
+
+        // Helper setup functions to create common filters representable by biquad filters:
+        // (and, as needed, modify/update/recalc helpers)
 
         // Sallen-Key low-pass
         //filter_biquad_device& opamp_sk_lowpass_setup(double r1, double r2, double r3, double r4, double c1, double c2);
@@ -164,7 +170,7 @@ namespace mame
             r.gain = -r3 / r1;
             r.q = (M_SQRT2 / 2.0);
 
-            if (c1 == 0) // if both R2 and C1 are 0, it is the 'proper' first order case. There do exist some unusual filters where R2 is not 0, though. In both cases this yields a single-pole filter with limited configurable gain, and a Q of ~0.707. R2 being zero makes the (r1 * r3) numerator term cancel out to 1.0.
+            if (c1 == 0) // if both R2 and C1 are 0, it is the 'proper' first order case. If C1 is 0 (Williams...) the filter is 1st order. There do exist some unusual filters where R2 is not 0, though. In both cases this yields a single-pole filter with limited configurable gain, and a Q of ~0.707. R2 being zero makes the (r1 * r3) numerator term cancel out to 1.0.
             {
                 r.fc = (r1 * r3) / (2 * M_PI * ((r1 * r2) + (r1 * r3) + (r2 * r3)) * r3 * c2);
                 r.type = biquad_type.LOWPASS1P;
@@ -244,6 +250,9 @@ namespace mame
 
         void recalc()
         {
+            if (m_type == biquad_type.RAWPARAMS)
+                return; // if we're dealing with raw parameters, just return, don't touch anything.
+
             double MGain = fabs(m_gain); // absolute multiplicative gain
             double DBGain = log10(MGain) * 20.0; // gain in dB
             double AMGain = pow(10, fabs(DBGain) / 20.0); // multiplicative gain of absolute DB
@@ -251,9 +260,6 @@ namespace mame
             double Ksquared = K * K;
             double KoverQ = K / m_q;
             double normal = 1.0 / (1.0 + KoverQ + Ksquared);
-
-            m_a1 = 2.0 * (Ksquared - 1.0) * normal;
-            m_a2 = (1.0 - KoverQ + Ksquared) * normal;
 
             switch (m_type)
             {

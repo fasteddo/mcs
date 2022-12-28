@@ -517,7 +517,7 @@ namespace mame.ui
             if ((flags & machine_flags.type.NOT_WORKING) != 0)
                 buf += __("\nTHIS SYSTEM DOESN'T WORK. The emulation for this system is not yet complete. There is nothing you can do to fix this problem except wait for the developers to improve the emulation.\n");
             if ((flags & machine_flags.type.MECHANICAL) != 0)
-                buf += __("\nElements of this system cannot be emulated as they require physical interaction or consist of mechanical devices. It is not possible to fully experience this system.\n");
+                buf += __("\nElements of this system cannot be emulated accurately as they require physical interaction or consist of mechanical devices. It is not possible to fully experience this system.\n");
 
             if ((flags & MACHINE_ERRORS) != 0 || ((machine.system().type.unemulated_features() | machine.system().type.imperfect_features()) & device_t_feature.type.PROTECTION) != 0)
             {

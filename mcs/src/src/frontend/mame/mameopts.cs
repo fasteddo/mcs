@@ -6,13 +6,13 @@ using System;
 using screen_device_enumerator = mame.device_type_enumerator<mame.screen_device>;  //typedef device_type_enumerator<screen_device> screen_device_enumerator;
 using size_t = System.UInt64;
 
-using static mame.corefile_global;
 using static mame.emucore_global;
 using static mame.emuopts_global;
 using static mame.mameopts_global;
 using static mame.options_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;
+using static mame.util;
 
 
 namespace mame

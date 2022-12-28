@@ -15,7 +15,6 @@ using uint8_t = System.Byte;
 using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 
-using static mame.corefile_global;
 using static mame.corefile_internal;
 using static mame.cpp_global;
 using static mame.osdcomm_global;
@@ -995,37 +994,6 @@ namespace mame
 
 
             public override Stream stream { get { throw new emu_unimplemented(); } }
-        }
-    }
-
-
-    public static class corefile_global
-    {
-        /* ----- filename utilities ----- */
-
-        /* extract the base part of a filename (remove extensions and paths) */
-        /*-------------------------------------------------
-            core_filename_extract_base - extract the base
-            name from a filename; note that this makes
-            assumptions about path separators
-        -------------------------------------------------*/
-        public static string core_filename_extract_base(string name, bool strip_extension = false)
-        {
-            if (strip_extension)
-                return Path.GetFileNameWithoutExtension(name);
-            else
-                return Path.GetFileName(name);
-        }
-
-
-        // extracts the file extension from a filename
-        //std::string core_filename_extract_extension(const std::string &filename, bool strip_period = false);
-
-
-        /* true if the given filename ends with a particular extension */
-        public static bool core_filename_ends_with(string filename, string extension)
-        {
-            return filename.EndsWith(extension);
         }
     }
 }

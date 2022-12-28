@@ -289,6 +289,7 @@ namespace mame.ui
                 (info) =>  //[this, &have_prev_selected, &old_item_selected, curitem = 0] (ui_software_info const &info) mutable
                 {
                     have_prev_selected = have_prev_selected || (info == (ui_software_info)m_prev_selected);
+                    ui_system_info elem = m_persistent_data.systems()[driver_list.find(info.driver.name)];
                     if (info.startempty != 0)
                     {
                         if (old_item_selected == -1 && info.shortname == reselect_last.driver())
@@ -302,14 +303,14 @@ namespace mame.ui
                                 cloneof = false;
                         }
 
-                        item_append(info.longname, cloneof ? FLAG_INVERT : 0, info);
+                        item_append(elem.description, cloneof ? FLAG_INVERT : 0, info);
                     }
                     else
                     {
                         if (old_item_selected == -1 && info.shortname == reselect_last.driver())
                             old_item_selected = curitem;
 
-                        item_append(info.longname, info.devicetype, info.parentname.empty() ? 0 : FLAG_INVERT, info);
+                        item_append(elem.description, info.devicetype, info.parentname.empty() ? 0 : FLAG_INVERT, info);
                     }
 
                     curitem++;

@@ -15,7 +15,6 @@ using uint32_t = System.UInt32;
 using uint64_t = System.UInt64;
 using unsigned = System.UInt32;
 
-using static mame.corefile_global;
 using static mame.corestr_global;
 using static mame.cpp_global;
 using static mame.device_global;
@@ -26,6 +25,7 @@ using static mame.main_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;
 using static mame.romload_global;
+using static mame.util;
 using static mame.version_global;
 
 
@@ -218,11 +218,14 @@ namespace mame
                 osd_printf_error("Caught unhandled emulator exception\n");
                 m_result = EMU_ERR_FATALERROR;
             }
+            //throw new emu_unimplemented();
+#if false
             catch (Exception ex)
             {
-                osd_printf_error("Caught unhandled {0} exception: {1}\n", ex.GetType(), ex.ToString());
+                osd_printf_error("Caught unhandled {0} exception: {1}\nStack:{2}", ex.GetType(), ex.ToString(), ex.StackTrace);
                 m_result = EMU_ERR_FATALERROR;
             }
+#endif
             //catch (...)
             //{
             //    osd_printf_error("Caught unhandled exception\n");

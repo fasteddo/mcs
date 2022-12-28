@@ -419,7 +419,7 @@ namespace mame
         //friend class render_manager;
         //friend class render_target;
 
-        const int MAX_TEXTURE_SCALES = 20;
+        const int MAX_TEXTURE_SCALES = 100;
 
         // a scaled_texture contains a single scaled entry for a texture
         struct scaled_texture

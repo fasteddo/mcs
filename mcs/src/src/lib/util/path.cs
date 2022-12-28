@@ -2,6 +2,7 @@
 // copyright-holders:Edward Fast
 
 using System;
+using System.IO;
 
 using static mame.osdfile_global;
 
@@ -46,7 +47,7 @@ namespace mame
                 path += PATH_SEPARATOR;  //path.append(PATH_SEPARATOR);
             path += next;  //path.append(std::forward<T>(next));
             //if constexpr (sizeof...(U))
-            //    return path_append(std::forward<U>(more)...);
+            //    return path_append(path, std::forward<U>(more)...);
             //else
                 return path;
         }
@@ -66,6 +67,72 @@ namespace mame
             //if constexpr (sizeof...(U))
                 path_append(ref result, more);  //path_append(result, std::forward<U>(more)...);
             return result;
+        }
+
+
+        /***************************************************************************
+            FUNCTION PROTOTYPES
+        ***************************************************************************/
+
+        /* ----- filename utilities ----- */
+
+        // extract the base part of a filename (remove extensions and paths)
+        // -------------------------------------------------
+        // core_filename_extract_base - extract the base
+        // name from a filename; note that this makes
+        // assumptions about path separators
+        // -------------------------------------------------
+        public static string core_filename_extract_base(string name, bool strip_extension = false)
+        {
+            //// find the start of the basename
+            //auto const start = std::find_if(name.rbegin(), name.rend(), &util::is_directory_separator);
+            //if (start == name.rbegin())
+            //    return std::string_view();
+            //
+            //// find the end of the basename
+            //auto const chop_position = strip_extension
+            //    ? std::find(name.rbegin(), start, '.')
+            //    : start;
+            //auto const end = ((chop_position != start) && (std::next(chop_position) != start))
+            //    ? std::next(chop_position)
+            //    : name.rbegin();
+            //
+            //return std::string_view(&*start.base(), end.base() - start.base());
+
+            if (strip_extension)
+                return Path.GetFileNameWithoutExtension(name);
+            else
+                return Path.GetFileName(name);
+        }
+
+
+        // extracts the file extension from a filename
+        //std::string_view core_filename_extract_extension(std::string_view filename, bool strip_period = false) noexcept;
+
+
+        // true if the given filename ends with a particular extension
+        // -------------------------------------------------
+        // core_filename_ends_with - does the given
+        // filename end with the specified extension?
+        // -------------------------------------------------
+        public static bool core_filename_ends_with(string filename, string extension)
+        {
+            //auto namelen = filename.length();
+            //auto extlen = extension.length();
+            //
+            //// first if the extension is bigger than the name, we definitely don't match
+            //bool matches = namelen >= extlen;
+            //
+            //// work backwards checking for a match
+            //while (matches && extlen > 0 && namelen > 0)
+            //{
+            //    if (std::tolower(uint8_t(filename[--namelen])) != std::tolower(uint8_t(extension[--extlen])))
+            //        matches = false;
+            //}
+            //
+            //return matches;
+
+            return filename.EndsWith(extension);
         }
 
         /// \}

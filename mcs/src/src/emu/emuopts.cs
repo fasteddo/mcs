@@ -5,12 +5,12 @@ using System;
 
 using size_t = System.UInt64;
 
-using static mame.corefile_global;
 using static mame.corestr_global;
 using static mame.cpp_global;
 using static mame.emuopts_global;
 using static mame.emuopts_internal;
 using static mame.options_global;
+using static mame.util;
 
 
 namespace mame

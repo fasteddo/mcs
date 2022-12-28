@@ -11,12 +11,12 @@ using sorted_favorites = mame.std.vector<mame.ui_software_info>;
 using uint8_t = System.Byte;
 using uint64_t = System.UInt64;
 
-using static mame.corefile_global;
 using static mame.corestr_global;
 using static mame.cpp_global;
 using static mame.language_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;
+using static mame.util;
 using static mame.utils_global;
 
 

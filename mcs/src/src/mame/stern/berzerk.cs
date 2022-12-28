@@ -14,6 +14,7 @@ using static mame.disound_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
 using static mame.exidy_global;
+using static mame.flt_vol_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
 using static mame.nvram_global;
@@ -30,6 +31,7 @@ namespace mame
     {
         required_device<z80_device> m_maincpu;
         required_device<s14001a_device> m_s14001a;
+        required_device<filter_volume_device> m_s14001a_volume;
         required_device<ttl74181_device> m_ls181_10c;
         required_device<ttl74181_device> m_ls181_12c;
         required_device<exidy_sound_device> m_custom;
@@ -58,6 +60,7 @@ namespace mame
         {
             m_maincpu = new required_device<z80_device>(this, "maincpu");
             m_s14001a = new required_device<s14001a_device>(this, "speech");
+            m_s14001a_volume = new required_device<filter_volume_device>(this, "s14001a_volume");
             m_ls181_10c = new required_device<ttl74181_device>(this, "ls181_10c");
             m_ls181_12c = new required_device<ttl74181_device>(this, "ls181_12c");
             m_custom = new required_device<exidy_sound_device>(this, "exidy");
@@ -492,79 +495,12 @@ namespace mame
         }
 
 
-#if false
         /*************************************
-         *
          *  Audio system
-         *
          *************************************/
+        //void berzerk_state::audio_w(offs_t offset, uint8_t data)
 
-        void berzerk_state::audio_w(offs_t offset, uint8_t data)
-        {
-            switch (offset)
-            {
-            /* offset 4 writes to the S14001A */
-            case 4:
-                switch (data >> 6)
-                {
-                /* write data to the S14001 */
-                case 0:
-                    m_s14001a->data_w(data & 0x3f);
-
-                    /* clock the chip -- via a 555 timer */
-                    m_s14001a->start_w(1);
-                    m_s14001a->start_w(0);
-
-                    break;
-
-                case 1:
-                {
-                    /* volume */
-                    m_s14001a->force_update();
-                    m_s14001a->set_output_gain(0, ((data >> 3 & 0xf) + 1) / 16.0);
-
-                    /* clock control - the first LS161 divides the clock by 9 to 16, the 2nd by 8,
-                       giving a final clock from 19.5kHz to 34.7kHz */
-                    int clock_divisor = 16 - (data & 0x07);
-                    m_s14001a->set_clock(S14001_CLOCK / clock_divisor / 8);
-                    break;
-                }
-
-                default: break; /* 2 and 3 are not connected */
-                }
-
-                break;
-
-            /* offset 6 writes to the sfxcontrol latch */
-            case 6:
-                m_custom->sfxctrl_w(data >> 6, data);
-                break;
-
-            /* everything else writes to the 6840 */
-            default:
-                m_custom->sh6840_w(offset, data);
-                break;
-            }
-        }
-
-
-        uint8_t berzerk_state::audio_r(offs_t offset)
-        {
-            switch (offset)
-            {
-            /* offset 4 reads from the S14001A */
-            case 4:
-                return (m_s14001a->busy_r()) ? 0xc0 : 0x40;
-            /* offset 6 is open bus */
-            case 6:
-                logerror("attempted read from berzerk audio reg 6 (sfxctrl)!\n");
-                return 0;
-            /* everything else reads from the 6840 */
-            default:
-                return m_custom->sh6840_r(offset);
-            }
-        }
-#endif
+        //uint8_t berzerk_state::audio_r(offs_t offset)
 
 
         protected override void sound_reset()
@@ -836,7 +772,10 @@ namespace mame
             /* audio hardware */
             SPEAKER(config, "mono").front_center();
 
-            S14001A(config, m_s14001a, S14001_CLOCK / 16 / 8).disound.add_route(ALL_OUTPUTS, "mono", 1.00); /* placeholder - the clock is software controllable */
+            S14001A(config, m_s14001a, S14001_CLOCK/16/8); // placeholder clock - it is software controllable
+            m_s14001a.op0.disound.add_route(ALL_OUTPUTS, "s14001a_volume", 0.5);
+            FILTER_VOLUME(config, m_s14001a_volume).disound.add_route(ALL_OUTPUTS, "mono", 1.0);
+
             EXIDY(config, m_custom, 0).disound.add_route(ALL_OUTPUTS, "mono", 0.33);
         }
 
