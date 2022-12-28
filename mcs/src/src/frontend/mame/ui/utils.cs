@@ -1123,6 +1123,7 @@ namespace mame
 
 
                     set_process_flags(PROCESS_LR_REPEAT);
+                    set_heading(__("Select Filters"));
                 }
 
                 ~menu_configure()
@@ -1136,17 +1137,6 @@ namespace mame
                     base.Dispose();
                     m_handler(m_parent);
                     m_isDisposed_menu_configure = true;
-                }
-
-
-                protected override void custom_render(object selectedref, float top, float bottom, float x, float y, float x2, float y2)
-                {
-                    string [] text = { "Select custom filters:" };
-                    draw_text_box(
-                            text,  //std::begin(text), std::end(text),
-                            x, x2, y - top, y - ui().box_tb_border(),
-                            text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
                 }
 
 
@@ -1179,9 +1169,6 @@ namespace mame
                         item_append("Add filter", 0, FILTER.ADD_FILTER);
 
                     item_append(menu_item_type.SEPARATOR);
-
-                    // leave space for heading
-                    customtop = ui().get_line_height() + 3.0f * ui().box_tb_border();
                 }
 
 
@@ -1900,6 +1887,8 @@ namespace mame
 
 
                     set_process_flags(PROCESS_LR_REPEAT);
+                    set_heading("Select Category");
+
                     inifile_manager mgr = mame_machine_manager.instance().inifile();
                     for (size_t i = 0; mgr.get_file_count() > i; ++i)
                     {
@@ -1922,17 +1911,6 @@ namespace mame
                 }
 
 
-                protected override void custom_render(object selectedref, float top, float bottom, float x, float y, float x2, float y2)
-                {
-                    string [] text = { "Select category:" };
-                    draw_text_box(
-                            text,  //std::begin(text), std::end(text),
-                            x, x2, y - top, y - ui().box_tb_border(),
-                            text_layout.text_justify.CENTER, text_layout.word_wrapping.NEVER, false,
-                            ui().colors().text_color(), UI_GREEN_COLOR, 1.0f);
-                }
-
-
                 protected override void populate(ref float customtop, ref float custombottom)
                 {
                     inifile_manager mgr = mame_machine_manager.instance().inifile();
@@ -1947,7 +1925,6 @@ namespace mame
                     }
 
                     item_append(menu_item_type.SEPARATOR);
-                    customtop = ui().get_line_height() + 3.0f * ui().box_tb_border();
                 }
 
 

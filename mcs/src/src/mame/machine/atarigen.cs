@@ -6,6 +6,7 @@ using System;
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -17,20 +18,14 @@ namespace mame
 {
     abstract class atarigen_state : driver_device
     {
-        // timer IDs
-        //enum
-        //{
-        const int TID_UNHALT_CPU = 0;
-        const int TID_ATARIGEN_LAST = 1;
-        //}
-
-
         required_device<cpu_device> m_maincpu;
 
         protected optional_device<gfxdecode_device> m_gfxdecode;
         protected optional_device<screen_device> m_screen;
 
         //std::unique_ptr<u8[]> m_blended_data;
+
+        emu_timer m_unhalt_cpu_timer;
 
 
         // construction/destruction
@@ -40,12 +35,14 @@ namespace mame
             m_maincpu = new required_device<cpu_device>(this, "maincpu");
             m_gfxdecode = new optional_device<gfxdecode_device>(this, "gfxdecode");
             m_screen = new optional_device<screen_device>(this, "screen");
+            m_unhalt_cpu_timer = null;
         }
 
 
         // users must call through to these
         protected override void machine_start()
         {
+            m_unhalt_cpu_timer = timer_alloc(unhalt_cpu);
         }
 
 
@@ -54,23 +51,17 @@ namespace mame
         }
 
 
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
-        {
-            switch (id)
-            {
-                // unhalt the CPU
-                case TID_UNHALT_CPU:
-                    m_maincpu.op0.execute().set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
-                    break;
-            }
-        }
-
-
         // video helpers
         //void halt_until_hblank_0(device_t &device, screen_device &screen);
 
         // misc helpers
         //void blend_gfx(int gfx0, int gfx1, int mask0, int mask1);
+
+        //TIMER_CALLBACK_MEMBER(unhalt_cpu);
+        void unhalt_cpu(s32 param)
+        {
+            m_maincpu.op0.set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
+        }
     }
 
 

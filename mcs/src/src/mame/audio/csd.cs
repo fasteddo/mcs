@@ -31,6 +31,7 @@ namespace mame
         // internal state
         //uint8_t m_status;
         //uint16_t m_dacval;
+        //emu_timer *m_pia_sync_timer;
 
 
         // construction/destruction
@@ -67,7 +68,7 @@ namespace mame
         protected override void device_add_mconfig(machine_config config) { throw new emu_unimplemented(); }
         protected override Pointer<tiny_rom_entry> device_rom_region() { throw new emu_unimplemented(); }
         protected override void device_start() { throw new emu_unimplemented(); }
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param) { throw new emu_unimplemented(); }
+        //TIMER_CALLBACK_MEMBER(sync_pia);
 
 
         // internal communications

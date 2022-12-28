@@ -134,7 +134,7 @@ namespace mame
             m_out_iorq_cb.resolve_safe();
 
             // allocate timer
-            m_timer = machine().scheduler().timer_alloc(timerproc);
+            m_timer = timer_alloc(timerproc);
 
             // register for state saving
             save_item(NAME(new { m_regs }));
@@ -211,17 +211,14 @@ namespace mame
 
         void update_status()
         {
-            uint16_t pending_transfer;
-            attotime next;
-
             // no transfer is active right now; is there a transfer pending right now?
-            pending_transfer = (uint16_t)(is_ready() & m_dma_enabled);
+            bool pending_transfer = is_ready() != 0 && m_dma_enabled != 0;
 
-            if (pending_transfer != 0)
+            if (pending_transfer)
             {
                 m_is_read = true;
                 m_cur_cycle = (PORTA_IS_SOURCE != 0 ? (uint8_t)PORTA_CYCLE_LEN : (uint8_t)PORTB_CYCLE_LEN);
-                next = attotime.from_hz(clock());
+                attotime next = attotime.from_hz(clock());
                 m_timer.adjust(
                     attotime.zero,
                     0,
@@ -238,7 +235,7 @@ namespace mame
             }
 
             // set the busreq line
-            m_out_busreq_cb.op_s32(pending_transfer != 0 ? ASSERT_LINE : CLEAR_LINE);
+            m_out_busreq_cb.op_s32(pending_transfer ? ASSERT_LINE : CLEAR_LINE);
         }
 
 

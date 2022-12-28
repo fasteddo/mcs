@@ -16,6 +16,88 @@ namespace mame
 
     partial class turbo_state : turbo_base_state
     {
+        /*************************************
+         *  Turbo shared state updates
+         *************************************/
+        //void turbo_state::update_samples()
+        //{
+        //    // accelerator sounds
+        //    // BSEL == 3 --> off
+        //    // BSEL == 2 --> standard
+        //    // BSEL == 1 --> tunnel
+        //    // BSEL == 0 --> ???
+        //    if (m_bsel == 3 && m_samples->playing(5))
+        //        m_samples->stop(5);
+        //    else if (m_bsel != 3 && !m_samples->playing(5))
+        //        m_samples->start(5, 7, true);
+        //    if (m_samples->playing(5))
+        //        m_samples->set_frequency(5, m_samples->base_frequency(5) * ((m_accel & 0x3f) / 5.25 + 1));
+        //}
+
+
+        //TIMER_CALLBACK_MEMBER(turbo_state::update_sound_a)
+
+
+        /*************************************
+         *  Turbo PPI write handlers
+         *************************************/
+        void sound_a_w(uint8_t data)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        void sound_b_w(uint8_t data)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        void sound_c_w(uint8_t data)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        /*************************************
+         *  Turbo sound hardware description
+         *************************************/
+        //static const char *const turbo_sample_names[] =
+
+
+        void turbo_samples(machine_config config)
+        {
+            throw new emu_unimplemented();
+        }
+
+
+        //void subroc3d_state::sound_a_w(uint8_t data)
+
+        //inline void subroc3d_state::update_volume(int leftchan, uint8_t dis, uint8_t dir)
+
+        //void subroc3d_state::sound_b_w(uint8_t data)
+
+        //void subroc3d_state::sound_c_w(uint8_t data)
+
+        //static const char *const subroc3d_sample_names[] =
+
+        //void subroc3d_state::subroc3d_samples(machine_config &config)
+
+        //void buckrog_state::update_samples()
+
+        //void buckrog_state::sound_a_w(uint8_t data)
+
+        //void buckrog_state::sound_b_w(uint8_t data)
+
+        //static const char *const buckrog_sample_names[]=
+
+        //void buckrog_state::buckrog_samples(machine_config &config)
+
+
+
+//OLD 
+
+
 #if false
         /*************************************
          *
@@ -63,7 +145,10 @@ namespace mame
         //  osel = (osel & 6) | ((data >> 5) & 1);
         //  update_samples(samples);
         }
-#endif
+#else
+        TIMER_CALLBACK_MEMBER(turbo_state::update_sound_a)
+        {
+        }
 #endif
 
 
@@ -233,6 +318,7 @@ namespace mame
             // channel 9 = OSEL -> OCAR.W/WM
             m_samples.op0.disound.add_route(9, "bspeaker",  0.25);
         }
+#endif
     }
 
 

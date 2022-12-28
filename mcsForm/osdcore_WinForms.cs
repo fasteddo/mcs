@@ -762,13 +762,12 @@ namespace mcsForm
 
             Parameters:
 
-                dst - result pointer
                 src - source string
 
         -----------------------------------------------------------------------------*/
-        public override void osd_subst_env(out string dst, string src)
+        public override string osd_subst_env(string src)
         {
-            dst = Environment.ExpandEnvironmentVariables(src);
+            return Environment.ExpandEnvironmentVariables(src);
         }
     }
 }

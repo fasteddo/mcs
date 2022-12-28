@@ -3,6 +3,7 @@
 
 using System;
 
+using base_device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = base_device_param_t;  //using base_device_param_t = const base_device_data_t &;  //using base_device_data_t = core_device_data_t;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
@@ -43,15 +44,14 @@ namespace mame.netlist
         }
 
 
-        //NETLIB_BASE_OBJECT(opamp)
         class nld_opamp : base_device_t
         {
             //NETLIB_DEVICE_IMPL_NS(analog, opamp, "OPAMP", "MODEL")
             public static readonly factory.constructor_ptr_t decl_opamp = NETLIB_DEVICE_IMPL_NS<nld_opamp>("analog", "OPAMP", "MODEL");
 
 
-            analog.nld_R_base m_RP;
-            analog.nld_VCCS m_G1;
+            sub_device_wrapper<analog.nld_R_base> m_RP;  //NETLIB_SUB_NS(analog, R_base) m_RP;
+            sub_device_wrapper<analog.nld_VCCS> m_G1;  //NETLIB_SUB_NS(analog, VCCS) m_G1;
             analog.nld_C m_CP;
 #if TEST_ALT_OUTPUT
             NETLIB_SUB_UPTR(analog, R_base) m_RO;
@@ -73,12 +73,11 @@ namespace mame.netlist
             int m_type;
 
 
-            //NETLIB_CONSTRUCTOR(opamp)
-            public nld_opamp(object owner, string name)
-                : base(owner, name)
+            public nld_opamp(base_device_t_constructor_param_t data)
+                : base(data)
             {
-                m_RP = new nld_R_base(this, "RP1");
-                m_G1 = new nld_VCCS(this, "G1");
+                m_RP = new sub_device_wrapper<nld_R_base>(this, new nld_R_base(new base_device_t_constructor_param_t(this, "RP1")));
+                m_G1 = new sub_device_wrapper<nld_VCCS>(this, new nld_VCCS(new base_device_t_constructor_param_t(this, "G1")));
                 m_VCC = new analog_input_t(this, "VCC", supply);
                 m_GND = new analog_input_t(this, "GND", supply);
                 m_model = new param_model_t(this, "MODEL", "LM324");
@@ -86,9 +85,9 @@ namespace mame.netlist
                 m_VH = new analog_output_t(this, "VH");
                 m_VL = new analog_output_t(this, "VL");
                 m_VREF = new analog_output_t(this, "VREF");
+                m_type = (int)m_modacc.m_TYPE.op();  //m_type(plib::narrow_cast<int>(m_modacc.m_TYPE));
 
 
-                m_type = (int)m_modacc.m_TYPE.op();  //m_type = plib::narrow_cast<int>(m_modacc.m_TYPE);
                 if (m_type < 1 || m_type > 3)
                 {
                     log().fatal.op(MF_OPAMP_UNKNOWN_TYPE(m_type));
@@ -97,9 +96,9 @@ namespace mame.netlist
 
                 if (m_type == 1)
                 {
-                    register_subalias("PLUS", "G1.IP");
-                    register_subalias("MINUS", "G1.IN");
-                    register_subalias("OUT", "G1.OP");
+                    register_sub_alias("PLUS", "G1.IP");
+                    register_sub_alias("MINUS", "G1.IN");
+                    register_sub_alias("OUT", "G1.OP");
 
                     connect("G1.ON", "VREF");
                     connect("RP1.2", "VREF");
@@ -108,14 +107,14 @@ namespace mame.netlist
                 }
                 if (m_type == 2 || m_type == 3)
                 {
-                    create_and_register_subdevice(this, "CP1", out m_CP);
-                    create_and_register_subdevice(this, "EBUF", out m_EBUF);
+                    create_and_register_sub_device(this, "CP1", out m_CP);
+                    create_and_register_sub_device(this, "EBUF", out m_EBUF);
 
 #if TEST_ALT_OUTPUT
-                    create_and_register_subdevice("RO", m_RO);
+                    create_and_register_sub_device("RO", m_RO);
 #endif
-                    register_subalias("PLUS", "G1.IP");
-                    register_subalias("MINUS", "G1.IN");
+                    register_sub_alias("PLUS", "G1.IP");
+                    register_sub_alias("MINUS", "G1.IN");
 
                     connect("G1.ON", "VREF");
                     connect("RP1.2", "VREF");
@@ -132,15 +131,15 @@ namespace mame.netlist
                 {
 #if TEST_ALT_OUTPUT
                     connect("EBUF.OP", "RO.1");
-                    register_subalias("OUT", "RO.2");
+                    register_sub_alias("OUT", "RO.2");
 #else
-                    register_subalias("OUT", "EBUF.OP");
+                    register_sub_alias("OUT", "EBUF.OP");
 #endif
                 }
                 if (m_type == 3)
                 {
-                    create_and_register_subdevice(this, "DN", out m_DN, "D(IS=1e-15 N=1)");
-                    create_and_register_subdevice(this, "DP", out m_DP, "D(IS=1e-15 N=1)");
+                    create_and_register_sub_device(this, "DN", out m_DN, "D(IS=1e-15 N=1)");
+                    create_and_register_sub_device(this, "DP", out m_DP, "D(IS=1e-15 N=1)");
 
                     connect("DP.K", "VH");
                     connect("VL", "DN.A");
@@ -148,9 +147,9 @@ namespace mame.netlist
                     connect("DN.K", "RP1.1");
 #if TEST_ALT_OUTPUT
                     connect("EBUF.OP", "RO.1");
-                    register_subalias("OUT", "RO.2");
+                    register_sub_alias("OUT", "RO.2");
 #else
-                    register_subalias("OUT", "EBUF.OP");
+                    register_sub_alias("OUT", "EBUF.OP");
 #endif
                 }
             }
@@ -179,14 +178,14 @@ namespace mame.netlist
             //NETLIB_UPDATE_PARAM(opamp)
             public override void update_param()
             {
-                m_G1.m_RI.set(m_modacc.m_RI.op());
+                m_G1.op().m_RI.set(m_modacc.m_RI.op());
 
                 if (m_type == 1)
                 {
                     nl_fptype RO = m_modacc.m_RO.op();
                     nl_fptype G = m_modacc.m_UGF.op() / m_modacc.m_FPF.op() / RO;
-                    m_RP.set_R(RO);
-                    m_G1.m_G.set(G);
+                    m_RP.op().set_R(RO);
+                    m_G1.op().m_G.set(G);
                 }
                 if (m_type == 3 || m_type == 2)
                 {
@@ -199,8 +198,8 @@ namespace mame.netlist
                         log().warning.op(MW_OPAMP_FAIL_CONVERGENCE(this.name()));
 
                     m_CP.set_cap_embedded(CP);
-                    m_RP.set_R(RP);
-                    m_G1.m_G.set(G);
+                    m_RP.op().set_R(RP);
+                    m_G1.op().m_G.set(G);
 
                 }
                 if (m_type == 2)

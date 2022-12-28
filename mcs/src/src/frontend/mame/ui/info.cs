@@ -434,7 +434,7 @@ namespace mame.ui
             if (machine.rom_load().warnings() > 0)
             {
                 bad_roms = true;
-                buf += __("One or more ROMs/CHDs for this machine are incorrect. The machine may not run correctly.\n");
+                buf += __("One or more ROMs/disk images for this system are incorrect. The system may not run correctly.\n");
             }
             if (!machine.rom_load().software_load_warnings_message().empty())
             {
@@ -447,12 +447,12 @@ namespace mame.ui
             {
                 if (bad_roms)
                     buf += '\n';
-                buf += __("There are known problems with this machine\n\n");
+                buf += __("There are known problems with this system\n\n");
             }
 
             // add a warning if any ROMs are flagged BAD_DUMP/NO_DUMP
             if (machine.rom_load().knownbad() > 0)
-                buf += __("One or more ROMs/CHDs for this machine have not been correctly dumped.\n");
+                buf += __("One or more ROMs/disk images for this system have not been correctly dumped.\n");
         }
 
 
@@ -503,17 +503,17 @@ namespace mame.ui
             if ((flags & machine_flags.type.NO_COCKTAIL) != 0)
                 buf += __("Screen flipping in cocktail mode is not supported.\n");
             if ((flags & machine_flags.type.REQUIRES_ARTWORK) != 0)
-                buf += __("This machine requires external artwork files.\n");
+                buf += __("This system requires external artwork files.\n");
             if ((flags & machine_flags.type.IS_INCOMPLETE) != 0)
-                buf += __("This machine was never completed. It may exhibit strange behavior or missing elements that are not bugs in the emulation.\n");
+                buf += __("This system was never completed. It may exhibit strange behavior or missing elements that are not bugs in the emulation.\n");
             if ((flags & machine_flags.type.NO_SOUND_HW) != 0)
-                buf += __("This machine has no sound hardware, MAME will produce no sounds, this is expected behaviour.\n");
+                buf += __("This system has no sound hardware, MAME will produce no sounds, this is expected behaviour.\n");
 
             // these are more severe warnings
             if ((flags & machine_flags.type.NOT_WORKING) != 0)
-                buf += __("\nTHIS MACHINE DOESN'T WORK. The emulation for this machine is not yet complete. There is nothing you can do to fix this problem except wait for the developers to improve the emulation.\n");
+                buf += __("\nTHIS SYSTEM DOESN'T WORK. The emulation for this system is not yet complete. There is nothing you can do to fix this problem except wait for the developers to improve the emulation.\n");
             if ((flags & machine_flags.type.MECHANICAL) != 0)
-                buf += __("\nElements of this machine cannot be emulated as they require physical interaction or consist of mechanical devices. It is not possible to fully experience this machine.\n");
+                buf += __("\nElements of this system cannot be emulated as they require physical interaction or consist of mechanical devices. It is not possible to fully experience this system.\n");
 
             if ((flags & MACHINE_ERRORS) != 0 || ((machine.system().type.unemulated_features() | machine.system().type.imperfect_features()) & device_t_feature.type.PROTECTION) != 0)
             {
@@ -535,7 +535,7 @@ namespace mame.ui
                         {
                             // this one works, add a header and display the name of the clone
                             if (!foundworking)
-                                util.stream_format(ref buf, __("\n\nThere are working clones of this machine: {0}"), driver.name);
+                                util.stream_format(ref buf, __("\n\nThere are working clones of this system: {0}"), driver.name);
                             else
                                 util.stream_format(ref buf, __(", {0}"), driver.name);
 

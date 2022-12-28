@@ -3,6 +3,7 @@
 
 using System;
 
+using device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = device_param_t;  //using device_param_t = const device_data_t &;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -45,7 +46,7 @@ namespace mame.netlist.interface_
     /// ```
 
     //template <typename FUNC>
-    public class nld_analog_callback : device_t  //NETLIB_OBJECT(analog_callback)
+    public class nld_analog_callback : device_t
     {
         public delegate void FUNC(device_t device, nl_fptype val);
 
@@ -56,9 +57,8 @@ namespace mame.netlist.interface_
         FUNC m_func;
 
 
-        //NETLIB_CONSTRUCTOR_EX(analog_callback, nl_fptype threshold, FUNC &&func)
-        public nld_analog_callback(object owner, string name, nl_fptype threshold, FUNC func)
-            : base(owner, name)
+        public nld_analog_callback(device_t_constructor_param_t data, nl_fptype threshold, FUNC func)
+            : base(data)
         {
             m_in = new analog_input_t(this, "IN", in_);
             m_threshold = threshold;
@@ -99,7 +99,7 @@ namespace mame.netlist.interface_
     /// analog callback device instead.
 
     //template <typename FUNC>
-    public class nld_logic_callback : device_t  //NETLIB_OBJECT(logic_callback)
+    public class nld_logic_callback : device_t
     {
         public delegate void FUNC(device_t device, netlist_sig_t val);
 
@@ -108,9 +108,8 @@ namespace mame.netlist.interface_
         FUNC m_func;
 
 
-        //NETLIB_CONSTRUCTOR_EX(logic_callback, FUNC &&func)
-        public nld_logic_callback(object owner, string name, FUNC func)
-            : base(owner, name)
+        public nld_logic_callback(device_t_constructor_param_t data, FUNC func)
+            : base(data)
         {
             m_in = new logic_input_t(this, "IN", in_);
             m_func = func;
@@ -136,7 +135,6 @@ namespace mame.netlist.interface_
     /// \tparam N Maximum number of supported buffers
     ///
     //template <typename T>
-    //NETLIB_OBJECT(buffered_param_setter)
     public class nld_buffered_param_setter<T> : device_t
     {
         delegate void setter_t(nl_fptype param);  //using setter_t = plib::pmfp<void (nl_fptype)>;
@@ -159,9 +157,8 @@ namespace mame.netlist.interface_
         param_num_t<size_t, param_num_t_operators_size_t> m_id;
 
 
-        //NETLIB_CONSTRUCTOR(buffered_param_setter)
-        protected nld_buffered_param_setter(object owner, string name)
-            : base(owner, name)
+        protected nld_buffered_param_setter(device_t_constructor_param_t data)
+            : base(data)
         {
             m_sample_time = netlist_time.zero();
             m_feedback = new logic_input_t(this, "FB", feedback); // clock part
@@ -260,4 +257,4 @@ namespace mame.netlist.interface_
                 throw new emu_unimplemented();
         }
     }
-} // namespace netlist
+}

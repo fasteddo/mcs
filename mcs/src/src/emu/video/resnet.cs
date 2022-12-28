@@ -94,7 +94,7 @@ namespace mame
         // - Least significant bit first
         public double  [] R = new double[8];
         // Minimum output voltage
-        // - Applicable if output is routed through a complimentary
+        // - Applicable if output is routed through a complementary
         // - darlington circuit
         // - typical value ~ 0.9V
         public double  minout;

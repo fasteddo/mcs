@@ -21,15 +21,6 @@ namespace mame
         const u16 GOTTLIEB_VIDEO_VBLANK   = 240;
 
 
-        //enum
-        //{
-        //    TIMER_LASERDISC_PHILIPS,
-        //    TIMER_LASERDISC_BIT_OFF,
-        //    TIMER_LASERDISC_BIT,
-        //    TIMER_NMI_CLEAR
-        //};
-
-
         // devices
         required_device<i8088_cpu_device> m_maincpu;
         optional_device<pioneer_pr8210_device> m_laserdisc;
@@ -55,7 +46,9 @@ namespace mame
         //u8 m_joystick_select = 0U;
         //u8 m_track[2]{};
         //emu_timer *m_laserdisc_bit_timer = null;
+        //emu_timer *m_laserdisc_bit_off_timer = nullptr;
         //emu_timer *m_laserdisc_philips_timer = null;
+        //emu_timer *m_nmi_clear_timer = nullptr;
         //u8 m_laserdisc_select = 0U;
         //u8 m_laserdisc_status = 0U;
         //uint16_t m_laserdisc_philips_code = 0U;
@@ -101,6 +94,5 @@ namespace mame
         protected override void machine_start() { throw new emu_unimplemented(); }
         protected override void machine_reset() { throw new emu_unimplemented(); }
         protected override void video_start() { throw new emu_unimplemented(); }
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param) { throw new emu_unimplemented(); }
     }
 }

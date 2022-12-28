@@ -17,7 +17,7 @@ namespace mame
 
     // ======================> filter_rc_device
     public class filter_rc_device : device_t
-                             //device_sound_interface
+                                    //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(FILTER_RC, filter_rc_device, "filter_rc", "RC Filter")
         public static readonly emu.detail.device_type_impl FILTER_RC = DEFINE_DEVICE_TYPE("filter_rc", "RC Filter", (type, mconfig, tag, owner, clock) => { return new filter_rc_device(mconfig, tag, owner, clock); });

@@ -571,7 +571,7 @@ namespace mame
             //VIDEO_START_CALL_MEMBER(dkong_base);
             video_start_dkong_base();
 
-            m_scanline_timer = machine().scheduler().timer_alloc(scanline_callback);
+            m_scanline_timer = timer_alloc(scanline_callback);
             m_scanline_timer.adjust(m_screen.op0.time_until_pos(0));
 
             switch (m_hardware_type)

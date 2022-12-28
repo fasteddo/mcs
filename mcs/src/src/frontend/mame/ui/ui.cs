@@ -19,6 +19,7 @@ using uint32_t = System.UInt32;
 
 using static mame.cpp_global;
 using static mame.gamedrv_global;
+using static mame.inputcode_global;
 using static mame.ioport_global;
 using static mame.language_global;
 using static mame.machine_global;
@@ -387,7 +388,7 @@ namespace mame
                         config_menu = true;
                         return UI_HANDLER_CANCEL;
                     }
-                    else if (poller.poll() != input_code.INPUT_CODE_INVALID)
+                    else if (poller.poll() != INPUT_CODE_INVALID)
                     {
                         // if any key is pressed, just exit
                         return UI_HANDLER_CANCEL;
@@ -512,7 +513,7 @@ namespace mame
                         if (!mandatory_images.empty() && show_mandatory_fileman)
                         {
                             string warning = "";
-                            warning += "This driver requires images to be loaded in the following device(s): ";
+                            warning += __("This system requires media images to be mounted for the following device(s): ");
 
                             output_joined_collection(mandatory_images,
                             (img) => { warning += "\"" + img + "\""; },  //    [&warning](const std::reference_wrapper<const std::string> &img)    { warning << "\"" << img.get() << "\""; },
@@ -525,7 +526,7 @@ namespace mame
 
                 // clear the input memory and wait for all keys to be released
                 poller.reset();
-                while (poller.poll() != input_code.INPUT_CODE_INVALID) { }
+                while (poller.poll() != INPUT_CODE_INVALID) { }
 
                 if (m_handler_callback_type == ui_callback_type.MODAL)
                 {

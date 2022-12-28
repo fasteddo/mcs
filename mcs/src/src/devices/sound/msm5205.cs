@@ -191,8 +191,8 @@ namespace mame
 
             /* stream system initialize */
             m_stream = stream_alloc(0, 1, clock());
-            m_vck_timer = timer_alloc(TIMER_VCK);
-            m_capture_timer = timer_alloc(TIMER_ADPCM_CAPTURE);
+            m_vck_timer = timer_alloc(toggle_vck);
+            m_capture_timer = timer_alloc(update_adpcm);
 
             /* register for save states */
             save_item(NAME(new { m_data }));
@@ -236,26 +236,22 @@ namespace mame
         }
 
 
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
+        //-------------------------------------------------
+        //  toggle_vck -
+        //-------------------------------------------------
+        //TIMER_CALLBACK_MEMBER(msm5205_device::toggle_vck)
+        void toggle_vck(s32 param)
         {
-            switch (id)
-            {
-                case TIMER_VCK:
-                    m_vck = !m_vck;
-                    m_vck_cb.op_s32(m_vck ? 1 : 0);
-                    if (!m_vck)
-                        m_capture_timer.adjust(attotime.from_hz(clock() / 6)); // 15.6 usec at 384KHz
-                    break;
-
-                case TIMER_ADPCM_CAPTURE:
-                    update_adpcm();
-                    break;
-            }
+            m_vck = !m_vck;
+            m_vck_cb.op_s32(m_vck ? 1 : 0);
+            if (!m_vck)
+                m_capture_timer.adjust(attotime.from_hz(clock() / adpcm_capture_divisor()));
         }
 
 
         // timer callback at VCK low edge on MSM5205 (at rising edge on MSM6585)
-        void update_adpcm()
+        //TIMER_CALLBACK_MEMBER(update_adpcm);
+        void update_adpcm(s32 param)
         {
             int val;
             int new_signal;
@@ -287,7 +283,7 @@ namespace mame
             }
 
             /* update when signal changed */
-            if ( m_signal != new_signal)
+            if (m_signal != new_signal)
             {
                 m_stream.update();
                 m_signal = new_signal;
@@ -358,6 +354,9 @@ namespace mame
             else
                 return m_s2 ? 48 : 96;
         }
+
+
+        protected virtual double adpcm_capture_divisor() { return 6.0; }
     }
 
 

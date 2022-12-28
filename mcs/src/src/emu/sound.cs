@@ -114,11 +114,12 @@ namespace mame
         [Conditional("DEBUG")] public static void sound_assert(bool condition) { assert(condition, "sound_assert\n"); }
 
 
-        const bool VERBOSE = false;  //#define VERBOSE         (0)
+        const int VERBOSE = 0;  //#define VERBOSE 1
 
-        public static void VPRINTF(string x, params object [] args) { if (VERBOSE) osd_printf_debug(x, args); } //#define VPRINTF(x)      do { if (VERBOSE) osd_printf_debug x; } while (0)
-
+        //#define LOG_OUTPUT_FUNC osd_printf_debug
+        //#include "logmacro.h"
         //#define LOG_OUTPUT_WAV  (0)
+        public static void LOG(string format, params object [] args) { if (VERBOSE != 0) osd_printf_debug(format, args); }
     }
 
 
@@ -1037,6 +1038,8 @@ namespace mame
         bool m_resampling_disabled;                    // is resampling of input streams disabled?
         emu_timer m_sync_timer;                       // update timer for synchronous streams  //emu_timer *m_sync_timer;                       // update timer for synchronous streams
 
+        attotime m_last_update_end_time;               // last end_time() in update
+
         // input information
         std.vector<sound_stream_input> m_input;       // list of streams we directly depend upon
         std.vector<read_stream_view> m_input_view;    // array of output views for passing to the callback
@@ -1065,6 +1068,7 @@ namespace mame
             m_synchronous = (flags & sound_stream_flags.STREAM_SYNCHRONOUS) != 0;
             m_resampling_disabled = (flags & sound_stream_flags.STREAM_DISABLE_INPUT_RESAMPLING) != 0;
             m_sync_timer = null;
+            m_last_update_end_time = attotime.zero;
             m_input = new std.vector<sound_stream_input>(inputs);  m_input.Fill(() => { return new sound_stream_input(); });
             m_input_view = new std.vector<read_stream_view>(inputs);
             m_empty_buffer = new stream_buffer(100);
@@ -1087,10 +1091,12 @@ namespace mame
 
             //throw new emu_unimplemented();
 #if false
-            save.save_item(m_device, "stream.sample_rate", state_tag.c_str(), 0, NAME(m_sample_rate));
+            save.save_item(&m_device, "stream.sound_stream", state_tag.c_str(), 0, NAME(m_sample_rate));
+            save.save_item(&m_device, "stream.sound_stream", state_tag.c_str(), 0, NAME(m_last_update_end_time));
 #endif
 
             save.register_postload(postload);
+            save.register_presave(presave);
 
             // initialize all inputs
             for (unsigned_int inputnum = 0; inputnum < m_input.size(); inputnum++)
@@ -1113,7 +1119,7 @@ namespace mame
 
             // create an update timer for synchronous streams
             if (synchronous())
-                m_sync_timer = m_device.machine().scheduler().timer_alloc(sync_update);
+                m_sync_timer = m_device.timer_alloc(sync_update);
 
             // force an update to the sample rates
             sample_rate_changed();
@@ -1188,7 +1194,7 @@ namespace mame
         //-------------------------------------------------
         public void set_input(int index, sound_stream input_stream, int output_index = 0, float gain = 1.0f)
         {
-            VPRINTF("stream_set_input({0}, '{1}', {2}, {3}, {4}, {5})\n", this, m_device.tag(), index, input_stream, output_index, (double)gain);
+            LOG("stream_set_input({0}, '{1}', {2}, {3}, {4}, {5}\n", this, m_device.tag(), index, input_stream, output_index, gain);
 
             // make sure it's a valid input
             if (index >= (int)m_input.size())
@@ -1397,12 +1403,19 @@ namespace mame
         //-------------------------------------------------
         void postload()
         {
-            // set the end time of all of our streams to now
+            // set the end time of all of our streams to the value saved in m_last_update_end_time
             foreach (var output in m_output)
-                output.set_end_time(m_device.machine().time());
+                output.set_end_time(m_last_update_end_time);
 
             // recompute the sample rate information
             sample_rate_changed();
+        }
+
+
+        // handle updates before a save state load
+        void presave()
+        {
+            throw new emu_unimplemented();
         }
 
 
@@ -1692,7 +1705,7 @@ namespace mame
             // count the mixers
 #if VERBOSE
             mixer_interface_enumerator iter(machine.root_device());
-            VPRINTF(("total mixers = %d\n", iter.count()));
+            LOG("total mixers = %d\n", iter.count());
 #endif
 
             // register callbacks
@@ -2072,7 +2085,7 @@ namespace mame
         //-------------------------------------------------
         void update(s32 param = 0)
         {
-            VPRINTF("sound_update\n");
+            LOG("sound_update\n");
 
             g_profiler.start(profile_type.PROFILER_SOUND);
 

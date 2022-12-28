@@ -21,7 +21,7 @@ using static mame.emumem_global;
 using static mame.emupal_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
-using static mame.input_global;
+using static mame.inputcode_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
@@ -234,7 +234,7 @@ namespace mame
             PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT );  PORT_PLAYER(1); PORT_4WAY();
             PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_PLAYER(1); PORT_4WAY();
             PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN );  PORT_PLAYER(1); PORT_4WAY();
-            PORT_DIPNAME(0x10, 0x10, "Rack Test (Cheat)" ); PORT_CODE(KEYCODE_F1);
+            PORT_DIPNAME(0x10, 0x10, "Rack Test (Cheat)" ); PORT_CODE(KEYCODE_F1); PORT_DIPLOCATION("SW:7"); PORT_TOGGLE();
             PORT_DIPSETTING(   0x10, DEF_STR( Off ) );
             PORT_DIPSETTING(   0x00, DEF_STR( On ) );
             PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 );
@@ -249,9 +249,9 @@ namespace mame
             PORT_SERVICE( 0x10, IP_ACTIVE_LOW );
             PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 );
             PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 );
-            PORT_DIPNAME(0x80, 0x80, DEF_STR( Cabinet ) );
-            PORT_DIPSETTING(   0x80, DEF_STR( Upright ) );
-            PORT_DIPSETTING(   0x00, DEF_STR( Cocktail ) );
+            PORT_CONFNAME(0x80, 0x80, DEF_STR( Cabinet ) );
+            PORT_CONFSETTING(   0x80, DEF_STR( Upright ) );
+            PORT_CONFSETTING(   0x00, DEF_STR( Cocktail ) );
 
             PORT_START("DSW1");
             PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) ); PORT_DIPLOCATION("SW:1,2");
@@ -269,12 +269,12 @@ namespace mame
             PORT_DIPSETTING(    0x10, "15000" );
             PORT_DIPSETTING(    0x20, "20000" );
             PORT_DIPSETTING(    0x30, DEF_STR( None ) );
-            PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) ); PORT_DIPLOCATION("SW:7"); // physical location for difficulty on puckman set is split-pad between R32 and C29
-            PORT_DIPSETTING(    0x40, DEF_STR( Normal ) );
-            PORT_DIPSETTING(    0x00, DEF_STR( Hard ) );
-            PORT_DIPNAME( 0x80, 0x80, "Ghost Names" ); PORT_DIPLOCATION("SW:8"); // physical location for ghostnames on puckman set is split-pad between C10 and C29
-            PORT_DIPSETTING(    0x80, DEF_STR( Normal ) );
-            PORT_DIPSETTING(    0x00, DEF_STR( Alternate ) );
+            PORT_CONFNAME(0x40, 0x40, DEF_STR( Difficulty ) );   // physical location for difficulty on puckman set is split-pad between R32 and C29
+            PORT_CONFSETTING(   0x40, DEF_STR( Normal ) );
+            PORT_CONFSETTING(   0x00, DEF_STR( Hard ) );
+            PORT_CONFNAME(0x80, 0x80, "Ghost Names" );           // physical location for ghostnames on puckman set is split-pad between C10 and C29
+            PORT_CONFSETTING(   0x80, DEF_STR( Normal ) );
+            PORT_CONFSETTING(   0x00, DEF_STR( Alternate ) );
 
             PORT_START("DSW2");
             PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED );
@@ -295,7 +295,7 @@ namespace mame
             PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ); PORT_4WAY();
             PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_4WAY();
             PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_4WAY();
-            PORT_DIPNAME(0x10, 0x10, "Rack Test (Cheat)" ); PORT_CODE(KEYCODE_F1);
+            PORT_DIPNAME( 0x10, 0x10, "Rack Test (Cheat)" ); PORT_CODE(KEYCODE_F1); PORT_DIPLOCATION("SW:7"); PORT_TOGGLE();
             PORT_DIPSETTING(    0x10, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
             PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 );
@@ -308,31 +308,31 @@ namespace mame
             PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ); PORT_4WAY(); PORT_COCKTAIL();
             PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ); PORT_4WAY(); PORT_COCKTAIL();
             PORT_SERVICE( 0x10, IP_ACTIVE_LOW );
-            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 );
-            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 );
-            PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) );
-            PORT_DIPSETTING(    0x80, DEF_STR( Upright ) );
-            PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) );
+            PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 );  // Also invincibility in mspacpls
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 );  // Also speed-up in mspacpls
+            PORT_CONFNAME( 0x80, 0x80, DEF_STR( Cabinet ) );
+            PORT_CONFSETTING(   0x80, DEF_STR( Upright ) );
+            PORT_CONFSETTING(   0x00, DEF_STR( Cocktail ) );
 
             PORT_START("DSW1");
-            PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) );
+            PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) );      PORT_DIPLOCATION("SW:1,2");
             PORT_DIPSETTING(    0x03, DEF_STR( _2C_1C ) );
             PORT_DIPSETTING(    0x01, DEF_STR( _1C_1C ) );
             PORT_DIPSETTING(    0x02, DEF_STR( _1C_2C ) );
             PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) );
-            PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Lives ) );
+            PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Lives ) );        PORT_DIPLOCATION("SW:3,4");
             PORT_DIPSETTING(    0x00, "1" );
             PORT_DIPSETTING(    0x04, "2" );
             PORT_DIPSETTING(    0x08, "3" );
             PORT_DIPSETTING(    0x0c, "5" );
-            PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) );
+            PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) );   PORT_DIPLOCATION("SW:5,6");
             PORT_DIPSETTING(    0x00, "10000" );
             PORT_DIPSETTING(    0x10, "15000" );
             PORT_DIPSETTING(    0x20, "20000" );
             PORT_DIPSETTING(    0x30, DEF_STR( None ) );
-            PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) );
-            PORT_DIPSETTING(    0x40, DEF_STR( Normal ) );
-            PORT_DIPSETTING(    0x00, DEF_STR( Hard ) );
+            PORT_CONFNAME( 0x40, 0x40, DEF_STR( Difficulty ) );
+            PORT_CONFSETTING(    0x40, DEF_STR( Normal ) );
+            PORT_CONFSETTING(    0x00, DEF_STR( Hard ) );
             PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED );
 
             PORT_START("DSW2");

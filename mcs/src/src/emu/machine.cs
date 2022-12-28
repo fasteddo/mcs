@@ -336,7 +336,7 @@ namespace mame
         public sound_manager sound() { return m_sound; }
         public video_manager video() { assert(m_video != null); return m_video; }
         network_manager network() { assert(m_network != null); return m_network; }
-        public bookkeeping_manager bookkeeping() { assert(m_network != null); return m_bookkeeping; }
+        public bookkeeping_manager bookkeeping() { assert(m_bookkeeping != null); return m_bookkeeping; }
         public configuration_manager configuration() { assert(m_configuration != null); return m_configuration; }
         public output_manager output() { assert(m_output != null); return m_output; }
         public ui_manager ui() { assert(m_ui != null); return m_ui; }

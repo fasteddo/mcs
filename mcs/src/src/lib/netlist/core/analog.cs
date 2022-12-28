@@ -14,7 +14,7 @@ namespace mame.netlist
     // -----------------------------------------------------------------------------
     public class analog_t : detail.core_terminal_t
     {
-        protected analog_t(core_device_t dev, string aname, state_e state, nldelegate delegate_)
+        protected analog_t(core_device_t dev, string aname, state_e state, nl_delegate delegate_)
             : base(dev, aname, state, delegate_)
         {
         }
@@ -35,7 +35,7 @@ namespace mame.netlist
 
     /// \brief Base class for terminals.
     ///
-    /// Each \ref nld_twoterm object consists of two terminals. Terminals
+    /// Each \ref nld_two_terminal object consists of two terminals. Terminals
     /// are at the core of analog netlists and are connected to  \ref net_t
     /// objects.
     ///
@@ -48,10 +48,10 @@ namespace mame.netlist
 
         /// \brief constructor
         ///
-        /// @param dev core_devict_t object owning the terminal
-        /// @param aname name of this terminal
-        /// @param otherterm pointer to the sibling terminal
-        public terminal_t(core_device_t dev, string aname, nldelegate delegate_)  //terminal_t(core_device_t &dev, const pstring &aname, terminal_t *otherterm, const std::array<terminal_t *, 2> &splitterterms, nldelegate delegate)
+        /// \param dev object owning the terminal
+        /// \param aname name of this terminal
+        /// \param other_terminal pointer to the sibling terminal
+        public terminal_t(core_device_t dev, string aname, nl_delegate delegate_)  //terminal_t(core_device_t &dev, const pstring &aname, terminal_t *otherterm, const std::array<terminal_t *, 2> &splitterterms, nldelegate delegate)
             : base(dev, aname, state_e.STATE_BIDIR, delegate_)
         {
             // NOTE - make sure to call terminal_t_after_ctor()
@@ -66,31 +66,25 @@ namespace mame.netlist
         }
 
 
-        public void terminal_t_after_ctor(terminal_t otherterm, std.array<terminal_t, u64_const_2> splitterterms = null)
+        public void terminal_t_after_ctor(terminal_t other_terminal, std.array<terminal_t, u64_const_2> splitter_terms = null)
         {
-            if (splitterterms == null)
-                splitterterms = new std.array<terminal_t, u64_const_2>(null, null);
+            if (splitter_terms == null)
+                splitter_terms = new std.array<terminal_t, u64_const_2>(null, null);
 
-            state().setup().register_term(this, otherterm, splitterterms);
+            state().setup().register_term(this, other_terminal, splitter_terms);
         }
 
 
         /// \brief Returns voltage of connected net
         ///
-        /// @return voltage of net this terminal is connected to
-        //nl_fptype operator ()() const  noexcept
-        //{
-        //    return net().Q_Analog();
-        //}
-        public nl_fptype op()
-        {
-            return net().Q_Analog();
-        }
+        /// \return voltage of net this terminal is connected to
+        //nl_fptype operator()() const noexcept { return net().Q_Analog(); }
+        public nl_fptype op() { return net().Q_Analog(); }
 
 
-        /// @brief sets conductivity value of this terminal
+        /// \brief sets conductivity value of this terminal
         ///
-        /// @param G Conductivity
+        /// \param G Conductivity
         public void set_conductivity(nl_fptype G)
         {
             set_go_gt_I(-G, G, nlconst.zero());
@@ -135,14 +129,14 @@ namespace mame.netlist
     // -----------------------------------------------------------------------------
     /// \brief terminal providing analog input voltage.
     ///
-    /// This terminal class provides a voltage measurement. The conductance against
-    /// ground is infinite.
+    /// This terminal class provides a voltage measurement. The conductance
+    /// against ground is infinite.
     class analog_input_t : analog_t
     {
         /// \brief Constructor
         public analog_input_t(core_device_t dev,  ///< owning device
             string aname,       ///< name of terminal
-            nldelegate delegate_) ///< delegate
+            nl_delegate delegate_) ///< delegate
             : base(dev, aname, state_e.STATE_INP_ACTIVE, delegate_)
         {
             state().setup().register_term(this);
@@ -157,10 +151,7 @@ namespace mame.netlist
 
         /// \brief returns voltage at terminal.
         ///  \returns voltage at terminal.
-        public nl_fptype Q_Analog()
-        {
-            return net().Q_Analog();
-        }
+        public nl_fptype Q_Analog() { return net().Q_Analog(); }
     }
 
 

@@ -3,6 +3,9 @@
 
 using System;
 
+using base_device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = base_device_param_t;  //using base_device_param_t = const base_device_data_t &;  //using base_device_data_t = core_device_data_t;
+using base_device_param_t = mame.netlist.core_device_data_t;  //using base_device_param_t = const base_device_data_t &;  //using base_device_data_t = core_device_data_t;
+using device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = device_param_t;  //using device_param_t = const device_data_t &;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using mt19937_64 = mame.plib.mersenne_twister_t_uint64<  //using mt19937_64 = mersenne_twister_t<
     //uint_fast64_t,
@@ -36,16 +39,16 @@ namespace mame
         //    NETLIB_DEVICE_IMPL_BASE(ns, chip, chip, p_name, p_def_param) \
         public static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_NS<chip>(string ns, string p_name, string p_def_param) { return NETLIB_DEVICE_IMPL_BASE<chip>("devices", "devices", p_name, p_def_param); }
 
-        //#define NETLIB_DEVICE_IMPL_BASE(ns, p_alias, chip, p_name, p_def_param) \
-        //    static factory::element_t::uptr NETLIB_NAME(p_alias ## _c) () \
-        //    { \
-        //        using devtype = factory::device_element_t<ns :: NETLIB_NAME(chip)>; \
-        //        factory::properties sl(p_def_param, PSOURCELOC()); \
-        //        return devtype::create(p_name, std::move(sl)); \
-        //    } \
-        //    \
-        //    extern factory::constructor_ptr_t decl_ ## p_alias; \
-        //    factory::constructor_ptr_t decl_ ## p_alias = NETLIB_NAME(p_alias ## _c);
+        //#define NETLIB_DEVICE_IMPL_BASE(ns, p_alias, chip, p_name, p_def_param)        \
+        //    static factory::element_t::uptr NETLIB_NAME(p_alias##_c)()                 \
+        //    {                                                                          \
+        //        using devtype = factory::device_element_t<ns ::NETLIB_NAME(chip)>;     \
+        //        factory::properties sl(p_def_param, PSOURCELOC());                     \
+        //        return devtype::create(p_name, std::move(sl));                         \
+        //    }                                                                          \
+        //                                                                               \
+        //    extern factory::constructor_ptr_t decl_##p_alias;                          \
+        //    factory::constructor_ptr_t        decl_##p_alias = NETLIB_NAME(p_alias##_c);
         static netlist.factory.constructor_ptr_t NETLIB_DEVICE_IMPL_BASE<chip>(string ns, string p_alias, string p_name, string p_def_param)
         {
             return () => 
@@ -68,15 +71,15 @@ namespace mame
 
         public class properties
         {
-            string m_defparam;
-            plib.source_location m_sourceloc;
+            string m_default_parameter;
+            plib.source_location m_location;
             element_type m_type;
 
 
-            public properties(string defparam, plib.source_location sourceloc)
+            public properties(string default_parameter, plib.source_location location)
             {
-                m_defparam = defparam;
-                m_sourceloc = sourceloc;
+                m_default_parameter = default_parameter;
+                m_location = location;
                 m_type = element_type.BUILTIN;
             }
 
@@ -84,9 +87,9 @@ namespace mame
             //PCOPYASSIGNMOVE(properties, default)
 
 
-            public string defparam()
+            public string default_parameter()
             {
-                return m_defparam;
+                return m_default_parameter;
             }
 
 
@@ -108,10 +111,12 @@ namespace mame
 
 
         // FIXME: this doesn't do anything, check how to remove
-        class nld_wrapper : base_device_t  //class NETLIB_NAME(wrapper) : public base_device_t
+        //class NETLIB_NAME(wrapper) : public base_device_t
+        class nld_wrapper : base_device_t
         {
-            public nld_wrapper(netlist_state_t anetlist, string name)  //NETLIB_NAME(wrapper)(netlist_state_t &anetlist, const pstring &name)
-                : base(anetlist, name)
+            //NETLIB_NAME(wrapper)(base_device_param_t data)
+            public nld_wrapper(base_device_param_t data)
+                : base(data)
             {
             }
 
@@ -150,7 +155,7 @@ namespace mame
 
 
             public string name() { return m_name; }
-            public string param_desc() { return m_properties.defparam(); }
+            public string param_desc() { return m_properties.default_parameter(); }
             //plib::source_location source() const noexcept { return m_properties.source(); }
             public element_type type() { return m_properties.type(); }
         }
@@ -159,7 +164,7 @@ namespace mame
         public static class nld_sound_in_helper
         {
             public static Func<Type, bool> is_nld_sound_in;
-            public static Func<object, string, core_device_t> new_nld_sound_in;
+            public static Func<device_t_constructor_param_t, core_device_t> new_nld_sound_in;
             public static Func<string, properties, element_t> new_device_element_t_nld_sound_in;
         }
 
@@ -167,6 +172,9 @@ namespace mame
         //template <class C, typename... Args>
         public class device_element_t<C> : element_t
         {
+            //using constructor_data_t = typename C::constructor_data_t;
+
+
             object [] m_args;  //std::tuple<Args...> m_args;
 
 
@@ -182,7 +190,7 @@ namespace mame
             //                    netlist_state_t &anetlist,
             //                    const pstring &name, std::tuple<Args...>& args, std::index_sequence<Is...>)
             //{
-            //    return plib::make_unique<C>(pool, anetlist, name, std::forward<Args>(std::get<Is>(args))...);
+            //    return plib::make_unique<C>(pool, constructor_data_t{anetlist, name}, std::forward<Args>(std::get<Is>(args))...);
             //}
 
             //dev_uptr make_device(device_arena &pool,
@@ -204,39 +212,39 @@ namespace mame
                 //return plib::make_unique<C>(pool, anetlist, name, std::forward<Args>(std::get<Is>(args))...);
                 ////return anetlist.make_pool_object<C>(anetlist, name, std::forward<Args>(std::get<Is>(args))...);
 
-                if      (typeof(C) == typeof(analog.nld_C))                   return new analog.nld_C(anetlist, name);
-                else if (typeof(C) == typeof(analog.nld_D))                   return new analog.nld_D(anetlist, name);
-                else if (typeof(C) == typeof(analog.nld_opamp))               return new analog.nld_opamp(anetlist, name);
-                else if (typeof(C) == typeof(analog.nld_POT))                 return new analog.nld_POT(anetlist, name);
-                else if (typeof(C) == typeof(analog.nld_QBJT_EB))             return new analog.nld_QBJT_EB(anetlist, name);
-                else if (typeof(C) == typeof(analog.nld_QBJT_switch))         return new analog.nld_QBJT_switch(anetlist, name);
-                else if (typeof(C) == typeof(analog.nld_R))                   return new analog.nld_R(anetlist, name);
-                else if (typeof(C) == typeof(analog.nld_switch2))             return new analog.nld_switch2(anetlist, name);
-                else if (typeof(C) == typeof(analog.nld_Z))                   return new analog.nld_Z(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_74107))              return new devices.nld_74107(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_74153))              return new devices.nld_74153(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_7448))               return new devices.nld_7448(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_7450))               return new devices.nld_7450(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_7474))               return new devices.nld_7474(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_7483))               return new devices.nld_7483(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_7490))               return new devices.nld_7490(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_7493))               return new devices.nld_7493(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_9316))               return new devices.nld_9316(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_analog_input))       return new devices.nld_analog_input(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_CD4066_GATE))        return new devices.nld_CD4066_GATE(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_clock))              return new devices.nld_clock(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_frontier))           return new devices.nld_frontier(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_gnd))                return new devices.nld_gnd(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_logic_input))        return new devices.nld_logic_input(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_mainclock))          return new devices.nld_mainclock(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_NE555))              return new devices.nld_NE555(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_netlistparams))      return new devices.nld_netlistparams(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_solver))             return new devices.nld_solver(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_sys_dsw1))           return new devices.nld_sys_dsw1(anetlist, name);
-                else if (typeof(C) == typeof(devices.nld_sys_noise<mt19937_64, plib.normal_distribution_t, plib.distribution_ops_normal>)) return new devices.nld_sys_noise<mt19937_64, plib.normal_distribution_t, plib.distribution_ops_normal>(anetlist, name);
-                else if (typeof(C) == typeof(interface_.nld_analog_callback)) { assert(args.Length == 2);  return new interface_.nld_analog_callback(anetlist, name, (nl_fptype)args[0], (interface_.nld_analog_callback.FUNC)args[1]); }
-                else if (typeof(C) == typeof(interface_.nld_logic_callback))  { assert(args.Length == 1);  return new interface_.nld_logic_callback(anetlist, name, (interface_.nld_logic_callback.FUNC)args[0]); }
-                else if (nld_sound_in_helper.is_nld_sound_in(typeof(C)))      return nld_sound_in_helper.new_nld_sound_in(anetlist, name);
+                if      (typeof(C) == typeof(analog.nld_C))                   return new analog.nld_C(new base_device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(analog.nld_D))                   return new analog.nld_D(new base_device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(analog.nld_opamp))               return new analog.nld_opamp(new base_device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(analog.nld_POT))                 return new analog.nld_POT(new base_device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(analog.nld_QBJT_EB))             return new analog.nld_QBJT_EB(new base_device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(analog.nld_QBJT_switch))         return new analog.nld_QBJT_switch(new base_device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(analog.nld_R))                   return new analog.nld_R(new base_device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(analog.nld_switch2))             return new analog.nld_switch2(new base_device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(analog.nld_Z))                   return new analog.nld_Z(new base_device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_74107))              return new devices.nld_74107(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_74153))              return new devices.nld_74153(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_7448))               return new devices.nld_7448(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_7450))               return new devices.nld_7450(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_7474))               return new devices.nld_7474(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_7483))               return new devices.nld_7483(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_7490))               return new devices.nld_7490(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_7493))               return new devices.nld_7493(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_9316))               return new devices.nld_9316(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_analog_input))       return new devices.nld_analog_input(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_CD4066_GATE))        return new devices.nld_CD4066_GATE(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_clock))              return new devices.nld_clock(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_frontier))           return new devices.nld_frontier(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_gnd))                return new devices.nld_gnd(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_logic_input))        return new devices.nld_logic_input(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_mainclock))          return new devices.nld_mainclock(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_NE555))              return new devices.nld_NE555(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_netlistparams))      return new devices.nld_netlistparams(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_solver))             return new devices.nld_solver(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_sys_dsw1))           return new devices.nld_sys_dsw1(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(devices.nld_sys_noise<mt19937_64, plib.normal_distribution_t, plib.distribution_ops_normal>)) return new devices.nld_sys_noise<mt19937_64, plib.normal_distribution_t, plib.distribution_ops_normal>(new device_t_constructor_param_t(anetlist, name));
+                else if (typeof(C) == typeof(interface_.nld_analog_callback)) { assert(args.Length == 2);  return new interface_.nld_analog_callback(new device_t_constructor_param_t(anetlist, name), (nl_fptype)args[0], (interface_.nld_analog_callback.FUNC)args[1]); }
+                else if (typeof(C) == typeof(interface_.nld_logic_callback))  { assert(args.Length == 1);  return new interface_.nld_logic_callback(new device_t_constructor_param_t(anetlist, name), (interface_.nld_logic_callback.FUNC)args[0]); }
+                else if (nld_sound_in_helper.is_nld_sound_in(typeof(C)))      return nld_sound_in_helper.new_nld_sound_in(new device_t_constructor_param_t(anetlist, name));
                 else throw new emu_unimplemented();
             }
 
@@ -368,7 +376,7 @@ namespace mame
 
             public override core_device_t make_device(device_arena pool, netlist_state_t anetlist, string name)  //dev_uptr make_device(device_arena &pool, netlist_state_t &anetlist, const pstring &name) override;
             {
-                return new nld_wrapper(anetlist, name);  //return plib::make_unique<NETLIB_NAME(wrapper)>(pool, anetlist, name);
+                return new nld_wrapper(new base_device_param_t(anetlist, name));  //return plib::make_unique<NETLIB_NAME(wrapper)>(pool, base_device_data_t{anetlist, name});
             }
         }
     }

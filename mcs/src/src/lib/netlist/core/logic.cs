@@ -16,7 +16,7 @@ namespace mame.netlist
     public class logic_t : detail.core_terminal_t, 
                            logic_family_t
     {
-        public logic_t(device_t dev, string aname, state_e terminal_state, nldelegate delegate_)
+        public logic_t(device_t dev, string aname, state_e terminal_state, nl_delegate delegate_)
             : base(dev, aname, terminal_state, delegate_)
         {
             m_logic_family = dev.logic_family();  //, logic_family_t(dev.logic_family())
@@ -38,7 +38,7 @@ namespace mame.netlist
     // -----------------------------------------------------------------------------
     public class logic_input_t : logic_t
     {
-        public logic_input_t(device_t dev, string aname, nldelegate delegate_)
+        public logic_input_t(device_t dev, string aname, nl_delegate delegate_)
             : base(dev, aname, state_e.STATE_INP_ACTIVE, delegate_)
         {
             state().setup().register_term(this);
@@ -49,14 +49,12 @@ namespace mame.netlist
         {
             //throw new emu_unimplemented();
 #if false
-            nl_assert(terminal_state() != STATE_INP_PASSIVE);
+            gsl_Expects(terminal_state() != STATE_INP_PASSIVE);
 #endif
-
-#if NL_USE_COPY_INSTEAD_OF_REFERENCE
-            return m_Q;
-#else
-            return net().Q();
-#endif
+            if (config.use_copy_instead_of_reference)
+                return m_Q_CIR.op;
+            else
+                return net().Q();
         }
 
 
@@ -116,7 +114,8 @@ namespace mame.netlist
         ///
         /// \param dev Device owning this output
         /// \param aname The name of this output
-        /// \param dummy Dummy parameter to allow construction like tristate output
+        /// \param dummy Dummy parameter to allow construction like tristate
+        /// output
         ///
         public logic_output_t(device_t dev, string aname, bool dummy = false)
             : base(dev, aname, state_e.STATE_OUT, null)  //: logic_t(dev, aname, STATE_OUT, nldelegate())

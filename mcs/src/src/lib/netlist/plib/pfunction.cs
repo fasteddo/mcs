@@ -182,18 +182,18 @@ namespace mame.plib
             { "G", ops.cast( 1e9) }, // NOLINT: Giga
             { "M", ops.cast( 1e6) }, // NOLINT: Mega
             { "k", ops.cast( 1e3) }, // NOLINT: Kilo
-            { "h", ops.cast( 1e2) }, // NOLINT: Hekto
-            //{ "da", narrow_cast<F>(1e1) }, // NOLINT: Deka
-            { "d", ops.cast(1e-1) }, // NOLINT: Dezi
-            { "c", ops.cast(1e-2) }, // NOLINT: Zenti
+            { "h", ops.cast( 1e2) }, // NOLINT: Hecto
+            //{ "da", narrow_cast<F>(1e1) }, // NOLINT: Deca
+            { "d", ops.cast(1e-1) }, // NOLINT: Deci
+            { "c", ops.cast(1e-2) }, // NOLINT: Centi
             { "m", ops.cast(1e-3) }, // NOLINT: Milli
-            { "µ", ops.cast(1e-6) }, // NOLINT: Mikro
+            { "µ", ops.cast(1e-6) }, // NOLINT: Micro
             { "n", ops.cast(1e-9) }, // NOLINT: Nano
-            { "p", ops.cast(1e-12) }, // NOLINT: Piko
+            { "p", ops.cast(1e-12) }, // NOLINT: Pico
             { "f", ops.cast(1e-15) }, // NOLINT: Femto
             { "a", ops.cast(1e-18) }, // NOLINT: Atto
             { "z", ops.cast(1e-21) }, // NOLINT: Zepto
-            { "y", ops.cast(1e-24) }, // NOLINT: Yokto
+            { "y", ops.cast(1e-24) }, // NOLINT: Yocto
         };
 
         static std.map<string, NT> units_si()
@@ -250,7 +250,7 @@ namespace mame.plib
 
         /// \brief Compile an expression
         ///
-        /// \param expr infix or postfix expression. default is infix, postrix
+        /// \param expr infix or postfix expression. default is infix, postfix
         ///          to be prefixed with rpn, e.g. "rpn:A B + 1.3 /"
         /// \param inputs Vector of input variables, e.g. {"A","B"}
         ///

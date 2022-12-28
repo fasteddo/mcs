@@ -11,14 +11,14 @@ namespace mame.plib
 {
     public static class pfmtlog_global
     {
-        //#define PERRMSGV(name, narg, str) \
+        //#define PERRMSGV(name, argument_count, str) \
         //    struct name : public plib::perrmsg \
         //    { \
         //        template<typename... Args> explicit name(Args&&... args) \
         //        : plib::perrmsg(str, std::forward<Args>(args)...) \
-        //        { static_assert(narg == sizeof...(args), "Argument count mismatch"); } \
+        //        { static_assert(argument_count == sizeof...(args), "Argument count mismatch"); } \
         //    };
-        public static string PERRMSGV(int narg, string format, params object [] args) { static_assert(narg == args.Length, "Argument count mismatch"); return String.Format(format, args); }
+        public static string PERRMSGV(int argument_count, string format, params object [] args) { static_assert(argument_count == args.Length, "Argument count mismatch"); return String.Format(format, args); }
     }
 
 
@@ -62,13 +62,13 @@ namespace mame.plib
         //template<typename T>
         //pfmt &operator ()(const T &x)
         //{
-        //    return format_element(ptype_traits<T>::size_spec(), ptype_traits<T>::fmt_spec(), ptype_traits<T>::cast(x));
+        //    return format_element(format_traits<T>::size_spec(), format_traits<T>::fmt_spec(), format_traits<T>::cast(x));
         //}
 
         //template<typename T>
         //pfmt &operator ()(const T *x)
         //{
-        //    return format_element(ptype_traits<T *>::size_spec(), ptype_traits<T *>::fmt_spec(), ptype_traits<T *>::cast(x));
+        //    return format_element(format_traits<T *>::size_spec(), format_traits<T *>::fmt_spec(), format_traits<T *>::cast(x));
         //}
 
         //pfmt &operator ()()
@@ -101,17 +101,17 @@ namespace mame.plib
         //~pfmt_writer_t() noexcept = default;
 
 
-        protected abstract void vdowrite(string ls);
+        protected abstract void upstream_write(string ls);
 
 
-        /* runtime enable */
+        // runtime enable
         //template<bool enabled, typename... Args>
         //void log(const pstring & fmt, Args&&... args) const
         //{
         //    if (build_enabled && enabled && m_enabled)
         //    {
         //        pfmt pf(fmt);
-        //        static_cast<T *>(this)->vdowrite(xlog(pf, std::forward<Args>(args)...));
+        //        plib::dynamic_downcast<T &>(*this).upstream_write(log_translate(pf, std::forward<Args>(args)...));
         //    }
         //}
 
@@ -121,7 +121,7 @@ namespace mame.plib
         //    if (build_enabled && m_enabled)
         //    {
         //        pfmt pf(fmt);
-        //        static_cast<const T *>(this)->vdowrite(xlog(pf, std::forward<Args>(args)...));
+        //        static_cast<const T &>(*this).upstream_write(log_translate(pf, std::forward<Args>(args)...));
         //    }
         //}
         public void op(string format, params object [] args)
@@ -129,7 +129,7 @@ namespace mame.plib
             if (build_enabled && m_enabled)
             {
                 string s = string.Format(format, args);
-                vdowrite(s);  //static_cast<const T *>(this)->vdowrite(xlog(pf, std::forward<Args>(args)...));
+                upstream_write(s);  //static_cast<const T &>(*this).upstream_write(log_translate(pf, std::forward<Args>(args)...));
             }
         }
 
@@ -140,12 +140,12 @@ namespace mame.plib
 
         //bool is_enabled() const { return m_enabled; }
 
-        //pfmt &xlog(pfmt &fmt) const { return fmt; }
+        //pfmt &log_translate(pfmt &fmt) const { return fmt; }
 
         //template<typename X, typename... Args>
-        //pfmt &xlog(pfmt &fmt, X&& x, Args&&... args) const
+        //pfmt &log_translate(pfmt &fmt, X&& x, Args&&... args) const
         //{
-        //    return xlog(fmt(std::forward<X>(x)), std::forward<Args>(args)...);
+        //    return log_translate(fmt(std::forward<X>(x)), std::forward<Args>(args)...);
         //}
     }
 
@@ -190,7 +190,7 @@ namespace mame.plib
         //~plog_channel() noexcept = default;
 
 
-        protected override void vdowrite(string ls)
+        protected override void upstream_write(string ls)
         {
             m_logger(L, ls);
         }

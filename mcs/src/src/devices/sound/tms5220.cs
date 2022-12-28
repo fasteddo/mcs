@@ -11,6 +11,7 @@ using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detai
 using int8_t = System.SByte;
 using int16_t = System.Int16;
 using int32_t = System.Int32;
+using s32 = System.Int32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;
 using uint32_t = System.UInt32;
@@ -597,7 +598,7 @@ namespace mame
             /* initialize a stream */
             m_stream = m_disound.stream_alloc(0, 1, clock() / 80);
 
-            m_timer_io_ready = timer_alloc(0);
+            m_timer_io_ready = timer_alloc(set_io_ready);
 
             /* not during reset which is called from within a write! */
             m_io_ready = true;
@@ -688,60 +689,6 @@ namespace mame
         }
 
 
-        /**********************************************************************************************
-             True timing
-        ***********************************************************************************************/
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
-        {
-            switch(id)
-            {
-            case 0: // m_timer_io_ready
-                /* bring up to date first */
-                m_stream.update();
-                LOGMASKED(LOG_IO_READY, "m_timer_io_ready timer fired, param = {0}, m_rs_ws = {1}\n", param, m_rs_ws);
-                if (param != 0) // low->high ready state
-                {
-                    switch (m_rs_ws)
-                    {
-                    case 0x02:
-                        /* Write */
-                        LOGMASKED(LOG_IO_READY, "m_timer_io_ready: Attempting to service write...\n");
-                        if ((m_fifo_count >= FIFO_SIZE) && m_DDIS) // if FIFO is full and we're in speak external mode
-                        {
-                            LOGMASKED(LOG_IO_READY, "m_timer_io_ready: in SPKEXT and FIFO was full! cannot service write now, delaying 16 cycles...\n");
-                            m_timer_io_ready.adjust(clocks_to_attotime(16), 1);
-                            break;
-                        }
-                        else
-                        {
-                            LOGMASKED(LOG_IO_READY, "m_timer_io_ready: Serviced write: {0}\n", m_write_latch);
-                            data_write(m_write_latch);
-                            m_io_ready = param != 0;
-                            break;
-                        }
-                    case 0x01:
-                        /* Read */
-                        m_read_latch = status_read(true);
-                        LOGMASKED(LOG_IO_READY, "m_timer_io_ready: Serviced read, returning {0}\n", m_read_latch);
-                        m_io_ready = param != 0;
-                        break;
-                    case 0x03:
-                        /* High Impedance */
-                        m_io_ready = param != 0;
-                        break;
-                    case 0x00:
-                        /* illegal */
-                        m_io_ready = param != 0;
-                        break;
-                    }
-                }
-
-                update_ready_state();
-                break;
-            }
-        }
-
-
         // sound stream update overrides
         /**********************************************************************************************
              tms5220_update -- update the sound chip so that it is in sync with CPU execution
@@ -765,6 +712,10 @@ namespace mame
                     output.put_int(sampindex++, sample_data[index], 32768);
             }
         }
+
+
+        //TIMER_CALLBACK_MEMBER(set_io_ready);
+        void set_io_ready(s32 param) { throw new emu_unimplemented(); }
 
 
         // 51xx and VSM related

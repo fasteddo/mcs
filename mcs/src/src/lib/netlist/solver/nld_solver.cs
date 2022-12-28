@@ -3,16 +3,17 @@
 
 using System;
 
-using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
+using device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = device_param_t;  //using device_param_t = const device_data_t &;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<config::prefer_int128::value && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
-using nld_solver_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t = solver::matrix_solver_t::net_list_t;
+using nld_solver_net_list_t = mame.std.vector<mame.netlist.analog_net_t>;  //using net_list_t = solver::matrix_solver_t::net_list_t;  //using net_list_t =  std::vector<analog_net_t *>;
 using nld_solver_params_uptr = mame.netlist.solver.solver_parameters_t;  //using params_uptr = solver_arena::unique_ptr<solver::solver_parameters_t>;
-using nld_solver_queue_type = mame.netlist.detail.queue_base<mame.netlist.solver.matrix_solver_t, mame.bool_const_false>;  //using queue_type = detail::queue_base<solver::matrix_solver_t, false>;
+using nld_solver_queue_type = mame.netlist.detail.queue_base<mame.netlist.solver.matrix_solver_t>;  //using queue_type = detail::queue_base<solver_arena, solver::matrix_solver_t>;
 using nld_solver_solver_ptr = mame.netlist.solver.matrix_solver_t;  //using solver_ptr = solver_arena::unique_ptr<solver::matrix_solver_t>;
 using size_t = System.UInt64;
 
+using static mame.netlist.nl_config_global;
 using static mame.netlist.nl_errstr_global;
 using static mame.nl_factory_global;
 
@@ -22,11 +23,10 @@ using static mame.nl_factory_global;
 // ----------------------------------------------------------------------------------------
 namespace mame.netlist.devices
 {
-    //NETLIB_OBJECT(solver)
     public class nld_solver : device_t
     {
-        //using queue_type = detail::queue_base<solver::matrix_solver_t, false>;
         //using solver_arena = device_arena;
+        //using queue_type = detail::queue_base<solver_arena, solver::matrix_solver_t>;
         //using solver_ptr = solver_arena::unique_ptr<solver::matrix_solver_t>;
         //using net_list_t = solver::matrix_solver_t::net_list_t;
         //using params_uptr = solver_arena::unique_ptr<solver::solver_parameters_t>;
@@ -47,23 +47,22 @@ namespace mame.netlist.devices
         nld_solver_queue_type m_queue;
 
 
-        //NETLIB_CONSTRUCTOR(solver)
-        //detail.family_setter_t m_famsetter;
-        //template <class CLASS>
-        //NETLIB_CONSTRUCTOR(solver)
-        public nld_solver(object owner, string name)
-            : base(owner, name)
+        public nld_solver(device_t_constructor_param_t data)
+            : base(data)
         {
-            m_fb_step = new logic_input_t(this, "FB_step", fb_step<bool_const_false>);  //, m_fb_step(*this, "FB_step", NETLIB_DELEGATE(fb_step<false>))
+            m_fb_step = new logic_input_t(this, "FB_step", fb_step<bool_const_false>);
             m_Q_step = new logic_output_t(this, "Q_step");
             m_params = new solver.solver_parameters_t(this, "", solver.solver_parameter_defaults.get_instance());
-            m_queue = new nld_solver_queue_type(config.max_solver_queue_size,
-                get_solver_id,  //queue_type::id_delegate(&NETLIB_NAME(solver).get_solver_id, this),
-                solver_by_id);  //queue_type::obj_delegate(&NETLIB_NAME(solver).solver_by_id, this));
+            m_queue = new nld_solver_queue_type(
+                  this.state().pool(), config.max_solver_queue_size,
+                  get_solver_id,
+                  solver_by_id);
 
 
             // internal stuff
-            state().save(this, (plib.state_manager_t.callback_t)m_queue, this.name(), "m_queue");
+            state().save(this,
+                         (plib.state_manager_t.callback_t)m_queue,
+                         this.name(), "m_queue");
 
             connect("FB_step", "Q_step");
         }
@@ -85,7 +84,7 @@ namespace mame.netlist.devices
             log().verbose.op("checking net consistency  ...");
             foreach (var grp in splitter.groups)
             {
-                int railterms = 0;
+                int rail_terminals = 0;
                 string nets_in_grp = "";
                 foreach (var n in grp)
                 {
@@ -102,7 +101,7 @@ namespace mame.netlist.devices
                         num_errors++;
                     }
 
-                    foreach (var t in state().core_terms(n))
+                    foreach (detail.core_terminal_t t in n.core_terms_copy())
                     {
                         if (!t.has_net())
                         {
@@ -111,15 +110,21 @@ namespace mame.netlist.devices
                         }
                         else
                         {
-                            var otherterm = t is terminal_t t_terminal ? t_terminal : null;  //auto *otherterm = dynamic_cast<terminal_t *>(t);
-                            if (otherterm != null)
-                                if (state().setup().get_connected_terminal(otherterm).net().is_rail_net())
-                                    railterms++;
+                            //if (auto other_terminal = plib::dynamic_downcast<
+                            //        terminal_t *>(t))
+                            var other_terminal = (terminal_t)t;
+                            if (other_terminal != default)
+                                if (state()
+                                        .setup()
+                                        .get_connected_terminal(other_terminal)
+                                        .net()
+                                        .is_rail_net())
+                                    rail_terminals++;
                         }
                     }
                 }
 
-                if (railterms == 0)
+                if (rail_terminals == 0)
                 {
                     state().log().error.op(ME_SOLVER_NO_RAIL_TERMINAL(nets_in_grp));
                     num_errors++;
@@ -171,14 +176,18 @@ namespace mame.netlist.devices
                         break;
                 }
 
+                state().register_device(
+                    ms.name(),
+                    ms);  //device_arena::owned_ptr<core_device_t>(ms.get(), false));
+
                 log().verbose.op("Solver {0}", ms.name());
                 log().verbose.op("       ==> {0} nets", grp.size());
                 log().verbose.op("       has {0} dynamic elements", ms.dynamic_device_count());
-                log().verbose.op("       has {0} timestep elements", ms.timestep_device_count());
+                log().verbose.op("       has {0} timestep elements", ms.time_step_device_count());
                 foreach (var n in grp)
                 {
                     log().verbose.op("Net {0}", n.name());
-                    foreach (var t in state().core_terms(n))
+                    foreach (detail.core_terminal_t t in n.core_terms_copy())
                     {
                         log().verbose.op("   {0}", t.name());
                     }
@@ -268,7 +277,7 @@ namespace mame.netlist.devices
             foreach (var s in m_mat_solvers)
                 s.reset();
             foreach (var s in m_mat_solvers)
-                m_queue.push<bool_const_false>(new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(netlist_time_ext.zero(), s));
+                m_queue.push<bool_const_false>(new plib.queue_entry_t<netlist_time, nld_solver_solver_ptr>(netlist_time_ext.zero(), s));
         }
 
 
@@ -280,7 +289,7 @@ namespace mame.netlist.devices
             netlist_time_ext now = exec().time();
             netlist_time_ext sched = now + ts;
             m_queue.remove<bool_const_false>(solv);
-            m_queue.push<bool_const_false>(new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(sched, solv));
+            m_queue.push<bool_const_false>(new plib.queue_entry_t<netlist_time, nld_solver_solver_ptr>(sched, solv));
 
             if (m_Q_step.net().is_queued())
             {
@@ -296,7 +305,7 @@ namespace mame.netlist.devices
 
         // FIXME: should be created in device space
         //template <class C>
-        solver.matrix_solver_t create_it<C, FT, FT_OPS, int_SIZE>(nld_solver main_solver, string name, analog_net_t_list_t nets, solver.solver_parameters_t params_, size_t size)  //NETLIB_NAME(solver)::solver_ptr create_it(NETLIB_NAME(solver) &main_solver, pstring name, NETLIB_NAME(solver)::net_list_t &nets, const solver::solver_parameters_t *params, std::size_t size)
+        solver.matrix_solver_t create_it<C, FT, FT_OPS, int_SIZE>(nld_solver main_solver, string name, nld_solver_net_list_t nets, solver.solver_parameters_t params_, size_t size)  //NETLIB_NAME(solver)::solver_ptr create_it(NETLIB_NAME(solver) &main_solver, pstring name, NETLIB_NAME(solver)::net_list_t &nets, const solver::solver_parameters_t *params, std::size_t size)
             where FT_OPS : plib.constants_operators<FT>, new()
             where int_SIZE : int_const, new()
         {
@@ -363,7 +372,7 @@ namespace mame.netlist.devices
                 for (size_t i = 0; i < p; i++)
                 {
                     if (nt[i] != netlist_time.zero())
-                        m_queue.push<bool_const_false>(new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(now + nt[i], tmp[i]));
+                        m_queue.push<bool_const_false>(new plib.queue_entry_t<netlist_time, nld_solver_solver_ptr>(now + nt[i], tmp[i]));
                     tmp[i].update_inputs();
                 }
             }
@@ -382,7 +391,7 @@ namespace mame.netlist.devices
                 for (size_t i = 0; i < p; i++)
                 {
                     if (nt[i] != netlist_time.zero())
-                        m_queue.push<bool_const_false>(new plib.pqentry_t<netlist_time, nld_solver_solver_ptr>(now + nt[i], tmp[i]));
+                        m_queue.push<bool_const_false>(new plib.queue_entry_t<netlist_time, nld_solver_solver_ptr>(now + nt[i], tmp[i]));
                     tmp[i].update_inputs();
                 }
             }
@@ -471,20 +480,21 @@ namespace mame.netlist.devices
         std.vector<nld_solver_net_list_t> groupspre = new std.vector<nld_solver_net_list_t>();
 
 
-        public void run(netlist_state_t nlstate)
+        public void run(netlist_state_t nl_state)
         {
-            foreach (var net in nlstate.nets())
+            foreach (var net in nl_state.nets())
             {
-                nlstate.log().verbose.op("processing {0}", net.name());
-                if (!net.is_rail_net() && !nlstate.core_terms(net).empty())
+                nl_state.log().verbose.op("processing {0}", net.name());
+                if (!net.is_rail_net() && !net.core_terms_empty())
                 {
-                    nlstate.log().verbose.op("   ==> not a rail net");
+                    nl_state.log().verbose.op("   ==> not a rail net");
                     // Must be an analog net
                     var n = (analog_net_t)net;  //auto &n = dynamic_cast<analog_net_t &>(*net);
+                    nl_assert_always(n != default, "Unable to cast to analog_net_t &");
                     if (!already_processed(n))
                     {
                         groupspre.emplace_back(new nld_solver_net_list_t());
-                        process_net(nlstate, n);
+                        process_net(nl_state, n);
                     }
                 }
             }
@@ -542,33 +552,36 @@ namespace mame.netlist.devices
         }
 
 
-        void process_net(netlist_state_t nlstate, analog_net_t n)
+        void process_net(netlist_state_t nl_state, analog_net_t n)
         {
             // ignore empty nets. FIXME: print a warning message
-            nlstate.log().verbose.op("Net {0}", n.name());
-            if (!nlstate.core_terms(n).empty())
+            nl_state.log().verbose.op("Net {0}", n.name());
+            var terminals = n.core_terms_copy();
+
+            if (!terminals.empty())
             {
                 // add the net
                 groupspre.back().push_back(n);
                 // process all terminals connected to this net
-                foreach (var term in nlstate.core_terms(n))
+                foreach (detail.core_terminal_t term in terminals)
                 {
-                    nlstate.log().verbose.op("Term {0} {1}", term.name(), (int)term.type());
+                    nl_state.log().verbose.op("Term {0} {1}", term.name(), (int)term.type());
                     // only process analog terminals
                     if (term.is_type(detail.terminal_type.TERMINAL))
                     {
                         var pt = (terminal_t)term;  //auto &pt = dynamic_cast<terminal_t &>(*term);
+                        nl_assert_always(pt != null, "Error casting *term to terminal_t &");
                         // check the connected terminal
-                        var connected_terminals = nlstate.setup().get_connected_terminals(pt);
+                        var connected_terminals = nl_state.setup().get_connected_terminals(pt);
                         foreach (var ct in connected_terminals)  //for (auto ct = connected_terminals->begin(); *ct != nullptr; ct++)
                         {
                             if (ct == default)
                                 continue;
 
                             analog_net_t connected_net = ct.net();
-                            nlstate.log().verbose.op("  Connected net {0}", connected_net.name());
+                            nl_state.log().verbose.op("  Connected net {0}", connected_net.name());
                             if (!check_if_processed_and_join(connected_net))
-                                process_net(nlstate, connected_net);
+                                process_net(nl_state, connected_net);
                         }
                     }
                 }

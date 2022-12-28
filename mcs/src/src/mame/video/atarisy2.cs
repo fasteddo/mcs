@@ -93,7 +93,7 @@ namespace mame
         protected override void video_start()
         {
             // reset the statics
-            m_yscroll_reset_timer = machine().scheduler().timer_alloc(reset_yscroll_callback);
+            m_yscroll_reset_timer = timer_alloc(reset_yscroll_callback);
 
             // save states
             save_item(NAME(new { m_playfield_tile_bank }));

@@ -10,13 +10,12 @@ using u32 = System.UInt32;
 using uint8_t = System.Byte;
 
 using static mame.device_global;
-using static mame.driver_global;
 using static mame.emucore_global;
 using static mame.emumem_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
 using static mame.i8085_global;
-using static mame.input_global;
+using static mame.inputcode_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
@@ -24,6 +23,7 @@ using static mame.mb14241_global;
 using static mame.mw8080bw_global;
 using static mame.romentry_global;
 using static mame.screen_global;
+using static mame.util;
 using static mame.watchdog_global;
 
 
@@ -36,6 +36,33 @@ namespace mame
         {
             machine().bookkeeping().coin_counter_w(0, (int)newval);
         }
+
+
+        /*************************************
+         *  Interrupt generation
+         *************************************/
+        //uint8_t mw8080bw_state::vpos_to_vysnc_chain_counter( int vpos )
+
+        //int mw8080bw_state::vysnc_chain_counter_to_vpos( uint8_t counter, int vblank )
+
+        //TIMER_CALLBACK_MEMBER(mw8080bw_state::interrupt_trigger)
+
+
+        //WRITE_LINE_MEMBER(mw8080bw_state::int_enable_w)
+        public void int_enable_w(int state) { throw new emu_unimplemented(); }
+
+
+        //IRQ_CALLBACK_MEMBER(mw8080bw_state::interrupt_vector)
+        int interrupt_vector(device_t device, int irqline) { throw new emu_unimplemented(); }
+
+
+        /*************************************
+         *  Machine setup
+         *************************************/
+        protected override void machine_start() { throw new emu_unimplemented(); }
+
+
+        protected override void machine_reset() { throw new emu_unimplemented(); }
 
 
         /*************************************
@@ -72,8 +99,6 @@ namespace mame
             maincpu.memory().set_addrmap(AS_PROGRAM, main_map);
             maincpu.execute().set_irq_acknowledge_callback(interrupt_vector);
             maincpu.out_inte_func().set((write_line_delegate)int_enable_w).reg();
-
-            MCFG_MACHINE_RESET_OVERRIDE(config, machine_reset_mw8080bw);
 
             /* video hardware */
             SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
@@ -268,7 +293,7 @@ namespace mame
     }
 
 
-    partial class mw8080bw : construct_ioport_helper
+    public partial class mw8080bw : construct_ioport_helper
     {
         //static INPUT_PORTS_START( tornbase )
 
@@ -530,14 +555,14 @@ namespace mame
     partial class mw8080bw_state : driver_device
     {
         //void mw8080bw_state::bowler(machine_config &config)
+    }
 
 
+    partial class invaders_state : mw8080bw_state
+    {
         /*************************************
-         *
          *  Space Invaders (PCB #739)
-         *
          *************************************/
-        //MACHINE_START_MEMBER(mw8080bw_state,invaders)
         void machine_start_invaders()
         {
             this.machine_start();  //mw8080bw_state::machine_start();
@@ -548,72 +573,69 @@ namespace mame
         }
 
 
-        //CUSTOM_INPUT_MEMBER(mw8080bw_state::invaders_sw6_sw7_r)
+        //CUSTOM_INPUT_MEMBER(invaders_state::invaders_sw6_sw7_r)
         public ioport_value invaders_sw6_sw7_r()
         {
             // upright PCB : switches visible
             // cocktail PCB: HI
         
-            if (invaders_is_cabinet_cocktail() != 0)
+            if (is_cabinet_cocktail())
                 return 0x03;
             else
                 return ioport(INVADERS_SW6_SW7_PORT_TAG).read();
         }
 
 
-        //CUSTOM_INPUT_MEMBER(mw8080bw_state::invaders_sw5_r)
+        //CUSTOM_INPUT_MEMBER(invaders_state::invaders_sw5_r)
         public ioport_value invaders_sw5_r()
         {
             // upright PCB : switch visible
             // cocktail PCB: HI
         
-            if (invaders_is_cabinet_cocktail() != 0)
+            if (is_cabinet_cocktail())
                 return 0x01;
             else
                 return ioport(INVADERS_SW5_PORT_TAG).read();
         }
 
 
-        //CUSTOM_INPUT_MEMBER(mw8080bw_state::invaders_in0_control_r)
+        //CUSTOM_INPUT_MEMBER(invaders_state::invaders_in0_control_r)
         public ioport_value invaders_in0_control_r()
         {
             // upright PCB : P1 controls
             // cocktail PCB: HI
         
-            if (invaders_is_cabinet_cocktail() != 0)
+            if (is_cabinet_cocktail())
                 return 0x07;
             else
-                return ioport(INVADERS_P1_CONTROL_PORT_TAG).read();
+                return m_player_controls[0].op0.read();
         }
 
 
-        //CUSTOM_INPUT_MEMBER(mw8080bw_state::invaders_in1_control_r)
+        //CUSTOM_INPUT_MEMBER(invaders_state::invaders_in1_control_r)
         public ioport_value invaders_in1_control_r()
         {
-            return ioport(INVADERS_P1_CONTROL_PORT_TAG).read();
+            return m_player_controls[0].op0.read();
         }
 
 
-        //CUSTOM_INPUT_MEMBER(mw8080bw_state::invaders_in2_control_r)
+        //CUSTOM_INPUT_MEMBER(invaders_state::invaders_in2_control_r)
         public ioport_value invaders_in2_control_r()
         {
             // upright PCB : P1 controls
             // cocktail PCB: P2 controls
-        
-            if (invaders_is_cabinet_cocktail() != 0)
-                return ioport(INVADERS_P2_CONTROL_PORT_TAG).read();
-            else
-                return ioport(INVADERS_P1_CONTROL_PORT_TAG).read();
+
+            return m_player_controls[is_cabinet_cocktail() ? 1 : 0].op0.read();
         }
 
 
-        int invaders_is_cabinet_cocktail()
+        bool is_cabinet_cocktail()
         {
-            return (int)ioport(INVADERS_CAB_TYPE_PORT_TAG).read();
+            return BIT(m_cabinet_type.op0.read(), 0) != 0;
         }
 
 
-        void invaders_io_map(address_map map, device_t device)
+        void io_map(address_map map, device_t device)
         {
             map.global_mask(0x7);
             map.op(0x00, 0x00).mirror(0x04).portr("IN0");
@@ -637,23 +659,23 @@ namespace mame
         {
             INPUT_PORTS_START(owner, portlist, ref errorbuf);
 
-            mw8080bw_state mw8080bw_state = (mw8080bw_state)owner;
+            invaders_state invaders_state = (invaders_state)owner;
 
             PORT_START("IN0");
             PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) ); PORT_DIPLOCATION("SW:8");
             PORT_DIPSETTING(    0x00, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x01, DEF_STR( On ) );
-            PORT_BIT( 0x06, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, mw8080bw_state.invaders_sw6_sw7_r);
+            PORT_BIT( 0x06, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, invaders_state.invaders_sw6_sw7_r);
             PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_UNUSED );
-            PORT_BIT( 0x70, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, mw8080bw_state.invaders_in0_control_r);
-            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, mw8080bw_state.invaders_sw5_r);
+            PORT_BIT( 0x70, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, invaders_state.invaders_in0_control_r);
+            PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, invaders_state.invaders_sw5_r);
 
             PORT_START("IN1");
-            PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 ); PORT_CHANGED_MEMBER(DEVICE_SELF, mw8080bw_state.direct_coin_count, 0);
+            PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 ); PORT_CHANGED_MEMBER(DEVICE_SELF, invaders_state.direct_coin_count, 0);
             PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 );
             PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 );
             PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_UNUSED );
-            PORT_BIT( 0x70, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, mw8080bw_state.invaders_in1_control_r);
+            PORT_BIT( 0x70, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, invaders_state.invaders_in1_control_r);
             PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED );
 
             PORT_START("IN2");
@@ -662,11 +684,11 @@ namespace mame
             PORT_DIPSETTING(    0x01, "4" );
             PORT_DIPSETTING(    0x02, "5" );
             PORT_DIPSETTING(    0x03, "6" );
-            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED ); /* in the software, this is TILI, but not connected on the Midway PCB. Is this correct? */
+            PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED ); // in the software, this is TILI, but not connected on the Midway PCB. Is this correct?
             PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) ); PORT_DIPLOCATION("SW:2");
             PORT_DIPSETTING(    0x08, "1000" );
             PORT_DIPSETTING(    0x00, "1500" );
-            PORT_BIT( 0x70, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, mw8080bw_state.invaders_in2_control_r);
+            PORT_BIT( 0x70, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_CUSTOM_MEMBER(DEVICE_SELF, invaders_state.invaders_in2_control_r);
             PORT_DIPNAME( 0x80, 0x00, "Display Coinage" ); PORT_DIPLOCATION("SW:1");
             PORT_DIPSETTING(    0x80, DEF_STR( Off ) );
             PORT_DIPSETTING(    0x00, DEF_STR( On ) );
@@ -711,16 +733,15 @@ namespace mame
     }
 
 
-    partial class mw8080bw_state : driver_device
+    partial class invaders_state : mw8080bw_state
     {
         public void invaders(machine_config config)
         {
             mw8080bw_root(config);
 
             // basic machine hardware
-            m_maincpu.op0.memory().set_addrmap(AS_IO, invaders_io_map);
+            m_maincpu.op0.memory().set_addrmap(AS_IO, io_map);
 
-            MCFG_MACHINE_START_OVERRIDE(config, machine_start_invaders);
 
             WATCHDOG_TIMER(config, m_watchdog).set_time(255 * attotime.from_hz(MW8080BW_60HZ));
 
@@ -731,8 +752,13 @@ namespace mame
             MB14241(config, m_mb14241);
 
             // audio hardware
-            INVADERS_AUDIO(config, "soundboard").  // the flip screen line is only connected on the cocktail PCB
-                    flip_screen_out().set((int state) => { if (invaders_is_cabinet_cocktail() != 0) m_flip_screen = state != 0 ? (uint8_t)1 : (uint8_t)0; }).reg();
+            INVADERS_AUDIO(config, "soundboard")
+                    .flip_screen_out().set(
+                            (int state) =>  //[this] (int state)
+                            {
+                                if (is_cabinet_cocktail()) // the flip screen line is only connected on the cocktail PCB
+                                    m_flip_screen = state != 0 ? (uint8_t)1 : (uint8_t)0;
+                            }).reg();
         }
 
 
@@ -861,16 +887,16 @@ namespace mame
          *************************************/
 
         static void gunfight_state_gunfight(machine_config config, device_t device) { gunfight_state gunfight_state = (gunfight_state)device; gunfight_state.gunfight(config); }
-        static void mw8080bw_state_invaders(machine_config config, device_t device) { mw8080bw_state mw8080bw_state = (mw8080bw_state)device; mw8080bw_state.invaders(config); }
+        static void invaders_state_invaders(machine_config config, device_t device) { invaders_state invaders_state = (invaders_state)device; invaders_state.invaders(config); }
 
         static mw8080bw m_mw8080bw = new mw8080bw();
 
-        static device_t device_creator_mw8080bw(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new mw8080bw_state(mconfig, type, tag); }
         static device_t device_creator_gunfight(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new gunfight_state(mconfig, type, tag); }
+        static device_t device_creator_invaders(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new invaders_state(mconfig, type, tag); }
 
 
         // PCB #                                                             creator                  rom           year    name        parent machine                  inp                                   init                      monitor company,                            fullname,                            flags                  layout
         /* 597 */ public static readonly game_driver driver_gunfight = GAMEL(device_creator_gunfight, rom_gunfight, "1975", "gunfight", "0",   gunfight_state_gunfight, m_mw8080bw.construct_ioport_gunfight, driver_device.empty_init, ROT0,   "Dave Nutting Associates / Midway", "Gun Fight (set 1)",                 MACHINE_SUPPORTS_SAVE, null /*layout_gunfight*/);
-        /* 739 */ public static readonly game_driver driver_invaders = GAMEL(device_creator_mw8080bw, rom_invaders, "1978", "invaders", "0",   mw8080bw_state_invaders, m_mw8080bw.construct_ioport_invaders, driver_device.empty_init, ROT270, "Taito / Midway",                   "Space Invaders / Space Invaders M", MACHINE_SUPPORTS_SAVE, null /*layout_invaders*/);
+        /* 739 */ public static readonly game_driver driver_invaders = GAMEL(device_creator_invaders, rom_invaders, "1978", "invaders", "0",   invaders_state_invaders, m_mw8080bw.construct_ioport_invaders, driver_device.empty_init, ROT270, "Taito / Midway",                   "Space Invaders / Space Invaders M", MACHINE_SUPPORTS_SAVE, null /*layout_invaders*/);
     }
 }

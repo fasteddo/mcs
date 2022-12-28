@@ -3,6 +3,8 @@
 
 using System;
 
+using static mame.language_global;
+
 
 namespace mame.ui
 {
@@ -26,6 +28,7 @@ namespace mame.ui
 
             // The warning string is used when accessing from the force_file_manager call, i.e.
             // when the file manager is loaded top front in the case of mandatory image devices
+            set_heading(__("File Manager"));
         }
 
         //~menu_file_manager() { }

@@ -3,9 +3,8 @@
 
 using System;
 
-using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
+using matrix_solver_t_net_list_t = mame.std.vector<mame.netlist.analog_net_t>;  //using net_list_t =  std::vector<analog_net_t *>;
 using matrix_solver_t_fptype = System.Double;  //using fptype = nl_fptype;
-using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
@@ -33,19 +32,19 @@ namespace mame.netlist.solver
         //static constexpr const std::size_t m_pitch_ABS = (((SIZEABS + 0) + 7) / 8) * 8;
 
 
-        //PALIGNAS_VECTOROPT() parrays define alignment already
+        //PALIGNAS_VECTOROPT() `parray` defines alignment already
         protected FT [] m_new_V;  //plib::parray<float_type, SIZE> m_new_V;
-        //PALIGNAS_VECTOROPT() parrays define alignment already
+        //PALIGNAS_VECTOROPT() `parray` defines alignment already
         protected FT [] m_RHS;  //plib::parray<float_type, SIZE> m_RHS;
 
-        //PALIGNAS_VECTOROPT() parrays define alignment already
-        protected plib.pmatrix2d<Pointer<FT>> m_mat_ptr;  //plib::pmatrix2d<float_type *> m_mat_ptr;
+        //PALIGNAS_VECTOROPT() `parray` defines alignment already
+        protected plib.pmatrix2d<Pointer<FT>> m_mat_ptr;  //plib::pmatrix2d<arena_type, float_type *> m_mat_ptr;
 
 
         // state - variable time_stepping
-        //PALIGNAS_VECTOROPT() parrays define alignment already
+        //PALIGNAS_VECTOROPT() `parray` defines alignment already
         FT [] m_last_V;  //plib::parray<fptype, SIZE> m_last_V;
-        // PALIGNAS_VECTOROPT() parrays define alignment already
+        //PALIGNAS_VECTOROPT() `parray` defines alignment already
         FT [] m_DD_n_m_1;  //plib::parray<fptype, SIZE> m_DD_n_m_1;
         // PALIGNAS_VECTOROPT() parrays define alignment already
         FT [] m_h_n_m_1;  //plib::parray<fptype, SIZE> m_h_n_m_1;
@@ -58,7 +57,7 @@ namespace mame.netlist.solver
         {
             m_new_V = new FT [size];
             m_RHS = new FT [size];
-            m_mat_ptr = new plib.pmatrix2d<Pointer<FT>>(size, this.max_railstart() + 1);
+            m_mat_ptr = new plib.pmatrix2d<Pointer<FT>>(size, this.max_rail_start() + 1);  //, m_mat_ptr(m_arena, size, this->max_rail_start() + 1)
             m_last_V = new FT [size]; std.fill(m_last_V, ops.cast(nlconst.zero()));
             m_DD_n_m_1 = new FT [size]; std.fill(m_DD_n_m_1, ops.cast(nlconst.zero()));
             m_h_n_m_1 = new FT [size]; std.fill(m_h_n_m_1, ops.cast(nlconst.magic(1e-6))); // we need a non zero value here
@@ -81,7 +80,7 @@ namespace mame.netlist.solver
 
             // FIXME: Not yet working, mat_cr.h needs some more work
 #if false
-            auto mat_GE = dynamic_cast<plib::pGEmatrix_cr_t<typename M::base> *>(&mat);
+            auto mat_GE = plib::dynamic_downcast<plib::pGEmatrix_cr_t<typename M::base> *>(&mat);
 #endif
             std.vector<unsigned> levL = new std.vector<unsigned>(iN, 0);
             std.vector<unsigned> levU = new std.vector<unsigned>(iN, 0);
@@ -202,9 +201,9 @@ namespace mame.netlist.solver
         }
 
 
-        protected override netlist_time compute_next_timestep(matrix_solver_t_fptype cur_ts, matrix_solver_t_fptype min_ts, matrix_solver_t_fptype max_ts)
+        protected override netlist_time compute_next_time_step(matrix_solver_t_fptype cur_ts, matrix_solver_t_fptype min_ts, matrix_solver_t_fptype max_ts)
         {
-            matrix_solver_t_fptype new_solver_timestep_sq = max_ts * max_ts;
+            matrix_solver_t_fptype new_solver_time_step_sq = max_ts * max_ts;
 
             for (size_t k = 0; k < size(); k++)
             {
@@ -222,15 +221,15 @@ namespace mame.netlist.solver
                 m_DD_n_m_1[k] = ops.cast(DD_n);
                 {
                     // save the sqrt for the end
-                    matrix_solver_t_fptype new_net_timestep_sq = m_params.m_dynamic_lte.op() / plib.pg.abs(nlconst.half() * DD2);
-                    new_solver_timestep_sq = std.min(new_net_timestep_sq, new_solver_timestep_sq);
+                    matrix_solver_t_fptype new_net_time_step_sq = m_params.m_dynamic_lte.op() / plib.pg.abs(nlconst.half() * DD2);
+                    new_solver_time_step_sq = std.min(new_net_time_step_sq, new_solver_time_step_sq);
                 }
             }
 
-            new_solver_timestep_sq = std.max(plib.pg.sqrt(new_solver_timestep_sq), min_ts);
+            new_solver_time_step_sq = std.max(plib.pg.sqrt(new_solver_time_step_sq), min_ts);
 
             // FIXME: Factor 2 below is important. Without, we get timing issues. This must be a bug elsewhere.
-            return netlist_time.Max(netlist_time.from_fp(new_solver_timestep_sq), netlist_time.quantum() * 2);
+            return netlist_time.Max(netlist_time.from_fp(new_solver_time_step_sq), netlist_time.quantum() * 2);
         }
 
 
@@ -244,7 +243,7 @@ namespace mame.netlist.solver
                 size_t cnt = 0;
 
                 // build pointers into the compressed row format matrix for each terminal
-                for (size_t j = 0; j< this.m_terms[k].railstart(); j++)
+                for (size_t j = 0; j< this.m_terms[k].rail_start(); j++)
                 {
                     int other = this.m_terms[k].m_connected_net_idx[j];
                     if (other >= 0)
@@ -254,8 +253,8 @@ namespace mame.netlist.solver
                     }
                 }
 
-                nl_assert_always(cnt == this.m_terms[k].railstart(), "Count and railstart mismatch");
-                m_mat_ptr.op(k)[this.m_terms[k].railstart()] = new Pointer<FT>(mat[k], (int)k);  //m_mat_ptr[k][this->m_terms[k].railstart()] = &(mat[k][k]);
+                nl_assert_always(cnt == this.m_terms[k].rail_start(), "Count and rail start mismatch");
+                m_mat_ptr.op(k)[this.m_terms[k].rail_start()] = new Pointer<FT>(mat[k], (int)k);  //m_mat_ptr[k][this->m_terms[k].railstart()] = &(mat[k][k]);
             }
         }
 
@@ -288,7 +287,7 @@ namespace mame.netlist.solver
 
                 //using source_type = typename decltype(m_gtn)::value_type;
                 size_t term_count = net.count();
-                size_t railstart = net.railstart();
+                size_t rail_start = net.rail_start();
                 var go = m_gonn.op(k);
                 var gt = m_gtn.op(k);
                 var Idr = m_Idrn.op(k);
@@ -301,16 +300,16 @@ namespace mame.netlist.solver
                     gtot_t += (gt + (int)i)[0];
 
                 // update diagonal element ...
-                tcr_r[railstart] = ops.cast(gtot_t); //mat.A[mat.diag[k]] += gtot_t;  //*tcr_r[railstart] = static_cast<FT>(gtot_t); //mat.A[mat.diag[k]] += gtot_t;
+                tcr_r[rail_start] = ops.cast(gtot_t); //mat.A[mat.diag[k]] += gtot_t;  //*tcr_r[railstart] = static_cast<FT>(gtot_t); //mat.A[mat.diag[k]] += gtot_t;
 
-                for (size_t i = 0; i < railstart; i++)
+                for (size_t i = 0; i < rail_start; i++)
                     tcr_r[i]       = ops.add(tcr_r[i], ops.cast(go[i]));  //*tcr_r[i]       += static_cast<FT>(go[i]);
 
                 var RHS_t = plib.constants<matrix_solver_t_fptype, plib.constants_operators_double>.zero();  //auto RHS_t(std::accumulate(Idr, Idr + term_count, plib::constants<source_type>::zero()));
                 for (size_t i = 0; i < term_count; i++)
                     RHS_t += (Idr + (int)i)[0];
 
-                for (size_t i = railstart; i < term_count; i++)
+                for (size_t i = rail_start; i < term_count; i++)
                     RHS_t +=  (- go[i]) * cnV[i][0];  //RHS_t +=  (- go[i]) * *cnV[i];
 
                 m_RHS[k] = ops.cast(RHS_t);  //m_RHS[k] = static_cast<FT>(RHS_t);

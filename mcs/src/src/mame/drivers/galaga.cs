@@ -158,7 +158,7 @@ namespace mame
         {
             m_leds.resolve();
             /* create the interrupt timer */
-            m_cpu3_interrupt_timer = machine().scheduler().timer_alloc(cpu3_interrupt_callback);
+            m_cpu3_interrupt_timer = timer_alloc(cpu3_interrupt_callback);
             save_item(NAME(new { m_main_irq_mask }));
             save_item(NAME(new { m_sub_irq_mask }));
             save_item(NAME(new { m_sub2_nmi_mask }));

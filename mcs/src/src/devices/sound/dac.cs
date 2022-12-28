@@ -318,6 +318,28 @@ namespace mame
 
 
     // DAC circuits/unidentified chips
+    //DAC_GENERATOR(DAC_1BIT,                      dac_1bit_device,                      dac_bit_device_base,  dac_mapper_unsigned,  1, 1.0,          "1-Bit DAC",                       "dac")
+    //DAC_GENERATOR(DAC_2BIT_BINARY_WEIGHTED,      dac_2bit_binary_weighted_device,      dac_byte_device_base, dac_mapper_unsigned,  2, dac_gain_bw,  "2-Bit Binary Weighted DAC",       "dac_2bit_bw")
+    //DAC_GENERATOR(DAC_2BIT_R2R,                  dac_2bit_r2r_device,                  dac_byte_device_base, dac_mapper_unsigned,  2, dac_gain_r2r, "2-Bit R-2R DAC",                  "dac_2bit_r2r")
+    //DAC_GENERATOR(DAC_3BIT_BINARY_WEIGHTED,      dac_3bit_binary_weighted_device,      dac_byte_device_base, dac_mapper_unsigned,  3, dac_gain_bw,  "3-Bit Binary Weighted DAC",       "dac_3bit_bw")
+    //DAC_GENERATOR(DAC_4BIT_BINARY_WEIGHTED,      dac_4bit_binary_weighted_device,      dac_byte_device_base, dac_mapper_unsigned,  4, dac_gain_bw,  "4-Bit Binary Weighted DAC",       "dac_4bit_bw")
+
+    //DAC_GENERATOR(DAC_4BIT_R2R,                  dac_4bit_r2r_device,                  dac_byte_device_base, dac_mapper_unsigned,  4, dac_gain_r2r, "4-Bit R-2R DAC",                  "dac_4bit_r2r")
+    public class dac_4bit_r2r_device : dac_byte_device_base
+    {
+        //DEFINE_DEVICE_TYPE(_dac_type, _dac_class, _dac_shortname, _dac_description)
+        public static readonly emu.detail.device_type_impl DAC_4BIT_R2R = DEFINE_DEVICE_TYPE("dac_4bit_r2r", "4-Bit R-2R DAC", (type, mconfig, tag, owner, clock) => { return new dac_4bit_r2r_device(mconfig, tag, owner, clock); });
+
+        dac_4bit_r2r_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
+            : base(mconfig, DAC_4BIT_R2R, tag, owner, clock, 4, dac_mapper_unsigned, dac_gain_r2r)
+        { }
+    }
+
+    //DAC_GENERATOR(DAC_6BIT_BINARY_WEIGHTED,      dac_6bit_binary_weighted_device,      dac_byte_device_base, dac_mapper_unsigned,  6, dac_gain_bw,  "6-Bit Binary Weighted DAC",       "dac_6bit_bw")
+    //DAC_GENERATOR(DAC_6BIT_R2R,                  dac_6bit_r2r_device,                  dac_byte_device_base, dac_mapper_unsigned,  6, dac_gain_r2r, "6-Bit R-2R DAC",                  "dac_6bit_r2r")
+    //DAC_GENERATOR(DAC_8BIT_BINARY_WEIGHTED,      dac_8bit_binary_weighted_device,      dac_byte_device_base, dac_mapper_unsigned,  8, dac_gain_bw,  "8-Bit Binary Weighted DAC",       "dac_8bit_bw")
+    //DAC_GENERATOR(DAC_8BIT_PWM,                  dac_8bit_pwm_device,                  dac_byte_device_base, dac_mapper_unsigned,  8, dac_gain_r2r, "8-Bit PWM DAC",                   "dac_8bit_pwm")
+
     //DAC_GENERATOR(DAC_8BIT_R2R,                  dac_8bit_r2r_device,                  dac_byte_device_base, dac_mapper_unsigned,  8, dac_gain_r2r, "8-Bit R-2R DAC",                  "dac_8bit_r2r")
     public class dac_8bit_r2r_device : dac_byte_device_base
     {
@@ -328,6 +350,12 @@ namespace mame
             : base(mconfig, DAC_8BIT_R2R, tag, owner, clock, 8, dac_mapper_unsigned, dac_gain_r2r)
         { }
     }
+
+    //DAC_GENERATOR(DAC_8BIT_R2R_TWOS_COMPLEMENT,  dac_8bit_r2r_twos_complement_device,  dac_byte_device_base, dac_mapper_signed,    8, dac_gain_r2r, "8-Bit R-2R Twos Complement DAC",  "dac_8bit_r2r_tc")
+    //DAC_GENERATOR(DAC_10BIT_R2R,                 dac_10bit_r2r_device,                 dac_word_device_base, dac_mapper_unsigned, 10, dac_gain_r2r, "10-Bit R-2R DAC",                 "dac_10bit_r2r")
+    //DAC_GENERATOR(DAC_12BIT_R2R,                 dac_12bit_r2r_device,                 dac_word_device_base, dac_mapper_unsigned, 12, dac_gain_r2r, "12-Bit R-2R DAC",                 "dac_12bit_r2r")
+    //DAC_GENERATOR(DAC_12BIT_R2R_TWOS_COMPLEMENT, dac_12bit_r2r_twos_complement_device, dac_word_device_base, dac_mapper_signed,   12, dac_gain_r2r, "12-Bit R-2R Twos Complement DAC", "dac_12bit_r2r_tc")
+    //DAC_GENERATOR(DAC_16BIT_R2R,                 dac_16bit_r2r_device,                 dac_word_device_base, dac_mapper_unsigned, 16, dac_gain_r2r, "16-Bit R-2R DAC",                 "dac_16bit_r2r")
 
 
     //DAC_GENERATOR(DAC_16BIT_R2R_TWOS_COMPLEMENT, dac_16bit_r2r_twos_complement_device, dac_word_device_base, dac_mapper_signed,   16, dac_gain_r2r, "16-Bit R-2R Twos Complement DAC", "dac_16bit_r2r_tc")
@@ -347,6 +375,7 @@ namespace mame
         public static ad7533_device AD7533<bool_Required>(machine_config mconfig, device_finder<ad7533_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, ad7533_device.AD7533, clock); }
         public static mc1408_device MC1408(machine_config mconfig, string tag, u32 clock) { return emu.detail.device_type_impl.op<mc1408_device>(mconfig, tag, mc1408_device.MC1408, clock); }
         public static mc1408_device MC1408<bool_Required>(machine_config mconfig, device_finder<mc1408_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, mc1408_device.MC1408, clock); }
+        public static dac_4bit_r2r_device DAC_4BIT_R2R<bool_Required>(machine_config mconfig, device_finder<dac_4bit_r2r_device, bool_Required> finder, u32 clock = 0) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_4bit_r2r_device.DAC_4BIT_R2R, clock); }
         public static dac_8bit_r2r_device DAC_8BIT_R2R<bool_Required>(machine_config mconfig, device_finder<dac_8bit_r2r_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_8bit_r2r_device.DAC_8BIT_R2R, clock); }
         public static dac_16bit_r2r_twos_complement_device DAC_16BIT_R2R_TWOS_COMPLEMENT<bool_Required>(machine_config mconfig, device_finder<dac_16bit_r2r_twos_complement_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, dac_16bit_r2r_twos_complement_device.DAC_16BIT_R2R_TWOS_COMPLEMENT, clock); }
     }

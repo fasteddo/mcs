@@ -3,6 +3,8 @@
 
 using System;
 
+using static mame.language_global;
+
 
 namespace mame.ui
 {
@@ -12,7 +14,12 @@ namespace mame.ui
             menu_input_groups_populate - populate the
             input groups menu
         -------------------------------------------------*/
-        public menu_input_groups(mame_ui_manager mui, render_container container) : base(mui, container) { }
+        public menu_input_groups(mame_ui_manager mui, render_container container)
+            : base(mui, container)
+        {
+            set_heading(__("Input Assignments (general)"));
+        }
+
         //~menu_input_groups() { }
 
 
@@ -87,11 +94,6 @@ namespace mame.ui
         //~menu_input() { }
 
 
-        protected override void menu_activated()
-        {
-            throw new emu_unimplemented();
-        }
-
         protected override void handle(event_ ev)
         {
             throw new emu_unimplemented();
@@ -115,13 +117,18 @@ namespace mame.ui
             menu_input_general - handle the general
             input menu
         -------------------------------------------------*/
-        menu_input_general(mame_ui_manager mui, render_container container, int _group)
+        menu_input_general(mame_ui_manager mui, render_container container, int group_, string heading)
             : base(mui, container)
         {
-            group = _group;
+            group = group_;
+
+            set_heading(heading);
         }
 
         //~menu_input_general() { }
+
+
+        protected override void menu_activated() { throw new emu_unimplemented(); }
 
 
         protected override void populate(ref float customtop, ref float custombottom)
@@ -145,6 +152,9 @@ namespace mame.ui
         -------------------------------------------------*/
         public menu_input_specific(mame_ui_manager mui, render_container container) : base(mui, container) { }
         //~menu_input_specific() { }
+
+
+        protected override void menu_activated() { throw new emu_unimplemented(); }
 
 
         protected override void populate(ref float customtop, ref float custombottom)

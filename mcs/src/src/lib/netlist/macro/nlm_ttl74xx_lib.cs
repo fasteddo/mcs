@@ -1226,7 +1226,7 @@ namespace mame
         //- Title: DM54LS73A/DM74LS73A Dual Negative-Edge-Triggered Master-Slave J-K Flip-Flops with Clear and Complementary Outputs
         //- Pinalias: CLK1,CLR1,K1,VCC,CLK2,CLR2,J2,QQ2,Q2,K2,GND,Q1,QQ1,J1
         //- Package: DIP
-        //- NamingConvention: Naming conventions follow National Semicouductor datasheet
+        //- NamingConvention: Naming conventions follow National Semiconductor datasheet
         //- FunctionTable:
         //-   http://pdf.datasheetcatalog.com/datasheet/nationalsemiconductor/DS006372.PDF
         //-
@@ -2714,21 +2714,16 @@ namespace mame
             throw new emu_unimplemented();
 #if false
             TTL_74174("A");
-            TTL_74174("B");
-            TTL_74174("C");
-            TTL_74174("D");
-            TTL_74174("E");
-            TTL_74174("F");
 #endif
 
             h.DIPPINS(    /*      +--------------+      */
                 "A.CLRQ", /* CLRQ |1     ++    16| VCC  */ "A.VCC",
-                   "A.Q", /*   Q1 |2           15| Q6   */ "F.Q",
-                   "A.D", /*   D1 |3           14| D6   */ "F.D",
-                   "B.D", /*   D2 |4   74174   13| D5   */ "E.D",
-                   "B.Q", /*   Q2 |5           12| Q5   */ "E.Q",
-                   "C.D", /*   D3 |6           11| D4   */ "D.D",
-                   "C.Q", /*   Q3 |7           10| Q4   */ "D.Q",
+                  "A.Q1", /*   Q1 |2           15| Q6   */ "A.Q6",
+                  "A.D1", /*   D1 |3           14| D6   */ "A.D6",
+                  "A.D2", /*   D2 |4   74174   13| D5   */ "A.D5",
+                  "A.Q2", /*   Q2 |5           12| Q5   */ "A.Q5",
+                  "A.D3", /*   D3 |6           11| D4   */ "A.D4",
+                  "A.Q3", /*   Q3 |7           10| Q4   */ "A.Q4",
                  "A.GND", /*  GND |8            9| CLK  */ "A.CLK"
                         /*      +--------------+      */
             );

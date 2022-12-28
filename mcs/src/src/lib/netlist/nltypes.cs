@@ -5,6 +5,7 @@ using System;
 
 using int64_t = System.Int64;
 using models_t_map_t = mame.std.unordered_map<string, string>;  //using map_t = std::unordered_map<pstring, pstring>;
+using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<config::prefer_int128::value && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -17,6 +18,11 @@ using static mame.netlist.nltypes_global;
 
 namespace mame.netlist
 {
+    /// \brief Construct a netlist device name
+    ///
+    //#define NETLIB_NAME(chip) nld_##chip
+
+
     /// \brief Constants and const calculations for the library
     ///
     //template<typename T>
@@ -90,11 +96,11 @@ namespace mame.netlist
     //  Types needed by various includes
     //============================================================
 
-    /// \brief Timestep type.
+    /// \brief Time step type.
     ///
     /// May be either FORWARD or RESTORE
     ///
-    public enum timestep_type
+    public enum time_step_type
     {
         FORWARD,  ///< forward time
         RESTORE   ///< restore state before last forward
@@ -103,9 +109,9 @@ namespace mame.netlist
 
     /// \brief Delegate type for device notification.
     ///
-    public delegate void nldelegate();  //using nldelegate = plib::pmfp<void ()>;
-    public delegate void nldelegate_ts(timestep_type param1, double param2);  //using nldelegate_ts = plib::pmfp<void (timestep_type, nl_fptype)>;
-    public delegate void nldelegate_dyn();  //using nldelegate_dyn = plib::pmfp<void ()>;
+    public delegate void nl_delegate();  //using nldelegate = plib::pmfp<void ()>;
+    public delegate void nl_delegate_ts(time_step_type param1, double param2);  //using nldelegate_ts = plib::pmfp<void (timestep_type, nl_fptype)>;
+    public delegate void nl_delegate_dyn();  //using nldelegate_dyn = plib::pmfp<void ()>;
 
 
     namespace detail

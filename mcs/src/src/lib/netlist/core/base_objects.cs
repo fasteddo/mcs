@@ -7,6 +7,7 @@ using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using object_t_props = mame.netlist.detail.property_store_t<mame.netlist.detail.object_t, string>;  //using props = property_store_t<object_t, pstring>;
 using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s32 = state_var<std::int32_t>;
+using state_var_sig = mame.netlist.state_var<System.UInt32>;  //using state_var_sig = state_var<netlist_sig_t>;  //using netlist_sig_t = std::uint32_t;
 using unsigned = System.UInt32;
 
 using static mame.netlist.nl_errstr_global;
@@ -22,40 +23,54 @@ namespace mame.netlist.detail
         //using store_type = std::unordered_map<key_type, value_type>;
 
 
-        public static void add(C obj, T aname)  //static void add(key_type obj, const value_type &aname) noexcept
+        public static void add(C obj, T value)  //static void add(key_type obj, const value_type &value) noexcept
         {
-            store().insert(obj, aname);
+            try
+            {
+                store().insert(obj, value);
+            }
+            catch (Exception)
+            {
+                plib.pg.terminate("exception in property_store_t.add()");
+            }
         }
 
 
-        public static T get(C obj)  //static value_type *get(key_type obj) noexcept
+        public static T get(C obj)  //static const value_type &get(key_type obj) noexcept
         {
             try
             {
                 var ret = store().find(obj);  //typename store_type::iterator ret(store().find(obj));
                 if (ret == default)
-                    return null;
+                    plib.pg.terminate("object not found in property_store_t.get()");
                 return ret;
             }
             catch (Exception)
             {
                 plib.pg.terminate("exception in property_store_t.get()");
-                return null;
+                return default;
             }
         }
 
 
         //static void remove(key_type obj) noexcept
         //{
-        //    store().erase(store().find(obj));
+        //    try
+        //    {
+        //        store().erase(store().find(obj));
+        //    }
+        //    catch (...)
+        //    {
+        //        plib::terminate("exception in property_store_t.remove()");
+        //    }
         //}
 
 
-        static std.unordered_map<C, T> lstore = new std.unordered_map<C, T>();
+        static std.unordered_map<C, T> static_store = new std.unordered_map<C, T>();
 
         static std.unordered_map<C, T> store()
         {
-            return lstore;
+            return static_store;
         }
     }
 
@@ -73,10 +88,7 @@ namespace mame.netlist.detail
         /// Every class derived from the object_t class must have a name.
         ///
         /// \param aname string containing name of the object
-        protected object_t(string aname)
-        {
-            object_t_props.add(this, aname);
-        }
+        protected object_t(string aname) { object_t_props.add(this, aname); }
 
 
         //PCOPYASSIGNMOVE(object_t, delete)
@@ -84,23 +96,17 @@ namespace mame.netlist.detail
         /// \brief return name of the object
         ///
         /// \returns name of the object.
-        public string name()
-        {
-            return object_t_props.get(this);
-        }
+        public string name() { return object_t_props.get(this); }
 
 
         //using props = property_store_t<object_t, pstring>;
 
         // only childs should be destructible
-        //~object_t() noexcept
-        //{
-        //    props::remove(this);
-        //}
+        //~object_t() noexcept { props::remove(this); }
     }
 
 
-    /// \brief Base class for all objects bejng owned by a netlist
+    /// \brief Base class for all objects being owned by a netlist
     ///
     /// The object provides adds \ref netlist_state_t and \ref netlist_t
     /// accessors.
@@ -120,7 +126,7 @@ namespace mame.netlist.detail
 
         //PCOPYASSIGNMOVE(netlist_object_t, delete)
 
-        public netlist_state_t state() { return m_netlist.nlstate(); }
+        public netlist_state_t state() { return m_netlist.nl_state(); }
         //const netlist_state_t & state() const noexcept;
 
         public netlist_t exec() { return m_netlist; }
@@ -181,12 +187,15 @@ namespace mame.netlist.detail
     /// All terminals are derived from this class.
     ///
     public class core_terminal_t : device_object_t
-                                   //public plib::linkedlist_t<core_terminal_t>::element_t
+                                   //, public plib::linked_list_t<core_terminal_t, 0>::element_t
+#if NL_USE_INPLACE_CORE_TERMS
+                                   , public plib::linked_list_t<core_terminal_t, 1>::element_t
+#endif
     {
         /// \brief Number of signal bits
         ///
         /// Going forward setting this to 8 will allow 8-bit signal
-        /// busses to be used in netlist, e.g. for more complex memory
+        /// buses to be used in netlist, e.g. for more complex memory
         /// arrangements.
         /// Minimum value is 2 here to support tristate output on proxies.
         const unsigned INP_BITS = 2;
@@ -206,23 +215,25 @@ namespace mame.netlist.detail
             STATE_INP_HL      = INP_MASK << (int)INP_HL_SHIFT,
             STATE_INP_LH      = INP_MASK << (int)INP_LH_SHIFT,
             STATE_INP_ACTIVE  = STATE_INP_HL | STATE_INP_LH,
-            STATE_OUT         = 1 << (int)(2*INP_BITS),
-            STATE_BIDIR       = 1 << (int)(2*INP_BITS + 1)
+            STATE_OUT         = 1 << (int)(2 * INP_BITS),
+            STATE_BIDIR       = 1 << (int)(2 * INP_BITS + 1)
         }
 
 
-        nldelegate m_delegate;
+        //// std::conditional_t<config::use_copy_instead_of_reference::value,
+        //// state_var_sig, void *> m_Q;
+        protected state_var_sig m_Q_CIR;
+
+        nl_delegate m_delegate;
         core_device_t m_delegate_device;
         net_t m_net;
         state_var<state_e> m_state;
 
 
-        protected core_terminal_t(core_device_t dev, string aname, state_e state, nldelegate delegate_)
+        protected core_terminal_t(core_device_t dev, string aname, state_e state, nl_delegate delegate_)
             : base(dev, dev.name() + "." + aname)
         {
-#if NL_USE_COPY_INSTEAD_OF_REFERENCE
-            , m_Q(*this, "m_Q", 0)
-#endif
+            m_Q_CIR = new state_var_sig(this, "m_Q", 0);
             m_delegate = delegate_;
             m_net = null;
             m_state = new state_var<state_e>(this, "m_state", state);
@@ -254,7 +265,10 @@ namespace mame.netlist.detail
         /// \brief Checks if object is of specified type.
         /// \param atype type to check object against.
         /// \returns true if object is of specified type else false.
-        public bool is_type(terminal_type atype) { return type() == atype; }
+        public bool is_type(terminal_type atype)
+        {
+            return type() == atype;
+        }
 
         public void set_net(net_t anet) { m_net = anet; }
         public void clear_net() { m_net = null; }
@@ -270,24 +284,31 @@ namespace mame.netlist.detail
         //bool is_analog_input() const noexcept;
         public bool is_analog_output() { return this is analog_output_t; }  //return dynamic_cast<const analog_output_t *>(this) != nullptr;
 
-        protected bool is_state(state_e astate) { return m_state.op == astate; }
+        protected bool is_state(state_e astate)
+        {
+            return m_state.op == astate;
+        }
+
         public state_e terminal_state() { return m_state.op; }
-        public void set_state(state_e astate) { m_state.op = astate; }
+        public void set_state(state_e state) { m_state.op = state; }
 
         public void reset() { set_state(is_type(terminal_type.OUTPUT) ? state_e.STATE_OUT : state_e.STATE_INP_ACTIVE); }
 
-#if NL_USE_COPY_INSTEAD_OF_REFERENCE
-        void set_copied_input(netlist_sig_t val) noexcept
+        public void set_copied_input(netlist_sig_t val)
         {
-            m_Q = val;
+            if (config.use_copy_instead_of_reference)
+            {
+                m_Q_CIR.op = val;
+            }
         }
 
-        state_var_sig m_Q;
-#else
-        public void set_copied_input(netlist_sig_t val) { } // NOLINT: static means more message elsewhere
-#endif
-        public void set_delegate(nldelegate delegate_, core_device_t device) { m_delegate = delegate_; m_delegate_device = device; }
-        public nldelegate delegate_() { return m_delegate; }
+        public void set_delegate(nl_delegate delegate_, core_device_t device)
+        {
+            m_delegate = delegate_;
+            m_delegate_device = device;
+        }
+
+        public nl_delegate delegate_() { return m_delegate; }
         public core_device_t delegate_device() { return m_delegate_device; }
         public void run_delegate() { m_delegate(); }
     }

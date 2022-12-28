@@ -6,6 +6,7 @@ using System;
 using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_value_const_unsigned_1<mame.Type_constant_s32>>;  //using devcb_write_line = devcb_write<int, 1U>;
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using int32_t = System.Int32;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using uint32_t = System.UInt32;
 
@@ -161,7 +162,7 @@ namespace mame
 
             m_ready_state = true;
 
-            m_ready_timer = timer_alloc(0);
+            m_ready_timer = timer_alloc(delayed_ready);
             m_ready_handler.op_s32(ASSERT_LINE);
 
             register_for_save_states();
@@ -174,10 +175,11 @@ namespace mame
         }
 
 
-        //virtual void    device_timer(emu_timer &timer, device_timer_id id, int param) override;
-
-
         protected virtual void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { throw new emu_unimplemented(); }  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
+
+
+        //TIMER_CALLBACK_MEMBER(delayed_ready);
+        void delayed_ready(s32 param) { throw new emu_unimplemented(); }
 
 
         //inline bool     in_noise_mode();

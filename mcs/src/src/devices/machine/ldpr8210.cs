@@ -25,15 +25,6 @@ namespace mame
         public static readonly emu.detail.device_type_impl PIONEER_PR8210 = DEFINE_DEVICE_TYPE("pr8210", "Pioneer PR-8210", (type, mconfig, tag, owner, clock) => { return new pioneer_pr8210_device(mconfig, tag, owner, clock); });
 
 
-        // timer IDs
-        //enum
-        //{
-        //    TID_VSYNC_OFF = TID_FIRST_PLAYER_TIMER,
-        //    TID_VBI_DATA_FETCH,
-        //    TID_FIRST_SUBCLASS_TIMER
-        //};
-
-
         // LED outputs
         //output_finder<>     m_audio1;
         //output_finder<>     m_audio2;
@@ -45,6 +36,10 @@ namespace mame
         //output_finder<>     m_step;
         //output_finder<>     m_pause;
         //output_finder<>     m_standby;
+
+        // timers
+        //emu_timer          *m_process_vbi_timer;
+        //emu_timer          *m_vsync_off_timer;
 
         // internal state
         //uint8_t             m_control;              // control line state
@@ -107,7 +102,6 @@ namespace mame
         // device-level overrides
         protected override void device_start() { throw new emu_unimplemented(); }
         protected override void device_reset() { throw new emu_unimplemented(); }
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param) { throw new emu_unimplemented(); }
         protected override Pointer<tiny_rom_entry> device_rom_region() { throw new emu_unimplemented(); }
         protected override void device_add_mconfig(machine_config config) { throw new emu_unimplemented(); }
 
@@ -119,6 +113,8 @@ namespace mame
 
 
         // internal helpers
+        //TIMER_CALLBACK_MEMBER(process_vbi_data);
+        //TIMER_CALLBACK_MEMBER(vsync_off);
         //bool focus_on() const { return !(m_i8049_port1 & 0x08); }
         //bool spdl_on() const { return !(m_i8049_port1 & 0x10); }
         //bool laser_on() const { return !(m_i8049_port2 & 0x01); }

@@ -8,6 +8,7 @@ using devcb_write_line = mame.devcb_write<mame.Type_constant_s32, mame.devcb_val
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using size_t = System.UInt64;
 using u8 = System.Byte;
 using uint8_t = System.Byte;
@@ -153,7 +154,7 @@ namespace mame
             m_in_cb.resolve_all_safe_u8(0xff);
 
             // allocate timers
-            m_cycle_timer = timer_alloc();
+            m_cycle_timer = timer_alloc(update_state);
             m_cycle_timer.adjust(attotime.zero, 0, attotime.from_hz(clock()));
 
             // register for save states
@@ -166,9 +167,10 @@ namespace mame
 
 
         //-------------------------------------------------
-        //  device_timer - handler timer events
+        //  update_state
         //-------------------------------------------------
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
+        //TIMER_CALLBACK_MEMBER(update_state);
+        void update_state(s32 param)
         {
             switch (m_state)
             {

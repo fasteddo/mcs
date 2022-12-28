@@ -11,8 +11,8 @@ namespace mame
         const string APPNAME                 = "MAME";
         const string APPNAME_LOWER           = "mame";
         const string CONFIGNAME              = "mame";
-        const string COPYRIGHT               = "Copyright Nicola Salmoria\nand the MAME team\nhttp://mamedev.org";
-        const string COPYRIGHT_INFO          = "Copyright Nicola Salmoria and the MAME team";
+        const string COPYRIGHT               = "Copyright MAMEdev and contributors\nhttps://mamedev.org";
+        const string COPYRIGHT_INFO          = "Copyright MAMEdev and contributors";
 
 
         public static string get_appname() { return APPNAME;}

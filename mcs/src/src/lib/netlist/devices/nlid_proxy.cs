@@ -3,6 +3,8 @@
 
 using System;
 
+using base_device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = base_device_param_t;  //using base_device_param_t = const base_device_data_t &;  //using base_device_data_t = core_device_data_t;
+using device_param_t = mame.netlist.core_device_data_t;  //using device_param_t = const device_data_t &;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -27,8 +29,8 @@ namespace mame.netlist.devices
         protected analog_t m_tn;
 
 
-        protected nld_base_proxy(netlist_state_t anetlist, string name, logic_t inout_proxied)
-            : base(anetlist, name, inout_proxied.logic_family())
+        protected nld_base_proxy(device_param_t data, logic_t inout_proxied)
+            : base(data, inout_proxied.logic_family())
         {
             m_tp = null;
             m_tn = null;
@@ -45,9 +47,9 @@ namespace mame.netlist.devices
             {
                 string devname = inout_proxied.device().name();
 
-                var tp_ct = anetlist.setup().find_terminal(devname + "." + pwr_sym.first,
+                var tp_ct = state().setup().find_terminal(devname + "." + pwr_sym.first,
                         /*detail::terminal_type::INPUT,*/ false);
-                var tp_cn = anetlist.setup().find_terminal(devname + "." + pwr_sym.second,
+                var tp_cn = state().setup().find_terminal(devname + "." + pwr_sym.second,
                     /*detail::terminal_type::INPUT,*/ false);
                 if (tp_ct != null && tp_cn != null)
                 {
@@ -75,7 +77,7 @@ namespace mame.netlist.devices
             }
 
             if (!f)
-                throw new nl_exception(MF_NO_POWER_TERMINALS_ON_DEVICE_2(name, anetlist.setup().de_alias(inout_proxied.device().name())));
+                throw new nl_exception(MF_NO_POWER_TERMINALS_ON_DEVICE_2(name(), state().setup().de_alias(inout_proxied.device().name())));
 
             log().verbose.op("D/A Proxy: Found power terminals on device {0}", inout_proxied.device().name());
         }
@@ -91,8 +93,8 @@ namespace mame.netlist.devices
     // -----------------------------------------------------------------------------
     public abstract class nld_base_a_to_d_proxy : nld_base_proxy
     {
-        protected nld_base_a_to_d_proxy(netlist_state_t anetlist, string name, logic_input_t in_proxied)
-            : base(anetlist, name, in_proxied)
+        protected nld_base_a_to_d_proxy(device_param_t data, logic_input_t in_proxied)
+            : base(data, in_proxied)
         {
         }
 
@@ -107,8 +109,8 @@ namespace mame.netlist.devices
         analog_input_t m_I;
 
 
-        public nld_a_to_d_proxy(netlist_state_t anetlist, string name, logic_input_t in_proxied)
-            : base(anetlist, name, in_proxied)
+        public nld_a_to_d_proxy(device_param_t data, logic_input_t in_proxied)
+            : base(data, in_proxied)
         {
             m_Q = new logic_output_t(this, "Q");
             m_I = new analog_input_t(this, "I", input);
@@ -135,11 +137,11 @@ namespace mame.netlist.devices
             var vn = m_tn.net().Q_Analog();
             var vp = m_tp.net().Q_Analog();
 
-            if (logic_family().is_above_high_thresh_V(v, vn, vp))
+            if (logic_family().is_above_high_threshold_V(v, vn, vp))
             {
                 out_().push(1, netlist_time.quantum());
             }
-            else if (logic_family().is_below_low_thresh_V(v, vn, vp))
+            else if (logic_family().is_below_low_threshold_V(v, vn, vp))
             {
                 out_().push(0, netlist_time.quantum());
             }
@@ -156,8 +158,8 @@ namespace mame.netlist.devices
     // -----------------------------------------------------------------------------
     public abstract class nld_base_d_to_a_proxy : nld_base_proxy
     {
-        protected nld_base_d_to_a_proxy(netlist_state_t anetlist, string name, logic_output_t out_proxied)
-            : base(anetlist, name, out_proxied)
+        protected nld_base_d_to_a_proxy(device_param_t data, logic_output_t out_proxied)
+            : base(data, out_proxied)
         {
         }
 
@@ -172,26 +174,26 @@ namespace mame.netlist.devices
         static readonly nl_fptype G_OFF = nlconst.cgmin();
 
         logic_input_t m_I;
-        analog.nld_twoterm m_RP;  //analog::NETLIB_NAME(twoterm) m_RP;
-        analog.nld_twoterm m_RN;  //analog::NETLIB_NAME(twoterm) m_RN;
+        sub_device_wrapper<analog.nld_two_terminal> m_RP;  //NETLIB_SUB_NS(analog, two_terminal) m_RP;
+        sub_device_wrapper<analog.nld_two_terminal> m_RN;  //NETLIB_SUB_NS(analog, two_terminal) m_RN;
         state_var<netlist_sig_t> m_last_state;
 
 
-        public nld_d_to_a_proxy(netlist_state_t anetlist, string name, logic_output_t out_proxied)
-            : base(anetlist, name, out_proxied)
+        public nld_d_to_a_proxy(device_param_t data, logic_output_t out_proxied)
+            : base(data, out_proxied)
         {
             m_I = new logic_input_t(this, "I", input);
-            m_RP = new analog.nld_twoterm(this, "RP");
-            m_RN = new analog.nld_twoterm(this, "RN");
+            m_RP = new sub_device_wrapper<analog.nld_two_terminal>(this, new analog.nld_two_terminal(new base_device_t_constructor_param_t(this, "RP")));
+            m_RN = new sub_device_wrapper<analog.nld_two_terminal>(this, new analog.nld_two_terminal(new base_device_t_constructor_param_t(this, "RN")));
             m_last_state = new state_var<netlist_sig_t>(this, "m_last_var", terminal_t.OUT_TRISTATE());
 
 
-            register_subalias("Q", "RN.1");
+            register_sub_alias("Q", "RN.1");
 
-            connect(m_RN.N(), m_tn);
-            connect(m_RP.P(), m_tp);
+            connect(m_RN.op().N(), m_tn);
+            connect(m_RP.op().P(), m_tp);
 
-            connect(m_RN.P(), m_RP.N());
+            connect(m_RN.op().P(), m_RP.op().N());
         }
 
 
@@ -200,7 +202,7 @@ namespace mame.netlist.devices
 
         public override detail.core_terminal_t proxy_term()
         {
-            return m_RN.setup_P();
+            return m_RN.op().setup_P();
         }
 
 
@@ -209,13 +211,10 @@ namespace mame.netlist.devices
         {
             ////m_Q.initial(0.0);
             m_last_state.op = terminal_t.OUT_TRISTATE();
-            m_RN.reset();
-            m_RP.reset();
-            m_RN.set_G_V_I(plib.pg.reciprocal(logic_family().R_low()),
-                    logic_family().low_offset_V(), nlconst.zero());
-            m_RP.set_G_V_I(G_OFF,
-                nlconst.zero(),
-                nlconst.zero());
+            m_RN.op().reset();
+            m_RP.op().reset();
+            m_RN.op().set_G_V_I(plib.pg.reciprocal(logic_family().R_low()),logic_family().low_offset_V(), nlconst.zero());
+            m_RP.op().set_G_V_I(G_OFF, nlconst.zero(), nlconst.zero());
         }
 
 
@@ -227,32 +226,32 @@ namespace mame.netlist.devices
             if (state != m_last_state.op)
             {
                 // RN, RP are connected ...
-                m_RN.change_state(() =>  //m_RN.change_state([this, &state]()
+                m_RN.op().change_state(() =>  //m_RN.change_state([this, &state]()
                 {
                     //switch (state)
                     {
                         if (state == 0)  //case 0:
                         {
-                            m_RN.set_G_V_I(plib.pg.reciprocal(logic_family().R_low()),
+                            m_RN.op().set_G_V_I(plib.pg.reciprocal(logic_family().R_low()),
                                     logic_family().low_offset_V(), nlconst.zero());
-                            m_RP.set_G_V_I(G_OFF,
+                            m_RP.op().set_G_V_I(G_OFF,
                                 nlconst.zero(),
                                 nlconst.zero());
                         }//    break;
                         else if (state == 0)  //case 1:
                         {
-                            m_RN.set_G_V_I(G_OFF,
+                            m_RN.op().set_G_V_I(G_OFF,
                                 nlconst.zero(),
                                 nlconst.zero());
-                            m_RP.set_G_V_I(plib.pg.reciprocal(logic_family().R_high()),
+                            m_RP.op().set_G_V_I(plib.pg.reciprocal(logic_family().R_high()),
                                     logic_family().high_offset_V(), nlconst.zero());
                         }//    break;
                         else if (state == terminal_t.OUT_TRISTATE())  //case terminal_t.OUT_TRISTATE():
                         {
-                            m_RN.set_G_V_I(G_OFF,
+                            m_RN.op().set_G_V_I(G_OFF,
                                 nlconst.zero(),
                                 nlconst.zero());
-                            m_RP.set_G_V_I(G_OFF,
+                            m_RP.op().set_G_V_I(G_OFF,
                                 nlconst.zero(),
                                 nlconst.zero());
                         }//    break;

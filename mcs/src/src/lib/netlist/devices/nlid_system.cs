@@ -3,6 +3,7 @@
 
 using System;
 
+using device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = device_param_t;  //using device_param_t = const device_data_t &;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -35,10 +36,8 @@ namespace mame.netlist.devices
 
 
         //NETLIB_CONSTRUCTOR(clock)
-        //detail.family_setter_t m_famsetter;
-        //template <class CLASS>
-        public nld_clock(object owner, string name)
-            : base(owner, name)
+        public nld_clock(device_t_constructor_param_t data)
+            : base(data)
         {
             m_feedback = new logic_input_t(this, "FB", fb);
             m_Q = new logic_output_t(this, "Q");
@@ -70,7 +69,7 @@ namespace mame.netlist.devices
 
 
     // -----------------------------------------------------------------------------
-    // varclock
+    // variable clock
     // -----------------------------------------------------------------------------
     //NETLIB_OBJECT(varclock)
 
@@ -101,10 +100,8 @@ namespace mame.netlist.devices
 
 
         //NETLIB_CONSTRUCTOR(logic_input)
-        //detail.family_setter_t m_famsetter;
-        //template <class CLASS>
-        public nld_logic_input(object owner, string name)
-            : base(owner, name)
+        public nld_logic_input(device_t_constructor_param_t data)
+            : base(data)
         {
             m_Q = new logic_output_t(this, "Q");
             m_IN = new param_logic_t(this, "IN", false);
@@ -140,10 +137,8 @@ namespace mame.netlist.devices
 
 
         //NETLIB_CONSTRUCTOR(analog_input)
-        //detail.family_setter_t m_famsetter;
-        //template <class CLASS>
-        public nld_analog_input(object owner, string name)
-            : base(owner, name)
+        public nld_analog_input(device_t_constructor_param_t data)
+            : base(data)
         {
             m_Q = new analog_output_t(this, "Q");
             m_IN = new param_fp_t(this, "IN", nlconst.zero());
@@ -168,8 +163,8 @@ namespace mame.netlist.devices
         public static readonly factory.constructor_ptr_t decl_frontier = NETLIB_DEVICE_IMPL<nld_frontier>("FRONTIER_DEV", "+I,+G,+Q");
 
 
-        analog.nld_twoterm m_RIN;
-        analog.nld_twoterm m_ROUT;
+        analog.nld_two_terminal m_RIN;  //analog::NETLIB_NAME(two_terminal) m_RIN;
+        analog.nld_two_terminal m_ROUT;  //analog::NETLIB_NAME(two_terminal) m_ROUT;
         analog_input_t m_I;
         analog_output_t m_Q;
 
@@ -180,23 +175,23 @@ namespace mame.netlist.devices
         //NETLIB_CONSTRUCTOR(frontier)
         //detail.family_setter_t m_famsetter;
         //template <class CLASS>
-        public nld_frontier(object owner, string name)
-            : base(owner, name)
+        public nld_frontier(device_t_constructor_param_t data)
+            : base(data)
         {
-            m_RIN = new analog.nld_twoterm(this, "m_RIN", input); // FIXME: does not look right
-            m_ROUT = new analog.nld_twoterm(this, "m_ROUT", input); // FIXME: does not look right
+            m_RIN = new analog.nld_two_terminal(this, "m_RIN", input); // FIXME: does not look right
+            m_ROUT = new analog.nld_two_terminal(this, "m_ROUT", input); // FIXME: does not look right
             m_I = new analog_input_t(this, "_I", input);
             m_Q = new analog_output_t(this, "_Q");
             m_p_RIN = new param_fp_t(this, "RIN", nlconst.magic(1.0e6));
             m_p_ROUT = new param_fp_t(this, "ROUT", nlconst.magic(50.0));
 
 
-            register_subalias("I", "m_RIN.1");
-            register_subalias("G", "m_RIN.2");
+            register_sub_alias("I", "m_RIN.1");
+            register_sub_alias("G", "m_RIN.2");
             connect("_I", "m_RIN.1");
 
-            register_subalias("_OP", "m_ROUT.1");
-            register_subalias("Q", "m_ROUT.2");
+            register_sub_alias("_OP", "m_ROUT.1");
+            register_sub_alias("Q", "m_ROUT.2");
             connect("_Q", "m_ROUT.1");
         }
 
@@ -220,11 +215,9 @@ namespace mame.netlist.devices
     }
 
 
-    /* -----------------------------------------------------------------------------
-        * nld_function
-        *
-        * FIXME: Currently a proof of concept to get congo bongo working
-        * ----------------------------------------------------------------------------- */
+    // -----------------------------------------------------------------------------
+    // nld_function
+    // ----------------------------------------------------------------------------- */
     //NETLIB_OBJECT(function)
 
 
@@ -242,7 +235,7 @@ namespace mame.netlist.devices
         param_fp_t m_ROFF;
 
 
-        analog.nld_R_base m_R;
+        sub_device_wrapper<analog.nld_R_base> m_R;  //NETLIB_SUB_NS(analog, R_base) m_R;
         logic_input_t m_I;
 
         state_var<netlist_sig_t> m_last_state;
@@ -251,18 +244,18 @@ namespace mame.netlist.devices
         //NETLIB_CONSTRUCTOR(sys_dsw1)
         //detail.family_setter_t m_famsetter;
         //template <class CLASS>
-        public nld_sys_dsw1(object owner, string name)
-            : base(owner, name)
+        public nld_sys_dsw1(device_t_constructor_param_t data)
+            : base(data)
         {
             m_RON = new param_fp_t(this, "RON", nlconst.one());
             m_ROFF = new param_fp_t(this, "ROFF", nlconst.magic(1.0E20));
-            m_R = new analog.nld_R_base(this, "_R");
+            m_R = new sub_device_wrapper<analog.nld_R_base>(this, new analog.nld_R_base(new device_t_constructor_param_t(this, "_R")));
             m_I = new logic_input_t(this, "I", input);
             m_last_state = new state_var<netlist_sig_t>(this, "m_last_state", 0);
 
 
-            register_subalias("1", "_R.1");
-            register_subalias("2", "_R.2");
+            register_sub_alias("1", "_R.1");
+            register_sub_alias("2", "_R.2");
         }
 
 
@@ -270,7 +263,7 @@ namespace mame.netlist.devices
         public override void reset()
         {
             m_last_state.op = 0;
-            m_R.set_R(m_ROFF.op());
+            m_R.op().set_R(m_ROFF.op());
         }
 
 
@@ -293,9 +286,9 @@ namespace mame.netlist.devices
                 m_last_state.op = state;
                 nl_fptype R = (state != 0) ? m_RON.op() : m_ROFF.op();
 
-                m_R.change_state(() => //[this, &R]()
+                m_R.op().change_state(() => //[this, &R]()
                 {
-                    m_R.set_R(R);
+                    m_R.op().set_R(R);
                 });
             }
         }
@@ -331,7 +324,7 @@ namespace mame.netlist.devices
         //using distribution = D<nl_fptype>;
 
 
-        analog.nld_twoterm m_T;
+        sub_device_wrapper<analog.nld_two_terminal> m_T;  //NETLIB_SUB_NS(analog, two_terminal) m_T;
         logic_input_t m_I;
         param_fp_t m_RI;
         param_fp_t m_sigma;
@@ -340,12 +333,10 @@ namespace mame.netlist.devices
 
 
         //NETLIB_CONSTRUCTOR(sys_noise)
-        //detail.family_setter_t m_famsetter;
-        //template <class CLASS>
-        public nld_sys_noise(object owner, string name)
-            : base(owner, name)
+        public nld_sys_noise(device_t_constructor_param_t data)
+            : base(data)
         {
-            m_T = new analog.nld_twoterm(this, "m_T");
+            m_T = new sub_device_wrapper<analog.nld_two_terminal>(this, new analog.nld_two_terminal(new device_t_constructor_param_t(this, "m_T")));
             m_I = new logic_input_t(this, "I", input);
             m_RI = new param_fp_t(this, "RI", nlconst.magic(0.1));
             m_sigma = new param_fp_t(this, "SIGMA", nlconst.zero());
@@ -353,8 +344,8 @@ namespace mame.netlist.devices
             m_dis = new state_var<D>(this, "m_dis", ops.new_(m_sigma.op()));
 
 
-            register_subalias("1", "m_T.1");
-            register_subalias("2", "m_T.2");
+            register_sub_alias("1", "m_T.1");
+            register_sub_alias("2", "m_T.2");
         }
 
 

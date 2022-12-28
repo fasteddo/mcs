@@ -107,6 +107,7 @@ namespace mame.netlist
         public static string MW_TERMINAL_1_WITHOUT_CONNECTIONS(params object [] args) { return PERRMSGV(1, "Found terminal {0} without connections", args); }
 
         public static string ME_TERMINAL_1_WITHOUT_NET(params object [] args) { return PERRMSGV(1, "Found terminal {0} without a net", args); }
+        public static string ME_TERMINALS_1_2_WITHOUT_NET(params object [] args) { return PERRMSGV(2, "Found terminals {0} and {1} without a net", args); }
         public static string MF_TERMINALS_WITHOUT_NET(params object [] args) { return PERRMSGV(0, "Found terminals without a net"); }
         public static string ME_TRISTATE_NO_PROXY_FOUND_2(params object [] args) { return PERRMSGV(2,
         "Tristate output {0} on device {1} is not connected to a proxy. You " + 

@@ -143,7 +143,8 @@ namespace mame.plib
         {
             foreach (var s in m_collection)
             {
-                var source = (psource_t)s;  //auto *source(dynamic_cast<S *>(s.get()));
+                //if (auto source = plib::dynamic_downcast<S *>(s.get()))
+                var source = (psource_t)s;
                 if (source != null)
                 {
                     var strm = source.stream(name);
@@ -162,7 +163,8 @@ namespace mame.plib
         {
             foreach (var s in m_collection)
             {
-                var source = s is T s_t ? s_t : default;  //auto *source(dynamic_cast<S *>(s.get()));
+                //if (auto source = plib::dynamic_downcast<S *>(s.get()))
+                var source = s is T s_t ? s_t : default;
                 if (source != default)
                 {
                     if (lambda(source))

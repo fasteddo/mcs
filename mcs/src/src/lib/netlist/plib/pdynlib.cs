@@ -8,60 +8,120 @@ using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 
 namespace mame.plib
 {
-    public abstract class dynlib_base
+    public abstract class dynamic_library_base
     {
+        //template <typename R, typename... Args>
+        public class function
+        {
+            //using calltype = R(*) (Args... args);
+
+
+            Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> m_sym;  //calltype m_sym;
+
+
+            public function() { m_sym = null; }
+
+            public function(dynamic_library_base dl, string name)
+            {
+                m_sym = dl.get_symbol(name);  //m_sym = dl.get_symbol<calltype>(name);
+            }
+
+
+            public void load(dynamic_library_base dl, string name) { throw new emu_unimplemented(); }
+            //{
+            //    m_sym = dl.get_symbol<calltype>(name);
+            //}
+
+            //R operator ()(Args&&... args) const
+            //{
+            //    return m_sym(std::forward<Args>(args)...);
+            //    //return m_sym(args...);
+            //}
+
+            public bool resolved() { throw new emu_unimplemented(); }  //{ return m_sym != nullptr; }
+        }
+
+
         bool m_is_loaded;
 
 
-        protected dynlib_base() { m_is_loaded = false; }
+        protected dynamic_library_base() { m_is_loaded = false; }
 
-        //virtual ~dynlib_base() = default;
+        //virtual ~dynamic_library_base() = default;
 
-        //PCOPYASSIGN(dynlib_base, delete)
-        //PMOVEASSIGN(dynlib_base, default)
+        //dynamic_library_base(const dynamic_library_base &) = delete;
+        //dynamic_library_base &operator=(const dynamic_library_base &) = delete;
+
+        //dynamic_library_base(dynamic_library_base &&) noexcept = default;
+        //dynamic_library_base &operator=(dynamic_library_base &&) noexcept = default;
+
 
         public bool isLoaded() { return m_is_loaded; }
 
         //template <typename T>
-        public Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> getsym(string name)  //T getsym(const pstring &name) const noexcept
+        public Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> get_symbol(string name)  //T get_symbol(const pstring &name) const noexcept
         {
-            return getsym_p(name);  //return reinterpret_cast<T>(getsym_p(name));
+            return get_symbol_pointer(name);  //return reinterpret_cast<T>(get_symbol_pointer(name));
         }
 
         protected void set_loaded(bool v) { m_is_loaded = v; }
 
-        protected abstract Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> getsym_p(string name);  //virtual void *getsym_p(const pstring &name) const noexcept = 0;
+        protected abstract Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> get_symbol_pointer(string name);  //virtual void *get_symbol_pointer(const pstring &name) const noexcept = 0;
     }
 
 
-    //class dynlib : dynlib_base
-
-
-    public struct dynlib_static_sym
+    class dynamic_library : dynamic_library_base
     {
-        public string name;
-        public Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> addr;
-    }
+        //void *m_lib;
 
 
-    public class dynlib_static : dynlib_base
-    {
-        dynlib_static_sym [] m_syms;
-
-
-        public dynlib_static(dynlib_static_sym [] syms)
+        dynamic_library(string libname)
         {
-            m_syms = syms;
+            //m_lib = LoadLibrary(winapi_string(putf8string(libname)).c_str());
+            set_loaded(true);
+        }
+
+        dynamic_library(string path, string libname)
+        {
+            //m_lib = LoadLibrary(winapi_string(putf8string(libname)).c_str());
+            set_loaded(true);
+        }
+
+        //~dynamic_library() override;
+
+        //PCOPYASSIGN(dynamic_library, delete)
+        //PMOVEASSIGN(dynamic_library, default)
 
 
-            if (syms != null)
+        protected override Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> get_symbol_pointer(string name) { throw new emu_unimplemented(); }  //void *get_symbol_pointer(const pstring &name) const noexcept override;
+    }
+
+
+    public class static_library : dynamic_library_base
+    {
+        public struct symbol
+        {
+            public string name;
+            public Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> addr;  //void       *addr;
+        }
+
+
+        symbol [] m_syms;
+
+
+        public static_library(symbol [] symbols)
+        {
+            m_syms = symbols;
+
+
+            if (symbols != null)
                 set_loaded(true);
         }
 
 
-        protected override Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> getsym_p(string name)  //void *getsym_p(const pstring &name) const noexcept override
+        protected override Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> get_symbol_pointer(string name)  //void *get_symbol_pointer(const pstring &name) const noexcept override
         {
-            dynlib_static_sym [] p_ = m_syms;  //const dynlib_static_sym *p = m_syms;
+            symbol [] p_ = m_syms;  //const symbol *p = m_syms;
             //while (p->name[0] != 0)
             //{
             //    if (name == pstring(p->name))
@@ -76,37 +136,5 @@ namespace mame.plib
 
             return null;
         }
-    }
-
-
-    //template <typename R, typename... Args>
-    class dynproc
-    {
-        //using calltype = R(*) (Args... args);
-
-
-        //calltype m_sym;
-        Action<Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<nl_fptype>, Pointer<Pointer<nl_fptype>>> m_sym;
-
-
-        public dynproc() { m_sym = null; }
-
-        public dynproc(dynlib_base dl, string name)
-        {
-            m_sym = dl.getsym(name);  //m_sym = dl.getsym<calltype>(name);
-        }
-
-        public void load(dynlib_base dl, string name)
-        {
-            m_sym = dl.getsym(name);  //m_sym = dl.getsym<calltype>(name);
-        }
-
-        public void op(Pointer<nl_fptype> arg1, Pointer<nl_fptype> arg2, Pointer<nl_fptype> arg3, Pointer<nl_fptype> arg4, Pointer<Pointer<nl_fptype>> arg5)  //R operator ()(Args&&... args) const
-        {
-            m_sym(arg1, arg2, arg3, arg4, arg5);  //return m_sym(std::forward<Args>(args)...);
-            ////return m_sym(args...);
-        }
-
-        public bool resolved() { return m_sym != null; }
     }
 }

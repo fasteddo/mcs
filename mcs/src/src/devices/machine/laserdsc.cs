@@ -78,13 +78,6 @@ namespace mame
         //typedef device_delegate<void (int samplerate, int samples, const int16_t *ch0, const int16_t *ch1)> audio_delegate;
 
 
-        // timer IDs
-        //enum
-        //{
-        //    TID_VBI_FETCH,
-        //    TID_FIRST_PLAYER_TIMER
-        //};
-
         // common laserdisc states
         //enum player_state : uint32_t
         //{
@@ -150,6 +143,8 @@ namespace mame
 
         //player_state_info   m_player_state;         // active state
         //player_state_info   m_saved_state;          // saved state during temporary operations
+
+        //emu_timer           *m_vbi_fetch_timer;     // fetcher for our VBI data
 
 
         // configuration
@@ -329,13 +324,13 @@ namespace mame
         protected override void device_start() { throw new emu_unimplemented(); }
         protected override void device_stop() { throw new emu_unimplemented(); }
         protected override void device_reset() { throw new emu_unimplemented(); }
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param) { throw new emu_unimplemented(); }
         protected override void device_validity_check(validity_checker valid) { throw new emu_unimplemented(); }
 
 
         // device_sound_interface overrides
         //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
 
+        //virtual TIMER_CALLBACK_MEMBER(fetch_vbi_data);
 
         // subclass helpers
         //void set_audio_squelch(bool squelchleft, bool squelchright) { m_stream->update(); m_audiosquelch = (squelchleft ? 1 : 0) | (squelchright ? 2 : 0); }

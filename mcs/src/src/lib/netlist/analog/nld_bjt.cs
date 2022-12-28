@@ -3,6 +3,7 @@
 
 using System;
 
+using base_device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = base_device_param_t;  //using base_device_param_t = const base_device_data_t &;  //using base_device_data_t = core_device_data_t;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using param_model_t_value_t = mame.netlist.param_model_t.value_base_t<System.Double, mame.netlist.param_model_t.value_base_t_operators_double>;  //using value_t = value_base_t<nl_fptype>;
 using unsigned = System.UInt32;
@@ -89,52 +90,20 @@ namespace mame.netlist
         }
 
 
-        // Have a common start for transistors
-
-        //NETLIB_BASE_OBJECT(QBJT)
-        public class nld_QBJT : base_device_t
-        {
-            protected param_model_t m_model;
-
-            bjt_type m_qtype;
-
-
-            //NETLIB_CONSTRUCTOR_EX(QBJT, const pstring &model = "NPN")
-            public nld_QBJT(object owner, string name, string model = "NPN")
-                : base(owner, name)
-            {
-                m_model = new param_model_t(this, "MODEL", model);
-                m_qtype = bjt_type.BJT_NPN;
-            }
-
-
-            //NETLIB_IS_DYNAMIC(true)
-            public override bool is_dynamic() { return true; }
-
-
-            //NETLIB_RESETI();
-
-            //bjt_type qtype() const noexcept { return m_qtype; }
-            //bool is_qtype(bjt_type atype) const noexcept { return m_qtype == atype; }
-            protected void set_qtype(bjt_type atype) { m_qtype = atype; }
-        }
-
-
         // -----------------------------------------------------------------------------
         // nld_QBJT_switch
         // -----------------------------------------------------------------------------
-
-        //NETLIB_OBJECT_DERIVED(QBJT_switch, QBJT)
-        public class nld_QBJT_switch : nld_QBJT
+        public class nld_QBJT_switch : base_device_t
         {
             //NETLIB_DEVICE_IMPL_NS(analog, QBJT_switch, "QBJT_SW", "MODEL")
             public static readonly factory.constructor_ptr_t decl_QBJT_switch = NETLIB_DEVICE_IMPL_NS<nld_QBJT_switch>("analog", "QBJT_SW", "MODEL");
 
 
-            bjt_model_t m_modacc;
-            nld_twoterm m_RB;
-            nld_twoterm m_RC;
-            nld_twoterm m_BC;
+            param_model_t m_model;
+            bjt_model_t m_bjt_model;
+            nld_two_terminal m_RB;  //NETLIB_NAME(two_terminal) m_RB;
+            nld_two_terminal m_RC;  //NETLIB_NAME(two_terminal) m_RC;
+            nld_two_terminal m_BC;  //NETLIB_NAME(two_terminal) m_BC;
 
             nl_fptype m_gB; // base conductance / switch on
             nl_fptype m_gC; // collector conductance / switch on
@@ -142,23 +111,23 @@ namespace mame.netlist
             state_var<unsigned> m_state_on;
 
 
-            //NETLIB_CONSTRUCTOR(QBJT_switch)
-            public nld_QBJT_switch(object owner, string name)
-                : base(owner, name)
+            public nld_QBJT_switch(base_device_t_constructor_param_t data)
+                : base(data)
             {
-                m_modacc = new bjt_model_t(m_model);
-                m_RB = new nld_twoterm(this, "m_RB", termhandler);
-                m_RC = new nld_twoterm(this, "m_RC", termhandler);
-                m_BC = new nld_twoterm(this, "m_BC", termhandler);
+                m_model = new param_model_t(this, "MODEL", "NPN");
+                m_bjt_model = new bjt_model_t(m_model);
+                m_RB = new nld_two_terminal(this, "m_RB", terminal_handler);
+                m_RC = new nld_two_terminal(this, "m_RC", terminal_handler);
+                m_BC = new nld_two_terminal(this, "m_BC", terminal_handler);
                 m_gB = nlconst.cgmin();
                 m_gC = nlconst.cgmin();
                 m_V = nlconst.zero();
                 m_state_on = new state_var<unsigned>(this, "m_state_on", 0U);
 
 
-                register_subalias("B", m_RB.P());
-                register_subalias("E", m_RB.N());
-                register_subalias("C", m_RC.P());
+                register_sub_alias("B", m_RB.P());
+                register_sub_alias("E", m_RB.N());
+                register_sub_alias("C", m_RC.P());
 
                 connect(m_RB.N(), m_RC.N());
                 connect(m_RB.P(), m_BC.P());
@@ -173,8 +142,6 @@ namespace mame.netlist
                 if (m_RB.solver() == null && m_RC.solver() == null)
                     throw new nl_exception(MF_DEVICE_FRY_1(this.name()));
 
-                base.reset();  //NETLIB_NAME(QBJT)::reset();
-
                 var zero = nlconst.zero();
 
                 m_state_on.op = 0;
@@ -186,28 +153,29 @@ namespace mame.netlist
             }
 
 
-            //NETLIB_HANDLERI(termhandler)
-            void termhandler()
+            //NETLIB_HANDLERI(terminal_handler)
+            void terminal_handler()
             {
-                var solv = m_RB.solver();
-                if (solv != null)
-                    solv.solve_now();
+                var solver = m_RB.solver();
+                if (solver != null)
+                    solver.solve_now();
                 else
                     m_RC.solver().solve_now();
             }
+
+
+            //NETLIB_IS_DYNAMIC(true)
+            public override bool is_dynamic() { return true; }
 
 
             //NETLIB_UPDATE_PARAMI();
             //NETLIB_UPDATE_PARAM(QBJT_switch)
             public override void update_param()
             {
-                nl_fptype IS = m_modacc.m_IS.op();
-                nl_fptype BF = m_modacc.m_BF.op();
-                nl_fptype NF = m_modacc.m_NF.op();
-                //nl_fptype VJE = m_modacc.dValue("VJE", 0.75);
-
-                // FIXME: check for PNP as well and bail out
-                set_qtype(m_modacc.m_type);
+                nl_fptype IS = m_bjt_model.m_IS.op();
+                nl_fptype BF = m_bjt_model.m_BF.op();
+                nl_fptype NF = m_bjt_model.m_NF.op();
+                //nl_fptype VJE = m_bjt_model.dValue("VJE", 0.75);
 
                 nl_fptype alpha = BF / (nlconst.one() + BF);
 
@@ -237,7 +205,7 @@ namespace mame.netlist
             public override void update_terminals()
             {
                 throw new emu_unimplemented();
-                //const nl_fptype m = (is_qtype( bjt_type::BJT_NPN) ? 1 : -1);
+                //const nl_fptype m = (m_bjt_model.m_type == bjt_type::BJT_NPN) ? nlconst::one() : -nlconst::one();
                 //
                 //const unsigned new_state = (m_RB.deltaV() * m > m_V ) ? 1 : 0;
                 //if (m_state_on ^ new_state)
@@ -258,20 +226,20 @@ namespace mame.netlist
         // -----------------------------------------------------------------------------
         // nld_QBJT_EB
         // -----------------------------------------------------------------------------
-        //NETLIB_OBJECT_DERIVED(QBJT_EB, QBJT)
-        public class nld_QBJT_EB : nld_QBJT
+        public class nld_QBJT_EB : base_device_t
         {
             //NETLIB_DEVICE_IMPL_NS(analog, QBJT_EB, "QBJT_EB", "MODEL")
             public static readonly factory.constructor_ptr_t decl_QBJT_EB = NETLIB_DEVICE_IMPL_NS<nld_QBJT_EB>("analog", "QBJT_EB", "MODEL");
 
 
-            bjt_model_t m_modacc;
+            param_model_t m_model;
+            bjt_model_t m_bjt_model;
             generic_diode m_gD_BC;  //generic_diode<diode_e::BIPOLAR> m_gD_BC;
             generic_diode m_gD_BE;  //generic_diode<diode_e::BIPOLAR> m_gD_BE;
 
-            nld_twoterm m_D_CB;  // gcc, gce - gcc, gec - gcc, gcc - gce | Ic
-            nld_twoterm m_D_EB;  // gee, gec - gee, gce - gee, gee - gec | Ie
-            nld_twoterm m_D_EC;  // 0, -gec, -gcc, 0 | 0
+            nld_two_terminal m_D_CB;  //NETLIB_NAME(two_terminal) m_D_CB;  // gcc, gce - gcc, gec - gcc, gcc - gce | Ic
+            nld_two_terminal m_D_EB;  //NETLIB_NAME(two_terminal) m_D_EB;  // gee, gec - gee, gce - gee, gee - gec | Ie
+            nld_two_terminal m_D_EC;  //NETLIB_NAME(two_terminal) m_D_EC;  // 0, -gec, -gcc, 0 | 0
 
             nl_fptype m_alpha_f;
             nl_fptype m_alpha_r;
@@ -280,38 +248,38 @@ namespace mame.netlist
             analog.nld_C m_CJC;  //NETLIB_SUB_UPTR(analog, C) m_CJC;
 
 
-            //NETLIB_CONSTRUCTOR(QBJT_EB)
-            public nld_QBJT_EB(object owner, string name)
-                : base(owner, name)
+            public nld_QBJT_EB(base_device_t_constructor_param_t data)
+                : base(data)
             {
-                m_modacc = new bjt_model_t(m_model);
+                m_model = new param_model_t(this, "MODEL", "NPN");
+                m_bjt_model = new bjt_model_t(m_model);
                 m_gD_BC = new generic_diode(diode_e.BIPOLAR, this, "m_D_BC");
                 m_gD_BE = new generic_diode(diode_e.BIPOLAR, this, "m_D_BE");
-                m_D_CB = new nld_twoterm(this, "m_D_CB", termhandler);
-                m_D_EB = new nld_twoterm(this, "m_D_EB", termhandler);
-                m_D_EC = new nld_twoterm(this, "m_D_EC", termhandler);
+                m_D_CB = new nld_two_terminal(this, "m_D_CB", terminal_handler);
+                m_D_EB = new nld_two_terminal(this, "m_D_EB", terminal_handler);
+                m_D_EC = new nld_two_terminal(this, "m_D_EC", terminal_handler);
                 m_alpha_f = 0;
                 m_alpha_r = 0;
 
 
-                register_subalias("E", m_D_EB.P());   // Cathode
-                register_subalias("B", m_D_EB.N());   // Anode
+                register_sub_alias("E", m_D_EB.P());   // Cathode
+                register_sub_alias("B", m_D_EB.N());   // Anode
 
-                register_subalias("C", m_D_CB.P());   // Cathode
+                register_sub_alias("C", m_D_CB.P());   // Cathode
 
                 connect(m_D_EB.P(), m_D_EC.P());
                 connect(m_D_EB.N(), m_D_CB.N());
                 connect(m_D_CB.P(), m_D_EC.N());
 
-                if (m_modacc.m_CJE.op() > nlconst.zero())
+                if (m_bjt_model.m_CJE.op() > nlconst.zero())
                 {
-                    create_and_register_subdevice(this, "m_CJE", out m_CJE);
+                    create_and_register_sub_device(this, "m_CJE", out m_CJE);
                     connect("B", "m_CJE.1");
                     connect("E", "m_CJE.2");
                 }
-                if (m_modacc.m_CJC.op() > nlconst.zero())
+                if (m_bjt_model.m_CJC.op() > nlconst.zero())
                 {
-                    create_and_register_subdevice(this, "m_CJC", out m_CJC);
+                    create_and_register_sub_device(this, "m_CJC", out m_CJC);
                     connect("B", "m_CJC.1");
                     connect("C", "m_CJC.2");
                 }
@@ -325,16 +293,20 @@ namespace mame.netlist
             }
 
 
-            //NETLIB_HANDLERI(termhandler)
-            void termhandler()
+            //NETLIB_HANDLERI(terminal_handler)
+            void terminal_handler()
             {
                 throw new emu_unimplemented();
-                //auto *solv(m_D_EB.solver());
-                //if (solv != nullptr)
-                //    solv->solve_now();
+                //auto *solver(m_D_EB.solver());
+                //if (solver != nullptr)
+                //    solver->solve_now();
                 //else
                 //    m_D_CB.solver()->solve_now();
             }
+
+
+            //NETLIB_IS_DYNAMIC(true)
+            public override bool is_dynamic() { return true; }
 
 
             //NETLIB_UPDATE_PARAMI();

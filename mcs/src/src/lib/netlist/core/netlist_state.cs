@@ -31,7 +31,7 @@ namespace mame.netlist
         device_arena m_pool; // must be deleted last!
 
         netlist_t m_netlist;  //device_arena::unique_ptr<netlist_t>        m_netlist;
-        plib.dynlib_base m_lib;  //std::unique_ptr<plib::dynlib_base>         m_lib;
+        plib.dynamic_library_base m_lib;  //std::unique_ptr<plib::dynamic_library_base>         m_lib;
         plib.state_manager_t m_state = new plib.state_manager_t();
         log_type m_log;
 
@@ -43,8 +43,11 @@ namespace mame.netlist
         netlist_state_t_devices_collection_type m_devices = new netlist_state_t_devices_collection_type();
         // sole use is to manage lifetime of family objects
         netlist_state_t_family_collection_type m_family_cache = new netlist_state_t_family_collection_type();
+
+//#if !(NL_USE_INPLACE_CORE_TERMS)
         // all terms for a net
         std.unordered_map<detail.net_t, std.vector<detail.core_terminal_t>> m_core_terms = new std.unordered_map<detail.net_t, std.vector<detail.core_terminal_t>>();  //std::unordered_map<const detail::net_t *, std::vector<detail::core_terminal_t *>> m_core_terms;
+//#endif
 
         // dummy version
         int m_dummy_version;
@@ -108,7 +111,7 @@ namespace mame.netlist
         //template<class C>
         static bool check_class<C>(core_device_t p) where C : core_device_t
         {
-            return p is C;  //return dynamic_cast<C *>(p) != nullptr;
+            return p is C;  //return bool(plib::dynamic_downcast<C *>(p));
         }
 
 
@@ -160,7 +163,8 @@ namespace mame.netlist
             std.vector<C> tmp = new std.vector<C>();
             foreach (var d in m_devices)
             {
-                var dev = d.second is C d_C ? d_C : default;  //auto dev = dynamic_cast<C *>(d.second.get());
+                //if (auto dev = plib::dynamic_downcast<C *>(d.second.get()))
+                var dev = d.second is C d_C ? d_C : default;
                 if (dev != default)
                     tmp.push_back(dev);
             }
@@ -173,7 +177,7 @@ namespace mame.netlist
         public log_type log() { return m_log; }
 
 
-        public plib.dynlib_base static_solver_lib() { return m_lib; }
+        public plib.dynamic_library_base static_solver_lib() { return m_lib; }
 
 
         /// \brief provide library with static solver implementations.
@@ -182,7 +186,7 @@ namespace mame.netlist
         /// determined by the specific use case. You can pass such a collection
         /// of symbols with this method.
         ///
-        public void set_static_solver_lib(plib.dynlib_base lib)  //void set_static_solver_lib(std::unique_ptr<plib::dynlib_base> &&lib);
+        public void set_static_solver_lib(plib.dynamic_library_base lib)  //void set_static_solver_lib(std::unique_ptr<plib::dynamic_library_base> &&lib);
         {
             m_lib = lib;
         }
@@ -211,6 +215,10 @@ namespace mame.netlist
 
         public size_t find_net_id(detail.net_t net)
         {
+            // special case for queue end processing items
+            if (net == null)
+                return size_t.MaxValue - 1;
+
             for (size_t i = 0; i < m_nets.size(); i++)
                 if (m_nets[i] == net)
                     return i;
@@ -221,6 +229,10 @@ namespace mame.netlist
 
         public detail.net_t net_by_id(size_t id)
         {
+            // special case for queue end processing items
+            if (id == size_t.MaxValue - 1)
+                return null;
+
             return m_nets[id];
         }
 
@@ -385,12 +397,12 @@ namespace mame.netlist
             {
                 case 0:
                 {
-                    std.vector<nldelegate> t = new std.vector<nldelegate>();
+                    std.vector<nl_delegate> t = new std.vector<nl_delegate>();
                     log().verbose.op("Using default startup strategy");
                     foreach (var n in m_nets)
                     {
                         n.update_inputs(); // only used if USE_COPY_INSTEAD_OF_REFERENCE == 1
-                        foreach (var term in core_terms(n))
+                        foreach (var term in n.core_terms_copy())
                         {
                             if (!plib.container.contains(t, term.delegate_()))
                             {
@@ -433,6 +445,7 @@ namespace mame.netlist
         }
 
 
+//#if !(NL_USE_INPLACE_CORE_TERMS)
         public std.vector<detail.core_terminal_t> core_terms(detail.net_t net)  //std::vector<detail::core_terminal_t *> &core_terms(const detail::net_t &net) noexcept
         {
             if (m_core_terms[net] == default)
@@ -440,5 +453,6 @@ namespace mame.netlist
 
             return m_core_terms[net];
         }
+//#endif
     }
-} // namespace netlist
+}

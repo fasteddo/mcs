@@ -3,8 +3,7 @@
 
 using System;
 
-using analog_net_t_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;
-using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
+using matrix_solver_t_net_list_t = mame.std.vector<mame.netlist.analog_net_t>;  //using net_list_t =  std::vector<analog_net_t *>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using size_t = System.UInt64;
@@ -27,7 +26,7 @@ namespace mame.netlist.solver
         static readonly size_t m_pitch_ABS = (((SIZEABS + 0) + 7) / 8) * 8;
 
 
-        // PALIGNAS_VECTOROPT() parrays define alignment already
+        // PALIGNAS_VECTOROPT() `parray` defines alignment already
         protected MemoryContainer<MemoryContainer<FT>> m_A;  //plib::parray2D<FT, SIZE, m_pitch_ABS> m_A;
 
 
@@ -48,7 +47,7 @@ namespace mame.netlist.solver
         public override void reset() { base.reset(); }
 
 
-        protected override void vsolve_non_dynamic()
+        protected override void upstream_solve_non_dynamic()
         {
             throw new emu_unimplemented();
         }
@@ -94,30 +93,26 @@ namespace mame.netlist.solver
                 for (size_t i = 0; i < kN; i++)
                 {
                     // Find the row with the largest first value
-                    size_t maxrow = i;
+                    size_t max_row = i;
                     for (size_t j = i + 1; j < kN; j++)
                     {
-                        if (ops.greater_than(plib.pg.abs<FT, FT_OPS>(m_A[j][i]), plib.pg.abs<FT, FT_OPS>(m_A[maxrow][i])))  //if (plib::abs(m_A[j][i]) > plib::abs(m_A[maxrow][i]))
-                        //if (m_A[j][i] * m_A[j][i] > m_A[maxrow][i] * m_A[maxrow][i])
-                            maxrow = j;
+                        if (ops.greater_than(plib.pg.abs<FT, FT_OPS>(m_A[j][i]), plib.pg.abs<FT, FT_OPS>(m_A[max_row][i])))  //if (plib::abs(m_A[j][i]) > plib::abs(m_A[maxrow][i]))
+                        //#if (m_A[j][i] * m_A[j][i] > m_A[max_row][i] * m_A[max_row][i])
+                            max_row = j;
                     }
 
-                    if (maxrow != i)
+                    if (max_row != i)
                     {
 #if false
-                        // Swap the maxrow and ith row
-                        for (int k = 0; k < kN; k++)
-                        {
-                            //std::swap(m_A[i][k], m_A[maxrow][k]);
-                            double temp = m_A[i][k];
-                            m_A[i][k] = m_A[maxrow][k];
-                            m_A[maxrow][k] = temp;
+                        // Swap the max_row and ith row
+                        for (std::size_t k = 0; k < kN; k++) {
+                            std::swap(m_A[i][k], m_A[max_row][k]);
                         }
 #else
-                        (m_A[i], m_A[maxrow]) = (m_A[maxrow], m_A[i]);  //std::swap(m_A[i], m_A[maxrow]);
+                        (m_A[i], m_A[max_row]) = (m_A[max_row], m_A[i]);  //std::swap(m_A[i], m_A[max_row]);
 #endif
 
-                        (this.m_RHS[i], this.m_RHS[maxrow]) = (this.m_RHS[maxrow], this.m_RHS[i]);  //std::swap(this->m_RHS[i], this->m_RHS[maxrow]);
+                        (this.m_RHS[i], this.m_RHS[max_row]) = (this.m_RHS[max_row], this.m_RHS[i]);  //std::swap(this->m_RHS[i], this->m_RHS[max_row]);
                     }
 
                     // FIXME: Singular matrix?

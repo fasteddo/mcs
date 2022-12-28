@@ -8,6 +8,7 @@ using devcb_write8 = mame.devcb_write<mame.Type_constant_u8>;  //using devcb_wri
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using int32_t = System.Int32;
 using offs_t = System.UInt32;  //using offs_t = u32;
+using s32 = System.Int32;
 using stream_buffer_sample_t = System.Single;  //using sample_t = float;
 using u8 = System.Byte;
 using u32 = System.UInt32;
@@ -107,14 +108,6 @@ namespace mame
         const int SKSTAT_C =  0x0F;
         //}
 
-        //enum  /* sync-operations */
-        //{
-        const int SYNC_NOOP       = 11;
-        const int SYNC_SET_IRQST  = 12;
-        const int SYNC_POT        = 13;
-        const int SYNC_WRITE      = 14;
-        //}
-
 
         enum output_type
         {
@@ -161,7 +154,7 @@ namespace mame
                     if ((m_parent.m_IRQEN & m_INTMask) != 0)
                     {
                         /* Exposed state has changed: This should only be updated after a resync ... */
-                        m_parent.synchronize(SYNC_SET_IRQST, m_INTMask);
+                        m_parent.machine().scheduler().synchronize(m_parent.sync_set_irqst, m_INTMask);
                     }
                 }
             }
@@ -324,6 +317,10 @@ namespace mame
         double m_cap;
         double m_v_ref;
 
+        emu_timer m_serout_ready_timer;
+        emu_timer m_serout_complete_timer;
+        emu_timer m_serin_ready_timer;
+
 
         // construction/destruction
         //-------------------------------------------------
@@ -349,6 +346,9 @@ namespace mame
             m_keyboard_r = null;
             m_irq_f = null;
             m_output_type = output_type.LEGACY_LINEAR;
+            m_serout_ready_timer = null;
+            m_serout_complete_timer = null;
+            m_serin_ready_timer = null;
         }
 
 
@@ -387,7 +387,7 @@ namespace mame
             int data;
             int pot;
 
-            synchronize(SYNC_NOOP); /* force resync */
+            machine().scheduler().synchronize(); /* force resync */
 
             switch (offset & 15)
             {
@@ -482,7 +482,7 @@ namespace mame
         //-------------------------------------------------
         public void write(offs_t offset, uint8_t data)
         {
-            synchronize(SYNC_WRITE, (int)((offset << 8) | data));
+            machine().scheduler().synchronize(sync_write, (int)((offset << 8) | data));
         }
 
 
@@ -602,10 +602,10 @@ namespace mame
 
             m_stream = m_disound.stream_alloc(0, 1, clock());
 
-            timer_alloc(SYNC_WRITE);    /* timer for sync operation */
-            timer_alloc(SYNC_NOOP);
-            timer_alloc(SYNC_POT);
-            timer_alloc(SYNC_SET_IRQST);
+            m_serout_ready_timer = timer_alloc(serout_ready_irq);
+            m_serout_complete_timer = timer_alloc(serout_complete_irq);
+            m_serin_ready_timer = timer_alloc(serin_ready_irq);
+
 
             //throw new emu_unimplemented();
 #if false
@@ -694,60 +694,6 @@ namespace mame
         }
 
 
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
-        {
-            switch (id)
-            {
-            case 3:
-                /* serout_ready_cb */
-                if ((m_IRQEN & IRQ_SEROR) != 0)
-                {
-                    m_IRQST |= IRQ_SEROR;
-                    if (m_irq_f != null)
-                        m_irq_f(IRQ_SEROR);
-                }
-                break;
-            case 4:
-                /* serout_complete */
-                if ((m_IRQEN & IRQ_SEROC) != 0)
-                {
-                    m_IRQST |= IRQ_SEROC;
-                    if (m_irq_f != null)
-                        m_irq_f(IRQ_SEROC);
-                }
-                break;
-            case 5:
-                /* serin_ready */
-                if ((m_IRQEN & IRQ_SERIN) != 0)
-                {
-                    m_IRQST |= IRQ_SERIN;
-                    if (m_irq_f != null)
-                        m_irq_f(IRQ_SERIN);
-                }
-                break;
-            case SYNC_WRITE:
-                {
-                    offs_t offset = (offs_t)((param >> 8) & 0xff);
-                    uint8_t data = (uint8_t)(param & 0xff);
-                    write_internal(offset, data);
-                }
-                break;
-            case SYNC_NOOP:
-                /* do nothing, caused by a forced resync */
-                break;
-            case SYNC_POT:
-                //logerror("x %02x \n", (param & 0x20));
-                m_ALLPOT |= (uint8_t)(param & 0xff);
-                break;
-            case SYNC_SET_IRQST:
-                m_IRQST |=  (uint8_t)(param & 0xff);
-                break;
-            default:
-                throw new emu_fatalerror("Unknown id in pokey_device::device_timer");
-            }
-        }
-
-
         // device_sound_interface overrides
         //-------------------------------------------------
         //  sound_stream_update - handle a stream update
@@ -832,6 +778,25 @@ namespace mame
                 m_icount.i--;
             } while (m_icount.i > 0);
         }
+
+
+        //TIMER_CALLBACK_MEMBER(serout_ready_irq);
+        void serout_ready_irq(s32 param) { throw new emu_unimplemented(); }
+
+        //TIMER_CALLBACK_MEMBER(serout_complete_irq);
+        void serout_complete_irq(s32 param) { throw new emu_unimplemented(); }
+
+        //TIMER_CALLBACK_MEMBER(serin_ready_irq);
+        void serin_ready_irq(s32 param) { throw new emu_unimplemented(); }
+
+        //TIMER_CALLBACK_MEMBER(sync_write);
+        void sync_write(s32 param) { throw new emu_unimplemented(); }
+
+        //TIMER_CALLBACK_MEMBER(sync_pot);
+        void sync_pot(s32 param) { throw new emu_unimplemented(); }
+
+        //TIMER_CALLBACK_MEMBER(sync_set_irqst);
+        void sync_set_irqst(s32 param) { throw new emu_unimplemented(); }
 
 
         //virtual uint32_t execute_min_cycles() const { return 114; }
@@ -1093,7 +1058,7 @@ namespace mame
 
             // some pots latched?
             if (upd != 0)
-                synchronize(SYNC_POT, upd);
+                machine().scheduler().synchronize(sync_pot, upd);
         }
 
 
@@ -1412,9 +1377,9 @@ namespace mame
                  * loaders from Ballblazer and Escape from Fractalus
                  * The real times are unknown
                  */
-                timer_set(attotime.from_usec(200), 3);
+                m_serout_ready_timer.adjust(attotime.from_usec(200));
                 /* 10 bits (assumption 1 start, 8 data and 1 stop bit) take how long? */
-                timer_set(attotime.from_usec(2000), 4);// FUNC(pokey_serout_complete), 0, p);
+                m_serout_complete_timer.adjust(attotime.from_usec(2000));
                 break;
 
             case IRQEN_C:

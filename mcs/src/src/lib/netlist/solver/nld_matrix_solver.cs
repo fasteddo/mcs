@@ -3,8 +3,10 @@
 
 using System;
 
+using device_data_t = mame.netlist.core_device_data_t;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
+using device_t_constructor_data_t = mame.netlist.core_device_data_t;  //using constructor_data_t = device_data_t;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using matrix_solver_t_fptype = System.Double;  //using fptype = nl_fptype;
-using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
+using matrix_solver_t_net_list_t = mame.std.vector<mame.netlist.analog_net_t>;  //using net_list_t =  std::vector<analog_net_t *>;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<config::prefer_int128::value && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
@@ -60,6 +62,7 @@ namespace mame.netlist.solver
     }
 
 
+    //using arena_type = plib::mempool_arena<plib::aligned_arena<>, 1024>;
     //using static_compile_container = std::vector<std::pair<pstring, pstring>>;
 
 
@@ -161,8 +164,8 @@ namespace mame.netlist.solver
 
         public param_logic_t m_use_gabs;
 
-        public nl_fptype m_min_timestep;
-        public nl_fptype m_max_timestep;
+        public nl_fptype m_min_time_step;
+        public nl_fptype m_max_time_step;
 
 
         //template <typename D>
@@ -199,17 +202,17 @@ namespace mame.netlist.solver
             m_use_gabs = new param_logic_t(parent, prefix + "USE_GABS", defaults.m_use_gabs_());
 
 
-            m_min_timestep = m_dynamic_min_ts.op();
-            m_max_timestep = netlist_time.from_fp(plib.pg.reciprocal(m_freq.op())).as_fp();  //m_max_timestep = netlist_time::from_fp(plib::reciprocal(m_freq())).as_fp<decltype(m_max_timestep)>();
+            m_min_time_step = m_dynamic_min_ts.op();
+            m_max_time_step = netlist_time.from_fp(plib.pg.reciprocal(m_freq.op())).as_fp();  //m_max_timestep = netlist_time::from_fp(plib::reciprocal(m_freq())).as_fp<decltype(m_max_timestep)>();
 
 
             if (m_dynamic_ts != null)
             {
-                m_max_timestep *= 1;//NL_FCONST(1000.0);
+                m_max_time_step *= 1;//NL_FCONST(1000.0);
             }
             else
             {
-                m_min_timestep = m_max_timestep;
+                m_min_time_step = m_max_time_step;
             }
         }
 
@@ -248,21 +251,27 @@ namespace mame.netlist.solver
 
     public class terms_for_net_t
     {
-        public plib.aligned_vector<unsigned> m_nz = new plib.aligned_vector<unsigned>();   //!< all non zero for multiplication
-        public plib.aligned_vector<unsigned> m_nzrd = new plib.aligned_vector<unsigned>(); //!< non zero right of the diagonal for elimination, may include RHS element
-        public plib.aligned_vector<unsigned> m_nzbd = new plib.aligned_vector<unsigned>(); //!< non zero below of the diagonal for elimination
+        public std.vector<unsigned> m_nz;  //plib::arena_vector<arena_type, unsigned> m_nz;   //!< all non zero for multiplication
+        public std.vector<unsigned> m_nzrd;  //plib::arena_vector<arena_type, unsigned> m_nzrd; //!< non zero right of the diagonal for elimination, may include RHS element
+        public std.vector<unsigned> m_nzbd;  //plib::arena_vector<arena_type, unsigned> m_nzbd; //!< non zero below of the diagonal for elimination
 
-        public plib.aligned_vector<int> m_connected_net_idx = new plib.aligned_vector<int>();
+        public std.vector<int> m_connected_net_idx;  //plib::arena_vector<arena_type, int> m_connected_net_idx;
+
+        std.vector<terminal_t> m_terms;  //plib::arena_vector<arena_type, terminal_t *> m_terms;
 
         analog_net_t m_net;
-        plib.aligned_vector<terminal_t> m_terms = new plib.aligned_vector<terminal_t>();
-        size_t m_railstart;
+        size_t m_rail_start;
 
 
-        public terms_for_net_t(analog_net_t net = null)
+        public terms_for_net_t(analog_net_t net = null)  //terms_for_net_t(arena_type &arena, analog_net_t * net = nullptr);
         {
+            m_nz = new std.vector<unsigned>();
+            m_nzrd = new std.vector<unsigned>();
+            m_nzbd = new std.vector<unsigned>();
+            m_connected_net_idx = new std.vector<int>();
+            m_terms = new std.vector<terminal_t>();
             m_net = net;
-            m_railstart = 0;
+            m_rail_start = 0;
         }
 
 
@@ -288,7 +297,7 @@ namespace mame.netlist.solver
 
         public size_t count() { return (size_t)m_terms.size(); }  //std::size_t count() const { return m_terms.size(); }
 
-        public size_t railstart() { return m_railstart; }
+        public size_t rail_start() { return m_rail_start; }
 
         public std.vector<terminal_t> terms() { return m_terms; }  //inline terminal_t **terms() { return m_terms.data(); }
 
@@ -301,7 +310,7 @@ namespace mame.netlist.solver
         public bool is_net(analog_net_t net) { return net == m_net; }
 
 
-        public void set_railstart(size_t val) { m_railstart = val; }
+        public void set_rail_start(size_t val) { m_rail_start = val; }
     }
 
 
@@ -325,21 +334,21 @@ namespace mame.netlist.solver
     {
         //using list_t = std::vector<matrix_solver_t *>;
         //using fptype = nl_fptype;
-        //using arena_type = plib::mempool_arena<plib::aligned_arena, PALIGN_VECTOROPT>;
-        //using net_list_t =  plib::aligned_vector<analog_net_t *>;
+        //using net_list_t =  std::vector<analog_net_t *>;
 
 
         protected solver_parameters_t m_params;
+        //arena_type m_arena;
 
-        protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_gonn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gonn;
-        protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_gtn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();  //plib::pmatrix2d_vrl<fptype, arena_type>    m_gtn;
-        protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_Idrn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();  //plib::pmatrix2d_vrl<fptype, arena_type>    m_Idrn;
-        protected plib.pmatrix2d_vrl<Pointer<matrix_solver_t_fptype>> m_connected_net_Vn = new plib.pmatrix2d_vrl<Pointer<matrix_solver_t_fptype>>();  //plib::pmatrix2d_vrl<fptype *, arena_type>  m_connected_net_Vn;
+        protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_gonn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();  //plib::pmatrix2d_vrl<arena_type, fptype>   m_gonn;
+        protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_gtn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();  //plib::pmatrix2d_vrl<arena_type, fptype>   m_gtn;
+        protected plib.pmatrix2d_vrl<matrix_solver_t_fptype> m_Idrn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();  //plib::pmatrix2d_vrl<arena_type, fptype>   m_Idrn;
+        protected plib.pmatrix2d_vrl<Pointer<matrix_solver_t_fptype>> m_connected_net_Vn = new plib.pmatrix2d_vrl<Pointer<matrix_solver_t_fptype>>();  //plib::pmatrix2d_vrl<arena_type, fptype *> m_connected_net_Vn;
 
         protected state_var<size_t> m_iterative_fail;
         protected state_var<size_t> m_iterative_total;
 
-        protected plib.aligned_vector<terms_for_net_t> m_terms = new plib.aligned_vector<terms_for_net_t>();  // setup only
+        protected std.vector<terms_for_net_t> m_terms; // setup only
 
         devices.nld_solver m_main_solver;
 
@@ -349,22 +358,26 @@ namespace mame.netlist.solver
         state_var<size_t> m_stat_vsolver_calls;
 
         state_var<netlist_time_ext> m_last_step;
-        plib.aligned_vector<nldelegate_ts> m_step_funcs = new plib.aligned_vector<nldelegate_ts>();
-        plib.aligned_vector<nldelegate_dyn> m_dynamic_funcs = new plib.aligned_vector<nldelegate_dyn>();
-        plib.aligned_vector<proxied_analog_output_t> m_inps = new plib.aligned_vector<proxied_analog_output_t>();  //plib::aligned_vector<device_arena::unique_ptr<proxied_analog_output_t>> m_inps;
+        std.vector<nl_delegate_ts> m_step_funcs = new std.vector<nl_delegate_ts>();  //plib::arena_vector<arena_type, nl_delegate_ts> m_step_funcs;
+        std.vector<nl_delegate_dyn> m_dynamic_funcs = new std.vector<nl_delegate_dyn>();  //plib::arena_vector<arena_type, nl_delegate_dyn> m_dynamic_funcs;
+        std.vector<proxied_analog_output_t> m_inputs = new std.vector<proxied_analog_output_t>();  //plib::arena_vector<arena_type, device_arena::unique_ptr<proxied_analog_output_t>> m_inputs;
 
         size_t m_ops;
 
-        plib.aligned_vector<terms_for_net_t> m_rails_temp = new plib.aligned_vector<terms_for_net_t>(); // setup only
+        std.vector<terms_for_net_t> m_rails_temp = new std.vector<terms_for_net_t>(); // setup only
 
 
         // ----------------------------------------------------------------------------------------
         // matrix_solver
         // ----------------------------------------------------------------------------------------
         protected matrix_solver_t(devices.nld_solver main_solver, string name, matrix_solver_t_net_list_t nets, solver.solver_parameters_t params_)
-            : base((device_t)main_solver, name)
+            : base(new device_data_t(main_solver.state(), main_solver.name() + "." + name))
         {
             m_params = params_;
+            m_gonn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();
+            m_gtn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();
+            m_Idrn = new plib.pmatrix2d_vrl<matrix_solver_t_fptype>();
+            m_connected_net_Vn = new plib.pmatrix2d_vrl<Pointer<matrix_solver_t_fptype>>();
             m_iterative_fail = new state_var<size_t>(this, "m_iterative_fail", 0);
             m_iterative_total = new state_var<size_t>(this, "m_iterative_total", 0);
             m_main_solver = main_solver;
@@ -373,6 +386,9 @@ namespace mame.netlist.solver
             m_stat_newton_raphson_fail = new state_var<size_t>(this, "m_stat_newton_raphson_fail", 0);
             m_stat_vsolver_calls = new state_var<size_t>(this, "m_stat_vsolver_calls", 0);
             m_last_step = new state_var<netlist_time>(this, "m_last_step", netlist_time_ext.zero());
+            m_step_funcs = new std.vector<nl_delegate_ts>();
+            m_dynamic_funcs = new std.vector<nl_delegate_dyn>();
+            m_inputs = new std.vector<proxied_analog_output_t>();
             m_ops = 0;
 
 
@@ -398,10 +414,10 @@ namespace mame.netlist.solver
             if (delta < netlist_time.quantum())
             {
                 //printf("solve return %s at %f\n", source, now.as_double());
-                return timestep_device_count() > 0 ? netlist_time.from_fp(m_params.m_min_timestep) : netlist_time.zero();
+                return time_step_device_count() > 0 ? netlist_time.from_fp(m_params.m_min_time_step) : netlist_time.zero();
             }
 
-            backup(); // save voltages for backup and timestep calculation
+            backup(); // save voltages for backup and time step calculation
 
             // update all terminals for new time step
             m_last_step.op = now;
@@ -409,7 +425,7 @@ namespace mame.netlist.solver
             ++m_stat_vsolver_calls.op;
             if (dynamic_device_count() != 0)
             {
-                step(timestep_type.FORWARD, delta);
+                step(time_step_type.FORWARD, delta);
                 var resched = solve_nr_base();
 
                 if (resched)
@@ -417,20 +433,20 @@ namespace mame.netlist.solver
             }
             else
             {
-                step(timestep_type.FORWARD, delta);
+                step(time_step_type.FORWARD, delta);
                 this.m_stat_calculations.op++;
-                this.vsolve_non_dynamic();
+                this.upstream_solve_non_dynamic();
                 this.store();
             }
 
             if (m_params.m_dynamic_ts.op())
             {
-                if (timestep_device_count() > 0)
-                    return compute_next_timestep(delta.as_fp(), m_params.m_min_timestep, m_params.m_max_timestep);
+                if (time_step_device_count() > 0)
+                    return compute_next_time_step(delta.as_fp(), m_params.m_min_time_step, m_params.m_max_time_step);
             }
 
-            if (timestep_device_count() > 0)
-                return netlist_time.from_fp(m_params.m_max_timestep);
+            if (time_step_device_count() > 0)
+                return netlist_time.from_fp(m_params.m_max_time_step);
 
             return netlist_time.zero();
         }
@@ -439,21 +455,13 @@ namespace mame.netlist.solver
         public void update_inputs()
         {
             // avoid recursive calls. Inputs are updated outside this call
-            foreach (var inp in m_inps)
+            foreach (var inp in m_inputs)
                 inp.push(inp.proxied_net().Q_Analog());
         }
 
 
-        /// \brief Checks if solver may alter a net
-        ///
-        /// This checks if a solver will alter a net. Returns true if the
-        /// net is either part of the voltage vector or if it belongs to
-        /// the analog input nets connected to the solver.
-        //bool updates_net(const analog_net_t *net) const noexcept;
-
-
         public size_t dynamic_device_count() { return m_dynamic_funcs.size(); }  //std::size_t dynamic_device_count() const noexcept { return m_dynamic_funcs.size(); }
-        public size_t timestep_device_count() { return m_step_funcs.size(); }  //std::size_t timestep_device_count() const noexcept { return m_step_funcs.size(); }
+        public size_t time_step_device_count() { return m_step_funcs.size(); }  //std::size_t time_step_device_count() const noexcept { return m_step_funcs.size(); }
 
 
         /// \brief reschedule solver execution
@@ -469,20 +477,20 @@ namespace mame.netlist.solver
         /// \brief Immediately solve system at current time
         ///
         /// This should only be called from update and update_param events.
-        /// It's purpose is to bring voltage values to the current timestep.
+        /// It's purpose is to bring voltage values to the current time step.
         /// This will be called BEFORE updating object properties.
         public void solve_now()
         {
             // this should only occur outside of execution and thus
             // using time should be safe.
 
-            netlist_time new_timestep = solve(exec().time(), "solve_now");
+            netlist_time new_time_step = solve(exec().time(), "solve_now");
 
             update_inputs();
 
-            if (timestep_device_count() > 0)
+            if (time_step_device_count() > 0)
             {
-                this.reschedule(netlist_time.from_fp(m_params.m_dynamic_ts.op() ? m_params.m_min_timestep : m_params.m_max_timestep));
+                this.reschedule(netlist_time.from_fp(m_params.m_dynamic_ts.op() ? m_params.m_min_time_step : m_params.m_max_time_step));
             }
         }
 
@@ -491,15 +499,15 @@ namespace mame.netlist.solver
         public void change_state(Action f)  //void change_state(F f)
         {
             // We only need to update the net first if this is a time stepping net
-            if (timestep_device_count() > 0)
+            if (time_step_device_count() > 0)
             {
-                netlist_time new_timestep = solve(exec().time(), "change_state");
+                netlist_time new_time_step = solve(exec().time(), "change_state");
                 update_inputs();
             }
 
             f();
 
-            if (timestep_device_count() > 0)
+            if (time_step_device_count() > 0)
             {
                 //throw new emu_unimplemented();
 #if false
@@ -531,7 +539,7 @@ namespace mame.netlist.solver
 
         protected virtual std.pair<string, string> create_solver_code(solver.static_compile_target target)
         {
-            return new std.pair<string, string>("", new plib.pfmt("/* solver doesn't support static compile */\n\n").op());
+            return new std.pair<string, string>("", new plib.pfmt("// solver doesn't support static compile\n\n").op());
         }
 
 
@@ -539,19 +547,19 @@ namespace mame.netlist.solver
         //std::size_t ops() const { return m_ops; }
 
 
-        protected abstract void vsolve_non_dynamic();
-        protected abstract netlist_time compute_next_timestep(nl_fptype cur_ts, matrix_solver_t_fptype min_ts, matrix_solver_t_fptype max_ts);
+        protected abstract void upstream_solve_non_dynamic();
+        protected abstract netlist_time compute_next_time_step(nl_fptype cur_ts, matrix_solver_t_fptype min_ts, matrix_solver_t_fptype max_ts);
         protected abstract bool check_err();
         protected abstract void store();
         protected abstract void backup();
         protected abstract void restore();
 
 
-        protected size_t max_railstart()
+        protected size_t max_rail_start()
         {
             size_t max_rail = 0;
-            for (size_t k = 0; k < m_terms.size(); k++)
-                max_rail = std.max(max_rail, m_terms[k].railstart());
+            foreach (var term in m_terms)
+                max_rail = std.max(max_rail, term.rail_start());
 
             return max_rail;
         }
@@ -568,26 +576,31 @@ namespace mame.netlist.solver
 
             foreach (var net in nets)
             {
-                m_terms.emplace_back(new terms_for_net_t(net));
-                m_rails_temp.emplace_back(new terms_for_net_t());
+                m_terms.emplace_back(new terms_for_net_t(net));  //m_terms.emplace_back(m_arena, net);
+                m_rails_temp.emplace_back(new terms_for_net_t());  //m_rails_temp.emplace_back(m_arena);
             }
 
             for (size_t k = 0; k < nets.size(); k++)
             {
+                //std::vector<detail::core_terminal_t *> temp;
+
                 analog_net_t net = nets[k];
 
-                log().debug.op("adding net with {0} populated connections\n", setup.nlstate().core_terms(net).size());
+                // FIXME: add size() to list
+                //log().debug.op("adding net with {0} populated connections\n", net.core_terms(net).size());
 
                 net.set_solver(this);
 
-                foreach (var p in setup.nlstate().core_terms(net))
+                foreach (detail.core_terminal_t p in net.core_terms_copy())
                 {
+                    nl_assert_always(p.net() == net, "Net integrity violated");
+
                     log().debug.op("{0} {1} {2}\n", p.name(), net.name(), net.is_rail_net());
 
                     switch (p.type())
                     {
                         case detail.terminal_type.TERMINAL:
-                            if (p.device().is_timestep())
+                            if (p.device().is_time_step())
                             {
                                 if (!plib.container.contains(step_devices, p.device()))
                                     step_devices.push_back(p.device());
@@ -600,7 +613,8 @@ namespace mame.netlist.solver
                             }
 
                             {
-                                terminal_t pterm = (terminal_t)p;
+                                var pterm = (terminal_t)p;
+                                nl_assert_always(pterm != default, "cast to terminal_t * failed");
                                 add_term((int)k, pterm);
                             }
 
@@ -610,7 +624,7 @@ namespace mame.netlist.solver
                         case detail.terminal_type.INPUT:
                             {
                                 proxied_analog_output_t net_proxy_output = null;
-                                foreach (var input in m_inps)
+                                foreach (var input in m_inputs)
                                 {
                                     if (input.proxied_net() == p.net())
                                     {
@@ -621,14 +635,16 @@ namespace mame.netlist.solver
 
                                 if (net_proxy_output == null)
                                 {
-                                    string nname = this.name() + "." + new plib.pfmt("m{0}").op(m_inps.size());
-                                    nl_assert(p.net().is_analog());
-                                    var net_proxy_output_u = new proxied_analog_output_t(this, nname, (analog_net_t)p.net());  //auto net_proxy_output_u = state().make_pool_object<proxied_analog_output_t>(*this, nname, &dynamic_cast<analog_net_t &>(p->net()));
+                                    string new_name = this.name() + "." + new plib.pfmt("m{0}").op(m_inputs.size());
+                                    var proxied_net = (analog_net_t)p.net();
+                                    nl_assert_always(proxied_net != null, "Net is not an analog net");
+                                    var net_proxy_output_u = new proxied_analog_output_t(this, new_name, proxied_net);  //auto net_proxy_output_u = state().make_pool_object<proxied_analog_output_t>(*this, new_name, *proxied_net);
                                     net_proxy_output = net_proxy_output_u;
-                                    m_inps.emplace_back(net_proxy_output_u);
+                                    m_inputs.emplace_back(net_proxy_output_u);
                                 }
 
-                                setup.add_terminal(net_proxy_output.net(), p);
+                                net.remove_terminal(p);
+                                net_proxy_output.net().add_terminal(p);
 
                                 // FIXME: repeated calling - kind of brute force
                                 net_proxy_output.net().rebuild_list();
@@ -642,10 +658,12 @@ namespace mame.netlist.solver
                             throw new nl_exception(MF_UNHANDLED_ELEMENT_1_FOUND(p.name()));
                     }
                 }
+
+                net.rebuild_list();
             }
 
             foreach (var d in step_devices)
-                m_step_funcs.emplace_back(d.timestep);
+                m_step_funcs.emplace_back(d.time_step);
             foreach (var d in dynamic_devices)
                 m_dynamic_funcs.emplace_back(d.update_terminals);
         }
@@ -658,9 +676,9 @@ namespace mame.netlist.solver
             do
             {
                 update_dynamic();
-                // Gauss-Seidel will revert to Gaussian elemination if steps exceeded.
+                // Gauss-Seidel will revert to Gaussian elimination if steps exceeded.
                 this.m_stat_calculations.op++;
-                this.vsolve_non_dynamic();
+                this.upstream_solve_non_dynamic();
                 this_resched = this.check_err();
                 this.store();
                 newton_loops++;
@@ -680,29 +698,29 @@ namespace mame.netlist.solver
             bool resched = false;
 
             restore();
-            step(timestep_type.RESTORE, delta);
+            step(time_step_type.RESTORE, delta);
 
             for (size_t i = 0; i < 10; i++)
             {
                 backup();
-                step(timestep_type.FORWARD, netlist_time.from_fp(m_params.m_min_ts_ts.op()));
+                step(time_step_type.FORWARD, netlist_time.from_fp(m_params.m_min_ts_ts.op()));
                 resched = solve_nr_base();
-                // update timestep calculation
-                next_time_step = compute_next_timestep(m_params.m_min_ts_ts.op(), m_params.m_min_ts_ts.op(), m_params.m_max_timestep);
+                // update time step calculation
+                next_time_step = compute_next_time_step(m_params.m_min_ts_ts.op(), m_params.m_min_ts_ts.op(), m_params.m_max_time_step);
                 delta -= netlist_time.from_fp(m_params.m_min_ts_ts.op());
             }
 
-            // try remaining time using compute_next_timestep
+            // try remaining time using compute_next_time step
             while (delta > netlist_time.zero())
             {
                 if (next_time_step > delta)
                     next_time_step = delta;
 
                 backup();
-                step(timestep_type.FORWARD, next_time_step);
+                step(time_step_type.FORWARD, next_time_step);
                 delta -= next_time_step;
                 resched = solve_nr_base();
-                next_time_step = compute_next_timestep(next_time_step.as_fp(), m_params.m_min_ts_ts.op(), m_params.m_max_timestep);
+                next_time_step = compute_next_time_step(next_time_step.as_fp(), m_params.m_min_ts_ts.op(), m_params.m_max_time_step);
             }
 
             if (m_stat_newton_raphson.op % 100 == 0)
@@ -717,31 +735,35 @@ namespace mame.netlist.solver
             if (m_params.m_dynamic_ts.op())
                 return next_time_step;
 
-            return netlist_time.from_fp(m_params.m_max_timestep);
+            return netlist_time.from_fp(m_params.m_max_time_step);
         }
 
 
+        /// \brief Sort terminals
+        ///
+        /// @param sort Sort algorithm to use.
+        ///
+        /// Sort in descending order by number of connected matrix voltages.
+        /// The idea is, that for Gauss-Seidel algorithm the first voltage computed
+        /// depends on the greatest number of previous voltages thus taking into
+        /// account the maximum amount of information.
+        ///
+        /// This actually improves performance on popeye slightly. Average
+        /// GS computations reduce from 2.509 to 2.370
+        ///
+        /// Smallest to largest : 2.613
+        /// Unsorted            : 2.509
+        /// Largest to smallest : 2.370
+        //
+        /// Sorting as a general matrix pre-conditioning is mentioned in
+        /// literature but I have found no articles about Gauss Seidel.
+        ///
+        /// For Gaussian Elimination however increasing order is better suited.
+        /// NOTE: Even better would be to sort on elements right of the matrix diagonal.
+        /// FIXME: This entry needs an update.
+        ///
         void sort_terms(matrix_sort_type_e sort)
         {
-            // Sort in descending order by number of connected matrix voltages.
-            // The idea is, that for Gauss-Seidel algo the first voltage computed
-            // depends on the greatest number of previous voltages thus taking into
-            // account the maximum amout of information.
-            //
-            // This actually improves performance on popeye slightly. Average
-            // GS computations reduce from 2.509 to 2.370
-            //
-            // Smallest to largest : 2.613
-            // Unsorted            : 2.509
-            // Largest to smallest : 2.370
-            //
-            // Sorting as a general matrix pre-conditioning is mentioned in
-            // literature but I have found no articles about Gauss Seidel.
-            //
-            // For Gaussian Elimination however increasing order is better suited.
-            // NOTE: Even better would be to sort on elements right of the matrix diagonal.
-            //
-
             size_t iN = m_terms.size();
 
             switch (sort)
@@ -750,14 +772,14 @@ namespace mame.netlist.solver
                     {
                         for (size_t k = 0; k < iN - 1; k++)
                         {
-                            var pk = get_weight_around_diag(k, k);
+                            var pk = get_weight_around_diagonal(k, k);
                             for (size_t i = k + 1; i < iN; i++)
                             {
-                                var pi = get_weight_around_diag(i, k);
+                                var pi = get_weight_around_diagonal(i, k);
                                 if (pi < pk)
                                 {
                                     (m_terms[i], m_terms[k]) = (m_terms[k], m_terms[i]);  //std::swap(m_terms[i], m_terms[k]);
-                                    pk = get_weight_around_diag(k, k);
+                                    pk = get_weight_around_diagonal(k, k);
                                 }
                             }
                         }
@@ -767,14 +789,14 @@ namespace mame.netlist.solver
                     {
                         for (size_t k = 0; k < iN - 1; k++)
                         {
-                            var pk = get_left_right_of_diag(k, k);
+                            var pk = get_left_right_of_diagonal(k, k);
                             for (size_t i = k + 1; i < iN; i++)
                             {
-                                var pi = get_left_right_of_diag(i, k);
+                                var pi = get_left_right_of_diagonal(i, k);
                                 if (pi.first <= pk.first && pi.second >= pk.second)
                                 {
                                     (m_terms[i], m_terms[k]) = (m_terms[k], m_terms[i]);  //std::swap(m_terms[i], m_terms[k]);
-                                    pk = get_left_right_of_diag(k, k);
+                                    pk = get_left_right_of_diagonal(k, k);
                                 }
                             }
                         }
@@ -789,7 +811,7 @@ namespace mame.netlist.solver
                         {
                             for (size_t i = k + 1; i < iN; i++)
                             {
-                                if (((int)m_terms[k].railstart() - (int)m_terms[i].railstart()) * sort_order < 0)
+                                if (((int)m_terms[k].rail_start() - (int)m_terms[i].rail_start()) * sort_order < 0)
                                     (m_terms[i], m_terms[k]) = (m_terms[k], m_terms[i]);  //std::swap(m_terms[i], m_terms[k]);
                             }
                         }
@@ -821,7 +843,7 @@ namespace mame.netlist.solver
         }
 
 
-        void step(timestep_type ts_type, netlist_time delta)
+        void step(time_step_type ts_type, netlist_time delta)
         {
             var dd = delta.as_fp();
             foreach (var d in m_step_funcs)
@@ -840,7 +862,7 @@ namespace mame.netlist.solver
         }
 
 
-        std.pair<int, int> get_left_right_of_diag(size_t irow, size_t idiag)
+        std.pair<int, int> get_left_right_of_diagonal(size_t irow, size_t idiag)
         {
             //
             // return the maximum column left of the diagonal (-1 if no cols found)
@@ -874,7 +896,7 @@ namespace mame.netlist.solver
         }
 
 
-        nl_fptype get_weight_around_diag(size_t row, size_t diag)
+        nl_fptype get_weight_around_diagonal(size_t row, size_t diag)
         {
             {
                 //
@@ -936,7 +958,7 @@ namespace mame.netlist.solver
 
             for (size_t k = 0; k < iN; k++)
             {
-                m_terms[k].set_railstart(m_terms[k].count());
+                m_terms[k].set_rail_start(m_terms[k].count());
                 for (size_t i = 0; i < m_rails_temp[k].count(); i++)
                     this.m_terms[k].add_terminal(m_rails_temp[k].terms()[i], m_rails_temp[k].m_connected_net_idx[i], false);
             }
@@ -957,7 +979,7 @@ namespace mame.netlist.solver
 
                 t.m_nz.clear();
 
-                for (size_t i = 0; i < t.railstart(); i++)
+                for (size_t i = 0; i < t.rail_start(); i++)
                 {
                     if (!t.m_nz.Contains((unsigned)other[i]))  //if (!plib::container::contains(t->m_nz, static_cast<unsigned>(other[i])))
                         t.m_nz.push_back((unsigned)other[i]);
@@ -996,7 +1018,7 @@ namespace mame.netlist.solver
                     }
                 }
 
-                for (size_t i = 0; i < t.railstart(); i++)
+                for (size_t i = 0; i < t.rail_start(); i++)
                 {
                     if (!t.m_nzrd.Contains((unsigned)other[i]) && other[i] >= (int)(k + 1))  //if (!plib::container::contains(t->m_nzrd, static_cast<unsigned>(other[i])) && other[i] >= static_cast<int>(k + 1))
                         t.m_nzrd.push_back((unsigned)other[i]);
@@ -1047,9 +1069,11 @@ namespace mame.netlist.solver
                 }
             }
 
-            log().verbose.op("Number of mults/adds for {0}: {1}", name(), m_ops);
+            log().verbose.op("Number of multiplications/additions for {0}: {1}", name(), m_ops);
 
 #if false
+            // Dumps non zero elements right of diagonal -> to much output, disabled
+            // NOLINTNEXTLINE(readability-simplify-boolean-expr)
             if ((false))
                 for (std::size_t k = 0; k < iN; k++)
                 {
@@ -1083,7 +1107,7 @@ namespace mame.netlist.solver
             for (size_t k = 0; k < iN; k++)
             {
                 max_count = std.max(max_count, m_terms[k].count());
-                max_rail = std.max(max_rail, m_terms[k].railstart());
+                max_rail = std.max(max_rail, m_terms[k].rail_start());
             }
 
             m_gtn.resize(iN, max_count);

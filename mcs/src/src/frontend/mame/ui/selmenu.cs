@@ -441,12 +441,8 @@ namespace mame.ui
             {
                 m_uiinfo = ui_info;
                 m_parts = parts;
-            }
 
-
-            protected override void custom_render(object selectedref, float top, float bottom, float x, float y, float x2, float y2)
-            {
-                throw new emu_unimplemented();
+                set_heading(__("Select Software Package Part"));
             }
 
 
@@ -504,12 +500,9 @@ namespace mame.ui
                 m_software = software;
                 m_inlist = inlist;
                 m_bios = biosname;
-            }
 
 
-            protected override void custom_render(object selectedref, float top, float bottom, float x, float y, float x2, float y2)
-            {
-                throw new emu_unimplemented();
+                set_heading(__("Select System BIOS"));
             }
 
 
@@ -522,7 +515,6 @@ namespace mame.ui
                     item_append(elem.first, "", 0, elem.first);
 
                 item_append(menu_item_type.SEPARATOR);
-                customtop = ui().get_line_height() + (3.0f * ui().box_tb_border());
             }
 
 
@@ -781,11 +773,11 @@ namespace mame.ui
                 int cloneof = driver_list.non_bios_clone(driver);
 
                 if (0 > cloneof)
-                    tempbuf[1] = __("Driver is parent");
+                    tempbuf[1] = __("System is parent");
                 else if (system != null)
-                    tempbuf[1] = string_format(__("Driver is clone of: {0}"), system.parent);  //tempbuf[1] = string_format(_("Driver is clone of: %1$s"), system->parent);
+                    tempbuf[1] = string_format(__("System is clone of: {0}"), system.parent);  //tempbuf[1] = string_format(_("Driver is clone of: %1$s"), system->parent);
                 else
-                    tempbuf[1] = string_format(__("Driver is clone of: {0}"), driver_list.driver((size_t)cloneof).type.fullname());  //tempbuf[1] = string_format(_("Driver is clone of: %1$s"), driver_list::driver(cloneof).type.fullname());
+                    tempbuf[1] = string_format(__("System is clone of: {0}"), driver_list.driver((size_t)cloneof).type.fullname());  //tempbuf[1] = string_format(_("Driver is clone of: %1$s"), driver_list::driver(cloneof).type.fullname());
 
                 // next line is overall driver status
                 system_flags flags = get_system_flags(driver);
@@ -938,9 +930,10 @@ namespace mame.ui
         //-------------------------------------------------
         void draw_common_arrow(float origx1, float origy1, float origx2, float origy2, int current, int dmin, int dmax, float title_size)
         {
-            var line_height = ui().get_line_height();
-            var lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect(container());
-            var gutter_width = lr_arrow_width * 1.3f;
+            float aspect = machine().render().ui_aspect(container());
+            float line_height = ui().get_line_height();
+            float lr_arrow_width = 0.4f * line_height * aspect;
+            float gutter_width = 0.5f * line_height * aspect;
 
             // set left-right arrows dimension
             float ar_x0 = 0.5f * (origx2 + origx1) + 0.5f * title_size + gutter_width - lr_arrow_width;
@@ -1557,7 +1550,7 @@ namespace mame.ui
                 str += driver.type.fullname();
             str += "\t\n\n";
 
-            util.stream_format(ref str, __("Romset\t{0}\n"), driver.name);  //util::stream_format(str, _("Romset\t%1$s\n"), driver.name);
+            util.stream_format(ref str, __("Short Name\t{0}\n"), driver.name);  //util::stream_format(str, _("Romset\t%1$s\n"), driver.name);
             util.stream_format(ref str, __("Year\t{0}\n"), driver.year);  //util::stream_format(str, _("Year\t%1$s\n"), driver.year);
             util.stream_format(ref str, __("Manufacturer\t{0}\n"), driver.manufacturer);  //util::stream_format(str, _("Manufacturer\t%1$s\n"), driver.manufacturer);
 
@@ -1566,12 +1559,12 @@ namespace mame.ui
             {
                 util.stream_format(
                         ref str,
-                        __("Driver is Clone of\t{0}\n"),  //_("Driver is Clone of\t%1$s\n"),
+                        __("System is Clone of\t{0}\n"),  //_("Driver is Clone of\t%1$s\n"),
                         system != null ? system.parent : driver_list.driver((size_t)cloneof).type.fullname());
             }
             else
             {
-                str += __("Driver is Parent\t\n");
+                str += __("System is Parent\t\n");
             }
 
             if (flags.has_analog())
@@ -1691,12 +1684,12 @@ namespace mame.ui
             else if ((flags.imperfect_features() & device_t_feature_type.TIMING) != 0)
                 str += __("Timing\tImperfect\n");
 
-            str += ((flags.machine_flags() & machine_flags.type.MECHANICAL) != 0)        ? __("Mechanical Machine\tYes\n")         : __("Mechanical Machine\tNo\n");
+            str += ((flags.machine_flags() & machine_flags.type.MECHANICAL) != 0)        ? __("Mechanical System\tYes\n")          : __("Mechanical System\tNo\n");
             str += ((flags.machine_flags() & machine_flags.type.REQUIRES_ARTWORK) != 0)  ? __("Requires Artwork\tYes\n")           : __("Requires Artwork\tNo\n");
             str += ((flags.machine_flags() & machine_flags.type.CLICKABLE_ARTWORK) != 0) ? __("Requires Clickable Artwork\tYes\n") : __("Requires Clickable Artwork\tNo\n");
             if ((flags.machine_flags() & machine_flags.type.NO_COCKTAIL) != 0)
                 str += __("Support Cocktail\tNo\n");
-            str += ((flags.machine_flags() & machine_flags.type.IS_BIOS_ROOT) != 0)      ? __("Driver is BIOS\tYes\n")             : __("Driver is BIOS\tNo\n");
+            str += ((flags.machine_flags() & machine_flags.type.IS_BIOS_ROOT) != 0)      ? __("System is BIOS\tYes\n")             : __("System is BIOS\tNo\n");
             str += ((flags.machine_flags() & machine_flags.type.SUPPORTS_SAVE) != 0)     ? __("Support Save\tYes\n")               : __("Support Save\tNo\n");
             str += (((int)flags.machine_flags() & ORIENTATION_SWAP_XY) != 0)             ? __("Screen Orientation\tVertical\n")    : __("Screen Orientation\tHorizontal\n");
 

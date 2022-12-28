@@ -58,11 +58,6 @@ namespace mame
         uint8_t m_timerstate;
         emu_timer m_timer;
 
-        //enum
-        //{
-        //    TIMER_END_CB
-        //};
-
 
         // construction/destruction
         riot6532_device(machine_config mconfig, string tag, device_t owner, uint32_t clock)
@@ -125,15 +120,15 @@ namespace mame
         //uint8_t porta_out_get();
         //uint8_t portb_out_get();
 
-        //void timer_end();
-
 
         // device-level overrides
         protected override void device_start() { throw new emu_unimplemented(); }
         protected override void device_reset() { throw new emu_unimplemented(); }
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param) { throw new emu_unimplemented(); }
         protected override void device_post_load() { throw new emu_unimplemented(); }
         protected override void device_clock_changed() { throw new emu_unimplemented(); }
+
+
+        //TIMER_CALLBACK_MEMBER(timer_end);
 
 
         //void update_irqstate();

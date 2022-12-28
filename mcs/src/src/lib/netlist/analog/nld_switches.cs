@@ -3,6 +3,7 @@
 
 using System;
 
+using base_device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = base_device_param_t;  //using base_device_param_t = const base_device_data_t &;  //using base_device_data_t = core_device_data_t;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_logic_t = mame.netlist.param_num_t<bool, mame.netlist.param_num_t_operators_bool>;  //using param_logic_t = param_num_t<bool>;
@@ -17,13 +18,12 @@ namespace mame.netlist
         // ----------------------------------------------------------------------------------------
         // SWITCH
         // ----------------------------------------------------------------------------------------
-        //NETLIB_BASE_OBJECT(switch1)
+        //class nld_switch1 : public base_device_t
 
 
         // ----------------------------------------------------------------------------------------
         // SWITCH2
         // ----------------------------------------------------------------------------------------
-        //NETLIB_BASE_OBJECT(switch2)
         class nld_switch2 : base_device_t
         {
             //NETLIB_DEVICE_IMPL_NS(analog, switch2, "SWITCH2", "")
@@ -34,34 +34,33 @@ namespace mame.netlist
             static readonly nl_fptype R_ON = nlconst.magic(0.01);
 
 
-            nld_R_base m_R1;  //analog::NETLIB_SUB(R_base) m_R1;
-            nld_R_base m_R2;  //analog::NETLIB_SUB(R_base) m_R2;
+            sub_device_wrapper<analog.nld_R_base> m_R1;  //NETLIB_SUB_NS(analog, R_base) m_R1;
+            sub_device_wrapper<analog.nld_R_base> m_R2;  //NETLIB_SUB_NS(analog, R_base) m_R2;
             param_logic_t m_POS;
 
 
-            //NETLIB_CONSTRUCTOR(switch2)
-            public nld_switch2(object owner, string name)
-                : base(owner, name)
+            public nld_switch2(base_device_t_constructor_param_t data)
+                : base(data)
             {
-                m_R1 = new nld_R_base(this, "R1");
-                m_R2 = new nld_R_base(this, "R2");
+                m_R1 = new sub_device_wrapper<nld_R_base>(this, new nld_R_base(new base_device_t_constructor_param_t(this, "R1")));
+                m_R2 = new sub_device_wrapper<nld_R_base>(this, new nld_R_base(new base_device_t_constructor_param_t(this, "R2")));
                 m_POS = new param_logic_t(this, "POS", false);
 
 
-                connect(m_R1.N(), m_R2.N());
+                connect(m_R1.op().N(), m_R2.op().N());
 
-                register_subalias("1", m_R1.P());
-                register_subalias("2", m_R2.P());
+                register_sub_alias("1", m_R1.op().P());
+                register_sub_alias("2", m_R2.op().P());
 
-                register_subalias("Q", m_R1.N());
+                register_sub_alias("Q", m_R1.op().N());
             }
 
 
             //NETLIB_RESETI();
             public override void reset()
             {
-                m_R1.set_R(R_ON);
-                m_R2.set_R(R_OFF);
+                m_R1.op().set_R(R_ON);
+                m_R2.op().set_R(R_OFF);
             }
 
 
@@ -92,14 +91,14 @@ namespace mame.netlist
                 nl_fptype r1 = m_POS.op() ? R_OFF : R_ON;
                 nl_fptype r2 = m_POS.op() ? R_ON : R_OFF;
 
-                if (m_R1.solver() == m_R2.solver())
+                if (m_R1.op().solver() == m_R2.op().solver())
                 {
-                    m_R1.change_state(() => { m_R1.set_R(r1); m_R2.set_R(r2); });
+                    m_R1.op().change_state(() => { m_R1.op().set_R(r1); m_R2.op().set_R(r2); });
                 }
                 else
                 {
-                    m_R1.change_state(() => { m_R1.set_R(r1); });
-                    m_R2.change_state(() => { m_R2.set_R(r2); });
+                    m_R1.op().change_state(() => { m_R1.op().set_R(r1); });
+                    m_R2.op().change_state(() => { m_R2.op().set_R(r2); });
                 }
             }
         }

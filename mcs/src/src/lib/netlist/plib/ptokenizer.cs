@@ -4,10 +4,11 @@
 using System;
 using System.IO;
 
-using ptokenizer_token_id_t = mame.plib.detail.token_id_t;  //using token_id_t = detail::token_id_t;
-using ptokenizer_token_store = mame.plib.detail.token_store;  //using token_store = detail::token_store;
-using ptokenizer_token_t = mame.plib.detail.token_t;  //using token_t = detail::token_t;
-using ptokenizer_token_type = mame.plib.detail.token_type;  //using token_type = detail::token_type;
+using token_reader_t_token_store = mame.plib.detail.token_store_t;  //using token_store = tokenizer_t::token_store_t;  //using token_store_t = detail::token_store_t;
+using tokenizer_t_token_t = mame.plib.detail.token_t;  //using token_t = detail::token_t;
+using tokenizer_t_token_id_t = mame.plib.detail.token_id_t;  //using token_id_t = detail::token_id_t;
+using tokenizer_t_token_store_t = mame.plib.detail.token_store_t;  //using token_store_t = detail::token_store_t;
+using tokenizer_t_token_type = mame.plib.detail.token_type;  //using token_type = detail::token_type;
 using size_t = System.UInt64;
 using unsigned = System.UInt32;
 
@@ -53,7 +54,10 @@ namespace mame.plib
                 m_name = name;
             }
 
-            //PCOPYASSIGNMOVE(token_id_t, default)
+            //token_id_t(const token_id_t &) = default;
+            //token_id_t &operator=(const token_id_t &) = default;
+            //token_id_t(token_id_t &&) noexcept = default;
+            //token_id_t &operator=(token_id_t &&) noexcept = default;
 
             //~token_id_t() = default;
 
@@ -98,7 +102,11 @@ namespace mame.plib
                 m_token = str;
             }
 
-            //PCOPYASSIGNMOVE(token_t, default)
+
+            //token_t(const token_t &) = default;
+            //token_t &operator=(const token_t &) = default;
+            //token_t(token_t &&) noexcept = default;
+            //token_t &operator=(token_t &&) noexcept = default;
 
             //~token_t() = default;
 
@@ -114,15 +122,21 @@ namespace mame.plib
         }
 
 
-        class token_store : std.vector<token_t>
+        class token_store_t : std.vector<token_t>
         {
             //using std::vector<token_t>::vector;
         }
     }
 
 
-    class ptokenizer
+    class tokenizer_t
     {
+        //using token_type = detail::token_type;
+        //using token_id_t = detail::token_id_t;
+        //using token_t = detail::token_t;
+        //using token_store_t = detail::token_store_t;
+
+
         TextReader m_strm;  //putf8_reader *m_strm;
 
         string m_cur_line;
@@ -134,20 +148,20 @@ namespace mame.plib
         string m_identifier_chars;
         string m_number_chars;
         string m_number_chars_start;
-        std.unordered_map<string, ptokenizer_token_id_t> m_tokens = new std.unordered_map<string, ptokenizer_token_id_t>();
+        std.unordered_map<string, tokenizer_t_token_id_t> m_tokens = new std.unordered_map<string, tokenizer_t_token_id_t>();
         string m_whitespace;
         char m_string;  //pstring::value_type  m_string;
 
-        ptokenizer_token_id_t m_tok_comment_start;
-        ptokenizer_token_id_t m_tok_comment_end;
-        ptokenizer_token_id_t m_tok_line_comment;
+        tokenizer_t_token_id_t m_tok_comment_start;
+        tokenizer_t_token_id_t m_tok_comment_end;
+        tokenizer_t_token_id_t m_tok_line_comment;
 
 
         bool m_support_line_markers;
-        ptokenizer_token_store m_token_queue;
+        tokenizer_t_token_store_t m_token_queue;
 
 
-        public ptokenizer() // NOLINT(misc-forwarding-reference-overload, bugprone-forwarding-reference-overload)
+        public tokenizer_t() // NOLINT(misc-forwarding-reference-overload, bugprone-forwarding-reference-overload)
         {
             m_strm = null;
             m_unget = (char)0;
@@ -159,29 +173,29 @@ namespace mame.plib
             clear();
         }
 
-        //PCOPYASSIGNMOVE(ptokenizer, delete)
+
+        //tokenizer_t(const tokenizer_t &) = delete;
+        //tokenizer_t &operator=(const tokenizer_t &) = delete;
+        //tokenizer_t(tokenizer_t &&) noexcept = delete;
+        //tokenizer_t &operator=(tokenizer_t &&) noexcept = delete;
 
         //virtual ~ptokenizer() = default;
 
-        //using token_type = detail::token_type;
-        //using token_id_t = detail::token_id_t;
-        //using token_t = detail::token_t;
-        //using token_store = detail::token_store;
 
         // tokenizer stuff follows ...
 
-        public ptokenizer_token_id_t register_token(string token)
+        public tokenizer_t_token_id_t register_token(string token)
         {
-            ptokenizer_token_id_t ret = new ptokenizer_token_id_t(m_tokens.size(), token);
+            tokenizer_t_token_id_t ret = new tokenizer_t_token_id_t(m_tokens.size(), token);
             m_tokens.emplace(token, ret);
             return ret;
         }
 
-        public ptokenizer identifier_chars(string s) { m_identifier_chars = s; return this; }
-        public ptokenizer number_chars(string st, string rem) { m_number_chars_start = st; m_number_chars = rem; return this; }
+        public tokenizer_t identifier_chars(string s) { m_identifier_chars = s; return this; }
+        public tokenizer_t number_chars(string st, string rem) { m_number_chars_start = st; m_number_chars = rem; return this; }
         //ptokenizer & string_char(pstring::value_type c) { m_string = c; return *this; }
-        public ptokenizer whitespace(string s) { m_whitespace = s; return this; }
-        public ptokenizer comment(string start, string end, string line)
+        public tokenizer_t whitespace(string s) { m_whitespace = s; return this; }
+        public tokenizer_t comment(string start, string end, string line)
         {
             m_tok_comment_start = register_token(start);
             m_tok_comment_end = register_token(end);
@@ -189,21 +203,21 @@ namespace mame.plib
             return this;
         }
 
-        public void append_to_store(TextReader reader, ptokenizer_token_store tokstor)  //void append_to_store(putf8_reader *reader, token_store &tokstor)
+        public void append_to_store(TextReader reader, tokenizer_t_token_store_t store)  //void append_to_store(putf8_reader *reader, token_store_t &store);
         {
             clear();
 
             m_strm = reader;
 
             // Process tokens into queue
-            ptokenizer_token_t ret = new ptokenizer_token_t(ptokenizer_token_type.UNKNOWN);
-            m_token_queue = tokstor;
+            tokenizer_t_token_t ret = new tokenizer_t_token_t(tokenizer_t_token_type.UNKNOWN);
+            m_token_queue = store;
 
             do
             {
                 ret = get_token_comment();
-                tokstor.push_back(ret);
-            } while (!ret.is_type(ptokenizer_token_type.ENDOFFILE));
+                store.push_back(ret);
+            } while (!ret.is_type(tokenizer_t_token_type.ENDOFFILE));
 
             m_token_queue = null;
         }
@@ -217,7 +231,7 @@ namespace mame.plib
         }
 
 
-        ptokenizer_token_t get_token_internal()
+        tokenizer_t_token_t get_token_internal()
         {
             // skip ws
             char c = getc();  //pstring::value_type c = getc();
@@ -226,7 +240,7 @@ namespace mame.plib
                 c = getc();
                 if (eof())
                 {
-                    return new ptokenizer_token_t(ptokenizer_token_type.ENDOFFILE);
+                    return new tokenizer_t_token_t(tokenizer_t_token_type.ENDOFFILE);
                 }
             }
 
@@ -237,10 +251,10 @@ namespace mame.plib
                 {
                     c = getc();
                     if (eof())
-                        return new ptokenizer_token_t(ptokenizer_token_type.ENDOFFILE);
+                        return new tokenizer_t_token_t(tokenizer_t_token_type.ENDOFFILE);
 
                     if (c == '\r' || c == '\n')
-                        return new ptokenizer_token_t(ptokenizer_token_type.LINEMARKER, lm);
+                        return new tokenizer_t_token_t(tokenizer_t_token_type.LINEMARKER, lm);
 
                     lm += c;
                 } while (true);
@@ -250,12 +264,12 @@ namespace mame.plib
             {
                 // read number while we receive number or identifier chars
                 // treat it as an identifier when there are identifier chars in it
-                ptokenizer_token_type ret = ptokenizer_token_type.NUMBER;
+                tokenizer_t_token_type ret = tokenizer_t_token_type.NUMBER;
                 string tokstr = "";
                 while (true)
                 {
                     if (m_identifier_chars.find(c) != npos && m_number_chars.find(c) == npos)  //if (m_identifier_chars.find(c) != pstring::npos && m_number_chars.find(c) == pstring::npos)
-                        ret = ptokenizer_token_type.IDENTIFIER;
+                        ret = tokenizer_t_token_type.IDENTIFIER;
                     else if (m_number_chars.find(c) == npos)  //else if (m_number_chars.find(c) == pstring::npos)
                         break;
 
@@ -264,7 +278,7 @@ namespace mame.plib
                 }
 
                 ungetc(c);
-                return new ptokenizer_token_t(ret, tokstr);
+                return new tokenizer_t_token_t(ret, tokstr);
             }
 
             // not a number, try identifier
@@ -281,8 +295,8 @@ namespace mame.plib
                 ungetc(c);
                 var id = m_tokens.find(tokstr);
                 return (id != default) ?
-                        new ptokenizer_token_t(id, tokstr)
-                    :   new ptokenizer_token_t(ptokenizer_token_type.IDENTIFIER, tokstr);
+                        new tokenizer_t_token_t(id, tokstr)
+                    :   new tokenizer_t_token_t(tokenizer_t_token_type.IDENTIFIER, tokstr);
             }
 
             if (c == m_string)
@@ -295,13 +309,13 @@ namespace mame.plib
                     c = getc();
                 }
 
-                return new ptokenizer_token_t(ptokenizer_token_type.STRING, tokstr);
+                return new tokenizer_t_token_t(tokenizer_t_token_type.STRING, tokstr);
             }
-            else
+
             {
                 // read identifier till first identifier char or ws
                 string tokstr = "";
-                while ((m_identifier_chars.find(c) == npos) && (m_whitespace.find(c) == npos))  //while ((m_identifier_chars.find(c) == pstring::npos) && (m_whitespace.find(c) == pstring::npos))
+                while ((m_identifier_chars.find(c) == npos) && (m_whitespace.find(c) == npos))
                 {
                     tokstr += c;
                     // expensive, check for single char tokens
@@ -309,35 +323,37 @@ namespace mame.plib
                     {
                         var id = m_tokens.find(tokstr);
                         if (id != default)
-                            return new ptokenizer_token_t(id, tokstr);
+                            return new tokenizer_t_token_t(id, tokstr);
                     }
 
                     c = getc();
                 }
 
+                ungetc(c);
+
                 {
-                    ungetc(c);
                     var id = m_tokens.find(tokstr);
                     return (id != default) ?
-                            new ptokenizer_token_t(id, tokstr)
-                        :   new ptokenizer_token_t(ptokenizer_token_type.UNKNOWN, tokstr);
+                            new tokenizer_t_token_t(id, tokstr)
+                        :   new tokenizer_t_token_t(tokenizer_t_token_type.UNKNOWN, tokstr);
                 }
             }
         }
 
 
         // get internal token with comment processing
-        ptokenizer_token_t get_token_comment()
+        tokenizer_t_token_t get_token_comment()
         {
-            ptokenizer_token_t ret = get_token_internal();
+            tokenizer_t_token_t ret = get_token_internal();
             while (true)
             {
-                if (ret.is_type(ptokenizer_token_type.ENDOFFILE))
+                if (ret.is_type(tokenizer_t_token_type.ENDOFFILE))
                     return ret;
 
                 if (ret.is_(m_tok_comment_start))
                 {
-                    do {
+                    do
+                    {
                         ret = get_token_internal();
                     } while (ret.is_not(m_tok_comment_end));
 
@@ -345,7 +361,7 @@ namespace mame.plib
                 }
                 else if (ret.is_(m_tok_line_comment))
                 {
-                    skipeol();
+                    skip_eol();
                     ret = get_token_internal();
                 }
                 else
@@ -356,7 +372,7 @@ namespace mame.plib
         }
 
 
-        void skipeol() { throw new emu_unimplemented(); }
+        void skip_eol() { throw new emu_unimplemented(); }
 
 
         char getc()  //pstring::value_type getc();
@@ -372,13 +388,13 @@ namespace mame.plib
             {
                 //++m_source_location.back();
                 string line;  //putf8string line;
-                if ((line = m_strm.ReadLine()) != null)  //if (m_strm->readline_lf(line))
+                if ((line = m_strm.ReadLine()) != null)  //if (m_strm->read_line_lf(line))
                 {
                     line += '\n';
                     m_cur_line = line;
                     m_pxIdx = 0;  //m_px = m_cur_line.begin();
                     if (m_pxIdx != m_cur_line.Length && m_cur_line[m_pxIdx] != '#')  //if (*m_px != '#')
-                        m_token_queue.push_back(new ptokenizer_token_t(ptokenizer_token_type.SOURCELINE, m_cur_line));
+                        m_token_queue.push_back(new tokenizer_t_token_t(tokenizer_t_token_type.SOURCELINE, m_cur_line));
                 }
                 else
                 {
@@ -401,12 +417,12 @@ namespace mame.plib
     }
 
 
-    abstract class ptoken_reader
+    abstract class token_reader_t
     {
-        //using token_t = ptokenizer::token_t;
-        //using token_type = ptokenizer::token_type;
-        //using token_id_t = ptokenizer::token_id_t;
-        //using token_store = ptokenizer::token_store;
+        //using token_t = tokenizer_t::token_t;
+        //using token_type = tokenizer_t::token_type;
+        //using token_id_t = tokenizer_t::token_id_t;
+        //using token_store = tokenizer_t::token_store_t;
 
 
         static string MF_EXPECTED_TOKEN_1_GOT_2(params object [] args)  { return PERRMSGV(2, "Expected token <{0}>, got <{1}>", args); }
@@ -424,10 +440,10 @@ namespace mame.plib
         std.vector<plib.source_location> m_source_location = new std.vector<source_location>();
         string m_line = "";
         protected size_t m_idx;
-        ptokenizer_token_store m_token_store;
+        tokenizer_t_token_store_t m_token_store;
 
 
-        protected ptoken_reader()
+        protected token_reader_t()
         {
             m_idx = 0;
             m_token_store = null;
@@ -438,25 +454,29 @@ namespace mame.plib
         }
 
 
-        //PCOPYASSIGNMOVE(ptoken_reader, delete)
+        //token_reader_t(const token_reader_t &) = delete;
+        //token_reader_t &operator=(const token_reader_t &) = delete;
+        //token_reader_t(token_reader_t &&) noexcept = delete;
+        //token_reader_t &operator=(token_reader_t &&) noexcept = delete;
 
-        //virtual ~ptoken_reader() = default;
+        //virtual ~token_reader_t() = default;
 
-        protected void set_token_source(ptokenizer_token_store tokstor)
+
+        protected void set_token_source(tokenizer_t_token_store_t store)
         {
-            m_token_store = tokstor;
+            m_token_store = store;
         }
 
-        //pstring currentline_str() const;
+        //pstring current_line_str() const;
 
         // tokenizer stuff follows ...
 
-        protected ptokenizer_token_t get_token()
+        protected tokenizer_t_token_t get_token()
         {
-            ptokenizer_token_t ret = get_token_queue();
+            tokenizer_t_token_t ret = get_token_queue();
             while (true)
             {
-                if (ret.is_type(ptokenizer_token_type.ENDOFFILE))
+                if (ret.is_type(tokenizer_t_token_type.ENDOFFILE))
                     return ret;
 
                 //printf("%s\n", ret.str().c_str());
@@ -471,9 +491,9 @@ namespace mame.plib
             }
         }
 
-        protected ptokenizer_token_t get_token_raw()  // includes line information
+        protected tokenizer_t_token_t get_token_raw()  // includes line information
         {
-            ptokenizer_token_t ret = get_token_queue();
+            tokenizer_t_token_t ret = get_token_queue();
             process_line_token(ret);
             return ret;
         }
@@ -484,8 +504,8 @@ namespace mame.plib
 
         protected string get_identifier()
         {
-            ptokenizer_token_t tok = get_token();
-            if (!tok.is_type(ptokenizer_token_type.IDENTIFIER))
+            tokenizer_t_token_t tok = get_token();
+            if (!tok.is_type(tokenizer_t_token_type.IDENTIFIER))
             {
                 error(MF_EXPECTED_IDENTIFIER_GOT_1(tok.str()));
             }
@@ -496,8 +516,8 @@ namespace mame.plib
 
         protected string get_identifier_or_number()
         {
-            ptokenizer_token_t tok = get_token();
-            if (!(tok.is_type(ptokenizer_token_type.IDENTIFIER) || tok.is_type(ptokenizer_token_type.NUMBER)))
+            tokenizer_t_token_t tok = get_token();
+            if (!(tok.is_type(tokenizer_t_token_type.IDENTIFIER) || tok.is_type(tokenizer_t_token_type.NUMBER)))
             {
                 error(MF_EXPECTED_ID_OR_NUM_GOT_1(tok.str()));
             }
@@ -510,12 +530,12 @@ namespace mame.plib
         //long get_number_long();
 
 
-        protected void require_token(ptokenizer_token_id_t token_num)
+        protected void require_token(tokenizer_t_token_id_t token_num)
         {
             require_token(get_token(), token_num);
         }
 
-        protected void require_token(ptokenizer_token_t tok, ptokenizer_token_id_t token_num)
+        protected void require_token(tokenizer_t_token_t tok, tokenizer_t_token_id_t token_num)
         {
             if (!tok.is_(token_num))
             {
@@ -544,7 +564,7 @@ namespace mame.plib
         }
 
 
-        protected plib.source_location sourceloc() { return m_source_location.back(); }
+        protected plib.source_location location() { return m_source_location.back(); }
 
         //pstring current_line() const { return m_line; }
 
@@ -552,9 +572,9 @@ namespace mame.plib
         protected abstract void verror(string msg);
 
 
-        bool process_line_token(ptokenizer_token_t tok)
+        bool process_line_token(tokenizer_t_token_t tok)
         {
-            if (tok.is_type(ptokenizer_token_type.LINEMARKER))
+            if (tok.is_type(tokenizer_t_token_type.LINEMARKER))
             {
                 bool benter = false;
                 bool bexit = false;
@@ -593,7 +613,7 @@ namespace mame.plib
                 return true;
             }
 
-            if (tok.is_type(ptokenizer_token_type.SOURCELINE))
+            if (tok.is_type(tokenizer_t_token_type.SOURCELINE))
             {
                 m_line = tok.str();
                 m_source_location.back().inc();  //++m_source_location.back();
@@ -604,11 +624,11 @@ namespace mame.plib
         }
 
 
-        ptokenizer_token_t get_token_queue()
+        tokenizer_t_token_t get_token_queue()
         {
             if (m_idx < m_token_store.size())
                 return m_token_store[m_idx++];
-            return new ptokenizer_token_t(ptokenizer_token_type.ENDOFFILE);
+            return new tokenizer_t_token_t(tokenizer_t_token_type.ENDOFFILE);
         }
     }
 }

@@ -18,7 +18,6 @@ using uint32_t = System.UInt32;
 using static mame.cpp_global;
 using static mame.digfx_global;
 using static mame.emucore_global;
-using static mame.input_global;
 using static mame.language_global;
 using static mame.render_global;
 using static mame.rendertypes_global;

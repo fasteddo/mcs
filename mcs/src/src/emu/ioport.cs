@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using mame.osd;
 
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using char32_t = System.UInt32;
@@ -26,12 +27,12 @@ using static mame.emucore_global;
 using static mame.emumem_global;
 using static mame.emuopts_global;
 using static mame.inpttype_global;
-using static mame.inputdev_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_internal;
 using static mame.ioport_ioport_type_helper;
 using static mame.language_global;
+using static mame.osd.inputman_global;
 using static mame.osdcomm_global;
 using static mame.osdcore_global;
 using static mame.osdfile_global;

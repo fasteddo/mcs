@@ -2,8 +2,9 @@
 // copyright-holders:Edward Fast
 
 using System;
+using mame.osd;
 
-using static mame.input_global;
+using static mame.inputcode_global;
 using static mame.language_global;
 
 

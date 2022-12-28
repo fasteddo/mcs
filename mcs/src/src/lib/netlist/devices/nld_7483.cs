@@ -3,6 +3,7 @@
 
 using System;
 
+using device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = device_param_t;  //using device_param_t = const device_data_t &;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using state_var_u8 = mame.netlist.state_var<System.Byte>;  //using state_var_u8 = state_var<std::uint8_t>;
 using uint8_t = System.Byte;
@@ -43,8 +44,8 @@ namespace mame.netlist.devices
 
 
         //NETLIB_CONSTRUCTOR(7483)
-        public nld_7483(object owner, string name)
-            : base(owner, name)
+        public nld_7483(device_t_constructor_param_t data)
+            : base(data)
         {
             m_C0 = new logic_input_t(this, "C0", c0);
             m_A1 = new logic_input_t(this, "A1", upd_a);

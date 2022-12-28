@@ -11,7 +11,7 @@ using unsigned = System.UInt32;
 
 namespace mame.plib
 {
-    //template<typename T, int N, typename C = uint16_t>
+    //template<typename ARENA, typename T, int N, typename C = uint16_t>
     class pmatrix_cr<T, T_OPS, int_N, C, C_OPS>  //struct pmatrix_cr
         where T_OPS : constants_operators<T>, new()
         where int_N : int_const, new()
@@ -30,7 +30,10 @@ namespace mame.plib
         //static constexpr const int Np1 = (N == 0) ? 0 : (N < 0 ? N - 1 : N + 1);
 
 
-        //PCOPYASSIGNMOVE(pmatrix_cr_t, default)
+        //pmatrix_cr(const pmatrix_cr &) = default;
+        //pmatrix_cr &operator=(const pmatrix_cr &) = default;
+        //pmatrix_cr(pmatrix_cr &&) noexcept(std::is_nothrow_move_constructible<parray<value_type, NSQ>>::value) = default;
+        //pmatrix_cr &operator=(pmatrix_cr &&) noexcept(std::is_nothrow_move_assignable<parray<value_type, NSQ>>::value && std::is_nothrow_move_assignable<pmatrix2d_vrl<ARENA, index_type>>::value) = default;
 
 
         public enum constants_e
@@ -39,7 +42,7 @@ namespace mame.plib
         }
 
 
-        public C [] diag; //parray<index_type, N> diag;      // diagonal index pointer n
+        public C [] diagonal; //parray<index_type, N> diagonal;      // diagonal index pointer n
         public C [] row_idx;  //parray<index_type, Np1> row_idx;      // row index pointer n + 1
         public C [] col_idx;  //parray<index_type, NSQ> col_idx;       // column index array nz_num, initially (n * n)
         public MemoryContainer<T> A;  //parray<value_type, NSQ> A;    // Matrix elements nz_num, initially (n * n)
@@ -47,19 +50,19 @@ namespace mame.plib
         public size_t nz_num;
 
         ////parray<std::vector<index_type>, N > m_nzbd;    // Support for gaussian elimination
-        protected pmatrix2d_vrl<C> m_nzbd;    // Support for gaussian elimination  //pmatrix2d_vrl<index_type> m_nzbd;    // Support for gaussian elimination
+        protected pmatrix2d_vrl<C> m_nzbd;    //pmatrix2d_vrl<ARENA, index_type> m_nzbd;    // Support for gaussian elimination
         size_t m_size;
 
 
-        public pmatrix_cr(size_t n)
+        public pmatrix_cr(size_t n)  //explicit pmatrix_cr(ARENA &arena, std::size_t n)
         {
-            diag = new C [n];  //diag(n)
+            diagonal = new C [n];  //diagonal(n)
             row_idx = new C [n + 1];  //row_idx(n+1)
             col_idx = new C [n * n];  //col_idx(n*n)
             A = new MemoryContainer<T>((int)(n * n), true);  //A(n*n)
             nz_num = 0;
             ////, nzbd(n * (n+1) / 2)
-            m_nzbd = new pmatrix2d_vrl<C>(n, n);
+            m_nzbd = new pmatrix2d_vrl<C>(n, n);  //m_nzbd(arena, n, n)
             m_size = n;
 
 
@@ -104,7 +107,7 @@ namespace mame.plib
                     {
                         col_idx[c_ops.cast_int(nz)] = c_ops.cast(j);  //col_idx[nz] = static_cast<C>(j);
                         if (j == k)
-                            diag[k] = nz;
+                            diagonal[k] = nz;
                         nz = c_ops.add(nz, c_ops.cast(1));  //nz++;
                     }
                 }
@@ -120,10 +123,10 @@ namespace mame.plib
                 for (size_t j = k + 1; j < size(); j++)
                 {
                     if (f[j][k] < (size_t)constants_e.FILL_INFINITY)
-                        m_nzbd.set(k, m_nzbd.colcount(k), c_ops.cast(j));  //m_nzbd.set(k, m_nzbd.colcount(k), narrow_cast<C>(j));
+                        m_nzbd.set(k, m_nzbd.col_count(k), c_ops.cast(j));  //m_nzbd.set(k, m_nzbd.col_count(k), narrow_cast<C>(j));
                 }
 
-                m_nzbd.set(k, m_nzbd.colcount(k), c_ops.cast(0)); // end of sequence
+                m_nzbd.set(k, m_nzbd.col_count(k), c_ops.cast(0)); // end of sequence
             }
         }
 
@@ -145,7 +148,7 @@ namespace mame.plib
 
 
         public Pointer<C> nzbd(size_t row) { return m_nzbd.op(row); }
-        public size_t nzbd_count(size_t row) { return m_nzbd.colcount(row) - 1; }
+        public size_t nzbd_count(size_t row) { return m_nzbd.col_count(row) - 1; }
     }
 
 
@@ -169,7 +172,10 @@ namespace mame.plib
         public std.vector<std.vector<size_t>> m_ge_par = new std.vector<std.vector<size_t>>();  // parallel execution support for Gauss
 
 
-        public pGEmatrix_cr(size_t n) : base(n) { }
+        //template<typename ARENA>
+        public pGEmatrix_cr(size_t n)  //explicit pGEmatrix_cr(ARENA &arena, std::size_t n)
+            : base(n)  //: B(arena, n)
+        { }
 
 
         //template <typename M>
@@ -216,7 +222,7 @@ namespace mame.plib
             for (size_t i = 0; i < iN - 1; i++)
             {
                 size_t nzbdp = 0;
-                size_t pi = base.diag[i];  //std::size_t pi = base_type::diag[i];
+                size_t pi = base.diagonal[i];  //std::size_t pi = base_type::diag[i];
                 var f = plib.pg.reciprocal(t_ops.cast_double(base.A[pi++]));  //auto f = reciprocal(base_type::A[pi++]);
                 size_t piie = base.row_idx[i + 1];  //const std::size_t piie = base_type::row_idx[i+1];
 
@@ -337,5 +343,4 @@ namespace mame.plib
 
     //template<typename B>
     //struct pLUmatrix_cr : public B
-
-} // namespace plib
+}

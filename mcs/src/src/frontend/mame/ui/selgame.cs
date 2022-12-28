@@ -326,8 +326,8 @@ namespace mame.ui
             if (stack_has_special_main_menu())
             {
                 item_append(menu_item_type.SEPARATOR, 0);
-                item_append(__("Configure Options"), 0, CONF_OPTS);
-                item_append(__("Configure Machine"), 0, CONF_MACHINE);
+                item_append(__("General Settings"), 0, CONF_OPTS);
+                item_append(__("System Settings"), 0, CONF_MACHINE);
                 skip_main_items = 3;
 
                 if (m_prev_selected != null && !have_prev_selected)
@@ -383,7 +383,7 @@ namespace mame.ui
         //-------------------------------------------------
         protected override void handle(event_ ev)
         {
-            if (m_prev_selected != null)
+            if (m_prev_selected == null && item_count() > 0)
                 m_prev_selected = item(0).ref_();
 
             // if I have to reselect a software, force software list submenu
@@ -566,7 +566,7 @@ namespace mame.ui
             line1 = "";
             line2 = "";
 
-            line0 = string_format(__("{0} {1} ( {2} / {3} machines ({4} BIOS) )"),
+            line0 = string_format(__("{0} {1} ( {2} / {3} systems ({4} BIOS) )"),
                     emulator_info.get_appname(),
                     bare_build_version,
                     m_available_items,

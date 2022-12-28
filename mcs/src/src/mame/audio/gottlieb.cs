@@ -185,16 +185,18 @@ namespace mame
         //required_device<ay8913_device>  m_ay2;
 
         // internal state
-        //emu_timer * m_nmi_timer = 0;
-        //uint8_t       m_nmi_rate = 0;
-        //uint8_t       m_nmi_state = 0;
-        //uint8_t       m_dcpu_latch = 0;
-        //uint8_t       m_ycpu_latch = 0;
-        //uint8_t       m_speech_control = 0;
-        //uint8_t       m_last_command = 0;
-        //uint8_t       m_psg_latch = 0;
-        //uint8_t       m_psg_data_latch = 0;
-        //uint8_t       m_dcpu2_latch = 0;
+        //emu_timer *   m_nmi_timer;
+        //emu_timer *   m_nmi_clear_timer;
+        //emu_timer *   m_latch_timer;
+        //uint8_t       m_nmi_rate;
+        //uint8_t       m_nmi_state;
+        //uint8_t       m_dcpu_latch;
+        //uint8_t       m_ycpu_latch;
+        //uint8_t       m_speech_control;
+        //uint8_t       m_last_command;
+        //uint8_t       m_psg_latch;
+        //uint8_t       m_psg_data_latch;
+        //uint8_t       m_dcpu2_latch;
 
 
         // construction/destruction
@@ -221,6 +223,8 @@ namespace mame
             , m_ay1(*this, "ay1")
             , m_ay2(*this, "ay2")
             , m_nmi_timer(nullptr)
+            , m_nmi_clear_timer(nullptr)
+            , m_latch_timer(nullptr)
             , m_nmi_rate(0)
             , m_nmi_state(0)
             , m_dcpu_latch(0)
@@ -241,7 +245,10 @@ namespace mame
         // device-level overrides
         protected override void device_add_mconfig(machine_config config) { throw new emu_unimplemented(); }
         protected override void device_start() { throw new emu_unimplemented(); }
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param) { throw new emu_unimplemented(); }
+
+        //TIMER_CALLBACK_MEMBER(set_nmi);
+        //TIMER_CALLBACK_MEMBER(clear_nmi);
+        //TIMER_CALLBACK_MEMBER(update_latch);
 
 
         // internal communications
@@ -259,14 +266,6 @@ namespace mame
         // internal helpers
         //void nmi_timer_adjust();
         //void nmi_state_update();
-
-        // timer IDs
-        //enum
-        //{
-        //    TID_NMI_GENERATE,
-        //    TID_NMI_CLEAR,
-        //    TID_SOUND_LATCH_WRITE
-        //};
     }
 
 

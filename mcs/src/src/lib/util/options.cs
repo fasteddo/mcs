@@ -611,7 +611,7 @@ namespace mame
                 if (!args[(int)arg].empty() && args[(int)arg][0] == '-')
                 {
                     var curentry = get_entry(args[arg][1..]);
-                    if (curentry != null && curentry.type() == OPTION_COMMAND)
+                    if (curentry != null && curentry.type() == core_options.option_type.COMMAND)
                     {
                         // can only have one command
                         if (!m_command.empty())
@@ -649,12 +649,12 @@ namespace mame
                 }
 
                 // at this point, we've already processed commands
-                if (curentry.type() == OPTION_COMMAND)
+                if (curentry.type() == core_options.option_type.COMMAND)
                     continue;
 
                 // get the data for this argument, special casing booleans
                 string newdata;
-                if (curentry.type() == OPTION_BOOLEAN)
+                if (curentry.type() == option_type.BOOLEAN)
                 {
                     newdata = string.Compare(curarg.Remove(0, 1), 0, "no", 0, 2) == 0 ? "0" : "1";  //(strncmp(&curarg[1], "no", 2) == 0) ? "0" : "1";
                 }
@@ -1024,19 +1024,6 @@ namespace mame
         public options_entry(string name) : this(name, null, 0, null) { }
         public options_entry(string name, string defvalue, core_options.option_type type, string description)
         { this.name = name; this.defvalue = defvalue; this.type = type; this.description = description; }
-    }
-
-
-    public static partial class options_global
-    {
-        // legacy option types
-        public const core_options.option_type OPTION_INVALID = core_options.option_type.INVALID;
-        public const core_options.option_type OPTION_HEADER = core_options.option_type.HEADER;
-        public const core_options.option_type OPTION_COMMAND = core_options.option_type.COMMAND;
-        public const core_options.option_type OPTION_BOOLEAN = core_options.option_type.BOOLEAN;
-        public const core_options.option_type OPTION_INTEGER = core_options.option_type.INTEGER;
-        public const core_options.option_type OPTION_FLOAT = core_options.option_type.FLOAT;
-        public const core_options.option_type OPTION_STRING = core_options.option_type.STRING;
     }
 
 

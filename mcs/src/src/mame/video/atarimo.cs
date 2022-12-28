@@ -5,6 +5,7 @@ using System;
 
 using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using optional_shared_ptr_u16 = mame.shared_ptr_finder_u16<mame.bool_const_false>;  //using optional_shared_ptr_u16 = shared_ptr_finder_u16<false>;
+using s32 = System.Int32;
 using size_t = System.UInt64;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -151,13 +152,6 @@ namespace mame
     {
         //DEFINE_DEVICE_TYPE(ATARI_MOTION_OBJECTS, atari_motion_objects_device, "atarimo", "Atari Motion Objects")
         public static readonly emu.detail.device_type_impl ATARI_MOTION_OBJECTS = DEFINE_DEVICE_TYPE("atarimo", "Atari Motion Objects", (type, mconfig, tag, owner, clock) => { return new atari_motion_objects_device(mconfig, tag, owner, clock); });
-
-
-        // timer IDs
-        //enum
-        //{
-        const device_timer_id TID_FORCE_UPDATE = 0;
-        //}
 
 
         // a sprite parameter, which is a word index + shift + mask
@@ -590,7 +584,7 @@ namespace mame
                 m_gfxlookup[i] = m_atari_motion_objects_config.m_gfxindex;
 
             // allocate a timer to periodically force update
-            m_force_update_timer = timer_alloc(TID_FORCE_UPDATE);
+            m_force_update_timer = timer_alloc(force_update);
             m_force_update_timer.adjust(m_divideo.screen().time_until_pos(0));
 
             // register for save states
@@ -614,24 +608,8 @@ namespace mame
         }
 
 
-        //-------------------------------------------------
-        //  device_timer: Handle device-specific timer
-        //  calbacks
-        //-------------------------------------------------
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
-        {
-            switch (id)
-            {
-                case TID_FORCE_UPDATE:
-                    if (param > 0)
-                        m_divideo.screen().update_partial(param - 1);
-                    param += 64;
-                    if (param >= m_divideo.screen().visible_area().bottom())
-                        param = 0;
-                    timer.adjust(m_divideo.screen().time_until_pos(param), param);
-                    break;
-            }
-        }
+        //TIMER_CALLBACK_MEMBER(force_update);
+        void force_update(s32 param) { throw new emu_unimplemented(); }
 
 
         // internal helpers

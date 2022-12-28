@@ -24,7 +24,7 @@ namespace mame.plib
             }
             catch (Exception)
             {
-                /* ignore */
+                // ignore
             }
 
             std.terminate();
@@ -64,7 +64,7 @@ namespace mame.plib
 
     //class out_of_mem_e : public plib::pexception
 
-    //class fpexception_e : public pexception
+    //class fp_exception_e : public pexception
 
     //static constexpr unsigned FP_INEXACT = 0x0001;
     //static constexpr unsigned FP_DIVBYZERO = 0x0002;
@@ -73,5 +73,5 @@ namespace mame.plib
     //static constexpr unsigned FP_INVALID = 0x00010;
     //static constexpr unsigned FP_ALL = 0x0001f;
 
-    //class fpsignalenabler
+    //class fp_signal_enabler
 }

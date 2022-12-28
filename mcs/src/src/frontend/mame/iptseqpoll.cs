@@ -5,6 +5,8 @@ using System;
 
 using s32 = System.Int32;
 
+using static mame.inputcode_global;
+
 
 namespace mame
 {
@@ -179,7 +181,7 @@ namespace mame
             }
 
             // if nothing, return an invalid code
-            return input_code.INPUT_CODE_INVALID;
+            return INPUT_CODE_INVALID;
         }
     }
 

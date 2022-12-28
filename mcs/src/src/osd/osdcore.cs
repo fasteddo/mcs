@@ -385,11 +385,10 @@ namespace mame
 
             Parameters:
 
-                dst - result pointer
                 src - source string
 
         -----------------------------------------------------------------------------*/
-        public abstract void osd_subst_env(out string dst, string src);
+        public abstract string osd_subst_env(string src);
 
 
         //class osd_gpu

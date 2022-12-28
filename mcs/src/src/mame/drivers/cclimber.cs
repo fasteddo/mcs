@@ -17,7 +17,7 @@ using static mame.emumem_global;
 using static mame.emupal_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
-using static mame.input_global;
+using static mame.inputcode_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;
@@ -48,16 +48,6 @@ namespace mame
         //uint8_t cclimber_state::yamato_p1_r()
 
         //void cclimber_state::toprollr_rombank_w(int state)
-
-
-        //MACHINE_RESET_MEMBER(cclimber_state,cclimber)
-        void machine_reset_cclimber()
-        {
-            /* Disable interrupts, River Patrol / Silver Land needs this otherwise returns bad RAM on POST */
-            m_nmi_mask = false;  //0;
-
-            m_toprollr_rombank = 0;
-        }
 
 
         void nmi_mask_w(int state)
@@ -134,6 +124,7 @@ namespace mame
             map.global_mask(0xff);
             map.op(0x08, 0x09).w("cclimber_audio:aysnd", (offset, data) => { ((ay8910_device)subdevice("cclimber_audio:aysnd")).address_data_w(offset, data); });
             map.op(0x0c, 0x0c).r("cclimber_audio:aysnd", () => { return ((ay8910_device)subdevice("cclimber_audio:aysnd")).data_r(); });
+            map.op(0x0d, 0x0d).nopw();
         }
 
 
@@ -343,7 +334,7 @@ namespace mame
             /* sound hardware */
             SPEAKER(config, "speaker").front_center();
 
-            CCLIMBER_AUDIO(config, "cclimber_audio", 0);
+            CCLIMBER_AUDIO(config, "cclimber_audio", new XTAL(18_432_000)/3/2/2);
         }
 
 

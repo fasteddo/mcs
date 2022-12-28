@@ -60,7 +60,7 @@ namespace mame.plib
 
         //bool    exists(const pstring &filename);
 
-        public static string buildpath(params string [] list)  //pstring buildpath(std::initializer_list<pstring> list );
+        public static string build_path(params string [] list)  //pstring build_path(std::initializer_list<pstring> list );
         {
             //pstring ret = "";
             //for( const auto &elem : list )
@@ -91,7 +91,7 @@ namespace mame.plib
         //static constexpr const std::size_t npos = static_cast<std::size_t>(-1);
 
         //template <class C>
-        //std::size_t indexof(C &con, const typename C::value_type &elem)
+        //std::size_t index_of(C &con, const typename C::value_type &elem)
 
         //template <class C>
         //void insert_at(C &con, const std::size_t index, const typename C::value_type &elem)
@@ -173,4 +173,8 @@ namespace mame.plib
             return false;
         }
     }
+
+
+    //template <typename F>
+    //struct functor_guard
 }

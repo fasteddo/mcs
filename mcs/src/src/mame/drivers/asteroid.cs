@@ -14,7 +14,7 @@ using static mame.emumem_global;
 using static mame.er2055_global;
 using static mame.gamedrv_global;
 using static mame.hash_global;
-using static mame.input_global;
+using static mame.inputcode_global;
 using static mame.ioport_global;
 using static mame.ioport_input_string_helper;
 using static mame.ioport_ioport_type_helper;

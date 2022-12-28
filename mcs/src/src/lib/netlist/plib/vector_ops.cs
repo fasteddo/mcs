@@ -31,6 +31,6 @@ namespace mame.plib
         //void vec_add_ip(const std::size_t n, R & result, const V & v) noexcept
         //void vec_sub(const std::size_t n, VR & result, const V1 &v1, const V2 & v2) noexcept
         //void vec_scale(const std::size_t n, V & v, T &&scalar) noexcept
-        //T vec_maxabs(const std::size_t n, const V & v) noexcept
+        //T vec_max_abs(const std::size_t n, const V & v) noexcept
     }
 } // namespace plib

@@ -23,8 +23,7 @@ namespace mame
 
 
         // a timer callbacks look like this
-        //typedef device_delegate<void (timer_device &, void *, s32)> expired_delegate;
-        public delegate void expired_delegate(timer_device device, object ptr, int param);
+        public delegate void expired_delegate(timer_device device, object ptr, int param);  //typedef device_delegate<void (timer_device &, void *, s32)> expired_delegate;
 
 
         // timer types
@@ -215,8 +214,10 @@ namespace mame
         //-------------------------------------------------
         protected override void device_start()
         {
-            // allocate the timer
-            m_timer = timer_alloc();
+            if (m_type == timer_type.TIMER_TYPE_SCANLINE)
+                m_timer = timer_alloc(scanline_tick);
+            else
+                m_timer = timer_alloc(generic_tick);
 
             //throw new emu_unimplemented();
 #if false
@@ -268,46 +269,17 @@ namespace mame
         }
 
 
-        //-------------------------------------------------
-        //  device_timer - handle timer expiration events
-        //-------------------------------------------------
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
+        //TIMER_CALLBACK_MEMBER(generic_tick);
+        void generic_tick(s32 param)
         {
-            switch (m_type)
-            {
-                // general periodic timers just call through
-                case timer_type.TIMER_TYPE_GENERIC:
-                case timer_type.TIMER_TYPE_PERIODIC:
-                    if (m_callback != null)
-                        m_callback(this, m_ptr, param);
-                    break;
+            throw new emu_unimplemented();
+        }
 
 
-                // scanline timers have to do some additiona bookkeeping
-                case timer_type.TIMER_TYPE_SCANLINE:
-                {
-                    // by default, we fire at the first position
-                    int next_vpos = (int)m_first_vpos;
-
-                    // the first time through we just go with the default position
-                    if (!m_first_time)
-                    {
-                        // call the real callback
-                        int vpos = m_screen.op0.vpos();
-                        if (m_callback != null)
-                            m_callback(this, m_ptr, vpos);
-
-                        // advance by the increment only if we will still be within the screen bounds
-                        if (m_increment != 0 && (vpos + m_increment) < m_screen.op0.height())
-                            next_vpos = vpos + (int)m_increment;
-                    }
-                    m_first_time = false;
-
-                    // adjust the timer
-                    m_timer.adjust(m_screen.op0.time_until_pos(next_vpos));
-                    break;
-                }
-            }
+        //TIMER_CALLBACK_MEMBER(scanline_tick);
+        void scanline_tick(s32 param)
+        {
+            throw new emu_unimplemented();
         }
     }
 

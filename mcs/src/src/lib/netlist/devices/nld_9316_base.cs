@@ -3,6 +3,7 @@
 
 using System;
 
+using device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = device_param_t;  //using device_param_t = const device_data_t &;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using size_t = System.UInt64;
 using unsigned = System.UInt32;
@@ -49,8 +50,8 @@ namespace mame.netlist.devices
 
 
         //NETLIB_CONSTRUCTOR(9316_base)
-        public nld_9316_base(object owner, string name, desc_base desc)
-            : base(owner, name)
+        public nld_9316_base(device_t_constructor_param_t data, desc_base desc)
+            : base(data)
         {
             D = desc;
 
@@ -183,8 +184,8 @@ namespace mame.netlist.devices
         //NETLIB_DEVICE_IMPL(9316,     "TTL_9316",     "+CLK,+ENP,+ENT,+CLRQ,+LOADQ,+A,+B,+C,+D,@VCC,@GND")
         public static readonly netlist.factory.constructor_ptr_t decl_9316 = NETLIB_DEVICE_IMPL<nld_9316>("TTL_9316", "+CLK,+ENP,+ENT,+CLRQ,+LOADQ,+A,+B,+C,+D,@VCC,@GND");
 
-        public nld_9316(object owner, string name)
-            : base(owner, name, new desc_9316())
+        public nld_9316(device_t_constructor_param_t data)
+            : base(data, new desc_9316())
         { }
     }
 

@@ -135,7 +135,7 @@ namespace mame
                 m_fclk_rc = attotime.from_double(m_res * m_cap / 1.1);
 
             // create timer
-            m_timer = machine().scheduler().timer_alloc(conversion_done);
+            m_timer = timer_alloc(conversion_done);
 
             // save state
             if (m_rd_mode == read_mode.RD_BITBANGED)

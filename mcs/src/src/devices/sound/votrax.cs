@@ -163,11 +163,13 @@ namespace mame
         protected override void device_start() { throw new emu_unimplemented(); }
         protected override void device_reset() { throw new emu_unimplemented(); }
         protected override void device_clock_changed() { throw new emu_unimplemented(); }
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param) { throw new emu_unimplemented(); }
 
 
         // device_sound_interface overrides
         //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
+
+
+        //TIMER_CALLBACK_MEMBER(phone_tick);
 
 
         // Compute a total capacitor value based on which bits are currently active

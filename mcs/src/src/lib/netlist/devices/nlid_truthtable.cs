@@ -3,6 +3,8 @@
 
 using System;
 
+using device_data_t = mame.netlist.core_device_data_t;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
+using device_param_t = mame.netlist.core_device_data_t;  //using device_param_t = const device_data_t &;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using netlist_time_ext = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time_ext = plib::ptime<std::conditional<config::prefer_int128::value && plib::compile_info::has_int128::value, INT128, std::int64_t>::type, config::INTERNAL_RES::value>;
@@ -18,13 +20,13 @@ using static mame.netlist.nl_config_global;
 
 namespace mame.netlist.factory
 {
-    public abstract class truthtable_base_element_t : factory.element_t
+    public abstract class truth_table_base_element_t : factory.element_t
     {
         public std.vector<string> m_desc;
         public string m_family_name;
 
 
-        public truthtable_base_element_t(string name, properties props)
+        public truth_table_base_element_t(string name, properties props)
             : base(name, props)
         {
             m_family_name = config.DEFAULT_LOGIC_FAMILY();
@@ -35,9 +37,9 @@ namespace mame.netlist.factory
     public static class nlid_truthtable_global
     {
         //#define ENTRYY(n, m, s)    case (n * 100 + m): \
-        //    { using xtype = devices::netlist_factory_truthtable_t<n, m>; \
+        //    { using dev_type = devices::factory_truth_table_t<n, m>; \
         //        auto cs=s; \
-        //        ret = plib::make_unique<xtype, host_arena>(desc.name, std::move(cs)); } \
+        //        ret = plib::make_unique<dev_type, host_arena>(desc.name, std::move(cs)); } \
         //        break
 
         //#define ENTRY(n, s) ENTRYY(n, 1, s); ENTRYY(n, 2, s); ENTRYY(n, 3, s); \
@@ -46,158 +48,158 @@ namespace mame.netlist.factory
         //                    ENTRYY(n, 10, s)
 
 
-        public static truthtable_base_element_t truthtable_create(tt_desc desc, properties props)
+        public static truth_table_base_element_t truth_table_create(tt_desc desc, properties props)
         {
-            truthtable_base_element_t ret = null;
+            truth_table_base_element_t ret = null;
 
             switch (desc.ni * 100 + desc.no)
             {
                 //ENTRY(1, props);
-                case (1 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_1, u32_const_1>(desc.name, props); break;
-                case (1 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_1, u32_const_2>(desc.name, props); break;
-                case (1 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_1, u32_const_3>(desc.name, props); break;
-                case (1 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_1, u32_const_4>(desc.name, props); break;
-                case (1 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_1, u32_const_5>(desc.name, props); break;
-                case (1 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_1, u32_const_6>(desc.name, props); break;
-                case (1 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_1, u32_const_7>(desc.name, props); break;
-                case (1 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_1, u32_const_8>(desc.name, props); break;
-                case (1 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_1, u32_const_9>(desc.name, props); break;
-                case (1 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_1, u32_const_10>(desc.name, props); break;
+                case (1 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_1, u32_const_1>(desc.name, props); break;
+                case (1 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_1, u32_const_2>(desc.name, props); break;
+                case (1 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_1, u32_const_3>(desc.name, props); break;
+                case (1 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_1, u32_const_4>(desc.name, props); break;
+                case (1 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_1, u32_const_5>(desc.name, props); break;
+                case (1 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_1, u32_const_6>(desc.name, props); break;
+                case (1 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_1, u32_const_7>(desc.name, props); break;
+                case (1 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_1, u32_const_8>(desc.name, props); break;
+                case (1 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_1, u32_const_9>(desc.name, props); break;
+                case (1 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_1, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(2, props);
-                case (2 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_2, u32_const_1>(desc.name, props); break;
-                case (2 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_2, u32_const_2>(desc.name, props); break;
-                case (2 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_2, u32_const_3>(desc.name, props); break;
-                case (2 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_2, u32_const_4>(desc.name, props); break;
-                case (2 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_2, u32_const_5>(desc.name, props); break;
-                case (2 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_2, u32_const_6>(desc.name, props); break;
-                case (2 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_2, u32_const_7>(desc.name, props); break;
-                case (2 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_2, u32_const_8>(desc.name, props); break;
-                case (2 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_2, u32_const_9>(desc.name, props); break;
-                case (2 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_2, u32_const_10>(desc.name, props); break;
+                case (2 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_2, u32_const_1>(desc.name, props); break;
+                case (2 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_2, u32_const_2>(desc.name, props); break;
+                case (2 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_2, u32_const_3>(desc.name, props); break;
+                case (2 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_2, u32_const_4>(desc.name, props); break;
+                case (2 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_2, u32_const_5>(desc.name, props); break;
+                case (2 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_2, u32_const_6>(desc.name, props); break;
+                case (2 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_2, u32_const_7>(desc.name, props); break;
+                case (2 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_2, u32_const_8>(desc.name, props); break;
+                case (2 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_2, u32_const_9>(desc.name, props); break;
+                case (2 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_2, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(3, props);
-                case (3 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_3, u32_const_1>(desc.name, props); break;
-                case (3 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_3, u32_const_2>(desc.name, props); break;
-                case (3 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_3, u32_const_3>(desc.name, props); break;
-                case (3 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_3, u32_const_4>(desc.name, props); break;
-                case (3 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_3, u32_const_5>(desc.name, props); break;
-                case (3 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_3, u32_const_6>(desc.name, props); break;
-                case (3 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_3, u32_const_7>(desc.name, props); break;
-                case (3 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_3, u32_const_8>(desc.name, props); break;
-                case (3 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_3, u32_const_9>(desc.name, props); break;
-                case (3 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_3, u32_const_10>(desc.name, props); break;
+                case (3 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_3, u32_const_1>(desc.name, props); break;
+                case (3 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_3, u32_const_2>(desc.name, props); break;
+                case (3 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_3, u32_const_3>(desc.name, props); break;
+                case (3 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_3, u32_const_4>(desc.name, props); break;
+                case (3 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_3, u32_const_5>(desc.name, props); break;
+                case (3 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_3, u32_const_6>(desc.name, props); break;
+                case (3 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_3, u32_const_7>(desc.name, props); break;
+                case (3 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_3, u32_const_8>(desc.name, props); break;
+                case (3 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_3, u32_const_9>(desc.name, props); break;
+                case (3 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_3, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(4, props);
-                case (4 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_4, u32_const_1>(desc.name, props); break;
-                case (4 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_4, u32_const_2>(desc.name, props); break;
-                case (4 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_4, u32_const_3>(desc.name, props); break;
-                case (4 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_4, u32_const_4>(desc.name, props); break;
-                case (4 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_4, u32_const_5>(desc.name, props); break;
-                case (4 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_4, u32_const_6>(desc.name, props); break;
-                case (4 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_4, u32_const_7>(desc.name, props); break;
-                case (4 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_4, u32_const_8>(desc.name, props); break;
-                case (4 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_4, u32_const_9>(desc.name, props); break;
-                case (4 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_4, u32_const_10>(desc.name, props); break;
+                case (4 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_4, u32_const_1>(desc.name, props); break;
+                case (4 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_4, u32_const_2>(desc.name, props); break;
+                case (4 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_4, u32_const_3>(desc.name, props); break;
+                case (4 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_4, u32_const_4>(desc.name, props); break;
+                case (4 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_4, u32_const_5>(desc.name, props); break;
+                case (4 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_4, u32_const_6>(desc.name, props); break;
+                case (4 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_4, u32_const_7>(desc.name, props); break;
+                case (4 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_4, u32_const_8>(desc.name, props); break;
+                case (4 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_4, u32_const_9>(desc.name, props); break;
+                case (4 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_4, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(5, props);
-                case (5 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_5, u32_const_1>(desc.name, props); break;
-                case (5 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_5, u32_const_2>(desc.name, props); break;
-                case (5 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_5, u32_const_3>(desc.name, props); break;
-                case (5 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_5, u32_const_4>(desc.name, props); break;
-                case (5 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_5, u32_const_5>(desc.name, props); break;
-                case (5 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_5, u32_const_6>(desc.name, props); break;
-                case (5 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_5, u32_const_7>(desc.name, props); break;
-                case (5 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_5, u32_const_8>(desc.name, props); break;
-                case (5 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_5, u32_const_9>(desc.name, props); break;
-                case (5 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_5, u32_const_10>(desc.name, props); break;
+                case (5 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_5, u32_const_1>(desc.name, props); break;
+                case (5 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_5, u32_const_2>(desc.name, props); break;
+                case (5 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_5, u32_const_3>(desc.name, props); break;
+                case (5 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_5, u32_const_4>(desc.name, props); break;
+                case (5 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_5, u32_const_5>(desc.name, props); break;
+                case (5 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_5, u32_const_6>(desc.name, props); break;
+                case (5 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_5, u32_const_7>(desc.name, props); break;
+                case (5 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_5, u32_const_8>(desc.name, props); break;
+                case (5 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_5, u32_const_9>(desc.name, props); break;
+                case (5 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_5, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(6, props);
-                case (6 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_6, u32_const_1>(desc.name, props); break;
-                case (6 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_6, u32_const_2>(desc.name, props); break;
-                case (6 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_6, u32_const_3>(desc.name, props); break;
-                case (6 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_6, u32_const_4>(desc.name, props); break;
-                case (6 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_6, u32_const_5>(desc.name, props); break;
-                case (6 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_6, u32_const_6>(desc.name, props); break;
-                case (6 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_6, u32_const_7>(desc.name, props); break;
-                case (6 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_6, u32_const_8>(desc.name, props); break;
-                case (6 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_6, u32_const_9>(desc.name, props); break;
-                case (6 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_6, u32_const_10>(desc.name, props); break;
+                case (6 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_6, u32_const_1>(desc.name, props); break;
+                case (6 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_6, u32_const_2>(desc.name, props); break;
+                case (6 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_6, u32_const_3>(desc.name, props); break;
+                case (6 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_6, u32_const_4>(desc.name, props); break;
+                case (6 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_6, u32_const_5>(desc.name, props); break;
+                case (6 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_6, u32_const_6>(desc.name, props); break;
+                case (6 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_6, u32_const_7>(desc.name, props); break;
+                case (6 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_6, u32_const_8>(desc.name, props); break;
+                case (6 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_6, u32_const_9>(desc.name, props); break;
+                case (6 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_6, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(7, props);
-                case (7 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_7, u32_const_1>(desc.name, props); break;
-                case (7 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_7, u32_const_2>(desc.name, props); break;
-                case (7 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_7, u32_const_3>(desc.name, props); break;
-                case (7 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_7, u32_const_4>(desc.name, props); break;
-                case (7 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_7, u32_const_5>(desc.name, props); break;
-                case (7 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_7, u32_const_6>(desc.name, props); break;
-                case (7 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_7, u32_const_7>(desc.name, props); break;
-                case (7 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_7, u32_const_8>(desc.name, props); break;
-                case (7 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_7, u32_const_9>(desc.name, props); break;
-                case (7 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_7, u32_const_10>(desc.name, props); break;
+                case (7 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_7, u32_const_1>(desc.name, props); break;
+                case (7 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_7, u32_const_2>(desc.name, props); break;
+                case (7 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_7, u32_const_3>(desc.name, props); break;
+                case (7 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_7, u32_const_4>(desc.name, props); break;
+                case (7 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_7, u32_const_5>(desc.name, props); break;
+                case (7 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_7, u32_const_6>(desc.name, props); break;
+                case (7 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_7, u32_const_7>(desc.name, props); break;
+                case (7 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_7, u32_const_8>(desc.name, props); break;
+                case (7 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_7, u32_const_9>(desc.name, props); break;
+                case (7 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_7, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(8, props);
-                case (8 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_8, u32_const_1>(desc.name, props); break;
-                case (8 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_8, u32_const_2>(desc.name, props); break;
-                case (8 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_8, u32_const_3>(desc.name, props); break;
-                case (8 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_8, u32_const_4>(desc.name, props); break;
-                case (8 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_8, u32_const_5>(desc.name, props); break;
-                case (8 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_8, u32_const_6>(desc.name, props); break;
-                case (8 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_8, u32_const_7>(desc.name, props); break;
-                case (8 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_8, u32_const_8>(desc.name, props); break;
-                case (8 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_8, u32_const_9>(desc.name, props); break;
-                case (8 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_8, u32_const_10>(desc.name, props); break;
+                case (8 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_8, u32_const_1>(desc.name, props); break;
+                case (8 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_8, u32_const_2>(desc.name, props); break;
+                case (8 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_8, u32_const_3>(desc.name, props); break;
+                case (8 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_8, u32_const_4>(desc.name, props); break;
+                case (8 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_8, u32_const_5>(desc.name, props); break;
+                case (8 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_8, u32_const_6>(desc.name, props); break;
+                case (8 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_8, u32_const_7>(desc.name, props); break;
+                case (8 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_8, u32_const_8>(desc.name, props); break;
+                case (8 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_8, u32_const_9>(desc.name, props); break;
+                case (8 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_8, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(9, props);
-                case (9 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_9, u32_const_1>(desc.name, props); break;
-                case (9 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_9, u32_const_2>(desc.name, props); break;
-                case (9 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_9, u32_const_3>(desc.name, props); break;
-                case (9 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_9, u32_const_4>(desc.name, props); break;
-                case (9 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_9, u32_const_5>(desc.name, props); break;
-                case (9 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_9, u32_const_6>(desc.name, props); break;
-                case (9 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_9, u32_const_7>(desc.name, props); break;
-                case (9 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_9, u32_const_8>(desc.name, props); break;
-                case (9 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_9, u32_const_9>(desc.name, props); break;
-                case (9 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_9, u32_const_10>(desc.name, props); break;
+                case (9 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_9, u32_const_1>(desc.name, props); break;
+                case (9 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_9, u32_const_2>(desc.name, props); break;
+                case (9 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_9, u32_const_3>(desc.name, props); break;
+                case (9 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_9, u32_const_4>(desc.name, props); break;
+                case (9 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_9, u32_const_5>(desc.name, props); break;
+                case (9 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_9, u32_const_6>(desc.name, props); break;
+                case (9 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_9, u32_const_7>(desc.name, props); break;
+                case (9 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_9, u32_const_8>(desc.name, props); break;
+                case (9 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_9, u32_const_9>(desc.name, props); break;
+                case (9 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_9, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(10, props);
-                case (10 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_10, u32_const_1>(desc.name, props); break;
-                case (10 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_10, u32_const_2>(desc.name, props); break;
-                case (10 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_10, u32_const_3>(desc.name, props); break;
-                case (10 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_10, u32_const_4>(desc.name, props); break;
-                case (10 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_10, u32_const_5>(desc.name, props); break;
-                case (10 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_10, u32_const_6>(desc.name, props); break;
-                case (10 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_10, u32_const_7>(desc.name, props); break;
-                case (10 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_10, u32_const_8>(desc.name, props); break;
-                case (10 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_10, u32_const_9>(desc.name, props); break;
-                case (10 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_10, u32_const_10>(desc.name, props); break;
+                case (10 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_10, u32_const_1>(desc.name, props); break;
+                case (10 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_10, u32_const_2>(desc.name, props); break;
+                case (10 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_10, u32_const_3>(desc.name, props); break;
+                case (10 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_10, u32_const_4>(desc.name, props); break;
+                case (10 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_10, u32_const_5>(desc.name, props); break;
+                case (10 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_10, u32_const_6>(desc.name, props); break;
+                case (10 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_10, u32_const_7>(desc.name, props); break;
+                case (10 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_10, u32_const_8>(desc.name, props); break;
+                case (10 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_10, u32_const_9>(desc.name, props); break;
+                case (10 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_10, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(11, props);
-                case (11 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_11, u32_const_1>(desc.name, props); break;
-                case (11 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_11, u32_const_2>(desc.name, props); break;
-                case (11 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_11, u32_const_3>(desc.name, props); break;
-                case (11 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_11, u32_const_4>(desc.name, props); break;
-                case (11 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_11, u32_const_5>(desc.name, props); break;
-                case (11 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_11, u32_const_6>(desc.name, props); break;
-                case (11 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_11, u32_const_7>(desc.name, props); break;
-                case (11 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_11, u32_const_8>(desc.name, props); break;
-                case (11 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_11, u32_const_9>(desc.name, props); break;
-                case (11 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_11, u32_const_10>(desc.name, props); break;
+                case (11 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_11, u32_const_1>(desc.name, props); break;
+                case (11 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_11, u32_const_2>(desc.name, props); break;
+                case (11 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_11, u32_const_3>(desc.name, props); break;
+                case (11 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_11, u32_const_4>(desc.name, props); break;
+                case (11 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_11, u32_const_5>(desc.name, props); break;
+                case (11 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_11, u32_const_6>(desc.name, props); break;
+                case (11 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_11, u32_const_7>(desc.name, props); break;
+                case (11 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_11, u32_const_8>(desc.name, props); break;
+                case (11 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_11, u32_const_9>(desc.name, props); break;
+                case (11 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_11, u32_const_10>(desc.name, props); break;
 
                 //ENTRY(12, props);
-                case (12 * 100 +  1): ret = new devices.netlist_factory_truthtable_t<u32_const_12, u32_const_1>(desc.name, props); break;
-                case (12 * 100 +  2): ret = new devices.netlist_factory_truthtable_t<u32_const_12, u32_const_2>(desc.name, props); break;
-                case (12 * 100 +  3): ret = new devices.netlist_factory_truthtable_t<u32_const_12, u32_const_3>(desc.name, props); break;
-                case (12 * 100 +  4): ret = new devices.netlist_factory_truthtable_t<u32_const_12, u32_const_4>(desc.name, props); break;
-                case (12 * 100 +  5): ret = new devices.netlist_factory_truthtable_t<u32_const_12, u32_const_5>(desc.name, props); break;
-                case (12 * 100 +  6): ret = new devices.netlist_factory_truthtable_t<u32_const_12, u32_const_6>(desc.name, props); break;
-                case (12 * 100 +  7): ret = new devices.netlist_factory_truthtable_t<u32_const_12, u32_const_7>(desc.name, props); break;
-                case (12 * 100 +  8): ret = new devices.netlist_factory_truthtable_t<u32_const_12, u32_const_8>(desc.name, props); break;
-                case (12 * 100 +  9): ret = new devices.netlist_factory_truthtable_t<u32_const_12, u32_const_9>(desc.name, props); break;
-                case (12 * 100 + 10): ret = new devices.netlist_factory_truthtable_t<u32_const_12, u32_const_10>(desc.name, props); break;
+                case (12 * 100 +  1): ret = new devices.netlist_factory_truth_table_t<u32_const_12, u32_const_1>(desc.name, props); break;
+                case (12 * 100 +  2): ret = new devices.netlist_factory_truth_table_t<u32_const_12, u32_const_2>(desc.name, props); break;
+                case (12 * 100 +  3): ret = new devices.netlist_factory_truth_table_t<u32_const_12, u32_const_3>(desc.name, props); break;
+                case (12 * 100 +  4): ret = new devices.netlist_factory_truth_table_t<u32_const_12, u32_const_4>(desc.name, props); break;
+                case (12 * 100 +  5): ret = new devices.netlist_factory_truth_table_t<u32_const_12, u32_const_5>(desc.name, props); break;
+                case (12 * 100 +  6): ret = new devices.netlist_factory_truth_table_t<u32_const_12, u32_const_6>(desc.name, props); break;
+                case (12 * 100 +  7): ret = new devices.netlist_factory_truth_table_t<u32_const_12, u32_const_7>(desc.name, props); break;
+                case (12 * 100 +  8): ret = new devices.netlist_factory_truth_table_t<u32_const_12, u32_const_8>(desc.name, props); break;
+                case (12 * 100 +  9): ret = new devices.netlist_factory_truth_table_t<u32_const_12, u32_const_9>(desc.name, props); break;
+                case (12 * 100 + 10): ret = new devices.netlist_factory_truth_table_t<u32_const_12, u32_const_10>(desc.name, props); break;
 
                 default:
-                    string msg = new plib.pfmt("unable to create truthtable<{0},{2}>").op(desc.ni, desc.no);
+                    string msg = new plib.pfmt("unable to create truth table<{0},{1}>").op(desc.ni, desc.no);
                     nl_assert_always(false, msg);
                     break;
             }
@@ -213,8 +215,8 @@ namespace mame.netlist.factory
 namespace mame.netlist.devices
 {
     //template<std::size_t m_NI, std::size_t m_NO>
-    //class NETLIB_NAME(truthtable_t) : public device_t
-    class nld_truthtable_t<size_t_m_NI, size_t_m_NO> : device_t
+    //class NETLIB_NAME(truth_table_t) : public device_t
+    class nld_truth_table_t<size_t_m_NI, size_t_m_NO> : device_t
         where size_t_m_NI : u64_const, new()
         where size_t_m_NO : u64_const, new()
     {
@@ -233,14 +235,14 @@ namespace mame.netlist.devices
         public class u64_const_m_size_multiply_m_NO : u64_const { public UInt64 value { get { return m_size * m_NO; } } }
 
 
-        public class truthtable_t
+        public class truth_table_t
         {
             public std.array<FlexPrim, u64_const_m_size> m_out_state = new std.array<FlexPrim, u64_const_m_size>();  //std::array<type_t, m_size> m_out_state;
             public std.array<uint_least8_t, u64_const_m_size_multiply_m_NO> m_timing_index;  //std::array<uint_least8_t, m_size * m_NO> m_timing_index;
             public std.array<netlist_time, u64_const_16> m_timing_nt = new std.array<netlist_time, u64_const_16>();  //std::array<netlist_time, 16> m_timing_nt;
 
 
-            public truthtable_t()
+            public truth_table_t()
             {
                 m_timing_index = new std.array<uint_least8_t, u64_const_m_size_multiply_m_NO>();
 
@@ -252,22 +254,19 @@ namespace mame.netlist.devices
         plib.static_vector<logic_input_t, size_t_m_NI> m_I = new plib.static_vector<logic_input_t, size_t_m_NI>();  //plib::static_vector<logic_input_t, m_NI> m_I;
         plib.static_vector<logic_output_t, size_t_m_NO> m_Q = new plib.static_vector<logic_output_t, size_t_m_NO>();  //plib::static_vector<logic_output_t, m_NO> m_Q;
 
-#if USE_TT_ALTERNATIVE
+#if NL_TT_ALTERNATIVE
         state_var<type_t>   m_state;
 #endif
         state_var<UInt64> m_ign;  //state_var<type_t> m_ign;
-        truthtable_t m_ttp;
+        truth_table_t m_ttp;
         /* FIXME: the family should provide the names of the power-terminals! */
         nld_power_pins m_power_pins;
 
 
-        //template <class C>
-        public nld_truthtable_t(object owner, string name,  //nld_truthtable_t(C &owner, const pstring &name, const pstring &model,  truthtable_t &ttp, const std::vector<pstring> &desc)
-                string model,
-                truthtable_t ttp, std.vector<string> desc)
-            : base(owner, name, model)
+        public nld_truth_table_t(device_param_t data, string model, truth_table_t ttp, std.vector<string> desc)
+            : base(data, model)
         {
-#if USE_TT_ALTERNATIVE
+#if NL_TT_ALTERNATIVE
             , m_state(*this, "m_state", 0)
 #endif
             m_ign = new state_var<UInt64>(this, "m_ign", 0);
@@ -276,7 +275,7 @@ namespace mame.netlist.devices
             m_power_pins = new nld_power_pins(this);
 
 
-            m_activate = incdec_active;  //m_activate = activate_delegate(& NETLIB_NAME(truthtable_t) :: incdec_active, this);
+            m_activate = incdec_active;  //m_activate = activate_delegate(& NETLIB_NAME(truth_table_t) :: incdec_active, this);
             set_hint_deactivate(true);
             init(desc);
         }
@@ -290,34 +289,34 @@ namespace mame.netlist.devices
             // checks
             nl_assert_always(io.size() == 2, "too many '|'");
             std.vector<string> inout = plib.pg.psplit(io[0], ',');
-            nl_assert_always(inout.size() == m_num_bits, "bitcount wrong");
+            nl_assert_always(inout.size() == m_num_bits, "bit count wrong");
             std.vector<string> outputs = plib.pg.psplit(io[1], ',');
             nl_assert_always(outputs.size() == m_NO, "output count wrong");
 
-    #if !USE_TT_ALTERNATIVE
+#if !NL_USE_TT_ALTERNATIVE
             for (size_t i = 0; i < m_NI; i++)
             {
                 inout[i] = plib.pg.trim(inout[i]);
-                m_I.emplace_back(new logic_input_t(this, inout[i], inputs));  //m_I.emplace_back(*this, inout[i], nldelegate(&NETLIB_NAME(truthtable_t)<m_NI, m_NO> :: inputs, this));
+                m_I.emplace_back(new logic_input_t(this, inout[i], inputs));  //m_I.emplace_back(*this, inout[i], nl_delegate(&NETLIB_NAME(truth_table_t)<m_NI, m_NO> :: inputs, this));
             }
-    #else
+#else
             for (std::size_t i=0; i < m_NI; i++)
             {
                 inout[i] = plib::trim(inout[i]);
             }
-            if (0 < m_NI) m_I.emplace(0, *this, inout[0]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<0>, this));
-            if (1 < m_NI) m_I.emplace(1, *this, inout[1]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<1>, this));
-            if (2 < m_NI) m_I.emplace(2, *this, inout[2]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<2>, this));
-            if (3 < m_NI) m_I.emplace(3, *this, inout[3]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<3>, this));
-            if (4 < m_NI) m_I.emplace(4, *this, inout[4]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<4>, this));
-            if (5 < m_NI) m_I.emplace(5, *this, inout[5]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<5>, this));
-            if (6 < m_NI) m_I.emplace(6, *this, inout[6]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<6>, this));
-            if (7 < m_NI) m_I.emplace(7, *this, inout[7]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<7>, this));
-            if (8 < m_NI) m_I.emplace(8, *this, inout[8]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<8>, this));
-            if (9 < m_NI) m_I.emplace(9, *this, inout[9]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<9>, this));
-            if (10 < m_NI) m_I.emplace(10, *this, inout[10]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<10>, this));
-            if (11 < m_NI) m_I.emplace(11, *this, inout[11]); //, nldelegate(&nld_truthtable_t<m_NI, m_NO>::update_N<11>, this));
-    #endif
+            if (0 < m_NI) m_I.emplace_back(*this, inout[0], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<0>, this));
+            if (1 < m_NI) m_I.emplace_back(*this, inout[1], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<1>, this));
+            if (2 < m_NI) m_I.emplace_back(*this, inout[2], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<2>, this));
+            if (3 < m_NI) m_I.emplace_back(*this, inout[3], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<3>, this));
+            if (4 < m_NI) m_I.emplace_back(*this, inout[4], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<4>, this));
+            if (5 < m_NI) m_I.emplace_back(*this, inout[5], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<5>, this));
+            if (6 < m_NI) m_I.emplace_back(*this, inout[6], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<6>, this));
+            if (7 < m_NI) m_I.emplace_back(*this, inout[7], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<7>, this));
+            if (8 < m_NI) m_I.emplace_back(*this, inout[8], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<8>, this));
+            if (9 < m_NI) m_I.emplace_back(*this, inout[9], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<9>, this));
+            if (10 < m_NI) m_I.emplace_back(*this, inout[10], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<10>, this));
+            if (11 < m_NI) m_I.emplace_back(*this, inout[11], nl_delegate(&nld_truth_table_t<m_NI, m_NO>::update_N<11>, this));
+#endif
             for (size_t i = 0; i < m_NO; i++)
             {
                 outputs[i] = plib.pg.trim(outputs[i]);
@@ -325,7 +324,7 @@ namespace mame.netlist.devices
                 // Connect output "Q" to input "_Q" if this exists
                 // This enables timed state without having explicit state ....
                 string tmp = "_" + outputs[i];
-                int idx = inout.IndexOf(tmp);  //const std::size_t idx = plib::container::indexof(inout, tmp);
+                int idx = inout.IndexOf(tmp);  //const std::size_t idx = plib::container::index_of(inout, tmp);
                 if (idx != -1)  //if (idx != plib::container::npos)
                     connect(m_Q.op(i), m_I.op((size_t)idx));
             }
@@ -339,13 +338,13 @@ namespace mame.netlist.devices
         {
             int active_outputs = 0;
             m_ign.op = 0;
-#if USE_TT_ALTERNATIVE
+#if NL_USE_TT_ALTERNATIVE
             m_state = 0;
 #endif
             for (size_t i = 0; i < m_NI; ++i)
             {
                 m_I.op(i).activate();
-#if USE_TT_ALTERNATIVE
+#if NL_USE_TT_ALTERNATIVE
                 m_state |= (m_I[i]() << i);
 #endif
             }
@@ -354,8 +353,9 @@ namespace mame.netlist.devices
             {
                 var q = m_Q.op(i);
 
-                if (q.has_net() && !exec().nlstate().core_terms(q.net()).empty())
-                    active_outputs++;
+                if (q.has_net())
+                    if (!q.net().core_terms_empty())
+                        active_outputs++;
             }
 
             set_active_outputs(active_outputs);
@@ -365,7 +365,7 @@ namespace mame.netlist.devices
         //NETLIB_HANDLERI(inputs)
         void inputs()
         {
-#if USE_TT_ALTERNATIVE
+#if NL_USE_TT_ALTERNATIVE
             m_state = 0;
             for (std::size_t i = 0; i < m_NI; ++i)
             {
@@ -376,7 +376,7 @@ namespace mame.netlist.devices
         }
 
 
-#if USE_TT_ALTERNATIVE
+#if NL_USE_TT_ALTERNATIVE
         template <std::size_t N>
         void update_N() noexcept
         {
@@ -407,12 +407,12 @@ namespace mame.netlist.devices
         void process(bool doOUT)
         {
             netlist_time_ext mt = netlist_time_ext.zero();
-            UInt64 nstate = 0;  //type_t nstate(0);
+            UInt64 new_state = 0;  //type_t new_state(0);
             UInt64 ign = m_ign.op;  //type_t ign(m_ign);
 
             if (doOUT)
             {
-#if !USE_TT_ALTERNATIVE
+#if !NL_USE_TT_ALTERNATIVE
                 for (size_t Idx = 0; ign != 0; ign >>= 1, ++Idx)  //for (auto I = m_I.begin(); ign != 0; ign >>= 1, ++I)
                 {
                     if ((ign & 1U) != 0)
@@ -421,17 +421,17 @@ namespace mame.netlist.devices
 
                 for (size_t i = 0; i < m_NI; i++)
                 {
-                    nstate |= (m_I.op(i).op() << (int)i);
+                    new_state |= (m_I.op(i).op() << (int)i);
                 }
 #else
-                nstate = m_state;
+                new_state = m_state;
                 for (std::size_t i = 0; ign != 0; ign >>= 1, ++i)
                 {
                     if (ign & 1)
                     {
-                        nstate &= ~(1 << i);
+                        new_state &= ~(1 << i);
                         m_I[i].activate();
-                        nstate |= (m_I[i]() << i);
+                        new_state |= (m_I[i]() << i);
                     }
                 }
 #endif
@@ -441,17 +441,17 @@ namespace mame.netlist.devices
                 for (size_t i = 0; i < m_NI; i++)
                 {
                     m_I.op(i).activate();
-                    nstate |= (m_I.op(i).op() << (int)i);
+                    new_state |= (m_I.op(i).op() << (int)i);
                     mt = netlist_time_ext.Max(this.m_I.op(i).net().next_scheduled_time(), mt);
                 }
             }
 
-            UInt64 outstate = m_ttp.m_out_state[nstate].u64;  //const type_t outstate(m_ttp.m_out_state[nstate]);
-            UInt64 out_ = (outstate & m_outmask);  //type_t out(outstate & m_outmask);
+            UInt64 output_state = m_ttp.m_out_state[new_state].u64;  //const type_t output_state(m_ttp.m_out_state[new_state]);
+            UInt64 out_ = (output_state & m_outmask);  //const type_t out(output_state & m_outmask);
 
-            m_ign.op = outstate >> (int)m_NO;
+            m_ign.op = output_state >> (int)m_NO;
 
-            Pointer<uint_least8_t> t = m_ttp.m_timing_index.data() + (int)(nstate * m_NO);  //const auto *t(&m_ttp.m_timing_index[nstate * m_NO]);
+            Pointer<uint_least8_t> t = m_ttp.m_timing_index.data() + (int)(new_state * m_NO);  //const auto *t(&m_ttp.m_timing_index[new_state * m_NO]);
 
             if (doOUT)
             {
@@ -473,7 +473,7 @@ namespace mame.netlist.devices
                     m_I.op(Idx).inactivate();
             }
 
-#if USE_TT_ALTERNATIVE
+#if NL_USE_TT_ALTERNATIVE
             m_state = nstate;
 #endif
         }
@@ -580,7 +580,7 @@ namespace mame.netlist.devices
 
 
     // ----------------------------------------------------------------------------------------
-    // Truthtable parsing ....
+    // Truth table parsing ....
     // ----------------------------------------------------------------------------------------
 
     //using tt_bitset = pbitset<std::uint_least64_t>;
@@ -641,7 +641,7 @@ namespace mame.netlist.devices
     }
 
 
-    class truthtable_parser
+    class truth_table_parser
     {
         unsigned m_NO;
         unsigned m_NI;
@@ -653,7 +653,7 @@ namespace mame.netlist.devices
         size_t m_size;
 
 
-        public truthtable_parser(unsigned NO, unsigned NI, packed_int outs, Pointer<uint_least8_t> timing, Pointer<netlist_time> timing_nt)  //truthtable_parser(unsigned NO, unsigned NI, packed_int outs, uint_least8_t *timing, netlist_time *timing_nt)
+        public truth_table_parser(unsigned NO, unsigned NI, packed_int outs, Pointer<uint_least8_t> timing, Pointer<netlist_time> timing_nt)  //truthtable_parser(unsigned NO, unsigned NI, packed_int outs, uint_least8_t *timing, netlist_time *timing_nt)
         {
             m_NO = NO;
             m_NI = NI;
@@ -665,13 +665,13 @@ namespace mame.netlist.devices
         }
 
 
-        public void parse(std.vector<string> truthtable)
+        public void parse(std.vector<string> truth_table)
         {
             unsigned line = 0;
 
-            string ttline = truthtable[line];
+            string tt_line = truth_table[line];
             line++;
-            ttline = truthtable[line];
+            tt_line = truth_table[line];
             line++;
 
             for (unsigned j = 0; j < m_size; j++)
@@ -680,9 +680,9 @@ namespace mame.netlist.devices
             for (int j = 0; j < 16; j++)
                 m_timing_nt[j] = netlist_time.zero();
 
-            while (!ttline.empty())
+            while (!tt_line.empty())
             {
-                std.vector<string> io = plib.pg.psplit(ttline,'|');
+                std.vector<string> io = plib.pg.psplit(tt_line,'|');
                 // checks
                 nl_assert_always(io.size() == 3, "io.count mismatch");
                 std.vector<string> inout = plib.pg.psplit(io[0], ',');
@@ -693,10 +693,10 @@ namespace mame.netlist.devices
                 nl_assert_always(times.size() == m_NO, "timing count not matching");
 
                 tt_bitset val = new tt_bitset(0);
-                std.vector<uint_least8_t> tindex = new std.vector<uint_least8_t>();
+                std.vector<uint_least8_t> indexes = new std.vector<uint_least8_t>();
 
                 //
-                // FIXME: evaluation of outputs should be done in parseline to
+                // FIXME: evaluation of outputs should be done in parse_line to
                 //        enable the use of inputs for output values, i.e. "I1" or "~I1"
                 //  in addition to "0" and "1".
 
@@ -715,14 +715,14 @@ namespace mame.netlist.devices
                         k++;
 
                     m_timing_nt[k] = t;
-                    tindex.push_back(k); //[j] = k;
+                    indexes.push_back(k); //[j] = k;
                 }
 
-                parseline(0, inout, new tt_bitset(0), val.op, tindex);
-                if (line < truthtable.size())
-                    ttline = truthtable[line];
+                parse_line(0, inout, new tt_bitset(0), val.op, indexes);
+                if (line < truth_table.size())
+                    tt_line = truth_table[line];
                 else
-                    ttline = "";
+                    tt_line = "";
 
                 line++;
             }
@@ -755,13 +755,13 @@ namespace mame.netlist.devices
             for (size_t i = 0; i < m_size; i++)
             {
                 if (m_out_state.op(i) == m_out_state.mask())
-                    throw new nl_exception(new plib.pfmt("truthtable: found element not set {0}\n").op(i) );
+                    throw new nl_exception(new plib.pfmt("truth table: found element not set {0}\n").op(i) );
                 m_out_state.set(i, m_out_state.op(i) | (ign[i].op << (int)m_NO));
             }
         }
 
 
-        void parseline(unsigned cur, std.vector<string> list,
+        void parse_line(unsigned cur, std.vector<string> list,
                 tt_bitset state, uint_least64_t val, std.vector<uint_least8_t> timing_index)
         {
             string elem = plib.pg.trim(list[cur]);
@@ -790,26 +790,26 @@ namespace mame.netlist.devices
 
             for (uint_least64_t i = start; i <= end; i++)
             {
-                tt_bitset nstate = state;
+                tt_bitset new_state = state;
                 if (i == 1)
-                    nstate.set(cur);
+                    new_state.set(cur);
 
                 if (cur < m_num_bits - 1)
                 {
-                    parseline(cur + 1, list, nstate, val, timing_index);
+                    parse_line(cur + 1, list, new_state, val, timing_index);
                 }
                 else
                 {
                     // cutoff previous inputs and outputs for ignore
-                    if (m_out_state.op(nstate.op) != m_out_state.mask() &&  m_out_state.op(nstate.op) != val)
+                    if (m_out_state.op(new_state.op) != m_out_state.mask() &&  m_out_state.op(new_state.op) != val)
                     {
-                        throw new nl_exception(new plib.pfmt("Error in truthtable: State {0} already set, {1} != {2}\n")
-                                .op(nstate.as_uint(), m_out_state.op(nstate.op), val));
+                        throw new nl_exception(new plib.pfmt("Error in truth table: State {0} already set, {1} != {2}\n")
+                                .op(new_state.as_uint(), m_out_state.op(new_state.op), val));
                     }
 
-                    m_out_state.set(nstate.op, val);
+                    m_out_state.set(new_state.op, val);
                     for (size_t j = 0; j < m_NO; j++)
-                        m_timing[nstate.op * m_NO + j] = timing_index[j];
+                        m_timing[new_state.op * m_NO + j] = timing_index[j];
                 }
             }
         }
@@ -820,10 +820,10 @@ namespace mame.netlist.devices
 
 
     // ----------------------------------------------------------------------------------------
-    // Truthtable factory ....
+    // Truth table factory ....
     // ----------------------------------------------------------------------------------------
     //template<unsigned m_NI, unsigned m_NO>
-    class netlist_factory_truthtable_t<unsigned_m_NI, unsigned_m_NO> : factory.truthtable_base_element_t
+    class netlist_factory_truth_table_t<unsigned_m_NI, unsigned_m_NO> : factory.truth_table_base_element_t
         where unsigned_m_NI : u32_const, new()
         where unsigned_m_NO : u32_const, new()
     {
@@ -837,10 +837,10 @@ namespace mame.netlist.devices
         public class u64_const_m_NO : u64_const { public UInt64 value { get { return m_NO; } } }
 
 
-        nld_truthtable_t<u64_const_m_NI, u64_const_m_NO>.truthtable_t m_ttbl;  //device_arena::unique_ptr<typename nld_truthtable_t<m_NI, m_NO>::truthtable_t> m_ttbl;
+        nld_truth_table_t<u64_const_m_NI, u64_const_m_NO>.truth_table_t m_table;  //device_arena::unique_ptr<typename nld_truth_table_t<m_NI, m_NO>::truth_table_t> m_table;
 
 
-        public netlist_factory_truthtable_t(string name, factory.properties props)
+        public netlist_factory_truth_table_t(string name, factory.properties props)
             : base(name, props)
         {
         }
@@ -848,19 +848,19 @@ namespace mame.netlist.devices
 
         public override core_device_t make_device(device_arena pool, netlist_state_t anetlist, string name)  //device_arena::unique_ptr<core_device_t> make_device(device_arena &pool, netlist_state_t &anetlist, const pstring &name) override
         {
-            //using tt_type = nld_truthtable_t<m_NI, m_NO>;
+            //using tt_type = nld_truth_table_t<m_NI, m_NO>;
 
-            if (m_ttbl == null)
+            if (m_table == null)
             {
-                m_ttbl = new nld_truthtable_t<u64_const_m_NI, u64_const_m_NO>.truthtable_t();  //m_ttbl = plib::make_unique<typename nld_truthtable_t<m_NI, m_NO>::truthtable_t>(pool);
-                truthtable_parser desc_s = new truthtable_parser(m_NO, m_NI,  //truthtable_parser desc_s(m_NO, m_NI,
-                        new packed_int(m_ttbl.m_out_state.data(), (size_t)sizeof_(m_ttbl.m_out_state.data()[0].type) * 8),  //packed_int(m_ttbl->m_out_state.data(), sizeof(m_ttbl->m_out_state[0]) * 8),
-                        m_ttbl.m_timing_index.data(), m_ttbl.m_timing_nt.data());  //m_ttbl->m_timing_index.data(), m_ttbl->m_timing_nt.data());
+                m_table = new nld_truth_table_t<u64_const_m_NI, u64_const_m_NO>.truth_table_t();  //m_table = plib::make_unique<typename nld_truth_table_t<m_NI, m_NO>::truth_table_t>(pool);
+                truth_table_parser desc_s = new truth_table_parser(m_NO, m_NI,  //truth_table_parser desc_s(m_NO, m_NI,
+                        new packed_int(m_table.m_out_state.data(), (size_t)sizeof_(m_table.m_out_state.data()[0].type) * 8),  //packed_int(m_table->m_out_state.data(), sizeof(m_table->m_out_state[0]) * 8),
+                        m_table.m_timing_index.data(), m_table.m_timing_nt.data());  //m_table->m_timing_index.data(), m_table->m_timing_nt.data());
 
                 desc_s.parse(m_desc);
             }
 
-            return new nld_truthtable_t<u64_const_m_NI, u64_const_m_NO>(anetlist, name, m_family_name, m_ttbl, m_desc);  //return plib::make_unique<tt_type>(pool, anetlist, name, m_family_name, *m_ttbl, m_desc);
+            return new nld_truth_table_t<u64_const_m_NI, u64_const_m_NO>(new device_data_t(anetlist, name), m_family_name, m_table, m_desc);  //return plib::make_unique<tt_type>(pool, device_data_t{anetlist, name}, m_family_name, *m_table, m_desc);
         }
     }
 }

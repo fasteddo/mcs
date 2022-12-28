@@ -6,6 +6,8 @@ using System;
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using uint8_t = System.Byte;
 
+using static mame.diexec_global;
+
 
 namespace mame
 {
@@ -64,5 +66,8 @@ namespace mame
             m_toprollr_bg_coloram = new optional_shared_ptr<uint8_t>(this, "bg_coloram");
             m_decrypted_opcodes = new optional_shared_ptr<uint8_t>(this, "decrypted_opcodes");
         }
+
+
+        protected override void machine_reset() { m_maincpu.op0.pulse_input_line(INPUT_LINE_RESET, attotime.zero); }
     }
 }

@@ -13,7 +13,7 @@ namespace mame.netlist.devices
     public static class net_lib_global
     {
         //#ifdef RES_R
-        //#warning "Do not include rescap.h in a netlist environment"
+        //#warning "Do not include `rescap.h` in a netlist environment"
         //#endif
         //#ifndef RES_R
         //#define RES_R(res) (res)

@@ -3,7 +3,7 @@
 
 using System;
 
-using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
+using matrix_solver_t_net_list_t = mame.std.vector<mame.netlist.analog_net_t>;  //using net_list_t =  std::vector<analog_net_t *>;
 
 
 namespace mame.netlist.solver
@@ -27,7 +27,7 @@ namespace mame.netlist.solver
         // ----------------------------------------------------------------------------------------
         // matrix_solver - Direct2
         // ----------------------------------------------------------------------------------------
-        protected override void vsolve_non_dynamic()
+        protected override void upstream_solve_non_dynamic()
         {
             throw new emu_unimplemented();
         }

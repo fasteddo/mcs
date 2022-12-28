@@ -3,6 +3,7 @@
 
 using System;
 
+using device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = device_param_t;  //using device_param_t = const device_data_t &;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using netlist_sig_t = System.UInt32;  //using netlist_sig_t = std::uint32_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using size_t = System.UInt64;
@@ -32,8 +33,8 @@ namespace mame.netlist.devices
 
 
         //NETLIB_CONSTRUCTOR(74107_base)
-        public nld_74107_base(object owner, string name, desc_base desc)
-            : base(owner, name)
+        public nld_74107_base(device_t_constructor_param_t data, desc_base desc)
+            : base(data)
         {
             D = desc;
 
@@ -74,6 +75,8 @@ namespace mame.netlist.devices
         //NETLIB_HANDLERI(clk)
         void clk()
         {
+            netlist_sig_t J = m_J.op();
+            netlist_sig_t K = m_K.op();
             netlist_sig_t t = m_Q.net().Q();
             /*
              *  J K  Q1 Q2 F t   Q
@@ -86,10 +89,10 @@ namespace mame.netlist.devices
              *  1 0   0  0 1 1   1
              *  1 1   1  0 0 1   0
              */
-            if (((m_J.op() & m_K.op()) ^ 1) != 0)
+            if (((J & K) ^ 1) != 0)
                 m_clk.inactivate();
 
-            newstate(((t ^ 1) & m_J.op()) | (t & (m_K.op() ^ 1)));
+            newstate(((t ^ 1) & J) | (t & (K ^ 1)));
         }
 
 
@@ -124,8 +127,8 @@ namespace mame.netlist.devices
         //NETLIB_DEVICE_IMPL(74107,       "TTL_74107",    "+CLK,+J,+K,+CLRQ,@VCC,@GND")
         public static readonly netlist.factory.constructor_ptr_t decl_74107 = NETLIB_DEVICE_IMPL<nld_74107>("TTL_74107", "+CLK,+J,+K,+CLRQ,@VCC,@GND");
 
-        public nld_74107(object owner, string name)
-            : base(owner, name, new desc_74107())
+        public nld_74107(device_t_constructor_param_t data)
+            : base(data, new desc_74107())
         { }
     }
 

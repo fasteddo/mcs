@@ -6,7 +6,8 @@ using System;
 using int32_t = System.Int32;
 using uint32_t = System.UInt32;
 
-using static mame.input_global;
+using static mame.inputcode_global;
+using static mame.language_global;
 using static mame.render_global;
 using static mame.rendertypes_global;
 using static mame.ui_global;
@@ -30,6 +31,7 @@ namespace mame.ui
             set_one_shot(menuless_mode);
             set_needs_prev_menu_item(!menuless_mode);
             set_process_flags(PROCESS_LR_REPEAT | (m_hidden ? PROCESS_CUSTOM_ONLY : 0));
+            set_heading(__("Slider Controls"));
         }
 
 

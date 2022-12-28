@@ -103,21 +103,6 @@ namespace mame
         }
 
 
-        //NETLIST_START(pong)
-        void netlist_pong(netlist.nlparse_t setup)
-        {
-            netlist.helper h = new netlist.helper();
-
-            h.NETLIST_START(setup);
-
-            netlist_global.MEMREGION_SOURCE(h.helper_setup, this, "maincpu");
-            h.PARAM("NETLIST.USE_DEACTIVATE", 1);
-            h.INCLUDE("pong_schematics");
-
-            h.NETLIST_END();
-        }
-
-
         // driver_device overrides
         protected override void machine_start() { }
         protected override void machine_reset() { }
@@ -399,7 +384,7 @@ namespace mame
         public void pong(machine_config config)
         {
             /* basic machine hardware */
-            NETLIST_CPU(config, "maincpu", (u32)netlist.config.DEFAULT_CLOCK()).set_source(this, netlist_pong);
+            NETLIST_CPU(config, "maincpu", (u32)netlist.config.DEFAULT_CLOCK()).set_source(netlist_pong);
 
             NETLIST_ANALOG_INPUT(config, "maincpu:vr0", "ic_b9_R.R").set_mult_offset(1.0 / 100.0 * RES_K(50), RES_K(56) );
             NETLIST_ANALOG_INPUT(config, "maincpu:vr1", "ic_a9_R.R").set_mult_offset(1.0 / 100.0 * RES_K(50), RES_K(56) );
@@ -583,23 +568,18 @@ namespace mame
 
         ***************************************************************************/
 
-        //ROM_START( pong ) /* dummy to satisfy game entry*/
-        static readonly tiny_rom_entry [] rom_pong =
-        {
-            ROM_REGION( 0x10000, "maincpu", 0 ), /* enough for netlist */
-            ROM_LOAD( "pong.netlist", 0x000000, 18273, CRC("d249ce49") + SHA1("e1d2cfca74b75f0520965639e6947a351650fc3e") ),
-
-            ROM_END,
-        };
-
-
         //ROM_START( breakout )
         //    ROM_REGION( 0x10000, "maincpu", ROMREGION_ERASE00 )
         //ROM_END
 
-        //ROM_START( pongf ) /* dummy to satisfy game entry*/
-        //    ROM_REGION( 0x10000, "maincpu", ROMREGION_ERASE00 )
-        //ROM_END
+
+        //ROM_START( pong ) /* dummy to satisfy game entry*/
+        static readonly tiny_rom_entry [] rom_pong =
+        {
+            ROM_REGION( 0x10000, "maincpu", ROMREGION_ERASE00 ),
+            ROM_END,
+        };
+
 
         //ROM_START( pongd ) /* dummy to satisfy game entry*/
         //    ROM_REGION( 0x10000, "maincpu", ROMREGION_ERASE00 )
@@ -657,8 +637,7 @@ namespace mame
         static device_t device_creator_pong(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new pong_state(mconfig, (device_type)type, tag); }
 
 
-        public static readonly game_driver driver_pong = GAME(device_creator_pong, rom_pong, "1972", "pong", "0", pong_state_pong, m_pong.construct_ioport_pong, driver_device.empty_init, ROT0, "Atari", "Pong (Rev E) external [TTL]", MACHINE_SUPPORTS_SAVE);
-        //GAME(  1972, pongf,    pong, pongf,    pong,      pong_state,     empty_init, ROT0,  "Atari", "Pong (Rev E) [TTL]", MACHINE_SUPPORTS_SAVE)
+        public static readonly game_driver driver_pong = GAME(device_creator_pong, rom_pong, "1972", "pong", "0", pong_state_pong, m_pong.construct_ioport_pong, driver_device.empty_init, ROT0, "Atari", "Pong (Rev E) [TTL]", MACHINE_SUPPORTS_SAVE);
         //GAME(  1973, pongd,     0, pongd,    pongd,     pong_state,     empty_init, ROT0,  "Atari", "Pong Doubles [TTL]", MACHINE_SUPPORTS_SAVE)
         //GAMEL( 1974, rebound,   0, rebound,  rebound,   rebound_state,  empty_init, ROT0,  "Atari", "Rebound (Rev B) [TTL]", MACHINE_SUPPORTS_SAVE, layout_rebound)
         //GAMEL( 1976, breakout,  0, breakout, breakout,  breakout_state, empty_init, ROT90, "Atari", "Breakout [TTL]", MACHINE_SUPPORTS_SAVE, layout_breakout)

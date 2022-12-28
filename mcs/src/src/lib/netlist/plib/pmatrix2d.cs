@@ -11,7 +11,7 @@ using size_t = System.UInt64;
 
 namespace mame.plib
 {
-    //template<typename T, typename A = aligned_arena>
+    //template<typename A, typename T>
     class pmatrix2d<T>
     {
         //using size_type = std::size_t;
@@ -39,20 +39,22 @@ namespace mame.plib
         //allocator_type m_a;
 
 
-        public pmatrix2d()
+        public pmatrix2d()  //pmatrix2d(A &arena) noexcept
         {
             m_N = 0;
             m_M = 0;
             m_stride = 8;
             m_v = null;
+            //, m_a(arena)
         }
 
 
-        public pmatrix2d(pmatrix2d_size_type N, pmatrix2d_size_type M)
+        public pmatrix2d(pmatrix2d_size_type N, pmatrix2d_size_type M)  //pmatrix2d(A &arena, size_type N, size_type M)
         {
             m_N = N;
             m_M = M;
             m_v = new std.vector<T>();
+            //, m_a(arena)
 
 
             //gsl_Expects(N>0);
@@ -125,7 +127,7 @@ namespace mame.plib
 
 
     // variable row length matrix
-    //template<typename T, typename A = aligned_arena>
+    //template<typename A, typename T>
     public class pmatrix2d_vrl<T>
     {
         //using size_type = std::size_t;
@@ -140,22 +142,24 @@ namespace mame.plib
 
         pmatrix2d_vrl_size_type m_N;
         pmatrix2d_vrl_size_type m_M;
-        std.vector<pmatrix2d_vrl_size_type> m_row = new std.vector<pmatrix2d_size_type>();
-        std.vector<T> m_v;
+        std.vector<pmatrix2d_vrl_size_type> m_row = new std.vector<pmatrix2d_size_type>();  //plib::arena_vector<A, size_type, PALIGN_VECTOROPT> m_row;
+        std.vector<T> m_v = new std.vector<T>();  //plib::arena_vector<A, T, PALIGN_VECTOROPT> m_v;
 
 
-        public pmatrix2d_vrl()
+        public pmatrix2d_vrl()  //pmatrix2d_vrl(A &arena) noexcept
         {
             m_N = 0;
             m_M = 0;
-            m_v = new std.vector<T>();
+            //m_row(arena)
+            //m_v(arena)
         }
 
-        public pmatrix2d_vrl(pmatrix2d_vrl_size_type N, pmatrix2d_vrl_size_type M)
+        public pmatrix2d_vrl(pmatrix2d_vrl_size_type N, pmatrix2d_vrl_size_type M)  //pmatrix2d_vrl(A &arena, size_type N, size_type M)
         {
             m_N = N;
             m_M = M;
-            m_v = new std.vector<T>();
+            //m_row(arena)
+            //m_v(arena)
 
 
             m_row.resize(N + 1, 0);
@@ -218,7 +222,7 @@ namespace mame.plib
         }
 
 
-        public pmatrix2d_vrl_size_type colcount(pmatrix2d_vrl_size_type row)  //size_type colcount(size_type row) const noexcept
+        public pmatrix2d_vrl_size_type col_count(pmatrix2d_vrl_size_type row)  //constexpr size_type col_count(size_type row) const noexcept
         {
             return m_row[row + 1] - m_row[row];
         }

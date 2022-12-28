@@ -3,6 +3,10 @@
 
 using System;
 
+using base_device_t_constructor_data_t = mame.netlist.core_device_data_t;  //using constructor_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
+using base_device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = base_device_param_t;  //using base_device_param_t = const base_device_data_t &;  //using base_device_data_t = core_device_data_t;
+using base_device_param_t = mame.netlist.core_device_data_t;  //using base_device_param_t = const base_device_data_t &;  //using base_device_data_t = core_device_data_t;
+using core_device_param_t = mame.netlist.core_device_data_t;  //using core_device_param_t = const core_device_data_t &;
 using log_type = mame.plib.plog_base<mame.netlist.nl_config_global.bool_const_NL_DEBUG>;  //using log_type =  plib::plog_base<NL_DEBUG>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s32 = state_var<std::int32_t>;
@@ -10,6 +14,51 @@ using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s
 
 namespace mame.netlist
 {
+    // -------------------------------------------------------------------------
+    // core_device_t construction parameters
+    // -------------------------------------------------------------------------
+    public class core_device_data_t
+    {
+        //friend class core_device_t;
+        //friend class base_device_t;
+        //friend class analog::NETLIB_NAME(two_terminal);
+        //friend class logic_family_std_proxy_t;
+
+        //template <unsigned m_NI, unsigned m_NO>
+        //friend class devices::factory_truth_table_t;
+
+        //template <class C, typename... Args>
+        //friend class factory::device_element_t;
+        //friend class factory::library_element_t;
+
+        //template <typename CX>
+        //friend struct sub_device_wrapper;
+
+        //friend class solver::matrix_solver_t;
+
+
+        public netlist_state_t owner;
+        public string name;
+
+
+        public core_device_data_t(netlist_state_t o, string n)
+        {
+            owner = o;
+            name = n;
+        }
+
+        // MCS - added for convienence
+        public core_device_data_t(core_device_t o, string n)
+            : this(o.state(), o.name() + "." + n)
+        {
+        }
+    }
+
+
+    // The type use to pass data on
+    //using core_device_param_t = const core_device_data_t &;
+
+
     // -----------------------------------------------------------------------------
     // core_device_t
     // -----------------------------------------------------------------------------
@@ -21,48 +70,22 @@ namespace mame.netlist
 
         protected activate_delegate m_activate;
 
+        // FIXME: should this be a state_var?
         bool m_hint_deactivate;
         state_var_s32 m_active_outputs;
         stats_t m_stats;  //device_arena::unique_ptr<stats_t> m_stats;
 
 
-        protected core_device_t(object owner, string name)
-            : base(owner is netlist_state_t ? ((netlist_state_t)owner).exec() : ((core_device_t)owner).state().exec(),
-                   owner is netlist_state_t ? name : ((core_device_t)owner).name() + "." + name)
-        {
-            if (owner is netlist_state_t owner_netlist) core_device_t_after_ctor(owner_netlist, name);
-            else if (owner is core_device_t owner_device) core_device_t_after_ctor(owner_device, name);
-            else throw new emu_unimplemented();
-        }
-
-
-        void core_device_t_after_ctor(netlist_state_t owner, string name)
+        protected core_device_t(core_device_param_t data)
+            : base(data.owner.exec(), data.name)
         {
             m_hint_deactivate = false;
             m_active_outputs = new state_var_s32(this, "m_active_outputs", 1);
 
 
             if (exec().stats_enabled())
-                m_stats = new stats_t();  //m_stats = owner.make_pool_object<stats_t>();
+                m_stats = new stats_t();  //m_stats = state().make_pool_object<stats_t>();
         }
-
-
-        void core_device_t_after_ctor(core_device_t owner, string name)
-        {
-            m_hint_deactivate = false;
-            m_active_outputs = new state_var_s32(this, "m_active_outputs", 1);
-
-
-            //printf("owned device: %s\n", this->name().c_str());
-            owner.state().register_device(this.name(), this);  //owner.state().register_device(this->name(), device_arena::owned_ptr<core_device_t>(this, false));
-            if (exec().stats_enabled())
-                m_stats = new stats_t();  //m_stats = owner.state().make_pool_object<stats_t>();
-        }
-
-
-        //PCOPYASSIGNMOVE(core_device_t, delete)
-
-        //virtual ~core_device_t() noexcept = default;
 
 
         public void do_inc_active()
@@ -81,12 +104,10 @@ namespace mame.netlist
                     if (m_stats)
                         m_stats->m_stat_inc_active.inc();
 #endif
-
-                    m_activate(true);//inc_active();
+                    m_activate(true); // inc_active();
                 }
             }
         }
-
 
 
         public void do_dec_active()
@@ -100,7 +121,7 @@ namespace mame.netlist
             {
                 if (--m_active_outputs.op == 0)
                 {
-                    m_activate(false); //dec_active();
+                    m_activate(false); // dec_active();
                 }
             }
         }
@@ -131,9 +152,7 @@ namespace mame.netlist
         public virtual void reset() { }
 
 
-        protected void handler_noop()
-        {
-        }
+        protected void handler_noop() { }
 
 
         protected log_type log()
@@ -142,13 +161,21 @@ namespace mame.netlist
         }
 
 
-        public virtual void timestep(timestep_type ts_type, nl_fptype st) { }
+        public virtual void time_step(time_step_type ts_type, nl_fptype st) { }
         public virtual void update_terminals() { }
 
         public virtual void update_param() { }
         public virtual bool is_dynamic() { return false; }
-        public virtual bool is_timestep() { return false; }
+        public virtual bool is_time_step() { return false; }
     }
+
+
+    // -------------------------------------------------------------------------
+    // core_device_t construction parameters
+    // -------------------------------------------------------------------------
+    //using base_device_data_t = core_device_data_t;
+    // The type use to pass data on
+    //using base_device_param_t = const base_device_data_t &;
 
 
     // -----------------------------------------------------------------------------
@@ -156,44 +183,69 @@ namespace mame.netlist
     // -----------------------------------------------------------------------------
     public class base_device_t : core_device_t
     {
-        //protected base_device_t(netlist_state_t owner, string name)
-        //    : base(owner, name)
-        //{ }
+        //using constructor_data_t = base_device_data_t;
+        //using constructor_param_t = base_device_param_t;
 
-        //protected base_device_t(base_device_t owner, string name)
-        //    : base(owner, name)
-        //{ }
 
-        protected base_device_t(object owner, string name)
-            : base(owner, name)
-        { }
+        protected base_device_t(base_device_param_t data)
+            : base(data)
+        {
+        }
+
 
         //PCOPYASSIGNMOVE(base_device_t, delete)
 
         //~base_device_t() noexcept override = default;
 
+
+        //template <class O, class C, typename... Args>
+        //void create_and_register_sub_device(O &owner, const pstring &name,
+        //    device_arena::unique_ptr<C> &dev, Args &&...args)
+        //{
+        //    // dev = state().make_pool_object<C>(owner, name,
+        //    // std::forward<Args>(args)...);
+        //    using dev_constructor_data_t = typename C::constructor_data_t;
+        //    dev = state().make_pool_object<C>(
+        //        dev_constructor_data_t{state(), owner.name() + "." + name},
+        //        std::forward<Args>(args)...);
+        //    state().register_device(dev->name(),
+        //        device_arena::owned_ptr<core_device_t>(dev.get(), false));
+        //}
+
         //template<class O, class C, typename... Args>
-        protected void create_and_register_subdevice(base_device_t owner, string name, out analog.nld_C out_) { out_ = new analog.nld_C(owner, name); } //void create_and_register_subdevice(O& owner, const pstring &name, device_arena::unique_ptr<C> &dev, Args&&... args);
-        protected void create_and_register_subdevice(base_device_t owner, string name, out analog.nld_VCVS out_) { out_ = new analog.nld_VCVS(owner, name); } //void create_and_register_subdevice(O& owner, const pstring &name, device_arena::unique_ptr<C> &dev, Args&&... args);
-        protected void create_and_register_subdevice(base_device_t owner, string name, out analog.nld_D out_, string model = "D") { out_ = new analog.nld_D(owner, name, model); } //void create_and_register_subdevice(O& owner, const pstring &name, device_arena::unique_ptr<C> &dev, Args&&... args);
+        protected void create_and_register_sub_device(base_device_t owner, string name, out analog.nld_C dev)  //void create_and_register_subdevice(O& owner, const pstring &name, device_arena::unique_ptr<C> &dev, Args&&... args);
+        {
+            dev = new analog.nld_C(new base_device_t_constructor_param_t(state(), owner.name() + "." + name));
+            state().register_device(dev.name(), dev);
+        }
+        protected void create_and_register_sub_device(base_device_t owner, string name, out analog.nld_VCVS dev)  //void create_and_register_subdevice(O& owner, const pstring &name, device_arena::unique_ptr<C> &dev, Args&&... args);
+        {
+            dev = new analog.nld_VCVS(new base_device_t_constructor_param_t(state(), owner.name() + "." + name));
+            state().register_device(dev.name(), dev);
+        }
+        protected void create_and_register_sub_device(base_device_t owner, string name, out analog.nld_D dev, string model = "D")  //void create_and_register_subdevice(O& owner, const pstring &name, device_arena::unique_ptr<C> &dev, Args&&... args);
+        {
+            dev = new analog.nld_D(new base_device_t_constructor_param_t(state(), owner.name() + "." + name), model);
+            state().register_device(dev.name(), dev);
+        }
 
 
-        protected void register_subalias(string name, detail.core_terminal_t term)
+        protected void register_sub_alias(string name, detail.core_terminal_t term)
         {
             string alias = this.name() + "." + name;
 
             // everything already fully qualified
-            state().parser().register_alias_nofqn(alias, term.name());
+            state().parser().register_alias_no_fqn(alias, term.name());
         }
 
 
-        protected void register_subalias(string name, string aliased)
+        protected void register_sub_alias(string name, string aliased)
         {
             string alias = this.name() + "." + name;
             string aliased_fqn = this.name() + "." + aliased;
 
             // everything already fully qualified
-            state().parser().register_alias_nofqn(alias, aliased_fqn);
+            state().parser().register_alias_no_fqn(alias, aliased_fqn);
         }
 
 
@@ -211,4 +263,4 @@ namespace mame.netlist
 
         //NETLIB_UPDATE_TERMINALSI() { }
     }
-} // namespace netlist
+}

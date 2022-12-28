@@ -195,8 +195,8 @@ namespace mame
             if (!m_vector.op0.started())
                 throw new device_missing_dependencies();
 
-            m_vg_halt_timer = machine().scheduler().timer_alloc(vg_set_halt_callback);
-            m_vg_run_timer = machine().scheduler().timer_alloc(run_state_machine);
+            m_vg_halt_timer = timer_alloc(vg_set_halt_callback);
+            m_vg_run_timer = timer_alloc(run_state_machine);
 
             m_flip_x = m_flip_y = false;
 

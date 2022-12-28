@@ -82,9 +82,9 @@ namespace mame.plib
             object m_ptr;  //void *              m_ptr;
 
 
-            entry_t(string stname, datatype_t dt, object owner, size_t count, object ptr)  //entry_t(const pstring &stname, const datatype_t &dt, const void *owner, const std::size_t count, void *ptr)
+            entry_t(string item_name, datatype_t dt, object owner, size_t count, object ptr)  //entry_t(const pstring &item_name, const datatype_t &dt, const void *owner, const std::size_t count, void *ptr)
             {
-                m_name = stname;
+                m_name = item_name;
                 m_dt = dt;
                 m_owner = owner;
                 m_callback = null;
@@ -92,9 +92,9 @@ namespace mame.plib
                 m_ptr = ptr;
             }
 
-            entry_t(string stname, object owner, callback_t callback)  //entry_t(const pstring &stname, const void *owner, callback_t *callback)
+            entry_t(string item_name, object owner, callback_t callback)  //entry_t(const pstring &item_name, const void *owner, callback_t *callback)
             {
-                m_name = stname;
+                m_name = item_name;
                 m_dt = new datatype_t(true);
                 m_owner = owner;
                 m_callback = callback;
@@ -123,17 +123,17 @@ namespace mame.plib
 
 
         //template<typename C>
-        public void save_item(object owner, object state, string stname)  //void save_item(const void *owner, C &state, const pstring &stname)
+        public void save_item(object owner, object state, string item_name)  //void save_item(const void *owner, C &state, const pstring &item_name)
         {
             //throw new emu_unimplemented();
 #if false
-            save_item_dispatch(owner, state, stname);
+            save_item_dispatch(owner, state, item_name);
 #endif
         }
 
-        //template<typename C, std::size_t N> void save_item(const void *owner, C (&state)[N], const pstring &stname)
-        //template<typename C> void save_item(const void *owner, C *state, const pstring &stname, const std::size_t count)
-        //template<typename C> void save_item(const void *owner, std::vector<C> &v, const pstring &stname)
+        //template<typename C, std::size_t N> void save_item(const void *owner, C (&state)[N], const pstring &item_name)
+        //template<typename C> void save_item(const void *owner, C *state, const pstring &item_name, const std::size_t count)
+        //template<typename C> void save_item(const void *owner, std::vector<C> &v, const pstring &item_name)
 
 
         public void pre_save()
@@ -172,7 +172,7 @@ namespace mame.plib
 
         //const entry_t::list_t &save_list() const
 
-        public void save_state_ptr(object owner, string stname, object dt, size_t count, object ptr)  //void save_state_ptr(const void *owner, const pstring &stname, const datatype_t &dt, const std::size_t count, void *ptr);
+        public void save_state_ptr(object owner, string item_name, object dt, size_t count, object ptr)  //void save_state_ptr(const void *owner, const pstring &item_name, const datatype_t &dt, const std::size_t count, void *ptr);
         {
             //throw new emu_unimplemented();
 #if false
@@ -183,12 +183,12 @@ namespace mame.plib
         //template<typename C>
         //std::enable_if_t<plib::is_integral<C>::value || std::is_enum<C>::value
         //        || plib::is_floating_point<C>::value>
-        //save_item_dispatch(const void *owner, C &state, const pstring &stname)
+        //save_item_dispatch(const void *owner, C &state, const pstring &item_name)
 
 
         //template<typename C>
         //std::enable_if_t<!(plib::is_integral<C>::value || std::is_enum<C>::value
         //        || plib::is_floating_point<C>::value)>
-        //save_item_dispatch(const void *owner, C &state, const pstring &stname)
+        //save_item_dispatch(const void *owner, C &state, const pstring &item_name)
     }
 }

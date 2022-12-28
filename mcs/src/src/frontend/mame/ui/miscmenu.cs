@@ -3,12 +3,19 @@
 
 using System;
 
+using static mame.language_global;
+
 
 namespace mame.ui
 {
     class menu_network_devices : menu
     {
-        public menu_network_devices(mame_ui_manager mui, render_container container) : base(mui, container) { }
+        public menu_network_devices(mame_ui_manager mui, render_container container)
+            : base(mui, container)
+        {
+            set_heading(__("Network Devices"));
+        }
+
         //~menu_network_devices() { }
 
 
@@ -61,7 +68,13 @@ namespace mame.ui
             menu_crosshair - handle the crosshair settings
             menu
         -------------------------------------------------*/
-        public menu_crosshair(mame_ui_manager mui, render_container container) : base(mui, container) { }
+        public menu_crosshair(mame_ui_manager mui, render_container container)
+            : base(mui, container)
+        {
+            set_process_flags(PROCESS_LR_REPEAT);
+            set_heading(__("menu-crosshair", "Crosshair Options"));
+        }
+
         //~menu_crosshair() { }
 
 
@@ -76,7 +89,12 @@ namespace mame.ui
             ui_menu_bios_selection - populates the main
             bios selection menu
         -------------------------------------------------*/
-        public menu_bios_selection(mame_ui_manager mui, render_container container) : base(mui, container) { }
+        public menu_bios_selection(mame_ui_manager mui, render_container container)
+            : base(mui, container)
+        {
+            set_heading(__("BIOS Selection"));
+        }
+
         //~menu_bios_selection() { }
 
 

@@ -3,7 +3,7 @@
 
 using System;
 
-using matrix_solver_t_net_list_t = mame.plib.aligned_vector<mame.netlist.analog_net_t>;  //using net_list_t =  plib::aligned_vector<analog_net_t *>;
+using matrix_solver_t_net_list_t = mame.std.vector<mame.netlist.analog_net_t>;  //using net_list_t =  std::vector<analog_net_t *>;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using size_t = System.UInt64;
 using unsigned = System.UInt32;
@@ -29,7 +29,7 @@ namespace mame.netlist.solver
         }
 
 
-        protected override void vsolve_non_dynamic()
+        protected override void upstream_solve_non_dynamic()
         {
             // The matrix based code looks a lot nicer but actually is 30% slower than
             // the optimized code which works directly on the data structures.

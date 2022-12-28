@@ -194,11 +194,11 @@ namespace mame
             m_ctrld = 0;
 
             /* create a timer to speed/slow the CPU */
-            m_cpu_timer = machine().scheduler().timer_alloc(adjust_cpu_speed);
+            m_cpu_timer = timer_alloc(adjust_cpu_speed);
             m_cpu_timer.adjust(m_screen.op0.time_until_pos(v_to_scanline(0), 0));
 
             /* create a timer for IRQs and set up the first callback */
-            m_irq_timer = machine().scheduler().timer_alloc(clock_irq);
+            m_irq_timer = timer_alloc(clock_irq);
             m_irq_state = 0;
             schedule_next_irq(-32);
 
@@ -536,15 +536,15 @@ namespace mame
             PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 );
             PORT_BIT( 0x18, IP_ACTIVE_HIGH, IPT_CUSTOM );
             PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT );
-            PORT_SERVICE( 0x40, IP_ACTIVE_LOW );
+            PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ); PORT_TOGGLE();  // switch inside the coin door
             PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_CUSTOM ); PORT_READ_LINE_MEMBER(missile_state.vblank_r);
 
             PORT_START("R10");   /* IN2 */
-            PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) ); PORT_DIPLOCATION("R10:1,2");
-            PORT_DIPSETTING(    0x01, DEF_STR( _2C_1C ) );
+            PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) ); PORT_DIPLOCATION("R10:1,2");
             PORT_DIPSETTING(    0x00, DEF_STR( _1C_1C ) );
-            PORT_DIPSETTING(    0x03, DEF_STR( _1C_2C ) );
             PORT_DIPSETTING(    0x02, DEF_STR( Free_Play ) );
+            PORT_DIPSETTING(    0x01, DEF_STR( _2C_1C ) );
+            PORT_DIPSETTING(    0x03, DEF_STR( _1C_2C ) );
             PORT_DIPNAME( 0x0c, 0x00, "Right Coin" ); PORT_DIPLOCATION("R10:3,4");
             PORT_DIPSETTING(    0x00, "*1" );
             PORT_DIPSETTING(    0x04, "*4" );
@@ -568,10 +568,10 @@ namespace mame
             PORT_DIPSETTING(    0x01, "5" );
             PORT_DIPSETTING(    0x03, "6" );
             PORT_DIPSETTING(    0x00, "7" );
-            PORT_DIPNAME( 0x04, 0x04, "Bonus Credit for 4 Coins" ); PORT_DIPLOCATION("R8:!3");
+            PORT_DIPNAME( 0x04, 0x00, "Bonus Credit for 4 Coins" ); PORT_DIPLOCATION("R8:!3");
             PORT_DIPSETTING(    0x04, DEF_STR( No ) );
             PORT_DIPSETTING(    0x00, DEF_STR( Yes ) );
-            PORT_DIPNAME( 0x08, 0x08, "Trackball Size" ); PORT_DIPLOCATION("R8:!4");
+            PORT_DIPNAME( 0x08, 0x00, "Trackball Size" ); PORT_DIPLOCATION("R8:!4");
             PORT_DIPSETTING(    0x00, "Mini" ); // Faster Cursor Speed
             PORT_DIPSETTING(    0x08, "Large" ); // Slower Cursor Speed
             PORT_DIPNAME( 0x70, 0x70, "Bonus City" ); PORT_DIPLOCATION("R8:!5,!6,!7");

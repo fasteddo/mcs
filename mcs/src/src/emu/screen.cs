@@ -197,16 +197,6 @@ namespace mame
         void LOG_PARTIAL_UPDATES(string format, params object [] args) { if (VERBOSE) logerror(format, args); }
 
 
-        // timer IDs
-        //enum
-        //{
-        const int TID_VBLANK_START = 0;
-        const int TID_VBLANK_END   = 1;
-        const int TID_SCANLINE0    = 2;
-        const int TID_SCANLINE     = 3;
-        //}
-
-
         // VBLANK callbacks
         class callback_item
         {
@@ -698,7 +688,7 @@ namespace mame
             // call the VBLANK start timer now; otherwise, adjust it for the future
             attoseconds_t delta = (machine().time() - m_vblank_start_time).as_attoseconds();
             if (delta >= m_frame_period)
-                vblank_begin();
+                vblank_begin(0);
             else
                 m_vblank_begin_timer.adjust(time_until_vblank_start());
 
@@ -735,7 +725,7 @@ namespace mame
             // if we are resetting relative to (visarea.bottom() + 1, 0) == VBLANK start,
             // call the VBLANK start timer now; otherwise, adjust it for the future
             if (beamy == ((m_visarea.bottom() + 1) % m_height) && beamx == 0)
-                vblank_begin();
+                vblank_begin(0);
             else
                 m_vblank_begin_timer.adjust(time_until_vblank_start());
         }
@@ -1357,15 +1347,15 @@ namespace mame
             m_container.set_user_settings(settings);
 
             // allocate the VBLANK timers
-            m_vblank_begin_timer = timer_alloc(TID_VBLANK_START);
-            m_vblank_end_timer = timer_alloc(TID_VBLANK_END);
+            m_vblank_begin_timer = timer_alloc(vblank_begin);
+            m_vblank_end_timer = timer_alloc(vblank_end);
 
             // allocate a timer to reset partial updates
-            m_scanline0_timer = timer_alloc(TID_SCANLINE0);
+            m_scanline0_timer = timer_alloc(first_scanline_tick);
 
             // allocate a timer to generate per-scanline updates
             if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0 || m_scanline_cb.bool_)
-                m_scanline_timer = timer_alloc(TID_SCANLINE);
+                m_scanline_timer = timer_alloc(scanline_tick);
 
             // configure the screen with the default parameters
             configure(m_width, m_height, m_visarea, m_refresh);
@@ -1451,58 +1441,6 @@ namespace mame
             realloc_screen_bitmaps();
         }
 
-        //-------------------------------------------------
-        //  device_timer - called whenever a device timer
-        //  fires
-        //-------------------------------------------------
-        protected override void device_timer(emu_timer timer, device_timer_id id, int param)
-        {
-            switch (id)
-            {
-                // signal VBLANK start
-                case TID_VBLANK_START:
-                    vblank_begin();
-                    break;
-
-                // signal VBLANK end
-                case TID_VBLANK_END:
-                    vblank_end();
-                    break;
-
-                // first scanline
-                case TID_SCANLINE0:
-                    reset_partial_updates();
-                    if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
-                    {
-                        pre_update_scanline(0);
-                    }
-                    break;
-
-                // subsequent scanlines when scanline updates are enabled
-                case TID_SCANLINE:
-                    if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
-                    {
-                        pre_update_scanline(param);
-                    }
-
-                    if ((m_video_attributes & VIDEO_UPDATE_SCANLINE) != 0)
-                    {
-                        // force a partial update to the current scanline
-                        update_partial(param);
-                    }
-
-                    if (m_scanline_cb.bool_)
-                        m_scanline_cb.op_u32((u32)param);
-
-                    // compute the next visible scanline
-                    param++;
-                    if (param > m_visarea.bottom())
-                        param = m_visarea.top();
-                    m_scanline_timer.adjust(time_until_pos(param), param);
-                    break;
-            }
-        }
-
 
         // internal helpers
         public void set_container(render_container container) { m_container = container; }
@@ -1542,7 +1480,8 @@ namespace mame
         //  vblank_begin - call any external callbacks to
         //  signal the VBLANK period has begun
         //-------------------------------------------------
-        void vblank_begin()
+        //TIMER_CALLBACK_MEMBER(vblank_begin);
+        void vblank_begin(s32 param)
         {
             // reset the starting VBLANK time
             m_vblank_start_time = machine().time();
@@ -1563,7 +1502,7 @@ namespace mame
 
             // if no VBLANK period, call the VBLANK end callback immediately, otherwise reset the timer
             if (m_vblank_period == 0)
-                vblank_end();
+                vblank_end(0);
             else
                 m_vblank_end_timer.adjust(time_until_vblank_end());
         }
@@ -1572,7 +1511,8 @@ namespace mame
         //  vblank_end - call any external callbacks to
         //  signal the VBLANK period has ended
         //-------------------------------------------------
-        void vblank_end()
+        //TIMER_CALLBACK_MEMBER(vblank_end);
+        void vblank_end(s32 param)
         {
             // call the screen specific callbacks
             foreach (var item in m_callback_list)
@@ -1587,6 +1527,26 @@ namespace mame
             // increment the frame number counter
             m_frame_number++;
         }
+
+
+        //TIMER_CALLBACK_MEMBER(first_scanline_tick);
+        void first_scanline_tick(s32 param)
+        {
+            // first scanline
+            reset_partial_updates();
+            if ((m_video_attributes & VIDEO_VARIABLE_WIDTH) != 0)
+            {
+                pre_update_scanline(0);
+            }
+        }
+
+
+        //TIMER_CALLBACK_MEMBER(scanline_tick);
+        void scanline_tick(s32 param)
+        {
+            throw new emu_unimplemented();
+        }
+
 
         //-------------------------------------------------
         //  finalize_burnin - finalize the burnin bitmap

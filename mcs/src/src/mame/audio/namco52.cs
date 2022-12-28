@@ -97,7 +97,7 @@ namespace mame
             /* start the external clock */
             if (m_extclock != 0)
             {
-                m_extclock_pulse_timer = machine().scheduler().timer_alloc(external_clock_pulse);
+                m_extclock_pulse_timer = timer_alloc(external_clock_pulse);
                 m_extclock_pulse_timer.adjust(new attotime(0, m_extclock), 0, new attotime(0, m_extclock));
             }
 

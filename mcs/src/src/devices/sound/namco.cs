@@ -571,7 +571,7 @@ namespace mame
 
         protected override void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs)  //virtual void sound_stream_update(sound_stream &stream, std::vector<read_stream_view> const &inputs, std::vector<write_stream_view> &outputs) override;
         {
-            throw new emu_unimplemented();
+            base.device_sound_interface_sound_stream_update(stream, inputs, outputs);  //namco_audio_device::sound_stream_update(stream, inputs, outputs);
         }
     }
 

@@ -250,8 +250,8 @@ namespace mame.plib
 
 
         public double as_double() { return ops.cast_double(as_fp()); }  //constexpr double as_double() const noexcept { return as_fp<double>(); }
-        //constexpr double as_float() const noexcept { return as_fp<float>(); }
-        //constexpr double as_long_double() const noexcept { return as_fp<long double>(); }
+        //constexpr float as_float() const noexcept { return as_fp<float>(); }
+        //constexpr long double as_long_double() const noexcept { return as_fp<long double>(); }
 
 
         public ptime<TYPE, TYPE_OPS, TYPE_RES> shl(unsigned shift) { return new ptime<TYPE, TYPE_OPS, TYPE_RES>(ops.shift_left(m_time, (int)shift)); }  //constexpr ptime shl(unsigned shift) const noexcept { return ptime(m_time << shift); }

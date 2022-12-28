@@ -32,6 +32,11 @@ namespace mame
         }
 
 
+        // helper for accessing data adjusted for endianness
+        //template <typename In, typename Out, endianness Endian>
+        //class offset_endian_cast
+
+
         //**************************************************************************
         //  MACROS AND INLINE FUNCTIONS
         //**************************************************************************
@@ -44,6 +49,22 @@ namespace mame
 
 
         // inline functions for accessing bytes and words within larger chunks
+
+        //template <typename T, typename U>
+        //auto big_endian_cast(U *ptr)
+        //{
+        //    using requested_const = std::conditional_t<std::is_const_v<U>, std::add_const_t<T>, T>;
+        //    using requested_cv = std::conditional_t<std::is_volatile_v<U>, std::add_volatile<requested_const>, requested_const>;
+        //    return endian_cast<U, requested_cv, endianness::big>(ptr);
+        //}
+
+        //template <typename T, typename U>
+        //auto little_endian_cast(U *ptr)
+        //{
+        //    using requested_const = std::conditional_t<std::is_const_v<U>, std::add_const_t<T>, T>;
+        //    using requested_cv = std::conditional_t<std::is_volatile_v<U>, std::add_volatile<requested_const>, requested_const>;
+        //    return endian_cast<U, requested_cv, endianness::little>(ptr);
+        //}
 
         // read/write a byte to a 16-bit space
         public static int16_t BYTE_XOR_BE(int a) { return (int16_t)(a ^ NATIVE_ENDIAN_VALUE_LE_BE(1,0)); }  //template <typename T> constexpr T BYTE_XOR_BE(T a) { return a ^ NATIVE_ENDIAN_VALUE_LE_BE(1,0); }

@@ -178,38 +178,40 @@ namespace mame.plib
     ///
     /// The list allows insertions and deletions whilst being processed.
     ///
-    //template <class LC>
-    class linkedlist_t<LC>
+    //template <class LC, int TAG>
+    class linked_list_t<LC>
     {
+        //using ttag = std::integral_constant<int, TAG>;
+
         //struct element_t
 
         //struct iter_t final : public std::iterator<std::forward_iterator_tag, LC>
 
 
-        //LC *m_head;
+        //element_t *m_head;
         LinkedList<LC> m_list = new LinkedList<LC>();
 
 
-        public linkedlist_t() { }  //constexpr element_t() : m_next(nullptr), m_prev(nullptr) {}
+        public linked_list_t() { }  //constexpr element_t() : m_next(nullptr), m_prev(nullptr) {}
 
 
         //constexpr iter_t begin() const noexcept { return iter_t(m_head); }
         //constexpr iter_t end() const noexcept { return iter_t(nullptr); }
 
 
-        public void push_front(LC elem)
+        public void push_front(LC elem)  //constexpr void push_front(element_t *elem) noexcept
         {
             m_list.AddFirst(elem);
         }
 
 
-        public void push_back(LC elem)
+        public void push_back(LC elem)  //constexpr void push_back(element_t *elem) noexcept
         {
             m_list.AddLast(elem);
         }
 
 
-        public void remove(LC elem)
+        public void remove(LC elem)  //constexpr void remove(const element_t *elem) noexcept
         {
             m_list.Remove(elem);
         }
@@ -217,6 +219,8 @@ namespace mame.plib
         //constexpr LC *front() const noexcept { return m_head; }
 
         public bool empty() { return m_list.Count == 0; }
+
+        //constexpr std::size_t size() const noexcept
 
         public void clear() { m_list.Clear(); }
 

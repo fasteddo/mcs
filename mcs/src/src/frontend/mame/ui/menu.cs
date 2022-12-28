@@ -293,7 +293,9 @@ namespace mame.ui
         render_container m_container;       // render_container we render to
         menu m_parent;  //std::unique_ptr<menu>   m_parent;               // pointer to parent menu in the stack
 
+        string m_heading;  //std::optional<std::string> m_heading;           // menu heading
         std.vector<menu_item> m_items;                // array of items
+        bool m_rebuilding;           // ensure items are only added during rebuild
 
         uint32_t m_process_flags;        // event processing options
         int m_selected;             // which item is selected
@@ -326,7 +328,9 @@ namespace mame.ui
             m_ui = mui;
             m_container = container;
             m_parent = null;
+            m_heading = "";
             m_items = new std.vector<menu_item>();
+            m_rebuilding = false;
             m_process_flags = 0;
             m_selected = 0;
             m_hover = 1;
@@ -366,6 +370,18 @@ namespace mame.ui
         }
 
 
+        // setting menu heading
+        //template <typename... T>
+        protected void set_heading(string args)  //void set_heading(T &&... args)
+        {
+            //if (!m_heading)
+            //    m_heading.emplace(std::forward<T>(args));  //m_heading.emplace(std::forward<T>(args)...);
+            //else
+            //    m_heading->assign(std::forward<T>(args));  //m_heading->assign(std::forward<T>(args)...);
+            m_heading = args;
+        }
+
+
         // append a new item to the end of the menu
         //-------------------------------------------------
         //  item_append - append a new item to the
@@ -376,6 +392,8 @@ namespace mame.ui
         //void item_append(std::string &&text, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN) { item_append(text, std::string(), flags, ref, type); }
         protected void item_append(string text, string subtext, uint32_t flags, object ref_, menu_item_type type = menu_item_type.UNKNOWN)  //void item_append(std::string &&text, std::string &&subtext, uint32_t flags, void *ref, menu_item_type type = menu_item_type::UNKNOWN);
         {
+            assert(m_rebuilding);
+
             // allocate a new item and populate it
             menu_item pitem = new menu_item(type, ref_, flags);
             pitem.set_text(text);
@@ -482,12 +500,23 @@ namespace mame.ui
         {
             if (m_items.empty())
             {
-                // add an item to return - this is a really hacky way of doing this
-                if (m_needs_prev_menu_item)
-                    item_append(__("Return to Previous Menu"), 0, null);
+                m_rebuilding = true;
+                try
+                {
+                    // add an item to return - this is a really hacky way of doing this
+                    if (m_needs_prev_menu_item)
+                        item_append(__("Return to Previous Menu"), 0, null);
 
-                // let implementation add other items
-                populate(ref m_customtop, ref m_custombottom);
+                    // let implementation add other items
+                    populate(ref m_customtop, ref m_custombottom);
+                }
+                catch (Exception)
+                {
+                    m_items.clear();
+                    m_rebuilding = false;
+                    throw;
+                }
+                m_rebuilding = false;
             }
 
             handle(process());
@@ -1186,6 +1215,7 @@ namespace mame.ui
         protected virtual void draw(uint32_t flags)
         {
             // first draw the FPS counter
+            // FIXME: provide a way to do this in the UI manager itself while menus are on-screen
             if (ui().show_fps_counter())
             {
                 ui().draw_text_full(
@@ -1203,8 +1233,9 @@ namespace mame.ui
             float line_height = ui().get_line_height();
             float lr_arrow_width = 0.4f * line_height * aspect;
             float ud_arrow_width = line_height * aspect;
-            float gutter_width = lr_arrow_width * 1.3f;
+            float gutter_width = 0.5F * line_height * aspect;
             float lr_border = ui().box_lr_border() * aspect;
+            float max_width = 1.0F - ((lr_border + (aspect * UI_LINE_WIDTH)) * 2.0F);
 
             if (is_special_main_menu())
                 draw_background();
@@ -1224,22 +1255,30 @@ namespace mame.ui
                     total_width += 4.0f * ud_arrow_width;
 
                 // track the maximum
-                if (total_width > visible_width)
-                    visible_width = total_width;
+                visible_width = std.max(total_width, visible_width);
 
                 // track the height as well
                 visible_main_menu_height += line_height;
             }
 
+            // lay out the heading if present
+            text_layout heading_layout = null;  //std::optional<text_layout> heading_layout;
+            if (!string.IsNullOrEmpty(m_heading))
+            {
+                heading_layout = ui().create_layout(container(), max_width - (gutter_width * 2.0F), text_layout.text_justify.CENTER);
+                heading_layout.add_text(m_heading, ui().colors().text_color());
+            }
+
             // account for extra space at the top and bottom
-            float visible_extra_menu_height = m_customtop + m_custombottom;
+            float top_extra_menu_height = m_customtop + (heading_layout != null ? (heading_layout.actual_height() + (ui().box_tb_border() * 3.0F)) : 0.0F);
+            float visible_extra_menu_height = top_extra_menu_height + m_custombottom;
 
             // add a little bit of slop for rounding
             visible_width += 0.01f;
             visible_main_menu_height += 0.01f;
 
             // if we are too wide or too tall, clamp it down
-            visible_width = std.min(visible_width, 1.0f - ((lr_border + (aspect * UI_LINE_WIDTH)) * 2.0f));
+            visible_width = std.min(visible_width, max_width);
 
             // if the menu and extra menu won't fit, take away part of the regular menu, it will scroll
             if (visible_main_menu_height + visible_extra_menu_height + 2.0f * ui().box_tb_border() > 1.0f)
@@ -1250,7 +1289,7 @@ namespace mame.ui
 
             // compute top/left of inner menu area by centering
             float visible_left = (1.0f - visible_width) * 0.5f;
-            float visible_top = ((1.0f - visible_main_menu_height - visible_extra_menu_height) * 0.5f) + m_customtop;
+            float visible_top = ((1.0F - visible_main_menu_height - visible_extra_menu_height) * 0.5F) + top_extra_menu_height;
 
             // first add us a box
             float x1 = visible_left - lr_border;
@@ -1258,7 +1297,26 @@ namespace mame.ui
             float x2 = visible_left + visible_width + lr_border;
             float y2 = visible_top + visible_main_menu_height + ui().box_tb_border();
             if (!customonly)
-                ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
+            {
+                if (heading_layout != null)
+                {
+                    float heading_width = heading_layout.actual_width();
+                    float heading_left = (1.0F - heading_width) * 0.5F;
+                    float hx1 = std.min(x1, heading_left - gutter_width - lr_border);
+                    float hx2 = std.max(x2, heading_left + heading_width + gutter_width + lr_border);
+                    ui().draw_outlined_box(
+                            container(),
+                            hx1, y1 - top_extra_menu_height,
+                            hx2, y1 - m_customtop - ui().box_tb_border(),
+                            UI_GREEN_COLOR);
+                    heading_layout.emit(container(), (1.0F - heading_layout.width()) * 0.5F, y1 - top_extra_menu_height + ui().box_tb_border());
+                }
+                ui().draw_outlined_box(
+                        container(),
+                        x1, y1,
+                        x2, y2,
+                        ui().colors().background_color());
+            }
 
             if ((m_selected >= (top_line + m_visible_lines)) || (m_selected < (top_line + 1)))
                 top_line = m_selected - (m_visible_lines / 2);
@@ -1534,15 +1592,15 @@ namespace mame.ui
         protected abstract void handle(event_ ev);
 
 
-        // push a new menu onto the stack
-        static void stack_push_internal(menu menu) { menu.m_global_state.stack_push(menu); }  //void stack_push(std::unique_ptr<menu> &&menu);
-
-
         //void extra_text_draw_box(float origx1, float origx2, float origy, float yspan, std::string_view text, int direction);
 
 
         bool first_item_visible() { return top_line <= 0; }
         bool last_item_visible() { return (top_line + m_visible_lines) >= (int)m_items.size(); }
+
+
+        // push a new menu onto the stack
+        static void stack_push_internal(menu menu) { menu.m_global_state.stack_push(menu); }  //void stack_push(std::unique_ptr<menu> &&menu);
 
 
         static global_state get_global_state(mame_ui_manager ui)

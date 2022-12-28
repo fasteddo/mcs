@@ -249,12 +249,9 @@ namespace mame
 
         void draw_playfield(screen_device screen, bitmap_ind16 bitmap, rectangle cliprect)
         {
-            int i;
-
             m_pf_tilemap.mark_all_dirty();
-            m_pf_tilemap.set_flip((m_flip_x ? TILEMAP_FLIPX : 0) |
-                                            (m_flip_y ? TILEMAP_FLIPY : 0));
-            for (i = 0; i < 32; i++)
+            m_pf_tilemap.set_flip((m_flip_x ? TILEMAP_FLIPX : 0) | (m_flip_y ? TILEMAP_FLIPY : 0));
+            for (int i = 0; i < 32; i++)
                 m_pf_tilemap.set_scrolly(i, m_column_scroll.op[i]);
 
             m_pf_tilemap.draw(screen, bitmap, cliprect, 0, 0);
@@ -276,8 +273,7 @@ namespace mame
 
             m_bs_tilemap.mark_all_dirty();
 
-            m_bs_tilemap.set_flip((bigsprite_flip_x != 0 ? TILEMAP_FLIPX : 0) |
-                                            (((m_flip_y ? 1 : 0) ^ bigsprite_flip_y) != 0 ? TILEMAP_FLIPY : 0));
+            m_bs_tilemap.set_flip((bigsprite_flip_x != 0 ? TILEMAP_FLIPX : 0) | (((m_flip_y ? 1 : 0) ^ bigsprite_flip_y) != 0 ? TILEMAP_FLIPY : 0));
 
             m_bs_tilemap.set_scrollx(0, x);
             m_bs_tilemap.set_scrolly(0, y);

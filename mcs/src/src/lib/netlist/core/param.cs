@@ -52,7 +52,7 @@ namespace mame.netlist
         //param_type_t param_type() const noexcept(false);
 
 
-        public abstract string valstr();
+        public abstract string value_string();
 
 
         protected string get_initial(core_device_t dev, out bool found)
@@ -160,7 +160,7 @@ namespace mame.netlist
         public void set(T param) { set_and_update_param(m_param, param); }
 
 
-        public override string valstr()
+        public override string value_string()
         {
             return new plib.pfmt("{0}").op(m_param);
         }
@@ -237,18 +237,13 @@ namespace mame.netlist
         //void set(const T &param) noexcept { set_and_update_param(m_param, param); }
 
 
-        public override string valstr()
+        public override string value_string()
         {
             // returns the numerical value
             return new plib.pfmt("{0}").op(ops.cast_int(m_param));  //return plib::pfmt("{}")(static_cast<int>(m_param));
         }
     }
 
-
-    // FIXME: these should go as well
-    //using param_logic_t = param_num_t<bool>;
-    //using param_int_t = param_num_t<int>;
-    //using param_fp_t = param_num_t<nl_fptype>;
 
     // -----------------------------------------------------------------------------
     // pointer parameter
@@ -273,6 +268,9 @@ namespace mame.netlist
         }
 
 
+        // FIXME: The device less constructor is only used by macro parameters
+        //        Every macro device gets a nld_wrapper object as the owner.
+        //        Use this as the owner and get rid of this constructor.
         public param_str_t(netlist_state_t state, string name, string val)
             : base(name)
         {
@@ -289,7 +287,7 @@ namespace mame.netlist
         //void set(const pstring &param)
 
 
-        public override string valstr() { return m_param; }
+        public override string value_string() { return m_param; }
 
 
         protected virtual void changed() { }
@@ -415,4 +413,29 @@ namespace mame.netlist
     //template <typename ST, std::size_t AW, std::size_t DW>
     //class param_rom_t final: public param_data_t
 
-} // namespace netlist
+
+    // -----------------------------------------------------------------------------
+    // Externals
+    // -----------------------------------------------------------------------------
+    //extern template class param_num_t<std::uint8_t>;
+    //extern template class param_num_t<std::uint16_t>;
+    //extern template class param_num_t<std::uint32_t>;
+    //extern template class param_num_t<std::uint64_t>;
+    //extern template class param_num_t<std::int8_t>;
+    //extern template class param_num_t<std::int16_t>;
+    //extern template class param_num_t<std::int32_t>;
+    //extern template class param_num_t<std::int64_t>;
+    //extern template class param_num_t<float>;
+    //extern template class param_num_t<double>;
+    //extern template class param_num_t<long double>;
+    //extern template class param_num_t<bool>;
+
+    // FIXME: Should not be used as parameters. Fix later.
+    //using param_logic_t = param_num_t<bool>;
+    //using param_int_t = param_num_t<int>;
+    //using param_fp_t = param_num_t<nl_fptype>;
+
+    //extern template class param_model_t::value_base_t<float>;
+    //extern template class param_model_t::value_base_t<double>;
+    //extern template class param_model_t::value_base_t<long double>;
+}

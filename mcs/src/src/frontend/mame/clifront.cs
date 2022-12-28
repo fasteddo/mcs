@@ -80,40 +80,40 @@ namespace mame
         static readonly options_entry [] cli_option_entries = new options_entry []
         {
             /* core commands */
-            new options_entry(null,                                 null,   OPTION_HEADER,     "CORE COMMANDS"),
-            new options_entry(CLICOMMAND_HELP           + ";h;?",   "0",    OPTION_COMMAND,    "show help message"),
-            new options_entry(CLICOMMAND_VALIDATE       + ";valid", "0",    OPTION_COMMAND,    "perform validation on system drivers and devices"),
+            new options_entry(null,                                 null,   core_options.option_type.HEADER,     "CORE COMMANDS"),
+            new options_entry(CLICOMMAND_HELP           + ";h;?",   "0",    core_options.option_type.COMMAND,    "show help message"),
+            new options_entry(CLICOMMAND_VALIDATE       + ";valid", "0",    core_options.option_type.COMMAND,    "perform validation on system drivers and devices"),
 
             /* configuration commands */
-            new options_entry(null,                                 null,   OPTION_HEADER,     "CONFIGURATION COMMANDS"),
-            new options_entry(CLICOMMAND_CREATECONFIG   + ";cc",    "0",    OPTION_COMMAND,    "create the default configuration file"),
-            new options_entry(CLICOMMAND_SHOWCONFIG     + ";sc",    "0",    OPTION_COMMAND,    "display running parameters"),
-            new options_entry(CLICOMMAND_SHOWUSAGE      + ";su",    "0",    OPTION_COMMAND,    "show this help"),
+            new options_entry(null,                                 null,   core_options.option_type.HEADER,     "CONFIGURATION COMMANDS"),
+            new options_entry(CLICOMMAND_CREATECONFIG   + ";cc",    "0",    core_options.option_type.COMMAND,    "create the default configuration file"),
+            new options_entry(CLICOMMAND_SHOWCONFIG     + ";sc",    "0",    core_options.option_type.COMMAND,    "display running parameters"),
+            new options_entry(CLICOMMAND_SHOWUSAGE      + ";su",    "0",    core_options.option_type.COMMAND,    "show this help"),
 
             /* frontend commands */
-            new options_entry(null,                                 null,   OPTION_HEADER,     "FRONTEND COMMANDS"),
-            new options_entry(CLICOMMAND_LISTXML        + ";lx",    "0",    OPTION_COMMAND,    "all available info on driver in XML format"),
-            new options_entry(CLICOMMAND_LISTFULL       + ";ll",    "0",    OPTION_COMMAND,    "short name, full name"),
-            new options_entry(CLICOMMAND_LISTSOURCE     + ";ls",    "0",    OPTION_COMMAND,    "driver sourcefile"),
-            new options_entry(CLICOMMAND_LISTCLONES     + ";lc",    "0",    OPTION_COMMAND,    "show clones"),
-            new options_entry(CLICOMMAND_LISTBROTHERS   + ";lb",    "0",    OPTION_COMMAND,    "show \"brothers\", or other drivers from same sourcefile"),
-            new options_entry(CLICOMMAND_LISTCRC,                   "0",    OPTION_COMMAND,    "CRC-32s"),
-            new options_entry(CLICOMMAND_LISTROMS       + ";lr",    "0",    OPTION_COMMAND,    "list required ROMs for a driver"),
-            new options_entry(CLICOMMAND_LISTSAMPLES,               "0",    OPTION_COMMAND,    "list optional samples for a driver"),
-            new options_entry(CLICOMMAND_VERIFYROMS,                "0",    OPTION_COMMAND,    "report romsets that have problems"),
-            new options_entry(CLICOMMAND_VERIFYSAMPLES,             "0",    OPTION_COMMAND,    "report samplesets that have problems"),
-            new options_entry(CLICOMMAND_ROMIDENT,                  "0",    OPTION_COMMAND,    "compare files with known MAME ROMs"),
-            new options_entry(CLICOMMAND_LISTDEVICES    + ";ld",    "0",    OPTION_COMMAND,    "list available devices"),
-            new options_entry(CLICOMMAND_LISTSLOTS      + ";lslot", "0",    OPTION_COMMAND,    "list available slots and slot devices"),
-            new options_entry(CLICOMMAND_LISTMEDIA      + ";lm",    "0",    OPTION_COMMAND,    "list available media for the system"),
-            new options_entry(CLICOMMAND_LISTSOFTWARE   + ";lsoft", "0",    OPTION_COMMAND,    "list known software for the system"),
-            new options_entry(CLICOMMAND_VERIFYSOFTWARE + ";vsoft", "0",    OPTION_COMMAND,    "verify known software for the system"),
-            new options_entry(CLICOMMAND_GETSOFTLIST    + ";glist", "0",    OPTION_COMMAND,    "retrieve software list by name"),
-            new options_entry(CLICOMMAND_VERIFYSOFTLIST + ";vlist", "0",    OPTION_COMMAND,    "verify software list by name"),
-            new options_entry(CLICOMMAND_VERSION,                   "0",    OPTION_COMMAND,    "get MAME version"),
+            new options_entry(null,                                 null,   core_options.option_type.HEADER,     "FRONTEND COMMANDS"),
+            new options_entry(CLICOMMAND_LISTXML        + ";lx",    "0",    core_options.option_type.COMMAND,    "all available info on driver in XML format"),
+            new options_entry(CLICOMMAND_LISTFULL       + ";ll",    "0",    core_options.option_type.COMMAND,    "short name, full name"),
+            new options_entry(CLICOMMAND_LISTSOURCE     + ";ls",    "0",    core_options.option_type.COMMAND,    "driver sourcefile"),
+            new options_entry(CLICOMMAND_LISTCLONES     + ";lc",    "0",    core_options.option_type.COMMAND,    "show clones"),
+            new options_entry(CLICOMMAND_LISTBROTHERS   + ";lb",    "0",    core_options.option_type.COMMAND,    "show \"brothers\", or other drivers from same sourcefile"),
+            new options_entry(CLICOMMAND_LISTCRC,                   "0",    core_options.option_type.COMMAND,    "CRC-32s"),
+            new options_entry(CLICOMMAND_LISTROMS       + ";lr",    "0",    core_options.option_type.COMMAND,    "list required ROMs for a driver"),
+            new options_entry(CLICOMMAND_LISTSAMPLES,               "0",    core_options.option_type.COMMAND,    "list optional samples for a driver"),
+            new options_entry(CLICOMMAND_VERIFYROMS,                "0",    core_options.option_type.COMMAND,    "report romsets that have problems"),
+            new options_entry(CLICOMMAND_VERIFYSAMPLES,             "0",    core_options.option_type.COMMAND,    "report samplesets that have problems"),
+            new options_entry(CLICOMMAND_ROMIDENT,                  "0",    core_options.option_type.COMMAND,    "compare files with known MAME ROMs"),
+            new options_entry(CLICOMMAND_LISTDEVICES    + ";ld",    "0",    core_options.option_type.COMMAND,    "list available devices"),
+            new options_entry(CLICOMMAND_LISTSLOTS      + ";lslot", "0",    core_options.option_type.COMMAND,    "list available slots and slot devices"),
+            new options_entry(CLICOMMAND_LISTMEDIA      + ";lm",    "0",    core_options.option_type.COMMAND,    "list available media for the system"),
+            new options_entry(CLICOMMAND_LISTSOFTWARE   + ";lsoft", "0",    core_options.option_type.COMMAND,    "list known software for the system"),
+            new options_entry(CLICOMMAND_VERIFYSOFTWARE + ";vsoft", "0",    core_options.option_type.COMMAND,    "verify known software for the system"),
+            new options_entry(CLICOMMAND_GETSOFTLIST    + ";glist", "0",    core_options.option_type.COMMAND,    "retrieve software list by name"),
+            new options_entry(CLICOMMAND_VERIFYSOFTLIST + ";vlist", "0",    core_options.option_type.COMMAND,    "verify software list by name"),
+            new options_entry(CLICOMMAND_VERSION,                   "0",    core_options.option_type.COMMAND,    "get MAME version"),
 
-            new options_entry(null,                                 null,   OPTION_HEADER,     "FRONTEND COMMAND OPTIONS"),
-            new options_entry(CLIOPTION_DTD,                        "1",    OPTION_BOOLEAN,    "include DTD in XML output"),
+            new options_entry(null,                                 null,   core_options.option_type.HEADER,     "FRONTEND COMMAND OPTIONS"),
+            new options_entry(CLIOPTION_DTD,                        "1",    core_options.option_type.BOOLEAN,    "include DTD in XML output"),
             new options_entry(null),
         };
 
@@ -1269,10 +1269,7 @@ namespace mame
                 path_iterator iter = new path_iterator(m_options.plugins_path());
                 string pluginpath;
                 while (iter.next(out pluginpath))
-                {
-                    m_osdcore.osd_subst_env(out pluginpath, pluginpath);
-                    plugin_opts.scan_directory(pluginpath, true);
-                }
+                    plugin_opts.scan_directory(m_osdcore.osd_subst_env(pluginpath), true);
                 emu_file file_plugin = new emu_file(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
                 if (file_plugin.open("plugin.ini"))
                     throw new emu_fatalerror("Unable to create file plugin.ini\n");

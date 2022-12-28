@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using attoseconds_t = System.Int64;  //typedef s64 attoseconds_t;
 using device_t_feature = mame.emu.detail.device_feature;  //using feature = emu::detail::device_feature;
 using device_t_feature_type = mame.emu.detail.device_feature.type;  //using feature_type = emu::detail::device_feature::type;
-using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using device_type = mame.emu.detail.device_type_impl_base;  //typedef emu::detail::device_type_impl_base const &device_type;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using seconds_t = System.Int32;  //typedef s32 seconds_t;
@@ -638,10 +637,6 @@ namespace mame
     /// reattempting to start the device that threw the exception.
     /// \sa device_t::device_start device_interface::interface_pre_start
     public class device_missing_dependencies : emu_exception { }
-
-
-    // timer IDs for devices
-    //typedef u32 device_timer_id;
 
 
     /// \brief Base class for devices
@@ -1389,23 +1384,11 @@ namespace mame
 
         // timer interfaces
 
-        //-------------------------------------------------
-        //  timer_alloc - allocate a timer for our device
-        //  callback
-        //-------------------------------------------------
-        public emu_timer timer_alloc(device_timer_id id = 0) { return machine().scheduler().timer_alloc(this, id); }
-
-        //-------------------------------------------------
-        //  timer_set - set a temporary timer that will
-        //  call our device callback
-        //-------------------------------------------------
-        protected void timer_set(attotime duration, device_timer_id id = 0, int param = 0)
+        //template <typename... T>
+        public emu_timer timer_alloc(timer_expired_delegate args)  //inline emu_timer *device_t::timer_alloc(T &&... args)
         {
-            machine().scheduler().timer_set(duration, this, id, param);
+            return machine().scheduler().timer_alloc(args);
         }
-
-        protected void synchronize(device_timer_id id = 0, int param = 0) { timer_set(attotime.zero, id, param); }
-        public void timer_expired(emu_timer timer, device_timer_id id, int param) { device_timer(timer, id, param); }
 
 
         /// \brief Register data for save states
@@ -2010,12 +1993,6 @@ namespace mame
         //  is active to allow for device-specific setup
         //-------------------------------------------------
         protected virtual void device_debug_setup() { }
-
-        //-------------------------------------------------
-        //  device_timer - called whenever a device timer
-        //  fires
-        //-------------------------------------------------
-        protected virtual void device_timer(emu_timer timer, device_timer_id id, int param) { }
 
         //------------------- end derived class overrides
 

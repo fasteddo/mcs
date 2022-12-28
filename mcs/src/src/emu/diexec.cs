@@ -335,6 +335,9 @@ namespace mame
         public u32 m_cycles_per_second;        // cycles per second, adjusted for multipliers
         public attoseconds_t m_attoseconds_per_cycle;    // attoseconds per adjusted clock cycle
 
+        emu_timer m_spin_end_timer;           // timer for triggering the end of spin_until_time
+        emu_timer [] m_pulse_end_timers = new emu_timer[MAX_INPUT_LINES]; // timer for ending input-line pulses
+
 
         // construction/destruction
 
@@ -368,6 +371,7 @@ namespace mame
             m_divshift = 0;
             m_cycles_per_second = 0;
             m_attoseconds_per_cycle = 0;
+            m_spin_end_timer = null;
 
 
             for (int line = 0; line < m_input.Length; line++)
@@ -521,7 +525,7 @@ namespace mame
                 set_input_line(irqline, ASSERT_LINE);
 
                 attotime target_time = local_time() + duration;
-                m_scheduler.timer_set(target_time - m_scheduler.time(), irq_pulse_clear, irqline);
+                m_pulse_end_timers[irqline].adjust(target_time - m_scheduler.time(), irqline);
             }
         }
 
@@ -753,9 +757,16 @@ namespace mame
             m_profiler = (profile_type)(index + profile_type.PROFILER_DEVICE_FIRST);
             m_inttrigger = index + TRIGGER_INT;
 
-            // allocate timers if we need them
+            // allocate a timed-interrupt timer if we need it
             if (m_timed_interrupt_period != attotime.zero)
                 m_timedint_timer = m_scheduler.timer_alloc(trigger_periodic_interrupt);
+
+            // allocate a timer for triggering the end of spin-until conditions
+            m_spin_end_timer = m_scheduler.timer_alloc(timed_trigger_callback);
+
+            // allocate input-pulse timers if we have input lines
+            for (u32 i = 0; i < MAX_INPUT_LINES; i++)
+                m_pulse_end_timers[i] = m_scheduler.timer_alloc(irq_pulse_clear);
         }
 
         //-------------------------------------------------
@@ -932,8 +943,8 @@ namespace mame
 
 
         // callbacks
-        //TIMER_CALLBACK_MEMBER(timed_trigger_callback);
-        //static void static_timed_trigger_callback(running_machine &machine, void *ptr, int param);
+        //TIMER_CALLBACK_MEMBER(timed_trigger_callback)
+        void timed_trigger_callback(s32 param) { throw new emu_unimplemented(); }
 
 
         //-------------------------------------------------

@@ -53,8 +53,11 @@ namespace mame
 
 
         //WRITE_LINE_MEMBER(mw8080bw_state::screen_vblank_phantom2)
+    }
 
 
+    partial class invaders_state : mw8080bw_state
+    {
         /*************************************
          *
          *  Space Invaders

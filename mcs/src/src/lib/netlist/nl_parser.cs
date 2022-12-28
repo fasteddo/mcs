@@ -4,22 +4,22 @@
 using System;
 using System.IO;
 
-using parser_t_token_store = mame.plib.detail.token_store;  //using token_store = plib::ptokenizer::token_store;
-using parser_t_token_id_t = mame.plib.detail.token_id_t;  //using token_id_t = plib::ptokenizer::token_id_t;
-using parser_t_token_t = mame.plib.detail.token_t;  //using token_t = plib::ptokenizer::token_t;
-using parser_t_token_type = mame.plib.detail.token_type;  //using token_type = plib::ptokenizer::token_type;
+using parser_t_token_store_t = mame.plib.detail.token_store_t;  //using token_store_t = plib::tokenizer_t::token_store_t;
+using parser_t_token_id_t = mame.plib.detail.token_id_t;  //using token_id_t = plib::tokenizer_t::token_id_t;
+using parser_t_token_t = mame.plib.detail.token_t;  //using token_t = plib::tokenizer_t::token_t;
+using parser_t_token_type = mame.plib.detail.token_type;  //using token_type = plib::tokenizer_t::token_type;
 
 using static mame.netlist.nl_errstr_global;
 
 
 namespace mame.netlist
 {
-    class parser_t : plib.ptoken_reader
+    class parser_t : plib.token_reader_t
     {
-        //using token_t = plib::ptokenizer::token_t;
-        //using token_type = plib::ptokenizer::token_type;
-        //using token_id_t = plib::ptokenizer::token_id_t;
-        //using token_store = plib::ptokenizer::token_store;
+        //using token_t = plib::tokenizer_t::token_t;
+        //using token_type = plib::tokenizer_t::token_type;
+        //using token_id_t = plib::tokenizer_t::token_id_t;
+        //using token_store_t = plib::tokenizer_t::token_store_t;
 
 
         parser_t_token_id_t m_tok_paren_left;
@@ -51,11 +51,11 @@ namespace mame.netlist
         parser_t_token_id_t m_tok_TT_LINE;
         parser_t_token_id_t m_tok_TT_FAMILY;
 
-        plib.ptokenizer m_tokenizer = new plib.ptokenizer();
+        plib.tokenizer_t m_tokenizer = new plib.tokenizer_t();
         nlparse_t m_setup;
 
-        std.unordered_map<string, parser_t_token_store> m_local = new std.unordered_map<string, parser_t_token_store>();
-        parser_t_token_store m_cur_local;
+        std.unordered_map<string, parser_t_token_store_t> m_local = new std.unordered_map<string, parser_t_token_store_t>();
+        parser_t_token_store_t m_cur_local;
 
 
         public parser_t(nlparse_t setup)
@@ -112,9 +112,9 @@ namespace mame.netlist
         //bool parse(plib::istream_uptr &&strm, const pstring &nlname);
 
 
-        public bool parse(parser_t_token_store tokstor, string nlname)
+        public bool parse(parser_t_token_store_t store, string nlname)
         {
-            set_token_source(tokstor);
+            set_token_source(store);
 
             bool in_nl = false;
 
@@ -164,14 +164,14 @@ namespace mame.netlist
 
                     if (token.is_(m_tok_TRUTHTABLE_START) && name.str() == nlname)
                     {
-                        net_truthtable_start(nlname);
+                        net_truth_table_start(nlname);
                         return true;
                     }
 
                     // create a new cached local store
-                    m_local.emplace(name.str(), new parser_t_token_store());
+                    m_local.emplace(name.str(), new parser_t_token_store_t());
                     m_cur_local = m_local[name.str()];
-                    var sl = sourceloc();
+                    var sl = location();
                     var li = new plib.pfmt("# {0} \"{1}\"").op(sl.line(), sl.file_name());
 
                     m_cur_local.push_back(new parser_t_token_t(parser_t_token_type.LINEMARKER, li));
@@ -206,10 +206,10 @@ namespace mame.netlist
         }
 
 
-        public void parse_tokens(plib.istream_uptr strm, parser_t_token_store tokstor)
+        public void parse_tokens(plib.istream_uptr strm, parser_t_token_store_t tokstore)
         {
             //plib::putf8_reader u8reader(strm.release_stream());
-            m_tokenizer.append_to_store(new StreamReader(strm.release_stream()), tokstor);
+            m_tokenizer.append_to_store(new StreamReader(strm.release_stream()), tokstore);
         }
 
 
@@ -227,7 +227,7 @@ namespace mame.netlist
                 if (token.is_(m_tok_ALIAS))
                     net_alias();
                 else if (token.is_(m_tok_DIPPINS))
-                    dippins();
+                    dip_pins();
                 else if (token.is_(m_tok_NET_C))
                     net_c();
                 else if (token.is_(m_tok_FRONTIER))
@@ -235,13 +235,13 @@ namespace mame.netlist
                 else if (token.is_(m_tok_PARAM))
                     netdev_param();
                 else if (token.is_(m_tok_DEFPARAM))
-                    netdev_defparam();
+                    netdev_default_param();
                 else if (token.is_(m_tok_HINT))
                     netdev_hint();
                 else if (token.is_(m_tok_NET_MODEL))
                     net_model();
                 else if (token.is_(m_tok_SUBMODEL))
-                    net_submodel();
+                    net_sub_model();
                 else if (token.is_(m_tok_INCLUDE))
                     net_include();
                 else if (token.is_(m_tok_LOCAL_SOURCE))
@@ -297,7 +297,7 @@ namespace mame.netlist
         }
 
 
-        void dippins() { throw new emu_unimplemented(); }
+        void dip_pins() { throw new emu_unimplemented(); }
 
 
         void netdev_param()
@@ -321,7 +321,7 @@ namespace mame.netlist
             }
         }
 
-        void netdev_defparam() { throw new emu_unimplemented(); }
+        void netdev_default_param() { throw new emu_unimplemented(); }
         void netdev_hint() { throw new emu_unimplemented(); }
 
 
@@ -362,7 +362,7 @@ namespace mame.netlist
             while (tok.is_(m_tok_comma))
             {
                 tok = get_token();
-                if (/*tok.is_type(token_type::IDENTIFIER) ||*/ tok.is_type(parser_t_token_type.STRING))
+                if (tok.is_type(parser_t_token_type.STRING))
                 {
                     params_.push_back(tok.str());
                     tok = get_token();
@@ -392,13 +392,13 @@ namespace mame.netlist
 
 
         void net_model() { throw new emu_unimplemented(); }
-        void net_submodel() { throw new emu_unimplemented(); }
+        void net_sub_model() { throw new emu_unimplemented(); }
         void net_include() { throw new emu_unimplemented(); }
         void net_local_source() { throw new emu_unimplemented(); }
         void net_external_source() { throw new emu_unimplemented(); }
         void net_lib_entry(bool is_local) { throw new emu_unimplemented(); }
         void net_register_dev() { throw new emu_unimplemented(); }
-        void net_truthtable_start(string nlname) { throw new emu_unimplemented(); }
+        void net_truth_table_start(string nlname) { throw new emu_unimplemented(); }
 
         protected override void verror(string msg)
         {

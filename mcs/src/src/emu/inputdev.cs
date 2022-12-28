@@ -3,39 +3,18 @@
 
 using System;
 
+using input_device_item_item_get_state_func = mame.osd.input_device.item_get_state_func;  //using item_get_state_func = osd::input_device::item_get_state_func;
 using s32 = System.Int32;
 using u8 = System.Byte;
 
 using static mame.cpp_global;
-using static mame.input_global;
-using static mame.inputdev_global;
+using static mame.inputcode_global;
+using static mame.osd.inputman_global;
 using static mame.osdcore_global;
 
 
 namespace mame
 {
-    static class inputdev_global
-    {
-        //**************************************************************************
-        //  CONSTANTS
-        //**************************************************************************
-
-        // relative devices return ~512 units per onscreen pixel
-        public const s32 INPUT_RELATIVE_PER_PIXEL = 512;
-
-        // absolute devices return values between -65536 and +65536
-        public const s32 INPUT_ABSOLUTE_MIN = -65536;
-        public const s32 INPUT_ABSOLUTE_MAX = 65536;
-
-        // invalid memory value for axis polling
-        public const s32 INVALID_AXIS_VALUE = 0x7fffffff;
-    }
-
-
-    // callback for getting the value of an item on a device
-    public delegate int item_get_state_func(object device_internal, object item_internal);  //typedef s32 (*item_get_state_func)(void *device_internal, void *item_internal);
-
-
     // ======================> joystick_map
     // a 9x9 joystick map
     class joystick_map
@@ -222,13 +201,16 @@ namespace mame
     // a single item on an input device
     public abstract class input_device_item
     {
+        //using item_get_state_func = osd::input_device::item_get_state_func;
+
+
         // internal state
         input_device m_device;               // reference to our owning device
         string m_name;                 // string name of item
         object m_internal;  //void *                  m_internal;             // internal callback pointer
         input_item_id m_itemid;               // originally specified item id
         input_item_class m_itemclass;            // class of the item
-        item_get_state_func m_getstate;             // get state callback
+        input_device_item_item_get_state_func m_getstate;             // get state callback
         string m_token;                // tokenized name for non-standard items
 
         // live state
@@ -239,7 +221,7 @@ namespace mame
         //-------------------------------------------------
         //  input_device_item - constructor
         //-------------------------------------------------
-        protected input_device_item(input_device device, string name, object internalobj, input_item_id itemid, item_get_state_func getstate, input_item_class itemclass)
+        protected input_device_item(input_device device, string name, object internalobj, input_item_id itemid, input_device_item_item_get_state_func getstate, input_item_class itemclass)
         {
             m_device = device;
             m_name = name;
@@ -306,7 +288,7 @@ namespace mame
 
     // ======================> input_device
     // a logical device of a given class that can provide input
-    public abstract class input_device
+    public abstract class input_device : osd.input_device
     {
         //friend class input_class;
 
@@ -363,7 +345,7 @@ namespace mame
         //-------------------------------------------------
         //  add_item - add a new item to an input device
         //-------------------------------------------------
-        public input_item_id add_item(string name, input_item_id itemid, item_get_state_func getstate, object internal_obj = null)
+        public input_item_id add_item(string name, input_item_id itemid, input_device_item_item_get_state_func getstate, object internal_ = null)
         {
             if (machine().phase() != machine_phase.INIT)
                 throw new emu_fatalerror("Can only call input_device::add_item at init time!");
@@ -391,15 +373,15 @@ namespace mame
             switch (m_manager.device_class(devclass()).standard_item_class(originalid))
             {
                 case input_item_class.ITEM_CLASS_SWITCH:
-                    m_item[(int)itemid] = new input_device_switch_item(this, name, internal_obj, itemid, getstate);
+                    m_item[(int)itemid] = new input_device_switch_item(this, name, internal_, itemid, getstate);
                     break;
 
                 case input_item_class.ITEM_CLASS_RELATIVE:
-                    m_item[(int)itemid] = new input_device_relative_item(this, name, internal_obj, itemid, getstate);
+                    m_item[(int)itemid] = new input_device_relative_item(this, name, internal_, itemid, getstate);
                     break;
 
                 case input_item_class.ITEM_CLASS_ABSOLUTE:
-                    m_item[(int)itemid] = new input_device_absolute_item(this, name, internal_obj, itemid, getstate);
+                    m_item[(int)itemid] = new input_device_absolute_item(this, name, internal_, itemid, getstate);
                     break;
 
                 default:
@@ -821,7 +803,7 @@ namespace mame
         //-------------------------------------------------
         //  input_device_switch_item - constructor
         //-------------------------------------------------
-        public input_device_switch_item(input_device device, string name, object internalobj, input_item_id itemid, item_get_state_func getstate)
+        public input_device_switch_item(input_device device, string name, object internalobj, input_item_id itemid, input_device_item_item_get_state_func getstate)
             : base(device, name, internalobj, itemid, getstate, input_item_class.ITEM_CLASS_SWITCH)
         {
             m_steadykey = 0;
@@ -927,7 +909,7 @@ namespace mame
         //-------------------------------------------------
         //  input_device_relative_item - constructor
         //-------------------------------------------------
-        public input_device_relative_item(input_device device, string name, object internalobj, input_item_id itemid, item_get_state_func getstate)
+        public input_device_relative_item(input_device device, string name, object internalobj, input_item_id itemid, input_device_item_item_get_state_func getstate)
             : base(device, name, internalobj, itemid, getstate, input_item_class.ITEM_CLASS_RELATIVE)
         {
         }
@@ -949,7 +931,7 @@ namespace mame
         //-------------------------------------------------
         //  input_device_absolute_item - constructor
         //-------------------------------------------------
-        public input_device_absolute_item(input_device device, string name, object internalobj, input_item_id itemid, item_get_state_func getstate)
+        public input_device_absolute_item(input_device device, string name, object internalobj, input_item_id itemid, input_device_item_item_get_state_func getstate)
             : base(device, name, internalobj, itemid, getstate, input_item_class.ITEM_CLASS_ABSOLUTE)
         {
         }

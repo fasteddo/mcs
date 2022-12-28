@@ -190,7 +190,7 @@ namespace mame
         {
             // allocate our timers
             for (int tnum = 0; tnum < 2; tnum++)
-                m_timer[tnum] = machine().scheduler().timer_alloc(fm_timer_handler);
+                m_timer[tnum] = timer_alloc(fm_timer_handler);
 
             // resolve the handlers
             m_update_irq.resolve();

@@ -89,13 +89,13 @@ namespace mame.netlist.analog
             return - G(cap) * m_v.op;
         }
 
-        public void timestep(nl_fptype cap, nl_fptype v, nl_fptype step)
+        public void time_step(nl_fptype cap, nl_fptype v, nl_fptype step)
         {
             m_h.op = plib.pg.reciprocal(step);
             m_v.op = v;
         }
 
-        public void setparams(nl_fptype gmin) { m_gmin = gmin; }
+        public void set_parameters(nl_fptype gmin) { m_gmin = gmin; }
     }
 
 
@@ -114,7 +114,7 @@ namespace mame.netlist.analog
         }
 
         // Returns { G, Ieq }
-        public std.pair<nl_fptype, nl_fptype> timestep(nl_fptype cap, nl_fptype v, nl_fptype step)
+        public std.pair<nl_fptype, nl_fptype> time_step(nl_fptype cap, nl_fptype v, nl_fptype step)
         {
             nl_fptype h = plib.pg.reciprocal(step);
             nl_fptype G = cap * h + m_gmin;
@@ -126,7 +126,7 @@ namespace mame.netlist.analog
             // this one has no state
         }
 
-        public void setparams(nl_fptype gmin) { m_gmin = gmin; }
+        public void set_parameters(nl_fptype gmin) { m_gmin = gmin; }
     }
 #endif
 

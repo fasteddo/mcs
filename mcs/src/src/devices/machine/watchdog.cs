@@ -4,6 +4,7 @@
 using System;
 
 using int32_t = System.Int32;
+using s32 = System.Int32;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
@@ -113,7 +114,7 @@ namespace mame
         {
             // initialize the watchdog
             m_counter = 0;
-            m_timer = timer_alloc();
+            m_timer = timer_alloc(watchdog_expired);
 
             if (m_vblank_count != 0)
             {
@@ -139,7 +140,8 @@ namespace mame
         }
 
 
-        //virtual void device_timer(emu_timer &timer, device_timer_id id, int param) override;
+        //TIMER_CALLBACK_MEMBER(watchdog_expired);
+        void watchdog_expired(s32 param) { throw new emu_unimplemented(); }
 
 
         // internal helpers

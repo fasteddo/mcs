@@ -121,7 +121,7 @@ namespace mame
             m_write.resolve_all_safe();
 
             /* allocate a timer */
-            m_nmi_timer = machine().scheduler().timer_alloc(nmi_generate); //timer_expired_delegate(FUNC(namco_06xx_device::nmi_generate),this));
+            m_nmi_timer = timer_alloc(nmi_generate);
 
             save_item(NAME(new { m_control }));
             save_item(NAME(new { m_next_timer_state }));

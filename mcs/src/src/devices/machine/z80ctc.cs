@@ -72,8 +72,8 @@ namespace mame
         protected override void device_start()
         {
             // initialize state
-            m_timer = machine().scheduler().timer_alloc(timer_callback);
-            m_zc_to_timer = machine().scheduler().timer_alloc(zc_to_callback);
+            m_timer = timer_alloc(timer_callback);
+            m_zc_to_timer = timer_alloc(zc_to_callback);
 
             // register for save states
             save_item(NAME(new { m_mode }));

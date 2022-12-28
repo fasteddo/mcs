@@ -13,6 +13,7 @@ using size_t = System.UInt64;
 using unsigned = System.UInt32;
 
 using static mame.cpp_global;
+using static mame.netlist.nl_config_global;
 using static mame.netlist.nl_errstr_global;
 
 
@@ -122,7 +123,7 @@ namespace mame.netlist
             }
 
             if (map.empty())
-                model_parse(model , map);
+                model_parse(model, map);
 
             return new model_t(model, map);
         }
@@ -140,26 +141,28 @@ namespace mame.netlist
             while (true)
             {
                 pos = model.find('(');
-                if (pos != npos) break;
+                if (pos != npos)
+                    break;
 
                 key = plib.pg.ucase(model);
                 var i = m_models.find(key);
                 if (i == default)
                     throw new nl_exception(MF_MODEL_NOT_FOUND("xx" + model));
+
                 model = i;
             }
 
-            string xmodel = plib.pg.left(model, pos);
+            string base_model = plib.pg.left(model, pos);
 
-            if (xmodel == "_")
+            if (base_model == "_")
             {
                 map["COREMODEL"] = key;
             }
             else
             {
-                var i = m_models.find(xmodel);
+                var i = m_models.find(base_model);
                 if (i != default)
-                    model_parse(xmodel, map);
+                    model_parse(base_model, map);
                 else
                     throw new nl_exception(MF_MODEL_NOT_FOUND(model_in));
             }
@@ -167,6 +170,7 @@ namespace mame.netlist
             string remainder = plib.pg.trim(model.substr(pos + 1));
             if (!plib.pg.endsWith(remainder, ")"))
                 throw new nl_exception(MF_MODEL_ERROR_1(model));
+
             // FIMXE: Not optimal
             remainder = plib.pg.left(remainder, remainder.length() - 1);
 
@@ -201,7 +205,7 @@ namespace mame.netlist
             // need to preserve order of device creation ...
             public std.vector<std.pair<string, factory.element_t>> m_device_factory = new std.vector<std.pair<string, factory.element_t>>();
             // lifetime control only - can be cleared before run
-            public std.vector<std.pair<string, string>> m_defparams = new std.vector<std.pair<string, string>>();
+            public std.vector<std.pair<string, string>> m_default_params = new std.vector<std.pair<string, string>>();
             public std.unordered_map<string, bool> m_hints = new std.unordered_map<string, bool>();
             public factory.list_t m_factory;
 
@@ -326,7 +330,7 @@ namespace mame.netlist
                         var k = m_params.find(r);
                         if (k != default)
                         {
-                            v = v + k.param().valstr();
+                            v = v + k.param().value_string();
                             found_pat = true;
                         }
                         else
@@ -380,7 +384,7 @@ namespace mame.netlist
         }
 
 
-        // get family -> truthtable
+        // get family -> truth table
         public logic_family_desc_t family_from_model(string model)
         {
             family_type ft = family_type.CUSTOM;
@@ -397,8 +401,8 @@ namespace mame.netlist
 
             var ret = new logic_family_std_proxy_t(ft);  //auto ret = plib::make_unique<logic_family_std_proxy_t, host_arena>(ft);
 
-            ret.m_low_thresh_PCNT = modv.m_IVL.op();
-            ret.m_high_thresh_PCNT = modv.m_IVH.op();
+            ret.m_low_threshold_PCNT = modv.m_IVL.op();
+            ret.m_high_threshold_PCNT = modv.m_IVH.op();
             ret.m_low_VO = modv.m_OVL.op();
             ret.m_high_VO = modv.m_OVH.op();
             ret.m_R_low = modv.m_ORL.op();
@@ -541,58 +545,63 @@ namespace mame.netlist
         // FIXME: only needed by solver code outside of setup_t
         bool connect(detail.core_terminal_t t1_in, detail.core_terminal_t t2_in)
         {
+            //using namespace detail;
+
             log().debug.op("Connecting {0} to {1}\n", t1_in.name(), t2_in.name());
             detail.core_terminal_t t1 = resolve_proxy(t1_in);
             detail.core_terminal_t t2 = resolve_proxy(t2_in);
+            detail.terminal_type t1_type = t1.type();
+            detail.terminal_type t2_type = t2.type();
             bool ret = true;
 
-            if (t1.is_type(detail.terminal_type.OUTPUT) && t2.is_type(detail.terminal_type.INPUT))
+            switch (t1_type)
             {
-                if (t2.has_net() && t2.net().is_rail_net())
+                case detail.terminal_type.TERMINAL:
                 {
-                    log().fatal.op(MF_INPUT_1_ALREADY_CONNECTED(t2.name()));
-                    throw new nl_exception(MF_INPUT_1_ALREADY_CONNECTED(t2.name()));
+                    switch (t2_type)
+                    {
+                        case detail.terminal_type.TERMINAL:
+                            connect_terminals(t1, t2);
+                            break;
+                        case detail.terminal_type.INPUT:
+                            connect_terminal_input(t1, t2);
+                            break;
+                        case detail.terminal_type.OUTPUT:
+                            connect_terminal_output(t1, t2);
+                            break;
+                    }
+                    break;
                 }
-
-                connect_input_output(t2, t1);
-            }
-            else if (t1.is_type(detail.terminal_type.INPUT) && t2.is_type(detail.terminal_type.OUTPUT))
-            {
-                if (t1.has_net() && t1.net().is_rail_net())
+                case detail.terminal_type.INPUT:
                 {
-                    log().fatal.op(MF_INPUT_1_ALREADY_CONNECTED(t1.name()));
-                    throw new nl_exception(MF_INPUT_1_ALREADY_CONNECTED(t1.name()));
+                    switch (t2_type)
+                    {
+                        case detail.terminal_type.TERMINAL:
+                            connect_terminal_input(t2, t1);
+                            break;
+                        case detail.terminal_type.INPUT:
+                            ret = connect_input_input(t1, t2);
+                            break;
+                        case detail.terminal_type.OUTPUT:
+                            connect_input_output(t1, t2);
+                            break;
+                    }
+                    break;
                 }
-
-                connect_input_output(t1, t2);
-            }
-            else if (t1.is_type(detail.terminal_type.OUTPUT) && t2.is_type(detail.terminal_type.TERMINAL))
-            {
-                connect_terminal_output((terminal_t)t2, t1);
-            }
-            else if (t1.is_type(detail.terminal_type.TERMINAL) && t2.is_type(detail.terminal_type.OUTPUT))
-            {
-                connect_terminal_output((terminal_t)t1, t2);
-            }
-            else if (t1.is_type(detail.terminal_type.INPUT) && t2.is_type(detail.terminal_type.TERMINAL))
-            {
-                connect_terminal_input((terminal_t)t2, t1);
-            }
-            else if (t1.is_type(detail.terminal_type.TERMINAL) && t2.is_type(detail.terminal_type.INPUT))
-            {
-                connect_terminal_input((terminal_t)t1, t2);
-            }
-            else if (t1.is_type(detail.terminal_type.TERMINAL) && t2.is_type(detail.terminal_type.TERMINAL))
-            {
-                connect_terminals((terminal_t)t1, (terminal_t)t2);
-            }
-            else if (t1.is_type(detail.terminal_type.INPUT) && t2.is_type(detail.terminal_type.INPUT))
-            {
-                ret = connect_input_input(t1, t2);
-            }
-            else
-            {
-                ret = false;
+                case detail.terminal_type.OUTPUT:
+                {
+                    switch (t2_type)
+                    {
+                        case detail.terminal_type.TERMINAL:
+                            connect_terminal_output(t2, t1);
+                            break;
+                        case detail.terminal_type.INPUT:
+                            connect_input_output(t2, t1);
+                            break;
+                        case detail.terminal_type.OUTPUT: ret = false; break;
+                    }
+                    break;
+                }
             }
 
             return ret;
@@ -613,7 +622,7 @@ namespace mame.netlist
 
             // create defparams first!
 
-            foreach (var e in m_abstract.m_defparams)
+            foreach (var e in m_abstract.m_default_params)
             {
                 var param = new param_str_t(nlstate(), e.first, e.second);  //auto param(plib::make_unique<param_str_t, host_arena>(nlstate(), e.first, e.second));
                 register_param_t(param);
@@ -639,8 +648,8 @@ namespace mame.netlist
             // set default model parameters
 
             // FIXME: this is not optimal
-            m_parser.register_model(new plib.pfmt("NMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.m_mos_capmodel.op()));
-            m_parser.register_model(new plib.pfmt("PMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.m_mos_capmodel.op()));
+            m_parser.register_model(new plib.pfmt("NMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.m_mos_cap_model.op()));
+            m_parser.register_model(new plib.pfmt("PMOS_DEFAULT _(CAPMOD={0})").op(m_netlist_params.m_mos_cap_model.op()));
 
             // create devices
 
@@ -686,7 +695,7 @@ namespace mame.netlist
             resolve_inputs();
 
             log().verbose.op("looking for two terms connected to rail nets ...");
-            foreach (var t in m_nlstate.get_device_list<analog.nld_twoterm>())
+            foreach (var t in m_nlstate.get_device_list<analog.nld_two_terminal>())
             {
                 if (t.N().net().is_rail_net() && t.P().net().is_rail_net())
                 {
@@ -774,24 +783,6 @@ namespace mame.netlist
 
 
         log_type log() { return m_nlstate.log(); }
-
-
-        // FIXME: needed from matrix_solver_t
-        public void add_terminal(detail.net_t net, detail.core_terminal_t terminal)
-        {
-            foreach (var t in nlstate().core_terms(net))
-            {
-                if (t == terminal)
-                {
-                    log().fatal.op(MF_NET_1_DUPLICATE_TERMINAL_2(net.name(), t.name()));
-                    throw new nl_exception(MF_NET_1_DUPLICATE_TERMINAL_2(net.name(), t.name()));
-                }
-            }
-
-            terminal.set_net(net);
-
-            nlstate().core_terms(net).push_back(terminal);
-        }
 
 
         void resolve_inputs()
@@ -950,29 +941,29 @@ namespace mame.netlist
         }
 
 
-        void merge_nets(detail.net_t thisnet, detail.net_t othernet)
+        void merge_nets(detail.net_t this_net, detail.net_t other_net)
         {
             log().debug.op("merging nets ...\n");
-            if (othernet == thisnet)
+            if (other_net == this_net)
             {
-                log().warning.op(MW_CONNECTING_1_TO_ITSELF(thisnet.name()));
+                log().warning.op(MW_CONNECTING_1_TO_ITSELF(this_net.name()));
                 return; // Nothing to do
             }
 
-            if (thisnet.is_rail_net() && othernet.is_rail_net())
+            if (this_net.is_rail_net() && other_net.is_rail_net())
             {
-                log().fatal.op(MF_MERGE_RAIL_NETS_1_AND_2(thisnet.name(), othernet.name()));
-                throw new nl_exception(MF_MERGE_RAIL_NETS_1_AND_2(thisnet.name(), othernet.name()));
+                log().fatal.op(MF_MERGE_RAIL_NETS_1_AND_2(this_net.name(), other_net.name()));
+                throw new nl_exception(MF_MERGE_RAIL_NETS_1_AND_2(this_net.name(), other_net.name()));
             }
 
-            if (othernet.is_rail_net())
+            if (other_net.is_rail_net())
             {
                 log().debug.op("other net is a rail net\n");
-                merge_nets(othernet, thisnet);
+                merge_nets(other_net, this_net);
             }
             else
             {
-                move_connections(othernet, thisnet);
+                move_connections(other_net, this_net);
             }
         }
 
@@ -987,155 +978,167 @@ namespace mame.netlist
             else if (t2.has_net())
             {
                 log().debug.op("T2 has net\n");
-                add_terminal(t2.net(), t1);
+                t2.net().add_terminal(t1);
             }
             else if (t1.has_net())
             {
                 log().debug.op("T1 has net\n");
-                add_terminal(t1.net(), t2);
+                t1.net().add_terminal(t2);
             }
             else
             {
                 log().debug.op("adding analog net ...\n");
                 // FIXME: Nets should have a unique name
-                var anet = new analog_net_t(m_nlstate, "net." + t1.name());  //auto anet = plib::make_owned<analog_net_t>(nlstate().pool(), m_nlstate,"net." + t1.name());
-                var anetp = anet;
-                m_nlstate.register_net(anet);
-                t1.set_net(anetp);
-                add_terminal(anetp, t2);
-                add_terminal(anetp, t1);
+                var new_net_uptr = new analog_net_t(m_nlstate, "net." + t1.name());  //auto new_net_uptr = plib::make_owned<analog_net_t>(nlstate().pool(), m_nlstate,"net." + t1.name());
+                var new_net_ptr = new_net_uptr;
+                m_nlstate.register_net(new_net_uptr);
+                t1.set_net(new_net_uptr);
+                new_net_uptr.add_terminal(t2);
+                new_net_uptr.add_terminal(t1);
             }
         }
 
 
-        void connect_input_output(detail.core_terminal_t in_, detail.core_terminal_t out_)
+        void connect_input_output(detail.core_terminal_t input, detail.core_terminal_t output)
         {
-            if (out_.is_analog() && in_.is_logic())
+            if (input.has_net() && input.net().is_rail_net())
             {
-                var proxy = get_a_d_proxy(in_);
-
-                add_terminal(out_.net(), proxy.proxy_term());
+                log().fatal.op(MF_INPUT_1_ALREADY_CONNECTED(input.name()));
+                throw new nl_exception(MF_INPUT_1_ALREADY_CONNECTED(input.name()));
             }
-            else if (out_.is_logic() && in_.is_analog())
+            if (output.is_analog() && input.is_logic())
             {
-                devices.nld_base_proxy proxy = get_d_a_proxy(out_);
+                var proxy = get_a_d_proxy(input);
 
-                connect_terminals(proxy.proxy_term(), in_);
-                //proxy->out().net().register_con(in);
+                output.net().add_terminal(proxy.proxy_term());
+            }
+            else if (output.is_logic() && input.is_analog())
+            {
+                devices.nld_base_proxy proxy = get_d_a_proxy(output);
+
+                connect_terminals(proxy.proxy_term(), input);
             }
             else
             {
-                if (in_.has_net())
-                    merge_nets(out_.net(), in_.net());
+                if (input.has_net())
+                    merge_nets(output.net(), input.net());
+                else if (output.has_net())
+                    output.net().add_terminal(input);
                 else
-                    add_terminal(out_.net(), in_);
+                {
+                    log().fatal.op(ME_TERMINALS_1_2_WITHOUT_NET(input.name(), output.name()));
+                    throw new nl_exception(ME_TERMINALS_1_2_WITHOUT_NET(input.name(), output.name()));
+                }
             }
         }
 
 
-        void connect_terminal_output(terminal_t in_, detail.core_terminal_t out_)
+        void connect_terminal_output(detail.core_terminal_t terminal, detail.core_terminal_t output)
         {
-            if (out_.is_analog())
+            if (output.is_analog())
             {
-                log().debug.op("connect_terminal_output: {0} {1}\n", in_.name(), out_.name());
+                log().debug.op("connect_terminal_output: {0} {1}\n", terminal.name(), output.name());
                 // no proxy needed, just merge existing terminal net
-                if (in_.has_net())
+                if (terminal.has_net())
                 {
-                    if (out_.net() != in_.net())
+                    if (output.net() != terminal.net())
                     {
-                        merge_nets(out_.net(), in_.net());
+                        merge_nets(output.net(), terminal.net());
                     }
                     else
                     {
                         // Only an info - some ICs (CD4538) connect pins internally to GND
                         // and the schematics again externally. This will cause this warning.
                         // FIXME: Add a hint to suppress the warning.
-                        log().info.op(MI_CONNECTING_1_TO_2_SAME_NET(in_.name(), out_.name(), in_.net().name()));
+                        log().info.op(MI_CONNECTING_1_TO_2_SAME_NET(terminal.name(), output.name(), terminal.net().name()));
                     }
                 }
                 else
                 {
-                    add_terminal(out_.net(), in_);
+                    output.net().add_terminal(terminal);
                 }
             }
-            else if (out_.is_logic())
+            else if (output.is_logic())
             {
                 log().debug.op("connect_terminal_output: connecting proxy\n");
-                devices.nld_base_proxy proxy = get_d_a_proxy(out_);
+                devices.nld_base_proxy proxy = get_d_a_proxy(output);
 
-                connect_terminals(proxy.proxy_term(), in_);
+                connect_terminals(proxy.proxy_term(), terminal);
             }
             else
             {
-                log().fatal.op(MF_OBJECT_OUTPUT_TYPE_1(out_.name()));
-                throw new nl_exception(MF_OBJECT_OUTPUT_TYPE_1(out_.name()));
+                log().fatal.op(MF_OBJECT_OUTPUT_TYPE_1(output.name()));
+                throw new nl_exception(MF_OBJECT_OUTPUT_TYPE_1(output.name()));
             }
         }
 
 
-        void connect_terminal_input(terminal_t term, detail.core_terminal_t inp)
+        void connect_terminal_input(detail.core_terminal_t terminal, detail.core_terminal_t input)
         {
-            if (inp.is_analog())
+            if (input.is_analog())
             {
-                connect_terminals(inp, term);
+                connect_terminals(input, terminal);
             }
-            else if (inp.is_logic())
+            else if (input.is_logic())
             {
-                log().verbose.op("connect terminal {0} (in, {1}) to {2}\n", inp.name(),
-                        inp.is_analog() ? "analog" : inp.is_logic() ? "logic" : "?", term.name());
-                var proxy = get_a_d_proxy(inp);
+                log().verbose.op("connect terminal {0} (in, {1}) to {2}\n", input.name(), input.is_analog() ? "analog" : input.is_logic() ? "logic" : "?", terminal.name());
+                var proxy = get_a_d_proxy(input);
 
                 //out.net().register_con(proxy->proxy_term());
-                connect_terminals(term, proxy.proxy_term());
+                connect_terminals(terminal, proxy.proxy_term());
 
             }
             else
             {
-                log().fatal.op(MF_OBJECT_INPUT_TYPE_1(inp.name()));
-                throw new nl_exception(MF_OBJECT_INPUT_TYPE_1(inp.name()));
+                log().fatal.op(MF_OBJECT_INPUT_TYPE_1(input.name()));
+                throw new nl_exception(MF_OBJECT_INPUT_TYPE_1(input.name()));
             }
         }
 
 
-        bool connect_input_input(detail.core_terminal_t t1, detail.core_terminal_t t2)
+        bool connect_input_input(detail.core_terminal_t input1, detail.core_terminal_t input2)
         {
             bool ret = false;
-            if (t1.has_net())
+            if (input1.has_net()) // if input 1 already has a net
             {
-                if (t1.net().is_rail_net())
-                    ret = connect(t2, t1.net().railterminal());
-
+                if (input1.net().is_rail_net()) // and the net is a rail net
+                    ret = connect(input2, input1.net().rail_terminal()); // try to
+                                                                         // connect
+                                                                         // input 2
+                                                                         // to rail
+                                                                         // terminal
+                                                                         // of input
+                                                                         // 1 net
                 if (!ret)
                 {
-                    foreach (var t in nlstate().core_terms(t1.net()))
+                    // the above was not successfull - try to connect input2 to
+                    // TERMINAL type terminals of input 1 net's terminals
+                    foreach (detail.core_terminal_t t in input1.net().core_terms_copy())
                     {
                         if (t.is_type(detail.terminal_type.TERMINAL))
-                            ret = connect(t2, t);
-
+                            ret = connect(input2, t);
                         if (ret)
                             break;
                     }
                 }
             }
-
-            if (!ret && t2.has_net())
+            // FIXME: We could use a helper connect_input_input_helper(input2,
+            // input1) here.
+            if (!ret && input2.has_net())
             {
-                if (t2.net().is_rail_net())
-                    ret = connect(t1, t2.net().railterminal());
-
+                if (input2.net().is_rail_net())
+                    ret = connect(input1, input2.net().rail_terminal());
                 if (!ret)
                 {
-                    foreach (var t in nlstate().core_terms(t2.net()))
+                    foreach (detail.core_terminal_t t in input2.net().core_terms_copy())
                     {
                         if (t.is_type(detail.terminal_type.TERMINAL))
-                            ret = connect(t1, t);
-
+                            ret = connect(input1, t);
                         if (ret)
                             break;
                     }
                 }
             }
-
             return ret;
         }
 
@@ -1159,24 +1162,27 @@ namespace mame.netlist
 
         devices.nld_base_proxy get_d_a_proxy(detail.core_terminal_t out_)
         {
-            //throw new emu_unimplemented();
-#if false
-            gsl_Expects(out.is_logic());
-#endif
-
-            var out_cast = (logic_output_t)out_;  //const auto &out_cast = dynamic_cast<const logic_output_t &>(out);
             var iter_proxy = m_proxies.find(out_);
 
             if (iter_proxy != default)
                 return iter_proxy;
 
             // create a new one ...
+
+            var out_cast = (logic_output_t)out_;
+            nl_assert_always(out_cast != null, "Not able to cast to logic_output_t&");
+
             string x = new plib.pfmt("proxy_da_{0}_{1}").op(out_.name(), m_proxy_cnt);
             var new_proxy = out_cast.logic_family().create_d_a_proxy(m_nlstate, x, out_cast);
             m_proxy_cnt++;
             // connect all existing terminals to new net
 
-            foreach (var p in nlstate().core_terms(out_.net()))
+            // Get a copy first
+            var temp_terminals = out_.net().core_terms_copy();
+            // remove all terminals from out.net()
+            out_.net().remove_all_terminals();
+
+            foreach (detail.core_terminal_t p in temp_terminals)
             {
                 p.clear_net(); // de-link from all nets ...
                 if (!connect(new_proxy.proxy_term(), p))
@@ -1186,16 +1192,13 @@ namespace mame.netlist
                 }
             }
 
-            nlstate().core_terms(out_.net()).clear();
-
-            add_terminal(out_.net(), new_proxy.in_());
+            out_.net().add_terminal(new_proxy.in_());
 
             var proxy = new_proxy;
             if (!m_proxies.insert(out_, proxy))
                 throw new nl_exception(MF_DUPLICATE_PROXY_1(out_.name()));
 
             m_nlstate.register_device(new_proxy.name(), new_proxy);
-
             return proxy;
         }
 
@@ -1204,10 +1207,10 @@ namespace mame.netlist
         {
             //throw new emu_unimplemented();
 #if false
-            nl_assert(inp.is_logic());
+            gsl_Expects(inp.is_logic());
 #endif
 
-            var incast = (logic_input_t)inp;
+            var logic_input_terminal = (logic_input_t)inp;
 
             var iter_proxy = m_proxies.find(inp);
 
@@ -1215,7 +1218,7 @@ namespace mame.netlist
                 return iter_proxy;
 
             log().debug.op("connect_terminal_input: connecting proxy\n");
-            var new_proxy = incast.logic_family().create_a_d_proxy(m_nlstate, new plib.pfmt("proxy_ad_{0}_{1}").op(inp.name(), m_proxy_cnt), incast);
+            var new_proxy = logic_input_terminal.logic_family().create_a_d_proxy(m_nlstate, new plib.pfmt("proxy_ad_{0}_{1}").op(inp.name(), m_proxy_cnt), logic_input_terminal);
 
             var ret = new_proxy;
 
@@ -1228,7 +1231,11 @@ namespace mame.netlist
 
             if (inp.has_net())
             {
-                foreach (detail.core_terminal_t p in nlstate().core_terms(inp.net()))
+                var temp_terminals = inp.net().core_terms_copy();
+
+                inp.net().remove_all_terminals();
+
+                foreach (detail.core_terminal_t p in temp_terminals)
                 {
                     // inp may already belongs to the logic net. Thus skip it here.
                     // It will be removed by the clear further down.
@@ -1237,19 +1244,15 @@ namespace mame.netlist
                         p.clear_net(); // de-link from all nets ...
                         if (!connect(ret.proxy_term(), p))
                         {
-                            log().fatal.op(MF_CONNECTING_1_TO_2(
-                                    ret.proxy_term().name(), p.name()));
-                            throw new nl_exception(MF_CONNECTING_1_TO_2(
-                                    ret.proxy_term().name(), p.name()));
+                            log().fatal.op(MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
+                            throw new nl_exception(MF_CONNECTING_1_TO_2(ret.proxy_term().name(), p.name()));
                         }
                     }
                 }
-
-                nlstate().core_terms(inp.net()).clear(); // clear the list
             }
 
             inp.clear_net();
-            add_terminal(ret.out_().net(), inp);
+            ret.out_().net().add_terminal(inp);
             m_nlstate.register_device(new_proxy.name(), new_proxy);
             return ret;
         }
@@ -1271,26 +1274,19 @@ namespace mame.netlist
 
         // net manipulations
 
-        void remove_terminal(detail.net_t net, detail.core_terminal_t terminal)
-        {
-            if (plib.container.contains(nlstate().core_terms(net), terminal))
-            {
-                terminal.set_net(null);
-                plib.container.remove(nlstate().core_terms(net), terminal);
-            }
-            else
-            {
-                log().fatal.op(MF_REMOVE_TERMINAL_1_FROM_NET_2(terminal.name(), net.name()));
-                throw new nl_exception(MF_REMOVE_TERMINAL_1_FROM_NET_2(terminal.name(), net.name()));
-            }
-        }
+        //void remove_terminal(detail.net_t net, detail.core_terminal_t terminal)
 
 
         void move_connections(detail.net_t net, detail.net_t dest_net)
         {
-            foreach (var ct in nlstate().core_terms(net))
-                add_terminal(dest_net, ct);
-            nlstate().core_terms(net).clear();
+            var temp = net.core_terms_copy();
+
+            net.remove_all_terminals();
+
+            foreach (detail.core_terminal_t ct in temp)
+            {
+                dest_net.add_terminal(ct);
+            }
         }
 
 
@@ -1330,7 +1326,7 @@ namespace mame.netlist
 
 
     // ----------------------------------------------------------------------------------------
-    // Specific netlist psource_t implementations
+    // Specific netlist `psource_t` implementations
     // ----------------------------------------------------------------------------------------
 
     public abstract class source_netlist_t : plib.psource_t

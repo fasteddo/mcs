@@ -100,7 +100,7 @@ namespace mame
             m_options = 0;
             m_divisor = 7;
             m_source = timer_source.CLOCK;
-            m_timer = false;
+            m_timer = true;
         }
 
 

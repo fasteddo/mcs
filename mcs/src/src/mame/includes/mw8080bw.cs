@@ -21,29 +21,26 @@ namespace mame
         const uint16_t MW8080BW_HBSTART                = 0x100;
         const uint16_t MW8080BW_VTOTAL                 = 0x106;
         const uint16_t MW8080BW_VBEND                  = 0x000;
-        const uint16_t MW8080BW_VBSTART                = 0x0e0;
-        const int MW8080BW_VCOUNTER_START_NO_VBLANK    = 0x020;
+        protected const uint16_t MW8080BW_VBSTART      = 0x0e0;
+        protected const int MW8080BW_VCOUNTER_START_NO_VBLANK = 0x020;
         const int MW8080BW_VCOUNTER_START_VBLANK       = 0x0da;
         const int MW8080BW_INT_TRIGGER_COUNT_1         = 0x080;
         const int MW8080BW_INT_TRIGGER_VBLANK_1        = 0;
         const int MW8080BW_INT_TRIGGER_COUNT_2         = MW8080BW_VCOUNTER_START_VBLANK;
         const int MW8080BW_INT_TRIGGER_VBLANK_2        = 1;
-        const uint32_t MW8080BW_60HZ                   = MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL;
+        protected const uint32_t MW8080BW_60HZ         = MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL;
 
         // +4 is added to HBSTART because the hardware displays that many pixels after setting HBLANK
-        const uint16_t MW8080BW_HPIXCOUNT              = MW8080BW_HBSTART + 4;
+        protected const uint16_t MW8080BW_HPIXCOUNT    = MW8080BW_HBSTART + 4;
 
 
         // device/memory pointers
         protected required_device<i8080_cpu_device> m_maincpu;
         protected optional_device<mb14241_device> m_mb14241;
-        optional_device<watchdog_timer_device> m_watchdog;
-        required_shared_ptr<uint8_t> m_main_ram;
+        protected optional_device<watchdog_timer_device> m_watchdog;
+        protected required_shared_ptr<uint8_t> m_main_ram;
         optional_device<discrete_sound_device> m_discrete;
-        required_device<screen_device> m_screen;
-
-        // misc game specific
-        uint8_t m_flip_screen = 0;
+        protected required_device<screen_device> m_screen;
 
         // misc game specific
         //uint16_t      m_phantom2_cloud_counter = 0;
@@ -113,10 +110,6 @@ namespace mame
 
     //class zzzap_state : public mw8080bw_state
 
-    //#define TORNBASE_CAB_TYPE_UPRIGHT_OLD   (0)
-    //#define TORNBASE_CAB_TYPE_UPRIGHT_NEW   (1)
-    //#define TORNBASE_CAB_TYPE_COCKTAIL      (2)
-
 
     partial class mw8080bw_state : driver_device
     {
@@ -126,6 +119,28 @@ namespace mame
         public const string INVADERS_SW6_SW7_PORT_TAG    = "SW6SW7";
         public const string INVADERS_SW5_PORT_TAG        = "SW5";
     }
+
+
+    partial class invaders_state : mw8080bw_state
+    {
+        optional_ioport_array<u32_const_2> m_player_controls;
+        optional_ioport m_cabinet_type;
+
+        uint8_t m_flip_screen = 0;
+
+
+        public invaders_state(machine_config mconfig, device_type type, string tag)
+            : base(mconfig, type, tag)
+        {
+            m_player_controls = new optional_ioport_array<u32_const_2>(this, "CONTP{0}", 1U);
+            m_cabinet_type = new optional_ioport(this, INVADERS_CAB_TYPE_PORT_TAG);
+        }
+    }
+
+
+    //#define TORNBASE_CAB_TYPE_UPRIGHT_OLD   (0)
+    //#define TORNBASE_CAB_TYPE_UPRIGHT_NEW   (1)
+    //#define TORNBASE_CAB_TYPE_COCKTAIL      (2)
 
 
     //#define BLUESHRK_SPEAR_PORT_TAG         ("IN0")
@@ -141,8 +156,7 @@ namespace mame
     //#define INVADERS_CONTROL_PORT_PLAYER(player) \
     //    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(player) \
     //    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(player) \
-    //    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(player) \
-    //    PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
+    //    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(player)
 
     //#define INVADERS_CAB_TYPE_PORT \
     //    PORT_START(INVADERS_CAB_TYPE_PORT_TAG) \

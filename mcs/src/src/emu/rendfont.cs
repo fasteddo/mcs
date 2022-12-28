@@ -185,18 +185,20 @@ namespace mame
         //  string_width - return the width of a string
         //  at the given height
         //-------------------------------------------------
-        public float string_width(float height, float aspect, string str)  // const char *string)
+        public float string_width(float height, float aspect, string string_)
         {
             // loop over the string and accumulate widths
             int totwidth = 0;
             char schar;  //char32_t schar;
 
             // loop over characters
-            while (!str.empty())
+            int scharcount;
+            while ((scharcount = uchar_from_utf8(out schar, string_)) != 0)
             {
-                int scharcount = uchar_from_utf8(out schar, str);
+                if (0 > scharcount)
+                    schar = (char)0xfffd;
+                string_ = string_.remove_prefix_((0 > scharcount) ? 1 : (size_t)scharcount);  //string.remove_prefix((0 > scharcount) ? 1 : scharcount);
                 totwidth += get_char(schar).width;
-                str = str[scharcount..];  //string.remove_prefix(scharcount);
             }
 
             // scale the final result based on height

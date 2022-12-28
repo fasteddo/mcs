@@ -3,6 +3,7 @@
 
 using System;
 
+using base_device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = base_device_param_t;  //using base_device_param_t = const base_device_data_t &;  //using base_device_data_t = core_device_data_t;
 using nl_fptype = System.Double;  //using nl_fptype = config::fptype;
 using nl_fptype_ops = mame.plib.constants_operators_double;
 using param_fp_t = mame.netlist.param_num_t<System.Double, mame.netlist.param_num_t_operators_double>;  //using param_fp_t = param_num_t<nl_fptype>;
@@ -29,7 +30,6 @@ namespace mame.netlist.analog
     //
     //   RI = 1 / NETLIST_GMIN
     //
-    //NETLIB_BASE_OBJECT(VCCS)
     public class nld_VCCS : base_device_t
     {
         public param_fp_t m_G;
@@ -44,26 +44,22 @@ namespace mame.netlist.analog
         protected terminal_t m_OP1;
         protected terminal_t m_ON1;
 
-        ////terminal_t m_IPx;
-        ////terminal_t m_INx;
-
         nl_fptype m_gfac;
 
 
-        //NETLIB_CONSTRUCTOR_EX(VCCS, nl_fptype ri = nlconst::magic(1e9))
-        public nld_VCCS(base_device_t owner, string name) : this(owner, name, nlconst.magic(1e9)) { }
-        public nld_VCCS(base_device_t owner, string name, nl_fptype ri)
-            : base(owner, name)
+        public nld_VCCS(base_device_t_constructor_param_t data) : this(data, nlconst.magic(1e9)) { }
+        public nld_VCCS(base_device_t_constructor_param_t data, nl_fptype ri)
+            : base(data)
         {
             m_G = new param_fp_t(this, "G", nlconst.one());
             m_RI = new param_fp_t(this, "RI", ri);
 
-            m_OP = new terminal_t(this, "OP", termhandler);  //m_OP(*this, "OP", &m_IP, {&m_ON, &m_IN}, NETLIB_DELEGATE(termhandler));
-            m_ON = new terminal_t(this, "ON", termhandler);  //m_ON(*this, "ON", &m_IP, {&m_OP, &m_IN}, NETLIB_DELEGATE(termhandler));
-            m_IP = new terminal_t(this, "IP", termhandler);  //m_IP(*this, "IP", &m_IN, {&m_OP, &m_ON}, NETLIB_DELEGATE(termhandler));
-            m_IN = new terminal_t(this, "IN", termhandler);  //m_IN(*this, "IN", &m_IP, {&m_OP, &m_ON}, NETLIB_DELEGATE(termhandler));
-            m_OP1 = new terminal_t(this, "_OP1", termhandler);//, m_OP1(*this, "_OP1", &m_IN, NETLIB_DELEGATE(termhandler))
-            m_ON1 = new terminal_t(this, "_ON1", termhandler);//, m_ON1(*this, "_ON1", &m_IN, NETLIB_DELEGATE(termhandler))
+            m_OP = new terminal_t(this, "OP", terminal_handler);  //m_OP(*this, "OP", &m_IP, {&m_ON, &m_IN}, NETLIB_DELEGATE(terminal_handler));
+            m_ON = new terminal_t(this, "ON", terminal_handler);  //m_ON(*this, "ON", &m_IP, {&m_OP, &m_IN}, NETLIB_DELEGATE(terminal_handler));
+            m_IP = new terminal_t(this, "IP", terminal_handler);  //m_IP(*this, "IP", &m_IN, {&m_OP, &m_ON}, NETLIB_DELEGATE(terminal_handler));
+            m_IN = new terminal_t(this, "IN", terminal_handler);  //m_IN(*this, "IN", &m_IP, {&m_OP, &m_ON}, NETLIB_DELEGATE(terminal_handler));
+            m_OP1 = new terminal_t(this, "_OP1", terminal_handler);//, m_OP1(*this, "_OP1", &m_IN, NETLIB_DELEGATE(terminal_handler))
+            m_ON1 = new terminal_t(this, "_ON1", terminal_handler);//, m_ON1(*this, "_ON1", &m_IN, NETLIB_DELEGATE(terminal_handler))
             m_OP.terminal_t_after_ctor(m_IP, new std.array<terminal_t, u64_const_2>(m_ON, m_IN));
             m_ON.terminal_t_after_ctor(m_IP, new std.array<terminal_t, u64_const_2>(m_OP, m_IN));
             m_IP.terminal_t_after_ctor(m_IN, new std.array<terminal_t, u64_const_2>(m_OP, m_ON));
@@ -71,16 +67,11 @@ namespace mame.netlist.analog
             m_OP1.terminal_t_after_ctor(m_IN);
             m_ON1.terminal_t_after_ctor(m_IN);
 
-            ////, m_IPx(*this, "_IPx", &m_OP, NETLIB_DELEGATE(termhandler))   // <= this should be NULL and terminal be filtered out prior to solving...
-            ////, m_INx(*this, "_INx", &m_ON, NETLIB_DELEGATE(termhandler))   // <= this should be NULL and terminal be filtered out prior to solving...
-
             m_gfac = nlconst.one();
 
 
             connect(m_OP, m_OP1);
             connect(m_ON, m_ON1);
-            ////connect(m_IP, m_IPx);
-            ////connect(m_IN, m_INx);
         }
 
 
@@ -102,9 +93,9 @@ namespace mame.netlist.analog
         }
 
 
-        //NETLIB_HANDLERI(termhandler);
-        //NETLIB_HANDLER(VCCS, termhandler)
-        protected void termhandler()
+        //NETLIB_HANDLERI(terminal_handler);
+        //NETLIB_HANDLER(VCCS, terminal_handler)
+        protected void terminal_handler()
         {
             solver.matrix_solver_t solv = null;
             // only called if connected to a rail net ==> notify the solver to recalculate
@@ -122,7 +113,7 @@ namespace mame.netlist.analog
         //NETLIB_UPDATE_PARAMI()
         public override void update_param()
         {
-            this.reset();
+            this.reset();  //NETLIB_NAME(VCCS)::reset(); }
         }
 
 
@@ -139,12 +130,11 @@ namespace mame.netlist.analog
     }
 
 
-    //NETLIB_OBJECT_DERIVED(LVCCS, VCCS)
+    //class nld_LVCCS : public nld_VCCS
 
-    //NETLIB_OBJECT_DERIVED(CCCS, VCCS)
+    //class nld_CCCS : public nld_VCCS
 
 
-    //NETLIB_OBJECT_DERIVED(VCVS, VCCS)
     public class nld_VCVS : nld_VCCS
     {
         public param_fp_t m_RO;
@@ -153,14 +143,13 @@ namespace mame.netlist.analog
         terminal_t m_ON2;
 
 
-        //NETLIB_CONSTRUCTOR_DERIVED(VCVS, VCCS)
-        public nld_VCVS(base_device_t owner, string name)
-            : base(owner, name)
+        public nld_VCVS(base_device_t_constructor_param_t data)
+            : base(data)
         { 
             m_RO = new param_fp_t(this, "RO", nlconst.one());
 
-            m_OP2 = new terminal_t(this, "_OP2", termhandler);//, &m_ON2, NETLIB_DELEGATE(termhandler))
-            m_ON2 = new terminal_t(this, "_ON2", termhandler);//, &m_OP2, NETLIB_DELEGATE(termhandler))
+            m_OP2 = new terminal_t(this, "_OP2", terminal_handler);//, &m_ON2, NETLIB_DELEGATE(terminal_handler))
+            m_ON2 = new terminal_t(this, "_ON2", terminal_handler);//, &m_OP2, NETLIB_DELEGATE(terminal_handler))
             m_OP2.terminal_t_after_ctor(m_ON2);
             m_ON2.terminal_t_after_ctor(m_OP2);
 
@@ -184,16 +173,16 @@ namespace mame.netlist.analog
         }
 
 
-        //NETLIB_UPDATE_PARAMI();
+        ////NETLIB_UPDATE_PARAMI();
 
 
-        //NETLIB_HANDLERI(termhandler)
-        new void termhandler()
+        //NETLIB_HANDLERI(terminal_handler)
+        new void terminal_handler()
         {
-            base.termhandler();  //NETLIB_NAME(VCCS) :: termhandler();
+            base.terminal_handler();  //NETLIB_NAME(VCCS) :: terminal_handler();
         }
     }
 
 
-    //NETLIB_OBJECT_DERIVED(CCVS, VCCS)
+    //class nld_CCVS : public nld_VCCS
 }

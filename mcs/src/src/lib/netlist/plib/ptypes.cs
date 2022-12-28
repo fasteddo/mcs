@@ -50,7 +50,8 @@ namespace mame.plib
     //{
     //    UNKNOWN,
     //    LIBSTDCXX,
-    //    LIBCPP
+    //    LIBCPP,
+    //    MSVCPRT
     //};
 
     //enum class ci_os
@@ -82,12 +83,14 @@ namespace mame.plib
 
     // <sys/types.h> on ubuntu system may define major and minor as macros
     // That's why we use vmajor, .. here
-    //template <std::size_t MAJOR, std::size_t MINOR>
+    //template <std::size_t MAJOR, std::size_t MINOR, std::size_t PL = 0>
     //struct typed_version
     //{
+    //    static_assert((MINOR < 100) && (PL < 100), "typed_version: MAJOR, MINOR or PATCHLEVEL exceeds or equal to 100");
     //    using vmajor = std::integral_constant<std::size_t, MAJOR>;
     //    using vminor = std::integral_constant<std::size_t, MINOR>;
-    //    using full = std::integral_constant<std::size_t, MAJOR * 100 + MINOR>;
+    //    using vpatchlevel = std::integral_constant<std::size_t, PL>;
+    //    using full = std::integral_constant<std::size_t, MAJOR * 10000 + MINOR * 100 + PL>;
     //};
 
     //struct compile_info

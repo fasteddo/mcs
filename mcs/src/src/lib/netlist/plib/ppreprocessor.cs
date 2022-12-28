@@ -287,21 +287,21 @@ namespace mame.plib
                         while (token != ")")
                         {
                             string par = "";
-                            int pcnt = 1;
+                            int parenthesis_count = 1;
                             while (true)
                             {
-                                if (pcnt==1 && token == ",")
+                                if (parenthesis_count == 1 && token == ",")
                                 {
                                     token = elems.next();
                                     break;
                                 }
 
                                 if (token == "(")
-                                    pcnt++;
+                                    parenthesis_count++;
 
                                 if (token == ")")
                                 {
-                                    if (--pcnt == 0)
+                                    if (--parenthesis_count == 0)
                                         break;
                                 }
 
@@ -376,8 +376,8 @@ namespace mame.plib
             while (!m_stack.empty())
             {
                 string line;  //putf8string line;
-                string linemarker = new pfmt("# {0} \"{1}\"\n").op(m_stack.back().m_lineno, m_stack.back().m_name);
-                push_out(linemarker);
+                string line_marker = new pfmt("# {0} \"{1}\"\n").op(m_stack.back().m_lineno, m_stack.back().m_name);
+                push_out(line_marker);
                 bool last_skipped = false;
                 while ((line = m_stack.back().m_reader.ReadLine()) != null)
                 {
@@ -400,8 +400,8 @@ namespace mame.plib
                 m_stack.pop_back();
                 if (!m_stack.empty())
                 {
-                    linemarker = new pfmt("# {0} \"{1}\" 2\n").op(m_stack.back().m_lineno, m_stack.back().m_name);
-                    push_out(linemarker);
+                    line_marker = new pfmt("# {0} \"{1}\" 2\n").op(m_stack.back().m_lineno, m_stack.back().m_name);
+                    push_out(line_marker);
                 }
             }
         }
@@ -410,7 +410,7 @@ namespace mame.plib
         ppreprocessor_string_list tokenize(string str, ppreprocessor_string_list sep, bool remove_ws, bool concat)
         {
             string STR = "\"";
-            ppreprocessor_string_list tmpret = new ppreprocessor_string_list();
+            ppreprocessor_string_list tmp_ret = new ppreprocessor_string_list();
             ppreprocessor_string_list tmp = plib.pg.psplit(str, sep);
             size_t pi = 0;
 
@@ -427,7 +427,7 @@ namespace mame.plib
                     }
 
                     s += STR;
-                    tmpret.push_back(s);
+                    tmp_ret.push_back(s);
                 }
                 else
                 {
@@ -445,21 +445,21 @@ namespace mame.plib
                     }
 
                     if (!remove_ws || (tok != " " && tok != "\t"))
-                        tmpret.push_back(tok);
+                        tmp_ret.push_back(tok);
                 }
 
                 pi++;
             }
 
             if (!concat)
-                return tmpret;
+                return tmp_ret;
 
             // FIXME: error if concat at beginning or end
             ppreprocessor_string_list ret = new ppreprocessor_string_list();
             pi = 0;
-            while (pi < tmpret.size())
+            while (pi < tmp_ret.size())
             {
-                if (tmpret[pi] == "##")
+                if (tmp_ret[pi] == "##")
                 {
                     while (ret.back() == " " || ret.back() == "\t")
                         ret.pop_back();
@@ -467,17 +467,17 @@ namespace mame.plib
                     string cc = ret.back();
                     ret.pop_back();
                     pi++;
-                    while (pi < tmpret.size() && (tmpret[pi] == " " || tmpret[pi] == "\t"))
+                    while (pi < tmp_ret.size() && (tmp_ret[pi] == " " || tmp_ret[pi] == "\t"))
                         pi++;
 
-                    if (pi == tmpret.size())
+                    if (pi == tmp_ret.size())
                         error("## found at end of sequence");
 
-                    ret.push_back(cc + tmpret[pi]);
+                    ret.push_back(cc + tmp_ret[pi]);
                 }
                 else
                 {
-                    ret.push_back(tmpret[pi]);
+                    ret.push_back(tmp_ret[pi]);
                 }
 
                 pi++;
@@ -620,7 +620,7 @@ namespace mame.plib
                         {
                             arg = arg.substr(1, arg.length() - 2);
                             // first try local context
-                            var l = plib.util.buildpath(m_stack.back().m_local_path, arg);
+                            var l = plib.util.build_path(m_stack.back().m_local_path, arg);
                             var lstrm = m_sources.get_stream(l);
                             if (!lstrm.empty())
                             {
@@ -644,8 +644,8 @@ namespace mame.plib
                             error("include misspelled:" + arg);
                         }
 
-                        string linemarker = new pfmt("# {0} \"{1}\" 1\n").op(m_stack.back().m_lineno, m_stack.back().m_name);
-                        push_out(linemarker);
+                        string line_marker = new pfmt("# {0} \"{1}\" 1\n").op(m_stack.back().m_lineno, m_stack.back().m_name);
+                        push_out(line_marker);
                     }
                 }
                 else if (lti[0] == "#pragma")
@@ -653,7 +653,7 @@ namespace mame.plib
                     if (m_if_flag == 0 && lti.size() > 3 && lti[1] == "NETLIST")
                     {
                         if (lti[2] == "warning")
-                            error("NETLIST: " + catremainder(lti, 3, " "));
+                            error("NETLIST: " + cat_remainder(lti, 3, " "));
                     }
                 }
                 else if (lti[0] == "#define")
@@ -668,10 +668,10 @@ namespace mame.plib
                         if (!is_valid_token(n))
                             error("define expected identifier");
 
-                        var prevdef = get_define(n);
+                        var previous_define = get_define(n);
                         if (lti.size() == 2)
                         {
-                            if (prevdef != null && !prevdef.m_replace.empty())
+                            if (previous_define != null && !previous_define.m_replace.empty())
                                 error("redefinition of " + n);
 
                             m_defines.insert(n, new define_t(n, ""));
@@ -699,7 +699,7 @@ namespace mame.plib
                                 r += args.next_ws();
 
                             def.m_replace = r;
-                            if (prevdef != null && prevdef.m_replace != r)
+                            if (previous_define != null && previous_define.m_replace != r)
                                 error("redefinition of " + n);
 
                             m_defines.insert(n, def);
@@ -710,7 +710,7 @@ namespace mame.plib
                             while (!args.eod())
                                 r += args.next_ws();
 
-                            if (prevdef != null && prevdef.m_replace != r)
+                            if (previous_define != null && previous_define.m_replace != r)
                                 error("redefinition of " + n);
 
                             m_defines.insert(n, new define_t(n, r));
@@ -878,7 +878,7 @@ namespace mame.plib
         }
 
 
-        static string catremainder(std.vector<string> elems, size_t start, string sep)
+        static string cat_remainder(std.vector<string> elems, size_t start, string sep)
         {
             throw new emu_unimplemented();
 #if false

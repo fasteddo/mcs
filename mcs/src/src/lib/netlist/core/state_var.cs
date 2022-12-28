@@ -5,6 +5,7 @@ using System;
 
 using state_var_u8 = mame.netlist.state_var<System.Byte>;  //using state_var_u8 = state_var<std::uint8_t>;
 using state_var_s32 = mame.netlist.state_var<System.Int32>;  //using state_var_s32 = state_var<std::int32_t>;
+using state_var_sig = mame.netlist.state_var<System.UInt32>;  //using state_var_sig = state_var<netlist_sig_t>;  //using netlist_sig_t = std::uint32_t;
 
 
 namespace mame.netlist
@@ -51,7 +52,8 @@ namespace mame.netlist
         }
 
 
-        //PMOVEASSIGN(state_var, delete)
+        //state_var(state_var &&) noexcept = delete;
+        //state_var &operator=(state_var &&) noexcept = delete;
 
         //! Destructor.
         //~state_var() noexcept = default;
@@ -91,8 +93,8 @@ namespace mame.netlist
 
 
     /// \brief A persistent array template.
-    ///  Use this state_var template to define an array whose contents are saved.
-    ///  Please refer to \ref state_var.
+    ///  Use this state_var template to define an array whose contents are
+    ///  saved. Please refer to \ref state_var.
     ///
     ///  \tparam C container class to use.
     //template <typename C>
@@ -118,6 +120,6 @@ namespace mame.netlist
 
 namespace plib
 {
-    //template<typename X>
-    //struct ptype_traits<netlist::state_var<X>> : ptype_traits<X>
+    //template <typename X>
+    //struct format_traits<netlist::state_var<X>> : format_traits<X>
 } // namespace plib

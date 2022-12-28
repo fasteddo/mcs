@@ -373,7 +373,7 @@ namespace mame
                 while (iter.next(out pluginpath))
                 {
                     // user may specify environment variables; subsitute them
-                    m_osdcore.osd_subst_env(out pluginpath, pluginpath);
+                    pluginpath = osd_subst_env(pluginpath);
 
                     // and then scan the directory recursively
                     m_plugins.scan_directory(pluginpath, true);
@@ -435,11 +435,9 @@ namespace mame
                 std.error_condition filerr = file.open("boot.lua");
                 if (!filerr)
                 {
-                    string exppath;
-                    m_osdcore.osd_subst_env(out exppath, file.fullpath());
-
                     throw new emu_unimplemented();
 #if false
+                    const std::string exppath = osd_subst_env(file.fullpath());ubst_env(out exppath, file.fullpath());
                     auto &l(*lua());
                     auto load_result = l.load_script(exppath);
                     if (!load_result.valid())

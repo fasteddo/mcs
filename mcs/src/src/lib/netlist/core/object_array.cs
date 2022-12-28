@@ -53,12 +53,12 @@ namespace mame.netlist
         //}
 
         //template<class D>
-        //object_array_base_t(D &dev, std::size_t offset, std::size_t qmask, const pstring &fmt)
+        //object_array_base_t(D &dev, std::size_t offset, std::size_t output_mask, const pstring &fmt)
         //{
         //    for (std::size_t i = 0; i<N; i++)
         //    {
         //        pstring name(formatted(fmt, i+offset));
-        //        if ((qmask >> i) & 1)
+        //        if ((output_mask >> i) & 1)
         //            name += "Q";
         //        this->emplace(i, dev, name);
         //    }
@@ -100,8 +100,8 @@ namespace mame.netlist
 
 
         //template<class D, std::size_t ND>
-        //object_array_t(D &dev, std::size_t offset, std::size_t qmask,
-        //    const pstring &fmt, std::array<nldelegate, ND> &&delegates)
+        //object_array_t(D &dev, std::size_t offset, std::size_t output_mask,
+        //    const pstring &fmt, std::array<nl_delegate, ND> &&delegates)
         //{
         //    static_assert(N <= ND, "initializer_list size mismatch");
         //    std::size_t i = 0;
@@ -110,7 +110,7 @@ namespace mame.netlist
         //        if (i < N)
         //        {
         //            pstring name(this->formatted(fmt, i+offset));
-        //            if ((qmask >> i) & 1)
+        //            if ((output_mask >> i) & 1)
         //                name += "Q";
         //            this->emplace_back(dev, name, e);
         //        }
@@ -214,5 +214,4 @@ namespace mame.netlist
 
     //template<std::size_t N>
     //class object_array_t<tristate_output_t, N> : public object_array_base_t<tristate_output_t, N>
-
-} // namespace netlist
+}

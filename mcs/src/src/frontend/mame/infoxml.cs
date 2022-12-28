@@ -400,7 +400,13 @@ namespace mame
             //prepared_info() = default;
             //prepared_info(const prepared_info &) = delete;
             //prepared_info(prepared_info &&) = default;
-            //prepared_info &operator=(const prepared_info &) = delete;
+//#if defined(_CPPLIB_VER) && defined(_MSVC_STL_VERSION)
+//            // MSVCPRT currently requires default-constructible std::future promise types to be assignable
+//            // remove this workaround when that's fixed
+//            prepared_info &operator=(const prepared_info &) = default;
+//#else
+//            prepared_info &operator=(const prepared_info &) = delete;
+//#endif
         }
 
         delegate void output_header_if_necessary_delegate(ref string out_);

@@ -372,7 +372,7 @@ namespace mame
         {
             base.device_start();
 
-            m_sci_timer = machine().scheduler().timer_alloc(sci_tick);
+            m_sci_timer = timer_alloc(sci_tick);
 
             m_irq_state[M6801_IS_LINE] = 0;
             m_port_ddr[3] = 0;

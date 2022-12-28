@@ -209,7 +209,7 @@ namespace mame
 
         void berzerk_state::create_irq_timer()
         {
-            m_irq_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(berzerk_state::irq_callback),this));
+            m_irq_timer = timer_alloc(FUNC(berzerk_state::irq_callback), this);
         }
 
 
@@ -286,7 +286,7 @@ namespace mame
 
         void berzerk_state::create_nmi_timer()
         {
-            m_nmi_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(berzerk_state::nmi_callback),this));
+            m_nmi_timer = timer_alloc(FUNC(berzerk_state::nmi_callback), this);
         }
 
 

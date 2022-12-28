@@ -3,6 +3,7 @@
 
 using System;
 
+using device_t_constructor_param_t = mame.netlist.core_device_data_t;  //using constructor_param_t = device_param_t;  //using device_param_t = const device_data_t &;  //using device_data_t = base_device_data_t;  //using base_device_data_t = core_device_data_t;
 using netlist_time = mame.plib.ptime<System.Int64, mame.plib.ptime_operators_int64, mame.plib.ptime_RES_config_INTERNAL_RES>;  //using netlist_time = plib::ptime<std::int64_t, config::INTERNAL_RES::value>;
 using unsigned = System.UInt32;
 
@@ -26,7 +27,7 @@ namespace mame.netlist.devices
         logic_input_t m_CLKB;
 
         logic_output_t m_QA;
-        object_array_t_logic_output_t<u64_const_3> m_QB;
+        object_array_t_logic_output_t<u64_const_3> m_QBCD;
 
         state_var<unsigned> m_a;
         state_var<unsigned> m_bcd;
@@ -38,13 +39,13 @@ namespace mame.netlist.devices
 
 
         //NETLIB_CONSTRUCTOR(7493)
-        public nld_7493(object owner, string name)
-            : base(owner, name)
+        public nld_7493(device_t_constructor_param_t data)
+            : base(data)
         {
             m_CLKA = new logic_input_t(this, "CLKA", updA);
             m_CLKB = new logic_input_t(this, "CLKB", updB);
             m_QA = new logic_output_t(this, "QA");
-            m_QB = new object_array_t_logic_output_t<u64_const_3>(this, new logic_output_t(this, "QB"), new logic_output_t(this, "QC"), new logic_output_t(this, "QD"));
+            m_QBCD = new object_array_t_logic_output_t<u64_const_3>(this, new logic_output_t(this, "QB"), new logic_output_t(this, "QC"), new logic_output_t(this, "QD"));
             m_a = new state_var<unsigned>(this, "m_a", 0);
             m_bcd = new state_var<unsigned>(this, "m_b", 0);
             m_R1 = new logic_input_t(this, "R1", inputs);
@@ -74,7 +75,7 @@ namespace mame.netlist.devices
                 m_CLKA.inactivate();
                 m_CLKB.inactivate();
                 m_QA.push(0, NLTIME_FROM_NS(40));
-                m_QB.push(0, NLTIME_FROM_NS(40));
+                m_QBCD.push(0, NLTIME_FROM_NS(40));
                 m_a.op = m_bcd.op = 0;
             }
         }
@@ -91,7 +92,7 @@ namespace mame.netlist.devices
         {
             ++m_bcd.op;
             var cnt = (m_bcd.op &= 0x07);
-            m_QB.push(cnt, out_delay);
+            m_QBCD.push(cnt, out_delay);
         }
     }
 }
