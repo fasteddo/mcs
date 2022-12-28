@@ -279,13 +279,15 @@ namespace mame
         attotime m_callback_timer_expire_time; // the original expiration time
         bool m_suspend_changes_pending;  // suspend/resume changes are pending
 
+
         // scheduling quanta
         class quantum_slot : simple_list_item<quantum_slot>
         {
             quantum_slot m_next;
-            attoseconds_t m_actual;                   // actual duration of the quantum
-            attoseconds_t m_requested;                // duration of the requested quantum
-            attotime m_expire;                   // absolute expiration time of this quantum
+            public attoseconds_t m_actual;                   // actual duration of the quantum
+            public attoseconds_t m_requested;                // duration of the requested quantum
+            public attotime m_expire;                   // absolute expiration time of this quantum
+
 
             // getters
             public quantum_slot next() { return m_next; }
@@ -301,6 +303,7 @@ namespace mame
             public void requested_set(attoseconds_t value) { m_requested = value; }
             public void expire_set(attotime value) { m_expire = value; }
         }
+
 
         simple_list<quantum_slot>   m_quantum_list = new simple_list<quantum_slot>();             // list of active quanta
         fixed_allocator<quantum_slot> m_quantum_allocator = new fixed_allocator<quantum_slot>();      // allocator for quanta
@@ -584,16 +587,55 @@ namespace mame
 
 
         //-------------------------------------------------
-        //  boost_interleave - temporarily boosts the
-        //  interleave factor
+        //  add_quantum - add a scheduling quantum;
+        //  the smallest active one is the one that is in use
         //-------------------------------------------------
-        public void boost_interleave(attotime timeslice_time, attotime boost_duration)
+        void add_quantum(attotime quantum, attotime duration)
         {
-            // ignore timeslices > 1 second
-            if (timeslice_time.seconds() > 0)
-                return;
+            assert(quantum.seconds() == 0);
 
-            add_scheduling_quantum(timeslice_time, boost_duration);
+            attotime curtime = time();
+            attotime expire = curtime + duration;
+            attoseconds_t quantum_attos = quantum.attoseconds();
+
+            // figure out where to insert ourselves, expiring any quanta that are out-of-date
+            quantum_slot insert_after = null;
+            quantum_slot next;
+            for (quantum_slot quant = m_quantum_list.first(); quant != null; quant = next)
+            {
+                // if this quantum is expired, nuke it
+                next = quant.next();
+                if (curtime >= quant.m_expire)
+                    m_quantum_allocator.reclaim(m_quantum_list.detach(quant));
+
+                // if this quantum is shorter than us, we need to be inserted afterwards
+                else if (quant.m_requested <= quantum_attos)
+                    insert_after = quant;
+            }
+
+            // if we found an exact match, just take the maximum expiry time
+            if (insert_after != null && insert_after.m_requested == quantum_attos)
+                insert_after.m_expire = attotime.Max(insert_after.m_expire, expire);
+
+            // otherwise, allocate a new quantum and insert it after the one we picked
+            else
+            {
+                quantum_slot quant = m_quantum_allocator.alloc();
+                quant.m_requested = quantum_attos;
+                quant.m_actual = std.max(quantum_attos, m_quantum_minimum);
+                quant.m_expire = expire;
+                m_quantum_list.insert_after(quant, insert_after);
+            }
+        }
+
+
+        //-------------------------------------------------
+        //  perfect_quantum - add a (temporary) minimum
+        //  scheduling quantum to boost the interleave
+        //-------------------------------------------------
+        public void perfect_quantum(attotime duration)
+        {
+            add_quantum(attotime.zero, duration);
         }
 
 
@@ -807,7 +849,7 @@ namespace mame
                     min_quantum = attotime.Min(new attotime(0, exec.minimum_quantum()), min_quantum);
 
                 // inform the timer system of our decision
-                add_scheduling_quantum(min_quantum, attotime.never);
+                add_quantum(min_quantum, attotime.never);
             }
 
 
@@ -881,49 +923,6 @@ namespace mame
                 rebuild_execute_list();
             else
                 m_suspend_changes_pending = false;
-        }
-
-        //-------------------------------------------------
-        //  add_scheduling_quantum - add a scheduling
-        //  quantum; the smallest active one is the one
-        //  that is in use
-        //-------------------------------------------------
-        void add_scheduling_quantum(attotime quantum, attotime duration)
-        {
-            assert(quantum.seconds() == 0);
-
-            attotime curtime = time();
-            attotime expire = curtime + duration;
-            attoseconds_t quantum_attos = quantum.attoseconds();
-
-            // figure out where to insert ourselves, expiring any quanta that are out-of-date
-            quantum_slot insert_after = null;
-            quantum_slot next;
-            for (quantum_slot quant = m_quantum_list.first(); quant != null; quant = next)
-            {
-                // if this quantum is expired, nuke it
-                next = quant.next();
-                if (curtime >= quant.expire())
-                    m_quantum_allocator.reclaim(m_quantum_list.detach(quant));
-
-                // if this quantum is shorter than us, we need to be inserted afterwards
-                else if (quant.requested() <= quantum_attos)
-                    insert_after = quant;
-            }
-
-            // if we found an exact match, just take the maximum expiry time
-            if (insert_after != null && insert_after.requested() == quantum_attos)
-                insert_after.expire_set(attotime.Max(insert_after.expire(), expire));
-
-            // otherwise, allocate a new quantum and insert it after the one we picked
-            else
-            {
-                quantum_slot quant = m_quantum_allocator.alloc();
-                quant.requested_set(quantum_attos);
-                quant.actual_set(std.max(quantum_attos, m_quantum_minimum));
-                quant.expire_set(expire);
-                m_quantum_list.insert_after(quant, insert_after);
-            }
         }
 
 

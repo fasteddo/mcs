@@ -303,51 +303,51 @@ namespace mame
         //-------------------------------------------------
         //  flip_screen_set - set global flip
         //-------------------------------------------------
-        public void flip_screen_set(u32 on)
+        public void flip_screen_set(int state)
         {
             // normalize to all 1
-            if (on != 0)
-                on = u32.MaxValue;  //~0;
+            if (state != 0)
+                state = 0xff;
 
             // if something's changed, handle it
-            if (m_flip_screen_x != on || m_flip_screen_y != on)
+            if (m_flip_screen_x != state || m_flip_screen_y != state)
             {
-                m_flip_screen_x = m_flip_screen_y = (u8)on;
+                m_flip_screen_x = m_flip_screen_y = (u8)state;
                 updateflip();
             }
         }
 
-        protected void flip_screen_x_set(u32 on)
+        protected void flip_screen_x_set(int state)
         {
             // normalize to all 1
-            if (on != 0)
-                on = u32.MaxValue;  //~0;
+            if (state != 0)
+                state = 0xff;
 
             // if something's changed, handle it
-            if (m_flip_screen_x != on)
+            if (m_flip_screen_x != state)
             {
-                m_flip_screen_x = (u8)on;
+                m_flip_screen_x = (u8)state;
                 updateflip();
             }
         }
 
-        protected void flip_screen_y_set(u32 on)
+        protected void flip_screen_y_set(int state)
         {
             // normalize to all 1
-            if (on != 0)
-                on = u32.MaxValue;  //~0;
+            if (state != 0)
+                state = 0xff;
 
             // if something's changed, handle it
-            if (m_flip_screen_y != on)
+            if (m_flip_screen_y != state)
             {
-                m_flip_screen_y = (u8)on;
+                m_flip_screen_y = (u8)state;
                 updateflip();
             }
         }
 
-        public u32 flip_screen() { return m_flip_screen_x; }
-        protected u32 flip_screen_x() { return m_flip_screen_x; }
-        protected u32 flip_screen_y() { return m_flip_screen_y; }
+        public u8 flip_screen() { return m_flip_screen_x; } // & m_flip_screen_y?
+        protected u8 flip_screen_x() { return m_flip_screen_x; }
+        protected u8 flip_screen_y() { return m_flip_screen_y; }
 
 
         // helpers

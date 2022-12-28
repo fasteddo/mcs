@@ -1203,9 +1203,9 @@ namespace mame
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_NEXT_GROUP,        N_p("input-name", "UI Next Group"),          new input_seq(KEYCODE_CLOSEBRACE) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_ROTATE,            N_p("input-name", "UI Rotate"),              new input_seq(KEYCODE_R) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SHOW_PROFILER,     N_p("input-name", "Show Profiler"),          new input_seq(KEYCODE_F11, KEYCODE_LSHIFT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TOGGLE_UI,         N_p("input-name", "UI Toggle"),              new input_seq(KEYCODE_SCRLOCK, input_seq.not_code, KEYCODE_LSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TOGGLE_UI,         N_p("input-name", "UI Toggle"),              new input_seq(KEYCODE_SCRLOCK, input_seq.not_code, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_RELEASE_POINTER,   N_p("input-name", "UI Release Pointer"),     new input_seq(KEYCODE_RCONTROL, KEYCODE_RALT) );
-            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_PASTE,             N_p("input-name", "UI Paste Text"),          new input_seq(KEYCODE_SCRLOCK, KEYCODE_LSHIFT) );
+            INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_PASTE,             N_p("input-name", "UI Paste Text"),          new input_seq(KEYCODE_SCRLOCK, KEYCODE_LSHIFT, input_seq.or_code, KEYCODE_SCRLOCK, KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_SAVE_STATE,        N_p("input-name", "Save State"),             new input_seq(KEYCODE_F7, KEYCODE_LSHIFT, input_seq.or_code, KEYCODE_F7, KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_LOAD_STATE,        N_p("input-name", "Load State"),             new input_seq(KEYCODE_F7, input_seq.not_code, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );
             INPUT_PORT_DIGITAL_TYPE(typelist, 0, UI,      UI_TAPE_START,        N_p("input-name", "UI (First) Tape Start"),  new input_seq(KEYCODE_F2, input_seq.not_code, KEYCODE_LSHIFT, input_seq.not_code, KEYCODE_RSHIFT) );

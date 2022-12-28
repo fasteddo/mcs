@@ -84,7 +84,7 @@ namespace mame
 #if false//#if defined(SDLMAME_MACOSX) || defined(OSD_MAC)
             new options_entry(OSDOPTION_UIMODEKEY,                    "DEL",             core_options.option_type.STRING,    "key to enable/disable MAME controls when emulated system has keyboard inputs"),
 #else
-            new options_entry(OSDOPTION_UIMODEKEY,                    "SCRLOCK",         core_options.option_type.STRING,    "key to enable/disable MAME controls when emulated system has keyboard inputs"),
+            new options_entry(OSDOPTION_UIMODEKEY,                    "auto",            core_options.option_type.STRING,    "key to enable/disable MAME controls when emulated system has keyboard inputs"),
 #endif  // SDLMAME_MACOSX
 
             new options_entry(null,                                   null,              core_options.option_type.HEADER,    "OSD FONT OPTIONS"),
@@ -756,9 +756,12 @@ namespace mame
 
                 if (om.probe())
                 {
-                    om.init(options());
-                    m_osdcore.osd_list_network_adapters();
-                    om.exit();
+                    throw new emu_unimplemented();
+#if false
+                    om->init(options());
+                    osd_list_network_adapters();
+                    om->exit();
+#endif
                 }
 
                 return true;

@@ -24,10 +24,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_adc((uint8_t)TMP);
+            do_adc(TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -55,10 +55,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_adc((uint8_t)TMP);
+            do_adc(TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -93,10 +93,10 @@ namespace mame
             TMP += X;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_adc((uint8_t)TMP);
+            do_adc(TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -145,10 +145,10 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_adc((uint8_t)TMP);
+            do_adc(TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -183,10 +183,10 @@ namespace mame
             TMP += Y;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_adc((uint8_t)TMP);
+            do_adc(TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -235,10 +235,10 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_adc((uint8_t)TMP);
+            do_adc(TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -467,10 +467,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 2; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_adc((uint8_t)TMP);
+            do_adc(TMP2);
 
             if(icount == 0) { inst_substate = 3; return; }
             prefetch();
@@ -492,10 +492,10 @@ namespace mame
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
         case 2:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_adc((uint8_t)TMP);
+            do_adc(TMP2);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -520,10 +520,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((uint8_t)(TMP+X));
+            TMP2 = read((uint8_t)(TMP+X));
             icount--;
 
-            do_adc((uint8_t)TMP);
+            do_adc(TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -551,10 +551,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((uint8_t)(TMP+X));
+            TMP2 = read((uint8_t)(TMP+X));
             icount--;
 
-            do_adc((uint8_t)TMP);
+            do_adc(TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -2905,10 +2905,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(A, (uint8_t)TMP);
+            do_cmp(A, TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -2936,10 +2936,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(A, (uint8_t)TMP);
+            do_cmp(A, TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -2974,10 +2974,10 @@ namespace mame
             TMP += X;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(A, (uint8_t)TMP);
+            do_cmp(A, TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -3026,10 +3026,10 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(A, (uint8_t)TMP);
+            do_cmp(A, TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -3064,10 +3064,10 @@ namespace mame
             TMP += Y;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(A, (uint8_t)TMP);
+            do_cmp(A, TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -3116,10 +3116,10 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(A, (uint8_t)TMP);
+            do_cmp(A, TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -3348,10 +3348,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 2; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(A, (uint8_t)TMP);
+            do_cmp(A, TMP2);
 
             if(icount == 0) { inst_substate = 3; return; }
             prefetch();
@@ -3373,10 +3373,10 @@ namespace mame
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
         case 2:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(A, (uint8_t)TMP);
+            do_cmp(A, TMP2);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -3401,10 +3401,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((uint8_t)(TMP+X));
+            TMP2 = read((uint8_t)(TMP+X));
             icount--;
 
-            do_cmp(A, (uint8_t)TMP);
+            do_cmp(A, TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -3432,10 +3432,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((uint8_t)(TMP+X));
+            TMP2 = read((uint8_t)(TMP+X));
             icount--;
 
-            do_cmp(A, (uint8_t)TMP);
+            do_cmp(A, TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -3460,10 +3460,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(X, (uint8_t)TMP);
+            do_cmp(X, TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -3491,10 +3491,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(X, (uint8_t)TMP);
+            do_cmp(X, TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -3554,10 +3554,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 2; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(X, (uint8_t)TMP);
+            do_cmp(X, TMP2);
 
             if(icount == 0) { inst_substate = 3; return; }
             prefetch();
@@ -3579,10 +3579,10 @@ namespace mame
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
         case 2:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(X, (uint8_t)TMP);
+            do_cmp(X, TMP2);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -3607,10 +3607,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(Y, (uint8_t)TMP);
+            do_cmp(Y, TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -3638,10 +3638,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(Y, (uint8_t)TMP);
+            do_cmp(Y, TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -3701,10 +3701,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 2; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(Y, (uint8_t)TMP);
+            do_cmp(Y, TMP2);
 
             if(icount == 0) { inst_substate = 3; return; }
             prefetch();
@@ -3726,10 +3726,10 @@ namespace mame
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
         case 2:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_cmp(Y, (uint8_t)TMP);
+            do_cmp(Y, TMP2);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -8588,10 +8588,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_sbc((uint8_t)TMP);
+            do_sbc(TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -8619,10 +8619,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_sbc((uint8_t)TMP);
+            do_sbc(TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -8657,10 +8657,10 @@ namespace mame
             TMP += X;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_sbc((uint8_t)TMP);
+            do_sbc(TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -8709,10 +8709,10 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_sbc((uint8_t)TMP);
+            do_sbc(TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -8747,10 +8747,10 @@ namespace mame
             TMP += Y;
 
             if(icount == 0) { inst_substate = 4; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_sbc((uint8_t)TMP);
+            do_sbc(TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             prefetch();
@@ -8799,10 +8799,10 @@ namespace mame
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_sbc((uint8_t)TMP);
+            do_sbc(TMP2);
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
@@ -9031,10 +9031,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 2; return; }
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_sbc((uint8_t)TMP);
+            do_sbc(TMP2);
 
             if(icount == 0) { inst_substate = 3; return; }
             prefetch();
@@ -9056,10 +9056,10 @@ namespace mame
             if(icount == 0) { inst_substate = 2; return; }
             goto case 2;
         case 2:
-            TMP = read(TMP);
+            TMP2 = read(TMP);
             icount--;
 
-            do_sbc((uint8_t)TMP);
+            do_sbc(TMP2);
 
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
@@ -9084,10 +9084,10 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            TMP = read((uint8_t)(TMP+X));
+            TMP2 = read((uint8_t)(TMP+X));
             icount--;
 
-            do_sbc((uint8_t)TMP);
+            do_sbc(TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             prefetch();
@@ -9115,10 +9115,10 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            TMP = read((uint8_t)(TMP+X));
+            TMP2 = read((uint8_t)(TMP+X));
             icount--;
 
-            do_sbc((uint8_t)TMP);
+            do_sbc(TMP2);
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
@@ -10263,19 +10263,27 @@ namespace mame
             icount--;
 
             if(icount == 0) { inst_substate = 3; return; }
-            read(SP); dec_SP();
+            read(SP);
             icount--;
+
+            dec_SP();
 
             if(icount == 0) { inst_substate = 4; return; }
-            read(SP); dec_SP();
+            read(SP);
             icount--;
+
+            dec_SP();
 
             if(icount == 0) { inst_substate = 5; return; }
-            read(SP); dec_SP();
+            read(SP);
             icount--;
 
+            dec_SP();
+
+            P |= F_I;
+
             if(icount == 0) { inst_substate = 6; return; }
-            P |= F_I; PC = read_arg(0xfffc);
+            PC = read_arg(0xfffc);
             icount--;
 
             if(icount == 0) { inst_substate = 7; return; }
@@ -10310,25 +10318,33 @@ namespace mame
             if(icount == 0) { inst_substate = 3; return; }
             goto case 3;
         case 3:
-            read(SP); dec_SP();
+            read(SP);
             icount--;
+
+            dec_SP();
 
             if(icount == 0) { inst_substate = 4; return; }
             goto case 4;
         case 4:
-            read(SP); dec_SP();
+            read(SP);
             icount--;
+
+            dec_SP();
 
             if(icount == 0) { inst_substate = 5; return; }
             goto case 5;
         case 5:
-            read(SP); dec_SP();
+            read(SP);
             icount--;
+
+            dec_SP();
+
+            P |= F_I;
 
             if(icount == 0) { inst_substate = 6; return; }
             goto case 6;
         case 6:
-            P |= F_I; PC = read_arg(0xfffc);
+            PC = read_arg(0xfffc);
             icount--;
 
             if(icount == 0) { inst_substate = 7; return; }

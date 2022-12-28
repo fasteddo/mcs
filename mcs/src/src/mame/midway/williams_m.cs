@@ -118,7 +118,7 @@ namespace mame
 
     partial class williams_state : driver_device
     {
-        void snd_cmd_w(u8 data)
+        protected virtual void snd_cmd_w(u8 data)
         {
             throw new emu_unimplemented();
         }
@@ -292,16 +292,7 @@ namespace mame
 
         //TIMER_CALLBACK_MEMBER(blaster_state::deferred_snd_cmd_w)
 
-        //void blaster_state::snd_cmd_w(u8 data)
-
-
-        /*************************************
-         *
-         *  Lotto Fun-specific routines
-         *
-         *************************************/
-
-        //WRITE_LINE_MEMBER(williams_state::lottofun_coin_lock_w)
+        //void blaster_state::blaster_snd_cmd_w(u8 data)
 
 
         /*************************************

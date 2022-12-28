@@ -93,6 +93,7 @@ namespace mame
            3_579_000, /* 3.579_MHz_XTAL         BeebOPL */
            3_579_545, /* 3.579545_MHz_XTAL      NTSC color subcarrier, extremely common, used on 100's of PCBs (Keytronic custom part #48-300-010 is equivalent) */
            3_579_575, /* 3.579575_MHz_XTAL      Atari 2600 NTSC */
+           3_680_000, /* 3.68_MHz_XTAL          Resonator - Baud rate clock for the 6551 in the MTU-130 */
            3_686_400, /* 3.6864_MHz_XTAL        Baud rate clock for MC68681 and similar UARTs */
            3_840_000, /* 3.84_MHz_XTAL          Fairlight CMI Alphanumeric Keyboard */
            3_900_000, /* 3.9_MHz_XTAL           Resonator - Used on some Fidelity boards */

@@ -342,40 +342,6 @@ namespace mame
         public void osd_break_into_debugger(string format, params object [] args) { osd_break_into_debugger(string.Format(format, args)); }
 
 
-        /*-----------------------------------------------------------------------------
-          MESS specific code below
-        -----------------------------------------------------------------------------*/
-
-        /// \brief Get clipboard text
-        ///
-        /// Gets current clipboard content as UTF-8 text.  Returns an empty
-        /// string if the clipboard contents cannot be converted to plain text.
-        /// \return Clipboard contents or an empty string.
-        //std::string osd_get_clipboard_text(void);
-
-
-        /***************************************************************************
-            MIDI I/O INTERFACES
-        ***************************************************************************/
-
-        public abstract class osd_midi_device
-        {
-            // free result with osd_close_midi_channel()
-            //virtual bool open_input(const char *devname) = 0;
-            // free result with osd_close_midi_channel()
-            //virtual bool open_output(const char *devname) = 0;
-            //virtual void close() = 0;
-            //virtual bool poll() = 0;
-            //virtual int read(UINT8 *pOut) = 0;
-            //virtual void write(UINT8 data) = 0;
-        }
-
-
-        //FIXME: really needed here?
-        public abstract void osd_list_network_adapters();
-
-
-
         /***************************************************************************
             UNCATEGORIZED INTERFACES
         ***************************************************************************/

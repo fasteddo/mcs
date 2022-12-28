@@ -319,7 +319,7 @@ namespace mame
         {
             /* boost interleave when communicating with the sound CPU */
             m_soundlatch.op0.write(data);
-            machine().scheduler().boost_interleave(attotime.zero, attotime.from_usec(100));
+            machine().scheduler().perfect_quantum(attotime.from_usec(100));
         }
 
 
@@ -352,7 +352,7 @@ namespace mame
 
             /* boost interleave to ensure that the MCU can break the Z80 out of a HALT */
             if (BIT(m_mcu_control, 6) == 0 && BIT(data, 6) != 0)
-                machine().scheduler().boost_interleave(attotime.zero, attotime.from_usec(10));
+                machine().scheduler().perfect_quantum(attotime.from_usec(10));
 
             m_mcu_control = data;
             m_maincpu.op0.set_input_line(INPUT_LINE_HALT, (data & 0x40) != 0 ? ASSERT_LINE : CLEAR_LINE);

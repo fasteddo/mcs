@@ -60,6 +60,7 @@ namespace mame
         validity_checker_int_map m_region_map = new validity_checker_int_map();
         validity_checker_string_set m_ioport_set = new validity_checker_string_set();
         validity_checker_string_set m_already_checked = new validity_checker_string_set();
+        validity_checker_string_set m_slotcard_set = new validity_checker_string_set();
         bool m_checking_card;
         bool m_quick;
 
@@ -284,6 +285,7 @@ namespace mame
             m_defstr_map.clear();
             m_region_map.clear();
             m_ioport_set.clear();
+            m_slotcard_set.clear();
 
             // reset internal state
             m_errors = 0;

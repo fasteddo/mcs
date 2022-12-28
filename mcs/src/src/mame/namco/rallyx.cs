@@ -84,7 +84,7 @@ namespace mame
 
         void flip_screen_w(int state)
         {
-            flip_screen_set((u32)state);
+            flip_screen_set(state);
         }
 
 

@@ -64,4 +64,20 @@ namespace mame
         // midi interface
         //virtual osd_midi_device *create_midi_device() = 0;
     }
+
+
+    /***************************************************************************
+        MIDI I/O INTERFACES
+    ***************************************************************************/
+    //class osd_midi_device
+    //{
+    //public:
+    //    virtual ~osd_midi_device() { }
+    //    virtual bool open_input(const char *devname) = 0;
+    //    virtual bool open_output(const char *devname) = 0;
+    //    virtual void close() = 0;
+    //    virtual bool poll() = 0;
+    //    virtual int read(uint8_t *pOut) = 0;
+    //    virtual void write(uint8_t data) = 0;
+    //};
 }

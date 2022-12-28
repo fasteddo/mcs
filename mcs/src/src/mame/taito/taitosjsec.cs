@@ -149,7 +149,7 @@ namespace mame
             if (BIT(offset, 0) != 0)
             {
                 // ZLSTATUS
-                machine().scheduler().boost_interleave(attotime.zero, attotime.from_usec(10));
+                machine().scheduler().perfect_quantum(attotime.from_usec(10));
                 return
                     (u8)(((u8)space.unmap() & 0xfc) |
                           (u8)(m_zaccept ? 0x00 : 0x02) |
@@ -181,7 +181,7 @@ namespace mame
                 // ZLWRITE
                 device_scheduler sched = machine().scheduler();
                 sched.synchronize(do_host_write, data);
-                sched.boost_interleave(attotime.zero, attotime.from_usec(10));
+                sched.perfect_quantum(attotime.from_usec(10));
             }
         }
 

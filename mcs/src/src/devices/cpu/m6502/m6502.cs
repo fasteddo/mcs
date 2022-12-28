@@ -195,6 +195,7 @@ namespace mame
         bool irq_taken;
         bool sync;
         bool inhibit_interrupts;
+        bool uses_custom_memory_interface;
 
 
 #if MCS_DEBUG
@@ -248,11 +249,25 @@ namespace mame
             irq_taken = false;
             sync = false;
             inhibit_interrupts = false;
+            uses_custom_memory_interface = false;
             count_before_instruction_step = 0;
         }
 
 
         int icount { get { return icount_.i; } set { icount_.i = value; } }
+
+
+        //void set_address_width(int width, bool custom_interface)
+        //{
+        //    program_config.m_addr_width = width;
+        //    sprogram_config.m_addr_width = width;
+        //    uses_custom_memory_interface = custom_interface;
+        //}
+
+        //void set_custom_memory_interface(std::unique_ptr<memory_interface> interface)
+        //{
+        //    mintf = std::move(interface);
+        //}
 
 
         public bool get_sync() { return sync; }
@@ -262,12 +277,15 @@ namespace mame
 
         protected virtual void init()
         {
-            m_dimemory.space(AS_PROGRAM).cache(mintf.cprogram);
-            m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(mintf.csprogram);
-            if (m_dimemory.space(AS_PROGRAM).addr_width() > 14)
-                m_dimemory.space(AS_PROGRAM).specific(mintf.program);
-            else
-                m_dimemory.space(AS_PROGRAM).specific(mintf.program14);
+            if (mintf != null)
+            {
+                m_dimemory.space(AS_PROGRAM).cache(mintf.cprogram);
+                m_dimemory.space(m_dimemory.has_space(AS_OPCODES) ? AS_OPCODES : AS_PROGRAM).cache(mintf.csprogram);
+                if (m_dimemory.space(AS_PROGRAM).addr_width() > 14)
+                    m_dimemory.space(AS_PROGRAM).specific(mintf.program);
+                else
+                    m_dimemory.space(AS_PROGRAM).specific(mintf.program14);
+            }
 
             sync_w.resolve_safe();
 
@@ -336,7 +354,8 @@ namespace mame
         // device-level overrides
         protected override void device_start()
         {
-            mintf = m_dimemory.space(AS_PROGRAM).addr_width() > 14 ? new mi_default() : new mi_default14();
+            if (!uses_custom_memory_interface)
+                mintf = m_dimemory.space(AS_PROGRAM).addr_width() > 14 ? new mi_default() : new mi_default14();
 
             init();
         }

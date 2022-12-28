@@ -18,12 +18,20 @@ namespace mame
         -------------------------------------------------*/
         public static int core_stricmp(string s1, string s2)
         {
-            //for (;;)
+            //auto s1_iter = s1.begin();
+            //auto s2_iter = s2.begin();
+            //while (true)
             //{
-            //    int c1 = tolower((UINT8)*s1++);
-            //    int c2 = tolower((UINT8)*s2++);
-            //    if (c1 == 0 || c1 != c2)
-            //        return c1 - c2;
+            //    if (s1.end() == s1_iter)
+            //        return (s2.end() == s2_iter) ? 0 : -1;
+            //    else if (s2.end() == s2_iter)
+            //        return 1;
+            //
+            //    const int c1 = tolower(uint8_t(*s1_iter++));
+            //    const int c2 = tolower(uint8_t(*s2_iter++));
+            //    const int diff = c1 - c2;
+            //    if (diff)
+            //        return diff;
             //}
 
             return string.Compare(s1, s2, StringComparison.CurrentCultureIgnoreCase);

@@ -288,7 +288,7 @@ namespace mame
         void m52_flipscreen_w(uint8_t data)
         {
             /* screen flip is handled both by software and hardware */
-            flip_screen_set((u32)((data & 0x01) ^ (~ioport("DSW2").read() & 0x01)));
+            flip_screen_set((data & 0x01) ^ (int)(~ioport("DSW2").read() & 0x01));
 
             machine().bookkeeping().coin_counter_w(0, data & 0x02);
             machine().bookkeeping().coin_counter_w(1, data & 0x20);

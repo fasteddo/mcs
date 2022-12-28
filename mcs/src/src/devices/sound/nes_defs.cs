@@ -5,6 +5,7 @@ using System;
 
 using s16 = System.Int16;
 using u8 = System.Byte;
+using u16 = System.UInt16;
 using u32 = System.UInt32;
 using unsigned = System.UInt32;
 
@@ -14,7 +15,7 @@ using static mame.nes_defs_global;
 namespace mame
 {
     /* APU type */
-    class apu_t
+    public class apu_t
     {
         /* CHANNEL TYPE DEFINITIONS */
 
@@ -72,7 +73,7 @@ namespace mame
             //}
 
             public u8 [] regs = new u8 [4]; /* regs[1] unused */
-            public u32 seed = 1;
+            public u16 lfsr = 1;
             public int vbl_length = 0;
             public float phaseacc = 0.0f;
             public float env_phase = 0.0f;

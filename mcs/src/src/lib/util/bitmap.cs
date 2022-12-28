@@ -24,7 +24,7 @@ namespace mame
     // bitmap_format describes the various bitmap formats we use
     public enum bitmap_format
     {
-        BITMAP_FORMAT_INVALID = 0,      // invalid forma
+        BITMAP_FORMAT_INVALID = 0,      // invalid format
         BITMAP_FORMAT_IND8,             // 8bpp indexed
         BITMAP_FORMAT_IND16,            // 16bpp indexed
         BITMAP_FORMAT_IND32,            // 32bpp indexed
@@ -365,8 +365,12 @@ namespace mame
             {
                 // if we need more memory, just realloc
                 palette_t palette = m_palette;
+                if (palette != null)
+                    palette.ref_();
                 allocate(width, height, xslop, yslop);
                 set_palette(palette);
+                if (palette != null)
+                    palette.deref();
             }
             else
             {
@@ -395,19 +399,15 @@ namespace mame
          */
         public void set_palette(palette_t palette)
         {
-            // first dereference any existing palette
-            if (m_palette != null)
-            {
-                m_palette.deref();
-                m_palette = null;
-            }
-
-            // then reference any new palette
+            // first reference the new palette
             if (palette != null)
-            {
                 palette.ref_();
-                m_palette = palette;
-            }
+
+            // then dereference any existing palette
+            if (m_palette != null)
+                m_palette.deref();
+
+            m_palette = palette;
         }
 
         public void fill(uint64_t color) { fill(color, m_cliprect); }
@@ -636,7 +636,7 @@ namespace mame
         public bitmap_ind16(bitmap_ind16 source, rectangle subrect) : base(k_bitmap_format, source, subrect) { }
 
         //void wrap(uint16_t *base, int width, int height, int rowpixels) { bitmap_t::wrap(base, width, height, rowpixels); }
-        //void wrap(const bitmap_ind8 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<const bitmap_t &>(source), subrect); }
+        //void wrap(bitmap_ind16 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<bitmap_t &>(source), subrect); }
 
         // getters
         //bitmap_format format() const { return k_bitmap_format; }
@@ -656,7 +656,7 @@ namespace mame
         bitmap_ind32(bitmap_ind32 source, rectangle subrect) : base(k_bitmap_format, source, subrect) { }
 
         //void wrap(uint32_t *base, int width, int height, int rowpixels) { bitmap_t::wrap(base, width, height, rowpixels); }
-        //void wrap(const bitmap_ind8 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<const bitmap_t &>(source), subrect); }
+        //void wrap(bitmap_ind32 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<bitmap_t &>(source), subrect); }
 
         // getters
         //bitmap_format format() const { return k_bitmap_format; }
@@ -676,7 +676,7 @@ namespace mame
         public bitmap_ind64(bitmap_ind64 source, rectangle subrect) : base(k_bitmap_format, source, subrect) { }
 
         //void wrap(uint64_t *base, int width, int height, int rowpixels) { bitmap_t::wrap(base, width, height, rowpixels); }
-        //void wrap(const bitmap_ind8 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<const bitmap_t &>(source), subrect); }
+        //void wrap(bitmap_ind64 &source, const rectangle &subrect) { bitmap_t::wrap(static_cast<bitmap_t &>(source), subrect); }
 
         // getters
         //bitmap_format format() const { return k_bitmap_format; }

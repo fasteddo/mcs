@@ -212,7 +212,7 @@ namespace mame
         //WRITE_LINE_MEMBER(fastfred_state::flip_screen_x_w)
         void flip_screen_x_w(int state)
         {
-            flip_screen_x_set((uint32_t)state);
+            flip_screen_x_set(state);
 
             m_bg_tilemap.set_flip((flip_screen_x() != 0 ? TILEMAP_FLIPX : 0) | (flip_screen_y() != 0 ? TILEMAP_FLIPY : 0));
         }
@@ -221,7 +221,7 @@ namespace mame
         //WRITE_LINE_MEMBER(fastfred_state::flip_screen_y_w)
         void flip_screen_y_w(int state)
         {
-            flip_screen_y_set((uint32_t)state);
+            flip_screen_y_set(state);
 
             m_bg_tilemap.set_flip((flip_screen_x() != 0 ? TILEMAP_FLIPX : 0) | (flip_screen_y() != 0 ? TILEMAP_FLIPY : 0));
         }

@@ -19,9 +19,9 @@ using unsigned = System.UInt32;
 using vertical_machine_filter = mame.ui.vertical_machine_filter_impl;  //using vertical_machine_filter       = vertical_machine_filter_impl<>;
 using working_machine_filter = mame.ui.working_machine_filter_impl;  //using working_machine_filter        = working_machine_filter_impl<>;
 
-using static mame.corestr_global;
 using static mame.cpp_global;
 using static mame.language_global;
+using static mame.osdlib_global;
 using static mame.rendfont_global;
 using static mame.romload_global;
 using static mame.unicode_global;
@@ -772,56 +772,108 @@ namespace mame
         //const char* strensure(const char* s);
         //int getprecisionchr(const char* s);
         //std::vector<std::string> tokenize(const std::string &text, char sep);
+    }
 
 
-        public delegate bool input_character_filter(char32_t uchar);
-
-        //-------------------------------------------------
-        //  input_character - inputs a typed character
-        //  into a buffer
-        //-------------------------------------------------
-        //template <typename F>
-        public static bool input_character(ref string buffer, size_t size, char32_t unichar, input_character_filter filter)
+    namespace ui
+    {
+        public static class utils_ui_global
         {
-            bool result = false;
-            var buflen = buffer.size();
+            public delegate bool input_character_filter(char32_t uchar);
 
-            if ((unichar == 8) || (unichar == 0x7f))
+            //-------------------------------------------------
+            //  input_character - inputs a typed character
+            //  into a buffer
+            //-------------------------------------------------
+            //template <typename F>
+            public static bool input_character(ref string buffer, size_t size, char32_t unichar, input_character_filter filter)
             {
-                // backspace
-                if (0 < buflen)
+                var buflen = buffer.length();
+
+                if ((unichar == 8) || (unichar == 0x7f))
                 {
-                    //auto buffer_oldend = buffer.c_str() + buflen;
-                    //auto buffer_newend = utf8_previous_char(buffer_oldend);
-                    if (buffer.Length > 0)
-                        buffer = buffer.Remove(buffer.Length - 1);  //buffer.resize(buffer_newend - buffer.c_str());
-                    result = true;
+                    // backspace
+                    if (0 < buflen)
+                    {
+                        //auto buffer_oldend = buffer.c_str() + buflen;
+                        //auto buffer_newend = utf8_previous_char(buffer_oldend);
+                        if (buffer.Length > 0)
+                            buffer = buffer.Remove(buffer.Length - 1);  //buffer.resize(buffer_newend - buffer.c_str());
+                        return true;
+                    }
                 }
+                else if ((unichar >= ' ') && filter(unichar))
+                {
+                    // append this character - check against the size first
+                    string utf8char;  //char utf8char[UTF8_CHAR_MAX];
+                    var utf8len = utf8_from_uchar(out utf8char, unichar);
+                    if ((0 < utf8len) && (size >= (size_t)utf8len) && ((size - (size_t)utf8len) >= buflen))
+                    {
+                        buffer += utf8char;
+                        return true;
+                    }
+                }
+
+                return false;
             }
-            else if ((unichar >= ' ') && filter(unichar))
+
+
+            //-------------------------------------------------
+            //  input_character - inputs a typed character
+            //  into a buffer
+            //-------------------------------------------------
+            //template <typename F>
+            public static bool input_character(ref string buffer, char32_t unichar, input_character_filter filter)
             {
-                // append this character - check against the size first
-                string utf8_char = utf8_from_uchar(unichar);
-                if ((buffer.size() + utf8_char.size()) <= size)
-                {
-                    buffer += utf8_char;
-                    result = true;
-                }
+                var size = size_t.MaxValue;  //auto const size(std::numeric_limits<std::string::size_type>::max());
+                return input_character(ref buffer, size, unichar, filter);
             }
 
-            return result;
-        }
+
+            //-------------------------------------------------
+            //  paste_text - paste text from clipboard into a
+            //  buffer, ignoring invalid characters
+            //-------------------------------------------------
+            //template <typename F>
+            public static bool paste_text(ref string buffer, input_character_filter filter)  //bool paste_text(std::string &buffer, std::string::size_type size, F &&filter)
+            {
+                string clip = m_osdlib.osd_get_clipboard_text();
+                string text = clip;
+                bool updated = false;
+                int codelength;
+                char unichar;  //char32_t unichar;
+                while ((codelength = uchar_from_utf8(out unichar, text)) != 0)
+                {
+                    text = text.remove_prefix_((0 < codelength) ? (size_t)codelength : 1);
+                    if ((0 < codelength) && filter(unichar))
+                    {
+                        string utf8char;  //char utf8char[UTF8_CHAR_MAX];
+                        var utf8len = utf8_from_uchar(out utf8char, unichar);
+                        if (0 < utf8len)
+                        {
+                            //if ((size < utf8len) || ((size - utf8len) < buffer.length()))
+                            //{
+                            //    return updated;
+                            //}
+                            //else
+                            {
+                                buffer += utf8char;  //buffer.append(utf8char, utf8len);
+                                updated = true;
+                            }
+                        }
+                    }
+                }
+
+                return updated;
+            }
 
 
-        //-------------------------------------------------
-        //  input_character - inputs a typed character
-        //  into a buffer
-        //-------------------------------------------------
-        //template <typename F>
-        public static bool input_character(ref string buffer, char32_t unichar, input_character_filter filter)
-        {
-            var size = size_t.MaxValue;  //auto size = std::numeric_limits<std::string::size_type>::max();
-            return input_character(ref buffer, size, unichar, filter);
+            //-------------------------------------------------
+            //  paste_text - paste text from clipboard into a
+            //  buffer, ignoring invalid characters
+            //-------------------------------------------------
+            //template <typename F>
+            //bool paste_text(std::string &buffer, F &&filter)
         }
     }
 

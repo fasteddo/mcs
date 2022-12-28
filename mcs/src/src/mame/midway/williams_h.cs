@@ -15,17 +15,18 @@ using static mame.williams_global;
 
 namespace mame
 {
+    // base Williams hardware
     partial class williams_state : driver_device
     {
         //enum
         //{
-        //    //controlbyte (0xCA00) bit definitions
+        //    // controlbyte (0xCA00) bit definitions
         //    WMS_BLITTER_CONTROLBYTE_NO_EVEN = 0x80,
         //    WMS_BLITTER_CONTROLBYTE_NO_ODD = 0x40,
         //    WMS_BLITTER_CONTROLBYTE_SHIFT = 0x20,
         //    WMS_BLITTER_CONTROLBYTE_SOLID = 0x10,
         //    WMS_BLITTER_CONTROLBYTE_FOREGROUND_ONLY = 0x08,
-        //    WMS_BLITTER_CONTROLBYTE_SLOW = 0x04, //2us blits instead of 1us
+        //    WMS_BLITTER_CONTROLBYTE_SLOW = 0x04, // 2us blits instead of 1us
         //    WMS_BLITTER_CONTROLBYTE_DST_STRIDE_256 = 0x02,
         //    WMS_BLITTER_CONTROLBYTE_SRC_STRIDE_256 = 0x01
         //};
@@ -71,6 +72,7 @@ namespace mame
     }
 
 
+    // Defender
     partial class defender_state : williams_state
     {
         required_device<address_map_bank_device> m_bankc000;
@@ -87,11 +89,10 @@ namespace mame
     }
 
 
-    //class defndjeu_state : public defender_state
-
     //class mayday_state : public defender_state
 
 
+    // Sinistar: blitter window clip
     partial class sinistar_state : williams_state
     {
         public sinistar_state(machine_config mconfig, device_type type, string tag) :
@@ -105,13 +106,14 @@ namespace mame
     //class playball_state : public williams_state
 
 
-    partial class williams_muxed_state : williams_state
+    // Joust, Splat: muxed inputs
+    partial class wms_muxed_state : williams_state
     {
         required_device<ls157_device> m_mux0;
         required_device<ls157_device> m_mux1;
 
 
-        public williams_muxed_state(machine_config mconfig, device_type type, string tag) :
+        public wms_muxed_state(machine_config mconfig, device_type type, string tag) :
             base(mconfig, type, tag)
         {
             m_mux0 = new required_device<ls157_device>(this, "mux_0");
@@ -143,12 +145,12 @@ namespace mame
 
     static class williams_global
     {
+        // blitter type
+        //enum 
+        //{
         public const int WILLIAMS_BLITTER_NONE       = 0;       /* no blitter */
         public const int WILLIAMS_BLITTER_SC1        = 1;       /* Special Chip 1 blitter */
-        //#define WILLIAMS_BLITTER_SC2        2       /* Special Chip 2 "bugfixed" blitter */
-
-        //#define WILLIAMS_TILEMAP_MYSTICM    0       /* IC79 is a 74LS85 comparator */
-        //#define WILLIAMS_TILEMAP_TSHOOT     1       /* IC79 is a 74LS157 selector jumpered to be enabled */
-        //#define WILLIAMS_TILEMAP_JOUST2     2       /* IC79 is a 74LS157 selector jumpered to be disabled */
+        //WILLIAMS_BLITTER_SC2 = 2       /* Special Chip 2 "bugfixed" blitter */
+        //}
     }
 }

@@ -145,7 +145,7 @@ namespace mame
             // Bit 0   = Flip screen
             // Bit 1-7 = Unknown
 
-            flip_screen_set((uint32_t)(data & 0x01));
+            flip_screen_set(data & 0x01);
         }
 
 

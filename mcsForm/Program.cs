@@ -33,6 +33,7 @@ namespace mcsForm
             nld_sound_in_helper_global.init();
 
             osdcore_WinForms osdcore = new();
+            osdlib_WinForms osdlib = new();
             osd_file_WinForms osdfile = new();
             osd_directory_static_WinForms osddirectory = new();
             osd_options_WinForms options = new();
@@ -54,6 +55,7 @@ namespace mcsForm
             //options.set_value(emu_options.OPTION_SYSTEMNAME, gamename, g.OPTION_PRIORITY_MAXIMUM);
 
             osdcore_global.set_osdcore(osdcore);
+            osdlib_global.set_osdlib(osdlib);
             osdfile_global.set_osdfile(osdfile);
             osdfile_global.set_osddirectory(osddirectory);
             mame_machine_manager.instance(options, osd);

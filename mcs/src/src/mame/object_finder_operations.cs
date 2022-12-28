@@ -359,13 +359,6 @@ namespace mame
         public Pointer<msm5205_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
-    public class object_finder_operations_n2a03_device : object_finder_operations<n2a03_device>
-    {
-        public n2a03_device cast(device_t device) { return (n2a03_device)device; }
-        public n2a03_device cast(device_interface device) { throw new emu_unimplemented(); }
-        public Pointer<n2a03_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
-    }
-
     public class object_finder_operations_namco_device : object_finder_operations<namco_device>
     {
         public namco_device cast(device_t device) { return (namco_device)device; }
@@ -420,6 +413,14 @@ namespace mame
         public pia6821_device cast(device_t device) { return (pia6821_device)device; }
         public pia6821_device cast(device_interface device) { throw new emu_unimplemented(); }
         public Pointer<pia6821_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
+    }
+
+
+    public class object_finder_operations_rp2a03_device : object_finder_operations<rp2a03_device>
+    {
+        public rp2a03_device cast(device_t device) { return (rp2a03_device)device; }
+        public rp2a03_device cast(device_interface device) { throw new emu_unimplemented(); }
+        public Pointer<rp2a03_device> cast(PointerU8 memory) { throw new emu_unimplemented(); }
     }
 
     public class object_finder_operations_samples_device : object_finder_operations<samples_device>
@@ -627,7 +628,7 @@ namespace mame
                 else if (typeof_ObjectClass == typeof(midway_ssio_device))         return new object_finder_operations_midway_ssio_device();
                 else if (typeof_ObjectClass == typeof(midway_turbo_cheap_squeak_device)) return new object_finder_operations_midway_turbo_cheap_squeak_device();
                 else if (typeof_ObjectClass == typeof(msm5205_device))             return new object_finder_operations_msm5205_device();
-                else if (typeof_ObjectClass == typeof(n2a03_device))               return new object_finder_operations_n2a03_device();
+                else if (typeof_ObjectClass == typeof(rp2a03_device))              return new object_finder_operations_rp2a03_device();
                 else if (typeof_ObjectClass == typeof(namco_device))               return new object_finder_operations_namco_device();
                 else if (typeof_ObjectClass == typeof(nesapu_device))              return new object_finder_operations_nesapu_device();
                 else if (typeof_ObjectClass == typeof(netlist_mame_device))        return new object_finder_operations_netlist_mame_device();

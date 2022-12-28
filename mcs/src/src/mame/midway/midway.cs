@@ -3,7 +3,6 @@
 
 using System;
 
-using device_timer_id = System.UInt32;  //typedef u32 device_timer_id;
 using offs_t = System.UInt32;  //using offs_t = u32;
 using uint8_t = System.Byte;
 using uint16_t = System.UInt16;

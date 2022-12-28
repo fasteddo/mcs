@@ -2838,7 +2838,7 @@ namespace mame
 
             // validate
             if (entrynum < 0 || entrynum >= (int)m_entries.size())
-                throw new emu_fatalerror("memory_bank::set_entry called with out-of-range entry {0}", entrynum);
+                throw new emu_fatalerror("memory_bank::set_entry called for bank '{0}' with out-of-range entry {1}", m_tag, entrynum);
             if (m_entries[entrynum] == null)
                 throw new emu_fatalerror("memory_bank::set_entry called for bank '{0}' with invalid bank entry {1}", m_tag, entrynum);
 

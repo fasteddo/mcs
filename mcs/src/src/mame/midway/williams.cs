@@ -49,7 +49,7 @@ namespace mame
          *
          *************************************/
 
-        protected virtual void main_map(address_map map, device_t device)
+        protected override void main_map(address_map map, device_t device)
         {
             map.op(0x0000, 0xbfff).ram().share("videoram");
             map.op(0xc000, 0xcfff).m(m_bankc000, (map2, owner) => { m_bankc000.op0.amap8(map2); });
@@ -93,7 +93,7 @@ namespace mame
          *
          *************************************/
 
-        protected void base_map(address_map map, device_t device)
+        protected virtual void main_map(address_map map, device_t device)
         {
             map.op(0x0000, 0xbfff).ram().share("videoram");
             map.op(0x0000, 0x8fff).bankr("mainbank");
@@ -117,10 +117,10 @@ namespace mame
          *  Sinistar memory handlers
          *
          *************************************/
-        void main_map(address_map map, device_t device)
+        protected override void main_map(address_map map, device_t device)
         {
-            base_map(map, device);
-            map.op(0xc900, 0xc9ff).w(vram_select_w);
+            base.main_map(map, device);
+
             map.op(0xd000, 0xdfff).ram();
             map.op(0xe000, 0xffff).rom();
         }
@@ -446,7 +446,7 @@ namespace mame
         {
             // basic machine hardware
             MC6809E(config, m_maincpu, MASTER_CLOCK / 3 / 4);
-            m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, base_map);
+            m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, main_map);
 
             M6808(config, m_soundcpu, SOUND_CLOCK); // internal clock divider of 4, effective frequency is 894.886kHz
             m_soundcpu.op0.memory().set_addrmap(AS_PROGRAM, sound_map);
@@ -493,6 +493,25 @@ namespace mame
             m_pia[2].op0.irqa_handler().set("soundirq", (int state) => { ((input_merger_any_high_device)subdevice("soundirq")).in_w<u32_const_0>(state); }).reg();  //m_pia[2]->irqa_handler().set("soundirq", FUNC(input_merger_any_high_device::in_w<0>));
             m_pia[2].op0.irqb_handler().set("soundirq", (int state) => { ((input_merger_any_high_device)subdevice("soundirq")).in_w<u32_const_1>(state); }).reg();  //m_pia[2]->irqb_handler().set("soundirq", FUNC(input_merger_any_high_device::in_w<1>));
         }
+
+
+        public void williams_b0(machine_config config)
+        {
+            williams_base(config);
+            m_blitter_config = WILLIAMS_BLITTER_NONE;
+            m_blitter_clip_address = 0x0000;
+        }
+
+
+        public void williams_b1(machine_config config)
+        {
+            williams_base(config);
+            m_blitter_config = WILLIAMS_BLITTER_SC1;
+            m_blitter_clip_address = 0xc000;
+        }
+
+
+        //void williams_state::williams_b2(machine_config &config)
     }
 
 
@@ -500,19 +519,10 @@ namespace mame
     {
         public void defender(machine_config config)
         {
-            williams_base(config);
-
-            // basic machine hardware
-
-            m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, main_map);
-            m_soundcpu.op0.memory().set_addrmap(AS_PROGRAM, sound_map);
+            williams_b0(config);
 
             ADDRESS_MAP_BANK(config, m_bankc000).set_map(bankc000_map).set_options(ENDIANNESS_BIG, 8, 16, 0x1000);
-
             m_screen.op0.set_visarea(12, 304 - 1, 7, 247 - 1);
-
-            m_blitter_config = WILLIAMS_BLITTER_NONE;
-            m_blitter_clip_address = 0x0000;
         }
 
 
@@ -539,14 +549,10 @@ namespace mame
     }
 
 
-    partial class williams_muxed_state : williams_state
+    partial class wms_muxed_state : williams_state
     {
         public void williams_muxed(machine_config config)
         {
-            williams_base(config);
-
-            // basic machine hardware
-
             // pia
             m_pia[0].op0.readpa_handler().set_ioport("IN0").mask_u32(0x30).reg();
             m_pia[0].op0.readpa_handler().append("mux_0", () => { return ((ls157_device)subdevice("mux_0")).output_r(); }).mask_u32(0x0f).reg();
@@ -568,13 +574,12 @@ namespace mame
 
         public void joust(machine_config config)
         {
+            williams_b1(config);
             williams_muxed(config);
-            m_blitter_config = WILLIAMS_BLITTER_SC1;
-            m_blitter_clip_address = 0xc000;
         }
 
 
-        //void williams_muxed_state::splat(machine_config &config)
+        //void wms_muxed_state::splat(machine_config &config)
     }
 
 
@@ -587,13 +592,8 @@ namespace mame
     {
         public void sinistar(machine_config config)
         {
-            williams_base(config);
-
-            // basic machine hardware
-            m_maincpu.op0.memory().set_addrmap(AS_PROGRAM, main_map);
-
-            // sound hardware
-            HC55516(config, "cvsd", 0).disound.add_route(ALL_OUTPUTS, "speaker", 0.8);
+            williams_b1(config);
+            m_blitter_clip_address = 0x7400;
 
             // pia
             m_pia[0].op0.readpa_handler().set(port_0_49way_r).reg();
@@ -601,8 +601,8 @@ namespace mame
             m_pia[2].op0.ca2_handler().set("cvsd", (int state) => { ((hc55516_device)subdevice("cvsd")).digit_w(state); }).reg();
             m_pia[2].op0.cb2_handler().set("cvsd", (int state) => { ((hc55516_device)subdevice("cvsd")).clock_w(state); }).reg();
 
-            m_blitter_config = WILLIAMS_BLITTER_SC1;
-            m_blitter_clip_address = 0x7400;
+            // sound hardware
+            HC55516(config, "cvsd", 0).disound.add_route(ALL_OUTPUTS, "speaker", 0.8);
         }
     }
 
@@ -1320,9 +1320,9 @@ namespace mame
     partial class williams : construct_ioport_helper
     {
         static void defender_state_defender(machine_config config, device_t device) { defender_state defender_state = (defender_state)device; defender_state.defender(config); }
-        static void williams_state_stargate(machine_config config, device_t device) { williams_state williams_state = (williams_state)device; williams_state.stargate(config); }
-        static void williams_state_robotron(machine_config config, device_t device) { williams_state williams_state = (williams_state)device; williams_state.robotron(config); }
-        static void williams_muxed_state_joust(machine_config config, device_t device) { williams_muxed_state williams_muxed_state = (williams_muxed_state)device; williams_muxed_state.joust(config); }
+        static void williams_state_williams_b0(machine_config config, device_t device) { williams_state williams_state = (williams_state)device; williams_state.williams_b0(config); }
+        static void williams_state_williams_b1(machine_config config, device_t device) { williams_state williams_state = (williams_state)device; williams_state.williams_b1(config); }
+        static void wms_muxed_state_joust(machine_config config, device_t device) { wms_muxed_state wms_muxed_state = (wms_muxed_state)device; wms_muxed_state.joust(config); }
         static void sinistar_state_sinistar(machine_config config, device_t device) { sinistar_state sinistar_state = (sinistar_state)device; sinistar_state.sinistar(config); }
 
         static williams m_williams = new williams();
@@ -1330,13 +1330,11 @@ namespace mame
         static device_t device_creator_defender(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new defender_state(mconfig, type, tag); }
         static device_t device_creator_stargate(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new williams_state(mconfig, type, tag); }
         static device_t device_creator_robotron(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new williams_state(mconfig, type, tag); }
-        static device_t device_creator_joust(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new williams_muxed_state(mconfig, type, tag); }
+        static device_t device_creator_joust(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new wms_muxed_state(mconfig, type, tag); }
         static device_t device_creator_sinistar(emu.detail.device_type_impl_base type, machine_config mconfig, string tag, device_t owner, u32 clock) { return new sinistar_state(mconfig, type, tag); }
 
         /*************************************
-         *
          *  Game drivers
-         *
          *************************************/
 
         // Defender hardware games
@@ -1344,11 +1342,11 @@ namespace mame
 
 
         // Standard Williams hardware
-        public static readonly game_driver driver_stargate = GAME(device_creator_stargate, rom_stargate, "1981", "stargate", "0", williams_state_stargate,    m_williams.construct_ioport_stargate, driver_device.empty_init, ROT0,   "Williams / Vid Kidz", "Stargate",                          MACHINE_SUPPORTS_SAVE);
+        public static readonly game_driver driver_stargate = GAME(device_creator_stargate, rom_stargate, "1981", "stargate", "0", williams_state_williams_b0, m_williams.construct_ioport_stargate, driver_device.empty_init, ROT0,   "Williams / Vid Kidz", "Stargate",                          MACHINE_SUPPORTS_SAVE);
 
-        public static readonly game_driver driver_robotron = GAME(device_creator_robotron, rom_robotron, "1982", "robotron", "0", williams_state_robotron,    m_williams.construct_ioport_robotron, driver_device.empty_init, ROT0,   "Williams / Vid Kidz", "Robotron: 2084 (Solid Blue label)", MACHINE_SUPPORTS_SAVE);
+        public static readonly game_driver driver_robotron = GAME(device_creator_robotron, rom_robotron, "1982", "robotron", "0", williams_state_williams_b1, m_williams.construct_ioport_robotron, driver_device.empty_init, ROT0,   "Williams / Vid Kidz", "Robotron: 2084 (Solid Blue label)", MACHINE_SUPPORTS_SAVE);
 
-        public static readonly game_driver driver_joust    = GAME(device_creator_joust,    rom_joust,    "1982", "joust",    "0", williams_muxed_state_joust, m_williams.construct_ioport_robotron, driver_device.empty_init, ROT0,   "Williams",            "Joust (Green label)",               MACHINE_SUPPORTS_SAVE);
+        public static readonly game_driver driver_joust    = GAME(device_creator_joust,    rom_joust,    "1982", "joust",    "0", wms_muxed_state_joust,      m_williams.construct_ioport_robotron, driver_device.empty_init, ROT0,   "Williams",            "Joust (Green label)",               MACHINE_SUPPORTS_SAVE);
 
         public static readonly game_driver driver_sinistar = GAME(device_creator_sinistar, rom_sinistar, "1982", "sinistar", "0", sinistar_state_sinistar,    m_williams.construct_ioport_sinistar, driver_device.empty_init, ROT270, "Williams",            "Sinistar (revision 3)",             MACHINE_SUPPORTS_SAVE);
     }

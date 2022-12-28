@@ -314,7 +314,6 @@ namespace mame
             m_screen.op0.set_screen_update(screen_update_m52);
 
             /* sound hardware */
-            //m52_sound_c_audio(config);
             IREM_M52_SOUNDC_AUDIO(config, "irem_audio", 0);
         }
     }

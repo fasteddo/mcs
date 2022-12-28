@@ -215,15 +215,6 @@ namespace mame
         }
 
 
-        //WRITE_LINE_MEMBER(atarisy2_state::boost_interleave_hack)
-        public void boost_interleave_hack(int state)
-        {
-            // apb3 fails the self-test with a 100 µs delay or less
-            if (state != 0)
-                machine().scheduler().boost_interleave(attotime.zero, attotime.from_usec(200));
-        }
-
-
         /*************************************
          *
          *  Bank selection.
@@ -815,7 +806,8 @@ namespace mame
 
             GENERIC_LATCH_8(config, m_soundlatch);
             m_soundlatch.op0.data_pending_callback().set_inputline(m_audiocpu, m6502_device.NMI_LINE).reg();
-            m_soundlatch.op0.data_pending_callback().append(boost_interleave_hack).reg();
+            // apb3 fails the self-test with a 100 µs delay or less
+            m_soundlatch.op0.data_pending_callback().append(/*[this]*/(int state) => { if (state != 0) machine().scheduler().perfect_quantum(attotime.from_usec(200)); }).reg();
 
             GENERIC_LATCH_8(config, m_mainlatch);
 

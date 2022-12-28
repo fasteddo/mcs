@@ -69,7 +69,7 @@ namespace mame
         //WRITE_LINE_MEMBER(galaga_state::flip_screen_w)
         protected void flip_screen_w(int state)
         {
-            flip_screen_set((u32)state);
+            flip_screen_set(state);
         }
 
         //WRITE_LINE_MEMBER(galaga_state::irq1_clear_w)

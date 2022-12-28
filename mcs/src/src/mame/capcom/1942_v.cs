@@ -181,7 +181,7 @@ namespace mame
 
             m_audiocpu.op0.set_input_line(INPUT_LINE_RESET, (data & 0x10) != 0 ? ASSERT_LINE : CLEAR_LINE);
 
-            flip_screen_set((u32)(data & 0x80));
+            flip_screen_set(data & 0x80);
         }
 
 

@@ -21,7 +21,7 @@ using static mame.disound_global;
 using static mame.emumem_global;
 using static mame.latch8_global;
 using static mame.mcs48_global;
-using static mame.n2a03_global;
+using static mame.rp2a03_global;
 using static mame.rescap_global;
 using static mame.speaker_global;
 
@@ -1053,13 +1053,13 @@ namespace mame
         {
             SPEAKER(config, "mono").front_center();
 
-            n2a03_device n2a03a = N2A03(config, "n2a03a", NTSC_APU_CLOCK);
-            n2a03a.memory().set_addrmap(AS_PROGRAM, dkong3_sound1_map);
-            n2a03a.dimixer.add_route(ALL_OUTPUTS, "mono", 0.50);
+            rp2a03_device rp2a03a = RP2A03(config, "rp2a03a", NTSC_APU_CLOCK);
+            rp2a03a.memory().set_addrmap(AS_PROGRAM, dkong3_sound1_map);
+            rp2a03a.dimixer.add_route(ALL_OUTPUTS, "mono", 0.50);
 
-            n2a03_device n2a03b = N2A03(config, "n2a03b", NTSC_APU_CLOCK);
-            n2a03b.memory().set_addrmap(AS_PROGRAM, dkong3_sound2_map);
-            n2a03b.dimixer.add_route(ALL_OUTPUTS, "mono", 0.50);
+            rp2a03_device rp2a03b = RP2A03(config, "rp2a03b", NTSC_APU_CLOCK);
+            rp2a03b.memory().set_addrmap(AS_PROGRAM, dkong3_sound2_map);
+            rp2a03b.dimixer.add_route(ALL_OUTPUTS, "mono", 0.50);
 
             /* sound latches */
             LATCH8(config, "latch1");

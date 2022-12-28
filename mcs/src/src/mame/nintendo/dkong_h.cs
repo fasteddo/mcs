@@ -75,8 +75,8 @@ namespace mame
         required_device<z80_device> m_maincpu;  //required_device<cpu_device> m_maincpu;
         optional_device<mcs48_cpu_device> m_soundcpu;
         optional_device<eeprom_serial_93cxx_device> m_eeprom;
-        optional_device<n2a03_device> m_dev_n2a03a; /* dkong3 */
-        optional_device<n2a03_device> m_dev_n2a03b; /* dkong3 */
+        optional_device<rp2a03_device> m_dev_rp2a03a; /* dkong3 */
+        optional_device<rp2a03_device> m_dev_rp2a03b; /* dkong3 */
         optional_device<latch8_device> m_dev_vp2;   /* dkong2, virtual port 2 */
         optional_device<latch8_device> m_dev_6h;    /* dkong2 */
         optional_device<latch8_device> m_ls175_3d;  /* dkong2b_audio */
@@ -167,8 +167,8 @@ namespace mame
             m_maincpu = new required_device<z80_device>(this, "maincpu");
             m_soundcpu = new optional_device<mcs48_cpu_device>(this, "soundcpu");
             m_eeprom = new optional_device<eeprom_serial_93cxx_device>(this, "eeprom");
-            m_dev_n2a03a = new optional_device<n2a03_device>(this, "n2a03a");
-            m_dev_n2a03b = new optional_device<n2a03_device>(this, "n2a03b");
+            m_dev_rp2a03a = new optional_device<rp2a03_device>(this, "rp2a03a");
+            m_dev_rp2a03b = new optional_device<rp2a03_device>(this, "rp2a03b");
             m_dev_vp2 = new optional_device<latch8_device>(this, "virtual_p2");
             m_dev_6h = new optional_device<latch8_device>(this, "ls259.6h");
             m_ls175_3d = new optional_device<latch8_device>(this, "ls175.3d");

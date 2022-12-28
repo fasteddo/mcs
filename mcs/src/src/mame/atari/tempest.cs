@@ -205,7 +205,7 @@ namespace mame
         {
             // This is needed to ensure that the routine starting at ae1c passes checks and does not corrupt data;
             // config.m_perfect_cpu_quantum = subtag("maincpu"); would be very taxing on this driver.
-            machine().scheduler().boost_interleave(attotime::zero, attotime::from_usec(100));
+            machine().scheduler().perfect_quantum(attotime::from_usec(100));
             machine().scheduler().abort_timeslice();
 
             return m_rom[0xae1f];

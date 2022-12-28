@@ -637,9 +637,9 @@ namespace mame
                     m_maxindex = std.max(m_maxindex, devindex);
 
                     if (new_device.id()[0] == 0)
-                        osd_printf_verbose("Input: Adding {0} #{1}: {2}\n", m_name, devindex, new_device.name());
+                        osd_printf_verbose("Input: Adding {0} #{1}: {2}\n", m_name, devindex + 1, new_device.name());
                     else
-                        osd_printf_verbose("Input: Adding {0} #{1}: {2} (device id: {3})\n", m_name, devindex, new_device.name(), new_device.id());
+                        osd_printf_verbose("Input: Adding {0} #{1}: {2} (device id: {3})\n", m_name, devindex + 1, new_device.name(), new_device.id());
 
                     m_device[devindex] = new_device;
                     return m_device[devindex];

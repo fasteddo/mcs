@@ -34,8 +34,8 @@ using static mame.rendfont_global;
 using static mame.rendutil_global;
 using static mame.ui.defimg_global;
 using static mame.ui.selmenu_global;
-using static mame.ui.starimg_global;
 using static mame.ui.toolbar_global;
+using static mame.ui.utils_ui_global;
 using static mame.ui_global;
 using static mame.unicode_global;
 using static mame.util;
@@ -2137,6 +2137,16 @@ namespace mame.ui
             // handle a toggle cheats request
             if (!m_ui_error && machine().ui_input().pressed_repeat((int)ioport_type.IPT_UI_TOGGLE_CHEAT, 0))
                 mame_machine_manager.instance().cheat().set_enable(!mame_machine_manager.instance().cheat().enabled());
+
+            // handle pasting text into the search
+            if (exclusive_input_pressed(ref iptkey, (int)ioport_type.IPT_UI_PASTE, 0))
+            {
+                if (!m_ui_error && accept_search())
+                {
+                    if (paste_text(ref m_search, uchar_is_printable))
+                        reset(reset_options.SELECT_FIRST);
+                }
+            }
 
             // see if any other UI keys are pressed
             if (iptkey == (int)ioport_type.IPT_INVALID)

@@ -232,7 +232,7 @@ namespace mame
         ///
         /// Use this macro to define most systems intended for public use,
         /// including arcade games, gambling machines, vending machines, and
-        /// information kiosks.  Muse be used in the global namespace.
+        /// information kiosks.  Must be used in the global namespace.
         ///
         /// Creates an appropriately named and populated #game_driver structure
         /// describing the system.

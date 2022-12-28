@@ -148,15 +148,6 @@ namespace mame
         }
 
 
-        // hooks into our operations
-        //void set_instruction_hook(debug_instruction_hook_func hook);
-        //void set_dasm_override(dasm_override_func dasm_override) { m_dasm_override = dasm_override; }
-
-
-        // disassembly
-        //offs_t disassemble(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram) const;
-
-
         // debugger focus
         //void ignore(bool ignore = true);
         //bool observing() const { return ((m_flags & DEBUG_FLAG_OBSERVING) != 0); }
@@ -180,7 +171,7 @@ namespace mame
 
         // breakpoints
         //breakpoint *breakpoint_first() const { return m_bplist; }
-        //int breakpoint_set(offs_t address, const char *condition = NULL, const char *action = NULL);
+        //int breakpoint_set(offs_t address, const char *condition = nullptr, std::string_view action = {});
         //bool breakpoint_clear(int index);
         //void breakpoint_clear_all();
         //bool breakpoint_enable(int index, bool enable = true);
@@ -189,7 +180,7 @@ namespace mame
 
         // watchpoints
         //const std::vector<std::unique_ptr<watchpoint>> &watchpoint_vector(int spacenum) const { return m_wplist[spacenum]; }
-        //int watchpoint_set(address_space &space, read_or_write type, offs_t address, offs_t length, const char *condition, const char *action);
+        //int watchpoint_set(address_space &space, read_or_write type, offs_t address, offs_t length, const char *condition = nullptr, std::string_view action = {});
         //bool watchpoint_clear(int wpnum);
         //void watchpoint_clear_all();
         //bool watchpoint_enable(int index, bool enable = true);
@@ -197,12 +188,21 @@ namespace mame
 
 
         // registerpoints
-        //registerpoint *registerpoint_first() const { return m_rplist; }
-        //int registerpoint_set(const char *condition, const char *action = NULL);
+        //const std::forward_list<debug_registerpoint> &registerpoint_list() const { return m_rplist; }
+        //int registerpoint_set(const char *condition, std::string_view action = {});
         //bool registerpoint_clear(int index);
         //void registerpoint_clear_all();
         //bool registerpoint_enable(int index, bool enable = true);
-        //void registerpoint_enable_all(bool enable = true );
+        //void registerpoint_enable_all(bool enable = true);
+
+
+        // exception points
+        //const auto &exceptionpoint_list() const { return m_eplist; }
+        //int exceptionpoint_set(int exception, const char *condition = nullptr, std::string_view action = {});
+        //bool exceptionpoint_clear(int index);
+        //void exceptionpoint_clear_all();
+        //bool exceptionpoint_enable(int index, bool enable = true);
+        //void exceptionpoint_enable_all(bool enable = true);
 
 
         // comments
@@ -236,8 +236,12 @@ namespace mame
 
 
         // tracing
-        //void trace(FILE *file, bool trace_over, bool logerror, const char *action);
-        //void trace_printf(const char *fmt, ...) ATTR_PRINTF(2,3);
+        //void trace(std::unique_ptr<std::ostream> &&file, bool trace_over, bool detect_loops, bool logerror, std::string_view action);
+        //template <typename Format, typename... Params> void trace_printf(Format &&fmt, Params &&...args)
+        //{
+        //    if (m_trace != nullptr)
+        //        m_trace->vprintf(util::make_format_argument_pack(std::forward<Format>(fmt), std::forward<Params>(args)...));
+        //}
         //void trace_flush() { if (m_trace != NULL) m_trace->flush(); }
 
 

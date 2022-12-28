@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Windows.Forms;
 using mame;
 
 using int32_t = System.Int32;
@@ -743,20 +744,6 @@ namespace mcsForm
         }
 
 
-        /***************************************************************************
-            MIDI I/O INTERFACES
-        ***************************************************************************/
-
-        public abstract class osd_midi_device_WinForms : osd_midi_device
-        {
-        }
-
-
-        public override void osd_list_network_adapters()
-        {
-        }
-
-
         /*-----------------------------------------------------------------------------
             osd_subst_env: substitute environment variables with values
 
@@ -768,6 +755,20 @@ namespace mcsForm
         public override string osd_subst_env(string src)
         {
             return Environment.ExpandEnvironmentVariables(src);
+        }
+    }
+
+
+    public class osdlib_WinForms : osdlib_interface
+    {
+        /// \brief Get clipboard text
+        ///
+        /// Gets current clipboard content as UTF-8 text.  Returns an empty
+        /// string if the clipboard contents cannot be converted to plain text.
+        /// \return Clipboard contents or an empty string.
+        public override string osd_get_clipboard_text()
+        {
+            return Clipboard.GetText();
         }
     }
 }

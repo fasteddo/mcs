@@ -29,7 +29,7 @@ namespace mame
                                  //device_sound_interface
     {
         //DEFINE_DEVICE_TYPE(NES_APU, nesapu_device, "nesapu", "N2A03 APU")
-        public static readonly emu.detail.device_type_impl NES_APU = DEFINE_DEVICE_TYPE("nesapu", "N2A03 APU", (type, mconfig, tag, owner, clock) => { return new nesapu_device(mconfig, tag, owner, clock); });
+        public static readonly emu.detail.device_type_impl NES_APU = DEFINE_DEVICE_TYPE("nesapu", "RP2A0X APU", (type, mconfig, tag, owner, clock) => { return new nesapu_device(mconfig, tag, owner, clock); });
 
 
         public class device_sound_interface_nesapu_device : device_sound_interface
@@ -69,7 +69,7 @@ namespace mame
         { }
 
 
-        nesapu_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
+        protected nesapu_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
             : base(mconfig, type, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_sound_interface_nesapu_device(mconfig, this));  //device_sound_interface(mconfig, *this),
@@ -405,7 +405,7 @@ namespace mame
             save_item(NAME(new { m_APU.tri.output }));
 
             save_item(NAME(new { m_APU.noi.regs }));
-            save_item(NAME(new { m_APU.noi.seed }));
+            save_item(NAME(new { m_APU.noi.lfsr }));
             save_item(NAME(new { m_APU.noi.vbl_length }));
             save_item(NAME(new { m_APU.noi.phaseacc }));
             save_item(NAME(new { m_APU.noi.env_phase }));
@@ -430,6 +430,9 @@ namespace mame
 
         // sound stream update overrides
         protected virtual void device_sound_interface_sound_stream_update(sound_stream stream, std.vector<read_stream_view> inputs, std.vector<write_stream_view> outputs) { throw new emu_unimplemented(); }
+
+
+        protected virtual void update_lfsr(apu_t.noise_t chan) { throw new emu_unimplemented(); }
 
 
         void calculate_rates()
@@ -462,6 +465,26 @@ namespace mame
     }
 
 
+    class apu2a03_device : nesapu_device
+    {
+        //DEFINE_DEVICE_TYPE(APU_2A03, apu2a03_device, "apu2a03", "RP2A03 APU")
+        public static readonly emu.detail.device_type_impl APU_2A03 = DEFINE_DEVICE_TYPE("apu2a03", "RP2A03 APU", (type, mconfig, tag, owner, clock) => { return new apu2a03_device(mconfig, tag, owner, clock); });
+
+
+        apu2a03_device(machine_config mconfig, string tag, device_t owner, u32 clock)
+            : base(mconfig, APU_2A03, tag, owner, clock)
+        {
+        }
+
+
+        protected override void update_lfsr(apu_t.noise_t chan)
+        {
+            chan.lfsr |= (u16)((BIT(chan.lfsr, 0) ^ BIT(chan.lfsr, 1)) << 15);
+            chan.lfsr >>= 1;
+        }
+    }
+
+
     static class nes_apu_internal
     {
         /* RESET DPCM PARAMETERS */
@@ -479,5 +502,6 @@ namespace mame
     static class nes_apu_global
     {
         public static nesapu_device NES_APU<bool_Required>(machine_config mconfig, device_finder<nesapu_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, nesapu_device.NES_APU, clock); }
+        public static apu2a03_device APU_2A03<bool_Required>(machine_config mconfig, device_finder<apu2a03_device, bool_Required> finder, u32 clock) where bool_Required : bool_const, new() { return emu.detail.device_type_impl.op(mconfig, finder, apu2a03_device.APU_2A03, clock); }
     }
 }

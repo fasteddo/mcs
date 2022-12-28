@@ -182,7 +182,7 @@ namespace mame
             m_video_mode = data;
 
             /* bit 7 is flip screen */
-            flip_screen_set((u32)data & 0x80);
+            flip_screen_set(data & 0x80);
         }
 
 

@@ -305,19 +305,19 @@ namespace mame
             switch (reg)
             {
                 case 0:
-                    m_bg_tilemap.set_scrollx(0,scroll);
+                    m_bg_tilemap.set_scrollx(0, scroll);
                     break;
                 case 1:
-                    m_bg_tilemap.set_scrollx(0,scroll);
+                    m_bg_tilemap.set_scrollx(0, scroll);
                     break;
                 case 2:
-                    m_bg_tilemap.set_scrolly(0,scroll);
+                    m_bg_tilemap.set_scrolly(0, scroll);
                     break;
                 case 3:
-                    m_bg_tilemap.set_scrolly(0,scroll);
+                    m_bg_tilemap.set_scrolly(0, scroll);
                     break;
                 case 7:
-                    flip_screen_set((u32)(scroll & 1));
+                    flip_screen_set(scroll & 1);
                     break;
                 default:
                     logerror("CRTC WRITE REG: {0}  Data: {1}\n", reg, scroll);

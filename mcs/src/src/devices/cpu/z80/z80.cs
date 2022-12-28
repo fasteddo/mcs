@@ -2282,8 +2282,8 @@ namespace mame
         void ed_3e() { illegal_2();                                     } /* DB   ED          */
         void ed_3f() { illegal_2();                                     } /* DB   ED          */
 
-        void ed_40() { B = in_(BC); F = (uint8_t)((F & CF) | SZP[B]);               } /* IN   B,(C)       */
-        void ed_41() { out_(BC, B);                                      } /* OUT  (C),B       */
+        void ed_40() { B = in_(BC); F = (uint8_t)((F & CF) | SZP[B]); WZ = (uint16_t)(BC + 1);  } /* IN   B,(C)       */
+        void ed_41() { out_(BC, B); WZ = (uint16_t)(BC + 1);                         } /* OUT  (C),B       */
         void ed_42() { sbc_hl(m_bc);                                    } /* SBC  HL,BC       */
         void ed_43() { m_ea = arg16(); wm16((uint16_t)m_ea, m_bc); WZ = (uint16_t)(m_ea + 1); } /* LD   (w),BC      */
         void ed_44() { neg();                                           } /* NEG              */
@@ -2291,8 +2291,8 @@ namespace mame
         void ed_46() { m_im = 0;                                        } /* IM   0           */
         void ed_47() { ld_i_a();                                        } /* LD   i,A         */
 
-        void ed_48() { C = in_(BC); F = (uint8_t)((F & CF) | SZP[C]);               } /* IN   C,(C)       */
-        void ed_49() { out_(BC, C);                                      } /* OUT  (C),C       */
+        void ed_48() { C = in_(BC); F = (uint8_t)((F & CF) | SZP[C]); WZ = (uint16_t)(BC + 1);  } /* IN   C,(C)       */
+        void ed_49() { out_(BC, C); WZ = (uint16_t)(BC + 1);                         } /* OUT  (C),C       */
         void ed_4a() { adc_hl(m_bc);                                    } /* ADC  HL,BC       */
         void ed_4b() { m_ea = arg16(); rm16((uint16_t)m_ea, ref m_bc); WZ = (uint16_t)(m_ea + 1); } /* LD   BC,(w)      */
         void ed_4c() { neg();                                           } /* NEG              */
@@ -2300,8 +2300,8 @@ namespace mame
         void ed_4e() { m_im = 0;                                        } /* IM   0           */
         void ed_4f() { ld_r_a();                                        } /* LD   r,A         */
 
-        void ed_50() { D = in_(BC); F = (uint8_t)((F & CF) | SZP[D]);               } /* IN   D,(C)       */
-        void ed_51() { out_(BC, D);                                      } /* OUT  (C),D       */
+        void ed_50() { D = in_(BC); F = (uint8_t)((F & CF) | SZP[D]); WZ = (uint16_t)(BC + 1);  } /* IN   D,(C)       */
+        void ed_51() { out_(BC, D); WZ = (uint16_t)(BC + 1);                         } /* OUT  (C),D       */
         void ed_52() { sbc_hl(m_de);                                    } /* SBC  HL,DE       */
         void ed_53() { m_ea = arg16(); wm16((uint16_t)m_ea, m_de); WZ = (uint16_t)(m_ea + 1); } /* LD   (w),DE      */
         void ed_54() { neg();                                           } /* NEG              */
@@ -2309,8 +2309,8 @@ namespace mame
         void ed_56() { m_im = 1;                                        } /* IM   1           */
         void ed_57() { ld_a_i();                                        } /* LD   A,i         */
 
-        void ed_58() { E = in_(BC); F = (uint8_t)((F & CF) | SZP[E]);               } /* IN   E,(C)       */
-        void ed_59() { out_(BC, E);                                      } /* OUT  (C),E       */
+        void ed_58() { E = in_(BC); F = (uint8_t)((F & CF) | SZP[E]); WZ = (uint16_t)(BC + 1);  } /* IN   E,(C)       */
+        void ed_59() { out_(BC, E); WZ = (uint16_t)(BC + 1);                         } /* OUT  (C),E       */
         void ed_5a() { adc_hl(m_de);                                    } /* ADC  HL,DE       */
         void ed_5b() { m_ea = arg16(); rm16((uint16_t)m_ea, ref m_de); WZ = (uint16_t)(m_ea + 1); } /* LD   DE,(w)      */
         void ed_5c() { neg();                                           } /* NEG              */
@@ -2318,8 +2318,8 @@ namespace mame
         void ed_5e() { m_im = 2;                                        } /* IM   2           */
         void ed_5f() { ld_a_r();                                        } /* LD   A,r         */
 
-        void ed_60() { H = in_(BC); F = (uint8_t)((F & CF) | SZP[H]);               } /* IN   H,(C)       */
-        void ed_61() { out_(BC, H);                                      } /* OUT  (C),H       */
+        void ed_60() { H = in_(BC); F = (uint8_t)((F & CF) | SZP[H]); WZ = (uint16_t)(BC + 1);  } /* IN   H,(C)       */
+        void ed_61() { out_(BC, H); WZ = (uint16_t)(BC + 1);                         } /* OUT  (C),H       */
         void ed_62() { sbc_hl(m_hl);                                    } /* SBC  HL,HL       */
         void ed_63() { m_ea = arg16(); wm16((uint16_t)m_ea, m_hl); WZ = (uint16_t)(m_ea + 1); } /* LD   (w),HL      */
         void ed_64() { neg();                                           } /* NEG              */
@@ -2327,8 +2327,8 @@ namespace mame
         void ed_66() { m_im = 0;                                        } /* IM   0           */
         void ed_67() { rrd();                                           } /* RRD  (HL)        */
 
-        void ed_68() { L = in_(BC); F = (uint8_t)((F & CF) | SZP[L]);               } /* IN   L,(C)       */
-        void ed_69() { out_(BC, L);                                      } /* OUT  (C),L       */
+        void ed_68() { L = in_(BC); F = (uint8_t)((F & CF) | SZP[L]); WZ = (uint16_t)(BC + 1);  } /* IN   L,(C)       */
+        void ed_69() { out_(BC, L); WZ = (uint16_t)(BC + 1);                         } /* OUT  (C),L       */
         void ed_6a() { adc_hl(m_hl);                                    } /* ADC  HL,HL       */
         void ed_6b() { m_ea = arg16(); rm16((uint16_t)m_ea, ref m_hl); WZ = (uint16_t)(m_ea + 1); } /* LD   HL,(w)      */
         void ed_6c() { neg();                                           } /* NEG              */
@@ -2336,8 +2336,8 @@ namespace mame
         void ed_6e() { m_im = 0;                                        } /* IM   0           */
         void ed_6f() { rld();                                           } /* RLD  (HL)        */
 
-        void ed_70() { uint8_t res = in_(BC); F = (uint8_t)((F & CF) | SZP[res]);     } /* IN   0,(C)       */
-        void ed_71() { out_(BC, 0);                                      } /* OUT  (C),0       */
+        void ed_70() { u8 res = in_(BC); F = (uint8_t)((F & CF) | SZP[res]); WZ = (uint16_t)(BC + 1); } /* IN   0,(C)       */
+        void ed_71() { out_(BC, 0); WZ = (uint16_t)(BC + 1);                         } /* OUT  (C),0       */
         void ed_72() { sbc_hl(m_sp);                                    } /* SBC  HL,SP       */
         void ed_73() { m_ea = arg16(); wm16((uint16_t)m_ea, m_sp); WZ = (uint16_t)(m_ea + 1); } /* LD   (w),SP      */
         void ed_74() { neg();                                           } /* NEG              */
@@ -3318,7 +3318,7 @@ namespace mame
             }
             else
             {
-                WZ = arg();
+                arg();
                 //nomreq_addr(PCD, 3);
                 //PC++;
             }
