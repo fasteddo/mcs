@@ -154,6 +154,7 @@ namespace mame
            9_000_000, /* 9_MHz_XTAL             Homedata PCBs */
            9_216_000, /* 9.216_MHz_XTAL         Univac UTS 20 */
            9_400_000, /* 9.4_MHz_XTAL           Yamaha MU-5 and TG-100 */
+           9_426_500, /* 9.4265_MHz_XTAL        Yamaha DX7, and DX9 */
            9_600_000, /* 9.6_MHz_XTAL           WD37C65 second clock (for 300 KB/sec rate) */
            9_732_000, /* 9.732_MHz_XTAL         CTA Invader */
            9_828_000, /* 9.828_MHz_XTAL         Universal PCBs */

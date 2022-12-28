@@ -411,13 +411,16 @@ namespace mame.ymfm
         uint8_t m_irq_mask;              // mask of which bits signal IRQs
         uint8_t m_irq_state;             // current IRQ state
         uint8_t [] m_timer_running = new uint8_t[2];      // current timer running state
-        //uint8_t m_total_clocks;          // low 8 bits of the total number of clocks processed
+        uint8_t m_total_clocks;          // low 8 bits of the total number of clocks processed
         uint32_t m_active_channels;      // mask of active channels (computed by prepare)
         uint32_t m_modified_channels;    // mask of channels that have been modified
         uint32_t m_prepare_count;        // counter to do periodic prepare sweeps
         RegisterType m_regs;             // register accessor
         fm_channel<RegisterType, RegisterType_OPS> [] m_channel = new fm_channel<RegisterType, RegisterType_OPS>[CHANNELS]; // channel pointers  //std::unique_ptr<fm_channel<RegisterType>> m_channel[CHANNELS]; // channel pointers
         fm_operator<RegisterType, RegisterType_OPS> [] m_operator = new fm_operator<RegisterType, RegisterType_OPS>[OPERATORS]; // operator pointers  //std::unique_ptr<fm_operator<RegisterType>> m_operator[OPERATORS]; // operator pointers
+#if false  //(YMFM_DEBUG_LOG_WAVFILES)
+        mutable ymfm_wavfile<1> m_wavfile[CHANNELS]; // for debugging
+#endif
 
 
         // constructor
@@ -430,6 +433,7 @@ namespace mame.ymfm
             m_irq_mask = (uint8_t)(STATUS_TIMERA | STATUS_TIMERB);
             m_irq_state = 0;
             m_timer_running = new uint8_t[] {0, 0};
+            m_total_clocks = 0;
             m_active_channels = ALL_CHANNELS;
             m_modified_channels = ALL_CHANNELS;
             m_prepare_count = 0;
@@ -449,6 +453,11 @@ namespace mame.ymfm
             // create the operators
             for (uint32_t opnum = 0; opnum < OPERATORS; opnum++)
                 m_operator[opnum] = new fm_operator<RegisterType, RegisterType_OPS>(this, register_ops.operator_offset(opnum));
+
+#if false  //(YMFM_DEBUG_LOG_WAVFILES)
+            for (uint32_t chnum = 0; chnum < CHANNELS; chnum++)
+                m_wavfile[chnum].set_index(chnum);
+#endif
 
             // do the initial operator assignment
             assign_operators();
@@ -491,7 +500,10 @@ namespace mame.ymfm
         //void set_clock_prescale(uint32_t prescale) { m_clock_prescale = prescale; }
 
         // compute sample rate
-        public uint32_t sample_rate(uint32_t baseclock) { throw new mcs_notimplemented(); }  //{ return baseclock / (m_clock_prescale * OPERATORS); }
+        public uint32_t sample_rate(uint32_t baseclock)
+        {
+            throw new mcs_notimplemented();
+        }
 
         // return the owning device
         //ymfm_interface &intf() const { return m_intf; }

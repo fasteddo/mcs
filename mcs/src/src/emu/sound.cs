@@ -1694,14 +1694,6 @@ namespace mame
             m_first_reset = true;
 
 
-            // get filename for WAV file or AVI file if specified
-            string wavfile = machine.options().wav_write();
-            string avifile = machine.options().avi_write();
-
-            // handle -nosound and lower sample rate if not recording WAV or AVI
-            if (m_nosound_mode && wavfile[0] == 0 && avifile[0] == 0)
-                machine.m_sample_rate = 11025;
-
             // count the mixers
 #if VERBOSE
             mixer_interface_enumerator iter(machine.root_device());

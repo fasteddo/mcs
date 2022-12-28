@@ -289,7 +289,6 @@ namespace mame.ui
                 (info) =>  //[this, &have_prev_selected, &old_item_selected, curitem = 0] (ui_software_info const &info) mutable
                 {
                     have_prev_selected = have_prev_selected || (info == (ui_software_info)m_prev_selected);
-                    ui_system_info elem = m_persistent_data.systems()[driver_list.find(info.driver.name)];
                     if (info.startempty != 0)
                     {
                         if (old_item_selected == -1 && info.shortname == reselect_last.driver())
@@ -303,14 +302,15 @@ namespace mame.ui
                                 cloneof = false;
                         }
 
-                        item_append(elem.description, cloneof ? FLAG_INVERT : 0, info);
+                        ui_system_info sysinfo = m_persistent_data.systems()[driver_list.find(info.driver.name)];
+                        item_append(sysinfo.description, cloneof ? FLAG_INVERT : 0, info);
                     }
                     else
                     {
                         if (old_item_selected == -1 && info.shortname == reselect_last.driver())
                             old_item_selected = curitem;
 
-                        item_append(elem.description, info.devicetype, info.parentname.empty() ? 0 : FLAG_INVERT, info);
+                        item_append(info.longname, info.devicetype, info.parentname.empty() ? 0 : FLAG_INVERT, info);
                     }
 
                     curitem++;
@@ -873,9 +873,9 @@ namespace mame.ui
         void inkey_select(event_ menu_event)
         {
             var system = (ui_system_info)menu_event.itemref;
-            int driverint = menu_event.itemref is int itemref ? itemref : -1;
+            int systemint = menu_event.itemref is int itemref ? itemref : -1;  //uintptr_t(system)
 
-            if (driverint == CONF_OPTS)
+            if (systemint == CONF_OPTS)
             {
                 // special case for configure options
 
@@ -883,7 +883,7 @@ namespace mame.ui
 #if false
 #endif
             }
-            else if (driverint == CONF_MACHINE)
+            else if (systemint == CONF_MACHINE)
             {
                 // special case for configure machine
 
@@ -940,7 +940,7 @@ namespace mame.ui
         void inkey_select_favorite(event_ menu_event)
         {
             ui_software_info ui_swinfo = (ui_software_info)menu_event.itemref;
-            int ui_swinfoint = (int)menu_event.itemref;
+            int ui_swinfoint = (int)menu_event.itemref;  //(uintptr_t)ui_swinfo
 
             if (ui_swinfoint == CONF_OPTS)
             {
@@ -961,7 +961,7 @@ namespace mame.ui
                 }
                 return;
             }
-            else if (ui_swinfo.startempty == 1)
+            else if (ui_swinfo.startempty != 0)
             {
                 driver_enumerator enumerator = new driver_enumerator(machine().options(), ui_swinfo.driver);
                 enumerator.next();

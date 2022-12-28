@@ -216,6 +216,12 @@ namespace mame.ymfm
     }
 
 
+    // ======================> ymfm_wavfile
+    // this class is a debugging helper that accumulates data and writes it to wav files
+    //template<int Channels>
+    //class ymfm_wavfile
+
+
     // ======================> ymfm_saved_state
     // this class contains a managed vector of bytes that is used to save and
     // restore state

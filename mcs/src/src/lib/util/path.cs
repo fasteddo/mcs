@@ -46,7 +46,7 @@ namespace mame
             if (!path.empty() && !is_directory_separator(path.back()))
                 path += PATH_SEPARATOR;  //path.append(PATH_SEPARATOR);
             path += next;  //path.append(std::forward<T>(next));
-            //if constexpr (sizeof...(U))
+            //if constexpr (sizeof...(U) > 0U)
             //    return path_append(path, std::forward<U>(more)...);
             //else
                 return path;
@@ -64,7 +64,7 @@ namespace mame
         public static string path_concat(string first, string more)  //inline std::string path_concat(T &&first, U &&... more)
         {
             string result = first;  //std::string result(std::forward<T>(first));
-            //if constexpr (sizeof...(U))
+            //if constexpr (sizeof...(U) > 0U)
                 path_append(ref result, more);  //path_append(result, std::forward<U>(more)...);
             return result;
         }

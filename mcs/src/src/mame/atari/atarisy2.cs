@@ -488,7 +488,7 @@ namespace mame
         void sound_map(address_map map, device_t owner)
         {
             map.op(0x0000, 0x0fff).mirror(0x2000).ram();
-            map.op(0x1000, 0x17ff).mirror(0x2000).rw("eeprom", (address_space space, offs_t offset) => { return ((eeprom_parallel_28xx_device)subdevice("eeprom")).read(space, offset); }, (offs_t offset, u8 data) => { ((eeprom_parallel_28xx_device)subdevice("eeprom")).write(offset, data); });  //map(0x1000, 0x17ff).mirror(0x2000).rw("eeprom", FUNC(eeprom_parallel_28xx_device::read), FUNC(eeprom_parallel_28xx_device::write));
+            map.op(0x1000, 0x11ff).mirror(0x2600).rw("eeprom", (address_space space, offs_t offset) => { return ((eeprom_parallel_28xx_device)subdevice("eeprom")).read(space, offset); }, (offs_t offset, u8 data) => { ((eeprom_parallel_28xx_device)subdevice("eeprom")).write(offset, data); });  //map(0x1000, 0x11ff).mirror(0x2600).rw("eeprom", FUNC(eeprom_parallel_28xx_device::read), FUNC(eeprom_parallel_28xx_device::write));
             map.op(0x1800, 0x180f).mirror(0x2780).rw(m_pokey[0], (offset) => { return m_pokey[0].op0.read(offset); }, (offs_t offset, u8 data) => { m_pokey[0].op0.write(offset, data); });  //map(0x1800, 0x180f).mirror(0x2780).rw(m_pokey[0], FUNC(pokey_device::read), FUNC(pokey_device::write));
             map.op(0x1810, 0x1813).mirror(0x278c).r(leta_r);
             map.op(0x1830, 0x183f).mirror(0x2780).rw(m_pokey[1], (offset) => { return m_pokey[1].op0.read(offset); }, (offs_t offset, u8 data) => { m_pokey[1].op0.write(offset, data); });  //map(0x1830, 0x183f).mirror(0x2780).rw(m_pokey[1], FUNC(pokey_device::read), FUNC(pokey_device::write));

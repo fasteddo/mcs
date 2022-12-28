@@ -19,16 +19,6 @@ namespace mame
     public static class eminline_global
     {
         /*-------------------------------------------------
-            mul_16x16 - perform a signed 16 bit x 16 bit
-            multiply and return the full 32 bit result
-        -------------------------------------------------*/
-        //constexpr int32_t mul_16x16(int16_t a, int16_t b)
-        //{
-        //    return int32_t(a) * int32_t(b);
-        //}
-
-
-        /*-------------------------------------------------
             mul_32x32 - perform a signed 32 bit x 32 bit
             multiply and return the full 64 bit result
         -------------------------------------------------*/

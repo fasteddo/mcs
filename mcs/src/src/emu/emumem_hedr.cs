@@ -664,6 +664,8 @@ namespace mame
                 cur.unref();
                 m_u_dispatch[entry] = subdispatch;
                 subdispatch.populate_nomirror(start, end, ostart, oend, handler);
+                range_cut_before(((entry - 1) << (int)LowBits) - 1, (int)entry);
+                range_cut_after((entry + 1) << (int)LowBits, (int)entry);
             }
         }
 
@@ -681,6 +683,8 @@ namespace mame
                 cur.unref();
                 m_u_dispatch[entry] = subdispatch;
                 subdispatch.populate_mirror(start, end, ostart, oend, mirror, handler);
+                range_cut_before(((entry - 1) << (int)LowBits) - 1, (int)entry);
+                range_cut_after((entry + 1) << (int)LowBits, (int)entry);
             }
         }
 

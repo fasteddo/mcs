@@ -180,7 +180,7 @@ namespace mame
             if ((flags & osdcore_interface.WORK_QUEUE_FLAG_MULTI) != 0)
                 allocthreadnum = (int)queue.threads + 1;
             else
-                allocthreadnum = (int)queue.threads;
+                allocthreadnum = std.max((int)queue.threads, 1);
 
 #if KEEP_STATISTICS
             printf("osdprocs: %d effecprocs: %d threads: %d allocthreads: %d osdthreads: %d maxthreads: %d queuethreads: %d\n", osd_num_processors, numprocs, threadnum, allocthreadnum, osdthreadnum, WORK_MAX_THREADS, queue->threads);

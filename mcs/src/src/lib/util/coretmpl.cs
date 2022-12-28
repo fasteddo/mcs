@@ -533,6 +533,11 @@ namespace mame
         //        (BIT(val, B3) <<  3) | (BIT(val, B2) <<  2) | (BIT(val, B1) <<  1) | (BIT(val, B0) <<  0))
 
 
+        // utility function for sign-extending values of arbitrary width
+        //template <typename T, typename U>
+        //constexpr std::make_signed_t<T> sext(T value, U width) noexcept
+
+
         // constexpr absolute value of an integer
         //template <typename T>
         //constexpr std::enable_if_t<std::is_signed<T>::value, T> iabs(T v)

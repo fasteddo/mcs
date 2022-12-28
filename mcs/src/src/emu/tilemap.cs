@@ -1381,7 +1381,17 @@ namespace mame
 
             // look up priority and destination base addresses for y1
             bitmap_ind8 priority_bitmap = blit.priority;
-            PointerU8 priority_baseaddr = priority_bitmap.pix(y1, xpos);  //u8 *priority_baseaddr = &priority_bitmap.pix(y1, xpos);
+            PointerU8 priority_baseaddr = null;  //u8 *priority_baseaddr = nullptr;
+            int prio_rowpixels = 0;
+            if (priority_bitmap.valid())
+            {
+                prio_rowpixels = priority_bitmap.rowpixels();
+                priority_baseaddr = priority_bitmap.pix(y1, xpos);
+            }
+            else
+            {
+                assert((blit.tilemap_priority_code & 0xffff) == 0xff00);
+            }
 
             //typename _BitmapClass::pixel_t *dest_baseaddr = NULL;
             PointerU8 dest_baseaddr8 = null;
@@ -1488,7 +1498,7 @@ namespace mame
                             default: throw new emu_fatalerror("draw_instance() - unknown bpp - {0}\n", dest.bpp());
                         }
 
-                        PointerU8 pmap0 = priority_baseaddr + x_start;  //u8 *pmap0 = priority_baseaddr + x_start;
+                        PointerU8 pmap0 = priority_baseaddr != null ? (priority_baseaddr + x_start) : null;  //u8 *pmap0 = priority_baseaddr ? (priority_baseaddr + x_start) : nullptr;
 
                         // if we were opaque, use the opaque renderer
                         if (prev_trans == trans_t.WHOLLY_OPAQUE)
@@ -1515,7 +1525,7 @@ namespace mame
                                 }
 
                                 source0 += m_pixmap.rowpixels();
-                                pmap0 += priority_bitmap.rowpixels();
+                                pmap0 += prio_rowpixels;
                             }
                         }
                         // otherwise use the masked renderer
@@ -1546,7 +1556,7 @@ namespace mame
 
                                 source0 += m_pixmap.rowpixels();
                                 mask0 += m_flagsmap.rowpixels();
-                                pmap0 += priority_bitmap.rowpixels();
+                                pmap0 += prio_rowpixels;
                             }
                         }
                     }
@@ -1561,7 +1571,7 @@ namespace mame
                     break;
 
                 // advance to the next row on all our bitmaps
-                priority_baseaddr += priority_bitmap.rowpixels() * (nexty - y);
+                priority_baseaddr += prio_rowpixels * (nexty - y);
                 source_baseaddr += m_pixmap.rowpixels() * (nexty - y);
                 mask_baseaddr += m_flagsmap.rowpixels() * (nexty - y);
 

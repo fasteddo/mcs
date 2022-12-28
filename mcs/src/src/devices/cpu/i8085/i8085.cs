@@ -142,10 +142,10 @@ namespace mame
         /* 9 */ 4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
         /* A */ 4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
         /* B */ 4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-        /* C */ 6, 10,10,10,11,12,7, 12,6, 10,10,12,11,11,7, 12,
-        /* D */ 6, 10,10,10,11,12,7, 12,6, 10,10,10,11,10,7, 12,
-        /* E */ 6, 10,10,16,11,12,7, 12,6, 6, 10,5, 11,10,7, 12,
-        /* F */ 6, 10,10,4, 11,12,7, 12,6, 6, 10,4, 11,10,7, 12 };
+        /* C */ 6, 10,7, 7, 9, 12,7, 12,6, 10,7, 6, 9, 9, 7, 12,
+        /* D */ 6, 10,7, 10,9, 12,7, 12,6, 10,7, 10,9, 7, 7, 12,
+        /* E */ 6, 10,7, 16,9, 12,7, 12,6, 6, 7, 5, 9, 10,7, 12,
+        /* F */ 6, 10,7, 4, 9, 12,7, 12,6, 6, 7, 4, 9, 7, 7, 12 };
 
 
         // FIXME: public because drivers/altair.cpp, drivers/ipc.cpp and drivers/unior.cpp set initial PC through state interface
@@ -157,14 +157,6 @@ namespace mame
             I8085_A, I8085_B, I8085_C, I8085_D, I8085_E, I8085_F, I8085_H, I8085_L,
             I8085_STATUS, I8085_SOD, I8085_SID, I8085_INTE,
             I8085_HALT, I8085_IM
-        }
-
-
-        protected enum CPUTYPE
-        {
-            CPUTYPE_8080 = 0,
-            CPUTYPE_8080A,
-            CPUTYPE_8085A
         }
 
 
@@ -194,8 +186,6 @@ namespace mame
         devcb_write_line m_out_sod_func;
         clock_update_delegate m_clk_out_func;
 
-
-        int m_cputype;
 
         PAIR m_PC;
         PAIR m_SP;
@@ -230,14 +220,7 @@ namespace mame
         u8 [] lut_zsp = new u8 [256];
 
 
-        // construction/destruction
-        protected i8085a_cpu_device(machine_config mconfig, string tag, device_t owner, u32 clock)
-            : this(mconfig, I8085A, tag, owner, clock, (int)CPUTYPE.CPUTYPE_8085A)
-        {
-        }
-
-
-        protected i8085a_cpu_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock, int cputype)
+        protected i8085a_cpu_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
             : base(mconfig, type, tag, owner, clock)
         {
             m_class_interfaces.Add(new device_execute_interface_i8085a(mconfig, this));
@@ -258,7 +241,12 @@ namespace mame
             m_in_sid_func = new devcb_read_line(this);
             m_out_sod_func = new devcb_write_line(this);
             m_clk_out_func = null;
-            m_cputype = cputype;
+        }
+
+
+        protected i8085a_cpu_device(machine_config mconfig, string tag, device_t owner, u32 clock)
+            : this(mconfig, I8085A, tag, owner, clock)
+        {
         }
 
 
@@ -321,36 +309,33 @@ namespace mame
             init_tables();
 
             /* set up the state table */
+            m_distate.state_add((int)I8085.I8085_PC,     "PC",     m_PC.w.l);
+            m_distate.state_add(STATE_GENPC,  "GENPC",  m_PC.w.l).noshow();
+            m_distate.state_add(STATE_GENPCBASE, "CURPC", m_PC.w.l).noshow();
+            m_distate.state_add((int)I8085.I8085_SP,     "SP",     m_SP.w.l);
+            m_distate.state_add(STATE_GENFLAGS, "GENFLAGS", m_AF.b.l).noshow().formatstr("%8s");
+            m_distate.state_add((int)I8085.I8085_A,      "A",      m_AF.b.h).noshow();
+            m_distate.state_add((int)I8085.I8085_B,      "B",      m_BC.b.h).noshow();
+            m_distate.state_add((int)I8085.I8085_C,      "C",      m_BC.b.l).noshow();
+            m_distate.state_add((int)I8085.I8085_D,      "D",      m_DE.b.h).noshow();
+            m_distate.state_add((int)I8085.I8085_E,      "E",      m_DE.b.l).noshow();
+            m_distate.state_add((int)I8085.I8085_F,      "F",      m_AF.b.l).noshow();
+            m_distate.state_add((int)I8085.I8085_H,      "H",      m_HL.b.h).noshow();
+            m_distate.state_add((int)I8085.I8085_L,      "L",      m_HL.b.l).noshow();
+            m_distate.state_add((int)I8085.I8085_AF,     "AF",     m_AF.w.l);
+            m_distate.state_add((int)I8085.I8085_BC,     "BC",     m_BC.w.l);
+            m_distate.state_add((int)I8085.I8085_DE,     "DE",     m_DE.w.l);
+            m_distate.state_add((int)I8085.I8085_HL,     "HL",     m_HL.w.l);
+            if (is_8085())
             {
-                m_distate.state_add((int)I8085.I8085_PC,     "PC",     m_PC.w.l);
-                m_distate.state_add(STATE_GENPC,  "GENPC",  m_PC.w.l).noshow();
-                m_distate.state_add(STATE_GENPCBASE, "CURPC", m_PC.w.l).noshow();
-                m_distate.state_add((int)I8085.I8085_SP,     "SP",     m_SP.w.l);
-                m_distate.state_add(STATE_GENFLAGS, "GENFLAGS", m_AF.b.l).noshow().formatstr("%8s");
-                m_distate.state_add((int)I8085.I8085_A,      "A",      m_AF.b.h).noshow();
-                m_distate.state_add((int)I8085.I8085_B,      "B",      m_BC.b.h).noshow();
-                m_distate.state_add((int)I8085.I8085_C,      "C",      m_BC.b.l).noshow();
-                m_distate.state_add((int)I8085.I8085_D,      "D",      m_DE.b.h).noshow();
-                m_distate.state_add((int)I8085.I8085_E,      "E",      m_DE.b.l).noshow();
-                m_distate.state_add((int)I8085.I8085_F,      "F",      m_AF.b.l).noshow();
-                m_distate.state_add((int)I8085.I8085_H,      "H",      m_HL.b.h).noshow();
-                m_distate.state_add((int)I8085.I8085_L,      "L",      m_HL.b.l).noshow();
-                m_distate.state_add((int)I8085.I8085_AF,     "AF",     m_AF.w.l);
-                m_distate.state_add((int)I8085.I8085_BC,     "BC",     m_BC.w.l);
-                m_distate.state_add((int)I8085.I8085_DE,     "DE",     m_DE.w.l);
-                m_distate.state_add((int)I8085.I8085_HL,     "HL",     m_HL.w.l);
-
-                if (is_8080())
-                {
-                    m_distate.state_add((int)I8085.I8085_STATUS, "STATUS", m_status);
-                    m_distate.state_add((int)I8085.I8085_INTE,   "INTE",   m_ietemp).mask(0x1).callimport().callexport();
-                }
-                if (is_8085())
-                {
-                    m_distate.state_add((int)I8085.I8085_IM,     "IM",     m_im);
-                    m_distate.state_add((int)I8085.I8085_SOD,    "SOD",    m_sod_state).mask(0x1);
-                    m_distate.state_add((int)I8085.I8085_SID,    "SID",    m_ietemp).mask(0x1).callimport().callexport();
-                }
+                m_distate.state_add((int)I8085.I8085_IM,     "IM",     m_im);
+                m_distate.state_add((int)I8085.I8085_SOD,    "SOD",    m_sod_state).mask(0x1);
+                m_distate.state_add((int)I8085.I8085_SID,    "SID",    m_ietemp).mask(0x1).callimport().callexport();
+            }
+            else
+            {
+                m_distate.state_add((int)I8085.I8085_STATUS, "STATUS", m_status);
+                m_distate.state_add((int)I8085.I8085_INTE,   "INTE",   m_ietemp).mask(0x1).callimport().callexport();
             }
 
             m_dimemory.space(AS_PROGRAM).cache(m_cprogram);
@@ -483,8 +468,10 @@ namespace mame
         //virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
 
 
-        bool is_8080() { return m_cputype == (int)CPUTYPE.CPUTYPE_8080 || m_cputype == (int)CPUTYPE.CPUTYPE_8080A; }
-        bool is_8085() { return m_cputype == (int)CPUTYPE.CPUTYPE_8085A; }
+        protected virtual int extra_ret() { return 6; }
+        protected virtual int extra_jmp() { return 3; }
+        protected virtual int extra_call() { return 9; }
+        protected virtual bool is_8085() { return true; }
 
 
         void set_sod(int state)
@@ -1252,9 +1239,11 @@ namespace mame
                     if (is_8085())
                     {
                         if ((m_AF.b.l & VF) != 0)
+                        {
+                            // RST taken = 6 more cycles
+                            m_icount.i -= extra_ret();
                             op_rst(8);
-                        else
-                            m_icount.i += 6; // RST not taken
+                        }
                     }
                     else
                         op_jmp(1);
@@ -1421,7 +1410,7 @@ namespace mame
                     break;
                 case 0xf5: // PUSH A
                     // on 8080, VF=1 and X3F=0 and X5F=0 always! (we don't have to check for it elsewhere)
-                    if (is_8080())
+                    if (!is_8085())
                         m_AF.b.l = (u8)((m_AF.b.l & ~(X3F | X5F)) | VF);
                     op_push(m_AF);
                     break;
@@ -1468,19 +1457,16 @@ namespace mame
 
         void init_tables()
         {
-            u8 zs;
-            int i;
-            int p;
-            for (i = 0; i < 256; i++)
+            for (int i = 0; i < 256; i++)
             {
                 /* cycles */
                 lut_cycles[i] = is_8085() ? lut_cycles_8085[i] : lut_cycles_8080[i];
 
                 /* flags */
-                zs = 0;
+                u8 zs = 0;
                 if (i == 0) zs |= ZF;
                 if ((i & 128) != 0) zs |= SF;
-                p = 0;
+                u8 p = 0;
                 if ((i & 1) != 0) ++p;
                 if ((i & 2) != 0) ++p;
                 if ((i & 4) != 0) ++p;
@@ -1489,6 +1475,7 @@ namespace mame
                 if ((i & 32) != 0) ++p;
                 if ((i & 64) != 0) ++p;
                 if ((i & 128) != 0) ++p;
+
                 lut_zs[i] = zs;
                 lut_zsp[i] = (u8)(zs | ((p & 1) != 0 ? (u8)0 : PF));
             }
@@ -1574,32 +1561,29 @@ namespace mame
 
         void op_jmp(int cond)
         {
-            // on 8085, jump if condition is not satisfied is shorter
             if (cond != 0)
             {
                 m_PC = read_arg16();
+                m_icount.i -= extra_jmp();
             }
             else
             {
                 m_PC.w.l += 2;
-                m_icount.i += is_8085() ? 3 : 0;
             }
         }
 
         void op_call(int cond)
         {
-            // on 8085, call if condition is not satisfied is 9 ticks
             if (cond != 0)
             {
                 PAIR p = read_arg16();
-                m_icount.i -= is_8085() ? 7 : 6 ;
+                m_icount.i -= extra_call();
                 op_push(m_PC);
                 m_PC = p;
             }
             else
             {
                 m_PC.w.l += 2;
-                m_icount.i += is_8085() ? 2 : 0;
             }
         }
 
@@ -1608,7 +1592,7 @@ namespace mame
             // conditional RET only
             if (cond != 0)
             {
-                m_icount.i -= 6;
+                m_icount.i -= extra_ret();
                 m_PC = op_pop();
             }
         }
@@ -1627,20 +1611,28 @@ namespace mame
         public static readonly emu.detail.device_type_impl I8080 = DEFINE_DEVICE_TYPE("i8080", "Intel 8080", (type, mconfig, tag, owner, clock) => { return new i8080_cpu_device(mconfig, tag, owner, clock); });
 
 
-        // construction/destruction
         i8080_cpu_device(machine_config mconfig, string tag, device_t owner, u32 clock)
-            : base(mconfig, I8080, tag, owner, clock, (int)CPUTYPE.CPUTYPE_8080)
-        {
-        }
+            : this(mconfig, I8080, tag, owner, clock)
+        { }
+
+
+        i8080_cpu_device(machine_config mconfig, device_type type, string tag, device_t owner, u32 clock)
+            : base(mconfig, type, tag, owner, clock)
+        { }
 
 
         protected override u32 device_execute_interface_execute_input_lines() { return 1; }
         protected override u64 device_execute_interface_execute_clocks_to_cycles(u64 clocks) { return clocks; }
         protected override u64 device_execute_interface_execute_cycles_to_clocks(u64 cycles) { return cycles; }
+
+
+        protected override int extra_jmp() { return 0; }
+        protected override int extra_call() { return 6; }
+        protected override bool is_8085() { return false; }
     }
 
 
-    //class i8080a_cpu_device : public i8085a_cpu_device
+    //class i8080a_cpu_device : public i8080_cpu_device
 
 
     public static class i8085_global
